@@ -1,12 +1,9 @@
 [package]
-name = "node-runtime"
-version = "3.0.0-dev"
-authors = ["Parity Technologies <admin@parity.io>"]
+name = "selendra-runtime"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 build = "build.rs"
-license = "Apache-2.0"
-homepage = "https://substrate.io"
-repository = "https://github.com/paritytech/substrate/"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
