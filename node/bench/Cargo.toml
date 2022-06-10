@@ -1,0 +1,43 @@
+[package]
+name = "selendra-node-bench"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+clap = { version = "3.1.18", features = ["derive"] }
+derive_more = { version = "0.99.17", default-features = false, features = ["display"] }
+fs_extra = "1"
+futures = { version = "0.3.21", features = ["thread-pool"] }
+hash-db = "0.15.2"
+hex = "0.4.0"
+lazy_static = "1.4.0"
+log = "0.4.17"
+kvdb = "0.11.0"
+kvdb-rocksdb = "0.15.1"
+parity-util-mem = { version = "0.11.0", default-features = false, features = ["primitive-types"] }
+parity-db = { version = "0.3" }
+rand = { version = "0.7.2", features = ["small_rng"] }
+serde = "1.0.136"
+serde_json = "1.0.79"
+tempfile = "3.1.0"
+
+sc-client-api = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
+sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
+sc-transaction-pool = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
+sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
+
+sc-basic-authorship = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
+sp-consensus = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
+sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
+sp-inherents = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
+sp-timestamp = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
+sp-tracing = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
+sp-trie = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
+
+selendra-node-test = { path = "../test" }
+selendra-primitives = { path = "../../primitives" }
+selendra-runtime = { path = "../../runtime/selendra" }
+
+
