@@ -98,7 +98,7 @@ frame-system-benchmarking = { git = "https://github.com/paritytech/substrate.git
 pallet-election-provider-support-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false, optional = true }
 pallet-nomination-pools-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false, optional = true }
 pallet-offences-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false, optional = true }
-pallet-session-benchmarking = {  git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", optional = true }
+pallet-session-benchmarking = {  git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false, optional = true }
 
 # Local Dependency
 selendra-primitives = { default-features = false, path = "../../primitives" }

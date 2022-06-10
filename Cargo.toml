@@ -6,5 +6,12 @@ members = [
     "node/test",
     "runtime/selendra"
 ]
+
 [profile.release]
 panic = "unwind"
+opt-level = 3
+
+[profile.production]
+inherits = "release"
+lto = true
+codegen-units = 1
