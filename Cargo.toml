@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "primitives",
+]
+[profile.release]
+panic = "unwind"
