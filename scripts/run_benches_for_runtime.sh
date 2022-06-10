@@ -33,7 +33,6 @@ while read -r line; do
     --execution=wasm \
     --wasm-execution=compiled \
     --heap-pages=4096 \
-    --header=./file_header.txt \
     --output="./runtime/${runtime}/src/weights/${pallet/::/_}.rs"
 done < "${runtime}_pallets"
 rm "${runtime}_pallets"
