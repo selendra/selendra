@@ -5808,6 +5808,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "sc-basic-authorship"
+version = "0.10.0-dev"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.23#6cbe1772bf258793fa9845daa8f43ea0cadee596"
+dependencies = [
+ "futures",
+ "futures-timer",
+ "log",
+ "parity-scale-codec",
+ "sc-block-builder",
+ "sc-client-api",
+ "sc-proposer-metrics",
+ "sc-telemetry",
+ "sc-transaction-pool-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "substrate-prometheus-endpoint",
+]
+
+[[package]]
 name = "sc-block-builder"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.23#6cbe1772bf258793fa9845daa8f43ea0cadee596"
@@ -6232,6 +6255,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sc-proposer-metrics"
+version = "0.10.0-dev"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.23#6cbe1772bf258793fa9845daa8f43ea0cadee596"
+dependencies = [
+ "log",
+ "substrate-prometheus-endpoint",
+]
+
+[[package]]
 name = "sc-rpc"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.23#6cbe1772bf258793fa9845daa8f43ea0cadee596"
@@ -6638,6 +6670,43 @@ checksum = "0160a13a177a45bfb43ce71c01580998474f556ad854dcbca936dd2841a5c556"
 dependencies = [
  "core-foundation-sys",
  "libc",
+]
+
+[[package]]
+name = "selendra-node-bench"
+version = "0.1.0"
+dependencies = [
+ "clap 3.1.18",
+ "derive_more",
+ "fs_extra",
+ "futures",
+ "hash-db",
+ "hex",
+ "kvdb",
+ "kvdb-rocksdb",
+ "lazy_static",
+ "log",
+ "parity-db",
+ "parity-util-mem",
+ "rand 0.7.3",
+ "sc-basic-authorship",
+ "sc-client-api",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "selendra-node-test",
+ "selendra-primitives",
+ "selendra-runtime",
+ "serde",
+ "serde_json",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-timestamp",
+ "sp-tracing",
+ "sp-trie",
+ "tempfile",
 ]
 
 [[package]]

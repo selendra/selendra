@@ -1,10 +1,11 @@
 [workspace]
 members = [
     "primitives",
+    "node/bench",
     "node/inspect",
     "node/executor",
     "node/test",
-    "runtime/selendra"
+    "runtime/selendra",
 ]
 
 [profile.release]
