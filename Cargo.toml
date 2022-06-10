@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "primitives",
+    "runtime/selendra"
 ]
 [profile.release]
 panic = "unwind"
