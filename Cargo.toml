@@ -3,6 +3,7 @@ members = [
     "primitives",
     "node/bench",
     "node/inspect",
+    "node/rpc",
     "node/executor",
     "node/test",
     "runtime/selendra",
