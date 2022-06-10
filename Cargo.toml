@@ -1,6 +1,9 @@
 [workspace]
 members = [
     "primitives",
+    "node/inspect",
+    "node/executor",
+    "node/test",
     "runtime/selendra"
 ]
 [profile.release]
