@@ -16,7 +16,6 @@ codec = { package = "parity-scale-codec", version = "3.0.0" }
 
 frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
 
-pallet-asset-tx-payment = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
 pallet-transaction-payment = {git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
 
 sc-block-builder = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
