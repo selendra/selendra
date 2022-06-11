@@ -19,7 +19,7 @@
 use crate::keyring::*;
 use selendra_runtime::{
 	constants::currency::*, wasm_binary_unwrap, AccountId, BabeConfig, BalancesConfig,
-	GenesisConfig, GrandpaConfig, IndicesConfig, SessionConfig, SocietyConfig, StakerStatus,
+	GenesisConfig, GrandpaConfig, IndicesConfig, SessionConfig, StakerStatus,
 	StakingConfig, SystemConfig, BABE_GENESIS_EPOCH_CONFIG,
 };
 use sp_keyring::{Ed25519Keyring, Sr25519Keyring};
@@ -84,11 +84,7 @@ pub fn config_endowed(code: Option<&[u8]>, extra_endowed: Vec<AccountId>) -> Gen
 		elections: Default::default(),
 		sudo: Default::default(),
 		treasury: Default::default(),
-		society: SocietyConfig { members: vec![alice(), bob()], pot: 0, max_members: 999 },
 		vesting: Default::default(),
-		assets: Default::default(),
-		gilt: Default::default(),
-		transaction_storage: Default::default(),
 		transaction_payment: Default::default(),
 		nomination_pools: Default::default(),
 	}

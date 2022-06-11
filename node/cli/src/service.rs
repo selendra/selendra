@@ -93,7 +93,7 @@ pub fn create_extrinsic(
 		)),
 		frame_system::CheckNonce::<selendra_runtime::Runtime>::from(nonce),
 		frame_system::CheckWeight::<selendra_runtime::Runtime>::new(),
-		pallet_asset_tx_payment::ChargeAssetTxPayment::<selendra_runtime::Runtime>::from(tip, None),
+		pallet_transaction_payment::ChargeTransactionPayment::<selendra_runtime::Runtime>::from(tip),
 	);
 
 	let raw_payload = selendra_runtime::SignedPayload::from_raw(
@@ -748,6 +748,7 @@ mod tests {
 					.expect("error importing test block");
 			},
 			|service, _| {
+				let tip = 0;
 				let amount = 5 * CENTS;
 				let to: Address = AccountPublic::from(bob.public()).into_account().into();
 				let from: Address = AccountPublic::from(charlie.public()).into_account().into();
@@ -769,7 +770,7 @@ mod tests {
 				let check_era = frame_system::CheckEra::from(Era::Immortal);
 				let check_nonce = frame_system::CheckNonce::from(index);
 				let check_weight = frame_system::CheckWeight::new();
-				let tx_payment = pallet_asset_tx_payment::ChargeAssetTxPayment::from(0, None);
+				let tx_payment =pallet_transaction_payment::ChargeTransactionPayment::<selendra_runtime::Runtime>::from(tip);
 				let extra = (
 					check_non_zero_sender,
 					check_spec_version,
@@ -782,13 +783,22 @@ mod tests {
 				);
 				let raw_payload = SignedPayload::from_raw(
 					function,
-					extra,
-					((), spec_version, transaction_version, genesis_hash, genesis_hash, (), (), ()),
+					extra.clone(),
+					(
+						(),
+						spec_version,
+						transaction_version,
+						genesis_hash,
+						genesis_hash,
+						(),
+						(),
+						()
+					),
 				);
 				let signature = raw_payload.using_encoded(|payload| signer.sign(payload));
 				let (function, extra, _) = raw_payload.deconstruct();
 				index += 1;
-				UncheckedExtrinsic::new_signed(function, from.into(), signature.into(), extra)
+				UncheckedExtrinsic::new_signed(function, from.into(), signature.into(), extra.clone())
 					.into()
 			},
 		);
