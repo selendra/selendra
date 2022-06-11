@@ -1215,25 +1215,6 @@ impl pallet_whitelist::Config for Runtime {
 	type WeightInfo = pallet_whitelist::weights::SubstrateWeight<Runtime>;
 }
 
-parameter_types! {
-	pub const MigrationSignedDepositPerItem: Balance = 1 * CENTS;
-	pub const MigrationSignedDepositBase: Balance = 20 * DOLLARS;
-}
-
-impl pallet_state_trie_migration::Config for Runtime {
-	type Event = Event;
-	type ControlOrigin = EnsureRoot<AccountId>;
-	type Currency = Balances;
-	type SignedDepositPerItem = MigrationSignedDepositPerItem;
-	type SignedDepositBase = MigrationSignedDepositBase;
-	// Warning: this is not advised, as it might allow the chain to be temporarily DOS-ed.
-	// Preferably, if the chain's governance/maintenance team is planning on using a specific
-	// account for the migration, put it here to make sure only that account can trigger the signed
-	// migrations.
-	type SignedFilter = EnsureSigned<Self::AccountId>;
-	type WeightInfo = ();
-}
-
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1278,7 +1259,6 @@ construct_runtime!(
 		Gilt: pallet_gilt,
 		TransactionStorage: pallet_transaction_storage,
 		BagsList: pallet_bags_list,
-		StateTrieMigration: pallet_state_trie_migration,
 		ChildBounties: pallet_child_bounties,
 		Whitelist: pallet_whitelist,
 		NominationPools: pallet_nomination_pools,
@@ -1370,7 +1350,6 @@ mod benches {
 		[pallet_scheduler, Scheduler]
 		[pallet_session, SessionBench::<Runtime>]
 		[pallet_staking, Staking]
-		[pallet_state_trie_migration, StateTrieMigration]
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_timestamp, Timestamp]
 		[pallet_tips, Tips]
