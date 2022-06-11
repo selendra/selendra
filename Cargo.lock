@@ -4243,88 +4243,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-contracts"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.23#6cbe1772bf258793fa9845daa8f43ea0cadee596"
-dependencies = [
- "bitflags",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "pallet-contracts-primitives",
- "pallet-contracts-proc-macro",
- "parity-scale-codec",
- "rand 0.8.5",
- "rand_pcg 0.3.1",
- "scale-info",
- "serde",
- "smallvec",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-sandbox",
- "sp-std",
- "wasm-instrument",
- "wasmi-validation",
-]
-
-[[package]]
-name = "pallet-contracts-primitives"
-version = "6.0.0"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.23#6cbe1772bf258793fa9845daa8f43ea0cadee596"
-dependencies = [
- "bitflags",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-rpc",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-contracts-proc-macro"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.23#6cbe1772bf258793fa9845daa8f43ea0cadee596"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "pallet-contracts-rpc"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.23#6cbe1772bf258793fa9845daa8f43ea0cadee596"
-dependencies = [
- "jsonrpsee",
- "pallet-contracts-primitives",
- "pallet-contracts-rpc-runtime-api",
- "parity-scale-codec",
- "serde",
- "sp-api",
- "sp-blockchain",
- "sp-core",
- "sp-rpc",
- "sp-runtime",
-]
-
-[[package]]
-name = "pallet-contracts-rpc-runtime-api"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.23#6cbe1772bf258793fa9845daa8f43ea0cadee596"
-dependencies = [
- "pallet-contracts-primitives",
- "parity-scale-codec",
- "scale-info",
- "sp-api",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-conviction-voting"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.23#6cbe1772bf258793fa9845daa8f43ea0cadee596"
@@ -7409,7 +7327,6 @@ dependencies = [
  "frame-system",
  "futures",
  "pallet-balances",
- "pallet-contracts",
  "pallet-im-online",
  "pallet-timestamp",
  "pallet-treasury",
@@ -7453,7 +7370,6 @@ name = "selendra-node-rpc"
 version = "0.1.0"
 dependencies = [
  "jsonrpsee",
- "pallet-contracts-rpc",
  "pallet-mmr-rpc",
  "pallet-transaction-payment-rpc",
  "sc-chain-spec",
@@ -7549,9 +7465,6 @@ dependencies = [
  "pallet-bounties",
  "pallet-child-bounties",
  "pallet-collective",
- "pallet-contracts",
- "pallet-contracts-primitives",
- "pallet-contracts-rpc-runtime-api",
  "pallet-conviction-voting",
  "pallet-democracy",
  "pallet-election-provider-multi-phase",

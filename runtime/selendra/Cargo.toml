@@ -49,9 +49,6 @@ pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch 
 pallet-bounties = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 pallet-child-bounties = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 pallet-collective = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
-pallet-contracts = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
-pallet-contracts-primitives = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
-pallet-contracts-rpc-runtime-api = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 pallet-conviction-voting = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 pallet-democracy = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 pallet-election-provider-multi-phase = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
@@ -113,7 +110,7 @@ std = [
 	"codec/std",
 	"log/std",
 	"scale-info/std",
-	
+
 	"sp-api/std",
 	"sp-authority-discovery/std",
 	"sp-block-builder/std",
@@ -128,7 +125,7 @@ std = [
 	"sp-std/std",
 	"sp-transaction-pool/std",
 	"sp-version/std",
-	
+
 	"frame-benchmarking/std",
 	"frame-election-provider-support/std",
 	"frame-executive/std",
@@ -136,7 +133,7 @@ std = [
 	"frame-support/std",
 	"frame-system-rpc-runtime-api/std",
 	"frame-system/std",
-	
+
 	"pallet-assets/std",
 	"pallet-authority-discovery/std",
 	"pallet-authorship/std",
@@ -146,9 +143,6 @@ std = [
 	"pallet-bounties/std",
 	"pallet-child-bounties/std",
 	"pallet-collective/std",
-	"pallet-contracts/std",
-	"pallet-contracts-primitives/std",
-	"pallet-contracts-rpc-runtime-api/std",
 	"pallet-conviction-voting/std",
 	"pallet-democracy/std",
 	"pallet-elections-phragmen/std",
@@ -200,7 +194,6 @@ runtime-benchmarks = [
 	"pallet-bounties/runtime-benchmarks",
 	"pallet-child-bounties/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
-	"pallet-contracts/runtime-benchmarks",
 	"pallet-conviction-voting/runtime-benchmarks",
 	"pallet-democracy/runtime-benchmarks",
 	"pallet-election-provider-multi-phase/runtime-benchmarks",
@@ -250,7 +243,6 @@ try-runtime = [
 	"pallet-bounties/try-runtime",
 	"pallet-child-bounties/try-runtime",
 	"pallet-collective/try-runtime",
-	"pallet-contracts/try-runtime",
 	"pallet-conviction-voting/try-runtime",
 	"pallet-democracy/try-runtime",
 	"pallet-election-provider-multi-phase/try-runtime",
