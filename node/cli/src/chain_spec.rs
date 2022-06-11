@@ -27,7 +27,7 @@ use sc_telemetry::TelemetryEndpoints;
 use selendra_runtime::{
 	constants::currency::*, wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig,
 	BalancesConfig, Block, CouncilConfig, DemocracyConfig, ElectionsConfig, GrandpaConfig,
-	ImOnlineConfig, IndicesConfig, MaxNominations, SessionConfig, SessionKeys, SocietyConfig,
+	ImOnlineConfig, IndicesConfig, MaxNominations, SessionConfig, SessionKeys,
 	StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig,
 };
 use serde::{Deserialize, Serialize};
@@ -349,15 +349,6 @@ pub fn testnet_genesis(
 		grandpa: GrandpaConfig { authorities: vec![] },
 		technical_membership: Default::default(),
 		treasury: Default::default(),
-		society: SocietyConfig {
-			members: endowed_accounts
-				.iter()
-				.take((num_endowed_accounts + 1) / 2)
-				.cloned()
-				.collect(),
-			pot: 0,
-			max_members: 999,
-		},
 		vesting: Default::default(),
 		gilt: Default::default(),
 		transaction_storage: Default::default(),
