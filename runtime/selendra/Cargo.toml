@@ -76,7 +76,6 @@ pallet-transaction-payment = { git = "https://github.com/paritytech/substrate.gi
 pallet-transaction-payment-rpc-runtime-api = {  git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 pallet-transaction-storage = {  git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 pallet-vesting = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
-pallet-whitelist = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 
 # benchmarking
 frame-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false, optional = true }
@@ -197,7 +196,6 @@ runtime-benchmarks = [
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
 	"pallet-vesting/runtime-benchmarks",
-	"pallet-whitelist/runtime-benchmarks",
 	"frame-system-benchmarking",
 	"hex-literal",
 ]
@@ -236,7 +234,6 @@ try-runtime = [
 	"pallet-treasury/try-runtime",
 	"pallet-utility/try-runtime",
 	"pallet-vesting/try-runtime",
-	"pallet-whitelist/try-runtime",
 ]
 
 # A feature that should be enabled when the runtime should be build for on-chain

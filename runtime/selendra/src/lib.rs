@@ -1188,15 +1188,6 @@ impl pallet_transaction_storage::Config for Runtime {
 	type WeightInfo = pallet_transaction_storage::weights::SubstrateWeight<Runtime>;
 }
 
-impl pallet_whitelist::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
-	type WhitelistOrigin = EnsureRoot<AccountId>;
-	type DispatchWhitelistedOrigin = EnsureRoot<AccountId>;
-	type PreimageProvider = Preimage;
-	type WeightInfo = pallet_whitelist::weights::SubstrateWeight<Runtime>;
-}
-
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1241,7 +1232,6 @@ construct_runtime!(
 		TransactionStorage: pallet_transaction_storage,
 		BagsList: pallet_bags_list,
 		ChildBounties: pallet_child_bounties,
-		Whitelist: pallet_whitelist,
 		NominationPools: pallet_nomination_pools,
 	}
 );
@@ -1337,7 +1327,6 @@ mod benches {
 		[pallet_treasury, Treasury]
 		[pallet_utility, Utility]
 		[pallet_vesting, Vesting]
-		[pallet_whitelist, Whitelist]
 	);
 }
 
