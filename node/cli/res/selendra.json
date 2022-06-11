@@ -1,6 +1,6 @@
 {
-  "name": "Flaming Fir",
-  "id": "flamingfir9",
+  "name": "Selendra",
+  "id": "selendra",
   "chainType": "Live",
   "bootNodes": [
     "/dns/0.flamingfir.paritytech.net/tcp/30333/p2p/12D3KooWLK2gMLhWsYJzjW3q35zAs9FDDVqfqVfVuskiGZGRSMvR",
@@ -18,10 +18,10 @@
       0
     ]
   ],
-  "protocolId": "fir9",
+  "protocolId": "sel",
   "properties": {
-    "tokenDecimals": 15,
-    "tokenSymbol": "FIR"
+    "tokenDecimals": 12,
+    "tokenSymbol": "SEL"
   },
   "forkBlocks": null,
   "badBlocks": null,
