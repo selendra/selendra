@@ -66,7 +66,6 @@ pallet-preimage = { git = "https://github.com/paritytech/substrate.git", branch 
 pallet-proxy = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 pallet-recovery = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 pallet-referenda = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
-pallet-remark = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 pallet-session = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false, features = [ "historical" ] }
 pallet-scheduler = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 pallet-staking = {  git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
@@ -153,7 +152,6 @@ std = [
 	"pallet-preimage/std",
 	"pallet-proxy/std",
 	"pallet-referenda/std",
-	"pallet-remark/std",
 	"pallet-recovery/std",
 	"pallet-scheduler/std",
 	"pallet-session/std",
@@ -202,7 +200,6 @@ runtime-benchmarks = [
 	"pallet-scheduler/runtime-benchmarks",
 	"pallet-referenda/runtime-benchmarks",
 	"pallet-recovery/runtime-benchmarks",
-	"pallet-remark/runtime-benchmarks",
 	"pallet-session-benchmarking",
 	"pallet-staking/runtime-benchmarks",
 	"pallet-state-trie-migration/runtime-benchmarks",
