@@ -85,7 +85,6 @@ pub fn config_endowed(code: Option<&[u8]>, extra_endowed: Vec<AccountId>) -> Gen
 		sudo: Default::default(),
 		treasury: Default::default(),
 		vesting: Default::default(),
-		gilt: Default::default(),
 		transaction_storage: Default::default(),
 		transaction_payment: Default::default(),
 		nomination_pools: Default::default(),

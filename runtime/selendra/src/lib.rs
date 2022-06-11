@@ -41,7 +41,7 @@ use frame_support::{
 };
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureSigned,
+	EnsureRoot,
 };
 use pallet_election_provider_multi_phase::SolutionAccuracyOf;
 use pallet_grandpa::{
