@@ -222,8 +222,6 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = ConstU32<16>;
 }
 
-impl pallet_randomness_collective_flip::Config for Runtime {}
-
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
@@ -1238,7 +1236,7 @@ impl pallet_society::Config for Runtime {
 	type Event = Event;
 	type PalletId = SocietyPalletId;
 	type Currency = Balances;
-	type Randomness = RandomnessCollectiveFlip;
+	type Randomness = pallet_babe::RandomnessFromOneEpochAgo<Runtime>;
 	type CandidateDeposit = CandidateDeposit;
 	type WrongSideDeduction = WrongSideDeduction;
 	type MaxStrikes = MaxStrikes;
@@ -1287,7 +1285,7 @@ impl pallet_lottery::Config for Runtime {
 	type PalletId = LotteryPalletId;
 	type Call = Call;
 	type Currency = Balances;
-	type Randomness = RandomnessCollectiveFlip;
+	type Randomness = pallet_babe::RandomnessFromOneEpochAgo<Runtime>;
 	type Event = Event;
 	type ManagerOrigin = EnsureRoot<AccountId>;
 	type MaxCalls = MaxCalls;
@@ -1392,7 +1390,6 @@ construct_runtime!(
 		AuthorityDiscovery: pallet_authority_discovery,
 		Offences: pallet_offences,
 		Historical: pallet_session_historical::{Pallet},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 		Identity: pallet_identity,
 		Society: pallet_society,
 		Recovery: pallet_recovery,
