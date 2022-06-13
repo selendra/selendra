@@ -159,6 +159,10 @@ runtime-benchmarks = ["selendra-runtime/runtime-benchmarks", "frame-benchmarking
 # in the near future.
 try-runtime = ["selendra-runtime/try-runtime", "try-runtime-cli"]
 
+fast-runtime = [
+	"selendra-runtime/fast-runtime"
+]
+
 [[bench]]
 name = "transaction_pool"
 harness = false

@@ -2,7 +2,6 @@
 members = [
     "primitives",
     "node/cli",
-    "node/bench",
     "node/inspect",
     "node/rpc",
     "node/executor",

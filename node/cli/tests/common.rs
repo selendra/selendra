@@ -101,7 +101,7 @@ pub async fn run_node_for_a_while(base_path: &Path, args: &[&str]) {
 	let (ws_url, _) = find_ws_url_from_output(stderr);
 
 	// Let it produce some blocks.
-	let _ = wait_n_finalized_blocks(3, 30, &ws_url).await;
+	let _ = wait_n_finalized_blocks(3, 60, &ws_url).await;
 
 	assert!(child.try_wait().unwrap().is_none(), "the process should still be running");
 

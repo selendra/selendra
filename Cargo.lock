@@ -6986,43 +6986,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "selendra-node-bench"
-version = "0.1.0"
-dependencies = [
- "clap 3.1.18",
- "derive_more",
- "fs_extra",
- "futures",
- "hash-db",
- "hex",
- "kvdb",
- "kvdb-rocksdb",
- "lazy_static",
- "log",
- "parity-db",
- "parity-util-mem",
- "rand 0.7.3",
- "sc-basic-authorship",
- "sc-client-api",
- "sc-transaction-pool",
- "sc-transaction-pool-api",
- "selendra-node-test",
- "selendra-primitives",
- "selendra-runtime",
- "serde",
- "serde_json",
- "sp-consensus",
- "sp-core",
- "sp-inherents",
- "sp-runtime",
- "sp-state-machine",
- "sp-timestamp",
- "sp-tracing",
- "sp-trie",
- "tempfile",
-]
-
-[[package]]
 name = "selendra-node-cli"
 version = "0.1.0"
 dependencies = [
