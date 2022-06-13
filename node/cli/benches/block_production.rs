@@ -32,7 +32,8 @@ use sc_service::{
 	BasePath, Configuration, Role,
 };
 use selendra_node_cli::service::{create_extrinsic, FullClient};
-use selendra_runtime::{constants::currency::*, BalancesCall};
+use selendra_runtime::BalancesCall;
+use selendra_runtime_constants::currency::*;
 use sp_blockchain::{ApplyExtrinsicFailed::Validity, Error::ApplyExtrinsicFailed};
 use sp_consensus::BlockOrigin;
 use sp_keyring::Sr25519Keyring;
@@ -42,6 +43,7 @@ use sp_runtime::{
 	AccountId32, MultiAddress, OpaqueExtrinsic,
 };
 use tokio::runtime::Handle;
+
 
 fn new_node(tokio_handle: Handle) -> selendra_node_cli::service::NewFullBase {
 	let base_path = BasePath::new_temp_dir()

@@ -42,3 +42,4 @@ substrate-test-client = { git = "https://github.com/paritytech/substrate.git", b
 selendra-node-executor = { path = "../executor" }
 selendra-primitives = { path = "../../primitives" }
 selendra-runtime = { path = "../../runtime/selendra" }
+selendra-runtime-constants = { path = "../../runtime/selendra/constants" }

@@ -22,9 +22,10 @@ use frame_support::{
 use selendra_node_test::keyring::*;
 use selendra_primitives::Balance;
 use selendra_runtime::{
-	constants::{currency::*, time::SLOT_DURATION},
-	Balances, Call, CheckedExtrinsic, Multiplier, Runtime, TransactionByteFee, TransactionPayment,
+	Balances, Call, CheckedExtrinsic, Runtime, TransactionByteFee, TransactionPayment,
 };
+use selendra_runtime_constants::{currency::*, time::SLOT_DURATION};
+use pallet_transaction_payment::Multiplier;
 use sp_core::NeverNativeValue;
 use sp_runtime::{traits::One, Perbill};
 

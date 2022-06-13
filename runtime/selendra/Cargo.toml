@@ -85,6 +85,8 @@ pallet-session-benchmarking = {  git = "https://github.com/paritytech/substrate.
 
 # Local Dependency
 selendra-primitives = { default-features = false, path = "../../primitives" }
+runtime-common = { default-features = false, path = "../common", package = "selendra-runtime-common" }
+selendra-runtime-constants = { path = "./constants", default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
@@ -155,6 +157,8 @@ std = [
 	"pallet-vesting/std",
 
 	"selendra-primitives/std",
+	"selendra-runtime-constants/std",
+	"runtime-common/std"
 ]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",

@@ -20,7 +20,8 @@ use criterion::{criterion_group, criterion_main, BatchSize, Criterion, Throughpu
 use futures::{future, StreamExt};
 use selendra_node_cli::service::{create_extrinsic, fetch_nonce, FullClient, TransactionPool};
 use selendra_primitives::AccountId;
-use selendra_runtime::{constants::currency::*, BalancesCall, SudoCall};
+use selendra_runtime::{BalancesCall, SudoCall};
+use selendra_runtime_constants::currency::*;
 use sc_client_api::execution_extensions::ExecutionStrategies;
 use sc_service::{
 	config::{

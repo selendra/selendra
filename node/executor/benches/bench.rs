@@ -24,9 +24,10 @@ use selendra_node_executor::ExecutorDispatch;
 use selendra_node_test::keyring::*;
 use selendra_primitives::{BlockNumber, Hash};
 use selendra_runtime::{
-	constants::currency::*, Block, BuildStorage, Call, CheckedExtrinsic, GenesisConfig, Header,
+	Block, BuildStorage, Call, CheckedExtrinsic, GenesisConfig, Header,
 	UncheckedExtrinsic,
 };
+use selendra_runtime_constants::currency::*;
 use sp_core::{
 	storage::well_known_keys,
 	traits::{CodeExecutor, RuntimeCode},

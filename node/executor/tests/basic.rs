@@ -28,10 +28,10 @@ use sp_runtime::{
 use selendra_node_test::keyring::*;
 use selendra_primitives::{Balance, Hash};
 use selendra_runtime::{
-	constants::{currency::*, time::SLOT_DURATION},
 	Balances, Call, CheckedExtrinsic, Event, Header, Runtime, System, TransactionPayment,
 	UncheckedExtrinsic,
 };
+use selendra_runtime_constants::{currency::*, time::SLOT_DURATION};
 
 pub mod common;
 use self::common::{sign, *};
