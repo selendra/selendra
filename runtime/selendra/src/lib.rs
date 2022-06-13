@@ -34,7 +34,7 @@ use frame_support::{
 		LockIdentifier,
 	},
 	weights::{
-		ConstantMultiplier, IdentityFee,
+		ConstantMultiplier,
 	},
 	PalletId, RuntimeDebug,
 };
@@ -82,7 +82,7 @@ pub use sp_runtime::BuildStorage;
 pub use selendra_primitives::{AccountId, Signature};
 use selendra_primitives::{AccountIndex, Balance, BlockNumber, Hash, Moment, Nonce};
 pub use runtime_common::{CurrencyToVote, impls::DealWithFees, BlockHashCount, BlockLength, SlowAdjustingFeeUpdate, impl_runtime_weights};
-use selendra_runtime_constants::{currency::*, time::*};
+use selendra_runtime_constants::{currency::*, time::*, fee::*};
 use sp_runtime::generic::Era;
 /// Generated voter bag information.
 mod voter_bags;
@@ -386,7 +386,7 @@ parameter_types! {
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees<Self>>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-	type WeightToFee = IdentityFee<Balance>;
+	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 }
