@@ -574,9 +574,9 @@ mod tests {
 	use sc_transaction_pool_api::{ChainEvent, MaintainedTransactionPool};
 	use selendra_primitives::{Block, DigestItem, Signature};
 	use selendra_runtime::{
-		constants::{currency::CENTS, time::SLOT_DURATION},
 		Address, BalancesCall, Call, UncheckedExtrinsic,
 	};
+	use selendra_runtime_constants::{currency::CENTS, time::SLOT_DURATION};
 	use sp_consensus::{BlockOrigin, Environment, Proposer};
 	use sp_core::{crypto::Pair as CryptoPair, Public};
 	use sp_inherents::InherentDataProvider;

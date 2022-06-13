@@ -16,9 +16,13 @@
 
 //! A set of constant values used in substrate runtime.
 
+#![cfg_attr(not(feature = "std"), no_std)]
+
+pub mod weights;
+
 /// Money matters.
 pub mod currency {
-	use selendra_primitives::Balance;
+	use primitives::Balance;
 
 	pub const MILLICENTS: Balance = 1_000_000_000;
 	pub const CENTS: Balance = 1_000 * MILLICENTS; // assume this is worth about a cent.
@@ -31,7 +35,7 @@ pub mod currency {
 
 /// Time.
 pub mod time {
-	use selendra_primitives::{BlockNumber, Moment};
+	use primitives::{BlockNumber, Moment};
 
 	/// Since BABE is probabilistic this is the average expected block time that
 	/// we are targeting. Blocks will be produced at a minimum duration defined

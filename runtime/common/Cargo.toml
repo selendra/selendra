@@ -1,0 +1,59 @@
+[package]
+name = "selendra-runtime-common"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+parity-scale-codec = { version = "3.1.2", default-features = false, features = ["derive"] }
+scale-info = { version = "2.1.2", default-features = false, features = ["derive"] }
+static_assertions = "1.1.0"
+
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false  }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
+
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
+
+pallet-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
+pallet-balances = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.23", default-features = false }
+pallet-election-provider-multi-phase = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
+pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
+pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
+
+primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
+
+[dev-dependencies]
+frame-support-test = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
+pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
+
+[features]
+default = ["std"]
+no_std = []
+std = [
+	"parity-scale-codec/std",
+	"scale-info/std",
+	"sp-io/std",
+	"sp-core/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-authorship/std",
+	"pallet-balances/std",
+	"pallet-election-provider-multi-phase/std",
+	"pallet-treasury/std",
+	"primitives/std",
+]
+
+runtime-benchmarks = [
+	"frame-support/runtime-benchmarks",
+]
+
+try-runtime = [
+	"pallet-authorship/try-runtime",
+	"pallet-authorship/try-runtime",
+	"pallet-treasury/try-runtime",
+]

@@ -85,6 +85,7 @@ selendra-runtime = { path = "../../runtime/selendra" }
 selendra-node-rpc = { path = "../rpc" }
 selendra-primitives = { path = "../../primitives" }
 selendra-node-executor = { path = "../executor" }
+selendra-runtime-constants = { path = "../../runtime/selendra/constants" }
 
 # CLI-specific dependencies
 serde_json = "1.0.79"

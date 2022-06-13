@@ -38,9 +38,10 @@ use selendra_node_executor::ExecutorDispatch;
 use selendra_node_test::keyring::*;
 use selendra_primitives::{BlockNumber, Hash};
 use selendra_runtime::{
-	constants::currency::*, Block, BuildStorage, CheckedExtrinsic, Header, Runtime,
+	Block, BuildStorage, CheckedExtrinsic, Header, Runtime,
 	UncheckedExtrinsic,
 };
+use selendra_runtime_constants::currency::*;
 use sp_externalities::Externalities;
 
 pub const TEST_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"test");

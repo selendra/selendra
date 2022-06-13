@@ -33,6 +33,7 @@ frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "
 pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
 pallet-im-online = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
+pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
 pallet-treasury = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
 
 sp-application-crypto = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
@@ -42,6 +43,7 @@ sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "po
 sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
 
 selendra-node-test = { path = "../test" }
+selendra-runtime-constants = { path = "../../runtime/selendra/constants" }
 
 [features]
 wasmtime = ["sc-executor/wasmtime"]
