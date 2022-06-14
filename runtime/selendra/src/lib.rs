@@ -224,7 +224,7 @@ construct_runtime!(
 		Tips: pallet_tips,
 
 		// Staking support
-		BagsList: pallet_bags_list,
+		VoterList: pallet_bags_list,
 		NominationPools: pallet_nomination_pools,
 
 		// Temporary
@@ -282,7 +282,7 @@ mod benches {
 	define_benchmarks!(
 		[frame_benchmarking, BaselineBench::<Runtime>]
 		[pallet_babe, Babe]
-		[pallet_bags_list, BagsList]
+		[pallet_bags_list, VoterList]
 		[pallet_balances, Balances]
 		[pallet_bounties, Bounties]
 		[pallet_child_bounties, ChildBounties]
