@@ -7279,6 +7279,7 @@ dependencies = [
  "pallet-authorship",
  "pallet-balances",
  "pallet-election-provider-multi-phase",
+ "pallet-staking",
  "pallet-transaction-payment",
  "pallet-treasury",
  "parity-scale-codec",

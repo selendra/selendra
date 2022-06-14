@@ -20,13 +20,13 @@ use frame_support::{
 	traits::Currency,
 	weights::{constants::ExtrinsicBaseWeight, GetDispatchInfo, IdentityFee, WeightToFee},
 };
+use pallet_transaction_payment::Multiplier;
 use selendra_node_test::keyring::*;
 use selendra_primitives::Balance;
 use selendra_runtime::{
 	Balances, Call, CheckedExtrinsic, Runtime, TransactionByteFee, TransactionPayment,
 };
 use selendra_runtime_constants::{currency::*, time::SLOT_DURATION};
-use pallet_transaction_payment::Multiplier;
 use sp_core::NeverNativeValue;
 use sp_runtime::{traits::One, Perbill};
 

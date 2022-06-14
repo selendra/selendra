@@ -1,14 +1,14 @@
 use crate::{
-	Runtime, Event, Balances, WeightToFee, ConstantMultiplier,
-	CurrencyAdapter, SlowAdjustingFeeUpdate
+	Balances, ConstantMultiplier, CurrencyAdapter, Event, Runtime, SlowAdjustingFeeUpdate,
+	WeightToFee,
 };
 
 use frame_support::parameter_types;
 use sp_runtime::traits::ConvertInto;
 
-use selendra_primitives::Balance;
-use selendra_runtime_constants::currency::{MILLICENTS, DOLLARS, EXISTENTIAL_DEPOSIT};
 pub use runtime_common::impls::DealWithFees;
+use selendra_primitives::Balance;
+use selendra_runtime_constants::currency::{DOLLARS, EXISTENTIAL_DEPOSIT, MILLICENTS};
 
 parameter_types! {
 	pub const ExistentialDeposit: Balance = EXISTENTIAL_DEPOSIT;

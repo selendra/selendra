@@ -21,9 +21,7 @@ use frame_support::{
 };
 use frame_system::{self, AccountInfo, EventRecord, Phase};
 use sp_core::{storage::well_known_keys, traits::Externalities, NeverNativeValue};
-use sp_runtime::{
-	transaction_validity::InvalidTransaction, ApplyExtrinsicResult,
-};
+use sp_runtime::{transaction_validity::InvalidTransaction, ApplyExtrinsicResult};
 
 use selendra_node_test::keyring::*;
 use selendra_primitives::{Balance, Hash};

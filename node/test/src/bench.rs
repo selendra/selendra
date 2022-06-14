@@ -42,10 +42,11 @@ use sc_consensus::{BlockImport, BlockImportParams, ForkChoiceStrategy, ImportRes
 use sc_executor::{NativeElseWasmExecutor, WasmExecutionMethod, WasmtimeInstantiationStrategy};
 use selendra_primitives::Block;
 use selendra_runtime::{
-	AccountId, BalancesCall, Call, CheckedExtrinsic, MinimumPeriod,
-	Signature, SystemCall, UncheckedExtrinsic,
+	AccountId, BalancesCall, Call, CheckedExtrinsic, MinimumPeriod, Signature, SystemCall,
+	UncheckedExtrinsic,
 };
 use selendra_runtime_constants::currency::DOLLARS;
+use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_consensus::BlockOrigin;
 use sp_core::{blake2_256, ed25519, sr25519, traits::SpawnNamed, ExecutionContext, Pair, Public};
@@ -55,7 +56,6 @@ use sp_runtime::{
 	traits::{Block as BlockT, IdentifyAccount, Verify, Zero},
 	OpaqueExtrinsic,
 };
-use sp_api::ProvideRuntimeApi;
 /// Keyring full of accounts for benching.
 ///
 /// Accounts are ordered:

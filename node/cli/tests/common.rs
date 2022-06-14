@@ -23,8 +23,8 @@ use nix::{
 	sys::signal::{kill, Signal::SIGINT},
 	unistd::Pid,
 };
-use selendra_primitives::Block;
 use remote_externalities::rpc_api;
+use selendra_primitives::Block;
 use std::{
 	io::{BufRead, BufReader, Read},
 	ops::{Deref, DerefMut},
