@@ -44,7 +44,6 @@ use sp_runtime::{
 };
 use tokio::runtime::Handle;
 
-
 fn new_node(tokio_handle: Handle) -> selendra_node_cli::service::NewFullBase {
 	let base_path = BasePath::new_temp_dir()
 		.expect("getting the base path of a temporary path doesn't fail; qed");

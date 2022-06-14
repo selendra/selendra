@@ -1,4 +1,3 @@
-
 // This file is part of Substrate.
 
 // Copyright (C) 2022 Parity Technologies (UK) Ltd.
@@ -27,4 +26,3 @@ pub use block_weights::BlockExecutionWeight;
 pub use extrinsic_weights::ExtrinsicBaseWeight;
 pub use paritydb_weights::constants::ParityDbWeight;
 pub use rocksdb_weights::constants::RocksDbWeight;
-

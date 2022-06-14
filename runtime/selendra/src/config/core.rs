@@ -1,21 +1,18 @@
 use crate::{
-	RuntimeVersion, Call, Origin, Indices, VERSION, Runtime, BlockWeights, BlockHashCount, BlockLength,
-	RocksDbWeight, Event, PalletInfo, Babe,Weight, OriginCaller, Preimage
+	traits, Babe, BlockHashCount, BlockLength, BlockWeights, Call, Event, Indices, Origin,
+	OriginCaller, PalletInfo, Preimage, RocksDbWeight, Runtime, RuntimeVersion, UncheckedExtrinsic,
+	Weight, VERSION,
 };
 
 use frame_support::{
-	parameter_types, traits::{Everything, ConstU32, EqualPrivilegeOnly},
+	parameter_types,
+	traits::{ConstU32, EqualPrivilegeOnly, Everything},
 };
 use frame_system::EnsureRoot;
 
-use sp_runtime::{
-	generic, Perbill,
-	traits::{
-		BlakeTwo256
-	},
-};
+use sp_runtime::{generic, traits::BlakeTwo256, Perbill};
 
-use selendra_primitives::{BlockNumber, Nonce, AccountId, Hash, Moment, Balance};
+use selendra_primitives::{AccountId, Balance, BlockNumber, Hash, Moment, Nonce, Signature};
 use selendra_runtime_constants::time::SLOT_DURATION;
 
 parameter_types! {
@@ -50,6 +47,19 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = ConstU32<16>;
 }
 
+impl frame_system::offchain::SigningTypes for Runtime {
+	type Public = <Signature as traits::Verify>::Signer;
+	type Signature = Signature;
+}
+
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
+where
+	Call: From<C>,
+{
+	type Extrinsic = UncheckedExtrinsic;
+	type OverarchingCall = Call;
+}
+
 parameter_types! {
 	pub const MinimumPeriod: Moment = SLOT_DURATION / 2;
 }
@@ -81,4 +91,3 @@ impl pallet_scheduler::Config for Runtime {
 	type PreimageProvider = Preimage;
 	type NoPreimagePostponement = NoPreimagePostponement;
 }
-

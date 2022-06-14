@@ -93,7 +93,9 @@ pub fn create_extrinsic(
 		)),
 		frame_system::CheckNonce::<selendra_runtime::Runtime>::from(nonce),
 		frame_system::CheckWeight::<selendra_runtime::Runtime>::new(),
-		pallet_transaction_payment::ChargeTransactionPayment::<selendra_runtime::Runtime>::from(tip),
+		pallet_transaction_payment::ChargeTransactionPayment::<selendra_runtime::Runtime>::from(
+			tip,
+		),
 	);
 
 	let raw_payload = selendra_runtime::SignedPayload::from_raw(
@@ -573,9 +575,7 @@ mod tests {
 	use sc_service_test::TestNetNode;
 	use sc_transaction_pool_api::{ChainEvent, MaintainedTransactionPool};
 	use selendra_primitives::{Block, DigestItem, Signature};
-	use selendra_runtime::{
-		Address, BalancesCall, Call, UncheckedExtrinsic,
-	};
+	use selendra_runtime::{Address, BalancesCall, Call, UncheckedExtrinsic};
 	use selendra_runtime_constants::{currency::CENTS, time::SLOT_DURATION};
 	use sp_consensus::{BlockOrigin, Environment, Proposer};
 	use sp_core::{crypto::Pair as CryptoPair, Public};
@@ -770,7 +770,9 @@ mod tests {
 				let check_era = frame_system::CheckEra::from(Era::Immortal);
 				let check_nonce = frame_system::CheckNonce::from(index);
 				let check_weight = frame_system::CheckWeight::new();
-				let tx_payment =pallet_transaction_payment::ChargeTransactionPayment::<selendra_runtime::Runtime>::from(tip);
+				let tx_payment = pallet_transaction_payment::ChargeTransactionPayment::<
+					selendra_runtime::Runtime,
+				>::from(tip);
 				let extra = (
 					check_non_zero_sender,
 					check_spec_version,
@@ -784,22 +786,18 @@ mod tests {
 				let raw_payload = SignedPayload::from_raw(
 					function,
 					extra.clone(),
-					(
-						(),
-						spec_version,
-						transaction_version,
-						genesis_hash,
-						genesis_hash,
-						(),
-						(),
-						()
-					),
+					((), spec_version, transaction_version, genesis_hash, genesis_hash, (), (), ()),
 				);
 				let signature = raw_payload.using_encoded(|payload| signer.sign(payload));
 				let (function, extra, _) = raw_payload.deconstruct();
 				index += 1;
-				UncheckedExtrinsic::new_signed(function, from.into(), signature.into(), extra.clone())
-					.into()
+				UncheckedExtrinsic::new_signed(
+					function,
+					from.into(),
+					signature.into(),
+					extra.clone(),
+				)
+				.into()
 			},
 		);
 	}

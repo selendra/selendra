@@ -22,16 +22,16 @@ pub mod impls;
 
 use static_assertions::const_assert;
 
-use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
 use frame_support::{
 	parameter_types,
-	traits::Currency,
+	traits::{ConstU32, Currency},
 	weights::{constants::WEIGHT_PER_SECOND, Weight},
 };
 use frame_system::limits;
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
+use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
 
-use primitives::{BlockNumber};
+use primitives::BlockNumber;
 
 /// Implementations of some helper traits passed into runtime modules as associated types.
 pub use impls::ToAuthor;
@@ -72,7 +72,6 @@ parameter_types! {
 
 pub type SlowAdjustingFeeUpdate<R> =
 	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
-
 
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,
@@ -160,4 +159,10 @@ macro_rules! prod_or_fast {
 			$prod
 		}
 	};
+}
+
+pub struct StakingBenchmarkingConfig;
+impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
+	type MaxNominators = ConstU32<1000>;
+	type MaxValidators = ConstU32<1000>;
 }

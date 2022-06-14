@@ -204,7 +204,7 @@ mod tests {
 			// Author gets 100% of tip and 20% of fee = 22
 			assert_eq!(Balances::free_balance(TEST_ACCOUNT), 22);
 			// Treasury gets 80% of fee
-			assert_eq!(Balances::free_balance(Treasury::account_id()), 8);
+			assert_eq!(Balances::free_balance(Treasury::account_id()), 0);
 		});
 	}
 }

@@ -21,9 +21,7 @@ use frame_support::{
 };
 use frame_system::{self, AccountInfo, EventRecord, Phase};
 use sp_core::{storage::well_known_keys, traits::Externalities, NeverNativeValue};
-use sp_runtime::{
-	transaction_validity::InvalidTransaction, ApplyExtrinsicResult,
-};
+use sp_runtime::{transaction_validity::InvalidTransaction, ApplyExtrinsicResult};
 
 use selendra_node_test::keyring::*;
 use selendra_primitives::{Balance, Hash};
@@ -404,19 +402,6 @@ fn full_native_block_import_works() {
 			},
 			EventRecord {
 				phase: Phase::ApplyExtrinsic(1),
-				event: Event::Balances(pallet_balances::Event::Deposit {
-					who: pallet_treasury::Pallet::<Runtime>::account_id(),
-					amount: fees * 8 / 10,
-				}),
-				topics: vec![],
-			},
-			EventRecord {
-				phase: Phase::ApplyExtrinsic(1),
-				event: Event::Treasury(pallet_treasury::Event::Deposit { value: fees * 8 / 10 }),
-				topics: vec![],
-			},
-			EventRecord {
-				phase: Phase::ApplyExtrinsic(1),
 				event: Event::System(frame_system::Event::ExtrinsicSuccess {
 					dispatch_info: DispatchInfo { weight: transfer_weight, ..Default::default() },
 				}),
@@ -475,19 +460,6 @@ fn full_native_block_import_works() {
 			},
 			EventRecord {
 				phase: Phase::ApplyExtrinsic(1),
-				event: Event::Balances(pallet_balances::Event::Deposit {
-					who: pallet_treasury::Pallet::<Runtime>::account_id(),
-					amount: fees * 8 / 10,
-				}),
-				topics: vec![],
-			},
-			EventRecord {
-				phase: Phase::ApplyExtrinsic(1),
-				event: Event::Treasury(pallet_treasury::Event::Deposit { value: fees * 8 / 10 }),
-				topics: vec![],
-			},
-			EventRecord {
-				phase: Phase::ApplyExtrinsic(1),
 				event: Event::System(frame_system::Event::ExtrinsicSuccess {
 					dispatch_info: DispatchInfo { weight: transfer_weight, ..Default::default() },
 				}),
@@ -508,19 +480,6 @@ fn full_native_block_import_works() {
 					to: bob().into(),
 					amount: 15 * DOLLARS,
 				}),
-				topics: vec![],
-			},
-			EventRecord {
-				phase: Phase::ApplyExtrinsic(2),
-				event: Event::Balances(pallet_balances::Event::Deposit {
-					who: pallet_treasury::Pallet::<Runtime>::account_id(),
-					amount: fees * 8 / 10,
-				}),
-				topics: vec![],
-			},
-			EventRecord {
-				phase: Phase::ApplyExtrinsic(2),
-				event: Event::Treasury(pallet_treasury::Event::Deposit { value: fees * 8 / 10 }),
 				topics: vec![],
 			},
 			EventRecord {

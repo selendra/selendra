@@ -18,9 +18,9 @@
 
 use crate::keyring::*;
 use selendra_runtime::{
-	wasm_binary_unwrap, AccountId, BabeConfig, BalancesConfig,
-	GenesisConfig, GrandpaConfig, IndicesConfig, SessionConfig, StakerStatus,
-	StakingConfig, SystemConfig, BABE_GENESIS_EPOCH_CONFIG,
+	wasm_binary_unwrap, AccountId, BabeConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
+	IndicesConfig, SessionConfig, StakerStatus, StakingConfig, SystemConfig,
+	BABE_GENESIS_EPOCH_CONFIG,
 };
 use selendra_runtime_constants::currency::*;
 use sp_keyring::{Ed25519Keyring, Sr25519Keyring};
