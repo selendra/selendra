@@ -1,9 +1,8 @@
 use crate::{
-	prod_or_fast, Babe, Balances, Call, CouncilCollective,
-	CurrencyToVote, ElectionProviderMultiPhase, Event,
-	Historical, ImOnline, OffchainSolutionLengthLimit, OffchainSolutionWeightLimit, Offences,
-	Runtime, Session, SessionKeys, Staking, Timestamp, TransactionPayment, Treasury, VoterList,
-	Weight,
+	prod_or_fast, Babe, Balances, Call, CouncilCollective, CurrencyToVote,
+	ElectionProviderMultiPhase, Event, Historical, ImOnline, OffchainSolutionLengthLimit,
+	OffchainSolutionWeightLimit, Offences, Runtime, Session, SessionKeys, Staking, Timestamp,
+	TransactionPayment, Treasury, VoterList, Weight,
 };
 use codec::Decode;
 
@@ -22,7 +21,7 @@ use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use runtime_common::StakingBenchmarkingConfig;
 use selendra_primitives::{AccountId, Balance, BlockNumber, Moment};
 use selendra_runtime_constants::{
-	currency::{DOLLARS, deposit},
+	currency::{deposit, DOLLARS},
 	time::{EPOCH_DURATION_IN_SLOTS, MILLISECS_PER_BLOCK, MINUTES},
 };
 use sp_core::crypto::KeyTypeId;
