@@ -26,9 +26,9 @@ use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use selendra_runtime::{
 	wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig, BalancesConfig, Block, CouncilConfig,
-	DemocracyConfig, PhragmenElectionConfig, GrandpaConfig, ImOnlineConfig, IndicesConfig, MaxNominations,
-	SessionConfig, SessionKeys, StakerStatus, StakingConfig, SudoConfig, SystemConfig,
-	TechnicalCommitteeConfig,
+	DemocracyConfig, GrandpaConfig, ImOnlineConfig, IndicesConfig, MaxNominations,
+	PhragmenElectionConfig, SessionConfig, SessionKeys, StakerStatus, StakingConfig, SudoConfig,
+	SystemConfig, TechnicalCommitteeConfig,
 };
 use selendra_runtime_constants::currency::*;
 
