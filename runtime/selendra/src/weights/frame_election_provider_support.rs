@@ -26,9 +26,9 @@
 use frame_support::{traits::Get, weights::Weight};
 use sp_std::marker::PhantomData;
 
-/// Weight functions for `pallet_election_provider_support_benchmarking`.
+/// Weight functions for `frame_election_provider_support`.
 pub struct WeightInfo<T>(PhantomData<T>);
-impl<T: frame_system::Config> pallet_election_provider_support_benchmarking::WeightInfo for WeightInfo<T> {
+impl<T: frame_system::Config> frame_election_provider_support::WeightInfo for WeightInfo<T> {
 	fn phragmen(v: u32, _t: u32, d: u32, ) -> Weight {
 		(0 as Weight)
 			// Standard Error: 101_000
