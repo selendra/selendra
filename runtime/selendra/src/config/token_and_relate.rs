@@ -1,6 +1,6 @@
 use crate::{
-	Balances, ConstantMultiplier, CurrencyAdapter, Event, Runtime, SlowAdjustingFeeUpdate,
-	WeightToFee, System
+	Balances, ConstantMultiplier, CurrencyAdapter, Event, Runtime, SlowAdjustingFeeUpdate, System,
+	WeightToFee,
 };
 
 use frame_support::parameter_types;

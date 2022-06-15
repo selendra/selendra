@@ -26,7 +26,7 @@ pub mod currency {
 
 	pub const EXISTENTIAL_DEPOSIT: Balance = 1 * DOLLARS;
 
-	pub const DOLLARS: Balance =  1_000_000_000_000;
+	pub const DOLLARS: Balance = 1_000_000_000_000;
 	pub const CENTS: Balance = DOLLARS / 1_000;
 	pub const MILLICENTS: Balance = CENTS / 1_000;
 	pub const NANOCENTS: Balance = MILLICENTS / 1_000;
@@ -82,7 +82,8 @@ pub mod fee {
 	impl WeightToFeePolynomial for WeightToFee {
 		type Balance = Balance;
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 10/100 MILLICENTS:
+			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 10/100
+			// MILLICENTS:
 			let p = 10 * super::currency::MILLICENTS;
 			let q = 100 * Balance::from(ExtrinsicBaseWeight::get());
 			smallvec![WeightToFeeCoefficient {
