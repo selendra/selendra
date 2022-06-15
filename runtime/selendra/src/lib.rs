@@ -176,59 +176,60 @@ construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		// Core
-		System: frame_system,
-		Timestamp: pallet_timestamp,
-		Scheduler: pallet_scheduler,
+		System: frame_system = 0,
+		Timestamp: pallet_timestamp = 1,
+		Scheduler: pallet_scheduler = 2,
 
 		// Token && Relate
-		Balances: pallet_balances,
-		TransactionPayment: pallet_transaction_payment,
-		Vesting: pallet_vesting,
-
-		// Utility
-		Indices: pallet_indices,
-		Multisig: pallet_multisig,
-		Utility: pallet_utility,
-		Preimage: pallet_preimage,
-		Identity: pallet_identity,
-		Recovery: pallet_recovery,
-
-		// Proxy
-		Proxy: pallet_proxy,
+		Indices: pallet_indices = 10,
+		Balances: pallet_balances = 11,
+		TransactionPayment: pallet_transaction_payment = 12,
+		Vesting: pallet_vesting = 13,
 
 		// Consensus
 		// Authorship must be before session in order to note author in the correct session and era
 		// for im-online and staking.
-		Authorship: pallet_authorship,
-		Babe: pallet_babe,
-		Staking: pallet_staking,
-		Offences: pallet_offences,
-		Historical: pallet_session_historical::{Pallet},
-		Session: pallet_session,
-		Grandpa: pallet_grandpa,
-		ImOnline: pallet_im_online,
-		AuthorityDiscovery: pallet_authority_discovery,
-		ElectionProviderMultiPhase: pallet_election_provider_multi_phase,
+		Authorship: pallet_authorship = 20,
+		Babe: pallet_babe = 21,
+		Staking: pallet_staking = 22,
+		Offences: pallet_offences = 23,
+		Historical: pallet_session_historical::{Pallet} = 24,
+		Session: pallet_session = 25,
+		Grandpa: pallet_grandpa = 26,
+		ImOnline: pallet_im_online = 27,
+		AuthorityDiscovery: pallet_authority_discovery = 28,
+		ElectionProviderMultiPhase: pallet_election_provider_multi_phase = 29,
+
+		// Utility
+		Multisig: pallet_multisig = 30,
+		Utility: pallet_utility = 31,
+		Preimage: pallet_preimage = 32,
+		Identity: pallet_identity = 33,
+		Recovery: pallet_recovery = 34,
+
+		// Proxy
+		Proxy: pallet_proxy = 39,
+
 
 		// Governance
-		Democracy: pallet_democracy,
-		Council: pallet_collective::<Instance1>,
-		PhragmenElection: pallet_elections_phragmen,
-		TechnicalCommittee: pallet_collective::<Instance2>,
-		TechnicalMembership: pallet_membership::<Instance1>,
+		Democracy: pallet_democracy = 40,
+		Council: pallet_collective::<Instance1> = 41,
+		PhragmenElection: pallet_elections_phragmen = 42,
+		TechnicalCommittee: pallet_collective::<Instance2> =43,
+		TechnicalMembership: pallet_membership::<Instance1> = 44,
 
 		// Treasury
-		Treasury: pallet_treasury,
-		Bounties: pallet_bounties,
-		ChildBounties: pallet_child_bounties,
-		Tips: pallet_tips,
+		Treasury: pallet_treasury = 50,
+		Bounties: pallet_bounties = 51,
+		ChildBounties: pallet_child_bounties = 52,
+		Tips: pallet_tips=53,
 
 		// Staking support
-		VoterList: pallet_bags_list,
-		NominationPools: pallet_nomination_pools,
+		VoterList: pallet_bags_list = 60,
+		NominationPools: pallet_nomination_pools = 61,
 
 		// Temporary
-		Sudo: pallet_sudo,
+		Sudo: pallet_sudo = 100,
 	}
 );
 

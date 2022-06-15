@@ -1,9 +1,7 @@
 use crate::{deposit, Balances, Call, Event, Runtime};
 
 use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::{
-	parameter_types, traits::InstanceFilter, RuntimeDebug,
-};
+use frame_support::{parameter_types, traits::InstanceFilter, RuntimeDebug};
 use sp_runtime::traits::BlakeTwo256;
 
 use selendra_primitives::Balance;
