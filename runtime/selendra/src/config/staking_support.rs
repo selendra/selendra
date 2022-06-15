@@ -1,7 +1,7 @@
 use crate::{voter_bags, Balances, Event, Runtime, Staking};
 
 use frame_election_provider_support::VoteWeight;
-use frame_support::{pallet_prelude::ConstU32, parameter_types, PalletId};
+use frame_support::{parameter_types, PalletId};
 use selendra_primitives::Balance;
 use sp_runtime::traits::Convert;
 
@@ -17,12 +17,6 @@ impl pallet_bags_list::Config for Runtime {
 	type Score = VoteWeight;
 }
 
-parameter_types! {
-	pub const PostUnbondPoolsWindow: u32 = 4;
-	pub const NominationPoolsPalletId: PalletId = PalletId(*b"py/nopls");
-	pub const MinPointsToBalance: u32 = 10;
-}
-
 pub struct BalanceToU256;
 impl Convert<Balance, sp_core::U256> for BalanceToU256 {
 	fn convert(balance: Balance) -> sp_core::U256 {
@@ -36,16 +30,23 @@ impl Convert<sp_core::U256, Balance> for U256ToBalance {
 	}
 }
 
+parameter_types! {
+	pub const PostUnbondPoolsWindow: u32 = 4;
+	pub const NominationPoolsPalletId: PalletId = PalletId(*b"py/nopls");
+	pub const MinPointsToBalance: u32 = 10;
+	pub const MaxMetadataLen: u32 = 256;
+}
+
 impl pallet_nomination_pools::Config for Runtime {
 	type WeightInfo = ();
 	type Event = Event;
 	type Currency = Balances;
 	type BalanceToU256 = BalanceToU256;
 	type U256ToBalance = U256ToBalance;
-	type StakingInterface = pallet_staking::Pallet<Self>;
+	type StakingInterface = Staking;
 	type PostUnbondingPoolsWindow = PostUnbondPoolsWindow;
-	type MaxMetadataLen = ConstU32<256>;
-	type MaxUnbonding = ConstU32<8>;
+	type MaxMetadataLen = MaxMetadataLen;
+	type MaxUnbonding = <Self as pallet_staking::Config>::MaxUnlockingChunks;
 	type PalletId = NominationPoolsPalletId;
 	type MinPointsToBalance = MinPointsToBalance;
 }
