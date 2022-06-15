@@ -47,9 +47,8 @@ impl pallet_utility::Config for Runtime {
 
 parameter_types! {
 	pub const PreimageMaxSize: u32 = 4096 * 1024;
-	pub const PreimageBaseDeposit: Balance = 1 * DOLLARS;
-	// One cent: $10,000 / MB
-	pub const PreimageByteDeposit: Balance = 1 * CENTS;
+	pub const PreimageBaseDeposit: Balance = deposit(2, 64);
+	pub const PreimageByteDeposit: Balance = deposit(0, 1);
 }
 
 impl pallet_preimage::Config for Runtime {
@@ -63,9 +62,9 @@ impl pallet_preimage::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BasicDeposit: Balance = 10 * DOLLARS;       // 258 bytes on-chain
-	pub const FieldDeposit: Balance = 250 * CENTS;        // 66 bytes on-chain
-	pub const SubAccountDeposit: Balance = 2 * DOLLARS;   // 53 bytes on-chain
+	pub const BasicDeposit: Balance = deposit(1, 258);
+	pub const FieldDeposit: Balance = deposit(0, 66);
+	pub const SubAccountDeposit: Balance = deposit(1, 53);
 	pub const MaxSubAccounts: u32 = 100;
 	pub const MaxAdditionalFields: u32 = 100;
 	pub const MaxRegistrars: u32 = 20;
@@ -88,8 +87,8 @@ impl pallet_identity::Config for Runtime {
 
 parameter_types! {
 	pub const ConfigDepositBase: Balance = 5 * DOLLARS;
-	pub const FriendDepositFactor: Balance = 50 * CENTS;
-	pub const MaxFriends: u16 = 9;
+	pub const FriendDepositFactor: Balance = 1 * DOLLARS;
+	pub const MaxFriends: u16 = 10;
 	pub const RecoveryDeposit: Balance = 5 * DOLLARS;
 }
 

@@ -213,7 +213,7 @@ construct_runtime!(
 		// Governance
 		Democracy: pallet_democracy,
 		Council: pallet_collective::<Instance1>,
-		Elections: pallet_elections_phragmen,
+		PhragmenElection: pallet_elections_phragmen,
 		TechnicalCommittee: pallet_collective::<Instance2>,
 		TechnicalMembership: pallet_membership::<Instance1>,
 
@@ -290,7 +290,7 @@ mod benches {
 		[pallet_democracy, Democracy]
 		[pallet_election_provider_multi_phase, ElectionProviderMultiPhase]
 		[pallet_election_provider_support_benchmarking, EPSBench::<Runtime>]
-		[pallet_elections_phragmen, Elections]
+		[pallet_elections_phragmen, PhragmenElection]
 		[pallet_grandpa, Grandpa]
 		[pallet_identity, Identity]
 		[pallet_im_online, ImOnline]
