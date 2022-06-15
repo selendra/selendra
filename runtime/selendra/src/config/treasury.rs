@@ -1,5 +1,6 @@
 use crate::{
-	Balances, Bounties, ChildBounties, CouncilCollective, Elections, Event, Runtime, Treasury,
+	Balances, Bounties, ChildBounties, CouncilCollective, Event, PhragmenElection, Runtime,
+	Treasury,
 };
 use frame_support::{parameter_types, traits::EnsureOneOf, PalletId};
 use frame_system::EnsureRoot;
@@ -99,7 +100,7 @@ impl pallet_tips::Config for Runtime {
 	type Event = Event;
 	type DataDepositPerByte = DataDepositPerByte;
 	type MaximumReasonLength = MaximumReasonLength;
-	type Tippers = Elections;
+	type Tippers = PhragmenElection;
 	type TipCountdown = TipCountdown;
 	type TipFindersFee = TipFindersFee;
 	type TipReportDepositBase = TipReportDepositBase;
