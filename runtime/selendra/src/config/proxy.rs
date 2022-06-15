@@ -1,4 +1,4 @@
-use crate::{deposit, Balances, Call, Event, Runtime};
+use crate::{deposit, Balances, Call, Event, Runtime, weights};
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{parameter_types, traits::InstanceFilter, RuntimeDebug};
@@ -123,7 +123,7 @@ impl pallet_proxy::Config for Runtime {
 	type ProxyDepositBase = ProxyDepositBase;
 	type ProxyDepositFactor = ProxyDepositFactor;
 	type MaxProxies = MaxProxies;
-	type WeightInfo = pallet_proxy::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_proxy::WeightInfo<Runtime>;
 	type MaxPending = MaxPending;
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = AnnouncementDepositBase;

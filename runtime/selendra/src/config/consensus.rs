@@ -2,7 +2,7 @@ use crate::{
 	prod_or_fast, Babe, Balances, Call, CouncilCollective, CurrencyToVote,
 	ElectionProviderMultiPhase, Event, Historical, ImOnline, OffchainSolutionLengthLimit,
 	OffchainSolutionWeightLimit, Offences, Runtime, Session, SessionKeys, Staking, Timestamp,
-	TransactionPayment, Treasury, VoterList, Weight,
+	TransactionPayment, Treasury, VoterList, Weight, weights
 };
 use codec::Decode;
 
@@ -96,7 +96,7 @@ impl pallet_session::Config for Runtime {
 	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, Staking>;
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
-	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_session::WeightInfo<Runtime>;
 }
 
 impl pallet_session::historical::Config for Runtime {
@@ -161,7 +161,7 @@ impl pallet_staking::Config for Runtime {
 	type VoterList = VoterList;
 	type MaxUnlockingChunks = ConstU32<32>;
 	type OnStakerSlash = ();
-	type WeightInfo = pallet_staking::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_staking::WeightInfo<Runtime>;
 	type BenchmarkingConfig = StakingBenchmarkingConfig;
 }
 
@@ -182,7 +182,7 @@ impl pallet_im_online::Config for Runtime {
 	type NextSessionRotation = Babe;
 	type ReportUnresponsiveness = Offences;
 	type UnsignedPriority = ImOnlineUnsignedPriority;
-	type WeightInfo = pallet_im_online::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_im_online::WeightInfo<Runtime>;
 	type MaxKeys = MaxKeys;
 	type MaxPeerInHeartbeats = MaxPeerInHeartbeats;
 	type MaxPeerDataEncodingSize = MaxPeerDataEncodingSize;
@@ -241,8 +241,8 @@ impl onchain::Config for OnChainSeqPhragmen {
 		AccountId,
 		pallet_election_provider_multi_phase::SolutionAccuracyOf<Runtime>,
 	>;
-	type DataProvider = <Runtime as pallet_election_provider_multi_phase::Config>::DataProvider;
-	type WeightInfo = frame_election_provider_support::weights::SubstrateWeight<Runtime>;
+	type DataProvider = Staking;
+	type WeightInfo = weights::frame_election_provider_support::WeightInfo<Runtime>;
 }
 
 impl onchain::BoundedConfig for OnChainSeqPhragmen {
@@ -295,7 +295,7 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
 	type MaxElectableTargets = MaxElectableTargets;
 	type MaxElectingVoters = MaxElectingVoters;
 	type BenchmarkingConfig = runtime_common::elections::BenchmarkConfig;
-	type WeightInfo = pallet_election_provider_multi_phase::weights::SubstrateWeight<Self>;
+	type WeightInfo = weights::pallet_election_provider_multi_phase::WeightInfo<Self>;
 }
 
 impl pallet_offences::Config for Runtime {

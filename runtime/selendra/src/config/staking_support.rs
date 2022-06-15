@@ -1,4 +1,4 @@
-use crate::{voter_bags, Balances, Event, Runtime, Staking};
+use crate::{voter_bags, Balances, Event, Runtime, Staking, weights};
 
 use frame_election_provider_support::VoteWeight;
 use frame_support::{parameter_types, PalletId};
@@ -12,7 +12,7 @@ parameter_types! {
 impl pallet_bags_list::Config for Runtime {
 	type Event = Event;
 	type ScoreProvider = Staking;
-	type WeightInfo = pallet_bags_list::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_bags_list::WeightInfo<Runtime>;
 	type BagThresholds = BagThresholds;
 	type Score = VoteWeight;
 }
@@ -38,7 +38,6 @@ parameter_types! {
 }
 
 impl pallet_nomination_pools::Config for Runtime {
-	type WeightInfo = ();
 	type Event = Event;
 	type Currency = Balances;
 	type BalanceToU256 = BalanceToU256;
@@ -49,4 +48,5 @@ impl pallet_nomination_pools::Config for Runtime {
 	type MaxUnbonding = <Self as pallet_staking::Config>::MaxUnlockingChunks;
 	type PalletId = NominationPoolsPalletId;
 	type MinPointsToBalance = MinPointsToBalance;
+	type WeightInfo = weights::pallet_nomination_pools::WeightInfo<Self>;
 }

@@ -65,9 +65,11 @@ pub use selendra_primitives::{AccountId, Signature};
 use selendra_primitives::{AccountIndex, Balance, BlockNumber, Nonce};
 use selendra_runtime_constants::{currency::*, fee::*, time::*};
 use sp_runtime::generic::Era;
+
 pub mod config;
 /// Generated voter bag information.
 mod voter_bags;
+mod weights;
 
 pub use config::{
 	consensus::{EpochDuration, MaxNominations},
