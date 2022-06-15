@@ -1,9 +1,8 @@
-use crate::{Balances, Bounties, ChildBounties, CouncilCollective, Elections, Event, Runtime};
-use frame_support::{
-	parameter_types,
-	traits::{ConstU32, EnsureOneOf},
-	PalletId,
+use crate::{
+	Balances, Bounties, ChildBounties, CouncilCollective, Event, PhragmenElection, Runtime,
+	Treasury, weights
 };
+use frame_support::{parameter_types, traits::EnsureOneOf, PalletId};
 use frame_system::EnsureRoot;
 use sp_runtime::{Percent, Permill};
 
@@ -13,36 +12,38 @@ use selendra_runtime_constants::{
 	time::DAYS,
 };
 
+type MoreThanHalfCouncil = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
+>;
+
+type ApproveOrigin = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>,
+>;
+
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
-	pub const SpendPeriod: BlockNumber = 1 * DAYS;
-	pub const Burn: Permill = Permill::from_percent(50);
-	pub const TipCountdown: BlockNumber = 1 * DAYS;
-	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance = 1 * DOLLARS;
+	pub const Burn: Permill = Permill::from_percent(10);
+	pub const ProposalBondMinimum: Balance = 100 * DOLLARS;
+	pub const ProposalBondMaximum: Balance = 500 * DOLLARS;
 	pub const DataDepositPerByte: Balance = 1 * CENTS;
-	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
-	pub const MaximumReasonLength: u32 = 300;
+	pub const SpendPeriod: BlockNumber = 21 * DAYS;
 	pub const MaxApprovals: u32 = 100;
+	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+
 }
 
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
-	type ApproveOrigin = EnsureOneOf<
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>,
-	>;
-	type RejectOrigin = EnsureOneOf<
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
-	>;
+	type ApproveOrigin = ApproveOrigin;
+	type RejectOrigin = MoreThanHalfCouncil;
 	type Event = Event;
-	type OnSlash = ();
+	type OnSlash = Treasury;
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
-	type ProposalBondMaximum = ();
+	type ProposalBondMaximum = ProposalBondMaximum;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
@@ -52,14 +53,14 @@ impl pallet_treasury::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
-	pub const BountyValueMinimum: Balance = 5 * DOLLARS;
 	pub const BountyDepositBase: Balance = 1 * DOLLARS;
+	pub const BountyDepositPayoutDelay: BlockNumber = 8 * DAYS;
+	pub const BountyUpdatePeriod: BlockNumber = 90 * DAYS;
 	pub const CuratorDepositMultiplier: Permill = Permill::from_percent(50);
-	pub const CuratorDepositMin: Balance = 1 * DOLLARS;
-	pub const CuratorDepositMax: Balance = 100 * DOLLARS;
-	pub const BountyDepositPayoutDelay: BlockNumber = 1 * DAYS;
-	pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
+	pub const CuratorDepositMin: Balance = 10 * DOLLARS;
+	pub const CuratorDepositMax: Balance = 200 * DOLLARS;
+	pub const BountyValueMinimum: Balance = 10 * DOLLARS;
+	pub const MaximumReasonLength: u32 = 16384;
 }
 
 impl pallet_bounties::Config for Runtime {
@@ -73,28 +74,35 @@ impl pallet_bounties::Config for Runtime {
 	type BountyValueMinimum = BountyValueMinimum;
 	type DataDepositPerByte = DataDepositPerByte;
 	type MaximumReasonLength = MaximumReasonLength;
-	type WeightInfo = pallet_bounties::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_bounties::WeightInfo<Runtime>;
 	type ChildBountyManager = ChildBounties;
 }
 
 parameter_types! {
-	pub const ChildBountyValueMinimum: Balance = 1 * DOLLARS;
+	pub const ChildBountyValueMinimum: Balance = BountyValueMinimum::get() / 10;
+	pub const MaxActiveChildBountyCount: u32 = 50;
 }
 
 impl pallet_child_bounties::Config for Runtime {
 	type Event = Event;
-	type MaxActiveChildBountyCount = ConstU32<5>;
+	type MaxActiveChildBountyCount = MaxActiveChildBountyCount;
 	type ChildBountyValueMinimum = ChildBountyValueMinimum;
-	type WeightInfo = pallet_child_bounties::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_child_bounties::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	pub const TipCountdown: BlockNumber = 1 * DAYS;
+	pub const TipFindersFee: Percent = Percent::from_percent(5);
+	pub const TipReportDepositBase: Balance = 1 * DOLLARS;
 }
 
 impl pallet_tips::Config for Runtime {
 	type Event = Event;
 	type DataDepositPerByte = DataDepositPerByte;
 	type MaximumReasonLength = MaximumReasonLength;
-	type Tippers = Elections;
+	type Tippers = PhragmenElection;
 	type TipCountdown = TipCountdown;
 	type TipFindersFee = TipFindersFee;
 	type TipReportDepositBase = TipReportDepositBase;
-	type WeightInfo = pallet_tips::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_tips::WeightInfo<Runtime>;
 }

@@ -26,9 +26,9 @@ use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use selendra_runtime::{
 	wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig, BalancesConfig, Block, CouncilConfig,
-	DemocracyConfig, ElectionsConfig, GrandpaConfig, ImOnlineConfig, IndicesConfig, MaxNominations,
-	SessionConfig, SessionKeys, StakerStatus, StakingConfig, SudoConfig, SystemConfig,
-	TechnicalCommitteeConfig,
+	DemocracyConfig, GrandpaConfig, ImOnlineConfig, IndicesConfig, MaxNominations,
+	PhragmenElectionConfig, SessionConfig, SessionKeys, StakerStatus, StakingConfig, SudoConfig,
+	SystemConfig, TechnicalCommitteeConfig,
 };
 use selendra_runtime_constants::currency::*;
 
@@ -324,7 +324,7 @@ pub fn testnet_genesis(
 			..Default::default()
 		},
 		democracy: DemocracyConfig::default(),
-		elections: ElectionsConfig {
+		phragmen_election: PhragmenElectionConfig {
 			members: endowed_accounts
 				.iter()
 				.take((num_endowed_accounts + 1) / 2)

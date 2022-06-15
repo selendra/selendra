@@ -43,7 +43,7 @@ impl<T: frame_system::Config> pallet_tips::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
-	// Storage: Elections Members (r:1 w:0)
+	// Storage: PhragmenElection Members (r:1 w:0)
 	// Storage: Tips Reasons (r:1 w:1)
 	// Storage: Tips Tips (r:0 w:1)
 	fn tip_new(r: u32, t: u32, ) -> Weight {
@@ -55,7 +55,7 @@ impl<T: frame_system::Config> pallet_tips::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
-	// Storage: Elections Members (r:1 w:0)
+	// Storage: PhragmenElection Members (r:1 w:0)
 	// Storage: Tips Tips (r:1 w:1)
 	fn tip(t: u32, ) -> Weight {
 		(8_480_000 as Weight)
@@ -65,7 +65,7 @@ impl<T: frame_system::Config> pallet_tips::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Tips Tips (r:1 w:1)
-	// Storage: Elections Members (r:1 w:0)
+	// Storage: PhragmenElection Members (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Tips Reasons (r:0 w:1)
 	fn close_tip(t: u32, ) -> Weight {

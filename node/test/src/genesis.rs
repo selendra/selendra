@@ -82,7 +82,7 @@ pub fn config_endowed(code: Option<&[u8]>, extra_endowed: Vec<AccountId>) -> Gen
 		council: Default::default(),
 		technical_committee: Default::default(),
 		technical_membership: Default::default(),
-		elections: Default::default(),
+		phragmen_election: Default::default(),
 		sudo: Default::default(),
 		treasury: Default::default(),
 		vesting: Default::default(),

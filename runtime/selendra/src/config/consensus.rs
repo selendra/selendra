@@ -1,9 +1,8 @@
 use crate::{
-	prod_or_fast, Babe, Balances, Call, CouncilCollective,
-	CurrencyToVote, ElectionProviderMultiPhase, Event,
-	Historical, ImOnline, OffchainSolutionLengthLimit, OffchainSolutionWeightLimit, Offences,
-	Runtime, Session, SessionKeys, Staking, Timestamp, TransactionPayment, Treasury, VoterList,
-	Weight,
+	prod_or_fast, Babe, Balances, Call, CouncilCollective, CurrencyToVote,
+	ElectionProviderMultiPhase, Event, Historical, ImOnline, OffchainSolutionLengthLimit,
+	OffchainSolutionWeightLimit, Offences, Runtime, Session, SessionKeys, Staking, Timestamp,
+	TransactionPayment, Treasury, VoterList, Weight, weights
 };
 use codec::Decode;
 
@@ -22,7 +21,7 @@ use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use runtime_common::StakingBenchmarkingConfig;
 use selendra_primitives::{AccountId, Balance, BlockNumber, Moment};
 use selendra_runtime_constants::{
-	currency::{DOLLARS, deposit},
+	currency::{deposit, DOLLARS},
 	time::{EPOCH_DURATION_IN_SLOTS, MILLISECS_PER_BLOCK, MINUTES},
 };
 use sp_core::crypto::KeyTypeId;
@@ -39,7 +38,7 @@ type SlashCancelOrigin = EnsureOneOf<
 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 4>,
 >;
 
-type ForceElection = EnsureOneOf<
+type ForceElectionOrigin = EnsureOneOf<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>,
 >;
@@ -97,7 +96,7 @@ impl pallet_session::Config for Runtime {
 	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, Staking>;
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
-	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_session::WeightInfo<Runtime>;
 }
 
 impl pallet_session::historical::Config for Runtime {
@@ -162,7 +161,7 @@ impl pallet_staking::Config for Runtime {
 	type VoterList = VoterList;
 	type MaxUnlockingChunks = ConstU32<32>;
 	type OnStakerSlash = ();
-	type WeightInfo = pallet_staking::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_staking::WeightInfo<Runtime>;
 	type BenchmarkingConfig = StakingBenchmarkingConfig;
 }
 
@@ -183,7 +182,7 @@ impl pallet_im_online::Config for Runtime {
 	type NextSessionRotation = Babe;
 	type ReportUnresponsiveness = Offences;
 	type UnsignedPriority = ImOnlineUnsignedPriority;
-	type WeightInfo = pallet_im_online::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_im_online::WeightInfo<Runtime>;
 	type MaxKeys = MaxKeys;
 	type MaxPeerInHeartbeats = MaxPeerInHeartbeats;
 	type MaxPeerDataEncodingSize = MaxPeerDataEncodingSize;
@@ -242,8 +241,8 @@ impl onchain::Config for OnChainSeqPhragmen {
 		AccountId,
 		pallet_election_provider_multi_phase::SolutionAccuracyOf<Runtime>,
 	>;
-	type DataProvider = <Runtime as pallet_election_provider_multi_phase::Config>::DataProvider;
-	type WeightInfo = frame_election_provider_support::weights::SubstrateWeight<Runtime>;
+	type DataProvider = Staking;
+	type WeightInfo = weights::frame_election_provider_support::WeightInfo<Runtime>;
 }
 
 impl onchain::BoundedConfig for OnChainSeqPhragmen {
@@ -292,11 +291,11 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
 	type Fallback = onchain::BoundedExecution<OnChainSeqPhragmen>;
 	type GovernanceFallback = onchain::BoundedExecution<OnChainSeqPhragmen>;
 	type Solver = SequentialPhragmen<AccountId, SolutionAccuracyOf<Self>, OffchainRandomBalancing>;
-	type ForceOrigin = ForceElection;
+	type ForceOrigin = ForceElectionOrigin;
 	type MaxElectableTargets = MaxElectableTargets;
 	type MaxElectingVoters = MaxElectingVoters;
 	type BenchmarkingConfig = runtime_common::elections::BenchmarkConfig;
-	type WeightInfo = pallet_election_provider_multi_phase::weights::SubstrateWeight<Self>;
+	type WeightInfo = weights::pallet_election_provider_multi_phase::WeightInfo<Self>;
 }
 
 impl pallet_offences::Config for Runtime {

@@ -29,10 +29,10 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `pallet_elections_phragmen`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for WeightInfo<T> {
-	// Storage: Elections Candidates (r:1 w:0)
-	// Storage: Elections Members (r:1 w:0)
-	// Storage: Elections RunnersUp (r:1 w:0)
-	// Storage: Elections Voting (r:1 w:1)
+	// Storage: PhragmenElection Candidates (r:1 w:0)
+	// Storage: PhragmenElection Members (r:1 w:0)
+	// Storage: PhragmenElection RunnersUp (r:1 w:0)
+	// Storage: PhragmenElection Voting (r:1 w:1)
 	// Storage: Balances Locks (r:1 w:1)
 	fn vote_equal(v: u32, ) -> Weight {
 		(19_832_000 as Weight)
@@ -41,10 +41,10 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for WeightIn
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
-	// Storage: Elections Candidates (r:1 w:0)
-	// Storage: Elections Members (r:1 w:0)
-	// Storage: Elections RunnersUp (r:1 w:0)
-	// Storage: Elections Voting (r:1 w:1)
+	// Storage: PhragmenElection Candidates (r:1 w:0)
+	// Storage: PhragmenElection Members (r:1 w:0)
+	// Storage: PhragmenElection RunnersUp (r:1 w:0)
+	// Storage: PhragmenElection Voting (r:1 w:1)
 	// Storage: Balances Locks (r:1 w:1)
 	fn vote_more(v: u32, ) -> Weight {
 		(28_492_000 as Weight)
@@ -53,10 +53,10 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for WeightIn
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
-	// Storage: Elections Candidates (r:1 w:0)
-	// Storage: Elections Members (r:1 w:0)
-	// Storage: Elections RunnersUp (r:1 w:0)
-	// Storage: Elections Voting (r:1 w:1)
+	// Storage: PhragmenElection Candidates (r:1 w:0)
+	// Storage: PhragmenElection Members (r:1 w:0)
+	// Storage: PhragmenElection RunnersUp (r:1 w:0)
+	// Storage: PhragmenElection Voting (r:1 w:1)
 	// Storage: Balances Locks (r:1 w:1)
 	fn vote_less(v: u32, ) -> Weight {
 		(33_696_000 as Weight)
@@ -65,16 +65,16 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for WeightIn
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
-	// Storage: Elections Voting (r:1 w:1)
+	// Storage: PhragmenElection Voting (r:1 w:1)
 	// Storage: Balances Locks (r:1 w:1)
 	fn remove_voter() -> Weight {
 		(34_851_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
-	// Storage: Elections Candidates (r:1 w:1)
-	// Storage: Elections Members (r:1 w:0)
-	// Storage: Elections RunnersUp (r:1 w:0)
+	// Storage: PhragmenElection Candidates (r:1 w:1)
+	// Storage: PhragmenElection Members (r:1 w:0)
+	// Storage: PhragmenElection RunnersUp (r:1 w:0)
 	fn submit_candidacy(c: u32, ) -> Weight {
 		(29_719_000 as Weight)
 			// Standard Error: 4_000
@@ -82,7 +82,7 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for WeightIn
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
-	// Storage: Elections Candidates (r:1 w:1)
+	// Storage: PhragmenElection Candidates (r:1 w:1)
 	fn renounce_candidacy_candidate(c: u32, ) -> Weight {
 		(27_311_000 as Weight)
 			// Standard Error: 2_000
@@ -90,8 +90,8 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for WeightIn
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
-	// Storage: Elections Members (r:1 w:1)
-	// Storage: Elections RunnersUp (r:1 w:1)
+	// Storage: PhragmenElection Members (r:1 w:1)
+	// Storage: PhragmenElection RunnersUp (r:1 w:1)
 	// Storage: Council Prime (r:1 w:1)
 	// Storage: Council Proposals (r:1 w:0)
 	// Storage: Council Members (r:0 w:1)
@@ -100,7 +100,7 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for WeightIn
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
-	// Storage: Elections RunnersUp (r:1 w:1)
+	// Storage: PhragmenElection RunnersUp (r:1 w:1)
 	fn renounce_candidacy_runners_up() -> Weight {
 		(22_908_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
@@ -110,8 +110,8 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for WeightIn
 	fn remove_member_without_replacement() -> Weight {
 		(2_000_000_000_000 as Weight)
 	}
-	// Storage: Elections RunnersUp (r:1 w:1)
-	// Storage: Elections Members (r:1 w:1)
+	// Storage: PhragmenElection RunnersUp (r:1 w:1)
+	// Storage: PhragmenElection Members (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Council Prime (r:1 w:1)
 	// Storage: Council Proposals (r:1 w:0)
@@ -121,15 +121,15 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for WeightIn
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
-	// Storage: Elections RunnersUp (r:1 w:0)
+	// Storage: PhragmenElection RunnersUp (r:1 w:0)
 	fn remove_member_wrong_refund() -> Weight {
 		(5_727_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
-	// Storage: Elections Voting (r:251 w:250)
-	// Storage: Elections Members (r:1 w:0)
-	// Storage: Elections RunnersUp (r:1 w:0)
-	// Storage: Elections Candidates (r:1 w:0)
+	// Storage: PhragmenElection Voting (r:251 w:250)
+	// Storage: PhragmenElection Members (r:1 w:0)
+	// Storage: PhragmenElection RunnersUp (r:1 w:0)
+	// Storage: PhragmenElection Candidates (r:1 w:0)
 	// Storage: Balances Locks (r:250 w:250)
 	// Storage: System Account (r:250 w:250)
 	fn clean_defunct_voters(v: u32, d: u32, ) -> Weight {
@@ -142,12 +142,12 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for WeightIn
 			.saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(v as Weight)))
 			.saturating_add(T::DbWeight::get().writes((3 as Weight).saturating_mul(v as Weight)))
 	}
-	// Storage: Elections Candidates (r:1 w:1)
-	// Storage: Elections Members (r:1 w:1)
-	// Storage: Elections RunnersUp (r:1 w:1)
-	// Storage: Elections Voting (r:502 w:0)
+	// Storage: PhragmenElection Candidates (r:1 w:1)
+	// Storage: PhragmenElection Members (r:1 w:1)
+	// Storage: PhragmenElection RunnersUp (r:1 w:1)
+	// Storage: PhragmenElection Voting (r:502 w:0)
 	// Storage: Council Proposals (r:1 w:0)
-	// Storage: Elections ElectionRounds (r:1 w:1)
+	// Storage: PhragmenElection ElectionRounds (r:1 w:1)
 	// Storage: Council Members (r:0 w:1)
 	// Storage: Council Prime (r:0 w:1)
 	// Storage: System Account (r:3 w:3)
