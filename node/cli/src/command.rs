@@ -86,7 +86,6 @@ fn set_default_ss58_version(_spec: &Box<dyn sc_service::ChainSpec>) {
 	sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
-
 /// Parse command line arguments into service configuration.
 pub fn run() -> Result<()> {
 	let cli = Cli::from_args();
