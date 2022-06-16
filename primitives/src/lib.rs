@@ -20,7 +20,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod currency;
+pub mod evm;
+
 pub use currency::CurrencyId;
+
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
