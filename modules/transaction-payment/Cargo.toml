@@ -22,13 +22,13 @@ support = { package = "module-support", path = "../support", default-features = 
 orml-traits = { path = "../../orml/traits", default-features = false }
 xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.23", default-features = false }
 
-# [dev-dependencies]
-# sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
-# pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
-# orml-tokens = { path = "../../orml/tokens" }
-# module-currencies = { path = "../../modules/currencies" }
-# module-dex = { path = "../dex" }
-# smallvec = "1.4.1"
+[dev-dependencies]
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
+orml-tokens = { path = "../../orml/tokens" }
+module-currencies = { path = "../../modules/currencies" }
+module-dex = { path = "../dex" }
+smallvec = "1.4.1"
 
 [features]
 default = ["std"]
