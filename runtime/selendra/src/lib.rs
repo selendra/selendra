@@ -76,7 +76,7 @@ pub use config::{
 	consensus::{EpochDuration, MaxNominations},
 	core::MinimumPeriod,
 	governance::{CouncilCollective, EnsureRootOrHalfCouncil},
-	token_and_relate::{NativeTokenExistentialDeposit, TransactionByteFee, ExistentialDeposits},
+	token_and_relate::{NativeTokenExistentialDeposit, TransactionByteFee},
 };
 
 impl_runtime_weights!(selendra_runtime_constants);
@@ -144,31 +144,6 @@ parameter_types! {
 pub fn get_all_module_accounts() -> Vec<AccountId> {
 	vec![]
 }
-
-// parameter_type_with_key! {
-// 	pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
-// 		match currency_id {
-// 			CurrencyId::Token(symbol) => match symbol {
-// 				TokenSymbol::SUSD => 10 * cent(*currency_id),
-// 			},
-// 			CurrencyId::DexShare(dex_share_0, _) => {
-// 				let currency_id_0: CurrencyId = (*dex_share_0).into();
-
-// 				// initial dex share amount is calculated based on currency_id_0,
-// 				// use the ED of currency_id_0 as the ED of lp token.
-// 				if currency_id_0 == GetNativeCurrencyId::get() {
-// 					NativeTokenExistentialDeposit::get()
-// 				} else {
-// 					Self::get(&currency_id_0)
-// 				}
-// 			},
-// 			CurrencyId::StableAssetPoolToken(stable_asset_id) => {
-// 				AssetIdMaps::<Runtime>::get_asset_metadata(AssetIds::StableAssetId(*stable_asset_id)).
-// 					map_or(Balance::max_value(), |metatata| metatata.minimal_balance)
-// 			},
-// 		}
-// 	};
-// }
 
 construct_runtime!(
 	pub enum Runtime where
