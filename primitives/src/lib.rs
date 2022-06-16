@@ -26,6 +26,7 @@ pub use currency::CurrencyId;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
+use sp_core::U256;
 
 use sp_runtime::{
 	generic,
@@ -84,4 +85,9 @@ pub enum ReserveIdentifier {
 
 	// always the last, indicate number of variants
 	Count,
+}
+
+/// Convert any type that implements Into<U256> into byte representation ([u8, 32])
+pub fn to_bytes<T: Into<U256>>(value: T) -> [u8; 32] {
+	Into::<[u8; 32]>::into(value.into())
 }
