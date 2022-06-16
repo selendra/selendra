@@ -12,7 +12,10 @@ members = [
 	"modules/evm-accounts",
 	"modules/transaction-payment",
 	"modules/dex",
-	"modules/currencies"
+	"modules/currencies",
+	"modules/evm/rpc",
+	"modules/evm/rpc/runtime_api",
+	"modules/evm"
 ]
 
 [profile.release]

@@ -1,7 +1,7 @@
 [package]
 name = "module-evm"
-version = "2.7.0"
-authors = ["Acala Developers"]
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [[bench]]
@@ -40,11 +40,12 @@ orml-tokens = { path = "../../orml/tokens", default-features = false, optional =
 
 module-support = { path = "../support", default-features = false }
 module-evm-utility = { path = "../evm-utility", default-features = false }
-primitives = { package = "acala-primitives", path = "../../primitives", default-features = false }
+primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
 module-idle-scheduler = { path = "../idle-scheduler", default-features = false, optional = true }
 module-transaction-payment = { path = "../../modules/transaction-payment", default-features = false }
 module-dex = { path = "../dex", default-features = false, optional = true }
 
+xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.23", default-features = false }
 
 [dev-dependencies]
 hex = "0.4"
