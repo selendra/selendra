@@ -16,13 +16,18 @@
 
 //! Low-level types used throughout the Substrate code.
 
-#![warn(missing_docs)]
+// #![warn(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
+
+pub mod currency;
+pub use currency::CurrencyId;
+use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentifyAccount, Verify},
-	MultiSignature, OpaqueExtrinsic,
+	MultiSignature, OpaqueExtrinsic, RuntimeDebug,
 };
 
 /// An index to a block.
@@ -63,3 +68,17 @@ pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 pub type Block = generic::Block<Header, OpaqueExtrinsic>;
 /// Block ID.
 pub type BlockId = generic::BlockId<Block>;
+
+/// Signed version of Balance
+pub type Amount = i128;
+
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, MaxEncodedLen, TypeInfo)]
+#[repr(u8)]
+pub enum ReserveIdentifier {
+	Nft,
+	TransactionPayment,
+	TransactionPaymentDeposit,
+
+	// always the last, indicate number of variants
+	Count,
+}

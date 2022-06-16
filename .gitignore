@@ -17,3 +17,6 @@
 
 run
 selendra_pallets
+
+# Open runtime floder (https://github.com/open-web3-stack/open-runtime-module-library)
+open-runtime-module-library

@@ -1,7 +1,7 @@
-use crate::{voter_bags, Balances, Event, Runtime, Staking, weights};
+use crate::{voter_bags, Balances, Event, Runtime, Staking, weights, NominationPoolsPalletId};
 
 use frame_election_provider_support::VoteWeight;
-use frame_support::{parameter_types, PalletId};
+use frame_support::parameter_types;
 use selendra_primitives::Balance;
 use sp_runtime::traits::Convert;
 
@@ -32,7 +32,6 @@ impl Convert<sp_core::U256, Balance> for U256ToBalance {
 
 parameter_types! {
 	pub const PostUnbondPoolsWindow: u32 = 4;
-	pub const NominationPoolsPalletId: PalletId = PalletId(*b"py/nopls");
 	pub const MinPointsToBalance: u32 = 10;
 	pub const MaxMetadataLen: u32 = 256;
 }

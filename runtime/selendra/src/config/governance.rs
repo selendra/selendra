@@ -1,19 +1,20 @@
 use crate::{
 	config, prod_or_fast, Balances, Call, Council, CurrencyToVote, Event, Origin, OriginCaller,
-	Runtime, Scheduler, TechnicalCommittee, Treasury, weights
+	Runtime, Scheduler, TechnicalCommittee, Treasury, weights, ElectionsPhragmenPalletId
 };
 use frame_support::{
 	parameter_types,
-	traits::{EnsureOneOf, LockIdentifier},
+	traits::EnsureOneOf,
 };
 use frame_system::EnsureRoot;
 use static_assertions::const_assert;
 
-use selendra_primitives::{AccountId, Balance, BlockNumber};
+use selendra_primitives::{AccountId, Balance, BlockNumber, currency::SEL};
 use selendra_runtime_constants::{
-	currency::{deposit, DOLLARS},
+	currency::deposit,
 	time::{DAYS, HOURS, MINUTES},
 };
+use runtime_common::dollar;
 
 parameter_types! {
 	pub LaunchPeriod: BlockNumber = prod_or_fast!(28 * DAYS, 1, "SEL_LAUNCH_PERIOD");
@@ -22,7 +23,7 @@ parameter_types! {
 	pub EnactmentPeriod: BlockNumber = prod_or_fast!(28 * DAYS, 1, "SEL_ENACTMENT_PERIOD");
 	pub CooloffPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1, "SEL_ENACTMENT_PERIOD");
 	pub const InstantAllowed: bool = true;
-	pub const MinimumDeposit: Balance = 100 * DOLLARS;
+	pub MinimumDeposit: Balance = 100 * dollar(SEL);
 	pub const MaxProposals: u32 = 100;
 	pub const MaxVotes: u32 = 100;
 }
@@ -118,15 +119,14 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 }
 
 parameter_types! {
-	pub const CandidacyBond: Balance = 10 * DOLLARS;
+	pub CandidacyBond: Balance = 10 * dollar(SEL);
 	// 1 storage item created, key size is 32 bytes, value size is 16+16.
-	pub const VotingBondBase: Balance = deposit(1, 64);
+	pub VotingBondBase: Balance = deposit(1, 64);
 	// additional data per vote is 32 bytes (account id).
-	pub const VotingBondFactor: Balance = deposit(0, 32);
+	pub VotingBondFactor: Balance = deposit(0, 32);
 	pub TermDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "SEL_TERM_DURATION");
 	pub const DesiredMembers: u32 = 10;
 	pub const DesiredRunnersUp: u32 = 20;
-	pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
 }
 
 pub type EnsureRootOrHalfCouncil = EnsureOneOf<

@@ -34,7 +34,7 @@ pub use sp_runtime::BuildStorage;
 use codec::Encode;
 
 use frame_support::{
-	construct_runtime, parameter_types, traits::KeyOwnerProofSystem, weights::ConstantMultiplier,
+	construct_runtime, parameter_types, traits::{LockIdentifier, KeyOwnerProofSystem}, weights::ConstantMultiplier, PalletId
 };
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
@@ -62,9 +62,10 @@ pub use runtime_common::{
 	CurrencyToVote, SlowAdjustingFeeUpdate,
 };
 pub use selendra_primitives::{AccountId, Signature};
-use selendra_primitives::{AccountIndex, Balance, BlockNumber, Nonce};
+use selendra_primitives::{AccountIndex, Balance, BlockNumber, Nonce, CurrencyId, currency::SEL};
 use selendra_runtime_constants::{currency::*, fee::*, time::*};
 use sp_runtime::generic::Era;
+// use orml_traits::parameter_type_with_key;
 
 pub mod config;
 /// Generated voter bag information.
@@ -75,7 +76,7 @@ pub use config::{
 	consensus::{EpochDuration, MaxNominations},
 	core::MinimumPeriod,
 	governance::{CouncilCollective, EnsureRootOrHalfCouncil},
-	token_and_relate::{ExistentialDeposit, TransactionByteFee},
+	token_and_relate::{NativeTokenExistentialDeposit, TransactionByteFee, ExistentialDeposits},
 };
 
 impl_runtime_weights!(selendra_runtime_constants);
@@ -93,19 +94,6 @@ pub fn wasm_binary_unwrap() -> &'static [u8] {
 		 the flag disabled.",
 	)
 }
-
-/// Runtime version.
-#[sp_version::runtime_version]
-pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("selendra"),
-	impl_name: create_runtime_str!("selendra"),
-	authoring_version: 1,
-	spec_version: 101,
-	impl_version: 0,
-	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
-	state_version: 1,
-};
 
 /// The BABE epoch configuration at genesis.
 pub const BABE_GENESIS_EPOCH_CONFIG: sp_consensus_babe::BabeEpochConfiguration =
@@ -129,47 +117,58 @@ impl_opaque_keys! {
 	}
 }
 
-impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
-where
-	Call: From<LocalCall>,
-{
-	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-		call: Call,
-		public: <Signature as traits::Verify>::Signer,
-		account: AccountId,
-		nonce: Nonce,
-	) -> Option<(Call, <UncheckedExtrinsic as traits::Extrinsic>::SignaturePayload)> {
-		let tip = 0;
-		// take the biggest period possible.
-		let period =
-			BlockHashCount::get().checked_next_power_of_two().map(|c| c / 2).unwrap_or(2) as u64;
-		let current_block = System::block_number()
-			.saturated_into::<u64>()
-			// The `System::block_number` is initialized with `n+1`,
-			// so the actual block number is `n`.
-			.saturating_sub(1);
-		let era = Era::mortal(period, current_block);
-		let extra = (
-			frame_system::CheckNonZeroSender::<Runtime>::new(),
-			frame_system::CheckSpecVersion::<Runtime>::new(),
-			frame_system::CheckTxVersion::<Runtime>::new(),
-			frame_system::CheckGenesis::<Runtime>::new(),
-			frame_system::CheckEra::<Runtime>::from(era),
-			frame_system::CheckNonce::<Runtime>::from(nonce),
-			frame_system::CheckWeight::<Runtime>::new(),
-			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-		);
-		let raw_payload = SignedPayload::new(call, extra)
-			.map_err(|e| {
-				log::warn!("Unable to create signed payload: {:?}", e);
-			})
-			.ok()?;
-		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
-		let address = Indices::unlookup(account);
-		let (call, extra, _) = raw_payload.deconstruct();
-		Some((call, (address, signature, extra)))
-	}
+/// Runtime version.
+#[sp_version::runtime_version]
+pub const VERSION: RuntimeVersion = RuntimeVersion {
+	spec_name: create_runtime_str!("selendra"),
+	impl_name: create_runtime_str!("selendra"),
+	authoring_version: 1,
+	spec_version: 101,
+	impl_version: 0,
+	apis: RUNTIME_API_VERSIONS,
+	transaction_version: 1,
+	state_version: 1,
+};
+
+parameter_types! {
+	pub const GetNativeCurrencyId: CurrencyId = SEL;
 }
+
+// Pallet accounts of runtime
+parameter_types! {
+	pub const NominationPoolsPalletId: PalletId = PalletId(*b"py/nopls");
+	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+	pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
+}
+
+pub fn get_all_module_accounts() -> Vec<AccountId> {
+	vec![]
+}
+
+// parameter_type_with_key! {
+// 	pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+// 		match currency_id {
+// 			CurrencyId::Token(symbol) => match symbol {
+// 				TokenSymbol::SUSD => 10 * cent(*currency_id),
+// 			},
+// 			CurrencyId::DexShare(dex_share_0, _) => {
+// 				let currency_id_0: CurrencyId = (*dex_share_0).into();
+
+// 				// initial dex share amount is calculated based on currency_id_0,
+// 				// use the ED of currency_id_0 as the ED of lp token.
+// 				if currency_id_0 == GetNativeCurrencyId::get() {
+// 					NativeTokenExistentialDeposit::get()
+// 				} else {
+// 					Self::get(&currency_id_0)
+// 				}
+// 			},
+// 			CurrencyId::StableAssetPoolToken(stable_asset_id) => {
+// 				AssetIdMaps::<Runtime>::get_asset_metadata(AssetIds::StableAssetId(*stable_asset_id)).
+// 					map_or(Balance::max_value(), |metatata| metatata.minimal_balance)
+// 			},
+// 		}
+// 	};
+// }
 
 construct_runtime!(
 	pub enum Runtime where
@@ -185,8 +184,9 @@ construct_runtime!(
 		// Token && Relate
 		Indices: pallet_indices = 10,
 		Balances: pallet_balances = 11,
-		TransactionPayment: pallet_transaction_payment = 12,
-		Vesting: pallet_vesting = 13,
+		Tokens: orml_tokens exclude_parts { Call } = 12,
+		TransactionPayment: pallet_transaction_payment = 18,
+		Vesting: pallet_vesting = 19,
 
 		// Consensus
 		// Authorship must be before session in order to note author in the correct session and era
@@ -234,6 +234,48 @@ construct_runtime!(
 		Sudo: pallet_sudo = 100,
 	}
 );
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
+where
+	Call: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: Call,
+		public: <Signature as traits::Verify>::Signer,
+		account: AccountId,
+		nonce: Nonce,
+	) -> Option<(Call, <UncheckedExtrinsic as traits::Extrinsic>::SignaturePayload)> {
+		let tip = 0;
+		// take the biggest period possible.
+		let period =
+			BlockHashCount::get().checked_next_power_of_two().map(|c| c / 2).unwrap_or(2) as u64;
+		let current_block = System::block_number()
+			.saturated_into::<u64>()
+			// The `System::block_number` is initialized with `n+1`,
+			// so the actual block number is `n`.
+			.saturating_sub(1);
+		let era = Era::mortal(period, current_block);
+		let extra = (
+			frame_system::CheckNonZeroSender::<Runtime>::new(),
+			frame_system::CheckSpecVersion::<Runtime>::new(),
+			frame_system::CheckTxVersion::<Runtime>::new(),
+			frame_system::CheckGenesis::<Runtime>::new(),
+			frame_system::CheckEra::<Runtime>::from(era),
+			frame_system::CheckNonce::<Runtime>::from(nonce),
+			frame_system::CheckWeight::<Runtime>::new(),
+			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+		);
+		let raw_payload = SignedPayload::new(call, extra)
+			.map_err(|e| {
+				log::warn!("Unable to create signed payload: {:?}", e);
+			})
+			.ok()?;
+		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
+		let address = Indices::unlookup(account);
+		let (call, extra, _) = raw_payload.deconstruct();
+		Some((call, (address, signature, extra)))
+	}
+}
 
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, AccountIndex>;
@@ -314,6 +356,7 @@ mod benches {
 		[pallet_treasury, Treasury]
 		[pallet_utility, Utility]
 		[pallet_vesting, Vesting]
+		[orml_tokens, benchmarking::tokens]
 	);
 }
 
@@ -496,6 +539,20 @@ impl_runtime_apis! {
 			SessionKeys::decode_into_raw_public_keys(&encoded)
 		}
 	}
+
+	// impl orml_tokens_rpc_runtime_api::TokensApi<
+	// 	Block,
+	// 	CurrencyId,
+	// 	Balance,
+	// > for Runtime {
+	// 	fn query_existential_deposit(key: CurrencyId) -> Balance {
+	// 		if key == GetNativeCurrencyId::get() {
+	// 			NativeTokenExistentialDeposit::get()
+	// 		} else {
+	// 			ExistentialDeposits::get(&key)
+	// 		}
+	// 	}
+	// }
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {

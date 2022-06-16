@@ -40,12 +40,12 @@ use sc_client_api::{
 use sc_client_db::PruningMode;
 use sc_consensus::{BlockImport, BlockImportParams, ForkChoiceStrategy, ImportResult, ImportedAux};
 use sc_executor::{NativeElseWasmExecutor, WasmExecutionMethod, WasmtimeInstantiationStrategy};
-use selendra_primitives::Block;
+use selendra_primitives::{Block, currency::SEL};
 use selendra_runtime::{
 	AccountId, BalancesCall, Call, CheckedExtrinsic, MinimumPeriod, Signature, SystemCall,
 	UncheckedExtrinsic,
 };
-use selendra_runtime_constants::currency::DOLLARS;
+use selendra_runtime_common::dollar;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_consensus::BlockOrigin;
@@ -302,21 +302,21 @@ impl<'a> Iterator for BlockContentIterator<'a> {
 			CheckedExtrinsic {
 				signed: Some((
 					sender,
-					signed_extra(0, selendra_runtime::ExistentialDeposit::get() + 1),
+					signed_extra(0, selendra_runtime::NativeTokenExistentialDeposit::get() + 1),
 				)),
 				function: match self.content.block_type {
 					BlockType::RandomTransfersKeepAlive =>
 						Call::Balances(BalancesCall::transfer_keep_alive {
 							dest: sp_runtime::MultiAddress::Id(receiver),
-							value: selendra_runtime::ExistentialDeposit::get() + 1,
+							value: selendra_runtime::NativeTokenExistentialDeposit::get() + 1,
 						}),
 					BlockType::RandomTransfersReaping => {
 						Call::Balances(BalancesCall::transfer {
 							dest: sp_runtime::MultiAddress::Id(receiver),
 							// Transfer so that ending balance would be 1 less than existential
 							// deposit so that we kill the sender account.
-							value: 100 * DOLLARS -
-								(selendra_runtime::ExistentialDeposit::get() - 1),
+							value: 100 * dollar(SEL) -
+								(selendra_runtime::NativeTokenExistentialDeposit::get() - 1),
 						})
 					},
 					BlockType::Noop => Call::System(SystemCall::remark { remark: Vec::new() }),

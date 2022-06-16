@@ -1,17 +1,18 @@
 use crate::{
 	Balances, ConstantMultiplier, CurrencyAdapter, Event, Runtime, SlowAdjustingFeeUpdate, System,
-	WeightToFee, weights
+	WeightToFee, weights, get_all_module_accounts
 };
 
-use frame_support::parameter_types;
-use sp_runtime::traits::ConvertInto;
+use frame_support::{traits::Contains, parameter_types};
+use orml_traits::parameter_type_with_key;
 
+use sp_runtime::traits::{Zero, ConvertInto};
 pub use runtime_common::impls::DealWithFees;
-use selendra_primitives::Balance;
-use selendra_runtime_constants::currency::{DOLLARS, EXISTENTIAL_DEPOSIT, NANOCENTS};
+use selendra_primitives::{CurrencyId, Balance, Amount, AccountId, ReserveIdentifier, currency::SEL};
+use runtime_common::{dollar, microcent};
 
 parameter_types! {
-	pub const ExistentialDeposit: Balance = EXISTENTIAL_DEPOSIT;
+	pub NativeTokenExistentialDeposit: Balance = 1 * dollar(SEL);
 	pub const MaxLocks: u32 = 50;
 	pub const MaxReserves: u32 = 50;
 }
@@ -20,7 +21,7 @@ impl pallet_balances::Config for Runtime {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = NativeTokenExistentialDeposit;
 	type AccountStore = System;
 	type MaxLocks = MaxLocks;
 	type MaxReserves = MaxReserves;
@@ -29,7 +30,7 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 50 * NANOCENTS;
+	pub TransactionByteFee: Balance = 50 * microcent(SEL);
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
@@ -42,7 +43,7 @@ impl pallet_transaction_payment::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MinVestedTransfer: Balance = 1 * DOLLARS;
+	pub MinVestedTransfer: Balance = 1 * dollar(SEL);
 }
 
 impl pallet_vesting::Config for Runtime {
@@ -52,4 +53,31 @@ impl pallet_vesting::Config for Runtime {
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = weights::pallet_vesting::WeightInfo<Runtime>;
 	const MAX_VESTING_SCHEDULES: u32 = 28;
+}
+
+pub struct DustRemovalWhitelist;
+impl Contains<AccountId> for DustRemovalWhitelist {
+	fn contains(a: &AccountId) -> bool {
+		get_all_module_accounts().contains(a)
+	}
+}
+
+parameter_type_with_key! {
+	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
+		Zero::zero()
+	};
+}
+
+impl orml_tokens::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = CurrencyId;
+	type WeightInfo = weights::orml_tokens::WeightInfo<Runtime>;
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = orml_tokens::BurnDust<Runtime>;
+	type MaxLocks = MaxLocks;
+	type MaxReserves = MaxReserves;
+	type ReserveIdentifier = ReserveIdentifier;
+	type DustRemovalWhitelist = DustRemovalWhitelist;
 }

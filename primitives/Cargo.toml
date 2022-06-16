@@ -8,21 +8,33 @@ edition = "2021"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+bstringify = "0.1.2"
+enumflags2 = { version = "0.6.3" }
+serde = { version = "1.0.136", optional = true }
+num_enum = { version = "0.5.1", default-features = false }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
 
 frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 sp-application-crypto = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
+
+nutsfinance-stable-asset = { version = "0.1.0", default-features = false, path = "../modules/stable-asset" }
 
 [features]
 default = ["std"]
 std = [
+	"serde",
+	"sp-std/std",
 	"codec/std",
+	"num_enum/std",
+	"enumflags2/serde",
 	"frame-system/std",
 	"scale-info/std",
 	"sp-application-crypto/std",
 	"sp-core/std",
 	"sp-runtime/std",
+	"nutsfinance-stable-asset/std"
 ]

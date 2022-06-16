@@ -2,7 +2,7 @@ use crate::{
 	prod_or_fast, Babe, Balances, Call, CouncilCollective, CurrencyToVote,
 	ElectionProviderMultiPhase, Event, Historical, ImOnline, OffchainSolutionLengthLimit,
 	OffchainSolutionWeightLimit, Offences, Runtime, Session, SessionKeys, Staking, Timestamp,
-	TransactionPayment, Treasury, VoterList, Weight, weights
+	TransactionPayment, Treasury, VoterList, Weight, weights, SEL,
 };
 use codec::Decode;
 
@@ -18,10 +18,10 @@ use frame_system::EnsureRoot;
 use pallet_election_provider_multi_phase::SolutionAccuracyOf;
 use pallet_grandpa::AuthorityId as GrandpaId;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
-use runtime_common::StakingBenchmarkingConfig;
+use runtime_common::{StakingBenchmarkingConfig, dollar};
 use selendra_primitives::{AccountId, Balance, BlockNumber, Moment};
 use selendra_runtime_constants::{
-	currency::{deposit, DOLLARS},
+	currency::deposit,
 	time::{EPOCH_DURATION_IN_SLOTS, MILLISECS_PER_BLOCK, MINUTES},
 };
 use sp_core::crypto::KeyTypeId;
@@ -197,9 +197,9 @@ parameter_types! {
 	pub OffchainRepeat: BlockNumber = UnsignedPhase::get() / 32;
 
 	// signed config
-	pub const SignedRewardBase: Balance = 1 * DOLLARS;
-	pub const SignedDepositBase: Balance = deposit(2, 0);
-	pub const SignedDepositByte: Balance = deposit(0, 10) / 1024;
+	pub SignedRewardBase: Balance = 1 * dollar(SEL);
+	pub SignedDepositBase: Balance = deposit(2, 0);
+	pub SignedDepositByte: Balance = deposit(0, 10) / 1024;
 	pub const SignedMaxSubmissions: u32 = 16;
 	pub const SignedMaxRefunds: u32 = 16 / 4;
 

@@ -33,7 +33,8 @@ use sc_service::{
 };
 use selendra_node_cli::service::{create_extrinsic, FullClient};
 use selendra_runtime::BalancesCall;
-use selendra_runtime_constants::currency::*;
+use selendra_primitives::currency::SEL;
+use selendra_runtime_common::dollar;
 use sp_blockchain::{ApplyExtrinsicFailed::Validity, Error::ApplyExtrinsicFailed};
 use sp_consensus::BlockOrigin;
 use sp_keyring::Sr25519Keyring;
@@ -165,7 +166,7 @@ fn prepare_benchmark(client: &FullClient) -> (usize, Vec<OpaqueExtrinsic>) {
 		let extrinsic: OpaqueExtrinsic = create_extrinsic(
 			client,
 			src.clone(),
-			BalancesCall::transfer { dest: dst.clone(), value: 1 * DOLLARS },
+			BalancesCall::transfer { dest: dst.clone(), value: 1 * dollar(SEL) },
 			Some(nonce),
 		)
 		.into();

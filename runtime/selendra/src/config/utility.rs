@@ -1,15 +1,16 @@
 use crate::{
-	deposit, Balances, Call, EnsureRootOrHalfCouncil, Event, OriginCaller, Runtime, Treasury, weights
+	Balances, Call, EnsureRootOrHalfCouncil, Event, OriginCaller, Runtime, Treasury, weights
 };
 
 use frame_support::parameter_types;
 use frame_system::EnsureRoot;
 
-use selendra_primitives::{AccountId, AccountIndex, Balance};
-use selendra_runtime_constants::currency::*;
+use selendra_primitives::{AccountId, AccountIndex, Balance, currency::SEL};
+use selendra_runtime_constants::currency::deposit;
+use runtime_common::dollar;
 
 parameter_types! {
-	pub const IndexDeposit: Balance = 1 * DOLLARS;
+	pub IndexDeposit: Balance = 1 * dollar(SEL);
 }
 
 impl pallet_indices::Config for Runtime {
@@ -22,9 +23,9 @@ impl pallet_indices::Config for Runtime {
 
 parameter_types! {
 	// One storage item; key size is 32; value is size 4+4+16+32 bytes = 56 bytes.
-	pub const DepositBase: Balance = deposit(1, 88);
+	pub DepositBase: Balance = deposit(1, 88);
 	// Additional storage item size of 32 bytes.
-	pub const DepositFactor: Balance = deposit(0, 32);
+	pub DepositFactor: Balance = deposit(0, 32);
 	pub const MaxSignatories: u16 = 100;
 }
 
@@ -47,8 +48,8 @@ impl pallet_utility::Config for Runtime {
 
 parameter_types! {
 	pub const PreimageMaxSize: u32 = 4096 * 1024;
-	pub const PreimageBaseDeposit: Balance = deposit(2, 64);
-	pub const PreimageByteDeposit: Balance = deposit(0, 1);
+	pub PreimageBaseDeposit: Balance = deposit(2, 64);
+	pub PreimageByteDeposit: Balance = deposit(0, 1);
 }
 
 impl pallet_preimage::Config for Runtime {
@@ -62,9 +63,9 @@ impl pallet_preimage::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BasicDeposit: Balance = deposit(1, 258);
-	pub const FieldDeposit: Balance = deposit(0, 66);
-	pub const SubAccountDeposit: Balance = deposit(1, 53);
+	pub BasicDeposit: Balance = deposit(1, 258);
+	pub FieldDeposit: Balance = deposit(0, 66);
+	pub SubAccountDeposit: Balance = deposit(1, 53);
 	pub const MaxSubAccounts: u32 = 100;
 	pub const MaxAdditionalFields: u32 = 100;
 	pub const MaxRegistrars: u32 = 20;
@@ -86,10 +87,10 @@ impl pallet_identity::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ConfigDepositBase: Balance = 5 * DOLLARS;
-	pub const FriendDepositFactor: Balance = 1 * DOLLARS;
+	pub ConfigDepositBase: Balance = 5 * dollar(SEL);
+	pub FriendDepositFactor: Balance = 1 * dollar(SEL);
 	pub const MaxFriends: u16 = 10;
-	pub const RecoveryDeposit: Balance = 5 * DOLLARS;
+	pub RecoveryDeposit: Balance = 5 * dollar(SEL);
 }
 
 impl pallet_recovery::Config for Runtime {

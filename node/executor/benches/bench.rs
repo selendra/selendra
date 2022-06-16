@@ -22,11 +22,11 @@ use sc_executor::WasmtimeInstantiationStrategy;
 use sc_executor::{Externalities, NativeElseWasmExecutor, RuntimeVersionOf, WasmExecutionMethod};
 use selendra_node_executor::ExecutorDispatch;
 use selendra_node_test::keyring::*;
-use selendra_primitives::{BlockNumber, Hash};
+use selendra_primitives::{BlockNumber, Hash, currency::SEL};
 use selendra_runtime::{
 	Block, BuildStorage, Call, CheckedExtrinsic, GenesisConfig, Header, UncheckedExtrinsic,
 };
-use selendra_runtime_constants::currency::*;
+use selendra_runtime_common::dollar;
 use sp_core::{
 	storage::well_known_keys,
 	traits::{CodeExecutor, RuntimeCode},
@@ -169,7 +169,7 @@ fn test_blocks(
 		signed: Some((alice(), signed_extra(i, 0))),
 		function: Call::Balances(pallet_balances::Call::transfer {
 			dest: bob().into(),
-			value: 1 * DOLLARS,
+			value: 1 * dollar(SEL),
 		}),
 	}));
 	let block1 =

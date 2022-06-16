@@ -29,9 +29,9 @@ use sc_service::{
 use sc_transaction_pool::PoolLimit;
 use sc_transaction_pool_api::{TransactionPool as _, TransactionSource, TransactionStatus};
 use selendra_node_cli::service::{create_extrinsic, fetch_nonce, FullClient, TransactionPool};
-use selendra_primitives::AccountId;
+use selendra_primitives::{AccountId, currency::SEL};
 use selendra_runtime::{BalancesCall, SudoCall};
-use selendra_runtime_constants::currency::*;
+use selendra_runtime_common::dollar;
 use sp_core::{crypto::Pair, sr25519};
 use sp_keyring::Sr25519Keyring;
 use sp_runtime::{generic::BlockId, OpaqueExtrinsic};
@@ -157,7 +157,7 @@ fn create_account_extrinsics(
 						call: Box::new(
 							BalancesCall::set_balance {
 								who: AccountId::from(a.public()).into(),
-								new_free: 1_000_000 * DOLLARS,
+								new_free: 1_000_000 * dollar(SEL),
 								new_reserved: 0,
 							}
 							.into(),
@@ -185,7 +185,7 @@ fn create_benchmark_extrinsics(
 					account.clone(),
 					BalancesCall::transfer {
 						dest: Sr25519Keyring::Bob.to_account_id().into(),
-						value: 1 * DOLLARS,
+						value: 1 * dollar(SEL),
 					},
 					Some(nonce as u32),
 				)
