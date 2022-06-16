@@ -26,7 +26,7 @@ use frame_support::{
 	traits::{ConstU128, ConstU64, Everything, Nothing},
 };
 use orml_traits::parameter_type_with_key;
-use primitives::{Amount, Balance, CurrencyId, TokenSymbol};
+use primitives::{Amount, Balance, CurrencyId, currency::TokenSymbol};
 use sp_core::{crypto::AccountId32, H256};
 use sp_io::hashing::keccak_256;
 use sp_runtime::{testing::Header, traits::IdentityLookup};
@@ -102,7 +102,7 @@ impl orml_tokens::Config for Runtime {
 }
 
 parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::ACA);
+	pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::SEL);
 }
 
 impl orml_currencies::Config for Runtime {
