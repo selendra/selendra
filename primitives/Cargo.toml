@@ -8,6 +8,7 @@ edition = "2021"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+hex-literal = "0.3.1"
 bstringify = "0.1.2"
 enumflags2 = { version = "0.6.3" }
 serde = { version = "1.0.136", optional = true }
@@ -21,6 +22,8 @@ sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polka
 sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
 
+module-evm-utility = { path = "../modules/evm-utility", default-features = false }
+module-evm-utility-macro = { path = "../modules/evm-utility/macro" }
 nutsfinance-stable-asset = { version = "0.1.0", default-features = false, path = "../modules/stable-asset" }
 
 [features]
@@ -36,5 +39,6 @@ std = [
 	"sp-application-crypto/std",
 	"sp-core/std",
 	"sp-runtime/std",
+	"module-evm-utility/std",
 	"nutsfinance-stable-asset/std"
 ]
