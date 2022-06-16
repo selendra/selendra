@@ -20,3 +20,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod evm;
+
+pub use crate::evm::*;
