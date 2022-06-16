@@ -44,3 +44,5 @@ std = [
 	"module-evm-utility/std",
 	"nutsfinance-stable-asset/std"
 ]
+
+evm-tests = []

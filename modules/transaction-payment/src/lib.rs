@@ -233,7 +233,7 @@ pub mod module {
 			+ IsType<<Self as frame_system::Config>::Call>;
 
 		/// Native currency id, the actual received currency type as fee for
-		/// treasury. Should be ACA
+		/// treasury. Should be SEL
 		#[pallet::constant]
 		type NativeCurrencyId: Get<CurrencyId>;
 
@@ -1200,7 +1200,7 @@ where
 		// tipPerWeight = tipPerWight / TipPerWeightStep * TipPerWeightStep
 		//              = tip / bounded_{weight|length} / TipPerWeightStep * TipPerWeightStep
 		// priority = tipPerWeight * max_block_{weight|length}
-		// MaxTipsOfPriority = 10_000 KAR/ACA = 10^16.
+		// MaxTipsOfPriority = 10_000 KAR/SEL = 10^16.
 		// `MaxTipsOfPriority * max_block_{weight|length}` will overflow, so div `TipPerWeightStep` here.
 		let max_reward = |val: PalletBalanceOf<T>| {
 			val.checked_div(T::TipPerWeightStep::get())
