@@ -1893,7 +1893,7 @@ fn get_liquidity_token_address_work() {
 		);
 		assert_eq!(
 			DexModule::get_liquidity_token_address(SUSD, DOT),
-			Some(H160::from_str("0x0000000000000000000200000000010000000002").unwrap())
+			Some(H160::from_str("0x0000000000000000000200000000010000000015").unwrap())
 		);
 
 		assert_ok!(DexModule::enable_trading_pair(
@@ -1907,7 +1907,7 @@ fn get_liquidity_token_address_work() {
 		);
 		assert_eq!(
 			DexModule::get_liquidity_token_address(SUSD, DOT),
-			Some(H160::from_str("0x0000000000000000000200000000010000000002").unwrap())
+			Some(H160::from_str("0x0000000000000000000200000000010000000015").unwrap())
 		);
 	});
 }
