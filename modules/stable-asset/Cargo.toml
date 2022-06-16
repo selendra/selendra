@@ -1,9 +1,9 @@
 [package]
+name = "nutsfinance-stable-asset"
+version = "0.1.0"
 authors = ["nuts.finance"]
 description = "Substrate-based runtime version of NUTS stable assets."
 edition = "2021"
-name = "nutsfinance-stable-asset"
-version = "0.1.0"
 license = "Apache-2.0"
 repository = "https://github.com/nutsfinance/stable-asset"
 readme = "README.md"
@@ -15,43 +15,18 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 scale-info = { version = "2.1", default-features = false, features = ["derive"] }
 
-[dependencies.frame-support]
-default-features = false
-git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.23"
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
 
-[dependencies.frame-system]
-default-features = false
-git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.23"
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
+
 
 [dev-dependencies]
-serde = { version = "1.0.101" }
-
-[dev-dependencies.sp-core]
-default-features = false
-git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.23"
-
-[dev-dependencies.sp-io]
-default-features = false
-git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.23"
-
-[dependencies.sp-std]
-default-features = false
-git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.23"
-
-[dependencies.sp-runtime]
-default-features = false
-git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.23"
-
-[dev-dependencies.pallet-balances]
-default-features = false
-git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.23"
+serde = { version = "1.0.136"}
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
+pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
 
 [features]
 default = ["std"]
