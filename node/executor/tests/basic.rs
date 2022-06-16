@@ -24,12 +24,13 @@ use sp_core::{storage::well_known_keys, traits::Externalities, NeverNativeValue}
 use sp_runtime::{transaction_validity::InvalidTransaction, ApplyExtrinsicResult};
 
 use selendra_node_test::keyring::*;
-use selendra_primitives::{Balance, Hash};
+use selendra_primitives::{Balance, Hash, currency::SEL};
 use selendra_runtime::{
 	Balances, Call, CheckedExtrinsic, Event, Header, Runtime, System, TransactionPayment,
-	UncheckedExtrinsic,
+	UncheckedExtrinsic
 };
-use selendra_runtime_constants::{currency::*, time::SLOT_DURATION};
+use selendra_runtime_constants::time::SLOT_DURATION;
+use selendra_runtime_common::dollar;
 
 pub mod common;
 use self::common::{sign, *};
@@ -86,7 +87,7 @@ fn changes_trie_block() -> (Vec<u8>, Hash) {
 				signed: Some((alice(), signed_extra(0, 0))),
 				function: Call::Balances(pallet_balances::Call::transfer {
 					dest: bob().into(),
-					value: 69 * DOLLARS,
+					value: 69 * dollar(SEL),
 				}),
 			},
 		],
@@ -113,7 +114,7 @@ fn blocks() -> ((Vec<u8>, Hash), (Vec<u8>, Hash)) {
 				signed: Some((alice(), signed_extra(0, 0))),
 				function: Call::Balances(pallet_balances::Call::transfer {
 					dest: bob().into(),
-					value: 69 * DOLLARS,
+					value: 69 * dollar(SEL),
 				}),
 			},
 		],
@@ -133,14 +134,14 @@ fn blocks() -> ((Vec<u8>, Hash), (Vec<u8>, Hash)) {
 				signed: Some((bob(), signed_extra(0, 0))),
 				function: Call::Balances(pallet_balances::Call::transfer {
 					dest: alice().into(),
-					value: 5 * DOLLARS,
+					value: 5 * dollar(SEL),
 				}),
 			},
 			CheckedExtrinsic {
 				signed: Some((alice(), signed_extra(1, 0))),
 				function: Call::Balances(pallet_balances::Call::transfer {
 					dest: bob().into(),
-					value: 15 * DOLLARS,
+					value: 15 * dollar(SEL),
 				}),
 			},
 		],
@@ -243,7 +244,7 @@ fn successful_execution_with_native_equivalent_code_gives_ok() {
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(alice()),
 		AccountInfo::<<Runtime as frame_system::Config>::Index, _> {
-			data: (111 * DOLLARS, 0u128, 0u128, 0u128),
+			data: (111 * dollar(SEL), 0u128, 0u128, 0u128),
 			..Default::default()
 		}
 		.encode(),
@@ -251,14 +252,14 @@ fn successful_execution_with_native_equivalent_code_gives_ok() {
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(bob()),
 		AccountInfo::<<Runtime as frame_system::Config>::Index, _> {
-			data: (0 * DOLLARS, 0u128, 0u128, 0u128),
+			data: (0 * dollar(SEL), 0u128, 0u128, 0u128),
 			..Default::default()
 		}
 		.encode(),
 	);
 	t.insert(
 		<pallet_balances::TotalIssuance<Runtime>>::hashed_key().to_vec(),
-		(111 * DOLLARS).encode(),
+		(111 * dollar(SEL)).encode(),
 	);
 	t.insert(<frame_system::BlockHash<Runtime>>::hashed_key_for(0), vec![0u8; 32]);
 
@@ -285,8 +286,8 @@ fn successful_execution_with_native_equivalent_code_gives_ok() {
 	assert!(r.is_ok());
 
 	t.execute_with(|| {
-		assert_eq!(Balances::total_balance(&alice()), 42 * DOLLARS - fees);
-		assert_eq!(Balances::total_balance(&bob()), 69 * DOLLARS);
+		assert_eq!(Balances::total_balance(&alice()), 42 * dollar(SEL) - fees);
+		assert_eq!(Balances::total_balance(&bob()), 69 * dollar(SEL));
 	});
 }
 
@@ -296,7 +297,7 @@ fn successful_execution_with_foreign_code_gives_ok() {
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(alice()),
 		AccountInfo::<<Runtime as frame_system::Config>::Index, _> {
-			data: (111 * DOLLARS, 0u128, 0u128, 0u128),
+			data: (111 * dollar(SEL), 0u128, 0u128, 0u128),
 			..Default::default()
 		}
 		.encode(),
@@ -304,14 +305,14 @@ fn successful_execution_with_foreign_code_gives_ok() {
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(bob()),
 		AccountInfo::<<Runtime as frame_system::Config>::Index, _> {
-			data: (0 * DOLLARS, 0u128, 0u128, 0u128),
+			data: (0 * dollar(SEL), 0u128, 0u128, 0u128),
 			..Default::default()
 		}
 		.encode(),
 	);
 	t.insert(
 		<pallet_balances::TotalIssuance<Runtime>>::hashed_key().to_vec(),
-		(111 * DOLLARS).encode(),
+		(111 * dollar(SEL)).encode(),
 	);
 	t.insert(<frame_system::BlockHash<Runtime>>::hashed_key_for(0), vec![0u8; 32]);
 
@@ -338,8 +339,8 @@ fn successful_execution_with_foreign_code_gives_ok() {
 	assert!(r.is_ok());
 
 	t.execute_with(|| {
-		assert_eq!(Balances::total_balance(&alice()), 42 * DOLLARS - fees);
-		assert_eq!(Balances::total_balance(&bob()), 69 * DOLLARS);
+		assert_eq!(Balances::total_balance(&alice()), 42 * dollar(SEL) - fees);
+		assert_eq!(Balances::total_balance(&bob()), 69 * dollar(SEL));
 	});
 }
 
@@ -368,8 +369,8 @@ fn full_native_block_import_works() {
 	.unwrap();
 
 	t.execute_with(|| {
-		assert_eq!(Balances::total_balance(&alice()), 42 * DOLLARS - fees);
-		assert_eq!(Balances::total_balance(&bob()), 169 * DOLLARS);
+		assert_eq!(Balances::total_balance(&alice()), 42 * dollar(SEL) - fees);
+		assert_eq!(Balances::total_balance(&bob()), 169 * dollar(SEL));
 		alice_last_known_balance = Balances::total_balance(&alice());
 		let events = vec![
 			EventRecord {
@@ -396,7 +397,7 @@ fn full_native_block_import_works() {
 				event: Event::Balances(pallet_balances::Event::Transfer {
 					from: alice().into(),
 					to: bob().into(),
-					amount: 69 * DOLLARS,
+					amount: 69 * dollar(SEL),
 				}),
 				topics: vec![],
 			},
@@ -426,9 +427,9 @@ fn full_native_block_import_works() {
 	t.execute_with(|| {
 		assert_eq!(
 			Balances::total_balance(&alice()),
-			alice_last_known_balance - 10 * DOLLARS - fees,
+			alice_last_known_balance - 10 * dollar(SEL) - fees,
 		);
-		assert_eq!(Balances::total_balance(&bob()), 179 * DOLLARS - fees);
+		assert_eq!(Balances::total_balance(&bob()), 179 * dollar(SEL) - fees);
 		let events = vec![
 			EventRecord {
 				phase: Phase::ApplyExtrinsic(0),
@@ -454,7 +455,7 @@ fn full_native_block_import_works() {
 				event: Event::Balances(pallet_balances::Event::Transfer {
 					from: bob().into(),
 					to: alice().into(),
-					amount: 5 * DOLLARS,
+					amount: 5 * dollar(SEL),
 				}),
 				topics: vec![],
 			},
@@ -478,7 +479,7 @@ fn full_native_block_import_works() {
 				event: Event::Balances(pallet_balances::Event::Transfer {
 					from: alice().into(),
 					to: bob().into(),
-					amount: 15 * DOLLARS,
+					amount: 15 * dollar(SEL),
 				}),
 				topics: vec![],
 			},
@@ -514,8 +515,8 @@ fn full_wasm_block_import_works() {
 	.unwrap();
 
 	t.execute_with(|| {
-		assert_eq!(Balances::total_balance(&alice()), 42 * DOLLARS - fees);
-		assert_eq!(Balances::total_balance(&bob()), 169 * DOLLARS);
+		assert_eq!(Balances::total_balance(&alice()), 42 * dollar(SEL) - fees);
+		assert_eq!(Balances::total_balance(&bob()), 169 * dollar(SEL));
 		alice_last_known_balance = Balances::total_balance(&alice());
 	});
 
@@ -534,9 +535,9 @@ fn full_wasm_block_import_works() {
 	t.execute_with(|| {
 		assert_eq!(
 			Balances::total_balance(&alice()),
-			alice_last_known_balance - 10 * DOLLARS - fees,
+			alice_last_known_balance - 10 * dollar(SEL) - fees,
 		);
-		assert_eq!(Balances::total_balance(&bob()), 179 * DOLLARS - 1 * fees);
+		assert_eq!(Balances::total_balance(&bob()), 179 * dollar(SEL) - 1 * fees);
 	});
 }
 
@@ -597,7 +598,7 @@ fn panic_execution_gives_error() {
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(alice()),
 		AccountInfo::<<Runtime as frame_system::Config>::Index, _> {
-			data: (0 * DOLLARS, 0u128, 0u128, 0u128),
+			data: (0 * dollar(SEL), 0u128, 0u128, 0u128),
 			..Default::default()
 		}
 		.encode(),
@@ -634,7 +635,7 @@ fn successful_execution_gives_ok() {
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(alice()),
 		AccountInfo::<<Runtime as frame_system::Config>::Index, _> {
-			data: (111 * DOLLARS, 0u128, 0u128, 0u128),
+			data: (111 * dollar(SEL), 0u128, 0u128, 0u128),
 			..Default::default()
 		}
 		.encode(),
@@ -642,14 +643,14 @@ fn successful_execution_gives_ok() {
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(bob()),
 		AccountInfo::<<Runtime as frame_system::Config>::Index, _> {
-			data: (0 * DOLLARS, 0u128, 0u128, 0u128),
+			data: (0 * dollar(SEL), 0u128, 0u128, 0u128),
 			..Default::default()
 		}
 		.encode(),
 	);
 	t.insert(
 		<pallet_balances::TotalIssuance<Runtime>>::hashed_key().to_vec(),
-		(111 * DOLLARS).encode(),
+		(111 * dollar(SEL)).encode(),
 	);
 	t.insert(<frame_system::BlockHash<Runtime>>::hashed_key_for(0), vec![0u8; 32]);
 
@@ -663,7 +664,7 @@ fn successful_execution_gives_ok() {
 	.0;
 	assert!(r.is_ok());
 	t.execute_with(|| {
-		assert_eq!(Balances::total_balance(&alice()), 111 * DOLLARS);
+		assert_eq!(Balances::total_balance(&alice()), 111 * dollar(SEL));
 	});
 
 	let fees = t.execute_with(|| transfer_fee(&xt()));
@@ -684,8 +685,8 @@ fn successful_execution_gives_ok() {
 		.expect("Extrinsic failed");
 
 	t.execute_with(|| {
-		assert_eq!(Balances::total_balance(&alice()), 42 * DOLLARS - fees);
-		assert_eq!(Balances::total_balance(&bob()), 69 * DOLLARS);
+		assert_eq!(Balances::total_balance(&alice()), 42 * dollar(SEL) - fees);
+		assert_eq!(Balances::total_balance(&bob()), 69 * dollar(SEL));
 	});
 }
 

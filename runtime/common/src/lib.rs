@@ -19,6 +19,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod impls;
+pub mod elections;
+pub mod currency;
 
 use static_assertions::const_assert;
 
@@ -35,7 +37,7 @@ use primitives::BlockNumber;
 
 /// Implementations of some helper traits passed into runtime modules as associated types.
 pub use impls::ToAuthor;
-pub mod elections;
+pub use currency::*;
 
 /// We assume that ~10% of the block weight is consumed by `on_initialize` handlers.
 /// This is used to limit the maximal weight of a single extrinsic.
@@ -166,3 +168,4 @@ impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
 	type MaxNominators = ConstU32<1000>;
 	type MaxValidators = ConstU32<1000>;
 }
+

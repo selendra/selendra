@@ -22,17 +22,11 @@ pub mod weights;
 
 /// Money matters.
 pub mod currency {
-	use primitives::Balance;
+	use primitives::{Balance, currency::SEL};
+	use runtime_common::{dollar, millicent};
 
-	pub const EXISTENTIAL_DEPOSIT: Balance = 1 * DOLLARS;
-
-	pub const DOLLARS: Balance = 1_000_000_000_000;
-	pub const CENTS: Balance = DOLLARS / 1_000;
-	pub const MILLICENTS: Balance = CENTS / 1_000;
-	pub const NANOCENTS: Balance = MILLICENTS / 1_000;
-
-	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 10 * DOLLARS + (bytes as Balance) * 10 * MILLICENTS
+	pub fn deposit(items: u32, bytes: u32) -> Balance {
+		items as Balance * 10 * dollar(SEL) + (bytes as Balance) * 10 * millicent(SEL)
 	}
 }
 
@@ -61,9 +55,10 @@ pub mod fee {
 	use frame_support::weights::{
 		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
 	};
-	use primitives::Balance;
+	use primitives::{Balance, currency::SEL};
 	use smallvec::smallvec;
 	pub use sp_runtime::Perbill;
+	use runtime_common::millicent;
 
 	/// The block saturation level. Fees will be updates based on this value.
 	pub const TARGET_BLOCK_FULLNESS: Perbill = Perbill::from_percent(25);
@@ -82,9 +77,9 @@ pub mod fee {
 	impl WeightToFeePolynomial for WeightToFee {
 		type Balance = Balance;
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 10/100
+			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 10/100 millicent
 			// MILLICENTS:
-			let p = 10 * super::currency::MILLICENTS;
+			let p = 10 * millicent(SEL);
 			let q = 100 * Balance::from(ExtrinsicBaseWeight::get());
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,

@@ -19,10 +19,11 @@
 use crate::keyring::*;
 use selendra_runtime::{
 	wasm_binary_unwrap, AccountId, BabeConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
-	IndicesConfig, SessionConfig, StakerStatus, StakingConfig, SystemConfig,
+	IndicesConfig, SessionConfig, StakerStatus, StakingConfig, SystemConfig, TokensConfig,
 	BABE_GENESIS_EPOCH_CONFIG,
 };
-use selendra_runtime_constants::currency::*;
+use selendra_primitives::currency::SEL;
+use selendra_runtime_common::dollar;
 use sp_keyring::{Ed25519Keyring, Sr25519Keyring};
 use sp_runtime::Perbill;
 
@@ -35,15 +36,15 @@ pub fn config(code: Option<&[u8]>) -> GenesisConfig {
 /// endowed accounts.
 pub fn config_endowed(code: Option<&[u8]>, extra_endowed: Vec<AccountId>) -> GenesisConfig {
 	let mut endowed = vec![
-		(alice(), 111 * DOLLARS),
-		(bob(), 100 * DOLLARS),
-		(charlie(), 100_000_000 * DOLLARS),
-		(dave(), 111 * DOLLARS),
-		(eve(), 101 * DOLLARS),
-		(ferdie(), 100 * DOLLARS),
+		(alice(), 111 * dollar(SEL)),
+		(bob(), 100 * dollar(SEL)),
+		(charlie(), 100_000_000 * dollar(SEL)),
+		(dave(), 111 * dollar(SEL)),
+		(eve(), 101 * dollar(SEL)),
+		(ferdie(), 100 * dollar(SEL)),
 	];
 
-	endowed.extend(extra_endowed.into_iter().map(|endowed| (endowed, 100 * DOLLARS)));
+	endowed.extend(extra_endowed.into_iter().map(|endowed| (endowed, 100 * dollar(SEL))));
 
 	GenesisConfig {
 		system: SystemConfig {
@@ -51,6 +52,7 @@ pub fn config_endowed(code: Option<&[u8]>, extra_endowed: Vec<AccountId>) -> Gen
 		},
 		indices: IndicesConfig { indices: vec![] },
 		balances: BalancesConfig { balances: endowed },
+		tokens: TokensConfig { balances: vec![] },
 		session: SessionConfig {
 			keys: vec![
 				(alice(), dave(), to_session_keys(&Ed25519Keyring::Alice, &Sr25519Keyring::Alice)),
@@ -64,9 +66,9 @@ pub fn config_endowed(code: Option<&[u8]>, extra_endowed: Vec<AccountId>) -> Gen
 		},
 		staking: StakingConfig {
 			stakers: vec![
-				(dave(), alice(), 111 * DOLLARS, StakerStatus::Validator),
-				(eve(), bob(), 100 * DOLLARS, StakerStatus::Validator),
-				(ferdie(), charlie(), 100 * DOLLARS, StakerStatus::Validator),
+				(dave(), alice(), 111 * dollar(SEL), StakerStatus::Validator),
+				(eve(), bob(), 100 * dollar(SEL), StakerStatus::Validator),
+				(ferdie(), charlie(), 100 * dollar(SEL), StakerStatus::Validator),
 			],
 			validator_count: 3,
 			minimum_validator_count: 0,

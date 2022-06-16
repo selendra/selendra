@@ -26,11 +26,11 @@ use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use selendra_runtime::{
 	wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig, BalancesConfig, Block, CouncilConfig,
-	DemocracyConfig, GrandpaConfig, ImOnlineConfig, IndicesConfig, MaxNominations,
+	DemocracyConfig, GrandpaConfig, ImOnlineConfig, IndicesConfig, MaxNominations, TokensConfig,
 	PhragmenElectionConfig, SessionConfig, SessionKeys, StakerStatus, StakingConfig, SudoConfig,
 	SystemConfig, TechnicalCommitteeConfig,
 };
-use selendra_runtime_constants::currency::*;
+use selendra_runtime_common::dollar;
 
 use serde::{Deserialize, Serialize};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
@@ -41,7 +41,7 @@ use sp_runtime::{
 	Perbill,
 };
 
-pub use selendra_primitives::{AccountId, Balance, Signature};
+pub use selendra_primitives::{AccountId, Balance, Signature, currency::SEL};
 pub use selendra_runtime::GenesisConfig;
 
 type AccountPublic = <Signature as Verify>::Signer;
@@ -246,6 +246,10 @@ pub fn testnet_genesis(
 	root_key: AccountId,
 	endowed_accounts: Option<Vec<AccountId>>,
 ) -> GenesisConfig {
+
+	let endowment: Balance = 10_000_000 * dollar(SEL);
+	let stash: Balance = endowment / 1000;
+
 	let mut endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(|| {
 		vec![
 			get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -277,7 +281,7 @@ pub fn testnet_genesis(
 	let mut rng = rand::thread_rng();
 	let stakers = initial_authorities
 		.iter()
-		.map(|x| (x.0.clone(), x.1.clone(), STASH, StakerStatus::Validator))
+		.map(|x| (x.0.clone(), x.1.clone(), stash, StakerStatus::Validator))
 		.chain(initial_nominators.iter().map(|x| {
 			use rand::{seq::SliceRandom, Rng};
 			let limit = (MaxNominations::get() as usize).min(initial_authorities.len());
@@ -288,20 +292,18 @@ pub fn testnet_genesis(
 				.into_iter()
 				.map(|choice| choice.0.clone())
 				.collect::<Vec<_>>();
-			(x.clone(), x.clone(), STASH, StakerStatus::Nominator(nominations))
+			(x.clone(), x.clone(), stash, StakerStatus::Nominator(nominations))
 		}))
 		.collect::<Vec<_>>();
 
 	let num_endowed_accounts = endowed_accounts.len();
 
-	const ENDOWMENT: Balance = 10_000_000 * DOLLARS;
-	const STASH: Balance = ENDOWMENT / 1000;
-
 	GenesisConfig {
 		system: SystemConfig { code: wasm_binary_unwrap().to_vec() },
 		balances: BalancesConfig {
-			balances: endowed_accounts.iter().cloned().map(|x| (x, ENDOWMENT)).collect(),
+			balances: endowed_accounts.iter().cloned().map(|x| (x, endowment)).collect(),
 		},
+		tokens: TokensConfig { balances: vec![] },
 		indices: IndicesConfig { indices: vec![] },
 		session: SessionConfig {
 			keys: initial_authorities
@@ -329,7 +331,7 @@ pub fn testnet_genesis(
 				.iter()
 				.take((num_endowed_accounts + 1) / 2)
 				.cloned()
-				.map(|member| (member, STASH))
+				.map(|member| (member, stash))
 				.collect(),
 		},
 		council: CouncilConfig::default(),

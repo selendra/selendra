@@ -44,6 +44,7 @@ sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "po
 
 selendra-node-test = { path = "../test" }
 selendra-runtime-constants = { path = "../../runtime/selendra/constants" }
+selendra-runtime-common = { path = "../../runtime/common" }
 
 [features]
 wasmtime = ["sc-executor/wasmtime"]

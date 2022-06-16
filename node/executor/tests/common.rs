@@ -36,11 +36,11 @@ use sp_state_machine::TestExternalities as CoreTestExternalities;
 
 use selendra_node_executor::ExecutorDispatch;
 use selendra_node_test::keyring::*;
-use selendra_primitives::{BlockNumber, Hash};
+use selendra_primitives::{BlockNumber, Hash, currency::SEL};
 use selendra_runtime::{
 	Block, BuildStorage, CheckedExtrinsic, Header, Runtime, UncheckedExtrinsic,
 };
-use selendra_runtime_constants::currency::*;
+use selendra_runtime_common::dollar;
 use sp_externalities::Externalities;
 
 pub const TEST_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"test");
@@ -87,7 +87,7 @@ pub fn sign(xt: CheckedExtrinsic) -> UncheckedExtrinsic {
 }
 
 pub fn default_transfer_call() -> pallet_balances::Call<Runtime> {
-	pallet_balances::Call::<Runtime>::transfer { dest: bob().into(), value: 69 * DOLLARS }
+	pallet_balances::Call::<Runtime>::transfer { dest: bob().into(), value: 69 * dollar(SEL) }
 }
 
 pub fn from_block_number(n: u32) -> Header {

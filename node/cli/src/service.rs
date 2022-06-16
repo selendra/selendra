@@ -574,9 +574,10 @@ mod tests {
 	use sc_keystore::LocalKeystore;
 	use sc_service_test::TestNetNode;
 	use sc_transaction_pool_api::{ChainEvent, MaintainedTransactionPool};
-	use selendra_primitives::{Block, DigestItem, Signature};
+	use selendra_primitives::{Block, DigestItem, Signature, currency::SEL};
 	use selendra_runtime::{Address, BalancesCall, Call, UncheckedExtrinsic};
-	use selendra_runtime_constants::{currency::CENTS, time::SLOT_DURATION};
+	use selendra_runtime_constants::time::SLOT_DURATION;
+	use selendra_runtime_common::cent;
 	use sp_consensus::{BlockOrigin, Environment, Proposer};
 	use sp_core::{crypto::Pair as CryptoPair, Public};
 	use sp_inherents::InherentDataProvider;
@@ -749,7 +750,7 @@ mod tests {
 			},
 			|service, _| {
 				let tip = 0;
-				let amount = 5 * CENTS;
+				let amount = 5 * cent(SEL);
 				let to: Address = AccountPublic::from(bob.public()).into_account().into();
 				let from: Address = AccountPublic::from(charlie.public()).into_account().into();
 				let genesis_hash = service.client().block_hash(0).unwrap().unwrap();

@@ -8,11 +8,11 @@ use selendra_primitives::Balance;
 
 parameter_types! {
 	// One storage item; key size 32, value size 8; .
-	pub const ProxyDepositBase: Balance = deposit(1, 8);
+	pub ProxyDepositBase: Balance = deposit(1, 8);
 	// Additional storage item size of 33 bytes.
-	pub const ProxyDepositFactor: Balance = deposit(0, 33);
-	pub const AnnouncementDepositBase: Balance = deposit(1, 8);
-	pub const AnnouncementDepositFactor: Balance = deposit(0, 66);
+	pub ProxyDepositFactor: Balance = deposit(0, 33);
+	pub AnnouncementDepositBase: Balance = deposit(1, 8);
+	pub AnnouncementDepositFactor: Balance = deposit(0, 66);
 	pub const MaxProxies: u16 = 32;
 	pub const MaxPending: u16 = 32;
 }
