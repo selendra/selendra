@@ -21,6 +21,7 @@
 
 pub mod currency;
 pub mod evm;
+pub mod task;
 
 pub use currency::CurrencyId;
 
@@ -32,6 +33,7 @@ use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentifyAccount, Verify},
 	MultiSignature, OpaqueExtrinsic, RuntimeDebug,
+	FixedU128
 };
 
 /// An index to a block.
@@ -76,13 +78,17 @@ pub type BlockId = generic::BlockId<Block>;
 /// Signed version of Balance
 pub type Amount = i128;
 
+/// Fee multiplier.
+pub type Multiplier = FixedU128;
+
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, MaxEncodedLen, TypeInfo)]
 #[repr(u8)]
 pub enum ReserveIdentifier {
+	EvmStorageDeposit,
+	EvmDeveloperDeposit,
 	Nft,
 	TransactionPayment,
 	TransactionPaymentDeposit,
-
 	// always the last, indicate number of variants
 	Count,
 }

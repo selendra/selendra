@@ -20,5 +20,32 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod evm;
-
 pub use crate::evm::*;
+
+use frame_support::pallet_prelude::Weight;
+use primitives::task::TaskResult;
+use sp_runtime::DispatchResult;
+
+/// Dispatchable tasks
+pub trait DispatchableTask {
+	fn dispatch(self, weight: Weight) -> TaskResult;
+}
+
+/// Idle scheduler trait
+pub trait IdleScheduler<Task> {
+	fn schedule(task: Task) -> DispatchResult;
+}
+
+#[cfg(feature = "std")]
+impl DispatchableTask for () {
+	fn dispatch(self, _weight: Weight) -> TaskResult {
+		unimplemented!()
+	}
+}
+
+#[cfg(feature = "std")]
+impl<Task> IdleScheduler<Task> for () {
+	fn schedule(_task: Task) -> DispatchResult {
+		unimplemented!()
+	}
+}
