@@ -59,8 +59,8 @@ use sp_std::prelude::*;
 use support::{BuyWeightRate, DEXManager, PriceProvider, Ratio, SwapLimit, TransactionPayment};
 use xcm::opaque::latest::MultiLocation;
 
-// mod mock;
-// mod tests;
+mod mock;
+mod tests;
 pub mod weights;
 
 pub use module::*;
