@@ -118,8 +118,10 @@ create_currency_id! {
 		SEL("Selendra", 12) = 0,
 		SUSD("Selendra Dollar", 12) = 1,
 
-		// 148 - 167: External tokens (e.g. bridged)
-		KMD("Kumandra Native Token", 12) = 149,
+		// 20 - 39: External tokens (e.g. bridged)
+		KMD("Kumandra Native Token", 12) = 20,
+		DOT("Polkadot", 10) = 21,
+		RENBTC("Ren Protocol BTC", 8) = 22,
 	}
 }
 
