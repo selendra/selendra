@@ -7,15 +7,6 @@ members = [
     "node/executor",
     "node/test",
     "runtime/selendra",
-	"modules/support",
-	"modules/idle-scheduler",
-	"modules/evm-accounts",
-	"modules/transaction-payment",
-	"modules/dex",
-	"modules/currencies",
-	"modules/evm/rpc",
-	"modules/evm/rpc/runtime_api",
-	"modules/evm"
 ]
 
 [profile.release]
