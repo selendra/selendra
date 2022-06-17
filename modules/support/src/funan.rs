@@ -14,14 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-use codec::FullCodec;
 use primitives::Position;
 use sp_runtime::{DispatchError, DispatchResult};
-use sp_std::{
-	cmp::{Eq, PartialEq},
-	fmt::Debug,
-	prelude::*,
-};
 
 use crate::{dex::*, ExchangeRate, Ratio};
 
@@ -58,22 +52,6 @@ impl<AccountId, CurrencyId, Balance: Default, DebitBalance> RiskManager<AccountI
 	fn check_debit_cap(_currency_id: CurrencyId, _total_debit_balance: DebitBalance) -> DispatchResult {
 		Ok(())
 	}
-}
-
-pub trait AuctionManager<AccountId> {
-	type CurrencyId;
-	type Balance;
-	type AuctionId: FullCodec + Debug + Clone + Eq + PartialEq;
-
-	fn new_collateral_auction(
-		refund_recipient: &AccountId,
-		currency_id: Self::CurrencyId,
-		amount: Self::Balance,
-		target: Self::Balance,
-	) -> DispatchResult;
-	fn cancel_auction(id: Self::AuctionId) -> DispatchResult;
-	fn get_total_collateral_in_auction(id: Self::CurrencyId) -> Self::Balance;
-	fn get_total_target_in_auction() -> Self::Balance;
 }
 
 /// An abstraction of cdp treasury for Funan Protocol.
@@ -123,24 +101,14 @@ pub trait CDPTreasury<AccountId> {
 pub trait CDPTreasuryExtended<AccountId>: CDPTreasury<AccountId> {
 	fn swap_collateral_to_stable(
 		currency_id: Self::CurrencyId,
-		limit: SwapLimit<Self::Balance>,
-		collateral_in_auction: bool,
+		limit: SwapLimit<Self::Balance>
 	) -> sp_std::result::Result<(Self::Balance, Self::Balance), DispatchError>;
-
-	fn create_collateral_auctions(
-		currency_id: Self::CurrencyId,
-		amount: Self::Balance,
-		target: Self::Balance,
-		refund_receiver: AccountId,
-		splited: bool,
-	) -> sp_std::result::Result<u32, DispatchError>;
 
 	fn remove_liquidity_for_lp_collateral(
 		currency_id: Self::CurrencyId,
 		amount: Self::Balance,
 	) -> sp_std::result::Result<(Self::Balance, Self::Balance), DispatchError>;
 
-	fn max_auction() -> u32;
 }
 
 pub trait EmergencyShutdown {
