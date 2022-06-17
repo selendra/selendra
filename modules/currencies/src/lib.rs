@@ -46,8 +46,8 @@ use sp_runtime::{
 use sp_std::{fmt::Debug, marker, result, vec::Vec};
 use support::{evm::limits::erc20, AddressMapping, EVMBridge, InvokeContext};
 
-// mod mock;
-// mod tests;
+mod mock;
+mod tests;
 pub mod weights;
 
 pub use module::*;

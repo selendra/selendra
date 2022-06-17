@@ -22,16 +22,16 @@ orml-utilities = { path = "../../orml/utilities", default-features = false }
 primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
 support = { package = "module-support", path = "../support", default-features = false }
 
-# [dev-dependencies]
-# serde_json = "1.0.68"
-# hex = "0.4"
-# hex-literal = "0.3.1"
-# sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
-# pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
-# pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
-# tokens = { package = "orml-tokens", path = "../../orml/tokens" }
-# module-evm = { path = "../evm" }
-# module-evm-bridge = { path = "../evm-bridge" }
+[dev-dependencies]
+serde_json = "1.0.68"
+hex = "0.4"
+hex-literal = "0.3.1"
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
+tokens = { package = "orml-tokens", path = "../../orml/tokens" }
+module-evm = { path = "../evm" }
+module-evm-bridge = { path = "../evm-bridge" }
 
 [features]
 default = ["std"]
