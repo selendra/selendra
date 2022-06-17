@@ -20,7 +20,7 @@
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dev"), DB CACHE: 128
 
 // Executed Command:
-// target/release/acala
+// target/release/selendra
 // benchmark
 // --chain=dev
 // --steps=50
@@ -60,9 +60,9 @@ pub trait WeightInfo {
 	fn abort_provisioning() -> Weight;
 }
 
-/// Weights for module_dex using the Acala node and recommended hardware.
-pub struct AcalaWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for AcalaWeight<T> {
+/// Weights for module_dex using the Selendra node and recommended hardware.
+pub struct SelendraWeight<T>(PhantomData<T>);
+impl<T: frame_system::Config> WeightInfo for SelendraWeight<T> {
 	fn enable_trading_pair() -> Weight {
 		(24_728_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))

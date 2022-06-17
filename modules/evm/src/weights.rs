@@ -21,7 +21,7 @@
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dev"), DB CACHE: 1024
 
 // Executed Command:
-// target/release/acala
+// target/release/selendra
 // benchmark
 // pallet
 // --chain=dev
@@ -59,9 +59,9 @@ pub trait WeightInfo {
 	fn selfdestruct() -> Weight;
 }
 
-/// Weights for module_evm using the Acala node and recommended hardware.
-pub struct AcalaWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for AcalaWeight<T> {
+/// Weights for module_evm using the Selendra node and recommended hardware.
+pub struct SelendraWeight<T>(PhantomData<T>);
+impl<T: frame_system::Config> WeightInfo for SelendraWeight<T> {
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: EvmAccounts EvmAddresses (r:1 w:0)
 	// Storage: EvmAccounts Accounts (r:2 w:0)

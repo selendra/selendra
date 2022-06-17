@@ -98,7 +98,7 @@ pub const RESERVE_ID_STORAGE_DEPOSIT: ReserveIdentifier = ReserveIdentifier::Evm
 pub const RESERVE_ID_DEVELOPER_DEPOSIT: ReserveIdentifier = ReserveIdentifier::EvmDeveloperDeposit;
 
 // Initially based on London hard fork configuration.
-static ACALA_CONFIG: EvmConfig = EvmConfig {
+static SELENDRA_CONFIG: EvmConfig = EvmConfig {
 	refund_sstore_clears: 0,            // no gas refund
 	sstore_gas_metering: false,         // no gas refund
 	sstore_revert_under_stipend: false, // ignored
@@ -205,7 +205,7 @@ pub mod module {
 
 		/// EVM config used in the module.
 		fn config() -> &'static EvmConfig {
-			&ACALA_CONFIG
+			&SELENDRA_CONFIG
 		}
 
 		/// Required origin for creating system contract.
@@ -1291,7 +1291,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_contract(source: H160, address: H160, publish: bool, code: Vec<u8>) {
 		let bounded_code: BoundedVec<u8, MaxCodeSize> = code
 			.try_into()
-			.expect("checked by create_contract_limit in ACALA_CONFIG; qed");
+			.expect("checked by create_contract_limit in SELENDRA_CONFIG; qed");
 		if bounded_code.is_empty() {
 			return;
 		}
@@ -1585,7 +1585,7 @@ impl<T: Config> Pallet<T> {
 			..
 		}) = Accounts::<T>::get(address)
 		{
-			// https://github.com/AcalaNetwork/Acala/blob/af1c277/modules/evm/rpc/src/lib.rs#L176
+			// https://github.com/SelendraNetwork/Selendra/blob/af1c277/modules/evm/rpc/src/lib.rs#L176
 			// when rpc is called, from is empty, allowing the call
 			published || maintainer == *caller || Self::is_developer_or_contract(caller) || *caller == H160::default()
 		} else {
