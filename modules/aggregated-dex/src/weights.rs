@@ -21,7 +21,7 @@
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dev"), DB CACHE: 128
 
 // Executed Command:
-// target/release/acala
+// target/release/selendra
 // benchmark
 // --chain=dev
 // --steps=50
@@ -48,9 +48,9 @@ pub trait WeightInfo {
 	fn update_aggregated_swap_paths(u: u32, ) -> Weight;
 }
 
-/// Weights for module_aggregated_dex using the Acala node and recommended hardware.
-pub struct AcalaWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for AcalaWeight<T> {
+/// Weights for module_aggregated_dex using the Selendra node and recommended hardware.
+pub struct SelendraWeight<T>(PhantomData<T>);
+impl<T: frame_system::Config> WeightInfo for SelendraWeight<T> {
 	fn swap_with_exact_supply(u: u32, ) -> Weight {
 		(93_799_000 as Weight)
 			// Standard Error: 117_000
