@@ -62,9 +62,9 @@ fn should_calculate_contract_address() {
 			gas_price: U256::one(),
 			..Default::default()
 		};
-		let metadata = StackSubstateMetadata::new(1000, 1000, &ACALA_CONFIG);
+		let metadata = StackSubstateMetadata::new(1000, 1000, &SELENDRA_CONFIG);
 		let state = SubstrateStackState::<Runtime>::new(&vicinity, metadata);
-		let mut executor = StackExecutor::new_with_precompiles(state, &ACALA_CONFIG, &());
+		let mut executor = StackExecutor::new_with_precompiles(state, &SELENDRA_CONFIG, &());
 
 		assert_eq!(
 			executor.create_address(evm::CreateScheme::Legacy { caller: addr }),
