@@ -17,14 +17,17 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod evm;
-pub mod dex;
-pub mod incentives;
+mod evm;
+mod dex;
+mod incentives;
+mod funan;
+
 pub mod mocks;
 
 pub use crate::evm::*;
 pub use crate::dex::*;
 pub use crate::incentives::*;
+pub use crate::funan::*;
 
 use sp_std::prelude::*;
 use xcm::latest::prelude::*;
