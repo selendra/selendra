@@ -120,6 +120,7 @@ create_currency_id! {
 		KMD("Kumandra Native Token", 12) = 20,
 		DOT("Polkadot", 10) = 21,
 		RENBTC("Ren Protocol BTC", 8) = 22,
+		KSM("Kusama", 12) = 132,
 	}
 }
 

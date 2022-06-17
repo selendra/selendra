@@ -113,7 +113,7 @@ pub struct EthereumTransactionMessage {
 
 /// Ethereum precompiles
 /// 0 - 0x0000000000000000000000000000000000000400
-/// Acala precompiles
+/// Selendra precompiles
 /// 0x0000000000000000000000000000000000000400 - 0x0000000000000000000000000000000000000800
 pub const PRECOMPILE_ADDRESS_START: EvmAddress = H160(hex!("0000000000000000000000000000000000000400"));
 /// Predeployed system contracts (except Mirrored ERC20)
