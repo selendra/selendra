@@ -142,7 +142,6 @@ impl<T: frame_system::Config> WeightInfo for SelendraWeight<T> {
 	// Storage: Rewards SharesAndWithdrawnRewards (r:1 w:1)
 	// Storage: Rewards PoolInfos (r:1 w:1)
 	// Storage: Loans TotalPositions (r:1 w:1)
-	// Storage: AuctionManager TotalCollateralInAuction (r:1 w:0)
 	// Storage: Dex TradingPairStatuses (r:3 w:0)
 	// Storage: Dex LiquidityPool (r:2 w:2)
 	// Storage: StableAsset Pools (r:1 w:0)

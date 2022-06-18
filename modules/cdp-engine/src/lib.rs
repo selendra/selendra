@@ -18,7 +18,7 @@
 //!
 //! ## Overview
 //!
-//! The core module of Honzon protocol. CDP engine is responsible for handle
+//! The core module of funan protocol. CDP engine is responsible for handle
 //! internal processes about CDPs, including liquidation, settlement and risk
 //! management.
 
