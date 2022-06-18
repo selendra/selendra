@@ -22,6 +22,7 @@
 pub mod currency;
 pub mod evm;
 pub mod task;
+pub mod nft;
 
 pub use currency::CurrencyId;
 
@@ -138,6 +139,7 @@ pub struct Position {
 pub enum ReserveIdentifier {
 	EvmStorageDeposit,
 	EvmDeveloperDeposit,
+	Funan,
 	Nft,
 	TransactionPayment,
 	TransactionPaymentDeposit,

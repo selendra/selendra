@@ -135,7 +135,7 @@ pub const SYSTEM_CONTRACT_ADDRESS_PREFIX: [u8; 9] = [0u8; 9];
 ///    0 1 2 3 4 5 6 7 8 910111213141516171819 index
 ///   ^^^^^^^^^^^^^^^^^^                       System contract address prefix
 ///                     ^^                     CurrencyId Type: 1-Token 2-DexShare 3-StableAsset
-///                                                             4-ForeignAsset(ignore Erc20, without the prefix of system contracts)
+///                                                             5-ForeignAsset(ignore Erc20, without the prefix of system contracts)
 ///                                                             FF-Erc20 Holding Account
 ///                                         ^^ CurrencyId Type is 1-Token, Token
 ///                                   ^^^^^^^^ CurrencyId Type is 1-Token, NFT
@@ -146,7 +146,7 @@ pub const SYSTEM_CONTRACT_ADDRESS_PREFIX: [u8; 9] = [0u8; 9];
 ///                                                             the same as DexShare Left Type
 ///                                   ^^^^^^^^ CurrencyId Type is 2-DexShare, DexShare right field
 ///                                   ^^^^^^^^ CurrencyId Type is 3-StableAsset, StableAssetPoolId
-///                                       ^^^^ CurrencyId Type is 4-ForeignAsset, ForeignAssetId
+///                                       ^^^^ CurrencyId Type is 5-ForeignAsset, ForeignAssetId
 
 /// Check if the given `address` is a system contract.
 ///
@@ -163,7 +163,6 @@ pub const H160_POSITION_DEXSHARE_LEFT_FIELD: Range<usize> = 11..15;
 pub const H160_POSITION_DEXSHARE_RIGHT_TYPE: usize = 15;
 pub const H160_POSITION_DEXSHARE_RIGHT_FIELD: Range<usize> = 16..20;
 pub const H160_POSITION_STABLE_ASSET: Range<usize> = 16..20;
-pub const H160_POSITION_LIQUID_CROADLOAN: Range<usize> = 16..20;
 pub const H160_POSITION_FOREIGN_ASSET: Range<usize> = 18..20;
 
 /// Generate the EvmAddress from CurrencyId so that evm contracts can call the erc20 contract.
@@ -211,7 +210,7 @@ mod convert {
 	/// Convert decimal between native(12) and EVM(18) and therefore the 1_000_000 conversion.
 	const DECIMALS_VALUE: u32 = 1_000_000u32;
 
-	/// Convert decimal from native(KAR/SEL 12) to EVM(18).
+	/// Convert decimal from native(SEL 12) to EVM(18).
 	pub fn convert_decimals_to_evm<B: Zero + Saturating + From<u32>>(b: B) -> B {
 		if b.is_zero() {
 			return b;
@@ -219,7 +218,7 @@ mod convert {
 		b.saturating_mul(DECIMALS_VALUE.into())
 	}
 
-	/// Convert decimal from EVM(18) to native(KAR/SEL 12).
+	/// Convert decimal from EVM(18) to native(SEL 12).
 	pub fn convert_decimals_from_evm<B: Zero + Saturating + CheckedDiv + PartialEq + Copy + From<u32>>(
 		b: B,
 	) -> Option<B> {
