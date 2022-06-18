@@ -27,7 +27,7 @@
 //! accumulates rewards and distributes rewards to users based on their shares.
 //!
 //! Pool types:
-//! 1. Loans: record the shares and rewards for users of Loans(Honzon protocol).
+//! 1. Loans: record the shares and rewards for users of Loans(funan protocol).
 //! 2. Dex: record the shares and rewards for DEX makers who staking LP token.
 //!
 //! Rewards accumulation:

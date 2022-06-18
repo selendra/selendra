@@ -12,7 +12,6 @@ use sp_std::{
 use serde::{Deserialize, Serialize};
 
 pub use asset_registry::{FixedConversionRateProvider, WeightToFeeConverter};
-pub use auction::{Auction, AuctionHandler, AuctionInfo, OnNewBidResult};
 pub use currency::{
 	BalanceStatus, BasicCurrency, BasicCurrencyExtended, BasicLockableCurrency, BasicReservableCurrency,
 	LockIdentifier, MultiCurrency, MultiCurrencyExtended, MultiLockableCurrency, MultiReservableCurrency,
@@ -29,7 +28,6 @@ pub use xcm_transfer::XcmTransfer;
 
 pub mod arithmetic;
 pub mod asset_registry;
-pub mod auction;
 pub mod currency;
 pub mod data_provider;
 pub mod get_by_key;
