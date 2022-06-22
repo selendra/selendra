@@ -64,18 +64,17 @@ use orml_traits::{
 use pallet_session::historical::{self as pallet_session_historical};
 use pallet_transaction_payment::RuntimeDispatchInfo;
 
-pub use frame_support::{
+use frame_support::{
 	construct_runtime, log,
 	pallet_prelude::InvalidTransaction,
 	parameter_types,
 	traits::{
-		ConstBool, ConstU128, ConstU16, ConstU32, Contains, ContainsLengthBound,
-		Currency as PalletCurrency, EnsureOrigin, EqualPrivilegeOnly, Everything, Get, Imbalance,
-		InstanceFilter, IsSubType, IsType, KeyOwnerProofSystem, LockIdentifier, Nothing,
-		OnRuntimeUpgrade, OnUnbalanced, Randomness, SortedMembers, U128CurrencyToVote,
+		ConstU16, ConstU32, Contains,
+		EnsureOrigin, EqualPrivilegeOnly, Get,
+		InstanceFilter, KeyOwnerProofSystem, LockIdentifier,
 	},
-	weights::{constants::RocksDbWeight, IdentityFee, Weight},
-	PalletId, RuntimeDebug, StorageValue,
+	weights::{constants::RocksDbWeight, Weight},
+	PalletId, RuntimeDebug,
 };
 
 pub use pallet_collective::MemberCount;
@@ -83,7 +82,6 @@ pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 
-pub use authority::AuthorityConfigImpl;
 pub use constants::{fee::*, time::*};
 use primitives::currency::AssetIds;
 pub use primitives::{
@@ -110,14 +108,18 @@ pub use runtime_common::{
 	TipPerWeightStep, SEL, SUSD, DOT, RENBTC, KMD
 };
 
-mod benchmarking;
+
 pub mod constants;
 
+mod benchmarking;
 mod authority;
-mod consensus;
-mod voter_bags;
 mod weights;
-use consensus::EpochDuration;
+mod voter_bags;
+
+mod consensus_config;
+mod governance_config;
+
+use consensus_config::EpochDuration;
 
 /// This runtime version.
 #[sp_version::runtime_version]
@@ -159,6 +161,7 @@ impl_opaque_keys! {
 parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"sel/trsy");
 	pub const DEXPalletId: PalletId = PalletId(*b"sel/dexm");
+	pub const PhragmenElectionPalletId: LockIdentifier = *b"phrelect";
 	pub const SelTreasuryPalletId: PalletId = PalletId(*b"sel/cdpt");
 	pub const IncentivesPalletId: PalletId = PalletId(*b"sel/inct");
 	// Treasury reserve
@@ -183,9 +186,9 @@ pub fn get_all_module_accounts() -> Vec<AccountId> {
 }
 
 parameter_types! {
-	pub const BlockHashCount: BlockNumber = 1200; // mortal tx can be valid up to 4 hour after signing
+	pub const BlockHashCount: BlockNumber = 2400;
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u8 = 10; // Ss58AddressFormat::SelendraAccount
+	pub const SS58Prefix: u8 = 42;
 }
 
 pub struct BaseCallFilter;
@@ -280,113 +283,6 @@ parameter_types! {
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
 }
 
-pub type SlowAdjustingFeeUpdate<R> =
-	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
-
-impl pallet_sudo::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
-}
-
-parameter_types! {
-	pub const GeneralCouncilMotionDuration: BlockNumber = 3 * DAYS;
-	pub const CouncilDefaultMaxProposals: u32 = 20;
-	pub const CouncilDefaultMaxMembers: u32 = 30;
-}
-
-impl pallet_collective::Config<GeneralCouncilInstance> for Runtime {
-	type Origin = Origin;
-	type Proposal = Call;
-	type Event = Event;
-	type MotionDuration = GeneralCouncilMotionDuration;
-	type MaxProposals = CouncilDefaultMaxProposals;
-	type MaxMembers = CouncilDefaultMaxMembers;
-	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = ();
-}
-
-impl pallet_membership::Config<GeneralCouncilMembershipInstance> for Runtime {
-	type Event = Event;
-	type AddOrigin = EnsureRootOrThreeFourthsGeneralCouncil;
-	type RemoveOrigin = EnsureRootOrThreeFourthsGeneralCouncil;
-	type SwapOrigin = EnsureRootOrThreeFourthsGeneralCouncil;
-	type ResetOrigin = EnsureRootOrThreeFourthsGeneralCouncil;
-	type PrimeOrigin = EnsureRootOrThreeFourthsGeneralCouncil;
-	type MembershipInitialized = GeneralCouncil;
-	type MembershipChanged = GeneralCouncil;
-	type MaxMembers = CouncilDefaultMaxMembers;
-	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub const FinancialCouncilMotionDuration: BlockNumber = 3 * DAYS;
-}
-
-impl pallet_collective::Config<FinancialCouncilInstance> for Runtime {
-	type Origin = Origin;
-	type Proposal = Call;
-	type Event = Event;
-	type MotionDuration = FinancialCouncilMotionDuration;
-	type MaxProposals = CouncilDefaultMaxProposals;
-	type MaxMembers = CouncilDefaultMaxMembers;
-	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = ();
-}
-
-impl pallet_membership::Config<FinancialCouncilMembershipInstance> for Runtime {
-	type Event = Event;
-	type AddOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type RemoveOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type SwapOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type ResetOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type PrimeOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type MembershipInitialized = FinancialCouncil;
-	type MembershipChanged = FinancialCouncil;
-	type MaxMembers = CouncilDefaultMaxMembers;
-	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub const TechnicalCommitteeMotionDuration: BlockNumber = 3 * DAYS;
-}
-
-impl pallet_collective::Config<TechnicalCommitteeInstance> for Runtime {
-	type Origin = Origin;
-	type Proposal = Call;
-	type Event = Event;
-	type MotionDuration = TechnicalCommitteeMotionDuration;
-	type MaxProposals = CouncilDefaultMaxProposals;
-	type MaxMembers = CouncilDefaultMaxMembers;
-	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = ();
-}
-
-impl pallet_membership::Config<TechnicalCommitteeMembershipInstance> for Runtime {
-	type Event = Event;
-	type AddOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type RemoveOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type SwapOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type ResetOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type PrimeOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type MembershipInitialized = TechnicalCommittee;
-	type MembershipChanged = TechnicalCommittee;
-	type MaxMembers = CouncilDefaultMaxMembers;
-	type WeightInfo = ();
-}
-
-impl pallet_membership::Config<OperatorMembershipInstanceSelendra> for Runtime {
-	type Event = Event;
-	type AddOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type RemoveOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type SwapOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type ResetOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type PrimeOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type MembershipInitialized = ();
-	type MembershipChanged = SelendraOracle;
-	type MaxMembers = ConstU32<50>;
-	type WeightInfo = ();
-}
-
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
@@ -407,31 +303,6 @@ impl pallet_multisig::Config for Runtime {
 	type DepositFactor = MultisigDepositFactor;
 	type MaxSignatories = ConstU16<100>;
 	type WeightInfo = ();
-}
-
-pub struct GeneralCouncilProvider;
-impl SortedMembers<AccountId> for GeneralCouncilProvider {
-	fn contains(who: &AccountId) -> bool {
-		GeneralCouncil::is_member(who)
-	}
-
-	fn sorted_members() -> Vec<AccountId> {
-		GeneralCouncil::members()
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn add(_: &AccountId) {
-		unimplemented!()
-	}
-}
-
-impl ContainsLengthBound for GeneralCouncilProvider {
-	fn max_len() -> usize {
-		CouncilDefaultMaxMembers::get() as usize
-	}
-	fn min_len() -> usize {
-		0
-	}
 }
 
 parameter_types! {
@@ -495,75 +366,11 @@ impl pallet_tips::Config for Runtime {
 	type Event = Event;
 	type DataDepositPerByte = DataDepositPerByte;
 	type MaximumReasonLength = MaximumReasonLength;
-	type Tippers = GeneralCouncilProvider;
+	type Tippers = PhragmenElection;
 	type TipCountdown = TipCountdown;
 	type TipFindersFee = TipFindersFee;
 	type TipReportDepositBase = TipReportDepositBase;
 	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
-	pub const VotingPeriod: BlockNumber = 5 * DAYS;
-	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
-	pub MinimumDeposit: Balance = 200 * dollar(SEL);
-	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
-	pub const VoteLockingPeriod: BlockNumber = 14 * DAYS;
-	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
-}
-
-impl pallet_democracy::Config for Runtime {
-	type Proposal = Call;
-	type Event = Event;
-	type Currency = Balances;
-	type EnactmentPeriod = EnactmentPeriod;
-	type LaunchPeriod = LaunchPeriod;
-	type VotingPeriod = VotingPeriod;
-	type VoteLockingPeriod = VoteLockingPeriod;
-	type MinimumDeposit = MinimumDeposit;
-	/// A straight majority of the council can decide what their next motion is.
-	type ExternalOrigin = EnsureRootOrHalfGeneralCouncil;
-	/// A majority can have the next scheduled referendum be a straight majority-carries vote.
-	type ExternalMajorityOrigin = EnsureRootOrHalfGeneralCouncil;
-	/// A unanimous council can have the next scheduled referendum be a straight default-carries
-	/// (NTB) vote.
-	type ExternalDefaultOrigin = EnsureRootOrAllGeneralCouncil;
-	/// Two thirds of the technical committee can have an ExternalMajority/ExternalDefault vote
-	/// be tabled immediately and with a shorter voting/enactment period.
-	type FastTrackOrigin = EnsureRootOrTwoThirdsTechnicalCommittee;
-	type InstantOrigin = EnsureRootOrAllTechnicalCommittee;
-	type InstantAllowed = ConstBool<true>;
-	type FastTrackVotingPeriod = FastTrackVotingPeriod;
-	// To cancel a proposal which has been passed, 2/3 of the council must agree to it.
-	type CancellationOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type BlacklistOrigin = EnsureRoot<AccountId>;
-	// To cancel a proposal before it has been passed, the technical committee must be unanimous or
-	// Root must agree.
-	type CancelProposalOrigin = EnsureRootOrAllTechnicalCommittee;
-	// Any single technical committee member may veto a coming council proposal, however they can
-	// only do it once and it lasts only for the cooloff period.
-	type VetoOrigin = pallet_collective::EnsureMember<AccountId, TechnicalCommitteeInstance>;
-	type CooloffPeriod = CooloffPeriod;
-	type PreimageByteDeposit = PreimageByteDeposit;
-	type OperationalPreimageOrigin =
-		pallet_collective::EnsureMember<AccountId, GeneralCouncilInstance>;
-	type Slash = Treasury;
-	type Scheduler = Scheduler;
-	type PalletsOrigin = OriginCaller;
-	type MaxVotes = ConstU32<100>;
-	type WeightInfo = pallet_democracy::weights::SubstrateWeight<Runtime>;
-	type MaxProposals = ConstU32<100>;
-}
-
-impl orml_authority::Config for Runtime {
-	type Event = Event;
-	type Origin = Origin;
-	type PalletsOrigin = OriginCaller;
-	type Call = Call;
-	type Scheduler = Scheduler;
-	type AsOriginId = AuthoritysOriginId;
-	type AuthorityConfig = AuthorityConfigImpl;
-	type WeightInfo = weights::orml_authority::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -879,6 +686,9 @@ parameter_types! {
 	pub MaxSwapSlippageCompareToOracle: Ratio = Ratio::saturating_from_rational(15, 100);
 }
 
+pub type SlowAdjustingFeeUpdate<R> =
+	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+
 impl module_transaction_payment::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
@@ -1190,6 +1000,7 @@ construct_runtime!(
 		GeneralCouncilMembership: pallet_membership::<Instance1> = 62,
 		FinancialCouncil: pallet_collective::<Instance2> = 63,
 		FinancialCouncilMembership: pallet_membership::<Instance2> = 64,
+		PhragmenElection: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 65,
 		TechnicalCommittee: pallet_collective::<Instance4> = 67,
 		TechnicalCommitteeMembership: pallet_membership::<Instance4> = 68,
 		Democracy: pallet_democracy = 69,

@@ -3102,6 +3102,7 @@ name = "pallet-elections-phragmen"
 version = "5.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -4459,6 +4460,7 @@ dependencies = [
  "pallet-collective",
  "pallet-democracy",
  "pallet-election-provider-multi-phase",
+ "pallet-elections-phragmen",
  "pallet-grandpa",
  "pallet-im-online",
  "pallet-membership",
