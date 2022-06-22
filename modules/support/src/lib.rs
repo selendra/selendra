@@ -167,11 +167,6 @@ impl<Task> IdleScheduler<Task> for () {
 	}
 }
 
-#[impl_trait_for_tuples::impl_for_tuples(30)]
-pub trait OnNewEra<EraIndex> {
-	fn on_new_era(era: EraIndex);
-}
-
 pub trait NomineesProvider<AccountId> {
 	fn nominees() -> Vec<AccountId>;
 }

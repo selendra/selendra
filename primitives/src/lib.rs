@@ -17,6 +17,7 @@
 #![allow(clippy::unnecessary_cast)]
 #![allow(clippy::upper_case_acronyms)]
 
+pub mod accounts;
 pub mod currency;
 pub mod evm;
 pub mod nft;
@@ -37,7 +38,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 
-pub use currency::{CurrencyId, DexShare, Lease, TokenSymbol};
+pub use currency::{CurrencyId, DexShare, TokenSymbol};
 pub use evm::{convert_decimals_from_evm, convert_decimals_to_evm};
 
 #[cfg(feature = "std")]
@@ -78,20 +79,14 @@ pub type Hash = sp_core::H256;
 /// An instant or duration in time.
 pub type Moment = u64;
 
-/// Counter for the number of eras that have passed.
-pub type EraIndex = u32;
-
 /// Balance of an account.
 pub type Balance = u128;
 
 /// Signed version of Balance
 pub type Amount = i128;
 
-/// Auction ID
-pub type AuctionId = u32;
-
-/// Share type
-pub type Share = u128;
+// /// Share type
+// pub type Share = u128;
 
 /// Header type.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
