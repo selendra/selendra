@@ -49,7 +49,7 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
-use frame_system::{EnsureRoot, RawOrigin};
+use frame_system::EnsureRoot;
 use module_asset_registry::{AssetIdMaps, EvmErc20InfoMapping};
 use module_currencies::BasicCurrencyAdapter;
 use module_evm::{runner::RunnerExtended, CallInfo, CreateInfo, EvmChainId, EvmTask};
@@ -69,7 +69,7 @@ use frame_support::{
 	pallet_prelude::InvalidTransaction,
 	parameter_types,
 	traits::{
-		ConstU16, ConstU32, Contains, EnsureOrigin, EqualPrivilegeOnly, InstanceFilter,
+		ConstU16, ConstU32, Contains, EqualPrivilegeOnly, InstanceFilter,
 		KeyOwnerProofSystem, LockIdentifier,
 	},
 	weights::{constants::RocksDbWeight, Weight},
@@ -503,41 +503,6 @@ impl module_currencies::Config for Runtime {
 	type GasToWeight = GasToWeight;
 	type SweepOrigin = EnsureRootOrOneGeneralCouncil;
 	type OnDust = module_currencies::TransferDust<Runtime, SelendraTreasuryAccount>;
-}
-
-parameter_types! {
-	pub SelendraFoundationAccounts: Vec<AccountId> = vec![
-		hex_literal::hex!["5336f96b54fa1832d517549bbffdfba2cae8983b8dcf65caff82d616014f5951"].into(),	// 22khtd8Zu9CpCY7DR4EPmmX66Aqsc91ShRAhehSWKGL7XDpL
-		hex_literal::hex!["26adf1c3a5b73f8640404d59ccb81de3ede79965b140addc7d8c0ff8736b5c53"].into(),	// 21kK5T9tvL8nVdAAWizjtBgRbGcAs466iU6ZxeNWb7mFgg5i
-		hex_literal::hex!["7e32626ae20238b3f2c63299bdc1eb4729c7aadc995ce2abaa4e42130209f5d5"].into(),	// 23j4ay2zBSgaSs18xstipmHBNi39W2Su9n8G89kWrz8eCe8F
-		TreasuryPalletId::get().into_account_truncating(),
-		TreasuryReservePalletId::get().into_account_truncating(),
-	];
-}
-
-pub struct EnsureSelendraFoundation;
-impl EnsureOrigin<Origin> for EnsureSelendraFoundation {
-	type Success = AccountId;
-
-	fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
-		Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
-			RawOrigin::Signed(caller) =>
-				if SelendraFoundationAccounts::get().contains(&caller) {
-					Ok(caller)
-				} else {
-					Err(Origin::from(Some(caller)))
-				},
-			r => Err(Origin::from(r)),
-		})
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn successful_origin() -> Origin {
-		let zero_account_id =
-			AccountId::decode(&mut sp_runtime::traits::TrailingZeroInput::zeroes())
-				.expect("infinite length input; no invalid inputs for type; qed");
-		Origin::from(RawOrigin::Signed(zero_account_id))
-	}
 }
 
 parameter_types! {
