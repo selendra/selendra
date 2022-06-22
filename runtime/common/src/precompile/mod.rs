@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! The precompiles for EVM, includes standard Ethereum precompiles, and more:
 //! - MultiCurrency at address `H160::from_low_u64_be(1024)`.
@@ -27,8 +26,8 @@ use frame_support::log;
 use hex_literal::hex;
 use module_evm::{
 	precompiles::{
-		Blake2F, Bn128Add, Bn128Mul, Bn128Pairing, ECRecover, ECRecoverPublicKey, Identity, IstanbulModexp, Modexp,
-		Precompile, Ripemd160, Sha256, Sha3FIPS256, Sha3FIPS512,
+		Blake2F, Bn128Add, Bn128Mul, Bn128Pairing, ECRecover, ECRecoverPublicKey, Identity,
+		IstanbulModexp, Modexp, Precompile, Ripemd160, Sha256, Sha3FIPS256, Sha3FIPS512,
 	},
 	runner::state::{PrecompileFailure, PrecompileResult, PrecompileSet},
 	Context, ExitRevert,
@@ -40,26 +39,22 @@ use sp_std::{collections::btree_set::BTreeSet, marker::PhantomData};
 pub mod dex;
 pub mod evm;
 pub mod evm_accounts;
-pub mod funan;
 pub mod incentives;
 pub mod input;
 pub mod multicurrency;
 pub mod nft;
 pub mod oracle;
 pub mod schedule;
-pub mod stable_asset;
 
 use crate::SystemContractsFilter;
 pub use dex::DEXPrecompile;
 pub use evm::EVMPrecompile;
 pub use evm_accounts::EVMAccountsPrecompile;
-pub use funan::FunanPrecompile;
 pub use incentives::IncentivesPrecompile;
 pub use multicurrency::MultiCurrencyPrecompile;
 pub use nft::NFTPrecompile;
 pub use oracle::OraclePrecompile;
 pub use schedule::SchedulePrecompile;
-pub use stable_asset::StableAssetPrecompile;
 
 pub const ECRECOVER: H160 = H160(hex!("0000000000000000000000000000000000000001"));
 pub const SHA256: H160 = H160(hex!("0000000000000000000000000000000000000002"));
@@ -83,9 +78,7 @@ pub const EVM: H160 = H160(hex!("0000000000000000000000000000000000000402"));
 pub const ORACLE: H160 = H160(hex!("0000000000000000000000000000000000000403"));
 pub const SCHEDULER: H160 = H160(hex!("0000000000000000000000000000000000000404"));
 pub const DEX: H160 = H160(hex!("0000000000000000000000000000000000000405"));
-pub const STABLE_ASSET: H160 = H160(hex!("0000000000000000000000000000000000000406"));
 pub const EVM_ACCOUNTS: H160 = H160(hex!("0000000000000000000000000000000000000408"));
-pub const FUNAN: H160 = H160(hex!("0000000000000000000000000000000000000409"));
 pub const INCENTIVES: H160 = H160(hex!("000000000000000000000000000000000000040a"));
 
 pub fn target_gas_limit(target_gas: Option<u64>) -> Option<u64> {
@@ -101,7 +94,7 @@ impl<R> AllPrecompiles<R>
 where
 	R: module_evm::Config,
 {
-	pub fn acala() -> Self {
+	pub fn selendra() -> Self {
 		Self {
 			active: BTreeSet::from([
 				ECRECOVER,
@@ -117,23 +110,21 @@ where
 				ECRECOVER_PUBLICKEY,
 				SHA3_256,
 				SHA3_512,
-				// Acala precompile
+				// Selendra precompile
 				MULTI_CURRENCY,
 				// NFT,
 				EVM,
 				ORACLE,
 				// SCHEDULER,
 				DEX,
-				// STABLE_ASSET,
 				EVM_ACCOUNTS,
-				/* FUNAN
-				 * INCENTIVES */
+				/* INCENTIVES */
 			]),
 			_marker: Default::default(),
 		}
 	}
 
-	pub fn karura() -> Self {
+	pub fn cardamom() -> Self {
 		Self {
 			active: BTreeSet::from([
 				ECRECOVER,
@@ -149,17 +140,15 @@ where
 				ECRECOVER_PUBLICKEY,
 				SHA3_256,
 				SHA3_512,
-				// Acala precompile
+				// Selendra precompile
 				MULTI_CURRENCY,
 				// NFT,
 				EVM,
 				ORACLE,
 				// SCHEDULER,
 				DEX,
-				// STABLE_ASSET,
 				EVM_ACCOUNTS,
-				/* FUNAN
-				 * INCENTIVES */
+				/* INCENTIVES */
 			]),
 			_marker: Default::default(),
 		}
@@ -181,16 +170,14 @@ where
 				ECRECOVER_PUBLICKEY,
 				SHA3_256,
 				SHA3_512,
-				// Acala precompile
+				// Selendra precompile
 				MULTI_CURRENCY,
 				NFT,
 				EVM,
 				ORACLE,
 				SCHEDULER,
 				DEX,
-				STABLE_ASSET,
 				EVM_ACCOUNTS,
-				FUNAN,
 				INCENTIVES,
 			]),
 			_marker: Default::default(),
@@ -207,9 +194,7 @@ where
 	EVMAccountsPrecompile<R>: Precompile,
 	OraclePrecompile<R>: Precompile,
 	DEXPrecompile<R>: Precompile,
-	StableAssetPrecompile<R>: Precompile,
 	SchedulePrecompile<R>: Precompile,
-	FunanPrecompile<R>: Precompile,
 	IncentivesPrecompile<R>: Precompile,
 {
 	fn execute(
@@ -221,7 +206,7 @@ where
 		is_static: bool,
 	) -> Option<PrecompileResult> {
 		if !self.is_precompile(address) {
-			return None;
+			return None
 		}
 
 		// Filter known precompile addresses except Ethereum officials
@@ -230,7 +215,7 @@ where
 				exit_status: ExitRevert::Reverted,
 				output: "cannot be called with DELEGATECALL or CALLCODE".into(),
 				cost: target_gas.unwrap_or_default(),
-			}));
+			}))
 		}
 
 		log::trace!(target: "evm", "Precompile begin, address: {:?}, input: {:?}, target_gas: {:?}, context: {:?}", address, input, target_gas, context);
@@ -267,7 +252,7 @@ where
 		} else if address == SHA3_512 {
 			Some(Sha3FIPS512::execute(input, target_gas, context, is_static))
 		}
-		// Acala precompile
+		// Selendra precompile
 		else {
 			if !SystemContractsFilter::is_allowed(context.caller) {
 				log::debug!(target: "evm", "Precompile no permission: {:?}", context.caller);
@@ -275,7 +260,7 @@ where
 					exit_status: ExitRevert::Reverted,
 					output: "NoPermission".into(),
 					cost: target_gas.unwrap_or_default(),
-				}));
+				}))
 			}
 
 			if !module_evm::Pallet::<R>::is_contract(&context.caller) {
@@ -284,13 +269,11 @@ where
 					exit_status: ExitRevert::Reverted,
 					output: "Caller is not a system contract".into(),
 					cost: target_gas.unwrap_or_default(),
-				}));
+				}))
 			}
 
 			if address == MULTI_CURRENCY {
-				Some(MultiCurrencyPrecompile::<R>::execute(
-					input, target_gas, context, is_static,
-				))
+				Some(MultiCurrencyPrecompile::<R>::execute(input, target_gas, context, is_static))
 			} else if address == NFT {
 				Some(NFTPrecompile::<R>::execute(input, target_gas, context, is_static))
 			} else if address == EVM {
@@ -301,20 +284,10 @@ where
 				Some(SchedulePrecompile::<R>::execute(input, target_gas, context, is_static))
 			} else if address == DEX {
 				Some(DEXPrecompile::<R>::execute(input, target_gas, context, is_static))
-			} else if address == STABLE_ASSET {
-				Some(StableAssetPrecompile::<R>::execute(
-					input, target_gas, context, is_static,
-				))
 			} else if address == EVM_ACCOUNTS {
-				Some(EVMAccountsPrecompile::<R>::execute(
-					input, target_gas, context, is_static,
-				))
-			} else if address == FUNAN {
-				Some(FunanPrecompile::<R>::execute(input, target_gas, context, is_static))
+				Some(EVMAccountsPrecompile::<R>::execute(input, target_gas, context, is_static))
 			} else if address == INCENTIVES {
-				Some(IncentivesPrecompile::<R>::execute(
-					input, target_gas, context, is_static,
-				))
+				Some(IncentivesPrecompile::<R>::execute(input, target_gas, context, is_static))
 			} else {
 				None
 			}

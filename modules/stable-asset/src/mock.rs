@@ -94,8 +94,7 @@ type AtLeast64BitUnsigned = u128;
 
 pub type AssetId = i64;
 
-use std::cell::RefCell;
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap};
 
 pub struct Asset {
 	total: Balance,
@@ -115,11 +114,9 @@ impl CreateAssets<AssetId> for TestAssets {
 	fn create_asset() -> Result<AssetId, DispatchError> {
 		ASSETS.with(|d| -> Result<AssetId, DispatchError> {
 			let mut d = d.borrow_mut();
-			let id = AssetId::try_from(d.len()).map_err(|_| DispatchError::Other("Too large id"))?;
-			d.push(Asset {
-				total: 0,
-				balances: HashMap::new(),
-			});
+			let id =
+				AssetId::try_from(d.len()).map_err(|_| DispatchError::Other("Too large id"))?;
+			d.push(Asset { total: 0, balances: HashMap::new() });
 
 			Ok(id)
 		})
@@ -129,7 +126,8 @@ impl CreateAssets<AssetId> for TestAssets {
 impl Mutate<AccountId> for TestAssets {
 	fn mint_into(asset: AssetId, dest: &AccountId, amount: Balance) -> DispatchResult {
 		ASSETS.with(|d| -> DispatchResult {
-			let i = usize::try_from(asset).map_err(|_| DispatchError::Other("Index out of range"))?;
+			let i =
+				usize::try_from(asset).map_err(|_| DispatchError::Other("Index out of range"))?;
 			let mut d = d.borrow_mut();
 			let a = d.get_mut(i).ok_or(DispatchError::Other("Index out of range"))?;
 
@@ -145,9 +143,14 @@ impl Mutate<AccountId> for TestAssets {
 		})
 	}
 
-	fn burn_from(asset: AssetId, dest: &AccountId, amount: Balance) -> Result<Balance, DispatchError> {
+	fn burn_from(
+		asset: AssetId,
+		dest: &AccountId,
+		amount: Balance,
+	) -> Result<Balance, DispatchError> {
 		ASSETS.with(|d| -> DispatchResult {
-			let i = usize::try_from(asset).map_err(|_| DispatchError::Other("Index out of range"))?;
+			let i =
+				usize::try_from(asset).map_err(|_| DispatchError::Other("Index out of range"))?;
 			let mut d = d.borrow_mut();
 			let a = d.get_mut(i).ok_or(DispatchError::Other("Index out of range"))?;
 
@@ -190,11 +193,20 @@ impl Inspect<AccountId> for TestAssets {
 		todo!()
 	}
 
-	fn can_deposit(_asset: Self::AssetId, _who: &AccountId, _amount: Balance, _mint: bool) -> DepositConsequence {
+	fn can_deposit(
+		_asset: Self::AssetId,
+		_who: &AccountId,
+		_amount: Balance,
+		_mint: bool,
+	) -> DepositConsequence {
 		todo!()
 	}
 
-	fn can_withdraw(_asset: AssetId, _who: &AccountId, _amount: Balance) -> WithdrawConsequence<Balance> {
+	fn can_withdraw(
+		_asset: AssetId,
+		_who: &AccountId,
+		_amount: Balance,
+	) -> WithdrawConsequence<Balance> {
 		todo!()
 	}
 }
@@ -267,8 +279,5 @@ impl stable_asset::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap()
-		.into()
+	frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }

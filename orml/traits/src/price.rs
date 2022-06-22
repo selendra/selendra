@@ -11,7 +11,8 @@ pub trait PriceProvider<CurrencyId, Price> {
 /// A `PriceProvider` implementation based on price data from a `DataProvider`
 pub struct DefaultPriceProvider<CurrencyId, Source>(PhantomData<(CurrencyId, Source)>);
 
-impl<CurrencyId, Source, Price> PriceProvider<CurrencyId, Price> for DefaultPriceProvider<CurrencyId, Source>
+impl<CurrencyId, Source, Price> PriceProvider<CurrencyId, Price>
+	for DefaultPriceProvider<CurrencyId, Source>
 where
 	CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize,
 	Source: DataProvider<CurrencyId, Price>,
@@ -48,14 +49,8 @@ mod test {
 
 	#[test]
 	fn get_price_should_work() {
-		assert_eq!(
-			TestPriceProvider::get_price(1, 2),
-			Some(Price::saturating_from_rational(1, 2))
-		);
-		assert_eq!(
-			TestPriceProvider::get_price(2, 1),
-			Some(Price::saturating_from_rational(2, 1))
-		);
+		assert_eq!(TestPriceProvider::get_price(1, 2), Some(Price::saturating_from_rational(1, 2)));
+		assert_eq!(TestPriceProvider::get_price(2, 1), Some(Price::saturating_from_rational(2, 1)));
 	}
 
 	#[test]

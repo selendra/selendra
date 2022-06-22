@@ -1,51 +1,45 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 #![cfg(any(test, feature = "bench"))]
 
-use crate::{AllPrecompiles, Ratio, Weight, NORMAL_DISPATCH_RATIO, MAXIMUM_BLOCK_WEIGHT, AVERAGE_ON_INITIALIZE_RATIO};
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use crate::{AllPrecompiles, Ratio, RuntimeBlockWeights, Weight};
+use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{
 		ConstU128, ConstU32, ConstU64, EqualPrivilegeOnly, Everything, InstanceFilter, Nothing, OnFinalize,
 		OnInitialize, SortedMembers,
 	},
-	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight},
-		IdentityFee, DispatchClass,
-	},
+	weights::IdentityFee,
 	PalletId, RuntimeDebug,
 };
-use frame_system::{limits, offchain::SendTransactionTypes, EnsureRoot, EnsureSignedBy};
-use module_cdp_engine::CollateralCurrencyIds;
+use frame_system::{offchain::SendTransactionTypes, EnsureRoot, EnsureSignedBy};
 use module_evm::{EvmChainId, EvmTask};
 use module_evm_accounts::EvmAddressMapping;
 use module_support::{
-	mocks::MockStableAsset, AddressMapping as AddressMappingT, DEXIncentives, DispatchableTask,
+	AddressMapping as AddressMappingT, DEXIncentives, DispatchableTask,
 	EmergencyShutdown, ExchangeRate, ExchangeRateProvider, PoolId, PriceProvider, Rate,
-	SpecificJointsSwap,
 };
 use orml_traits::{parameter_type_with_key, MultiReservableCurrency};
 pub use primitives::{
 	define_combined_task,
 	evm::{convert_decimals_to_evm, EvmAddress},
 	task::TaskResult,
-	Address, Amount,BlockNumber, currency::{DexShare, CurrencyId, TokenSymbol}, Header, Moment, Nonce,
-	ReserveIdentifier, Signature, TradingPair, Balance
+	Address, Amount, AuctionId, BlockNumber, CurrencyId, DexShare, EraIndex, Header, Lease, Moment, Nonce,
+	ReserveIdentifier, Signature, TokenSymbol, TradingPair,
 };
 use scale_info::TypeInfo;
 use sp_core::{H160, H256};
@@ -54,33 +48,11 @@ use sp_runtime::{
 	AccountId32, DispatchResult, FixedPointNumber, FixedU128, Perbill, Percent, Permill,
 };
 use sp_std::prelude::*;
-// use xcm::latest::prelude::*;
-
-parameter_types! {
-	/// Block weights base values and limits.
-	pub RuntimeBlockWeights: limits::BlockWeights = limits::BlockWeights::builder()
-		.base_block(BlockExecutionWeight::get())
-		.for_class(DispatchClass::all(), |weights| {
-			weights.base_extrinsic = ExtrinsicBaseWeight::get();
-		})
-		.for_class(DispatchClass::Normal, |weights| {
-			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
-		})
-		.for_class(DispatchClass::Operational, |weights| {
-			weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
-			// Operational transactions have an extra reserved space, so that they
-			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
-			weights.reserved = Some(
-				MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT,
-			);
-		})
-		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
-		.build_or_panic();
-}
 
 pub type AccountId = AccountId32;
 type Key = CurrencyId;
 pub type Price = FixedU128;
+type Balance = u128;
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
@@ -272,7 +244,7 @@ parameter_types! {
 	pub MaxSwapSlippageCompareToOracle: Ratio = Ratio::one();
 	pub const TreasuryPalletId: PalletId = PalletId(*b"sel/trsy");
 	pub const TransactionPaymentPalletId: PalletId = PalletId(*b"sel/fees");
-	pub KaruraTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
+	pub CardamomTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 	pub const CustomFeeSurplus: Percent = Percent::from_percent(50);
 	pub const AlternativeFeeSurplus: Percent = Percent::from_percent(25);
 	pub DefaultFeeTokens: Vec<CurrencyId> = vec![SUSD];
@@ -298,7 +270,7 @@ impl module_transaction_payment::Config for Test {
 	type PriceSource = module_prices::RealTimePriceProvider<Test>;
 	type WeightInfo = ();
 	type PalletId = TransactionPaymentPalletId;
-	type TreasuryAccount = KaruraTreasuryAccount;
+	type TreasuryAccount = CardamomTreasuryAccount;
 	type UpdateOrigin = EnsureSignedBy<ListingOrigin, AccountId>;
 	type CustomFeeSurplus = CustomFeeSurplus;
 	type AlternativeFeeSurplus = AlternativeFeeSurplus;
@@ -405,19 +377,6 @@ impl module_dex::Config for Test {
 	type OnLiquidityPoolUpdated = ();
 }
 
-parameter_types! {
-	pub const LoansPalletId: PalletId = PalletId(*b"sel/loan");
-}
-
-impl module_loans::Config for Test {
-	type Event = Event;
-	type Currency = Tokens;
-	type RiskManager = CDPEngine;
-	type CDPTreasury = CDPTreasury;
-	type PalletId = LoansPalletId;
-	type OnUpdateLoan = ();
-}
-
 pub struct MockPriceSource;
 impl PriceProvider<CurrencyId> for MockPriceSource {
 	fn get_relative_price(_base: CurrencyId, _quote: CurrencyId) -> Option<Price> {
@@ -429,39 +388,6 @@ impl PriceProvider<CurrencyId> for MockPriceSource {
 	}
 }
 
-parameter_type_with_key! {
-	pub MinimumCollateralAmount: |_currency_id: CurrencyId| -> Balance {
-		10
-	};
-}
-
-parameter_types! {
-	pub DefaultLiquidationRatio: Ratio = Ratio::saturating_from_rational(3, 2);
-	pub DefaultDebitExchangeRate: ExchangeRate = ExchangeRate::one();
-	pub DefaultLiquidationPenalty: Rate = Rate::saturating_from_rational(10, 100);
-}
-
-impl module_cdp_engine::Config for Test {
-	type Event = Event;
-	type PriceSource = MockPriceSource;
-	type DefaultLiquidationRatio = DefaultLiquidationRatio;
-	type DefaultDebitExchangeRate = DefaultDebitExchangeRate;
-	type DefaultLiquidationPenalty = DefaultLiquidationPenalty;
-	type MinimumDebitValue = ConstU128<2>;
-	type MinimumCollateralAmount = MinimumCollateralAmount;
-	type GetStableCurrencyId = GetStableCurrencyId;
-	type CDPTreasury = CDPTreasury;
-	type UpdateOrigin = EnsureSignedBy<One, AccountId>;
-	type MaxSwapSlippageCompareToOracle = MaxSwapSlippageCompareToOracle;
-	type UnsignedPriority = ConstU64<1048576>; // 1 << 20
-	type EmergencyShutdown = MockEmergencyShutdown;
-	type UnixTime = Timestamp;
-	type Currency = Currencies;
-	type DEX = DexModule;
-	type Swap = SpecificJointsSwap<DexModule, AlternativeSwapPathJointList>;
-	type WeightInfo = ();
-}
-
 pub struct MockEmergencyShutdown;
 impl EmergencyShutdown for MockEmergencyShutdown {
 	fn is_shutdown() -> bool {
@@ -470,60 +396,17 @@ impl EmergencyShutdown for MockEmergencyShutdown {
 }
 
 parameter_types! {
-	pub const CDPTreasuryPalletId: PalletId = PalletId(*b"sel/cdpt");
-	pub CDPTreasuryAccount: AccountId = PalletId(*b"sel/hztr").into_account_truncating();
+	pub const SelTreasuryPalletId: PalletId = PalletId(*b"sel/cdpt");
+	pub SelTreasuryAccount: AccountId = PalletId(*b"sel/hztr").into_account_truncating();
 	pub AlternativeSwapPathJointList: Vec<Vec<CurrencyId>> = vec![
 		vec![SUSD],
 	];
 }
 
-impl module_cdp_treasury::Config for Test {
-	type Event = Event;
+impl module_treasury::Config for Test {
 	type Currency = Currencies;
 	type GetStableCurrencyId = GetStableCurrencyId;
-	type UpdateOrigin = EnsureSignedBy<One, AccountId>;
-	type DEX = DexModule;
-	type PalletId = CDPTreasuryPalletId;
-	type TreasuryAccount = CDPTreasuryAccount;
-	type WeightInfo = ();
-	type StableAsset = MockStableAsset<CurrencyId, Balance, AccountId, BlockNumber>;
-	type Swap = SpecificJointsSwap<DexModule, AlternativeSwapPathJointList>;
-}
-
-impl module_funan::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type DepositPerAuthorization = ConstU128<100>;
-	type CollateralCurrencyIds = CollateralCurrencyIds<Test>;
-	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub const StableAssetPalletId: PalletId = PalletId(*b"nuts/sta");
-}
-
-pub struct EnsurePoolAssetId;
-impl nutsfinance_stable_asset::traits::ValidateAssetId<CurrencyId> for EnsurePoolAssetId {
-	fn validate(_currency_id: CurrencyId) -> bool {
-		true
-	}
-}
-
-impl nutsfinance_stable_asset::Config for Test {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type Assets = Tokens;
-	type PalletId = StableAssetPalletId;
-
-	type AtLeast64BitUnsigned = u128;
-	type FeePrecision = ConstU128<10_000_000_000>; // 10 decimals
-	type APrecision = ConstU128<100>; // 2 decimals
-	type PoolAssetLimit = ConstU32<5>;
-	type SwapExactOverAmount = ConstU128<100>;
-	type WeightInfo = ();
-	type ListingOrigin = EnsureSignedBy<ListingOrigin, AccountId>;
-	type EnsurePoolAssetId = EnsurePoolAssetId;
+	type PalletId = SelTreasuryPalletId;
 }
 
 pub type AdaptedBasicCurrency = module_currencies::BasicCurrencyAdapter<Test, Balances, Amount, BlockNumber>;
@@ -599,6 +482,12 @@ impl BlockNumberProvider for MockRelayBlockNumberProvider {
 }
 
 parameter_type_with_key! {
+	pub LiquidCrowdloanLeaseBlockNumber: |_lease: Lease| -> Option<BlockNumber> {
+		None
+	};
+}
+
+parameter_type_with_key! {
 	pub PricingPegged: |_currency_id: CurrencyId| -> Option<CurrencyId> {
 		None
 	};
@@ -624,16 +513,7 @@ impl module_prices::Config for Test {
 	type DEX = DexModule;
 	type Currency = Currencies;
 	type Erc20InfoMapping = EvmErc20InfoMapping;
-	type PricingPegged = PricingPegged;
 	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub const StakingCurrencyId: CurrencyId = DOT;
-	pub DefaultExchangeRate: ExchangeRate = ExchangeRate::saturating_from_rational(1, 10);
-	pub ActiveSubAccountsIndexList: Vec<u16> = vec![0, 1, 2];
-	pub const MintThreshold: Balance = 0;
-	pub const RedeemThreshold: Balance = 0;
 }
 
 impl orml_rewards::Config for Test {
@@ -661,7 +541,7 @@ impl module_incentives::Config for Test {
 	type NativeCurrencyId = GetNativeCurrencyId;
 	type EarnShareBooster = EarnShareBooster;
 	type UpdateOrigin = EnsureSignedBy<One, AccountId>;
-	type CDPTreasury = CDPTreasury;
+	type SelTreasury = SelTreasury;
 	type Currency = Tokens;
 	type DEX = DexModule;
 	type EmergencyShutdown = MockEmergencyShutdown;
@@ -673,6 +553,7 @@ pub const ALICE: AccountId = AccountId::new([1u8; 32]);
 pub const BOB: AccountId = AccountId::new([2u8; 32]);
 pub const EVA: AccountId = AccountId::new([5u8; 32]);
 pub const REWARDS_SOURCE: AccountId = AccountId::new([3u8; 32]);
+pub const HOMA_TREASURY: AccountId = AccountId::new([255u8; 32]);
 
 pub fn alice() -> AccountId {
 	<Test as module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr())
@@ -694,11 +575,11 @@ pub fn sel_evm_address() -> EvmAddress {
 	EvmAddress::try_from(SEL).unwrap()
 }
 
-pub fn susd_evm_address() -> EvmAddress {
+pub fn ausd_evm_address() -> EvmAddress {
 	EvmAddress::try_from(SUSD).unwrap()
 }
 
-pub fn lp_sel_susd_evm_address() -> EvmAddress {
+pub fn lp_sel_ausd_evm_address() -> EvmAddress {
 	EvmAddress::try_from(LP_SEL_SUSD).unwrap()
 }
 
@@ -724,10 +605,7 @@ frame_support::construct_runtime!(
 		Tokens: orml_tokens exclude_parts { Call },
 		Balances: pallet_balances,
 		Currencies: module_currencies,
-		CDPEngine: module_cdp_engine,
-		CDPTreasury: module_cdp_treasury,
-		Loans: module_loans,
-		Funan: module_funan,
+		SelTreasury: module_treasury,
 		EVMBridge: module_evm_bridge exclude_parts { Call },
 		AssetRegistry: module_asset_registry,
 		NFTModule: module_nft,
@@ -742,7 +620,6 @@ frame_support::construct_runtime!(
 		IdleScheduler: module_idle_scheduler,
 		Incentives: module_incentives,
 		Rewards: orml_rewards,
-		StableAsset: nutsfinance_stable_asset,
 	}
 );
 

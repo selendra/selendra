@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Unit tests for the dex oracle module.
 
@@ -27,10 +26,7 @@ use sp_runtime::{traits::BadOrigin, FixedPointNumber};
 fn enable_average_price_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		Timestamp::set_timestamp(1000);
-		assert_noop!(
-			DexOracle::enable_average_price(Origin::signed(0), SUSD, DOT, 0),
-			BadOrigin
-		);
+		assert_noop!(DexOracle::enable_average_price(Origin::signed(0), SUSD, DOT, 0), BadOrigin);
 		assert_noop!(
 			DexOracle::enable_average_price(Origin::signed(1), SUSD, LP_SUSD_DOT, 0),
 			Error::<Runtime>::InvalidCurrencyId
@@ -45,10 +41,7 @@ fn enable_average_price_work() {
 		);
 
 		set_pool(&SUSDDOTPair::get(), 1_000, 100);
-		assert_eq!(
-			DexOracle::cumulatives(SUSDDOTPair::get()),
-			(U256::from(0), U256::from(0), 0)
-		);
+		assert_eq!(DexOracle::cumulatives(SUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
 		assert_eq!(DexOracle::average_prices(SUSDDOTPair::get()), None);
 
 		assert_ok!(DexOracle::enable_average_price(Origin::signed(1), SUSD, DOT, 12000));
@@ -81,10 +74,7 @@ fn disable_average_price_work() {
 		set_pool(&SUSDDOTPair::get(), 1_000, 100);
 		Timestamp::set_timestamp(100);
 		assert_ok!(DexOracle::enable_average_price(Origin::signed(1), SUSD, DOT, 1000));
-		assert_eq!(
-			DexOracle::cumulatives(SUSDDOTPair::get()),
-			(U256::from(0), U256::from(0), 100)
-		);
+		assert_eq!(DexOracle::cumulatives(SUSDDOTPair::get()), (U256::from(0), U256::from(0), 100));
 		assert_eq!(
 			DexOracle::average_prices(SUSDDOTPair::get()),
 			Some((
@@ -97,10 +87,7 @@ fn disable_average_price_work() {
 			))
 		);
 
-		assert_noop!(
-			DexOracle::disable_average_price(Origin::signed(0), SUSD, DOT),
-			BadOrigin
-		);
+		assert_noop!(DexOracle::disable_average_price(Origin::signed(0), SUSD, DOT), BadOrigin);
 		assert_noop!(
 			DexOracle::disable_average_price(Origin::signed(1), SUSD, LP_SUSD_DOT),
 			Error::<Runtime>::InvalidCurrencyId
@@ -111,10 +98,7 @@ fn disable_average_price_work() {
 		);
 
 		assert_ok!(DexOracle::disable_average_price(Origin::signed(1), SUSD, DOT));
-		assert_eq!(
-			DexOracle::cumulatives(SUSDDOTPair::get()),
-			(U256::from(0), U256::from(0), 0)
-		);
+		assert_eq!(DexOracle::cumulatives(SUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
 		assert_eq!(DexOracle::average_prices(SUSDDOTPair::get()), None);
 	});
 }
@@ -153,12 +137,7 @@ fn update_average_price_interval_work() {
 			Error::<Runtime>::IntervalIsZero
 		);
 
-		assert_ok!(DexOracle::update_average_price_interval(
-			Origin::signed(1),
-			SUSD,
-			DOT,
-			2000
-		));
+		assert_ok!(DexOracle::update_average_price_interval(Origin::signed(1), SUSD, DOT, 2000));
 		assert_eq!(
 			DexOracle::average_prices(SUSDDOTPair::get()),
 			Some((
@@ -179,18 +158,12 @@ fn try_update_cumulative_work() {
 		// initialize cumulative price
 		set_pool(&SUSDDOTPair::get(), 1_000, 100);
 		assert_ok!(DexOracle::enable_average_price(Origin::signed(1), SUSD, DOT, 1000));
-		assert_eq!(
-			DexOracle::cumulatives(SUSDDOTPair::get()),
-			(U256::from(0), U256::from(0), 0)
-		);
+		assert_eq!(DexOracle::cumulatives(SUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
 
 		// will not cumulative if now is not gt than the last update cumulative timestamp.
 		assert_eq!(Timestamp::now(), 0);
 		DexOracle::try_update_cumulative(&SUSDDOTPair::get(), 500, 200);
-		assert_eq!(
-			DexOracle::cumulatives(SUSDDOTPair::get()),
-			(U256::from(0), U256::from(0), 0)
-		);
+		assert_eq!(DexOracle::cumulatives(SUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
 
 		Timestamp::set_timestamp(100);
 		assert_eq!(Timestamp::now(), 100);
@@ -217,15 +190,9 @@ fn try_update_cumulative_work() {
 		);
 
 		// will not cumulative if TradingPair is not enabled as cumulative price.
-		assert_eq!(
-			DexOracle::cumulatives(SELDOTPair::get()),
-			(U256::from(0), U256::from(0), 0)
-		);
+		assert_eq!(DexOracle::cumulatives(SELDOTPair::get()), (U256::from(0), U256::from(0), 0));
 		DexOracle::try_update_cumulative(&SELDOTPair::get(), 500, 200);
-		assert_eq!(
-			DexOracle::cumulatives(SELDOTPair::get()),
-			(U256::from(0), U256::from(0), 0)
-		);
+		assert_eq!(DexOracle::cumulatives(SELDOTPair::get()), (U256::from(0), U256::from(0), 0));
 	});
 }
 
@@ -236,10 +203,7 @@ fn on_initialize_work() {
 		assert_eq!(Timestamp::now(), 0);
 		set_pool(&SUSDDOTPair::get(), 1000, 100);
 		assert_ok!(DexOracle::enable_average_price(Origin::signed(1), SUSD, DOT, 1000));
-		assert_eq!(
-			DexOracle::cumulatives(SUSDDOTPair::get()),
-			(U256::from(0), U256::from(0), 0)
-		);
+		assert_eq!(DexOracle::cumulatives(SUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
 		assert_eq!(
 			DexOracle::average_prices(SUSDDOTPair::get()),
 			Some((
@@ -253,10 +217,7 @@ fn on_initialize_work() {
 		);
 		set_pool(&SELDOTPair::get(), 1000, 1000);
 		assert_ok!(DexOracle::enable_average_price(Origin::signed(1), SEL, DOT, 2000));
-		assert_eq!(
-			DexOracle::cumulatives(SELDOTPair::get()),
-			(U256::from(0), U256::from(0), 0)
-		);
+		assert_eq!(DexOracle::cumulatives(SELDOTPair::get()), (U256::from(0), U256::from(0), 0));
 		assert_eq!(
 			DexOracle::average_prices(SELDOTPair::get()),
 			Some((
@@ -269,14 +230,11 @@ fn on_initialize_work() {
 			))
 		);
 
-		// elapsed time is lt all update interval of trading pairs, no trading pairs will not update average
-		// price.
+		// elapsed time is lt all update interval of trading pairs, no trading pairs will not update
+		// average price.
 		Timestamp::set_timestamp(999);
 		DexOracle::on_initialize(1);
-		assert_eq!(
-			DexOracle::cumulatives(SUSDDOTPair::get()),
-			(U256::from(0), U256::from(0), 0)
-		);
+		assert_eq!(DexOracle::cumulatives(SUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
 		assert_eq!(
 			DexOracle::average_prices(SUSDDOTPair::get()),
 			Some((
@@ -288,10 +246,7 @@ fn on_initialize_work() {
 				1000,
 			))
 		);
-		assert_eq!(
-			DexOracle::cumulatives(SELDOTPair::get()),
-			(U256::from(0), U256::from(0), 0)
-		);
+		assert_eq!(DexOracle::cumulatives(SELDOTPair::get()), (U256::from(0), U256::from(0), 0));
 		assert_eq!(
 			DexOracle::average_prices(SELDOTPair::get()),
 			Some((
@@ -304,8 +259,8 @@ fn on_initialize_work() {
 			))
 		);
 
-		// elapsed time is lt the update interval of SUSD/DOT, update average price of SUSD/DOT after try
-		// update cumulatives.
+		// elapsed time is lt the update interval of SUSD/DOT, update average price of SUSD/DOT
+		// after try update cumulatives.
 		Timestamp::set_timestamp(1200);
 		DexOracle::on_initialize(2);
 		assert_eq!(
@@ -327,10 +282,7 @@ fn on_initialize_work() {
 				1000,
 			))
 		);
-		assert_eq!(
-			DexOracle::cumulatives(SELDOTPair::get()),
-			(U256::from(0), U256::from(0), 0)
-		);
+		assert_eq!(DexOracle::cumulatives(SELDOTPair::get()), (U256::from(0), U256::from(0), 0));
 		assert_eq!(
 			DexOracle::average_prices(SELDOTPair::get()),
 			Some((
@@ -343,8 +295,8 @@ fn on_initialize_work() {
 			))
 		);
 
-		// elapsed time is lt the update interval of SEL/DOT, update average price of SEL/DOT after try
-		// update cumulatives.
+		// elapsed time is lt the update interval of SEL/DOT, update average price of SEL/DOT after
+		// try update cumulatives.
 		set_pool(&SELDOTPair::get(), 1000, 2000);
 		Timestamp::set_timestamp(2100);
 		DexOracle::on_initialize(3);
@@ -527,14 +479,8 @@ fn dex_price_providers_work() {
 		assert_eq!(CurrentDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD), None);
 		assert_eq!(AverageDEXPriceProvider::<Runtime>::get_relative_price(SUSD, DOT), None);
 		assert_eq!(AverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD), None);
-		assert_eq!(
-			PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(SUSD, DOT),
-			None
-		);
-		assert_eq!(
-			PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD),
-			None
-		);
+		assert_eq!(PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(SUSD, DOT), None);
+		assert_eq!(PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD), None);
 
 		set_pool(&SUSDDOTPair::get(), 1_000, 100);
 		assert_eq!(

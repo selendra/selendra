@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::LinearCostPrecompile;
 use crate::runner::state::PrecompileFailure;
@@ -27,7 +26,10 @@ impl LinearCostPrecompile for Sha3FIPS256 {
 	const BASE: u64 = 60;
 	const WORD: u64 = 12;
 
-	fn execute(input: &[u8], _: u64) -> core::result::Result<(ExitSucceed, Vec<u8>), PrecompileFailure> {
+	fn execute(
+		input: &[u8],
+		_: u64,
+	) -> core::result::Result<(ExitSucceed, Vec<u8>), PrecompileFailure> {
 		let mut output = [0; 32];
 		let mut sha3 = tiny_keccak::Sha3::v256();
 		sha3.update(input);
@@ -43,7 +45,10 @@ impl LinearCostPrecompile for Sha3FIPS512 {
 	const BASE: u64 = 60;
 	const WORD: u64 = 12;
 
-	fn execute(input: &[u8], _: u64) -> core::result::Result<(ExitSucceed, Vec<u8>), PrecompileFailure> {
+	fn execute(
+		input: &[u8],
+		_: u64,
+	) -> core::result::Result<(ExitSucceed, Vec<u8>), PrecompileFailure> {
 		let mut output = [0; 64];
 		let mut sha3 = tiny_keccak::Sha3::v512();
 		sha3.update(input);
@@ -71,10 +76,10 @@ mod tests {
 			Ok((_, out)) => {
 				assert_eq!(out, expected);
 				Ok(())
-			}
+			},
 			Err(e) => {
 				panic!("Test not expected to fail: {:?}", e);
-			}
+			},
 		}
 	}
 
@@ -92,10 +97,10 @@ mod tests {
 			Ok((_, out)) => {
 				assert_eq!(out, expected);
 				Ok(())
-			}
+			},
 			Err(e) => {
 				panic!("Test not expected to fail: {:?}", e);
-			}
+			},
 		}
 	}
 
@@ -113,10 +118,10 @@ mod tests {
 			Ok((_, out)) => {
 				assert_eq!(out, expected);
 				Ok(())
-			}
+			},
 			Err(e) => {
 				panic!("Test not expected to fail: {:?}", e);
-			}
+			},
 		}
 	}
 
@@ -136,10 +141,10 @@ mod tests {
 			Ok((_, out)) => {
 				assert_eq!(out, expected);
 				Ok(())
-			}
+			},
 			Err(e) => {
 				panic!("Test not expected to fail: {:?}", e);
-			}
+			},
 		}
 	}
 }

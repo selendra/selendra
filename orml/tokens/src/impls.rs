@@ -1,11 +1,15 @@
-use frame_support::dispatch::{DispatchError, DispatchResult};
-use frame_support::traits::{
-	fungible, fungibles,
-	tokens::{Balance as BalanceT, DepositConsequence, WithdrawConsequence},
-	Contains, Get,
+use frame_support::{
+	dispatch::{DispatchError, DispatchResult},
+	traits::{
+		fungible, fungibles,
+		tokens::{Balance as BalanceT, DepositConsequence, WithdrawConsequence},
+		Contains, Get,
+	},
 };
 
-pub struct Combiner<AccountId, TestKey, A, B>(sp_std::marker::PhantomData<(AccountId, TestKey, A, B)>);
+pub struct Combiner<AccountId, TestKey, A, B>(
+	sp_std::marker::PhantomData<(AccountId, TestKey, A, B)>,
+);
 
 impl<AccountId, TestKey, A, B> fungibles::Inspect<AccountId> for Combiner<AccountId, TestKey, A, B>
 where
@@ -48,7 +52,12 @@ where
 		}
 	}
 
-	fn can_deposit(asset: Self::AssetId, who: &AccountId, amount: Self::Balance, mint: bool) -> DepositConsequence {
+	fn can_deposit(
+		asset: Self::AssetId,
+		who: &AccountId,
+		amount: Self::Balance,
+		mint: bool,
+	) -> DepositConsequence {
 		if TestKey::contains(&asset) {
 			A::can_deposit(who, amount, mint)
 		} else {
@@ -123,8 +132,11 @@ pub trait ConvertBalance<A, B> {
 	fn convert_balance_back(amount: B, asset_id: Self::AssetId) -> A;
 }
 
-pub struct Mapper<AccountId, T, C, B, GetCurrencyId>(sp_std::marker::PhantomData<(AccountId, T, C, B, GetCurrencyId)>);
-impl<AccountId, T, C, B, GetCurrencyId> fungible::Inspect<AccountId> for Mapper<AccountId, T, C, B, GetCurrencyId>
+pub struct Mapper<AccountId, T, C, B, GetCurrencyId>(
+	sp_std::marker::PhantomData<(AccountId, T, C, B, GetCurrencyId)>,
+);
+impl<AccountId, T, C, B, GetCurrencyId> fungible::Inspect<AccountId>
+	for Mapper<AccountId, T, C, B, GetCurrencyId>
 where
 	T: fungibles::Inspect<AccountId>,
 	C: ConvertBalance<
@@ -173,9 +185,8 @@ where
 			C::convert_balance_back(amount, GetCurrencyId::get()),
 		);
 		match res {
-			WithdrawConsequence::ReducedToZero(b) => {
-				WithdrawConsequence::ReducedToZero(C::convert_balance(b, GetCurrencyId::get()))
-			}
+			WithdrawConsequence::ReducedToZero(b) =>
+				WithdrawConsequence::ReducedToZero(C::convert_balance(b, GetCurrencyId::get())),
 			NoFunds => NoFunds,
 			WouldDie => WouldDie,
 			UnknownAsset => UnknownAsset,
@@ -187,7 +198,8 @@ where
 	}
 }
 
-impl<AccountId, T, C, B, GetCurrencyId> fungible::Transfer<AccountId> for Mapper<AccountId, T, C, B, GetCurrencyId>
+impl<AccountId, T, C, B, GetCurrencyId> fungible::Transfer<AccountId>
+	for Mapper<AccountId, T, C, B, GetCurrencyId>
 where
 	T: fungibles::Transfer<AccountId, Balance = B>,
 	C: ConvertBalance<
@@ -198,7 +210,12 @@ where
 	B: BalanceT,
 	GetCurrencyId: Get<<T as fungibles::Inspect<AccountId>>::AssetId>,
 {
-	fn transfer(source: &AccountId, dest: &AccountId, amount: B, keep_alive: bool) -> Result<B, DispatchError> {
+	fn transfer(
+		source: &AccountId,
+		dest: &AccountId,
+		amount: B,
+		keep_alive: bool,
+	) -> Result<B, DispatchError> {
 		T::transfer(
 			GetCurrencyId::get(),
 			source,
@@ -209,7 +226,8 @@ where
 	}
 }
 
-impl<AccountId, T, C, B, GetCurrencyId> fungible::Mutate<AccountId> for Mapper<AccountId, T, C, B, GetCurrencyId>
+impl<AccountId, T, C, B, GetCurrencyId> fungible::Mutate<AccountId>
+	for Mapper<AccountId, T, C, B, GetCurrencyId>
 where
 	T: fungibles::Mutate<AccountId, Balance = B>,
 	C: ConvertBalance<

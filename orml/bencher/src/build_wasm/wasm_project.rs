@@ -136,9 +136,9 @@ pub fn create_and_compile(
 		.as_ref()
 		.map(|wasm_binary| copy_wasm_to_target_directory(project_cargo_toml, wasm_binary));
 
-	wasm_binary_compressed
-		.as_ref()
-		.map(|wasm_binary_compressed| copy_wasm_to_target_directory(project_cargo_toml, wasm_binary_compressed));
+	wasm_binary_compressed.as_ref().map(|wasm_binary_compressed| {
+		copy_wasm_to_target_directory(project_cargo_toml, wasm_binary_compressed)
+	});
 
 	(wasm_binary_compressed.or(wasm_binary), bloaty)
 }
@@ -150,21 +150,21 @@ fn find_cargo_lock(cargo_manifest: &Path) -> Option<PathBuf> {
 	fn find_impl(mut path: PathBuf) -> Option<PathBuf> {
 		loop {
 			if path.join("Cargo.lock").exists() {
-				return Some(path.join("Cargo.lock"));
+				return Some(path.join("Cargo.lock"))
 			}
 
 			if !path.pop() {
-				return None;
+				return None
 			}
 		}
 	}
 
 	if let Some(path) = find_impl(build_helper::out_dir()) {
-		return Some(path);
+		return Some(path)
 	}
 
 	if let Some(path) = find_impl(cargo_manifest.to_path_buf()) {
-		return Some(path);
+		return Some(path)
 	}
 
 	build_helper::warning!(
@@ -178,9 +178,10 @@ fn find_cargo_lock(cargo_manifest: &Path) -> Option<PathBuf> {
 
 /// Extract the crate name from the given `Cargo.toml`.
 fn get_crate_name(cargo_manifest: &Path) -> String {
-	let cargo_toml: Table =
-		toml::from_str(&fs::read_to_string(cargo_manifest).expect("File exists as checked before; qed"))
-			.expect("Cargo manifest is a valid toml file; qed");
+	let cargo_toml: Table = toml::from_str(
+		&fs::read_to_string(cargo_manifest).expect("File exists as checked before; qed"),
+	)
+	.expect("Cargo manifest is a valid toml file; qed");
 
 	let package = cargo_toml
 		.get("package")
@@ -206,11 +207,10 @@ fn get_wasm_workspace_root() -> PathBuf {
 	loop {
 		match out_dir.parent() {
 			Some(parent) if out_dir.ends_with("build") => return parent.to_path_buf(),
-			_ => {
+			_ =>
 				if !out_dir.pop() {
-					break;
-				}
-			}
+					break
+				},
 		}
 	}
 
@@ -226,7 +226,8 @@ fn create_project_cargo_toml(
 	enabled_features: impl Iterator<Item = String>,
 ) {
 	let mut workspace_toml: Table = toml::from_str(
-		&fs::read_to_string(workspace_root_path.join("Cargo.toml")).expect("Workspace root `Cargo.toml` exists; qed"),
+		&fs::read_to_string(workspace_root_path.join("Cargo.toml"))
+			.expect("Workspace root `Cargo.toml` exists; qed"),
 	)
 	.expect("Workspace root `Cargo.toml` is a valid toml file; qed");
 
@@ -247,14 +248,14 @@ fn create_project_cargo_toml(
 	wasm_workspace_toml.insert("profile".into(), profile.into());
 
 	// Add patch section from the project root `Cargo.toml`
-	if let Some(mut patch) = workspace_toml.remove("patch").and_then(|p| p.try_into::<Table>().ok()) {
+	if let Some(mut patch) = workspace_toml.remove("patch").and_then(|p| p.try_into::<Table>().ok())
+	{
 		// Iterate over all patches and make the patch path absolute from the workspace
 		// root path.
 		patch
 			.iter_mut()
 			.filter_map(|p| {
-				p.1.as_table_mut()
-					.map(|t| t.iter_mut().filter_map(|t| t.1.as_table_mut()))
+				p.1.as_table_mut().map(|t| t.iter_mut().filter_map(|t| t.1.as_table_mut()))
 			})
 			.flatten()
 			.for_each(|p| {
@@ -318,7 +319,10 @@ fn find_package_by_manifest_path<'a>(
 }
 
 /// Get a list of enabled features for the project.
-fn project_enabled_features(cargo_manifest: &Path, crate_metadata: &cargo_metadata::Metadata) -> Vec<String> {
+fn project_enabled_features(
+	cargo_manifest: &Path,
+	crate_metadata: &cargo_metadata::Metadata,
+) -> Vec<String> {
 	let package = find_package_by_manifest_path(cargo_manifest, crate_metadata);
 
 	let mut enabled_features = package
@@ -330,11 +334,10 @@ fn project_enabled_features(cargo_manifest: &Path, crate_metadata: &cargo_metada
 
 			// We don't want to enable the `std`/`default` feature for the wasm build and
 			// we need to check if the feature is enabled by checking the env variable.
-			*f != "std"
-				&& *f != "default"
-				&& env::var(format!("CARGO_FEATURE_{}", feature_env))
-					.map(|v| v == "1")
-					.unwrap_or_default()
+			*f != "std" &&
+				*f != "default" && env::var(format!("CARGO_FEATURE_{}", feature_env))
+				.map(|v| v == "1")
+				.unwrap_or_default()
 		})
 		.cloned()
 		.collect::<Vec<_>>();
@@ -344,7 +347,10 @@ fn project_enabled_features(cargo_manifest: &Path, crate_metadata: &cargo_metada
 }
 
 /// Returns if the project has the `runtime-wasm` feature
-fn has_runtime_wasm_feature_declared(cargo_manifest: &Path, crate_metadata: &cargo_metadata::Metadata) -> bool {
+fn has_runtime_wasm_feature_declared(
+	cargo_manifest: &Path,
+	crate_metadata: &cargo_metadata::Metadata,
+) -> bool {
 	let package = find_package_by_manifest_path(cargo_manifest, crate_metadata);
 
 	package.features.keys().any(|k| k == "runtime-wasm")
@@ -367,7 +373,8 @@ fn create_project(
 	let wasm_binary = get_wasm_binary_name(project_cargo_toml);
 	let wasm_project_folder = wasm_workspace.join(&crate_name);
 
-	fs::create_dir_all(wasm_project_folder.join("src")).expect("Wasm project dir create can not fail; qed");
+	fs::create_dir_all(wasm_project_folder.join("src"))
+		.expect("Wasm project dir create can not fail; qed");
 
 	let mut enabled_features = project_enabled_features(project_cargo_toml, crate_metadata);
 
@@ -431,9 +438,9 @@ fn build_project(project: &Path, default_rustflags: &str, cargo_cmd: CargoComman
 		.args(&["rustc", "--target=wasm32-unknown-unknown"])
 		.arg(format!("--manifest-path={}", manifest_path.display()))
 		.env("RUSTFLAGS", rustflags)
-		// Unset the `CARGO_TARGET_DIR` to prevent a cargo deadlock (cargo locks a target dir exclusive).
-		// The runner project is created in `CARGO_TARGET_DIR` and executing it will create a sub target
-		// directory inside of `CARGO_TARGET_DIR`.
+		// Unset the `CARGO_TARGET_DIR` to prevent a cargo deadlock (cargo locks a target dir
+		// exclusive). The runner project is created in `CARGO_TARGET_DIR` and executing it will
+		// create a sub target directory inside of `CARGO_TARGET_DIR`.
 		.env_remove("CARGO_TARGET_DIR")
 		// We don't want to call ourselves recursively
 		.env(SKIP_BUILD_ENV, "");
@@ -447,7 +454,7 @@ fn build_project(project: &Path, default_rustflags: &str, cargo_cmd: CargoComman
 	};
 
 	match build_cmd.status().map(|s| s.success()) {
-		Ok(true) => {}
+		Ok(true) => {},
 		// Use `process.exit(1)` to have a clean error output.
 		_ => process::exit(1),
 	}
@@ -470,9 +477,7 @@ fn compact_wasm_file(
 	let wasm_compact_file = if is_release_build {
 		let wasm_compact_file = project.join(format!(
 			"{}.compact.wasm",
-			wasm_binary_name
-				.clone()
-				.unwrap_or_else(|| default_wasm_binary_name.clone()),
+			wasm_binary_name.clone().unwrap_or_else(|| default_wasm_binary_name.clone()),
 		));
 		wasm_gc::garbage_collect_file(&wasm_file, &wasm_compact_file)
 			.expect("Failed to compact generated WASM binary.");
@@ -482,11 +487,11 @@ fn compact_wasm_file(
 	};
 
 	let wasm_compact_compressed_file = wasm_compact_file.as_ref().and_then(|compact_binary| {
-		let file_name = wasm_binary_name
-			.clone()
-			.unwrap_or_else(|| default_wasm_binary_name.clone());
+		let file_name =
+			wasm_binary_name.clone().unwrap_or_else(|| default_wasm_binary_name.clone());
 
-		let wasm_compact_compressed_file = project.join(format!("{}.compact.compressed.wasm", file_name,));
+		let wasm_compact_compressed_file =
+			project.join(format!("{}.compact.compressed.wasm", file_name,));
 
 		if compress_wasm(&compact_binary.0, &wasm_compact_compressed_file) {
 			Some(WasmBinary(wasm_compact_compressed_file))
@@ -504,11 +509,7 @@ fn compact_wasm_file(
 	let bloaty_file = project.join(bloaty_file_name);
 	fs::copy(wasm_file, &bloaty_file).expect("Copying the bloaty file to the project dir.");
 
-	(
-		wasm_compact_file,
-		wasm_compact_compressed_file,
-		WasmBinaryBloaty(bloaty_file),
-	)
+	(wasm_compact_file, wasm_compact_compressed_file, WasmBinaryBloaty(bloaty_file))
 }
 
 fn compress_wasm(wasm_binary_path: &Path, compressed_binary_out_path: &Path) -> bool {
@@ -516,7 +517,8 @@ fn compress_wasm(wasm_binary_path: &Path, compressed_binary_out_path: &Path) -> 
 
 	let data = fs::read(wasm_binary_path).expect("Failed to read WASM binary");
 	if let Some(compressed) = sp_maybe_compressed_blob::compress(&data, CODE_BLOB_BOMB_LIMIT) {
-		fs::write(compressed_binary_out_path, &compressed[..]).expect("Failed to write WASM binary");
+		fs::write(compressed_binary_out_path, &compressed[..])
+			.expect("Failed to write WASM binary");
 
 		true
 	} else {

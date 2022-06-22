@@ -4,45 +4,53 @@ version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
-[package.metadata.docs.rs]
-targets = ["x86_64-unknown-linux-gnu"]
-
 [dependencies]
+paste = "1.0"
 hex-literal = "0.3.1"
 bstringify = "0.1.2"
 enumflags2 = { version = "0.6.3" }
 serde = { version = "1.0.136", optional = true }
 num_enum = { version = "0.5.1", default-features = false }
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+scale-info = { version = "2.1", default-features = false, features = ["derive"] }
+parity-util-mem = { version = "0.11", default-features = false, features = ["primitive-types"] }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["max-encoded-len"] }
 
-frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
-frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+orml-traits = { path = "../orml/traits", default-features = false }
 
 module-evm-utility = { path = "../modules/evm-utility", default-features = false }
 module-evm-utility-macro = { path = "../modules/evm-utility/macro" }
-nutsfinance-stable-asset = { version = "0.1.0", default-features = false, path = "../modules/stable-asset" }
+module-stable-asset = { version = "0.1.0", default-features = false, path = "../modules/stable-asset" }
+
+[dev-dependencies]
+serde_json = { version = "1.0.68" }
+
 
 [features]
 default = ["std"]
 std = [
 	"serde",
-	"sp-std/std",
 	"codec/std",
 	"num_enum/std",
-	"enumflags2/serde",
-	"frame-system/std",
-	"frame-support/std",
+	"parity-util-mem/std",
 	"scale-info/std",
-	"sp-application-crypto/std",
-	"sp-core/std",
+	"enumflags2/serde",
 	"sp-runtime/std",
-	"module-evm-utility/std",
-	"nutsfinance-stable-asset/std"
-]
+	"sp-core/std",
+	"sp-std/std",
+	"sp-io/std",
+	"sp-api/std",
 
+	"frame-support/std",
+
+	"orml-traits/std",
+	"module-evm-utility/std",
+	"module-stable-asset/std",
+]
 evm-tests = []

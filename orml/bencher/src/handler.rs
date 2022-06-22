@@ -6,8 +6,7 @@ use codec::Decode;
 use frame_benchmarking::frame_support::traits::StorageInfo;
 use linregress::{FormulaRegressionBuilder, RegressionDataBuilder};
 use serde::{Deserialize, Serialize};
-use std::io::Write;
-use std::time::Duration;
+use std::{io::Write, time::Duration};
 
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
 struct BenchData {
@@ -36,11 +35,7 @@ pub fn handle(output: Vec<u8>, storage_infos: Vec<StorageInfo>) {
 			let data = RegressionDataBuilder::new().build_from(data).unwrap();
 			let formula = "Y ~ X";
 
-			let model = FormulaRegressionBuilder::new()
-				.data(&data)
-				.formula(formula)
-				.fit()
-				.unwrap();
+			let model = FormulaRegressionBuilder::new().data(&data).formula(formula).fit().unwrap();
 
 			let mut total_reads = 0u32;
 			let mut total_writes = 0u32;
@@ -90,7 +85,8 @@ pub fn handle(output: Vec<u8>, storage_infos: Vec<StorageInfo>) {
 
 	let outdir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
 	let json_path = format!("{}/target/{}_bench_data.json", outdir, pkg_name);
-	let mut writer = std::io::BufWriter::new(std::fs::File::create(std::path::Path::new(&json_path)).unwrap());
+	let mut writer =
+		std::io::BufWriter::new(std::fs::File::create(std::path::Path::new(&json_path)).unwrap());
 	serde_json::to_writer_pretty(&mut writer, &data).unwrap();
 	writer.write_all(b"\n").unwrap();
 	writer.flush().unwrap();

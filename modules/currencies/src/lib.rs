@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Currencies module.
 
@@ -26,7 +25,8 @@ use frame_support::{
 	traits::{
 		tokens::{fungible, fungibles, DepositConsequence, WithdrawConsequence},
 		BalanceStatus as Status, Currency as PalletCurrency, ExistenceRequirement, Get, Imbalance,
-		LockableCurrency as PalletLockableCurrency, ReservableCurrency as PalletReservableCurrency, WithdrawReasons,
+		LockableCurrency as PalletLockableCurrency, ReservableCurrency as PalletReservableCurrency,
+		WithdrawReasons,
 	},
 	transactional,
 };
@@ -34,13 +34,16 @@ use frame_system::pallet_prelude::*;
 use orml_traits::{
 	arithmetic::{Signed, SimpleArithmetic},
 	currency::TransferAll,
-	BalanceStatus, BasicCurrency, BasicCurrencyExtended, BasicLockableCurrency, BasicReservableCurrency,
-	LockIdentifier, MultiCurrency, MultiCurrencyExtended, MultiLockableCurrency, MultiReservableCurrency, OnDust,
+	BalanceStatus, BasicCurrency, BasicCurrencyExtended, BasicLockableCurrency,
+	BasicReservableCurrency, LockIdentifier, MultiCurrency, MultiCurrencyExtended,
+	MultiLockableCurrency, MultiReservableCurrency, OnDust,
 };
 use primitives::{evm::EvmAddress, CurrencyId};
 use sp_io::hashing::blake2_256;
 use sp_runtime::{
-	traits::{CheckedAdd, CheckedSub, Convert, MaybeSerializeDeserialize, Saturating, StaticLookup, Zero},
+	traits::{
+		CheckedAdd, CheckedSub, Convert, MaybeSerializeDeserialize, Saturating, StaticLookup, Zero,
+	},
 	DispatchError, DispatchResult,
 };
 use sp_std::{fmt::Debug, marker, result, vec::Vec};
@@ -53,9 +56,12 @@ pub mod weights;
 pub use module::*;
 pub use weights::WeightInfo;
 
-type AmountOf<T> =
-	<<T as Config>::MultiCurrency as MultiCurrencyExtended<<T as frame_system::Config>::AccountId>>::Amount;
-type BalanceOf<T> = <<T as Config>::MultiCurrency as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
+type AmountOf<T> = <<T as Config>::MultiCurrency as MultiCurrencyExtended<
+	<T as frame_system::Config>::AccountId,
+>>::Amount;
+type BalanceOf<T> = <<T as Config>::MultiCurrency as MultiCurrency<
+	<T as frame_system::Config>::AccountId,
+>>::Balance;
 
 #[frame_support::pallet]
 pub mod module {
@@ -74,8 +80,11 @@ pub mod module {
 			+ fungibles::Unbalanced<Self::AccountId, AssetId = CurrencyId, Balance = BalanceOf<Self>>
 			+ fungibles::InspectHold<Self::AccountId, AssetId = CurrencyId, Balance = BalanceOf<Self>>
 			+ fungibles::MutateHold<Self::AccountId, AssetId = CurrencyId, Balance = BalanceOf<Self>>;
-		type NativeCurrency: BasicCurrencyExtended<Self::AccountId, Balance = BalanceOf<Self>, Amount = AmountOf<Self>>
-			+ BasicLockableCurrency<Self::AccountId, Balance = BalanceOf<Self>>
+		type NativeCurrency: BasicCurrencyExtended<
+				Self::AccountId,
+				Balance = BalanceOf<Self>,
+				Amount = AmountOf<Self>,
+			> + BasicLockableCurrency<Self::AccountId, Balance = BalanceOf<Self>>
 			+ BasicReservableCurrency<Self::AccountId, Balance = BalanceOf<Self>>
 			+ fungible::Inspect<Self::AccountId, Balance = BalanceOf<Self>>
 			+ fungible::Mutate<Self::AccountId, Balance = BalanceOf<Self>>
@@ -136,23 +145,11 @@ pub mod module {
 			amount: BalanceOf<T>,
 		},
 		/// Withdrawn some balances from an account
-		Withdrawn {
-			currency_id: CurrencyId,
-			who: T::AccountId,
-			amount: BalanceOf<T>,
-		},
+		Withdrawn { currency_id: CurrencyId, who: T::AccountId, amount: BalanceOf<T> },
 		/// Deposited some balance into an account
-		Deposited {
-			currency_id: CurrencyId,
-			who: T::AccountId,
-			amount: BalanceOf<T>,
-		},
+		Deposited { currency_id: CurrencyId, who: T::AccountId, amount: BalanceOf<T> },
 		/// Dust swept.
-		DustSwept {
-			currency_id: CurrencyId,
-			who: T::AccountId,
-			amount: BalanceOf<T>,
-		},
+		DustSwept { currency_id: CurrencyId, who: T::AccountId, amount: BalanceOf<T> },
 	}
 
 	#[pallet::pallet]
@@ -208,7 +205,11 @@ pub mod module {
 		) -> DispatchResult {
 			ensure_root(origin)?;
 			let dest = T::Lookup::lookup(who)?;
-			<Self as MultiCurrencyExtended<T::AccountId>>::update_balance(currency_id, &dest, amount)
+			<Self as MultiCurrencyExtended<T::AccountId>>::update_balance(
+				currency_id,
+				&dest,
+				amount,
+			)
 		}
 
 		#[pallet::weight(T::WeightInfo::sweep_dust(accounts.len() as u32))]
@@ -219,16 +220,16 @@ pub mod module {
 		) -> DispatchResult {
 			T::SweepOrigin::ensure_origin(origin)?;
 			if let CurrencyId::Erc20(_) = currency_id {
-				return Err(Error::<T>::Erc20InvalidOperation.into());
+				return Err(Error::<T>::Erc20InvalidOperation.into())
 			}
 			for account in accounts {
 				let free_balance = Self::free_balance(currency_id, &account);
 				if free_balance.is_zero() {
-					continue;
+					continue
 				}
 				let total_balance = Self::total_balance(currency_id, &account);
 				if free_balance != total_balance {
-					continue;
+					continue
 				}
 				if free_balance < Self::minimum_balance(currency_id) {
 					T::OnDust::on_dust(&account, currency_id, free_balance);
@@ -251,7 +252,8 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 	fn minimum_balance(currency_id: Self::CurrencyId) -> Self::Balance {
 		match currency_id {
 			CurrencyId::Erc20(_) => Default::default(),
-			id if id == T::GetNativeCurrencyId::get() => <T::NativeCurrency as fungible::Inspect<_>>::minimum_balance(),
+			id if id == T::GetNativeCurrencyId::get() =>
+				<T::NativeCurrency as fungible::Inspect<_>>::minimum_balance(),
 			_ => <T::MultiCurrency as fungibles::Inspect<_>>::minimum_balance(currency_id),
 		}
 	}
@@ -264,7 +266,8 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 				origin: Default::default(),
 			})
 			.unwrap_or_default(),
-			id if id == T::GetNativeCurrencyId::get() => <T::NativeCurrency as fungible::Inspect<_>>::total_issuance(),
+			id if id == T::GetNativeCurrencyId::get() =>
+				<T::NativeCurrency as fungible::Inspect<_>>::total_issuance(),
 			_ => <T::MultiCurrency as fungibles::Inspect<_>>::total_issuance(currency_id),
 		}
 	}
@@ -278,10 +281,10 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 						sender: Default::default(),
 						origin: Default::default(),
 					};
-					return T::EVMBridge::balance_of(context, address).unwrap_or_default();
+					return T::EVMBridge::balance_of(context, address).unwrap_or_default()
 				}
 				Default::default()
-			}
+			},
 			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::total_balance(who),
 			_ => T::MultiCurrency::total_balance(currency_id, who),
 		}
@@ -296,23 +299,28 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 						sender: Default::default(),
 						origin: Default::default(),
 					};
-					return T::EVMBridge::balance_of(context, address).unwrap_or_default();
+					return T::EVMBridge::balance_of(context, address).unwrap_or_default()
 				}
 				Default::default()
-			}
+			},
 			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::free_balance(who),
 			_ => T::MultiCurrency::free_balance(currency_id, who),
 		}
 	}
 
-	fn ensure_can_withdraw(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
+	fn ensure_can_withdraw(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
 		match currency_id {
 			CurrencyId::Erc20(contract) => {
 				if amount.is_zero() {
-					return Ok(());
+					return Ok(())
 				}
 
-				let address = T::AddressMapping::get_evm_address(who).ok_or(Error::<T>::EvmAccountNotFound)?;
+				let address = T::AddressMapping::get_evm_address(who)
+					.ok_or(Error::<T>::EvmAccountNotFound)?;
 				let balance = T::EVMBridge::balance_of(
 					InvokeContext {
 						contract,
@@ -324,8 +332,9 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 				.unwrap_or_default();
 				ensure!(balance >= amount, Error::<T>::BalanceTooLow);
 				Ok(())
-			}
-			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::ensure_can_withdraw(who, amount),
+			},
+			id if id == T::GetNativeCurrencyId::get() =>
+				T::NativeCurrency::ensure_can_withdraw(who, amount),
 			_ => T::MultiCurrency::ensure_can_withdraw(currency_id, who, amount),
 		}
 	}
@@ -337,26 +346,24 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if amount.is_zero() || from == to {
-			return Ok(());
+			return Ok(())
 		}
 
 		match currency_id {
 			CurrencyId::Erc20(contract) => {
-				let sender = T::AddressMapping::get_evm_address(from).ok_or(Error::<T>::EvmAccountNotFound)?;
+				let sender = T::AddressMapping::get_evm_address(from)
+					.ok_or(Error::<T>::EvmAccountNotFound)?;
 				let origin = T::EVMBridge::get_origin().ok_or(Error::<T>::RealOriginNotFound)?;
 				let origin_address = T::AddressMapping::get_or_create_evm_address(&origin);
 				let address = T::AddressMapping::get_or_create_evm_address(to);
 				T::EVMBridge::transfer(
-					InvokeContext {
-						contract,
-						sender,
-						origin: origin_address,
-					},
+					InvokeContext { contract, sender, origin: origin_address },
 					address,
 					amount,
 				)?;
-			}
-			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::transfer(from, to, amount)?,
+			},
+			id if id == T::GetNativeCurrencyId::get() =>
+				T::NativeCurrency::transfer(from, to, amount)?,
 			_ => T::MultiCurrency::transfer(currency_id, from, to, amount)?,
 		}
 
@@ -369,15 +376,19 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 		Ok(())
 	}
 
-	fn deposit(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
+	fn deposit(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
 		if amount.is_zero() {
-			return Ok(());
+			return Ok(())
 		}
 		match currency_id {
 			CurrencyId::Erc20(contract) => {
-				// deposit from erc20 holding account to receiver(who). in xcm case which receive erc20 from sibling
-				// parachain, we choose receiver to charge storage fee. we must make sure receiver has enough native
-				// token to charge storage fee.
+				// deposit from erc20 holding account to receiver(who). which receive
+				// erc20 from sibling parachain, we choose receiver to charge storage fee. we must
+				// make sure receiver has enough native token to charge storage fee.
 				let sender = T::Erc20HoldingAccount::get();
 				let from = T::AddressMapping::get_account_id(&sender);
 				ensure!(
@@ -386,65 +397,50 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 				);
 				let receiver = T::AddressMapping::get_or_create_evm_address(who);
 				T::EVMBridge::transfer(
-					InvokeContext {
-						contract,
-						sender,
-						origin: receiver,
-					},
+					InvokeContext { contract, sender, origin: receiver },
 					receiver,
 					amount,
 				)?;
-				Self::deposit_event(Event::Withdrawn {
-					currency_id,
-					who: from,
-					amount,
-				});
-				Self::deposit_event(Event::Deposited {
-					currency_id,
-					who: who.clone(),
-					amount,
-				});
+				Self::deposit_event(Event::Withdrawn { currency_id, who: from, amount });
+				Self::deposit_event(Event::Deposited { currency_id, who: who.clone(), amount });
 				Ok(())
-			}
+			},
 			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::deposit(who, amount),
 			_ => T::MultiCurrency::deposit(currency_id, who, amount),
 		}
 	}
 
-	fn withdraw(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
+	fn withdraw(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
 		if amount.is_zero() {
-			return Ok(());
+			return Ok(())
 		}
 
 		match currency_id {
 			CurrencyId::Erc20(contract) => {
-				// withdraw from sender(who) to erc20 holding account. in xcm case which receive erc20 from sibling
-				// parachain, sender is sibling parachain sovereign account. As the origin here is used to charge
-				// storage fee, we must make sure sibling parachain sovereign account has enough native token to
-				// charge storage fee.
+				// withdraw from sender(who) to erc20 holding account. which receive
+				// erc20 from sibling parachain, sender is sibling parachain sovereign account. As
+				// the origin here is used to charge storage fee, we must make sure sibling
+				// parachain sovereign account has enough native token to charge storage fee.
 				let receiver = T::Erc20HoldingAccount::get();
-				let sender = T::AddressMapping::get_evm_address(who).ok_or(Error::<T>::EvmAccountNotFound)?;
+				let sender = T::AddressMapping::get_evm_address(who)
+					.ok_or(Error::<T>::EvmAccountNotFound)?;
 				T::EVMBridge::transfer(
-					InvokeContext {
-						contract,
-						sender,
-						origin: sender,
-					},
+					InvokeContext { contract, sender, origin: sender },
 					receiver,
 					amount,
 				)?;
-				Self::deposit_event(Event::Withdrawn {
-					currency_id,
-					who: who.clone(),
-					amount,
-				});
+				Self::deposit_event(Event::Withdrawn { currency_id, who: who.clone(), amount });
 				Self::deposit_event(Event::Deposited {
 					currency_id,
 					who: T::AddressMapping::get_account_id(&receiver),
 					amount,
 				});
 				Ok(())
-			}
+			},
 			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::withdraw(who, amount),
 			_ => T::MultiCurrency::withdraw(currency_id, who, amount),
 		}
@@ -458,7 +454,11 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 		}
 	}
 
-	fn slash(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> Self::Balance {
+	fn slash(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> Self::Balance {
 		match currency_id {
 			CurrencyId::Erc20(_) => Default::default(),
 			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::slash(who, amount),
@@ -470,16 +470,20 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 impl<T: Config> MultiCurrencyExtended<T::AccountId> for Pallet<T> {
 	type Amount = AmountOf<T>;
 
-	fn update_balance(currency_id: Self::CurrencyId, who: &T::AccountId, by_amount: Self::Amount) -> DispatchResult {
+	fn update_balance(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		by_amount: Self::Amount,
+	) -> DispatchResult {
 		match currency_id {
-			CurrencyId::Erc20(_) => {
+			CurrencyId::Erc20(_) =>
 				if by_amount.is_zero() {
 					Ok(())
 				} else {
 					Err(Error::<T>::Erc20InvalidOperation.into())
-				}
-			}
-			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::update_balance(who, by_amount),
+				},
+			id if id == T::GetNativeCurrencyId::get() =>
+				T::NativeCurrency::update_balance(who, by_amount),
 			_ => T::MultiCurrency::update_balance(currency_id, who, by_amount),
 		}
 	}
@@ -496,7 +500,8 @@ impl<T: Config> MultiLockableCurrency<T::AccountId> for Pallet<T> {
 	) -> DispatchResult {
 		match currency_id {
 			CurrencyId::Erc20(_) => Err(Error::<T>::Erc20InvalidOperation.into()),
-			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::set_lock(lock_id, who, amount),
+			id if id == T::GetNativeCurrencyId::get() =>
+				T::NativeCurrency::set_lock(lock_id, who, amount),
 			_ => T::MultiCurrency::set_lock(lock_id, currency_id, who, amount),
 		}
 	}
@@ -509,22 +514,32 @@ impl<T: Config> MultiLockableCurrency<T::AccountId> for Pallet<T> {
 	) -> DispatchResult {
 		match currency_id {
 			CurrencyId::Erc20(_) => Err(Error::<T>::Erc20InvalidOperation.into()),
-			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::extend_lock(lock_id, who, amount),
+			id if id == T::GetNativeCurrencyId::get() =>
+				T::NativeCurrency::extend_lock(lock_id, who, amount),
 			_ => T::MultiCurrency::extend_lock(lock_id, currency_id, who, amount),
 		}
 	}
 
-	fn remove_lock(lock_id: LockIdentifier, currency_id: Self::CurrencyId, who: &T::AccountId) -> DispatchResult {
+	fn remove_lock(
+		lock_id: LockIdentifier,
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+	) -> DispatchResult {
 		match currency_id {
 			CurrencyId::Erc20(_) => Err(Error::<T>::Erc20InvalidOperation.into()),
-			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::remove_lock(lock_id, who),
+			id if id == T::GetNativeCurrencyId::get() =>
+				T::NativeCurrency::remove_lock(lock_id, who),
 			_ => T::MultiCurrency::remove_lock(lock_id, currency_id, who),
 		}
 	}
 }
 
 impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
-	fn can_reserve(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance) -> bool {
+	fn can_reserve(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		value: Self::Balance,
+	) -> bool {
 		match currency_id {
 			CurrencyId::Erc20(_) => Self::ensure_can_withdraw(currency_id, who, value).is_ok(),
 			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::can_reserve(who, value),
@@ -532,10 +547,15 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 		}
 	}
 
-	fn slash_reserved(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance) -> Self::Balance {
+	fn slash_reserved(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		value: Self::Balance,
+	) -> Self::Balance {
 		match currency_id {
 			CurrencyId::Erc20(_) => value,
-			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::slash_reserved(who, value),
+			id if id == T::GetNativeCurrencyId::get() =>
+				T::NativeCurrency::slash_reserved(who, value),
 			_ => T::MultiCurrency::slash_reserved(currency_id, who, value),
 		}
 	}
@@ -552,42 +572,47 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 						},
 						reserve_address(address),
 					)
-					.unwrap_or_default();
+					.unwrap_or_default()
 				}
 				Default::default()
-			}
+			},
 			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::reserved_balance(who),
 			_ => T::MultiCurrency::reserved_balance(currency_id, who),
 		}
 	}
 
-	fn reserve(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance) -> DispatchResult {
+	fn reserve(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		value: Self::Balance,
+	) -> DispatchResult {
 		match currency_id {
 			CurrencyId::Erc20(contract) => {
 				if value.is_zero() {
-					return Ok(());
+					return Ok(())
 				}
-				let address = T::AddressMapping::get_evm_address(who).ok_or(Error::<T>::EvmAccountNotFound)?;
+				let address = T::AddressMapping::get_evm_address(who)
+					.ok_or(Error::<T>::EvmAccountNotFound)?;
 				T::EVMBridge::transfer(
-					InvokeContext {
-						contract,
-						sender: address,
-						origin: address,
-					},
+					InvokeContext { contract, sender: address, origin: address },
 					reserve_address(address),
 					value,
 				)
-			}
+			},
 			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::reserve(who, value),
 			_ => T::MultiCurrency::reserve(currency_id, who, value),
 		}
 	}
 
-	fn unreserve(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance) -> Self::Balance {
+	fn unreserve(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		value: Self::Balance,
+	) -> Self::Balance {
 		match currency_id {
 			CurrencyId::Erc20(contract) => {
 				if value.is_zero() {
-					return value;
+					return value
 				}
 				if let Some(address) = T::AddressMapping::get_evm_address(who) {
 					let sender = reserve_address(address);
@@ -602,11 +627,7 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 					.unwrap_or_default();
 					let actual = reserved_balance.min(value);
 					match T::EVMBridge::transfer(
-						InvokeContext {
-							contract,
-							sender,
-							origin: address,
-						},
+						InvokeContext { contract, sender, origin: address },
 						address,
 						actual,
 					) {
@@ -616,7 +637,7 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 				} else {
 					value
 				}
-			}
+			},
 			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::unreserve(who, value),
 			_ => T::MultiCurrency::unreserve(currency_id, who, value),
 		}
@@ -632,19 +653,18 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 		match currency_id {
 			CurrencyId::Erc20(contract) => {
 				if value.is_zero() {
-					return Ok(value);
+					return Ok(value)
 				}
 				if slashed == beneficiary {
 					return match status {
 						BalanceStatus::Free => Ok(Self::unreserve(currency_id, slashed, value)),
-						BalanceStatus::Reserved => {
-							Ok(value.saturating_sub(Self::reserved_balance(currency_id, slashed)))
-						}
-					};
+						BalanceStatus::Reserved =>
+							Ok(value.saturating_sub(Self::reserved_balance(currency_id, slashed))),
+					}
 				}
 
-				let slashed_address =
-					T::AddressMapping::get_evm_address(slashed).ok_or(Error::<T>::EvmAccountNotFound)?;
+				let slashed_address = T::AddressMapping::get_evm_address(slashed)
+					.ok_or(Error::<T>::EvmAccountNotFound)?;
 				let beneficiary_address = T::AddressMapping::get_or_create_evm_address(beneficiary);
 
 				let slashed_reserve_address = reserve_address(slashed_address);
@@ -681,11 +701,16 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 					),
 				}?;
 				Ok(value - actual)
-			}
-			id if id == T::GetNativeCurrencyId::get() => {
-				T::NativeCurrency::repatriate_reserved(slashed, beneficiary, value, status)
-			}
-			_ => T::MultiCurrency::repatriate_reserved(currency_id, slashed, beneficiary, value, status),
+			},
+			id if id == T::GetNativeCurrencyId::get() =>
+				T::NativeCurrency::repatriate_reserved(slashed, beneficiary, value, status),
+			_ => T::MultiCurrency::repatriate_reserved(
+				currency_id,
+				slashed,
+				beneficiary,
+				value,
+				status,
+			),
 		}
 	}
 }
@@ -706,18 +731,24 @@ impl<T: Config> fungibles::Inspect<T::AccountId> for Pallet<T> {
 	fn balance(asset_id: Self::AssetId, who: &T::AccountId) -> Self::Balance {
 		match asset_id {
 			CurrencyId::Erc20(_) => <Self as MultiCurrency<_>>::total_balance(asset_id, who),
-			id if id == T::GetNativeCurrencyId::get() => <T::NativeCurrency as fungible::Inspect<_>>::balance(who),
+			id if id == T::GetNativeCurrencyId::get() =>
+				<T::NativeCurrency as fungible::Inspect<_>>::balance(who),
 			_ => <T::MultiCurrency as fungibles::Inspect<_>>::balance(asset_id, who),
 		}
 	}
 
-	fn reducible_balance(asset_id: Self::AssetId, who: &T::AccountId, keep_alive: bool) -> Self::Balance {
+	fn reducible_balance(
+		asset_id: Self::AssetId,
+		who: &T::AccountId,
+		keep_alive: bool,
+	) -> Self::Balance {
 		match asset_id {
 			CurrencyId::Erc20(_) => <Self as MultiCurrency<_>>::free_balance(asset_id, who),
-			id if id == T::GetNativeCurrencyId::get() => {
-				<T::NativeCurrency as fungible::Inspect<_>>::reducible_balance(who, keep_alive)
-			}
-			_ => <T::MultiCurrency as fungibles::Inspect<_>>::reducible_balance(asset_id, who, keep_alive),
+			id if id == T::GetNativeCurrencyId::get() =>
+				<T::NativeCurrency as fungible::Inspect<_>>::reducible_balance(who, keep_alive),
+			_ => <T::MultiCurrency as fungibles::Inspect<_>>::reducible_balance(
+				asset_id, who, keep_alive,
+			),
 		}
 	}
 
@@ -730,28 +761,29 @@ impl<T: Config> fungibles::Inspect<T::AccountId> for Pallet<T> {
 		match asset_id {
 			CurrencyId::Erc20(_) => {
 				if amount.is_zero() {
-					return DepositConsequence::Success;
+					return DepositConsequence::Success
 				}
 
 				if <Self as fungibles::Inspect<_>>::total_issuance(asset_id)
 					.checked_add(&amount)
 					.is_none()
 				{
-					return DepositConsequence::Overflow;
+					return DepositConsequence::Overflow
 				}
 
-				if <Self as fungibles::Inspect<_>>::balance(asset_id, who).saturating_add(amount)
-					< <Self as fungibles::Inspect<_>>::minimum_balance(asset_id)
+				if <Self as fungibles::Inspect<_>>::balance(asset_id, who).saturating_add(amount) <
+					<Self as fungibles::Inspect<_>>::minimum_balance(asset_id)
 				{
-					return DepositConsequence::BelowMinimum;
+					return DepositConsequence::BelowMinimum
 				}
 
 				DepositConsequence::Success
-			}
-			id if id == T::GetNativeCurrencyId::get() => {
-				<T::NativeCurrency as fungible::Inspect<_>>::can_deposit(who, amount, mint)
-			}
-			_ => <T::MultiCurrency as fungibles::Inspect<_>>::can_deposit(asset_id, who, amount, mint),
+			},
+			id if id == T::GetNativeCurrencyId::get() =>
+				<T::NativeCurrency as fungible::Inspect<_>>::can_deposit(who, amount, mint),
+			_ => <T::MultiCurrency as fungibles::Inspect<_>>::can_deposit(
+				asset_id, who, amount, mint,
+			),
 		}
 	}
 
@@ -761,20 +793,24 @@ impl<T: Config> fungibles::Inspect<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 	) -> WithdrawConsequence<Self::Balance> {
 		match asset_id {
-			CurrencyId::Erc20(_) => match <Self as MultiCurrency<_>>::ensure_can_withdraw(asset_id, who, amount) {
-				Ok(()) => WithdrawConsequence::Success,
-				_ => WithdrawConsequence::NoFunds,
-			},
-			id if id == T::GetNativeCurrencyId::get() => {
-				<T::NativeCurrency as fungible::Inspect<_>>::can_withdraw(who, amount)
-			}
+			CurrencyId::Erc20(_) =>
+				match <Self as MultiCurrency<_>>::ensure_can_withdraw(asset_id, who, amount) {
+					Ok(()) => WithdrawConsequence::Success,
+					_ => WithdrawConsequence::NoFunds,
+				},
+			id if id == T::GetNativeCurrencyId::get() =>
+				<T::NativeCurrency as fungible::Inspect<_>>::can_withdraw(who, amount),
 			_ => <T::MultiCurrency as fungibles::Inspect<_>>::can_withdraw(asset_id, who, amount),
 		}
 	}
 }
 
 impl<T: Config> fungibles::Mutate<T::AccountId> for Pallet<T> {
-	fn mint_into(asset_id: Self::AssetId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
+	fn mint_into(
+		asset_id: Self::AssetId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
 		<Self as MultiCurrency<_>>::deposit(asset_id, who, amount)
 	}
 
@@ -784,14 +820,13 @@ impl<T: Config> fungibles::Mutate<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError> {
 		if amount.is_zero() {
-			return Ok(amount);
+			return Ok(amount)
 		}
 
 		let actual = match asset_id {
 			CurrencyId::Erc20(_) => return Err(Error::<T>::Erc20InvalidOperation.into()),
-			id if id == T::GetNativeCurrencyId::get() => {
-				<T::NativeCurrency as fungible::Mutate<_>>::burn_from(who, amount)
-			}
+			id if id == T::GetNativeCurrencyId::get() =>
+				<T::NativeCurrency as fungible::Mutate<_>>::burn_from(who, amount),
 			_ => <T::MultiCurrency as fungibles::Mutate<_>>::burn_from(asset_id, who, amount),
 		}?;
 		Ok(actual)
@@ -807,7 +842,7 @@ impl<T: Config> fungibles::Transfer<T::AccountId> for Pallet<T> {
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError> {
 		if amount.is_zero() || source == dest {
-			return Ok(amount);
+			return Ok(amount)
 		}
 
 		let transferred_amount = match asset_id {
@@ -815,10 +850,11 @@ impl<T: Config> fungibles::Transfer<T::AccountId> for Pallet<T> {
 				// Event is deposited in `fn transfer`
 				<Self as MultiCurrency<_>>::transfer(asset_id, source, dest, amount)?;
 				amount
-			}
+			},
 			id if id == T::GetNativeCurrencyId::get() => {
-				let actual: Self::Balance =
-					<T::NativeCurrency as fungible::Transfer<_>>::transfer(source, dest, amount, keep_alive)?;
+				let actual: Self::Balance = <T::NativeCurrency as fungible::Transfer<_>>::transfer(
+					source, dest, amount, keep_alive,
+				)?;
 
 				Self::deposit_event(Event::Transferred {
 					currency_id: asset_id,
@@ -827,10 +863,11 @@ impl<T: Config> fungibles::Transfer<T::AccountId> for Pallet<T> {
 					amount: actual,
 				});
 				actual
-			}
+			},
 			_ => {
-				let actual: Self::Balance =
-					<T::MultiCurrency as fungibles::Transfer<_>>::transfer(asset_id, source, dest, amount, keep_alive)?;
+				let actual: Self::Balance = <T::MultiCurrency as fungibles::Transfer<_>>::transfer(
+					asset_id, source, dest, amount, keep_alive,
+				)?;
 
 				Self::deposit_event(Event::Transferred {
 					currency_id: asset_id,
@@ -839,30 +876,33 @@ impl<T: Config> fungibles::Transfer<T::AccountId> for Pallet<T> {
 					amount: actual,
 				});
 				actual
-			}
+			},
 		};
 		Ok(transferred_amount)
 	}
 }
 
 impl<T: Config> fungibles::Unbalanced<T::AccountId> for Pallet<T> {
-	fn set_balance(asset_id: Self::AssetId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
+	fn set_balance(
+		asset_id: Self::AssetId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
 		match asset_id {
 			CurrencyId::Erc20(_) => Err(Error::<T>::Erc20InvalidOperation.into()),
-			id if id == T::GetNativeCurrencyId::get() => {
-				<T::NativeCurrency as fungible::Unbalanced<_>>::set_balance(who, amount)
-			}
+			id if id == T::GetNativeCurrencyId::get() =>
+				<T::NativeCurrency as fungible::Unbalanced<_>>::set_balance(who, amount),
 			_ => <T::MultiCurrency as fungibles::Unbalanced<_>>::set_balance(asset_id, who, amount),
 		}
 	}
 
 	fn set_total_issuance(asset_id: Self::AssetId, amount: Self::Balance) {
 		match asset_id {
-			CurrencyId::Erc20(_) => {}
-			id if id == T::GetNativeCurrencyId::get() => {
-				<T::NativeCurrency as fungible::Unbalanced<_>>::set_total_issuance(amount)
-			}
-			_ => <T::MultiCurrency as fungibles::Unbalanced<_>>::set_total_issuance(asset_id, amount),
+			CurrencyId::Erc20(_) => {},
+			id if id == T::GetNativeCurrencyId::get() =>
+				<T::NativeCurrency as fungible::Unbalanced<_>>::set_total_issuance(amount),
+			_ =>
+				<T::MultiCurrency as fungibles::Unbalanced<_>>::set_total_issuance(asset_id, amount),
 		}
 	}
 }
@@ -870,20 +910,20 @@ impl<T: Config> fungibles::Unbalanced<T::AccountId> for Pallet<T> {
 impl<T: Config> fungibles::InspectHold<T::AccountId> for Pallet<T> {
 	fn balance_on_hold(asset_id: Self::AssetId, who: &T::AccountId) -> Self::Balance {
 		match asset_id {
-			CurrencyId::Erc20(_) => <Self as MultiReservableCurrency<_>>::reserved_balance(asset_id, who),
-			id if id == T::GetNativeCurrencyId::get() => {
-				<T::NativeCurrency as fungible::InspectHold<_>>::balance_on_hold(who)
-			}
+			CurrencyId::Erc20(_) =>
+				<Self as MultiReservableCurrency<_>>::reserved_balance(asset_id, who),
+			id if id == T::GetNativeCurrencyId::get() =>
+				<T::NativeCurrency as fungible::InspectHold<_>>::balance_on_hold(who),
 			_ => <T::MultiCurrency as fungibles::InspectHold<_>>::balance_on_hold(asset_id, who),
 		}
 	}
 
 	fn can_hold(asset_id: Self::AssetId, who: &T::AccountId, amount: Self::Balance) -> bool {
 		match asset_id {
-			CurrencyId::Erc20(_) => <Self as MultiReservableCurrency<_>>::can_reserve(asset_id, who, amount),
-			id if id == T::GetNativeCurrencyId::get() => {
-				<T::NativeCurrency as fungible::InspectHold<_>>::can_hold(who, amount)
-			}
+			CurrencyId::Erc20(_) =>
+				<Self as MultiReservableCurrency<_>>::can_reserve(asset_id, who, amount),
+			id if id == T::GetNativeCurrencyId::get() =>
+				<T::NativeCurrency as fungible::InspectHold<_>>::can_hold(who, amount),
 			_ => <T::MultiCurrency as fungibles::InspectHold<_>>::can_hold(asset_id, who, amount),
 		}
 	}
@@ -892,10 +932,10 @@ impl<T: Config> fungibles::InspectHold<T::AccountId> for Pallet<T> {
 impl<T: Config> fungibles::MutateHold<T::AccountId> for Pallet<T> {
 	fn hold(asset_id: Self::AssetId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
 		match asset_id {
-			CurrencyId::Erc20(_) => <Self as MultiReservableCurrency<_>>::reserve(asset_id, who, amount),
-			id if id == T::GetNativeCurrencyId::get() => {
-				<T::NativeCurrency as fungible::MutateHold<_>>::hold(who, amount)
-			}
+			CurrencyId::Erc20(_) =>
+				<Self as MultiReservableCurrency<_>>::reserve(asset_id, who, amount),
+			id if id == T::GetNativeCurrencyId::get() =>
+				<T::NativeCurrency as fungible::MutateHold<_>>::hold(who, amount),
 			_ => <T::MultiCurrency as fungibles::MutateHold<_>>::hold(asset_id, who, amount),
 		}
 	}
@@ -909,19 +949,27 @@ impl<T: Config> fungibles::MutateHold<T::AccountId> for Pallet<T> {
 		match asset_id {
 			CurrencyId::Erc20(_) => {
 				if amount.is_zero() {
-					return Ok(amount);
+					return Ok(amount)
 				}
 				ensure!(
-					best_effort || amount <= <Self as MultiReservableCurrency<_>>::reserved_balance(asset_id, who),
+					best_effort ||
+						amount <=
+							<Self as MultiReservableCurrency<_>>::reserved_balance(
+								asset_id, who
+							),
 					Error::<T>::BalanceTooLow
 				);
 				let gap = <Self as MultiReservableCurrency<_>>::unreserve(asset_id, who, amount);
 				Ok(amount.saturating_sub(gap))
-			}
-			id if id == T::GetNativeCurrencyId::get() => {
-				<T::NativeCurrency as fungible::MutateHold<_>>::release(who, amount, best_effort)
-			}
-			_ => <T::MultiCurrency as fungibles::MutateHold<_>>::release(asset_id, who, amount, best_effort),
+			},
+			id if id == T::GetNativeCurrencyId::get() =>
+				<T::NativeCurrency as fungible::MutateHold<_>>::release(who, amount, best_effort),
+			_ => <T::MultiCurrency as fungibles::MutateHold<_>>::release(
+				asset_id,
+				who,
+				amount,
+				best_effort,
+			),
 		}
 	}
 
@@ -936,25 +984,31 @@ impl<T: Config> fungibles::MutateHold<T::AccountId> for Pallet<T> {
 		match asset_id {
 			CurrencyId::Erc20(_) => {
 				if amount.is_zero() {
-					return Ok(amount);
+					return Ok(amount)
 				}
 				ensure!(
-					best_effort || amount <= <Self as fungibles::InspectHold<_>>::balance_on_hold(asset_id, source),
+					best_effort ||
+						amount <=
+							<Self as fungibles::InspectHold<_>>::balance_on_hold(
+								asset_id, source
+							),
 					Error::<T>::BalanceTooLow
 				);
 
 				let status = if on_hold { Status::Reserved } else { Status::Free };
-				let gap =
-					<Self as MultiReservableCurrency<_>>::repatriate_reserved(asset_id, source, dest, amount, status)?;
+				let gap = <Self as MultiReservableCurrency<_>>::repatriate_reserved(
+					asset_id, source, dest, amount, status,
+				)?;
 				Ok(amount.saturating_sub(gap))
-			}
-			id if id == T::GetNativeCurrencyId::get() => <T::NativeCurrency as fungible::MutateHold<_>>::transfer_held(
-				source,
-				dest,
-				amount,
-				best_effort,
-				on_hold,
-			),
+			},
+			id if id == T::GetNativeCurrencyId::get() =>
+				<T::NativeCurrency as fungible::MutateHold<_>>::transfer_held(
+					source,
+					dest,
+					amount,
+					best_effort,
+					on_hold,
+				),
 			_ => <T::MultiCurrency as fungibles::MutateHold<_>>::transfer_held(
 				asset_id,
 				source,
@@ -1025,7 +1079,11 @@ where
 	type Amount = AmountOf<T>;
 
 	fn update_balance(who: &T::AccountId, by_amount: Self::Amount) -> DispatchResult {
-		<Pallet<T> as MultiCurrencyExtended<T::AccountId>>::update_balance(GetCurrencyId::get(), who, by_amount)
+		<Pallet<T> as MultiCurrencyExtended<T::AccountId>>::update_balance(
+			GetCurrencyId::get(),
+			who,
+			by_amount,
+		)
 	}
 }
 
@@ -1036,16 +1094,38 @@ where
 {
 	type Moment = T::BlockNumber;
 
-	fn set_lock(lock_id: LockIdentifier, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
-		<Pallet<T> as MultiLockableCurrency<T::AccountId>>::set_lock(lock_id, GetCurrencyId::get(), who, amount)
+	fn set_lock(
+		lock_id: LockIdentifier,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
+		<Pallet<T> as MultiLockableCurrency<T::AccountId>>::set_lock(
+			lock_id,
+			GetCurrencyId::get(),
+			who,
+			amount,
+		)
 	}
 
-	fn extend_lock(lock_id: LockIdentifier, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
-		<Pallet<T> as MultiLockableCurrency<T::AccountId>>::extend_lock(lock_id, GetCurrencyId::get(), who, amount)
+	fn extend_lock(
+		lock_id: LockIdentifier,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
+		<Pallet<T> as MultiLockableCurrency<T::AccountId>>::extend_lock(
+			lock_id,
+			GetCurrencyId::get(),
+			who,
+			amount,
+		)
 	}
 
 	fn remove_lock(lock_id: LockIdentifier, who: &T::AccountId) -> DispatchResult {
-		<Pallet<T> as MultiLockableCurrency<T::AccountId>>::remove_lock(lock_id, GetCurrencyId::get(), who)
+		<Pallet<T> as MultiLockableCurrency<T::AccountId>>::remove_lock(
+			lock_id,
+			GetCurrencyId::get(),
+			who,
+		)
 	}
 }
 
@@ -1055,23 +1135,42 @@ where
 	GetCurrencyId: Get<CurrencyId>,
 {
 	fn can_reserve(who: &T::AccountId, value: Self::Balance) -> bool {
-		<Pallet<T> as MultiReservableCurrency<T::AccountId>>::can_reserve(GetCurrencyId::get(), who, value)
+		<Pallet<T> as MultiReservableCurrency<T::AccountId>>::can_reserve(
+			GetCurrencyId::get(),
+			who,
+			value,
+		)
 	}
 
 	fn slash_reserved(who: &T::AccountId, value: Self::Balance) -> Self::Balance {
-		<Pallet<T> as MultiReservableCurrency<T::AccountId>>::slash_reserved(GetCurrencyId::get(), who, value)
+		<Pallet<T> as MultiReservableCurrency<T::AccountId>>::slash_reserved(
+			GetCurrencyId::get(),
+			who,
+			value,
+		)
 	}
 
 	fn reserved_balance(who: &T::AccountId) -> Self::Balance {
-		<Pallet<T> as MultiReservableCurrency<T::AccountId>>::reserved_balance(GetCurrencyId::get(), who)
+		<Pallet<T> as MultiReservableCurrency<T::AccountId>>::reserved_balance(
+			GetCurrencyId::get(),
+			who,
+		)
 	}
 
 	fn reserve(who: &T::AccountId, value: Self::Balance) -> DispatchResult {
-		<Pallet<T> as MultiReservableCurrency<T::AccountId>>::reserve(GetCurrencyId::get(), who, value)
+		<Pallet<T> as MultiReservableCurrency<T::AccountId>>::reserve(
+			GetCurrencyId::get(),
+			who,
+			value,
+		)
 	}
 
 	fn unreserve(who: &T::AccountId, value: Self::Balance) -> Self::Balance {
-		<Pallet<T> as MultiReservableCurrency<T::AccountId>>::unreserve(GetCurrencyId::get(), who, value)
+		<Pallet<T> as MultiReservableCurrency<T::AccountId>>::unreserve(
+			GetCurrencyId::get(),
+			who,
+			value,
+		)
 	}
 
 	fn repatriate_reserved(
@@ -1107,12 +1206,19 @@ where
 		<Pallet<T> as fungibles::Inspect<_>>::balance(GetCurrencyId::get(), who)
 	}
 	fn reducible_balance(who: &T::AccountId, keep_alive: bool) -> Self::Balance {
-		<Pallet<T> as fungibles::Inspect<_>>::reducible_balance(GetCurrencyId::get(), who, keep_alive)
+		<Pallet<T> as fungibles::Inspect<_>>::reducible_balance(
+			GetCurrencyId::get(),
+			who,
+			keep_alive,
+		)
 	}
 	fn can_deposit(who: &T::AccountId, amount: Self::Balance, mint: bool) -> DepositConsequence {
 		<Pallet<T> as fungibles::Inspect<_>>::can_deposit(GetCurrencyId::get(), who, amount, mint)
 	}
-	fn can_withdraw(who: &T::AccountId, amount: Self::Balance) -> WithdrawConsequence<Self::Balance> {
+	fn can_withdraw(
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> WithdrawConsequence<Self::Balance> {
 		<Pallet<T> as fungibles::Inspect<_>>::can_withdraw(GetCurrencyId::get(), who, amount)
 	}
 }
@@ -1126,7 +1232,10 @@ where
 		<Pallet<T> as fungibles::Mutate<_>>::mint_into(GetCurrencyId::get(), who, amount)
 	}
 
-	fn burn_from(who: &T::AccountId, amount: Self::Balance) -> Result<Self::Balance, DispatchError> {
+	fn burn_from(
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> Result<Self::Balance, DispatchError> {
 		<Pallet<T> as fungibles::Mutate<_>>::burn_from(GetCurrencyId::get(), who, amount)
 	}
 }
@@ -1142,7 +1251,13 @@ where
 		amount: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError> {
-		<Pallet<T> as fungibles::Transfer<_>>::transfer(GetCurrencyId::get(), source, dest, amount, keep_alive)
+		<Pallet<T> as fungibles::Transfer<_>>::transfer(
+			GetCurrencyId::get(),
+			source,
+			dest,
+			amount,
+			keep_alive,
+		)
 	}
 }
 
@@ -1181,8 +1296,17 @@ where
 	fn hold(who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
 		<Pallet<T> as fungibles::MutateHold<_>>::hold(GetCurrencyId::get(), who, amount)
 	}
-	fn release(who: &T::AccountId, amount: Self::Balance, best_effort: bool) -> Result<Self::Balance, DispatchError> {
-		<Pallet<T> as fungibles::MutateHold<_>>::release(GetCurrencyId::get(), who, amount, best_effort)
+	fn release(
+		who: &T::AccountId,
+		amount: Self::Balance,
+		best_effort: bool,
+	) -> Result<Self::Balance, DispatchError> {
+		<Pallet<T> as fungibles::MutateHold<_>>::release(
+			GetCurrencyId::get(),
+			who,
+			amount,
+			best_effort,
+		)
 	}
 	fn transfer_held(
 		source: &T::AccountId,
@@ -1203,7 +1327,9 @@ where
 }
 
 /// Adapt other currency traits implementation to `BasicCurrency`.
-pub struct BasicCurrencyAdapter<T, Currency, Amount, Moment>(marker::PhantomData<(T, Currency, Amount, Moment)>);
+pub struct BasicCurrencyAdapter<T, Currency, Amount, Moment>(
+	marker::PhantomData<(T, Currency, Amount, Moment)>,
+);
 
 type PalletBalanceOf<A, Currency> = <Currency as PalletCurrency<A>>::Balance;
 
@@ -1233,9 +1359,8 @@ where
 	}
 
 	fn ensure_can_withdraw(who: &AccountId, amount: Self::Balance) -> DispatchResult {
-		let new_balance = Self::free_balance(who)
-			.checked_sub(&amount)
-			.ok_or(Error::<T>::BalanceTooLow)?;
+		let new_balance =
+			Self::free_balance(who).checked_sub(&amount).ok_or(Error::<T>::BalanceTooLow)?;
 
 		Currency::ensure_can_withdraw(who, amount, WithdrawReasons::all(), new_balance)
 	}
@@ -1255,7 +1380,8 @@ where
 	}
 
 	fn withdraw(who: &AccountId, amount: Self::Balance) -> DispatchResult {
-		Currency::withdraw(who, amount, WithdrawReasons::all(), ExistenceRequirement::AllowDeath).map(|_| ())
+		Currency::withdraw(who, amount, WithdrawReasons::all(), ExistenceRequirement::AllowDeath)
+			.map(|_| ())
 	}
 
 	fn can_slash(who: &AccountId, amount: Self::Balance) -> bool {
@@ -1288,10 +1414,8 @@ where
 	type Amount = Amount;
 
 	fn update_balance(who: &AccountId, by_amount: Self::Amount) -> DispatchResult {
-		let by_balance = by_amount
-			.abs()
-			.try_into()
-			.map_err(|_| Error::<T>::AmountIntoBalanceFailed)?;
+		let by_balance =
+			by_amount.abs().try_into().map_err(|_| Error::<T>::AmountIntoBalanceFailed)?;
 		if by_amount.is_positive() {
 			Self::deposit(who, by_balance)
 		} else {
@@ -1314,7 +1438,11 @@ where
 		Ok(())
 	}
 
-	fn extend_lock(lock_id: LockIdentifier, who: &AccountId, amount: Self::Balance) -> DispatchResult {
+	fn extend_lock(
+		lock_id: LockIdentifier,
+		who: &AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
 		Currency::extend_lock(lock_id, who, amount, WithdrawReasons::all());
 		Ok(())
 	}
@@ -1462,7 +1590,11 @@ where
 	fn hold(who: &AccountId, amount: Self::Balance) -> DispatchResult {
 		Currency::hold(who, amount)
 	}
-	fn release(who: &AccountId, amount: Self::Balance, best_effort: bool) -> Result<Self::Balance, DispatchError> {
+	fn release(
+		who: &AccountId,
+		amount: Self::Balance,
+		best_effort: bool,
+	) -> Result<Self::Balance, DispatchError> {
 		Currency::release(who, amount, best_effort)
 	}
 	fn transfer_held(
@@ -1493,7 +1625,8 @@ fn reserve_address(address: EvmAddress) -> EvmAddress {
 }
 
 pub struct TransferDust<T, GetAccountId>(marker::PhantomData<(T, GetAccountId)>);
-impl<T: Config, GetAccountId> OnDust<T::AccountId, CurrencyId, BalanceOf<T>> for TransferDust<T, GetAccountId>
+impl<T: Config, GetAccountId> OnDust<T::AccountId, CurrencyId, BalanceOf<T>>
+	for TransferDust<T, GetAccountId>
 where
 	T: Config,
 	GetAccountId: Get<T::AccountId>,
@@ -1503,7 +1636,8 @@ where
 		// if failed will leave some dust which still could be recycled.
 		let _ = match currency_id {
 			CurrencyId::Erc20(_) => Ok(()),
-			id if id == T::GetNativeCurrencyId::get() => T::NativeCurrency::transfer(who, &GetAccountId::get(), amount),
+			id if id == T::GetNativeCurrencyId::get() =>
+				T::NativeCurrency::transfer(who, &GetAccountId::get(), amount),
 			_ => T::MultiCurrency::transfer(currency_id, who, &GetAccountId::get(), amount),
 		};
 	}

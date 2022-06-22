@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 #![cfg(test)]
 
@@ -26,7 +25,9 @@ use frame_support::{
 use frame_system::EnsureSignedBy;
 use module_support::mocks::MockAddressMapping;
 use orml_traits::parameter_type_with_key;
-use primitives::{define_combined_task, Amount, BlockNumber, CurrencyId, ReserveIdentifier, currency::TokenSymbol};
+use primitives::{
+	define_combined_task, Amount, BlockNumber, CurrencyId, ReserveIdentifier, TokenSymbol,
+};
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,
@@ -119,7 +120,8 @@ impl orml_currencies::Config for Runtime {
 	type GetNativeCurrencyId = GetNativeCurrencyId;
 	type WeightInfo = ();
 }
-pub type AdaptedBasicCurrency = orml_currencies::BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+pub type AdaptedBasicCurrency =
+	orml_currencies::BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
 
 define_combined_task! {
 	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
@@ -251,43 +253,19 @@ pub fn charlie() -> H160 {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Runtime>()
-		.unwrap();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 	let mut accounts = BTreeMap::new();
 
-	accounts.insert(
-		contract_a(),
-		GenesisAccount {
-			nonce: 1,
-			..Default::default()
-		},
-	);
-	accounts.insert(
-		contract_b(),
-		GenesisAccount {
-			nonce: 1,
-			..Default::default()
-		},
-	);
+	accounts.insert(contract_a(), GenesisAccount { nonce: 1, ..Default::default() });
+	accounts.insert(contract_b(), GenesisAccount { nonce: 1, ..Default::default() });
 
 	accounts.insert(
 		alice(),
-		GenesisAccount {
-			nonce: 1,
-			balance: INITIAL_BALANCE,
-			..Default::default()
-		},
+		GenesisAccount { nonce: 1, balance: INITIAL_BALANCE, ..Default::default() },
 	);
-	accounts.insert(
-		bob(),
-		GenesisAccount {
-			nonce: 1,
-			balance: INITIAL_BALANCE,
-			..Default::default()
-		},
-	);
+	accounts
+		.insert(bob(), GenesisAccount { nonce: 1, balance: INITIAL_BALANCE, ..Default::default() });
 
 	pallet_balances::GenesisConfig::<Runtime> {
 		balances: vec![(TreasuryAccount::get(), INITIAL_BALANCE)],

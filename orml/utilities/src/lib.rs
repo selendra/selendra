@@ -25,7 +25,9 @@ pub use ordered_set::OrderedSet;
 ///
 /// Transactions can be nested to any depth. Commits happen to the parent
 /// transaction.
-pub fn with_transaction_result<R>(f: impl FnOnce() -> Result<R, DispatchError>) -> Result<R, DispatchError> {
+pub fn with_transaction_result<R>(
+	f: impl FnOnce() -> Result<R, DispatchError>,
+) -> Result<R, DispatchError> {
 	with_transaction(|| {
 		let res = f();
 		if res.is_ok() {

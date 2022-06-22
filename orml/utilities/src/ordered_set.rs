@@ -47,7 +47,7 @@ impl<T: Ord, S: Get<u32>> OrderedSet<T, S> {
 			Ok(loc) => {
 				self.0.remove(loc);
 				true
-			}
+			},
 			Err(_) => false,
 		}
 	}
@@ -97,10 +97,7 @@ mod tests {
 	fn from() {
 		let v: BoundedVec<i32, Eight> = vec![4, 2, 3, 4, 3, 1].try_into().unwrap();
 		let set: OrderedSet<i32, Eight> = v.into();
-		assert_eq!(
-			set,
-			OrderedSet::<i32, Eight>::from(vec![1, 2, 3, 4].try_into().unwrap())
-		);
+		assert_eq!(set, OrderedSet::<i32, Eight>::from(vec![1, 2, 3, 4].try_into().unwrap()));
 	}
 
 	#[test]
@@ -123,13 +120,11 @@ mod tests {
 
 	#[test]
 	fn remove() {
-		let mut set: OrderedSet<i32, Eight> = OrderedSet::from(vec![1, 2, 3, 4].try_into().unwrap());
+		let mut set: OrderedSet<i32, Eight> =
+			OrderedSet::from(vec![1, 2, 3, 4].try_into().unwrap());
 
 		assert!(!set.remove(&5));
-		assert_eq!(
-			set,
-			OrderedSet::<i32, Eight>::from(vec![1, 2, 3, 4].try_into().unwrap())
-		);
+		assert_eq!(set, OrderedSet::<i32, Eight>::from(vec![1, 2, 3, 4].try_into().unwrap()));
 
 		assert!(set.remove(&1));
 		assert_eq!(set, OrderedSet::<i32, Eight>::from(vec![2, 3, 4].try_into().unwrap()));
@@ -163,14 +158,16 @@ mod tests {
 
 	#[test]
 	fn clear() {
-		let mut set: OrderedSet<i32, Eight> = OrderedSet::from(vec![1, 2, 3, 4].try_into().unwrap());
+		let mut set: OrderedSet<i32, Eight> =
+			OrderedSet::from(vec![1, 2, 3, 4].try_into().unwrap());
 		set.clear();
 		assert_eq!(set, OrderedSet::new());
 	}
 
 	#[test]
 	fn exceeding_max_size_should_fail() {
-		let mut set: OrderedSet<i32, Five> = OrderedSet::from(vec![1, 2, 3, 4, 5].try_into().unwrap());
+		let mut set: OrderedSet<i32, Five> =
+			OrderedSet::from(vec![1, 2, 3, 4, 5].try_into().unwrap());
 		let inserted = set.insert(6);
 
 		assert!(!inserted)

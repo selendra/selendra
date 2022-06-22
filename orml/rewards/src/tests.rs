@@ -26,10 +26,7 @@ fn add_share_should_work() {
 
 		assert_eq!(
 			RewardsModule::pool_infos(DOT_POOL),
-			PoolInfo {
-				total_shares: 100,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 100, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(&DOT_POOL, &ALICE),
@@ -47,10 +44,7 @@ fn add_share_should_work() {
 				rewards: vec![(NATIVE_COIN, (5_000, 2_000))].into_iter().collect()
 			}
 		);
-		assert_eq!(
-			RewardsModule::shares_and_withdrawn_rewards(DOT_POOL, BOB),
-			Default::default()
-		);
+		assert_eq!(RewardsModule::shares_and_withdrawn_rewards(DOT_POOL, BOB), Default::default());
 
 		RewardsModule::add_share(&BOB, &DOT_POOL, 50);
 
@@ -111,16 +105,10 @@ fn add_share_should_work() {
 fn claim_rewards_should_not_create_empty_records() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_eq!(PoolInfos::<Runtime>::contains_key(&DOT_POOL), false);
-		assert_eq!(
-			SharesAndWithdrawnRewards::<Runtime>::contains_key(&DOT_POOL, &ALICE),
-			false
-		);
+		assert_eq!(SharesAndWithdrawnRewards::<Runtime>::contains_key(&DOT_POOL, &ALICE), false);
 		RewardsModule::claim_rewards(&ALICE, &DOT_POOL);
 		assert_eq!(PoolInfos::<Runtime>::contains_key(&DOT_POOL), false);
-		assert_eq!(
-			SharesAndWithdrawnRewards::<Runtime>::contains_key(&DOT_POOL, &ALICE),
-			false
-		);
+		assert_eq!(SharesAndWithdrawnRewards::<Runtime>::contains_key(&DOT_POOL, &ALICE), false);
 	})
 }
 
@@ -154,7 +142,8 @@ fn claim_rewards_should_work() {
 			(200, vec![(NATIVE_COIN, 5_000)].into_iter().collect())
 		);
 		assert_eq!(
-			RECEIVED_PAYOUT.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, NATIVE_COIN)).unwrap_or(&0)),
+			RECEIVED_PAYOUT
+				.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, NATIVE_COIN)).unwrap_or(&0)),
 			0
 		);
 		assert_eq!(
@@ -162,7 +151,8 @@ fn claim_rewards_should_work() {
 			0
 		);
 		assert_eq!(
-			RECEIVED_PAYOUT.with(|v| *v.borrow().get(&(DOT_POOL, CAROL, NATIVE_COIN)).unwrap_or(&0)),
+			RECEIVED_PAYOUT
+				.with(|v| *v.borrow().get(&(DOT_POOL, CAROL, NATIVE_COIN)).unwrap_or(&0)),
 			0
 		);
 
@@ -179,7 +169,8 @@ fn claim_rewards_should_work() {
 			(100, vec![(NATIVE_COIN, 2_500)].into_iter().collect())
 		);
 		assert_eq!(
-			RECEIVED_PAYOUT.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, NATIVE_COIN)).unwrap_or(&0)),
+			RECEIVED_PAYOUT
+				.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, NATIVE_COIN)).unwrap_or(&0)),
 			2_500
 		);
 
@@ -196,7 +187,8 @@ fn claim_rewards_should_work() {
 			(200, vec![(NATIVE_COIN, 5_000)].into_iter().collect())
 		);
 		assert_eq!(
-			RECEIVED_PAYOUT.with(|v| *v.borrow().get(&(DOT_POOL, CAROL, NATIVE_COIN)).unwrap_or(&0)),
+			RECEIVED_PAYOUT
+				.with(|v| *v.borrow().get(&(DOT_POOL, CAROL, NATIVE_COIN)).unwrap_or(&0)),
 			0
 		);
 
@@ -244,7 +236,8 @@ fn remove_share_should_work() {
 			(100, Default::default())
 		);
 		assert_eq!(
-			RECEIVED_PAYOUT.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, NATIVE_COIN)).unwrap_or(&0)),
+			RECEIVED_PAYOUT
+				.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, NATIVE_COIN)).unwrap_or(&0)),
 			0
 		);
 		assert_eq!(
@@ -266,7 +259,8 @@ fn remove_share_should_work() {
 			(100, Default::default())
 		);
 		assert_eq!(
-			RECEIVED_PAYOUT.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, NATIVE_COIN)).unwrap_or(&0)),
+			RECEIVED_PAYOUT
+				.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, NATIVE_COIN)).unwrap_or(&0)),
 			0
 		);
 
@@ -299,13 +293,11 @@ fn remove_share_should_work() {
 			RewardsModule::shares_and_withdrawn_rewards(DOT_POOL, ALICE),
 			(0, Default::default())
 		);
-		assert_eq!(
-			SharesAndWithdrawnRewards::<Runtime>::contains_key(&DOT_POOL, &ALICE),
-			false
-		);
+		assert_eq!(SharesAndWithdrawnRewards::<Runtime>::contains_key(&DOT_POOL, &ALICE), false);
 
 		assert_eq!(
-			RECEIVED_PAYOUT.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, NATIVE_COIN)).unwrap_or(&0)),
+			RECEIVED_PAYOUT
+				.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, NATIVE_COIN)).unwrap_or(&0)),
 			5_000
 		);
 
@@ -314,10 +306,7 @@ fn remove_share_should_work() {
 		assert_eq!(RewardsModule::pool_infos(DOT_POOL), PoolInfo::default());
 		assert_eq!(PoolInfos::<Runtime>::contains_key(DOT_POOL), false);
 		assert_eq!(PoolInfos::<Runtime>::iter().count(), 0);
-		assert_eq!(
-			SharesAndWithdrawnRewards::<Runtime>::contains_key(&DOT_POOL, &BOB),
-			false
-		);
+		assert_eq!(SharesAndWithdrawnRewards::<Runtime>::contains_key(&DOT_POOL, &BOB), false);
 		assert_eq!(SharesAndWithdrawnRewards::<Runtime>::iter().count(), 0);
 	});
 }
@@ -335,10 +324,7 @@ fn set_share_should_work() {
 
 		assert_eq!(
 			RewardsModule::pool_infos(DOT_POOL),
-			PoolInfo {
-				total_shares: 100,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 100, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(DOT_POOL, ALICE),
@@ -390,17 +376,16 @@ fn set_share_should_work() {
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(DOT_POOL, ALICE),
-			(
-				600,
-				vec![(NATIVE_COIN, 50_000), (STABLE_COIN, 1_000)].into_iter().collect()
-			)
+			(600, vec![(NATIVE_COIN, 50_000), (STABLE_COIN, 1_000)].into_iter().collect())
 		);
 		assert_eq!(
-			RECEIVED_PAYOUT.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, NATIVE_COIN)).unwrap_or(&0)),
+			RECEIVED_PAYOUT
+				.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, NATIVE_COIN)).unwrap_or(&0)),
 			0
 		);
 		assert_eq!(
-			RECEIVED_PAYOUT.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, STABLE_COIN)).unwrap_or(&0)),
+			RECEIVED_PAYOUT
+				.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, STABLE_COIN)).unwrap_or(&0)),
 			0
 		);
 
@@ -416,17 +401,16 @@ fn set_share_should_work() {
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(DOT_POOL, ALICE),
-			(
-				100,
-				vec![(NATIVE_COIN, 10_000), (STABLE_COIN, 1_000)].into_iter().collect()
-			)
+			(100, vec![(NATIVE_COIN, 10_000), (STABLE_COIN, 1_000)].into_iter().collect())
 		);
 		assert_eq!(
-			RECEIVED_PAYOUT.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, NATIVE_COIN)).unwrap_or(&0)),
+			RECEIVED_PAYOUT
+				.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, NATIVE_COIN)).unwrap_or(&0)),
 			10_000
 		);
 		assert_eq!(
-			RECEIVED_PAYOUT.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, STABLE_COIN)).unwrap_or(&0)),
+			RECEIVED_PAYOUT
+				.with(|v| *v.borrow().get(&(DOT_POOL, ALICE, STABLE_COIN)).unwrap_or(&0)),
 			5_000
 		);
 	});
@@ -471,10 +455,7 @@ fn accumulate_reward_should_work() {
 #[test]
 fn share_to_zero_removes_storage() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_eq!(
-			SharesAndWithdrawnRewards::<Runtime>::contains_key(DOT_POOL, ALICE),
-			false
-		);
+		assert_eq!(SharesAndWithdrawnRewards::<Runtime>::contains_key(DOT_POOL, ALICE), false);
 		RewardsModule::add_share(&ALICE, &DOT_POOL, 100);
 		RewardsModule::add_share(&BOB, &DOT_POOL, 100);
 		PoolInfos::<Runtime>::mutate(DOT_POOL, |pool_info| {
@@ -490,15 +471,9 @@ fn share_to_zero_removes_storage() {
 		);
 
 		// checks if key is removed
-		assert_eq!(
-			SharesAndWithdrawnRewards::<Runtime>::contains_key(DOT_POOL, ALICE),
-			true
-		);
+		assert_eq!(SharesAndWithdrawnRewards::<Runtime>::contains_key(DOT_POOL, ALICE), true);
 		RewardsModule::remove_share(&ALICE, &DOT_POOL, 100);
-		assert_eq!(
-			SharesAndWithdrawnRewards::<Runtime>::contains_key(DOT_POOL, ALICE),
-			false
-		);
+		assert_eq!(SharesAndWithdrawnRewards::<Runtime>::contains_key(DOT_POOL, ALICE), false);
 
 		RewardsModule::remove_share(&BOB, &DOT_POOL, 50);
 		assert_eq!(SharesAndWithdrawnRewards::<Runtime>::contains_key(DOT_POOL, BOB), true);

@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Unit tests for the transaction pause module.
 
@@ -25,11 +24,8 @@ use sp_runtime::traits::BadOrigin;
 
 const BALANCE_TRANSFER: &<Runtime as frame_system::Config>::Call =
 	&mock::Call::Balances(pallet_balances::Call::transfer { dest: ALICE, value: 10 });
-const TOKENS_TRANSFER: &<Runtime as frame_system::Config>::Call = &mock::Call::Tokens(orml_tokens::Call::transfer {
-	dest: ALICE,
-	currency_id: SUSD,
-	amount: 10,
-});
+const TOKENS_TRANSFER: &<Runtime as frame_system::Config>::Call =
+	&mock::Call::Tokens(orml_tokens::Call::transfer { dest: ALICE, currency_id: SUSD, amount: 10 });
 
 #[test]
 fn pause_transaction_work() {
@@ -37,7 +33,11 @@ fn pause_transaction_work() {
 		System::set_block_number(1);
 
 		assert_noop!(
-			TransactionPause::pause_transaction(Origin::signed(5), b"Balances".to_vec(), b"transfer".to_vec()),
+			TransactionPause::pause_transaction(
+				Origin::signed(5),
+				b"Balances".to_vec(),
+				b"transfer".to_vec()
+			),
 			BadOrigin
 		);
 
@@ -99,7 +99,11 @@ fn unpause_transaction_work() {
 		);
 
 		assert_noop!(
-			TransactionPause::unpause_transaction(Origin::signed(5), b"Balances".to_vec(), b"transfer".to_vec()),
+			TransactionPause::unpause_transaction(
+				Origin::signed(5),
+				b"Balances".to_vec(),
+				b"transfer".to_vec()
+			),
 			BadOrigin
 		);
 

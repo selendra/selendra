@@ -1,38 +1,27 @@
 [package]
-name = "selendra-node-rpc"
+name = "selendra-rpc"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
-[package.metadata.docs.rs]
-targets = ["x86_64-unknown-linux-gnu"]
-
 [dependencies]
-jsonrpsee = { version = "0.13.0", features = ["server"] }
+futures = "0.3.21"
+jsonrpsee = { version = "0.13.0", features = ["server", "macros"] }
+codec = { package = "parity-scale-codec", version = "3.0.0" }
+primitives = { package = "selendra-primitives", path = "../primitives" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sc-consensus-manual-seal = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
-sp-api = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sp-block-builder = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sp-consensus = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sp-consensus-babe = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sp-keystore = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-
-sc-chain-spec = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sc-client-api = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sc-consensus-babe = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sc-consensus-babe-rpc = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sc-consensus-epochs = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sc-finality-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sc-finality-grandpa-rpc = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sc-rpc = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sc-rpc-api = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sc-sync-state-rpc = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-
-pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-
-substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-substrate-state-trie-migration-rpc = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-
-selendra-primitives = { path = "../../primitives" }
+orml-oracle-rpc = { path = "../orml/oracle/rpc" }
+runtime-common = { path = "../runtime/common" }
+evm-rpc = { path = "../modules/evm/rpc" }
+orml-tokens-rpc = {path = "../orml/tokens/rpc" }

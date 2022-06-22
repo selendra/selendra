@@ -1,23 +1,22 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
-
 use primitives::Position;
-use sp_runtime::{DispatchError, DispatchResult};
+use sp_runtime::DispatchResult;
 
-use crate::{dex::*, ExchangeRate, Ratio};
+use crate::{ExchangeRate, Ratio};
 
 pub trait RiskManager<AccountId, CurrencyId, Balance, DebitBalance> {
 	fn get_debit_value(currency_id: CurrencyId, debit_balance: DebitBalance) -> Balance;
@@ -29,12 +28,15 @@ pub trait RiskManager<AccountId, CurrencyId, Balance, DebitBalance> {
 		check_required_ratio: bool,
 	) -> DispatchResult;
 
-	fn check_debit_cap(currency_id: CurrencyId, total_debit_balance: DebitBalance) -> DispatchResult;
+	fn check_debit_cap(
+		currency_id: CurrencyId,
+		total_debit_balance: DebitBalance,
+	) -> DispatchResult;
 }
 
 #[cfg(feature = "std")]
-impl<AccountId, CurrencyId, Balance: Default, DebitBalance> RiskManager<AccountId, CurrencyId, Balance, DebitBalance>
-	for ()
+impl<AccountId, CurrencyId, Balance: Default, DebitBalance>
+	RiskManager<AccountId, CurrencyId, Balance, DebitBalance> for ()
 {
 	fn get_debit_value(_currency_id: CurrencyId, _debit_balance: DebitBalance) -> Balance {
 		Default::default()
@@ -49,33 +51,27 @@ impl<AccountId, CurrencyId, Balance: Default, DebitBalance> RiskManager<AccountI
 		Ok(())
 	}
 
-	fn check_debit_cap(_currency_id: CurrencyId, _total_debit_balance: DebitBalance) -> DispatchResult {
+	fn check_debit_cap(
+		_currency_id: CurrencyId,
+		_total_debit_balance: DebitBalance,
+	) -> DispatchResult {
 		Ok(())
 	}
 }
 
 /// An abstraction of cdp treasury for Funan Protocol.
-pub trait CDPTreasury<AccountId> {
+pub trait SelTreasury<AccountId> {
 	type Balance;
 	type CurrencyId;
 
-	/// get surplus amount of cdp treasury
-	fn get_surplus_pool() -> Self::Balance;
-
 	/// get debit amount of cdp treasury
 	fn get_debit_pool() -> Self::Balance;
-
-	/// get collateral assets amount of cdp treasury
-	fn get_total_collaterals(id: Self::CurrencyId) -> Self::Balance;
 
 	/// calculate the proportion of specific debit amount for the whole system
 	fn get_debit_proportion(amount: Self::Balance) -> Ratio;
 
 	/// issue debit for cdp treasury
 	fn on_system_debit(amount: Self::Balance) -> DispatchResult;
-
-	/// issue surplus(stable currency) for cdp treasury
-	fn on_system_surplus(amount: Self::Balance) -> DispatchResult;
 
 	/// issue debit to `who`
 	/// if backed flag is true, means the debit to issue is backed on some
@@ -84,31 +80,6 @@ pub trait CDPTreasury<AccountId> {
 
 	/// burn debit(stable currency) of `who`
 	fn burn_debit(who: &AccountId, debit: Self::Balance) -> DispatchResult;
-
-	/// deposit surplus(stable currency) to cdp treasury by `from`
-	fn deposit_surplus(from: &AccountId, surplus: Self::Balance) -> DispatchResult;
-
-	/// withdraw surplus(stable currency) from cdp treasury to `to`
-	fn withdraw_surplus(to: &AccountId, surplus: Self::Balance) -> DispatchResult;
-
-	/// deposit collateral assets to cdp treasury by `who`
-	fn deposit_collateral(from: &AccountId, currency_id: Self::CurrencyId, amount: Self::Balance) -> DispatchResult;
-
-	/// withdraw collateral assets of cdp treasury to `who`
-	fn withdraw_collateral(to: &AccountId, currency_id: Self::CurrencyId, amount: Self::Balance) -> DispatchResult;
-}
-
-pub trait CDPTreasuryExtended<AccountId>: CDPTreasury<AccountId> {
-	fn swap_collateral_to_stable(
-		currency_id: Self::CurrencyId,
-		limit: SwapLimit<Self::Balance>
-	) -> sp_std::result::Result<(Self::Balance, Self::Balance), DispatchError>;
-
-	fn remove_liquidity_for_lp_collateral(
-		currency_id: Self::CurrencyId,
-		amount: Self::Balance,
-	) -> sp_std::result::Result<(Self::Balance, Self::Balance), DispatchError>;
-
 }
 
 pub trait EmergencyShutdown {
@@ -125,7 +96,11 @@ pub trait FunanManager<AccountId, CurrencyId, Amount, Balance> {
 		debit_adjustment: Amount,
 	) -> DispatchResult;
 	/// Close CDP loan using DEX
-	fn close_loan_by_dex(who: AccountId, currency_id: CurrencyId, max_collateral_amount: Balance) -> DispatchResult;
+	fn close_loan_by_dex(
+		who: AccountId,
+		currency_id: CurrencyId,
+		max_collateral_amount: Balance,
+	) -> DispatchResult;
 	/// Get open CDP corresponding to an account and collateral `CurrencyId`
 	fn get_position(who: &AccountId, currency_id: CurrencyId) -> Position;
 	/// Get liquidation ratio for collateral `CurrencyId`

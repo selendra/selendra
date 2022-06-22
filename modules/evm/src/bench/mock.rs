@@ -1,18 +1,20 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2021 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg(any(feature = "std", feature = "bench"))]
 
@@ -25,12 +27,14 @@ use frame_support::{
 	ConsensusEngineId, PalletId,
 };
 use frame_system::EnsureSignedBy;
-use module_support::mocks::MockErc20InfoMapping;
-use module_support::{mocks::MockAddressMapping, DEXIncentives, Price, PriceProvider};
+use module_support::{
+	mocks::{MockAddressMapping, MockErc20InfoMapping},
+	DEXIncentives, Price, PriceProvider,
+};
 use orml_traits::{parameter_type_with_key, MultiReservableCurrency};
 pub use primitives::{
-	define_combined_task, Address, Amount, Block, BlockNumber, CurrencyId, Header, Multiplier, ReserveIdentifier,
-	Signature, TokenSymbol,
+	define_combined_task, Address, Amount, Block, BlockNumber, CurrencyId, Header, Multiplier,
+	ReserveIdentifier, Signature, TokenSymbol,
 };
 use sp_core::{H160, H256};
 use sp_runtime::{
@@ -124,7 +128,8 @@ impl orml_currencies::Config for Runtime {
 	type GetNativeCurrencyId = GetNativeCurrencyId;
 	type WeightInfo = ();
 }
-pub type AdaptedBasicCurrency = orml_currencies::BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+pub type AdaptedBasicCurrency =
+	orml_currencies::BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
 
 define_combined_task! {
 	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
@@ -210,9 +215,9 @@ impl Config for Runtime {
 parameter_types! {
 	pub const GetStableCurrencyId: CurrencyId = SUSD;
 	pub MaxSwapSlippageCompareToOracle: Ratio = Ratio::one();
-	pub const TreasuryPalletId: PalletId = PalletId(*b"aca/trsy");
-	pub const TransactionPaymentPalletId: PalletId = PalletId(*b"aca/fees");
-	pub KaruraTreasuryAccount: AccountId32 = TreasuryPalletId::get().into_account_truncating();
+	pub const TreasuryPalletId: PalletId = PalletId(*b"sel/trsy");
+	pub const TransactionPaymentPalletId: PalletId = PalletId(*b"sel/fees");
+	pub CardamomTreasuryAccount: AccountId32 = TreasuryPalletId::get().into_account_truncating();
 	pub const CustomFeeSurplus: Percent = Percent::from_percent(50);
 	pub const AlternativeFeeSurplus: Percent = Percent::from_percent(25);
 	pub DefaultFeeTokens: Vec<CurrencyId> = vec![SUSD];
@@ -253,7 +258,7 @@ impl module_transaction_payment::Config for Runtime {
 	type PriceSource = MockPriceSource;
 	type WeightInfo = ();
 	type PalletId = TransactionPaymentPalletId;
-	type TreasuryAccount = KaruraTreasuryAccount;
+	type TreasuryAccount = CardamomTreasuryAccount;
 	type UpdateOrigin = EnsureSignedBy<ListingOrigin, AccountId32>;
 	type CustomFeeSurplus = CustomFeeSurplus;
 	type AlternativeFeeSurplus = AlternativeFeeSurplus;
@@ -262,11 +267,19 @@ impl module_transaction_payment::Config for Runtime {
 
 pub struct MockDEXIncentives;
 impl DEXIncentives<AccountId32, CurrencyId, Balance> for MockDEXIncentives {
-	fn do_deposit_dex_share(who: &AccountId32, lp_currency_id: CurrencyId, amount: Balance) -> DispatchResult {
+	fn do_deposit_dex_share(
+		who: &AccountId32,
+		lp_currency_id: CurrencyId,
+		amount: Balance,
+	) -> DispatchResult {
 		Tokens::reserve(lp_currency_id, who, amount)
 	}
 
-	fn do_withdraw_dex_share(who: &AccountId32, lp_currency_id: CurrencyId, amount: Balance) -> DispatchResult {
+	fn do_withdraw_dex_share(
+		who: &AccountId32,
+		lp_currency_id: CurrencyId,
+		amount: Balance,
+	) -> DispatchResult {
 		let _ = Tokens::unreserve(lp_currency_id, who, amount);
 		Ok(())
 	}
@@ -274,7 +287,7 @@ impl DEXIncentives<AccountId32, CurrencyId, Balance> for MockDEXIncentives {
 
 parameter_types! {
 	pub const GetExchangeFee: (u32, u32) = (1, 100);
-	pub const DEXPalletId: PalletId = PalletId(*b"aca/dexm");
+	pub const DEXPalletId: PalletId = PalletId(*b"sel/dexm");
 }
 
 impl module_dex::Config for Runtime {
@@ -292,7 +305,8 @@ impl module_dex::Config for Runtime {
 }
 
 pub type SignedExtra = (frame_system::CheckWeight<Runtime>,);
-pub type UncheckedExtrinsic = sp_runtime::generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type UncheckedExtrinsic =
+	sp_runtime::generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 
 construct_runtime!(
 	pub enum Runtime where

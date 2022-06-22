@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Mocks for the dex-oracle module.
 
@@ -24,7 +23,7 @@ use frame_support::{
 	traits::{ConstU64, Everything},
 };
 use frame_system::EnsureSignedBy;
-use primitives::{Moment, currency::{TokenSymbol, DexShare}};
+use primitives::{DexShare, Moment, TokenSymbol};
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,
@@ -101,7 +100,10 @@ pub fn set_pool(trading_pair: &TradingPair, pool_0: Balance, pool_1: Balance) {
 
 pub struct MockDEX;
 impl DEXManager<AccountId, Balance, CurrencyId> for MockDEX {
-	fn get_liquidity_pool(currency_id_0: CurrencyId, currency_id_1: CurrencyId) -> (Balance, Balance) {
+	fn get_liquidity_pool(
+		currency_id_0: CurrencyId,
+		currency_id_1: CurrencyId,
+	) -> (Balance, Balance) {
 		TradingPair::from_currency_ids(currency_id_0, currency_id_1)
 			.map(|trading_pair| {
 				if trading_pair == SUSDDOTPair::get() {
@@ -115,7 +117,10 @@ impl DEXManager<AccountId, Balance, CurrencyId> for MockDEX {
 			.unwrap_or_else(|| (0, 0))
 	}
 
-	fn get_liquidity_token_address(_currency_id_a: CurrencyId, _currency_id_b: CurrencyId) -> Option<H160> {
+	fn get_liquidity_token_address(
+		_currency_id_a: CurrencyId,
+		_currency_id_b: CurrencyId,
+	) -> Option<H160> {
 		unimplemented!()
 	}
 
@@ -201,9 +206,7 @@ impl Default for ExtBuilder {
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let t = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
-			.unwrap();
+		let t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 		t.into()
 	}

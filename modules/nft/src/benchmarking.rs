@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Benchmarks for the nft module.
 
@@ -46,9 +45,14 @@ fn test_attr() -> Attributes {
 	attr
 }
 
-fn create_token_class<T: Config>(caller: T::AccountId) -> Result<T::AccountId, DispatchErrorWithPostInfo> {
+fn create_token_class<T: Config>(
+	caller: T::AccountId,
+) -> Result<T::AccountId, DispatchErrorWithPostInfo> {
 	let base_currency_amount = dollar(1000);
-	<T as module::Config>::Currency::make_free_balance_be(&caller, base_currency_amount.unique_saturated_into());
+	<T as module::Config>::Currency::make_free_balance_be(
+		&caller,
+		base_currency_amount.unique_saturated_into(),
+	);
 
 	let module_account: T::AccountId =
 		T::PalletId::get().into_sub_account_truncating(orml_nft::Pallet::<T>::next_class_id());
@@ -56,10 +60,10 @@ fn create_token_class<T: Config>(caller: T::AccountId) -> Result<T::AccountId, D
 		RawOrigin::Signed(caller).into(),
 		vec![1],
 		Properties(
-			ClassProperty::Transferable
-				| ClassProperty::Burnable
-				| ClassProperty::Mintable
-				| ClassProperty::ClassPropertiesMutable,
+			ClassProperty::Transferable |
+				ClassProperty::Burnable |
+				ClassProperty::Mintable |
+				ClassProperty::ClassPropertiesMutable,
 		),
 		test_attr(),
 	)?;
@@ -210,7 +214,19 @@ mod mock {
 		type PalletsOrigin = OriginCaller;
 		type WeightInfo = ();
 	}
-	#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+	#[derive(
+		Copy,
+		Clone,
+		Eq,
+		PartialEq,
+		Ord,
+		PartialOrd,
+		Encode,
+		Decode,
+		RuntimeDebug,
+		MaxEncodedLen,
+		TypeInfo,
+	)]
 	pub enum ProxyType {
 		Any,
 		JustTransfer,
@@ -225,7 +241,8 @@ mod mock {
 		fn filter(&self, c: &Call) -> bool {
 			match self {
 				ProxyType::Any => true,
-				ProxyType::JustTransfer => matches!(c, Call::Balances(pallet_balances::Call::transfer { .. })),
+				ProxyType::JustTransfer =>
+					matches!(c, Call::Balances(pallet_balances::Call::transfer { .. })),
 				ProxyType::JustUtility => matches!(c, Call::Utility(..)),
 			}
 		}
@@ -260,7 +277,7 @@ mod mock {
 	}
 
 	parameter_types! {
-		pub const NftPalletId: PalletId = PalletId(*b"aca/aNFT");
+		pub const NftPalletId: PalletId = PalletId(*b"sel/aNFT");
 	}
 
 	impl crate::Config for Runtime {
@@ -304,9 +321,7 @@ mod mock {
 	use frame_system::Call as SystemCall;
 
 	pub fn new_test_ext() -> sp_io::TestExternalities {
-		let t = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
-			.unwrap();
+		let t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));
@@ -316,8 +331,7 @@ mod mock {
 
 #[cfg(test)]
 mod tests {
-	use super::mock::*;
-	use super::*;
+	use super::{mock::*, *};
 	use frame_benchmarking::impl_benchmark_test_suite;
 
 	impl_benchmark_test_suite!(Pallet, super::new_test_ext(), super::Runtime,);
