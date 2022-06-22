@@ -31,7 +31,7 @@ use module_evm::{EvmChainId, EvmTask};
 use module_evm_accounts::EvmAddressMapping;
 use module_support::{
 	AddressMapping as AddressMappingT, DEXIncentives, DispatchableTask, EmergencyShutdown,
-	ExchangeRate, ExchangeRateProvider, PoolId, PriceProvider, Rate,
+	PoolId, PriceProvider,
 };
 use orml_traits::{parameter_type_with_key, MultiReservableCurrency};
 pub use primitives::{
@@ -187,7 +187,6 @@ impl module_evm_bridge::Config for Test {
 impl module_asset_registry::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
-	type StakingCurrencyId = GetStakingCurrencyId;
 	type EVMBridge = module_evm_bridge::EVMBridge<Test>;
 	type RegisterOrigin = EnsureSignedBy<CouncilAccount, AccountId>;
 	type WeightInfo = ();
@@ -491,38 +490,9 @@ impl module_evm_accounts::Config for Test {
 	type WeightInfo = ();
 }
 
-pub struct MockLiquidStakingExchangeProvider;
-impl ExchangeRateProvider for MockLiquidStakingExchangeProvider {
-	fn get_exchange_rate() -> ExchangeRate {
-		ExchangeRate::saturating_from_rational(1, 2)
-	}
-}
-
-impl BlockNumberProvider for MockRelayBlockNumberProvider {
-	type BlockNumber = BlockNumber;
-
-	fn current_block_number() -> Self::BlockNumber {
-		Self::get()
-	}
-}
-
-parameter_type_with_key! {
-	pub LiquidCrowdloanLeaseBlockNumber: |_lease: Lease| -> Option<BlockNumber> {
-		None
-	};
-}
-
-parameter_type_with_key! {
-	pub PricingPegged: |_currency_id: CurrencyId| -> Option<CurrencyId> {
-		None
-	};
-}
 
 parameter_types! {
 	pub StableCurrencyFixedPrice: Price = Price::saturating_from_rational(1, 1);
-	pub const GetStakingCurrencyId: CurrencyId = DOT;
-	pub MockRelayBlockNumberProvider: BlockNumber = 0;
-	pub RewardRatePerRelaychainBlock: Rate = Rate::zero();
 }
 
 ord_parameter_types! {
