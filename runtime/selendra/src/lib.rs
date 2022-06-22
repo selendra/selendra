@@ -18,20 +18,34 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit.
 #![recursion_limit = "512"]
-#![allow(clippy::unnecessary_mut_passed)]
-#![allow(clippy::or_fun_call)]
-#![allow(clippy::from_over_into)]
-#![allow(clippy::upper_case_acronyms)]
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+// constants type
+pub mod constants;
+
+// runtime support
+mod authority;
+mod benchmarking;
+mod voter_bags;
+mod weights;
+
+// runtime config
+mod consensus_config;
+mod governance_config;
+
 use codec::{Decode, DecodeLimit, Encode};
-use pallet_grandpa::{
-	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
-};
 use scale_info::TypeInfo;
+
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
+use sp_std::prelude::*;
+#[cfg(feature = "std")]
+use sp_version::NativeVersion;
+use sp_version::RuntimeVersion;
+
 use sp_api::impl_runtime_apis;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160};
@@ -44,12 +58,25 @@ use sp_runtime::{
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, DispatchResult, FixedPointNumber, Perbill, Percent, Permill, Perquintill,
 };
-use sp_std::prelude::*;
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
 
+use pallet_grandpa::{
+	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
+};
+use pallet_session::historical::{self as pallet_session_historical};
+use pallet_transaction_payment::RuntimeDispatchInfo;
+
+use frame_support::{
+	construct_runtime, log,
+	pallet_prelude::InvalidTransaction,
+	parameter_types,
+	traits::{
+		ConstU16, ConstU32, Contains, EqualPrivilegeOnly, InstanceFilter, KeyOwnerProofSystem,
+	},
+	weights::{constants::RocksDbWeight, Weight},
+	RuntimeDebug,
+};
 use frame_system::EnsureRoot;
+
 use module_asset_registry::{AssetIdMaps, EvmErc20InfoMapping};
 use module_currencies::BasicCurrencyAdapter;
 use module_evm::{runner::RunnerExtended, CallInfo, CreateInfo, EvmChainId, EvmTask};
@@ -61,63 +88,29 @@ use orml_traits::{
 	create_median_value_data_provider, parameter_type_with_key, DataFeeder, DataProviderExtended,
 	GetByKey,
 };
-use pallet_session::historical::{self as pallet_session_historical};
-use pallet_transaction_payment::RuntimeDispatchInfo;
 
-use frame_support::{
-	construct_runtime, log,
-	pallet_prelude::InvalidTransaction,
-	parameter_types,
-	traits::{
-		ConstU16, ConstU32, Contains, EqualPrivilegeOnly, InstanceFilter,
-		KeyOwnerProofSystem, LockIdentifier,
-	},
-	weights::{constants::RocksDbWeight, Weight},
-	PalletId, RuntimeDebug,
-};
-
-pub use pallet_collective::MemberCount;
-pub use pallet_timestamp::Call as TimestampCall;
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-
+use consensus_config::EpochDuration;
 pub use constants::{fee::*, time::*};
 use primitives::currency::AssetIds;
+
 pub use primitives::{
+	accounts::*,
 	define_combined_task,
 	evm::{AccessListItem, BlockLimits, EstimateResourcesRequest, EthereumTransactionMessage},
 	task::TaskResult,
 	unchecked_extrinsic::SelendraUncheckedExtrinsic,
-	AccountId, AccountIndex, Address, Amount, AuthoritysOriginId, Balance, BlockNumber, CurrencyId,
-	DataProviderId, EraIndex, Hash, Lease, Moment, Multiplier, Nonce, ReserveIdentifier, Share,
-	Signature, TokenSymbol, TradingPair,
+	AccountId, AccountIndex, Amount, AuthoritysOriginId, Balance, BlockNumber, CurrencyId,
+	DataProviderId, Hash, Moment, Multiplier, Nonce, ReserveIdentifier, Signature, TokenSymbol,
 };
+
 pub use runtime_common::{
-	cent, dollar, microcent, millicent, prod_or_fast, AllPrecompiles,
-	EnsureRootOrAllGeneralCouncil, EnsureRootOrAllTechnicalCommittee,
-	EnsureRootOrHalfFinancialCouncil, EnsureRootOrHalfGeneralCouncil,
-	EnsureRootOrOneGeneralCouncil, EnsureRootOrOneThirdsTechnicalCommittee,
-	EnsureRootOrThreeFourthsGeneralCouncil, EnsureRootOrTwoThirdsGeneralCouncil,
-	EnsureRootOrTwoThirdsTechnicalCommittee, ExchangeRate, ExistentialDepositsTimesOneHundred,
-	FinancialCouncilInstance, FinancialCouncilMembershipInstance, GasToWeight,
-	GeneralCouncilInstance, GeneralCouncilMembershipInstance, MaxTipsOfPriority,
-	OffchainSolutionWeightLimit, OperationalFeeMultiplier, OperatorMembershipInstanceSelendra,
-	Price, ProxyType, Rate, Ratio, RuntimeBlockLength, RuntimeBlockWeights, SystemContractsFilter,
-	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance, TimeStampedPrice,
-	TipPerWeightStep, DOT, KMD, RENBTC, SEL, SUSD,
+	cent, dollar, microcent, prod_or_fast, AllPrecompiles, EnsureRootOrHalfFinancialCouncil,
+	EnsureRootOrHalfGeneralCouncil, EnsureRootOrOneGeneralCouncil,
+	EnsureRootOrOneThirdsTechnicalCommittee, EnsureRootOrThreeFourthsGeneralCouncil,
+	EnsureRootOrTwoThirdsGeneralCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, GasToWeight,
+	MaxTipsOfPriority, OperationalFeeMultiplier, Price, ProxyType, Rate, Ratio, RuntimeBlockLength,
+	RuntimeBlockWeights, TimeStampedPrice, TipPerWeightStep, DOT, KMD, SEL, SUSD,
 };
-
-pub mod constants;
-
-mod authority;
-mod benchmarking;
-mod voter_bags;
-mod weights;
-
-mod consensus_config;
-mod governance_config;
-
-use consensus_config::EpochDuration;
 
 /// This runtime version.
 #[sp_version::runtime_version]
@@ -153,34 +146,6 @@ impl_opaque_keys! {
 		pub im_online: ImOnline,
 		pub authority_discovery: AuthorityDiscovery,
 	}
-}
-
-// Pallet accounts of runtime
-parameter_types! {
-	pub const TreasuryPalletId: PalletId = PalletId(*b"sel/trsy");
-	pub const DEXPalletId: PalletId = PalletId(*b"sel/dexm");
-	pub const PhragmenElectionPalletId: LockIdentifier = *b"phrelect";
-	pub const SelTreasuryPalletId: PalletId = PalletId(*b"sel/cdpt");
-	pub const IncentivesPalletId: PalletId = PalletId(*b"sel/inct");
-	// Treasury reserve
-	pub const TreasuryReservePalletId: PalletId = PalletId(*b"sel/reve");
-	pub const NftPalletId: PalletId = PalletId(*b"sel/aNFT");
-	// Vault all unrleased native token.
-	pub UnreleasedNativeVaultAccountId: AccountId = PalletId(*b"sel/urls").into_account_truncating();
-	// This Pallet is only used to payment fee pool, it's not added to whitelist by design.
-	// because transaction payment pallet will ensure the accounts always have enough ED.
-	pub const TransactionPaymentPalletId: PalletId = PalletId(*b"sel/fees");
-}
-
-pub fn get_all_module_accounts() -> Vec<AccountId> {
-	vec![
-		SelTreasuryPalletId::get().into_account_truncating(),
-		DEXPalletId::get().into_account_truncating(),
-		IncentivesPalletId::get().into_account_truncating(),
-		TreasuryPalletId::get().into_account_truncating(),
-		TreasuryReservePalletId::get().into_account_truncating(),
-		UnreleasedNativeVaultAccountId::get(),
-	]
 }
 
 parameter_types! {

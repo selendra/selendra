@@ -15,7 +15,7 @@
 
 #![allow(clippy::from_over_into)]
 
-use crate::{evm::EvmAddress, *};
+use crate::evm::EvmAddress;
 use bstringify::bstringify;
 use codec::{Decode, Encode, MaxEncodedLen};
 pub use module_stable_asset::StableAssetPoolId;
@@ -182,7 +182,6 @@ pub trait TokenInfo {
 
 pub type ForeignAssetId = u16;
 pub type Erc20Id = u32;
-pub type Lease = BlockNumber;
 
 #[derive(
 	Encode,

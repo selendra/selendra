@@ -25,16 +25,15 @@ use module_evm_accounts::EvmAddressMapping;
 use module_support::{mocks::MockAddressMapping, DispatchableTask};
 use orml_traits::parameter_type_with_key;
 use primitives::{
-	define_combined_task, evm::convert_decimals_to_evm, task::TaskResult, Amount, BlockNumber, CurrencyId,
-	ReserveIdentifier, TokenSymbol,
+	define_combined_task, evm::convert_decimals_to_evm, task::TaskResult, Amount, BlockNumber,
+	CurrencyId, ReserveIdentifier, TokenSymbol,
 };
 use scale_info::TypeInfo;
 use sp_core::{H160, H256};
-use sp_runtime::traits::Convert;
 pub use sp_runtime::AccountId32;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, BlockNumberProvider, IdentityLookup, Zero},
+	traits::{BlakeTwo256, BlockNumberProvider, Convert, IdentityLookup, Zero},
 };
 use std::str::FromStr;
 
@@ -124,7 +123,8 @@ impl orml_currencies::Config for TestRuntime {
 	type GetNativeCurrencyId = GetNativeCurrencyId;
 	type WeightInfo = ();
 }
-pub type AdaptedBasicCurrency = orml_currencies::BasicCurrencyAdapter<TestRuntime, Balances, Amount, BlockNumber>;
+pub type AdaptedBasicCurrency =
+	orml_currencies::BasicCurrencyAdapter<TestRuntime, Balances, Amount, BlockNumber>;
 
 define_combined_task! {
 	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
@@ -233,7 +233,3 @@ frame_support::construct_runtime!(
 		IdleScheduler: module_idle_scheduler,
 	}
 );
-
-pub fn new_test_ext() -> sp_io::TestExternalities {
-	sp_io::TestExternalities::new_empty()
-}

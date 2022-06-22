@@ -18,27 +18,35 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "256"]
 
+pub mod bench;
+pub mod check_nonce;
+pub mod origin;
+pub mod precompile;
+pub mod evm;
+
+#[cfg(test)]
+mod mock;
+
 use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
+
+
+use sp_runtime::Perbill;
+use sp_std::prelude::*;
+use static_assertions::const_assert;
+
 use frame_support::{
 	parameter_types,
-	traits::{ConstU32, Contains, EnsureOneOf, Get},
+	traits::ConstU32,
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_MILLIS},
 		DispatchClass, Weight,
 	},
 	RuntimeDebug,
 };
-use frame_system::{limits, EnsureRoot};
-use module_evm::GenesisAccount;
-use orml_traits::GetByKey;
-use primitives::{evm::is_system_contract, Balance, CurrencyId, Nonce};
-use scale_info::TypeInfo;
-use sp_core::{Bytes, H160};
-use sp_runtime::{traits::Convert, transaction_validity::TransactionPriority, Perbill};
-use sp_std::{collections::btree_map::BTreeMap, marker::PhantomData, prelude::*};
-use static_assertions::const_assert;
+use frame_system::limits;
 
-pub use check_nonce::CheckNonce;
+
 pub use module_support::{ExchangeRate, PrecompileCallerFilter, Price, Rate, Ratio};
 pub use precompile::{
 	AllPrecompiles, DEXPrecompile, EVMPrecompile, MultiCurrencyPrecompile, NFTPrecompile,
@@ -48,21 +56,21 @@ pub use primitives::{
 	currency::{TokenInfo, DOT, KMD, KSM, RENBTC, SEL, SUSD},
 	AccountId,
 };
+use primitives::{Balance, CurrencyId};
 
-#[cfg(feature = "std")]
-use sp_core::bytes::from_hex;
-#[cfg(feature = "std")]
-use std::str::FromStr;
-
-pub mod bench;
-pub mod check_nonce;
-pub mod precompile;
-
-mod gas_to_weight_ratio;
-// #[cfg(test)]
-// mod mock;
+pub use check_nonce::CheckNonce;
+pub use origin::*;
+pub use evm::*;
 
 pub type TimeStampedPrice = orml_oracle::TimestampedValue<Price, primitives::Moment>;
+// TODO: somehow estimate this value. Start from a conservative value.
+pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
+/// The ratio that `Normal` extrinsics should occupy. Start from a conservative value.
+const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(70);
+/// Parachain only have 0.5 second of computation time.
+pub const MAXIMUM_BLOCK_WEIGHT: Weight = 500 * WEIGHT_PER_MILLIS;
+
+const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct());
 
 // Priority of unsigned transactions
 parameter_types! {
@@ -75,70 +83,7 @@ parameter_types! {
 	pub TipPerWeightStep: Balance = cent(SEL); // 0.01 SEL
 	pub MaxTipsOfPriority: Balance = 10_000 * dollar(SEL); // 10_000 SEL
 	pub const OperationalFeeMultiplier: u64 = 100_000_000_000_000u64;
-	// MinOperationalPriority = final_fee_min * OperationalFeeMultiplier / TipPerWeightStep
-	// 1_500_000_000u128 from https://github.com/SelendraNetwork/Selendra/blob/bda4d430cbecebf8720d700b976875d0d805ceca/runtime/integration-tests/src/runtime.rs#L275
-	MinOperationalPriority: TransactionPriority = (1_500_000_000u128 * OperationalFeeMultiplier::get() as u128 / TipPerWeightStep::get())
-		.try_into()
-		.expect("Check that there is no overflow here");
-	pub CdpEngineUnsignedPriority: TransactionPriority = MinOperationalPriority::get() - 1000;
-	pub RenvmBridgeUnsignedPriority: TransactionPriority = MinOperationalPriority::get() - 3000;
-}
 
-/// The call is allowed only if caller is a system contract.
-pub struct SystemContractsFilter;
-impl PrecompileCallerFilter for SystemContractsFilter {
-	fn is_allowed(caller: H160) -> bool {
-		is_system_contract(caller)
-	}
-}
-
-/// Convert gas to weight
-pub struct GasToWeight;
-impl Convert<u64, Weight> for GasToWeight {
-	fn convert(gas: u64) -> Weight {
-		gas.saturating_mul(gas_to_weight_ratio::RATIO)
-	}
-}
-
-pub struct ExistentialDepositsTimesOneHundred<NativeCurrencyId, NativeED, OtherEDs>(
-	PhantomData<(NativeCurrencyId, NativeED, OtherEDs)>,
-);
-impl<
-		NativeCurrencyId: Get<CurrencyId>,
-		NativeED: Get<Balance>,
-		OtherEDs: GetByKey<CurrencyId, Balance>,
-	> GetByKey<CurrencyId, Balance>
-	for ExistentialDepositsTimesOneHundred<NativeCurrencyId, NativeED, OtherEDs>
-{
-	fn get(currency_id: &CurrencyId) -> Balance {
-		if *currency_id == NativeCurrencyId::get() {
-			NativeED::get().saturating_mul(100u128)
-		} else {
-			OtherEDs::get(currency_id).saturating_mul(100u128)
-		}
-	}
-}
-
-/// Convert weight to gas
-pub struct WeightToGas;
-impl Convert<Weight, u64> for WeightToGas {
-	fn convert(weight: Weight) -> u64 {
-		weight
-			.checked_div(gas_to_weight_ratio::RATIO)
-			.expect("Compile-time constant is not zero; qed;")
-	}
-}
-
-// TODO: somehow estimate this value. Start from a conservative value.
-pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
-/// The ratio that `Normal` extrinsics should occupy. Start from a conservative value.
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(70);
-/// Parachain only have 0.5 second of computation time.
-pub const MAXIMUM_BLOCK_WEIGHT: Weight = 500 * WEIGHT_PER_MILLIS;
-
-const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct());
-
-parameter_types! {
 	/// Maximum length of block. Up to 5MB.
 	pub RuntimeBlockLength: limits::BlockLength =
 		limits::BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
@@ -163,25 +108,6 @@ parameter_types! {
 		.build_or_panic();
 }
 
-parameter_types! {
-	/// A limit for off-chain phragmen unsigned solution submission.
-	///
-	/// We want to keep it as high as possible, but can't risk having it reject,
-	/// so we always subtract the base block execution weight.
-	pub OffchainSolutionWeightLimit: Weight = RuntimeBlockWeights::get()
-		.get(DispatchClass::Normal)
-		.max_extrinsic
-		.expect("Normal extrinsics have weight limit configured by default; qed")
-		.saturating_sub(BlockExecutionWeight::get());
-}
-
-pub struct DummyNomineeFilter;
-impl<AccountId> Contains<AccountId> for DummyNomineeFilter {
-	fn contains(_: &AccountId) -> bool {
-		true
-	}
-}
-
 // TODO: make those const fn
 pub fn dollar(currency_id: CurrencyId) -> Balance {
 	10u128.saturating_pow(currency_id.decimals().expect("Not support Non-Token decimals").into())
@@ -198,126 +124,6 @@ pub fn millicent(currency_id: CurrencyId) -> Balance {
 pub fn microcent(currency_id: CurrencyId) -> Balance {
 	millicent(currency_id) / 1000
 }
-
-pub type GeneralCouncilInstance = pallet_collective::Instance1;
-pub type FinancialCouncilInstance = pallet_collective::Instance2;
-pub type HomaCouncilInstance = pallet_collective::Instance3;
-pub type TechnicalCommitteeInstance = pallet_collective::Instance4;
-
-pub type GeneralCouncilMembershipInstance = pallet_membership::Instance1;
-pub type FinancialCouncilMembershipInstance = pallet_membership::Instance2;
-pub type HomaCouncilMembershipInstance = pallet_membership::Instance3;
-pub type TechnicalCommitteeMembershipInstance = pallet_membership::Instance4;
-pub type OperatorMembershipInstanceSelendra = pallet_membership::Instance5;
-
-// General Council
-pub type EnsureRootOrAllGeneralCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, GeneralCouncilInstance, 1, 1>,
->;
-
-pub type EnsureRootOrHalfGeneralCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, GeneralCouncilInstance, 1, 2>,
->;
-
-pub type EnsureRootOrOneThirdsGeneralCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, GeneralCouncilInstance, 1, 3>,
->;
-
-pub type EnsureRootOrTwoThirdsGeneralCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, GeneralCouncilInstance, 2, 3>,
->;
-
-pub type EnsureRootOrThreeFourthsGeneralCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, GeneralCouncilInstance, 3, 4>,
->;
-
-pub type EnsureRootOrOneGeneralCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureMember<AccountId, GeneralCouncilInstance>,
->;
-
-// Financial Council
-pub type EnsureRootOrAllFinancialCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 1, 1>,
->;
-
-pub type EnsureRootOrHalfFinancialCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 1, 2>,
->;
-
-pub type EnsureRootOrOneThirdsFinancialCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 1, 3>,
->;
-
-pub type EnsureRootOrTwoThirdsFinancialCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 2, 3>,
->;
-
-pub type EnsureRootOrThreeFourthsFinancialCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 3, 4>,
->;
-
-// Homa Council
-pub type EnsureRootOrAllHomaCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 1, 1>,
->;
-
-pub type EnsureRootOrHalfHomaCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 1, 2>,
->;
-
-pub type EnsureRootOrOneThirdsHomaCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 1, 3>,
->;
-
-pub type EnsureRootOrTwoThirdsHomaCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 2, 3>,
->;
-
-pub type EnsureRootOrThreeFourthsHomaCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 3, 4>,
->;
-
-// Technical Committee Council
-pub type EnsureRootOrAllTechnicalCommittee = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 1, 1>,
->;
-
-pub type EnsureRootOrHalfTechnicalCommittee = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 1, 2>,
->;
-
-pub type EnsureRootOrOneThirdsTechnicalCommittee = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 1, 3>,
->;
-
-pub type EnsureRootOrTwoThirdsTechnicalCommittee = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 2, 3>,
->;
-
-pub type EnsureRootOrThreeFourthsTechnicalCommittee = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 3, 4>,
->;
 
 /// The type used to represent the kinds of proxying allowed.
 #[derive(
@@ -347,72 +153,11 @@ impl Default for ProxyType {
 	}
 }
 
-pub struct EvmLimits<T>(PhantomData<T>);
-impl<T> EvmLimits<T>
-where
-	T: frame_system::Config,
-{
-	pub fn max_gas_limit() -> u64 {
-		let weights = T::BlockWeights::get();
-		let normal_weight = weights.get(DispatchClass::Normal);
-		WeightToGas::convert(normal_weight.max_extrinsic.unwrap_or(weights.max_block))
-	}
-
-	pub fn max_storage_limit() -> u32 {
-		let length = T::BlockLength::get();
-		*length.max.get(DispatchClass::Normal)
-	}
-}
-
-#[cfg(feature = "std")]
-/// Returns `evm_genesis_accounts`
-pub fn evm_genesis(evm_accounts: Vec<H160>) -> BTreeMap<H160, GenesisAccount<Balance, Nonce>> {
-	let contracts_json =
-		&include_bytes!("../../../predeploy-contracts/resources/bytecodes.json")[..];
-	let contracts: Vec<(String, String, String)> = serde_json::from_slice(contracts_json).unwrap();
-	let mut accounts = BTreeMap::new();
-	for (_, address, code_string) in contracts {
-		let account = GenesisAccount {
-			nonce: 0u32,
-			balance: 0u128,
-			storage: BTreeMap::new(),
-			code: Bytes::from_str(&code_string).unwrap().0,
-			enable_contract_development: false,
-		};
-
-		let addr = H160::from_slice(
-			from_hex(address.as_str())
-				.expect("predeploy-contracts must specify address")
-				.as_slice(),
-		);
-		accounts.insert(addr, account);
-	}
-
-	for dev_acc in evm_accounts {
-		let account = GenesisAccount {
-			nonce: 0u32,
-			balance: 1000 * dollar(SEL),
-			storage: BTreeMap::new(),
-			code: vec![],
-			enable_contract_development: true,
-		};
-		accounts.insert(dev_acc, account);
-	}
-
-	accounts
-}
-
 // The type used for currency conversion.
 ///
 /// This must only be used as long as the balance type is `u128`.
 pub type CurrencyToVote = frame_support::traits::U128CurrencyToVote;
 static_assertions::assert_eq_size!(primitives::Balance, u128);
-
-pub struct StakingBenchmarkingConfig;
-impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
-	type MaxNominators = ConstU32<1000>;
-	type MaxValidators = ConstU32<1000>;
-}
 
 #[macro_export]
 macro_rules! prod_or_fast {
@@ -432,33 +177,8 @@ macro_rules! prod_or_fast {
 	};
 }
 
-#[cfg(test)]
-mod tests {
-	use super::*;
-	use primitives::evm::SYSTEM_CONTRACT_ADDRESS_PREFIX;
-
-	#[test]
-	fn system_contracts_filter_works() {
-		assert!(SystemContractsFilter::is_allowed(H160::from_low_u64_be(1)));
-
-		let mut max_allowed_addr = [0u8; 20];
-		max_allowed_addr[SYSTEM_CONTRACT_ADDRESS_PREFIX.len()] = 127u8;
-		assert!(SystemContractsFilter::is_allowed(max_allowed_addr.into()));
-
-		let mut min_blocked_addr = [0u8; 20];
-		min_blocked_addr[SYSTEM_CONTRACT_ADDRESS_PREFIX.len() - 1] = 1u8;
-		assert!(!SystemContractsFilter::is_allowed(min_blocked_addr.into()));
-	}
-
-	#[test]
-	fn check_max_normal_priority() {
-		let max_normal_priority: TransactionPriority = (MaxTipsOfPriority::get() /
-			TipPerWeightStep::get() *
-			RuntimeBlockWeights::get()
-				.max_block
-				.min(*RuntimeBlockLength::get().max.get(DispatchClass::Normal) as u64) as u128)
-			.try_into()
-			.expect("Check that there is no overflow here");
-		assert!(max_normal_priority < MinOperationalPriority::get() / 2); // 50%
-	}
+pub struct StakingBenchmarkingConfig;
+impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
+	type MaxNominators = ConstU32<1000>;
+	type MaxValidators = ConstU32<1000>;
 }

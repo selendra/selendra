@@ -30,16 +30,16 @@ use frame_system::{offchain::SendTransactionTypes, EnsureRoot, EnsureSignedBy};
 use module_evm::{EvmChainId, EvmTask};
 use module_evm_accounts::EvmAddressMapping;
 use module_support::{
-	AddressMapping as AddressMappingT, DEXIncentives, DispatchableTask, EmergencyShutdown,
-	PoolId, PriceProvider,
+	AddressMapping as AddressMappingT, DEXIncentives, DispatchableTask, EmergencyShutdown, PoolId,
+	PriceProvider,
 };
 use orml_traits::{parameter_type_with_key, MultiReservableCurrency};
 pub use primitives::{
 	define_combined_task,
 	evm::{convert_decimals_to_evm, EvmAddress},
 	task::TaskResult,
-	Address, Amount, AuctionId, BlockNumber, CurrencyId, DexShare, EraIndex, Header, Lease, Moment,
-	Nonce, ReserveIdentifier, Signature, TokenSymbol, TradingPair,
+	Address, Amount, BlockNumber, CurrencyId, DexShare, Header, Moment, Nonce, ReserveIdentifier,
+	Signature, TokenSymbol, TradingPair,
 };
 use scale_info::TypeInfo;
 use sp_core::{H160, H256};
@@ -489,7 +489,6 @@ impl module_evm_accounts::Config for Test {
 	type TransferAll = ();
 	type WeightInfo = ();
 }
-
 
 parameter_types! {
 	pub StableCurrencyFixedPrice: Price = Price::saturating_from_rational(1, 1);
