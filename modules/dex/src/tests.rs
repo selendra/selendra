@@ -20,9 +20,9 @@
 use super::*;
 use frame_support::{assert_noop, assert_ok};
 use mock::{
-	SELJointSwap, SUSDBTCPair, SUSDDOTPair, SUSDJointSwap, DOTBTCPair, DexModule, Event,
-	ExtBuilder, ListingOrigin, Origin, Runtime, System, Tokens, SEL, ALICE, SUSD,
-	SUSD_DOT_POOL_RECORD, BOB, BTC, CAROL, DOT,
+	DOTBTCPair, DexModule, Event, ExtBuilder, ListingOrigin, Origin, Runtime, SELJointSwap,
+	SUSDBTCPair, SUSDDOTPair, SUSDJointSwap, System, Tokens, ALICE, BOB, BTC, CAROL, DOT, SEL,
+	SUSD, SUSD_DOT_POOL_RECORD,
 };
 use orml_traits::MultiReservableCurrency;
 use sp_core::H160;

@@ -1,19 +1,20 @@
-
 use super::{
-	prod_or_fast, Balances, Call, GeneralCouncil, Event, Origin, OriginCaller, dollar, SEL, PreimageByteDeposit,
-	Runtime, Scheduler, TechnicalCommittee, Treasury, weights, AuthoritysOriginId, DAYS, HOURS, authority::AuthorityConfigImpl,
-	SelendraOracle, FinancialCouncil, PhragmenElectionPalletId, deposit, MINUTES
+	authority::AuthorityConfigImpl, deposit, dollar, prod_or_fast, weights, AuthoritysOriginId,
+	Balances, Call, Event, FinancialCouncil, GeneralCouncil, Origin, OriginCaller,
+	PhragmenElectionPalletId, PreimageByteDeposit, Runtime, Scheduler, SelendraOracle,
+	TechnicalCommittee, Treasury, DAYS, HOURS, MINUTES, SEL,
 };
 use frame_support::parameter_types;
 use frame_system::EnsureRoot;
 
 use primitives::{AccountId, Balance, BlockNumber};
 use runtime_common::{
-	CurrencyToVote, EnsureRootOrHalfGeneralCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, EnsureRootOrAllTechnicalCommittee,
-	GeneralCouncilInstance, EnsureRootOrAllGeneralCouncil, EnsureRootOrTwoThirdsGeneralCouncil, GeneralCouncilMembershipInstance,
-	TechnicalCommitteeInstance, FinancialCouncilMembershipInstance,
-	FinancialCouncilInstance, TechnicalCommitteeMembershipInstance,
-	OperatorMembershipInstanceSelendra, EnsureRootOrThreeFourthsGeneralCouncil
+	CurrencyToVote, EnsureRootOrAllGeneralCouncil, EnsureRootOrAllTechnicalCommittee,
+	EnsureRootOrHalfGeneralCouncil, EnsureRootOrThreeFourthsGeneralCouncil,
+	EnsureRootOrTwoThirdsGeneralCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
+	FinancialCouncilInstance, FinancialCouncilMembershipInstance, GeneralCouncilInstance,
+	GeneralCouncilMembershipInstance, OperatorMembershipInstanceSelendra,
+	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance,
 };
 
 impl orml_authority::Config for Runtime {

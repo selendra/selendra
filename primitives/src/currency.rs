@@ -18,8 +18,8 @@
 use crate::{evm::EvmAddress, *};
 use bstringify::bstringify;
 use codec::{Decode, Encode, MaxEncodedLen};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 pub use module_stable_asset::StableAssetPoolId;
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;

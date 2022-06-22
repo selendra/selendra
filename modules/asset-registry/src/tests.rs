@@ -21,7 +21,8 @@ use super::*;
 use frame_support::{assert_noop, assert_ok};
 use mock::{
 	alice, deploy_contracts, deploy_contracts_same_prefix, erc20_address, erc20_address_not_exists,
-	erc20_address_same_prefix, AssetRegistry, CouncilAccount, Event, ExtBuilder, Origin, Runtime, System,
+	erc20_address_same_prefix, AssetRegistry, CouncilAccount, Event, ExtBuilder, Origin, Runtime,
+	System,
 };
 use primitives::TokenSymbol;
 use sp_core::H160;
@@ -170,7 +171,9 @@ fn register_native_asset_works() {
 		}));
 
 		assert_eq!(
-			AssetMetadatas::<Runtime>::get(AssetIds::NativeAssetId(CurrencyId::Token(TokenSymbol::DOT))),
+			AssetMetadatas::<Runtime>::get(AssetIds::NativeAssetId(CurrencyId::Token(
+				TokenSymbol::DOT
+			))),
 			Some(AssetMetadata {
 				name: b"Token Name".to_vec(),
 				symbol: b"TN".to_vec(),
@@ -245,7 +248,9 @@ fn update_native_asset_works() {
 		}));
 
 		assert_eq!(
-			AssetMetadatas::<Runtime>::get(AssetIds::NativeAssetId(CurrencyId::Token(TokenSymbol::DOT))),
+			AssetMetadatas::<Runtime>::get(AssetIds::NativeAssetId(CurrencyId::Token(
+				TokenSymbol::DOT
+			))),
 			Some(AssetMetadata {
 				name: b"New Token Name".to_vec(),
 				symbol: b"NTN".to_vec(),
@@ -331,7 +336,9 @@ fn symbol_works() {
 			);
 
 			assert_eq!(
-				EvmErc20InfoMapping::<Runtime>::symbol(CurrencyId::Erc20(erc20_address_not_exists())),
+				EvmErc20InfoMapping::<Runtime>::symbol(CurrencyId::Erc20(
+					erc20_address_not_exists()
+				)),
 				None
 			);
 
@@ -399,7 +406,9 @@ fn decimals_works() {
 			);
 
 			assert_eq!(
-				EvmErc20InfoMapping::<Runtime>::decimals(CurrencyId::Erc20(erc20_address_not_exists())),
+				EvmErc20InfoMapping::<Runtime>::decimals(CurrencyId::Erc20(
+					erc20_address_not_exists()
+				)),
 				None
 			);
 
@@ -452,18 +461,24 @@ fn encode_evm_address_works() {
 
 			// Token
 			assert_eq!(
-				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Token(TokenSymbol::SEL)),
+				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Token(
+					TokenSymbol::SEL
+				)),
 				H160::from_str("0x0000000000000000000100000000000000000000").ok()
 			);
 
 			// Erc20
 			assert_eq!(
-				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(erc20_address())),
+				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(
+					erc20_address()
+				)),
 				Some(erc20_address())
 			);
 
 			assert_eq!(
-				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(erc20_address_not_exists())),
+				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(
+					erc20_address_not_exists()
+				)),
 				Some(erc20_address_not_exists())
 			);
 
@@ -540,7 +555,10 @@ fn decode_evm_address_works() {
 			// Token
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::decode_evm_address(
-					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Token(TokenSymbol::SEL)).unwrap()
+					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Token(
+						TokenSymbol::SEL
+					))
+					.unwrap()
 				),
 				Some(CurrencyId::Token(TokenSymbol::SEL))
 			);
@@ -548,15 +566,20 @@ fn decode_evm_address_works() {
 			// Erc20
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::decode_evm_address(
-					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(erc20_address())).unwrap()
+					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(
+						erc20_address()
+					))
+					.unwrap()
 				),
 				Some(CurrencyId::Erc20(erc20_address()))
 			);
 
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::decode_evm_address(
-					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(erc20_address_not_exists()))
-						.unwrap()
+					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(
+						erc20_address_not_exists()
+					))
+					.unwrap()
 				),
 				None,
 			);
@@ -625,7 +648,8 @@ fn decode_evm_address_works() {
 			);
 
 			// Allow non-system contracts
-			let non_system_contracts = H160::from_str("0x1000000000000000000000000000000000000000").unwrap();
+			let non_system_contracts =
+				H160::from_str("0x1000000000000000000000000000000000000000").unwrap();
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::decode_evm_address(non_system_contracts),
 				Some(CurrencyId::Erc20(non_system_contracts))
@@ -634,7 +658,8 @@ fn decode_evm_address_works() {
 			// ForeignAsset
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::decode_evm_address(
-					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::ForeignAsset(1)).unwrap()
+					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::ForeignAsset(1))
+						.unwrap()
 				),
 				Some(CurrencyId::ForeignAsset(1))
 			);

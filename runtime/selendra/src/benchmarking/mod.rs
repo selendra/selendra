@@ -15,7 +15,7 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use super::{CurrencyId, SEL, DOT, LCDOT, LDOT};
+use super::{CurrencyId, DOT, LCDOT, LDOT, SEL};
 use sp_std::prelude::*;
 
 pub mod utils {

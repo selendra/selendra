@@ -133,7 +133,8 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = ();
 }
 
-pub type AdaptedBasicCurrency = module_currencies::BasicCurrencyAdapter<Runtime, PalletBalances, Amount, BlockNumber>;
+pub type AdaptedBasicCurrency =
+	module_currencies::BasicCurrencyAdapter<Runtime, PalletBalances, Amount, BlockNumber>;
 
 parameter_types! {
 	pub const GetNativeCurrencyId: CurrencyId = SEL;
@@ -202,7 +203,9 @@ thread_local! {
 
 pub struct DealWithFees;
 impl OnUnbalanced<pallet_balances::NegativeImbalance<Runtime>> for DealWithFees {
-	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = pallet_balances::NegativeImbalance<Runtime>>) {
+	fn on_unbalanceds<B>(
+		mut fees_then_tips: impl Iterator<Item = pallet_balances::NegativeImbalance<Runtime>>,
+	) {
 		if let Some(fees) = fees_then_tips.next() {
 			FEE_UNBALANCED_AMOUNT.with(|a| *a.borrow_mut() += fees.peek());
 			if let Some(tips) = fees_then_tips.next() {
@@ -362,21 +365,15 @@ impl ExtBuilder {
 	}
 	pub fn build(self) -> sp_io::TestExternalities {
 		self.set_constants();
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+
+		pallet_balances::GenesisConfig::<Runtime> { balances: self.native_balances }
+			.assimilate_storage(&mut t)
 			.unwrap();
 
-		pallet_balances::GenesisConfig::<Runtime> {
-			balances: self.native_balances,
-		}
-		.assimilate_storage(&mut t)
-		.unwrap();
-
-		orml_tokens::GenesisConfig::<Runtime> {
-			balances: self.balances,
-		}
-		.assimilate_storage(&mut t)
-		.unwrap();
+		orml_tokens::GenesisConfig::<Runtime> { balances: self.balances }
+			.assimilate_storage(&mut t)
+			.unwrap();
 
 		module_dex::GenesisConfig::<Runtime> {
 			initial_listing_trading_pairs: vec![],

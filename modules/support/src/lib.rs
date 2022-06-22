@@ -19,7 +19,7 @@
 
 use codec::FullCodec;
 use frame_support::pallet_prelude::{DispatchClass, Pays, Weight};
-use primitives::{task::TaskResult, Multiplier, ReserveIdentifier, CurrencyId};
+use primitives::{task::TaskResult, CurrencyId, Multiplier, ReserveIdentifier};
 use sp_runtime::{
 	traits::CheckedDiv, transaction_validity::TransactionValidityError, DispatchError,
 	DispatchResult, FixedU128,
@@ -141,7 +141,6 @@ pub trait CallBuilder {
 		to: Self::AccountId,
 		amount: Self::Balance,
 	) -> Self::RelayChainCall;
-
 }
 
 /// Dispatchable tasks

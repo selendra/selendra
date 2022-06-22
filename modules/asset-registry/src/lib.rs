@@ -32,9 +32,7 @@ use frame_support::{
 	transactional,
 };
 use frame_system::pallet_prelude::*;
-use module_support::{
-	AssetIdMapping, EVMBridge, Erc20InfoMapping, InvokeContext,
-};
+use module_support::{AssetIdMapping, EVMBridge, Erc20InfoMapping, InvokeContext};
 use primitives::{
 	currency::{
 		AssetIds, AssetMetadata, CurrencyIdType, DexShare, DexShareType, Erc20Id, ForeignAssetId,
@@ -325,9 +323,7 @@ impl<T: Config> Pallet<T> {
 
 pub struct AssetIdMaps<T>(sp_std::marker::PhantomData<T>);
 
-impl<T: Config> AssetIdMapping<AssetMetadata<BalanceOf<T>>>
-	for AssetIdMaps<T>
-{
+impl<T: Config> AssetIdMapping<AssetMetadata<BalanceOf<T>>> for AssetIdMaps<T> {
 	fn get_asset_metadata(asset_ids: AssetIds) -> Option<AssetMetadata<BalanceOf<T>>> {
 		Pallet::<T>::asset_metadatas(asset_ids)
 	}

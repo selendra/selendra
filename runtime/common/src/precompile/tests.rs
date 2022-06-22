@@ -27,13 +27,16 @@ fn precompile_filter_works_on_selendra_precompiles() {
 	let mut non_system = [0u8; 20];
 	non_system[0] = 1;
 
-	let non_system_caller_context = Context {
-		address: precompile,
-		caller: non_system.into(),
-		apparent_value: 0.into(),
-	};
+	let non_system_caller_context =
+		Context { address: precompile, caller: non_system.into(), apparent_value: 0.into() };
 	assert_eq!(
-		PrecompilesValue::get().execute(precompile, &[0u8; 1], Some(10), &non_system_caller_context, false),
+		PrecompilesValue::get().execute(
+			precompile,
+			&[0u8; 1],
+			Some(10),
+			&non_system_caller_context,
+			false
+		),
 		Some(Err(PrecompileFailure::Revert {
 			exit_status: ExitRevert::Reverted,
 			output: "NoPermission".into(),
@@ -49,11 +52,8 @@ fn precompile_filter_does_not_work_on_system_contracts() {
 	let mut non_system = [0u8; 20];
 	non_system[0] = 1;
 
-	let non_system_caller_context = Context {
-		address: system,
-		caller: non_system.into(),
-		apparent_value: 0.into(),
-	};
+	let non_system_caller_context =
+		Context { address: system, caller: non_system.into(), apparent_value: 0.into() };
 	assert!(PrecompilesValue::get()
 		.execute(non_system.into(), &[0u8; 1], None, &non_system_caller_context, false)
 		.is_none());
