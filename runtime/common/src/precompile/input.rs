@@ -309,336 +309,321 @@ fn decode_i128(bytes: &[u8]) -> Option<i128> {
 	None
 }
 
-// #[cfg(test)]
-// mod tests {
-// 	use super::*;
+#[cfg(test)]
+mod tests {
+	use super::*;
 
-// 	use frame_support::{assert_err, assert_ok};
-// 	use hex_literal::hex;
-// 	use num_enum::TryFromPrimitive;
-// 	use sp_core::H160;
-// 	use sp_runtime::RuntimeDebug;
-// 	use std::str::FromStr;
+	use frame_support::{assert_err, assert_ok};
+	use hex_literal::hex;
+	use num_enum::TryFromPrimitive;
+	use sp_core::{bytes::from_hex, H160};
+	use sp_runtime::RuntimeDebug;
+	use std::str::FromStr;
 
-// 	use module_support::mocks::{MockAddressMapping, MockErc20InfoMapping};
-// 	use primitives::{AccountId, CurrencyId, TokenSymbol};
+	use module_support::mocks::{MockAddressMapping, MockErc20InfoMapping};
+	use primitives::{AccountId, CurrencyId, TokenSymbol};
 
-// 	#[derive(RuntimeDebug, PartialEq, Eq, TryFromPrimitive)]
-// 	#[repr(u32)]
-// 	pub enum Action {
-// 		QueryBalance = 0,
-// 		Transfer = 1,
-// 		Unknown = 2,
-// 	}
+	#[derive(RuntimeDebug, PartialEq, Eq, TryFromPrimitive)]
+	#[repr(u32)]
+	pub enum Action {
+		QueryBalance = 0,
+		Transfer = 1,
+		Unknown = 2,
+	}
 
-// 	pub type TestInput<'a> = Input<'a, Action, AccountId, MockAddressMapping, MockErc20InfoMapping>;
+	pub type TestInput<'a> = Input<'a, Action, AccountId, MockAddressMapping, MockErc20InfoMapping>;
 
-// 	#[test]
-// 	fn nth_param_works() {
-// 		let data = hex_literal::hex! {"
-// 			00000000
-// 			ffffffffffffffffffffffffffffffff00000000000000000000000000000001
-// 		"};
-// 		let input = TestInput::new(&data[..], Some(10));
-// 		assert_ok!(
-// 			input.nth_param(1, None),
-// 			&hex!("ffffffffffffffffffffffffffffffff00000000000000000000000000000001")[..]
-// 		);
-// 		assert_err!(
-// 			input.nth_param(2, None),
-// 			PrecompileFailure::Revert {
-// 				exit_status: ExitRevert::Reverted,
-// 				output: "invalid input".into(),
-// 				cost: 10,
-// 			}
-// 		);
-// 	}
+	#[test]
+	fn nth_param_works() {
+		let data = hex_literal::hex! {"
+			00000000
+			ffffffffffffffffffffffffffffffff00000000000000000000000000000001
+		"};
+		let input = TestInput::new(&data[..], Some(10));
+		assert_ok!(
+			input.nth_param(1, None),
+			&hex!("ffffffffffffffffffffffffffffffff00000000000000000000000000000001")[..]
+		);
+		assert_err!(
+			input.nth_param(2, None),
+			PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: "invalid input".into(),
+				cost: 10,
+			}
+		);
+	}
 
-// 	#[test]
-// 	fn action_works() {
-// 		let input = TestInput::new(&hex!("00000000")[..], None);
-// 		assert_ok!(input.action(), Action::QueryBalance);
+	#[test]
+	fn action_works() {
+		let input = TestInput::new(&hex!("00000000")[..], None);
+		assert_ok!(input.action(), Action::QueryBalance);
 
-// 		let input = TestInput::new(&hex!("00000001")[..], None);
-// 		assert_ok!(input.action(), Action::Transfer);
+		let input = TestInput::new(&hex!("00000001")[..], None);
+		assert_ok!(input.action(), Action::Transfer);
 
-// 		let input = TestInput::new(&hex!("00000002")[..], None);
-// 		assert_ok!(input.action(), Action::Unknown);
+		let input = TestInput::new(&hex!("00000002")[..], None);
+		assert_ok!(input.action(), Action::Unknown);
 
-// 		let input = TestInput::new(&hex!("00000003")[..], Some(10));
-// 		assert_eq!(
-// 			input.action(),
-// 			Err(PrecompileFailure::Revert {
-// 				exit_status: ExitRevert::Reverted,
-// 				output: "invalid action".into(),
-// 				cost: 10,
-// 			})
-// 		);
-// 	}
+		let input = TestInput::new(&hex!("00000003")[..], Some(10));
+		assert_eq!(
+			input.action(),
+			Err(PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: "invalid action".into(),
+				cost: 10,
+			})
+		);
+	}
 
-// 	#[test]
-// 	fn account_id_works() {
-// 		// extra bytes should be ignored
-// 		let data = hex_literal::hex! {"
-// 			00000000
-// 			000000000000000000000000 ff00000000000000000000000000000000000001
-// 			ffffffffffffffffffffffff 0000000000000000000000000000000000000002
-// 			ffffffffffffffffffffffff ff00000000000000000000000000000000000003
-// 		"};
+	#[test]
+	fn account_id_works() {
+		// extra bytes should be ignored
+		let data = hex_literal::hex! {"
+			00000000
+			000000000000000000000000 ff00000000000000000000000000000000000001
+			ffffffffffffffffffffffff 0000000000000000000000000000000000000002
+			ffffffffffffffffffffffff ff00000000000000000000000000000000000003
+		"};
 
-// 		let input = TestInput::new(&data[..], None);
-// 		assert_ok!(
-// 			input.account_id_at(1),
-// 			MockAddressMapping::get_account_id(&H160::from_str("ff00000000000000000000000000000000000001").
-// unwrap()) 		);
-// 		assert_ok!(
-// 			input.account_id_at(2),
-// 			MockAddressMapping::get_account_id(&H160::from_str("0000000000000000000000000000000000000002").
-// unwrap()) 		);
-// 		assert_ok!(
-// 			input.account_id_at(3),
-// 			MockAddressMapping::get_account_id(&H160::from_str("ff00000000000000000000000000000000000003").
-// unwrap()) 		);
-// 	}
+		let input = TestInput::new(&data[..], None);
+		assert_ok!(
+			input.account_id_at(1),
+			MockAddressMapping::get_account_id(
+				&H160::from_str("ff00000000000000000000000000000000000001").unwrap()
+			)
+		);
+		assert_ok!(
+			input.account_id_at(2),
+			MockAddressMapping::get_account_id(
+				&H160::from_str("0000000000000000000000000000000000000002").unwrap()
+			)
+		);
+		assert_ok!(
+			input.account_id_at(3),
+			MockAddressMapping::get_account_id(
+				&H160::from_str("ff00000000000000000000000000000000000003").unwrap()
+			)
+		);
+	}
 
-// 	#[test]
-// 	fn evm_address_works() {
-// 		// extra bytes should be ignored
-// 		let data = hex_literal::hex! {"
-// 			00000000
-// 			000000000000000000000000 ff00000000000000000000000000000000000001
-// 			ffffffffffffffffffffffff 0000000000000000000000000000000000000002
-// 			ffffffffffffffffffffffff ff00000000000000000000000000000000000003
-// 		"};
-// 		let input = TestInput::new(&data[..], None);
-// 		assert_ok!(
-// 			input.evm_address_at(1),
-// 			H160::from_str("ff00000000000000000000000000000000000001").unwrap()
-// 		);
-// 		assert_ok!(
-// 			input.evm_address_at(2),
-// 			H160::from_str("0000000000000000000000000000000000000002").unwrap()
-// 		);
-// 		assert_ok!(
-// 			input.evm_address_at(3),
-// 			H160::from_str("ff00000000000000000000000000000000000003").unwrap()
-// 		);
-// 	}
+	#[test]
+	fn evm_address_works() {
+		// extra bytes should be ignored
+		let data = hex_literal::hex! {"
+			00000000
+			000000000000000000000000 ff00000000000000000000000000000000000001
+			ffffffffffffffffffffffff 0000000000000000000000000000000000000002
+			ffffffffffffffffffffffff ff00000000000000000000000000000000000003
+		"};
+		let input = TestInput::new(&data[..], None);
+		assert_ok!(
+			input.evm_address_at(1),
+			H160::from_str("ff00000000000000000000000000000000000001").unwrap()
+		);
+		assert_ok!(
+			input.evm_address_at(2),
+			H160::from_str("0000000000000000000000000000000000000002").unwrap()
+		);
+		assert_ok!(
+			input.evm_address_at(3),
+			H160::from_str("ff00000000000000000000000000000000000003").unwrap()
+		);
+	}
 
-// 	#[test]
-// 	fn currency_id_works() {
-// 		let input = TestInput::new(&[0u8; 100][..], Some(10));
-// 		assert_err!(
-// 			input.currency_id_at(1),
-// 			PrecompileFailure::Revert {
-// 				exit_status: ExitRevert::Reverted,
-// 				output: "invalid currency id".into(),
-// 				cost: 10,
-// 			}
-// 		);
+	#[test]
+	fn currency_id_works() {
+		let input = TestInput::new(&[0u8; 100][..], Some(10));
+		assert_err!(
+			input.currency_id_at(1),
+			PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: "invalid currency id".into(),
+				cost: 10,
+			}
+		);
 
-// 		// extra bytes should be ignored
-// 		let data = hex_literal::hex! {"
-// 			00000000
-// 			000000000000000000000000 0000000000000000000100000000000000000000
-// 			000000000000000000000000 0000000000000000000100000000000000000001
-// 			ffffffffffffffffffffffff 0000000000000000000100000000000000000002
-// 		"};
+		// extra bytes should be ignored
+		let data = hex_literal::hex! {"
+			00000000
+			000000000000000000000000 0000000000000000000100000000000000000000
+			000000000000000000000000 0000000000000000000100000000000000000001
+			ffffffffffffffffffffffff 0000000000000000000100000000000000000080
+		"};
 
-// 		let input = TestInput::new(&data[..], None);
-// 		assert_ok!(input.currency_id_at(1), CurrencyId::Token(TokenSymbol::SEL));
-// 		assert_ok!(input.currency_id_at(2), CurrencyId::Token(TokenSymbol::SUSD));
-// 		assert_ok!(input.currency_id_at(3), CurrencyId::Token(TokenSymbol::DOT));
-// 	}
+		let input = TestInput::new(&data[..], None);
+		assert_ok!(input.currency_id_at(1), CurrencyId::Token(TokenSymbol::SEL));
+		assert_ok!(input.currency_id_at(2), CurrencyId::Token(TokenSymbol::SUSD));
+		assert_ok!(input.currency_id_at(3), CurrencyId::Token(TokenSymbol::DOT));
+	}
 
-// 	#[test]
-// 	fn u256_works() {
-// 		let data = hex_literal::hex! {"
-// 			00000000
-// 			000000000000000000000000000000000000000000000000000000000000007f
-// 			00000000000000000000000000000000ffffffffffffffffffffffffffffffff
-// 			ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-// 		"};
-// 		let input = TestInput::new(&data[..], None);
-// 		assert_ok!(input.u256_at(1), U256::from(127u128));
-// 		assert_ok!(input.u256_at(2), U256::from(u128::MAX));
-// 		assert_ok!(input.u256_at(3), U256::MAX);
-// 	}
+	#[test]
+	fn u256_works() {
+		let data = hex_literal::hex! {"
+			00000000
+			000000000000000000000000000000000000000000000000000000000000007f
+			00000000000000000000000000000000ffffffffffffffffffffffffffffffff
+			ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+		"};
+		let input = TestInput::new(&data[..], None);
+		assert_ok!(input.u256_at(1), U256::from(127u128));
+		assert_ok!(input.u256_at(2), U256::from(u128::MAX));
+		assert_ok!(input.u256_at(3), U256::MAX);
+	}
 
-// 	#[test]
-// 	fn balance_works() {
-// 		let data = hex_literal::hex! {"
-// 			00000000
-// 			00000000000000000000000000000000 0000000000000000000000000000007f
-// 			00000000000000000000000000000000 ffffffffffffffffffffffffffffffff
-// 			ffffffffffffffffffffffffffffffff ffffffffffffffffffffffffffffffff
-// 		"};
-// 		let input = TestInput::new(&data[..], Some(10));
-// 		assert_ok!(input.balance_at(1), 127u128);
-// 		assert_ok!(input.balance_at(2), u128::MAX);
-// 		assert_eq!(
-// 			input.balance_at(3),
-// 			Err(PrecompileFailure::Revert {
-// 				exit_status: ExitRevert::Reverted,
-// 				output: "failed to convert uint256 into Balance".into(),
-// 				cost: 10,
-// 			})
-// 		);
-// 	}
+	#[test]
+	fn balance_works() {
+		let data = hex_literal::hex! {"
+			00000000
+			00000000000000000000000000000000 0000000000000000000000000000007f
+			00000000000000000000000000000000 ffffffffffffffffffffffffffffffff
+			ffffffffffffffffffffffffffffffff ffffffffffffffffffffffffffffffff
+		"};
+		let input = TestInput::new(&data[..], Some(10));
+		assert_ok!(input.balance_at(1), 127u128);
+		assert_ok!(input.balance_at(2), u128::MAX);
+		assert_eq!(
+			input.balance_at(3),
+			Err(PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: "failed to convert uint256 into Balance".into(),
+				cost: 10,
+			})
+		);
+	}
 
-// 	#[test]
-// 	fn u64_works() {
-// 		let data = hex_literal::hex! {"
-// 			00000000
-// 			000000000000000000000000000000000000000000000000 000000000000007f
-// 			000000000000000000000000000000000000000000000000 ffffffffffffffff
-// 			000000000000000000000000000000000000000000000001 ffffffffffffffff
-// 		"};
-// 		let input = TestInput::new(&data[..], Some(10));
-// 		assert_ok!(input.u64_at(1), 127u64);
-// 		assert_ok!(input.u64_at(2), u64::MAX);
-// 		assert_eq!(
-// 			input.u64_at(3),
-// 			Err(PrecompileFailure::Revert {
-// 				exit_status: ExitRevert::Reverted,
-// 				output: "failed to convert uint256 into u64".into(),
-// 				cost: 10,
-// 			})
-// 		);
-// 	}
+	#[test]
+	fn u64_works() {
+		let data = hex_literal::hex! {"
+			00000000
+			000000000000000000000000000000000000000000000000 000000000000007f
+			000000000000000000000000000000000000000000000000 ffffffffffffffff
+			000000000000000000000000000000000000000000000001 ffffffffffffffff
+		"};
+		let input = TestInput::new(&data[..], Some(10));
+		assert_ok!(input.u64_at(1), 127u64);
+		assert_ok!(input.u64_at(2), u64::MAX);
+		assert_eq!(
+			input.u64_at(3),
+			Err(PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: "failed to convert uint256 into u64".into(),
+				cost: 10,
+			})
+		);
+	}
 
-// 	#[test]
-// 	fn u32_works() {
-// 		let data = hex_literal::hex! {"
-// 			00000000
-// 			00000000000000000000000000000000000000000000000000000000 0000007f
-// 			00000000000000000000000000000000000000000000000000000000 ffffffff
-// 			00000000000000000000000000000000000000000000000000000001 ffffffff
-// 		"};
-// 		let input = TestInput::new(&data[..], Some(10));
-// 		assert_ok!(input.u32_at(1), 127u32);
-// 		assert_ok!(input.u32_at(2), u32::MAX);
-// 		assert_eq!(
-// 			input.u32_at(3),
-// 			Err(PrecompileFailure::Revert {
-// 				exit_status: ExitRevert::Reverted,
-// 				output: "failed to convert uint256 into u32".into(),
-// 				cost: 10,
-// 			})
-// 		);
-// 	}
+	#[test]
+	fn u32_works() {
+		let data = hex_literal::hex! {"
+			00000000
+			00000000000000000000000000000000000000000000000000000000 0000007f
+			00000000000000000000000000000000000000000000000000000000 ffffffff
+			00000000000000000000000000000000000000000000000000000001 ffffffff
+		"};
+		let input = TestInput::new(&data[..], Some(10));
+		assert_ok!(input.u32_at(1), 127u32);
+		assert_ok!(input.u32_at(2), u32::MAX);
+		assert_eq!(
+			input.u32_at(3),
+			Err(PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: "failed to convert uint256 into u32".into(),
+				cost: 10,
+			})
+		);
+	}
 
-// 	#[test]
-// 	fn i128_works() {
-// 		let data = hex_literal::hex! {"
-// 			00000000
-// 			00000000000000000000000000000000 0000000000000000000000000000007f
-// 			0fffffffffffffffffffffffffffffff 00000000000000000000000000000001
-// 			ffffffffffffffffffffffffffffffff ffffffffffffffffffffffffffffffff
-// 			ffffffffffffffffffffffffffffffff fffffffffffffffffffffffffffffff0
-// 			ff000000000000000000000000000000 ffffffffffffffffffffffffffffffff
-// 			00000000000000000000000000000000 00000000000000000000000000000000
-// 		"};
-// 		let input = TestInput::new(&data[..], Some(10));
-// 		assert_ok!(input.i128_at(1), 127_i128);
-// 		assert_eq!(
-// 			input.i128_at(2),
-// 			Err(PrecompileFailure::Revert {
-// 				exit_status: ExitRevert::Reverted,
-// 				output: "failed to decode i128".into(),
-// 				cost: 10,
-// 			})
-// 		);
-// 		assert_ok!(input.i128_at(3), -1_i128);
-// 		assert_ok!(input.i128_at(4), -16_i128);
-// 		assert_eq!(
-// 			input.i128_at(5),
-// 			Err(PrecompileFailure::Revert {
-// 				exit_status: ExitRevert::Reverted,
-// 				output: "failed to decode i128".into(),
-// 				cost: 10,
-// 			})
-// 		);
-// 		assert_ok!(input.i128_at(6), 0);
-// 	}
+	#[test]
+	fn i128_works() {
+		let data = hex_literal::hex! {"
+			00000000
+			00000000000000000000000000000000 0000000000000000000000000000007f
+			0fffffffffffffffffffffffffffffff 00000000000000000000000000000001
+			ffffffffffffffffffffffffffffffff ffffffffffffffffffffffffffffffff
+			ffffffffffffffffffffffffffffffff fffffffffffffffffffffffffffffff0
+			ff000000000000000000000000000000 ffffffffffffffffffffffffffffffff
+			00000000000000000000000000000000 00000000000000000000000000000000
+		"};
+		let input = TestInput::new(&data[..], Some(10));
+		assert_ok!(input.i128_at(1), 127_i128);
+		assert_eq!(
+			input.i128_at(2),
+			Err(PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: "failed to decode i128".into(),
+				cost: 10,
+			})
+		);
+		assert_ok!(input.i128_at(3), -1_i128);
+		assert_ok!(input.i128_at(4), -16_i128);
+		assert_eq!(
+			input.i128_at(5),
+			Err(PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: "failed to decode i128".into(),
+				cost: 10,
+			})
+		);
+		assert_ok!(input.i128_at(6), 0);
+	}
 
-// 	#[test]
-// 	fn bool_works() {
-// 		let data = hex_literal::hex! {"
-// 			00000000
-// 			0000000000000000000000000000000000000000000000000000000000000000
-// 			0000000000000000000000000000000000000000000000000000000000000001
-// 			0000000000000000000000000000000000000000000000000000000000000002
-// 		"};
-// 		let input = TestInput::new(&data[..], Some(10));
-// 		assert_ok!(input.bool_at(1), false);
-// 		assert_ok!(input.bool_at(2), true);
-// 		assert_eq!(
-// 			input.bool_at(3),
-// 			Err(PrecompileFailure::Revert {
-// 				exit_status: ExitRevert::Reverted,
-// 				output: "failed to decode bool".into(),
-// 				cost: 10,
-// 			})
-// 		);
-// 	}
+	#[test]
+	fn bool_works() {
+		let data = hex_literal::hex! {"
+			00000000
+			0000000000000000000000000000000000000000000000000000000000000000
+			0000000000000000000000000000000000000000000000000000000000000001
+			0000000000000000000000000000000000000000000000000000000000000002
+		"};
+		let input = TestInput::new(&data[..], Some(10));
+		assert_ok!(input.bool_at(1), false);
+		assert_ok!(input.bool_at(2), true);
+		assert_eq!(
+			input.bool_at(3),
+			Err(PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: "failed to decode bool".into(),
+				cost: 10,
+			})
+		);
+	}
 
-// 	#[test]
-// 	fn decode_int128() {
-// 		let items = [
-// 			("ff00000000000000000000000000000000000000000000000000000000000000", None),
-// 			("0000000000000000000000000000000100000000000000000000000000000000", None),
-// 			("000000000000000000000000000000ff00000000000000000000000000000000", None),
-// 			(
-// 				"0000000000000000000000000000000010000000000000000000000000000000",
-// 				Some(21267647932558653966460912964485513216i128),
-// 			),
-// 			(
-// 				"fffffffffffffffffffffffffffffffff0000000000000000000000000000000",
-// 				Some(-21267647932558653966460912964485513216i128),
-// 			),
-// 			(
-// 				"0000000000000000000000000000000000000000000000000000000000000000",
-// 				Some(0),
-// 			),
-// 			(
-// 				"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-// 				Some(-1),
-// 			),
-// 			(
-// 				"0000000000000000000000000000000000000000000000000000000000000001",
-// 				Some(1),
-// 			),
-// 			(
-// 				"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0",
-// 				Some(-16),
-// 			),
-// 			(
-// 				"00000000000000000000000000000000000000000000000000000000000000ff",
-// 				Some(255),
-// 			),
-// 			(
-// 				"ffffffffffffffffffffffffffffffffffffffffffff000000000000000000ff",
-// 				Some(-1208925819614629174705921),
-// 			),
-// 			(
-// 				"00000000000000000000000000000000000000000000ffffffffffffffffff00",
-// 				Some(1208925819614629174705920),
-// 			),
-// 			(
-// 				"ffffffffffffffffffffffffffffffff80000000000000000000000000000000",
-// 				Some(i128::MIN),
-// 			),
-// 			(
-// 				"000000000000000000000000000000007fffffffffffffffffffffffffffffff",
-// 				Some(i128::MAX),
-// 			),
-// 			("00000000000000000000000000000000ffffffffffffffffffffffffffffffff", None),
-// 			("ffffffffffffffffffffffffffffffff00000000000000000000000000000000", None),
-// 		];
+	#[test]
+	fn decode_int128() {
+		let items = [
+			("ff00000000000000000000000000000000000000000000000000000000000000", None),
+			("0000000000000000000000000000000100000000000000000000000000000000", None),
+			("000000000000000000000000000000ff00000000000000000000000000000000", None),
+			(
+				"0000000000000000000000000000000010000000000000000000000000000000",
+				Some(21267647932558653966460912964485513216i128),
+			),
+			(
+				"fffffffffffffffffffffffffffffffff0000000000000000000000000000000",
+				Some(-21267647932558653966460912964485513216i128),
+			),
+			("0000000000000000000000000000000000000000000000000000000000000000", Some(0)),
+			("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", Some(-1)),
+			("0000000000000000000000000000000000000000000000000000000000000001", Some(1)),
+			("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0", Some(-16)),
+			("00000000000000000000000000000000000000000000000000000000000000ff", Some(255)),
+			(
+				"ffffffffffffffffffffffffffffffffffffffffffff000000000000000000ff",
+				Some(-1208925819614629174705921),
+			),
+			(
+				"00000000000000000000000000000000000000000000ffffffffffffffffff00",
+				Some(1208925819614629174705920),
+			),
+			("ffffffffffffffffffffffffffffffff80000000000000000000000000000000", Some(i128::MIN)),
+			("000000000000000000000000000000007fffffffffffffffffffffffffffffff", Some(i128::MAX)),
+			("00000000000000000000000000000000ffffffffffffffffffffffffffffffff", None),
+			("ffffffffffffffffffffffffffffffff00000000000000000000000000000000", None),
+		];
 
-// 		items.into_iter().for_each(|(input, value)| {
-// 			assert_eq!(decode_i128(&crate::from_hex(input).unwrap()), value);
-// 		});
-// 	}
-// }
+		items.into_iter().for_each(|(input, value)| {
+			assert_eq!(decode_i128(&from_hex(input).unwrap()), value);
+		});
+	}
+}

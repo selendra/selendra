@@ -174,130 +174,130 @@ where
 	}
 }
 
-// #[cfg(test)]
-// mod tests {
-// 	use super::*;
+#[cfg(test)]
+mod tests {
+	use super::*;
 
-// 	use crate::precompile::mock::{alice_evm_addr, new_test_ext, EvmAddress, Test, ALICE};
-// 	use codec::Encode;
-// 	use frame_support::assert_noop;
-// 	use hex_literal::hex;
-// 	use sp_core::blake2_256;
-// 	use std::str::FromStr;
+	use crate::precompile::mock::{alice_evm_addr, new_test_ext, EvmAddress, Test, ALICE};
+	use codec::Encode;
+	use frame_support::assert_noop;
+	use hex_literal::hex;
+	use sp_core::blake2_256;
+	use std::str::FromStr;
 
-// 	type EVMAccountsPrecompile = crate::precompile::EVMAccountsPrecompile<Test>;
+	type EVMAccountsPrecompile = crate::precompile::EVMAccountsPrecompile<Test>;
 
-// 	#[test]
-// 	fn get_account_id_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn get_account_id_works() {
+		new_test_ext().execute_with(|| {
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			// getAccountId(address) -> 0xe0b490f7
-// 			let input = hex! {"
-// 				e0b490f7
-// 				000000000000000000000000 1000000000000000000000000000000000000001
-// 			"};
+			// getAccountId(address) -> 0xe0b490f7
+			let input = hex! {"
+				e0b490f7
+				000000000000000000000000 1000000000000000000000000000000000000001
+			"};
 
-// 			// expect output is `evm` padded address
-// 			// evm: -> 0x65766d3a
-// 			let expected_output = hex! {"
-// 				65766d3a 1000000000000000000000000000000000000001 0000000000000000
-// 			"};
+			// expect output is `evm` padded address
+			// evm: -> 0x65766d3a
+			let expected_output = hex! {"
+				65766d3a 1000000000000000000000000000000000000001 0000000000000000
+			"};
 
-// 			let resp = EVMAccountsPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
-// 		});
-// 	}
+			let resp = EVMAccountsPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
+		});
+	}
 
-// 	#[test]
-// 	fn get_evm_address_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn get_evm_address_works() {
+		new_test_ext().execute_with(|| {
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			// getEvmAddress(bytes32) -> 0x0232027e
-// 			// evm: -> 0x65766d3a
-// 			let input = hex! {"
-// 				0232027e
-// 				65766d3a 1000000000000000000000000000000000000001 0000000000000000
-// 			"};
+			// getEvmAddress(bytes32) -> 0x0232027e
+			// evm: -> 0x65766d3a
+			let input = hex! {"
+				0232027e
+				65766d3a 1000000000000000000000000000000000000001 0000000000000000
+			"};
 
-// 			// expect output is evm address
-// 			let expected_output = hex! {"
-// 				000000000000000000000000 1000000000000000000000000000000000000001
-// 			"};
+			// expect output is evm address
+			let expected_output = hex! {"
+				000000000000000000000000 1000000000000000000000000000000000000001
+			"};
 
-// 			let resp = EVMAccountsPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
+			let resp = EVMAccountsPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
 
-// 			// evm address mapping not found
-// 			// normal account_id: ALICE
-// 			let input = hex! {"
-// 				0232027e
-// 				0101010101010101010101010101010101010101010101010101010101010101
-// 			"};
+			// evm address mapping not found
+			// normal account_id: ALICE
+			let input = hex! {"
+				0232027e
+				0101010101010101010101010101010101010101010101010101010101010101
+			"};
 
-// 			// expect output is address(0)
-// 			let expected_output = hex! {"
-// 				000000000000000000000000 0000000000000000000000000000000000000000
-// 			"};
+			// expect output is address(0)
+			let expected_output = hex! {"
+				000000000000000000000000 0000000000000000000000000000000000000000
+			"};
 
-// 			let resp = EVMAccountsPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
-// 		});
-// 	}
+			let resp = EVMAccountsPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
+		});
+	}
 
-// 	#[test]
-// 	fn claim_default_evm_address_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn claim_default_evm_address_works() {
+		new_test_ext().execute_with(|| {
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			// claimDefaultEvmAddress(bytes32) -> 0xbe4327a6
-// 			// normal account_id: ALICE
-// 			let input = hex! {"
-// 				be4327a6
-// 				0101010101010101010101010101010101010101010101010101010101010101
-// 			"};
+			// claimDefaultEvmAddress(bytes32) -> 0xbe4327a6
+			// normal account_id: ALICE
+			let input = hex! {"
+				be4327a6
+				0101010101010101010101010101010101010101010101010101010101010101
+			"};
 
-// 			let payload = (b"evm:", ALICE);
-// 			let default_address = EvmAddress::from_slice(&payload.using_encoded(blake2_256)[0..20]);
-// 			assert_eq!(
-// 				default_address,
-// 				EvmAddress::from_str("0x8f2703bbe0abeaf09b384374959ffac5f7d0d69f").unwrap()
-// 			);
+			let payload = (b"evm:", ALICE);
+			let default_address = EvmAddress::from_slice(&payload.using_encoded(blake2_256)[0..20]);
+			assert_eq!(
+				default_address,
+				EvmAddress::from_str("0x8f2703bbe0abeaf09b384374959ffac5f7d0d69f").unwrap()
+			);
 
-// 			// expect output is evm address
-// 			let expected_output = hex! {"
-// 				000000000000000000000000 8f2703bbe0abeaf09b384374959ffac5f7d0d69f
-// 			"};
+			// expect output is evm address
+			let expected_output = hex! {"
+				000000000000000000000000 8f2703bbe0abeaf09b384374959ffac5f7d0d69f
+			"};
 
-// 			let resp = EVMAccountsPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
+			let resp = EVMAccountsPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
 
-// 			// call again, the evm address already mapped
-// 			assert_noop!(
-// 				EVMAccountsPrecompile::execute(&input, Some(100_000), &context, false),
-// 				PrecompileFailure::Revert {
-// 					exit_status: ExitRevert::Reverted,
-// 					output: "AccountIdHasMapped".into(),
-// 					cost: target_gas_limit(Some(100_000)).unwrap(),
-// 				}
-// 			);
-// 		});
-// 	}
-// }
+			// call again, the evm address already mapped
+			assert_noop!(
+				EVMAccountsPrecompile::execute(&input, Some(100_000), &context, false),
+				PrecompileFailure::Revert {
+					exit_status: ExitRevert::Reverted,
+					output: "AccountIdHasMapped".into(),
+					cost: target_gas_limit(Some(100_000)).unwrap(),
+				}
+			);
+		});
+	}
+}

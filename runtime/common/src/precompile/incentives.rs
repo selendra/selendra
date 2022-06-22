@@ -380,329 +380,323 @@ fn init_pool_id(
 	}
 }
 
-// #[cfg(test)]
-// mod tests {
-// 	use super::*;
-// 	use crate::precompile::mock::{
-// 		alice, alice_evm_addr, bob, new_test_ext, Currencies, Incentives, Origin, Rewards, Test, Tokens,
-// SEL, ALICE, 		SUSD, DOT, LP_SEL_SUSD,
-// 	};
-// 	use frame_support::assert_ok;
-// 	use hex_literal::hex;
-// 	use module_support::Rate;
-// 	use orml_rewards::PoolInfo;
-// 	use orml_traits::MultiCurrency;
-// 	use sp_runtime::FixedU128;
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::precompile::mock::{
+		alice, alice_evm_addr, bob, new_test_ext, Currencies, Incentives, Origin, Rewards, Test,
+		Tokens, ALICE, LP_SEL_SUSD, SEL, SUSD,
+	};
+	use frame_support::assert_ok;
+	use hex_literal::hex;
+	use module_support::Rate;
+	use orml_rewards::PoolInfo;
+	use orml_traits::MultiCurrency;
+	use sp_runtime::FixedU128;
 
-// 	type IncentivesPrecompile = super::IncentivesPrecompile<Test>;
+	type IncentivesPrecompile = super::IncentivesPrecompile<Test>;
 
-// 	#[test]
-// 	fn get_incentive_reward_amount_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+	// #[test]
+	// fn get_incentive_reward_amount_works() {
+	// 	new_test_ext().execute_with(|| {
+	// 		let context = Context {
+	// 			address: Default::default(),
+	// 			caller: alice_evm_addr(),
+	// 			apparent_value: Default::default(),
+	// 		};
 
-// 			assert_ok!(Incentives::update_incentive_rewards(
-// 				Origin::signed(ALICE),
-// 				vec![(PoolId::Loans(DOT), vec![(DOT, 100)])]
-// 			));
+	// 		assert_ok!(Incentives::update_incentive_rewards(
+	// 			Origin::signed(ALICE),
+	// 			vec![(PoolId::Loans(DOT), vec![(DOT, 100)])]
+	// 		));
 
-// 			// getIncetiveRewardAmount(PoolId,address,addres) => 0x7469000d
-// 			// pool
-// 			// pool_currency_id
-// 			// reward_currency_id
-// 			let input = hex! {"
-// 				7469000d
-// 				00000000000000000000000000000000 00000000000000000000000000000000
-// 				000000000000000000000000 0000000000000000000100000000000000000002
-// 				000000000000000000000000 0000000000000000000100000000000000000002
-// 			"};
+	// 		// getIncetiveRewardAmount(PoolId,address,addres) => 0x7469000d
+	// 		// pool
+	// 		// pool_currency_id
+	// 		// reward_currency_id
+	// 		let input = hex! {"
+	// 			7469000d
+	// 			00000000000000000000000000000000 00000000000000000000000000000000
+	// 			000000000000000000000000 0000000000000000000100000000000000000002
+	// 			000000000000000000000000 0000000000000000000100000000000000000002
+	// 		"};
 
-// 			// value of 100
-// 			let expected_output = hex! {"
-// 				00000000000000000000000000000000 00000000000000000000000000000064
-// 			"};
+	// 		// value of 100
+	// 		let expected_output = hex! {"
+	// 			00000000000000000000000000000000 00000000000000000000000000000064
+	// 		"};
 
-// 			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(res.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(res.output, expected_output.to_vec());
-// 		});
-// 	}
+	// 		let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
+	// 		assert_eq!(res.exit_status, ExitSucceed::Returned);
+	// 		assert_eq!(res.output, expected_output.to_vec());
+	// 	});
+	// }
 
-// 	#[test]
-// 	fn get_dex_reward_rate_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn get_dex_reward_rate_works() {
+		new_test_ext().execute_with(|| {
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			assert_ok!(Incentives::update_dex_saving_rewards(
-// 				Origin::signed(ALICE),
-// 				vec![(PoolId::Dex(LP_SEL_SUSD), FixedU128::saturating_from_rational(1, 10))]
-// 			));
+			assert_ok!(Incentives::update_dex_saving_rewards(
+				Origin::signed(ALICE),
+				vec![(PoolId::Dex(LP_SEL_SUSD), FixedU128::saturating_from_rational(1, 10))]
+			));
 
-// 			// getDexRewardRate(address) => 0x7ec93136
-// 			// lp_currency_id
-// 			let input = hex! {"
-// 				7ec93136
-// 				000000000000000000000000 0000000000000000000200000000000000000001
-// 			"};
+			// getDexRewardRate(address) => 0x7ec93136
+			// lp_currency_id
+			let input = hex! {"
+				7ec93136
+				000000000000000000000000 0000000000000000000200000000000000000001
+			"};
 
-// 			// value for FixedU128::saturating_from_rational(1,10)
-// 			let expected_output = hex! {"
-// 				00000000000000000000000000000000 0000000000000000016345785d8a0000
-// 			"};
+			// value for FixedU128::saturating_from_rational(1,10)
+			let expected_output = hex! {"
+				00000000000000000000000000000000 0000000000000000016345785d8a0000
+			"};
 
-// 			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(res.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(res.output, expected_output.to_vec());
-// 		});
-// 	}
+			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(res.exit_status, ExitSucceed::Returned);
+			assert_eq!(res.output, expected_output.to_vec());
+		});
+	}
 
-// 	#[test]
-// 	fn deposit_dex_share_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn deposit_dex_share_works() {
+		new_test_ext().execute_with(|| {
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			assert_ok!(Currencies::deposit(LP_SEL_SUSD, &alice(), 1_000_000_000));
+			assert_ok!(Currencies::deposit(LP_SEL_SUSD, &alice(), 1_000_000_000));
 
-// 			// depositDexShare(address,address,uint256) => 0xc17ca2a6
-// 			// who
-// 			// lp_currency_id
-// 			// amount
-// 			let input = hex! {"
-// 				c17ca2a6
-// 				000000000000000000000000 1000000000000000000000000000000000000001
-// 				000000000000000000000000 0000000000000000000200000000000000000001
-// 				00000000000000000000000000000000 00000000000000000000000000100000
-// 			"};
+			// depositDexShare(address,address,uint256) => 0xc17ca2a6
+			// who
+			// lp_currency_id
+			// amount
+			let input = hex! {"
+				c17ca2a6
+				000000000000000000000000 1000000000000000000000000000000000000001
+				000000000000000000000000 0000000000000000000200000000000000000001
+				00000000000000000000000000000000 00000000000000000000000000100000
+			"};
 
-// 			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(res.exit_status, ExitSucceed::Returned);
+			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(res.exit_status, ExitSucceed::Returned);
 
-// 			assert_eq!(
-// 				Rewards::pool_infos(PoolId::Dex(LP_SEL_SUSD)),
-// 				PoolInfo {
-// 					total_shares: 1048576,
-// 					..Default::default()
-// 				}
-// 			);
-// 			assert_eq!(
-// 				Rewards::shares_and_withdrawn_rewards(PoolId::Dex(LP_SEL_SUSD), alice()),
-// 				(1048576, Default::default())
-// 			);
-// 		});
-// 	}
+			assert_eq!(
+				Rewards::pool_infos(PoolId::Dex(LP_SEL_SUSD)),
+				PoolInfo { total_shares: 1048576, ..Default::default() }
+			);
+			assert_eq!(
+				Rewards::shares_and_withdrawn_rewards(PoolId::Dex(LP_SEL_SUSD), alice()),
+				(1048576, Default::default())
+			);
+		});
+	}
 
-// 	#[test]
-// 	fn withdraw_dex_share_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn withdraw_dex_share_works() {
+		new_test_ext().execute_with(|| {
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			assert_ok!(Currencies::deposit(LP_SEL_SUSD, &alice(), 1_000_000_000));
-// 			assert_ok!(Incentives::deposit_dex_share(
-// 				Origin::signed(alice()),
-// 				LP_SEL_SUSD,
-// 				100_000
-// 			));
+			assert_ok!(Currencies::deposit(LP_SEL_SUSD, &alice(), 1_000_000_000));
+			assert_ok!(Incentives::deposit_dex_share(
+				Origin::signed(alice()),
+				LP_SEL_SUSD,
+				100_000
+			));
 
-// 			// withdrawDexShare(address,address,uint256) => 0xdae3ac69
-// 			// who
-// 			// lp_currency_id
-// 			// amount
-// 			let input = hex! {"
-// 				dae3ac69
-// 				000000000000000000000000 1000000000000000000000000000000000000001
-// 				000000000000000000000000 0000000000000000000200000000000000000001
-// 				00000000000000000000000000000000 00000000000000000000000000000100
-// 			"};
+			// withdrawDexShare(address,address,uint256) => 0xdae3ac69
+			// who
+			// lp_currency_id
+			// amount
+			let input = hex! {"
+				dae3ac69
+				000000000000000000000000 1000000000000000000000000000000000000001
+				000000000000000000000000 0000000000000000000200000000000000000001
+				00000000000000000000000000000000 00000000000000000000000000000100
+			"};
 
-// 			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(res.exit_status, ExitSucceed::Returned);
+			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(res.exit_status, ExitSucceed::Returned);
 
-// 			assert_eq!(
-// 				Rewards::pool_infos(PoolId::Dex(LP_SEL_SUSD)),
-// 				PoolInfo {
-// 					total_shares: 99744,
-// 					..Default::default()
-// 				}
-// 			);
-// 			assert_eq!(
-// 				Rewards::shares_and_withdrawn_rewards(PoolId::Dex(LP_SEL_SUSD), alice()),
-// 				(99744, Default::default())
-// 			);
-// 		});
-// 	}
+			assert_eq!(
+				Rewards::pool_infos(PoolId::Dex(LP_SEL_SUSD)),
+				PoolInfo { total_shares: 99744, ..Default::default() }
+			);
+			assert_eq!(
+				Rewards::shares_and_withdrawn_rewards(PoolId::Dex(LP_SEL_SUSD), alice()),
+				(99744, Default::default())
+			);
+		});
+	}
 
-// 	#[test]
-// 	fn claim_rewards_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn claim_rewards_works() {
+		new_test_ext().execute_with(|| {
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			assert_ok!(Tokens::deposit(SEL, &alice(), 1_000));
-// 			assert_ok!(Tokens::deposit(SEL, &bob(), 1_000));
-// 			assert_ok!(Tokens::deposit(SEL, &Incentives::account_id(), 1_000_000));
-// 			assert_ok!(Tokens::deposit(SUSD, &Incentives::account_id(), 1_000_000));
+			assert_ok!(Tokens::deposit(SEL, &alice(), 1_000));
+			assert_ok!(Tokens::deposit(SEL, &bob(), 1_000));
+			assert_ok!(Tokens::deposit(SEL, &Incentives::account_id(), 1_000_000));
+			assert_ok!(Tokens::deposit(SUSD, &Incentives::account_id(), 1_000_000));
 
-// 			assert_ok!(Incentives::update_claim_reward_deduction_rates(
-// 				Origin::signed(ALICE),
-// 				vec![(PoolId::Loans(SEL), Rate::saturating_from_rational(50, 100)),]
-// 			));
-// 			Rewards::add_share(&alice(), &PoolId::Loans(SEL), 100);
-// 			assert_ok!(Rewards::accumulate_reward(&PoolId::Loans(SEL), SEL, 1_000));
-// 			Rewards::add_share(&bob(), &PoolId::Loans(SEL), 100);
-// 			assert_ok!(Rewards::accumulate_reward(&PoolId::Loans(SEL), SEL, 1_000));
+			assert_ok!(Incentives::update_claim_reward_deduction_rates(
+				Origin::signed(ALICE),
+				vec![(PoolId::Loans(SEL), Rate::saturating_from_rational(50, 100)),]
+			));
+			Rewards::add_share(&alice(), &PoolId::Loans(SEL), 100);
+			assert_ok!(Rewards::accumulate_reward(&PoolId::Loans(SEL), SEL, 1_000));
+			Rewards::add_share(&bob(), &PoolId::Loans(SEL), 100);
+			assert_ok!(Rewards::accumulate_reward(&PoolId::Loans(SEL), SEL, 1_000));
 
-// 			assert_eq!(
-// 				Rewards::pool_infos(PoolId::Loans(SEL)),
-// 				PoolInfo {
-// 					total_shares: 200,
-// 					rewards: vec![(SEL, (3_000, 1_000))].into_iter().collect(),
-// 				}
-// 			);
+			assert_eq!(
+				Rewards::pool_infos(PoolId::Loans(SEL)),
+				PoolInfo {
+					total_shares: 200,
+					rewards: vec![(SEL, (3_000, 1_000))].into_iter().collect(),
+				}
+			);
 
-// 			// claimRewards(address,PoolId,address) => 0xe12eab9b
-// 			// who
-// 			// pool
-// 			// pool_currency_id
-// 			let input = hex! {"
-// 				e12eab9b
-// 				000000000000000000000000 1000000000000000000000000000000000000001
-// 				00000000000000000000000000000000 00000000000000000000000000000000
-// 				000000000000000000000000 0000000000000000000100000000000000000000
-// 			"};
+			// claimRewards(address,PoolId,address) => 0xe12eab9b
+			// who
+			// pool
+			// pool_currency_id
+			let input = hex! {"
+				e12eab9b
+				000000000000000000000000 1000000000000000000000000000000000000001
+				00000000000000000000000000000000 00000000000000000000000000000000
+				000000000000000000000000 0000000000000000000100000000000000000000
+			"};
 
-// 			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(res.exit_status, ExitSucceed::Returned);
+			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(res.exit_status, ExitSucceed::Returned);
 
-// 			assert_eq!(
-// 				Rewards::pool_infos(PoolId::Loans(SEL)),
-// 				PoolInfo {
-// 					total_shares: 200,
-// 					rewards: vec![(SEL, (3_750, 2_500))].into_iter().collect(),
-// 				}
-// 			);
-// 			assert_eq!(
-// 				Rewards::shares_and_withdrawn_rewards(PoolId::Loans(SEL), alice()),
-// 				(100, vec![(SEL, 1_500)].into_iter().collect())
-// 			);
-// 		});
-// 	}
+			assert_eq!(
+				Rewards::pool_infos(PoolId::Loans(SEL)),
+				PoolInfo {
+					total_shares: 200,
+					rewards: vec![(SEL, (3_750, 2_500))].into_iter().collect(),
+				}
+			);
+			assert_eq!(
+				Rewards::shares_and_withdrawn_rewards(PoolId::Loans(SEL), alice()),
+				(100, vec![(SEL, 1_500)].into_iter().collect())
+			);
+		});
+	}
 
-// 	#[test]
-// 	fn get_claim_reward_deduction_rate_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn get_claim_reward_deduction_rate_works() {
+		new_test_ext().execute_with(|| {
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			assert_ok!(Incentives::update_claim_reward_deduction_rates(
-// 				Origin::signed(ALICE),
-// 				vec![(PoolId::Dex(LP_SEL_SUSD), FixedU128::saturating_from_rational(1, 10))]
-// 			));
+			assert_ok!(Incentives::update_claim_reward_deduction_rates(
+				Origin::signed(ALICE),
+				vec![(PoolId::Dex(LP_SEL_SUSD), FixedU128::saturating_from_rational(1, 10))]
+			));
 
-// 			// getClaimRewardDeductionRate(PoolId,address) => 0xa2e2fc8e
-// 			// pool
-// 			// pool_currency_id
-// 			let input = hex! {"
-// 				a2e2fc8e
-// 				00000000000000000000000000000000 00000000000000000000000000000001
-// 				000000000000000000000000 0000000000000000000200000000000000000001
-// 			"};
+			// getClaimRewardDeductionRate(PoolId,address) => 0xa2e2fc8e
+			// pool
+			// pool_currency_id
+			let input = hex! {"
+				a2e2fc8e
+				00000000000000000000000000000000 00000000000000000000000000000001
+				000000000000000000000000 0000000000000000000200000000000000000001
+			"};
 
-// 			// value for FixedU128::saturating_from_rational(1,10)
-// 			let expected_output = hex! {"
-// 				00000000000000000000000000000000 0000000000000000016345785d8a0000
-// 			"};
+			// value for FixedU128::saturating_from_rational(1,10)
+			let expected_output = hex! {"
+				00000000000000000000000000000000 0000000000000000016345785d8a0000
+			"};
 
-// 			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(res.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(res.output, expected_output.to_vec());
-// 		});
-// 	}
+			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(res.exit_status, ExitSucceed::Returned);
+			assert_eq!(res.output, expected_output.to_vec());
+		});
+	}
 
-// 	#[test]
-// 	fn get_pending_rewards_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn get_pending_rewards_works() {
+		new_test_ext().execute_with(|| {
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			assert_ok!(Tokens::deposit(SEL, &alice(), 1_000));
-// 			assert_ok!(Tokens::deposit(SEL, &bob(), 1_000));
-// 			assert_ok!(Tokens::deposit(SEL, &Incentives::account_id(), 1_000_000));
-// 			assert_ok!(Tokens::deposit(SUSD, &Incentives::account_id(), 1_000_000));
+			assert_ok!(Tokens::deposit(SEL, &alice(), 1_000));
+			assert_ok!(Tokens::deposit(SEL, &bob(), 1_000));
+			assert_ok!(Tokens::deposit(SEL, &Incentives::account_id(), 1_000_000));
+			assert_ok!(Tokens::deposit(SUSD, &Incentives::account_id(), 1_000_000));
 
-// 			assert_ok!(Incentives::update_claim_reward_deduction_rates(
-// 				Origin::signed(ALICE),
-// 				vec![(PoolId::Loans(SEL), Rate::saturating_from_rational(50, 100)),]
-// 			));
-// 			Rewards::add_share(&alice(), &PoolId::Loans(SEL), 100);
-// 			assert_ok!(Rewards::accumulate_reward(&PoolId::Loans(SEL), SEL, 1_000));
-// 			Rewards::add_share(&bob(), &PoolId::Loans(SEL), 100);
-// 			assert_ok!(Rewards::accumulate_reward(&PoolId::Loans(SEL), SUSD, 1_000));
-// 			Rewards::remove_share(&alice(), &PoolId::Loans(SEL), 100);
+			assert_ok!(Incentives::update_claim_reward_deduction_rates(
+				Origin::signed(ALICE),
+				vec![(PoolId::Loans(SEL), Rate::saturating_from_rational(50, 100)),]
+			));
+			Rewards::add_share(&alice(), &PoolId::Loans(SEL), 100);
+			assert_ok!(Rewards::accumulate_reward(&PoolId::Loans(SEL), SEL, 1_000));
+			Rewards::add_share(&bob(), &PoolId::Loans(SEL), 100);
+			assert_ok!(Rewards::accumulate_reward(&PoolId::Loans(SEL), SUSD, 1_000));
+			Rewards::remove_share(&alice(), &PoolId::Loans(SEL), 100);
 
-// 			assert_eq!(
-// 				Incentives::get_pending_rewards(PoolId::Loans(SEL), alice(), vec![SEL, SUSD]),
-// 				vec![1000, 500]
-// 			);
+			assert_eq!(
+				Incentives::get_pending_rewards(PoolId::Loans(SEL), alice(), vec![SEL, SUSD]),
+				vec![1000, 500]
+			);
 
-// 			// getPendingRewards(address[],PoolId,address,address) -> 0x0eb797b1
-// 			// offset
-// 			// pool_id
-// 			// pool_currency_id
-// 			// who
-// 			// currency_ids_len
-// 			// SEL
-// 			// SUSD
-// 			let input = hex! {"
-// 				0eb797b1
-// 				00000000000000000000000000000000 00000000000000000000000000000000
-// 				00000000000000000000000000000000 00000000000000000000000000000000
-// 				000000000000000000000000 0000000000000000000100000000000000000000
-// 				000000000000000000000000 1000000000000000000000000000000000000001
-// 				00000000000000000000000000000000000000000000000000000000 00000002
-// 				000000000000000000000000 0000000000000000000100000000000000000000
-// 				000000000000000000000000 0000000000000000000100000000000000000001
-// 			"};
+			// getPendingRewards(address[],PoolId,address,address) -> 0x0eb797b1
+			// offset
+			// pool_id
+			// pool_currency_id
+			// who
+			// currency_ids_len
+			// SEL
+			// SUSD
+			let input = hex! {"
+				0eb797b1
+				00000000000000000000000000000000 00000000000000000000000000000000
+				00000000000000000000000000000000 00000000000000000000000000000000
+				000000000000000000000000 0000000000000000000100000000000000000000
+				000000000000000000000000 1000000000000000000000000000000000000001
+				00000000000000000000000000000000000000000000000000000000 00000002
+				000000000000000000000000 0000000000000000000100000000000000000000
+				000000000000000000000000 0000000000000000000100000000000000000001
+			"};
 
-// 			// encoded array of [1000, 500]
-// 			// offset
-// 			// array_len
-// 			// value_1
-// 			// value_2
-// 			let expected_output = hex! {"
-// 				00000000000000000000000000000000 00000000000000000000000000000020
-// 				00000000000000000000000000000000 00000000000000000000000000000002
-// 				00000000000000000000000000000000 000000000000000000000000000003e8
-// 				00000000000000000000000000000000 000000000000000000000000000001f4
-// 			"};
+			// encoded array of [1000, 500]
+			// offset
+			// array_len
+			// value_1
+			// value_2
+			let expected_output = hex! {"
+				00000000000000000000000000000000 00000000000000000000000000000020
+				00000000000000000000000000000000 00000000000000000000000000000002
+				00000000000000000000000000000000 000000000000000000000000000003e8
+				00000000000000000000000000000000 000000000000000000000000000001f4
+			"};
 
-// 			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(res.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(res.output, expected_output.to_vec());
-// 		})
-// 	}
-// }
+			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(res.exit_status, ExitSucceed::Returned);
+			assert_eq!(res.output, expected_output.to_vec());
+		})
+	}
+}

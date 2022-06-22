@@ -28,13 +28,12 @@ use sp_runtime::traits::Convert;
 use sp_std::{collections::btree_map::BTreeMap, marker::PhantomData, prelude::*};
 
 use frame_support::{
+	traits::Get,
 	weights::{DispatchClass, Weight},
-	traits::Get
 };
 
 use module_evm::GenesisAccount;
 use primitives::{evm::is_system_contract, Balance, Nonce};
-
 
 pub const RATIO: u64 = 9000;
 
@@ -58,9 +57,7 @@ impl Convert<u64, Weight> for GasToWeight {
 pub struct WeightToGas;
 impl Convert<Weight, u64> for WeightToGas {
 	fn convert(weight: Weight) -> u64 {
-		weight
-			.checked_div(RATIO)
-			.expect("Compile-time constant is not zero; qed;")
+		weight.checked_div(RATIO).expect("Compile-time constant is not zero; qed;")
 	}
 }
 
