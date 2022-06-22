@@ -69,9 +69,8 @@ use frame_support::{
 	pallet_prelude::InvalidTransaction,
 	parameter_types,
 	traits::{
-		ConstU16, ConstU32, Contains,
-		EnsureOrigin, EqualPrivilegeOnly, Get,
-		InstanceFilter, KeyOwnerProofSystem, LockIdentifier,
+		ConstU16, ConstU32, Contains, EnsureOrigin, EqualPrivilegeOnly, InstanceFilter,
+		KeyOwnerProofSystem, LockIdentifier,
 	},
 	weights::{constants::RocksDbWeight, Weight},
 	PalletId, RuntimeDebug,
@@ -102,19 +101,18 @@ pub use runtime_common::{
 	EnsureRootOrTwoThirdsTechnicalCommittee, ExchangeRate, ExistentialDepositsTimesOneHundred,
 	FinancialCouncilInstance, FinancialCouncilMembershipInstance, GasToWeight,
 	GeneralCouncilInstance, GeneralCouncilMembershipInstance, MaxTipsOfPriority,
-	OffchainSolutionWeightLimit, OperationalFeeMultiplier, OperatorMembershipInstanceSelendra, Price,
-	ProxyType, Rate, Ratio, RuntimeBlockLength, RuntimeBlockWeights, SystemContractsFilter,
+	OffchainSolutionWeightLimit, OperationalFeeMultiplier, OperatorMembershipInstanceSelendra,
+	Price, ProxyType, Rate, Ratio, RuntimeBlockLength, RuntimeBlockWeights, SystemContractsFilter,
 	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance, TimeStampedPrice,
-	TipPerWeightStep, SEL, SUSD, DOT, RENBTC, KMD
+	TipPerWeightStep, DOT, KMD, RENBTC, SEL, SUSD,
 };
-
 
 pub mod constants;
 
-mod benchmarking;
 mod authority;
-mod weights;
+mod benchmarking;
 mod voter_bags;
+mod weights;
 
 mod consensus_config;
 mod governance_config;

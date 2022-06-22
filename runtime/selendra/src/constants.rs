@@ -20,10 +20,9 @@ pub mod time {
 	use primitives::{Balance, BlockNumber, Moment};
 	use runtime_common::{dollar, millicent, prod_or_fast, SEL};
 
-	pub const MILLISECS_PER_BLOCK: Moment =  6000;
+	pub const MILLISECS_PER_BLOCK: Moment = 6000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
 	pub const EPOCH_DURATION_IN_SLOTS: BlockNumber = prod_or_fast!(4 * HOURS, 1 * MINUTES);
-
 
 	// These time units are defined in number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
@@ -41,8 +40,8 @@ pub mod time {
 /// Fee-related
 pub mod fee {
 	use frame_support::weights::{
-		constants::{ExtrinsicBaseWeight},
-		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
+		constants::ExtrinsicBaseWeight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		WeightToFeePolynomial,
 	};
 	use primitives::Balance;
 	use runtime_common::{millicent, SEL};
@@ -68,7 +67,8 @@ pub mod fee {
 	impl WeightToFeePolynomial for WeightToFee {
 		type Balance = Balance;
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 1/100 millicent
+			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 1/100
+			// millicent
 			let p = base_tx_in_sel();
 			let q = 100 * Balance::from(ExtrinsicBaseWeight::get());
 			smallvec![WeightToFeeCoefficient {

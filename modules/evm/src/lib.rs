@@ -1334,8 +1334,9 @@ impl<T: Config> Pallet<T> {
 	/// - Update maintainer of the contract.
 	/// - Save `code` if not saved yet.
 	pub fn create_contract(source: H160, address: H160, publish: bool, code: Vec<u8>) {
-		let bounded_code: BoundedVec<u8, MaxCodeSize> =
-			code.try_into().expect("checked by create_contract_limit in SELENDRA_CONFIG; qed");
+		let bounded_code: BoundedVec<u8, MaxCodeSize> = code
+			.try_into()
+			.expect("checked by create_contract_limit in SELENDRA_CONFIG; qed");
 		if bounded_code.is_empty() {
 			return
 		}

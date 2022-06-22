@@ -30,10 +30,7 @@ fn deposit_dex_share_works() {
 		System::set_block_number(1);
 		assert_ok!(TokensModule::deposit(BTC_SUSD_LP, &ALICE::get(), 10000));
 		assert_eq!(TokensModule::free_balance(BTC_SUSD_LP, &ALICE::get()), 10000);
-		assert_eq!(
-			TokensModule::free_balance(BTC_SUSD_LP, &IncentivesModule::account_id()),
-			0
-		);
+		assert_eq!(TokensModule::free_balance(BTC_SUSD_LP, &IncentivesModule::account_id()), 0);
 		assert_eq!(RewardsModule::pool_infos(PoolId::Dex(BTC_SUSD_LP)), PoolInfo::default(),);
 
 		assert_eq!(
@@ -52,16 +49,10 @@ fn deposit_dex_share_works() {
 			deposit: 10000,
 		}));
 		assert_eq!(TokensModule::free_balance(BTC_SUSD_LP, &ALICE::get()), 0);
-		assert_eq!(
-			TokensModule::free_balance(BTC_SUSD_LP, &IncentivesModule::account_id()),
-			10000
-		);
+		assert_eq!(TokensModule::free_balance(BTC_SUSD_LP, &IncentivesModule::account_id()), 10000);
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Dex(BTC_SUSD_LP)),
-			PoolInfo {
-				total_shares: 10000,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 10000, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(PoolId::Dex(BTC_SUSD_LP), ALICE::get()),
@@ -87,16 +78,10 @@ fn withdraw_dex_share_works() {
 			10000
 		));
 		assert_eq!(TokensModule::free_balance(BTC_SUSD_LP, &ALICE::get()), 0);
-		assert_eq!(
-			TokensModule::free_balance(BTC_SUSD_LP, &IncentivesModule::account_id()),
-			10000
-		);
+		assert_eq!(TokensModule::free_balance(BTC_SUSD_LP, &IncentivesModule::account_id()), 10000);
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Dex(BTC_SUSD_LP)),
-			PoolInfo {
-				total_shares: 10000,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 10000, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(PoolId::Dex(BTC_SUSD_LP), ALICE::get()),
@@ -114,16 +99,10 @@ fn withdraw_dex_share_works() {
 			withdraw: 8000,
 		}));
 		assert_eq!(TokensModule::free_balance(BTC_SUSD_LP, &ALICE::get()), 8000);
-		assert_eq!(
-			TokensModule::free_balance(BTC_SUSD_LP, &IncentivesModule::account_id()),
-			2000
-		);
+		assert_eq!(TokensModule::free_balance(BTC_SUSD_LP, &IncentivesModule::account_id()), 2000);
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Dex(BTC_SUSD_LP)),
-			PoolInfo {
-				total_shares: 2000,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 2000, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(PoolId::Dex(BTC_SUSD_LP), ALICE::get()),
@@ -141,18 +120,15 @@ fn update_incentive_rewards_works() {
 			BadOrigin
 		);
 		assert_noop!(
-			IncentivesModule::update_incentive_rewards(Origin::signed(ROOT::get()), vec![(PoolId::Dex(DOT), vec![])]),
+			IncentivesModule::update_incentive_rewards(
+				Origin::signed(ROOT::get()),
+				vec![(PoolId::Dex(DOT), vec![])]
+			),
 			Error::<Runtime>::InvalidPoolId
 		);
 
-		assert_eq!(
-			IncentivesModule::incentive_reward_amounts(PoolId::Dex(DOT_SUSD_LP), SEL),
-			0
-		);
-		assert_eq!(
-			IncentivesModule::incentive_reward_amounts(PoolId::Dex(DOT_SUSD_LP), DOT),
-			0
-		);
+		assert_eq!(IncentivesModule::incentive_reward_amounts(PoolId::Dex(DOT_SUSD_LP), SEL), 0);
+		assert_eq!(IncentivesModule::incentive_reward_amounts(PoolId::Dex(DOT_SUSD_LP), DOT), 0);
 		assert_eq!(IncentivesModule::incentive_reward_amounts(PoolId::Loans(DOT), SEL), 0);
 
 		assert_ok!(IncentivesModule::update_incentive_rewards(
@@ -162,33 +138,33 @@ fn update_incentive_rewards_works() {
 				(PoolId::Loans(DOT), vec![(SEL, 500)]),
 			],
 		));
-		System::assert_has_event(Event::IncentivesModule(crate::Event::IncentiveRewardAmountUpdated {
-			pool: PoolId::Dex(DOT_SUSD_LP),
-			reward_currency_id: SEL,
-			reward_amount_per_period: 1000,
-		}));
-		System::assert_has_event(Event::IncentivesModule(crate::Event::IncentiveRewardAmountUpdated {
-			pool: PoolId::Dex(DOT_SUSD_LP),
-			reward_currency_id: DOT,
-			reward_amount_per_period: 100,
-		}));
-		System::assert_has_event(Event::IncentivesModule(crate::Event::IncentiveRewardAmountUpdated {
-			pool: PoolId::Loans(DOT),
-			reward_currency_id: SEL,
-			reward_amount_per_period: 500,
-		}));
-		assert_eq!(
-			IncentivesModule::incentive_reward_amounts(PoolId::Dex(DOT_SUSD_LP), SEL),
-			1000
-		);
+		System::assert_has_event(Event::IncentivesModule(
+			crate::Event::IncentiveRewardAmountUpdated {
+				pool: PoolId::Dex(DOT_SUSD_LP),
+				reward_currency_id: SEL,
+				reward_amount_per_period: 1000,
+			},
+		));
+		System::assert_has_event(Event::IncentivesModule(
+			crate::Event::IncentiveRewardAmountUpdated {
+				pool: PoolId::Dex(DOT_SUSD_LP),
+				reward_currency_id: DOT,
+				reward_amount_per_period: 100,
+			},
+		));
+		System::assert_has_event(Event::IncentivesModule(
+			crate::Event::IncentiveRewardAmountUpdated {
+				pool: PoolId::Loans(DOT),
+				reward_currency_id: SEL,
+				reward_amount_per_period: 500,
+			},
+		));
+		assert_eq!(IncentivesModule::incentive_reward_amounts(PoolId::Dex(DOT_SUSD_LP), SEL), 1000);
 		assert_eq!(
 			IncentiveRewardAmounts::<Runtime>::contains_key(PoolId::Dex(DOT_SUSD_LP), DOT),
 			true
 		);
-		assert_eq!(
-			IncentivesModule::incentive_reward_amounts(PoolId::Dex(DOT_SUSD_LP), DOT),
-			100
-		);
+		assert_eq!(IncentivesModule::incentive_reward_amounts(PoolId::Dex(DOT_SUSD_LP), DOT), 100);
 		assert_eq!(IncentivesModule::incentive_reward_amounts(PoolId::Loans(DOT), SEL), 500);
 
 		assert_ok!(IncentivesModule::update_incentive_rewards(
@@ -198,20 +174,21 @@ fn update_incentive_rewards_works() {
 				(PoolId::Loans(DOT), vec![(SEL, 500)]),
 			],
 		));
-		System::assert_has_event(Event::IncentivesModule(crate::Event::IncentiveRewardAmountUpdated {
-			pool: PoolId::Dex(DOT_SUSD_LP),
-			reward_currency_id: SEL,
-			reward_amount_per_period: 200,
-		}));
-		System::assert_has_event(Event::IncentivesModule(crate::Event::IncentiveRewardAmountUpdated {
-			pool: PoolId::Dex(DOT_SUSD_LP),
-			reward_currency_id: DOT,
-			reward_amount_per_period: 0,
-		}));
-		assert_eq!(
-			IncentivesModule::incentive_reward_amounts(PoolId::Dex(DOT_SUSD_LP), SEL),
-			200
-		);
+		System::assert_has_event(Event::IncentivesModule(
+			crate::Event::IncentiveRewardAmountUpdated {
+				pool: PoolId::Dex(DOT_SUSD_LP),
+				reward_currency_id: SEL,
+				reward_amount_per_period: 200,
+			},
+		));
+		System::assert_has_event(Event::IncentivesModule(
+			crate::Event::IncentiveRewardAmountUpdated {
+				pool: PoolId::Dex(DOT_SUSD_LP),
+				reward_currency_id: DOT,
+				reward_amount_per_period: 0,
+			},
+		));
+		assert_eq!(IncentivesModule::incentive_reward_amounts(PoolId::Dex(DOT_SUSD_LP), SEL), 200);
 		assert_eq!(
 			IncentiveRewardAmounts::<Runtime>::contains_key(PoolId::Dex(DOT_SUSD_LP), DOT),
 			false
@@ -278,10 +255,7 @@ fn update_dex_saving_rewards_works() {
 			IncentivesModule::dex_saving_reward_rates(PoolId::Dex(DOT_SUSD_LP)),
 			Rate::saturating_from_rational(1, 100)
 		);
-		assert_eq!(
-			DexSavingRewardRates::<Runtime>::contains_key(PoolId::Dex(BTC_SUSD_LP)),
-			true
-		);
+		assert_eq!(DexSavingRewardRates::<Runtime>::contains_key(PoolId::Dex(BTC_SUSD_LP)), true);
 		assert_eq!(
 			IncentivesModule::dex_saving_reward_rates(PoolId::Dex(BTC_SUSD_LP)),
 			Rate::saturating_from_rational(2, 100)
@@ -306,10 +280,7 @@ fn update_dex_saving_rewards_works() {
 			IncentivesModule::dex_saving_reward_rates(PoolId::Dex(DOT_SUSD_LP)),
 			Rate::saturating_from_rational(5, 100)
 		);
-		assert_eq!(
-			DexSavingRewardRates::<Runtime>::contains_key(PoolId::Dex(BTC_SUSD_LP)),
-			false
-		);
+		assert_eq!(DexSavingRewardRates::<Runtime>::contains_key(PoolId::Dex(BTC_SUSD_LP)), false);
 		assert_eq!(
 			IncentivesModule::dex_saving_reward_rates(PoolId::Dex(BTC_SUSD_LP)),
 			Rate::zero()
@@ -322,7 +293,10 @@ fn update_claim_reward_deduction_rates_works() {
 	ExtBuilder::default().build().execute_with(|| {
 		System::set_block_number(1);
 		assert_noop!(
-			IncentivesModule::update_claim_reward_deduction_rates(Origin::signed(ALICE::get()), vec![]),
+			IncentivesModule::update_claim_reward_deduction_rates(
+				Origin::signed(ALICE::get()),
+				vec![]
+			),
 			BadOrigin
 		);
 		assert_noop!(
@@ -356,14 +330,18 @@ fn update_claim_reward_deduction_rates_works() {
 				(PoolId::Dex(BTC_SUSD_LP), Rate::saturating_from_rational(2, 100))
 			]
 		));
-		System::assert_has_event(Event::IncentivesModule(crate::Event::ClaimRewardDeductionRateUpdated {
-			pool: PoolId::Dex(DOT_SUSD_LP),
-			deduction_rate: Rate::saturating_from_rational(1, 100),
-		}));
-		System::assert_has_event(Event::IncentivesModule(crate::Event::ClaimRewardDeductionRateUpdated {
-			pool: PoolId::Dex(BTC_SUSD_LP),
-			deduction_rate: Rate::saturating_from_rational(2, 100),
-		}));
+		System::assert_has_event(Event::IncentivesModule(
+			crate::Event::ClaimRewardDeductionRateUpdated {
+				pool: PoolId::Dex(DOT_SUSD_LP),
+				deduction_rate: Rate::saturating_from_rational(1, 100),
+			},
+		));
+		System::assert_has_event(Event::IncentivesModule(
+			crate::Event::ClaimRewardDeductionRateUpdated {
+				pool: PoolId::Dex(BTC_SUSD_LP),
+				deduction_rate: Rate::saturating_from_rational(2, 100),
+			},
+		));
 		assert_eq!(
 			IncentivesModule::claim_reward_deduction_rates(PoolId::Dex(DOT_SUSD_LP)),
 			Rate::saturating_from_rational(1, 100)
@@ -384,14 +362,18 @@ fn update_claim_reward_deduction_rates_works() {
 				(PoolId::Dex(BTC_SUSD_LP), Rate::zero())
 			]
 		));
-		System::assert_has_event(Event::IncentivesModule(crate::Event::ClaimRewardDeductionRateUpdated {
-			pool: PoolId::Dex(DOT_SUSD_LP),
-			deduction_rate: Rate::saturating_from_rational(5, 100),
-		}));
-		System::assert_has_event(Event::IncentivesModule(crate::Event::ClaimRewardDeductionRateUpdated {
-			pool: PoolId::Dex(BTC_SUSD_LP),
-			deduction_rate: Rate::zero(),
-		}));
+		System::assert_has_event(Event::IncentivesModule(
+			crate::Event::ClaimRewardDeductionRateUpdated {
+				pool: PoolId::Dex(DOT_SUSD_LP),
+				deduction_rate: Rate::saturating_from_rational(5, 100),
+			},
+		));
+		System::assert_has_event(Event::IncentivesModule(
+			crate::Event::ClaimRewardDeductionRateUpdated {
+				pool: PoolId::Dex(BTC_SUSD_LP),
+				deduction_rate: Rate::zero(),
+			},
+		));
 		assert_eq!(
 			IncentivesModule::claim_reward_deduction_rates(PoolId::Dex(DOT_SUSD_LP)),
 			Rate::saturating_from_rational(5, 100)
@@ -423,10 +405,7 @@ fn on_update_loan_works() {
 		OnUpdateLoan::<Runtime>::happened(&(ALICE::get(), BTC, 100, 0));
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(BTC)),
-			PoolInfo {
-				total_shares: 100,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 100, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(PoolId::Loans(BTC), ALICE::get()),
@@ -436,10 +415,7 @@ fn on_update_loan_works() {
 		OnUpdateLoan::<Runtime>::happened(&(ALICE::get(), BTC, 100, 100));
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(BTC)),
-			PoolInfo {
-				total_shares: 200,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 200, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(PoolId::Loans(BTC), ALICE::get()),
@@ -449,10 +425,7 @@ fn on_update_loan_works() {
 		OnUpdateLoan::<Runtime>::happened(&(BOB::get(), BTC, 600, 0));
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(BTC)),
-			PoolInfo {
-				total_shares: 800,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 800, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(PoolId::Loans(BTC), BOB::get()),
@@ -462,10 +435,7 @@ fn on_update_loan_works() {
 		OnUpdateLoan::<Runtime>::happened(&(ALICE::get(), BTC, -50, 200));
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(BTC)),
-			PoolInfo {
-				total_shares: 750,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 750, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(PoolId::Loans(BTC), ALICE::get()),
@@ -475,10 +445,7 @@ fn on_update_loan_works() {
 		OnUpdateLoan::<Runtime>::happened(&(BOB::get(), BTC, -600, 600));
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(BTC)),
-			PoolInfo {
-				total_shares: 150,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 150, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(PoolId::Loans(BTC), BOB::get()),
@@ -521,17 +488,15 @@ fn transfer_failed_when_claim_rewards() {
 		assert_eq!(TokensModule::free_balance(SUSD, &ALICE::get()), 0);
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(BTC)),
-			PoolInfo {
-				total_shares: 200,
-				rewards: vec![(SUSD, (18, 0))].into_iter().collect(),
-			}
+			PoolInfo { total_shares: 200, rewards: vec![(SUSD, (18, 0))].into_iter().collect() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(PoolId::Loans(BTC), ALICE::get()),
 			(100, Default::default())
 		);
 
-		// Alice claim rewards, but the rewards are put back to pool because transfer rewards failed.
+		// Alice claim rewards, but the rewards are put back to pool because transfer rewards
+		// failed.
 		assert_ok!(IncentivesModule::claim_rewards(
 			Origin::signed(ALICE::get()),
 			PoolId::Loans(BTC)
@@ -541,10 +506,7 @@ fn transfer_failed_when_claim_rewards() {
 		assert_eq!(TokensModule::free_balance(SUSD, &ALICE::get()), 0);
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(BTC)),
-			PoolInfo {
-				total_shares: 200,
-				rewards: vec![(SUSD, (27, 9))].into_iter().collect(),
-			}
+			PoolInfo { total_shares: 200, rewards: vec![(SUSD, (27, 9))].into_iter().collect() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(PoolId::Loans(BTC), ALICE::get()),
@@ -558,18 +520,12 @@ fn transfer_failed_when_claim_rewards() {
 		);
 
 		// BOB claim reward and receive the reward.
-		assert_ok!(IncentivesModule::claim_rewards(
-			Origin::signed(BOB::get()),
-			PoolId::Loans(BTC)
-		));
+		assert_ok!(IncentivesModule::claim_rewards(Origin::signed(BOB::get()), PoolId::Loans(BTC)));
 		assert_eq!(TokensModule::free_balance(SUSD, &VAULT::get()), 87);
 		assert_eq!(TokensModule::free_balance(SUSD, &BOB::get()), 13);
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(BTC)),
-			PoolInfo {
-				total_shares: 200,
-				rewards: vec![(SUSD, (27, 22))].into_iter().collect(),
-			}
+			PoolInfo { total_shares: 200, rewards: vec![(SUSD, (27, 22))].into_iter().collect() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(PoolId::Loans(BTC), BOB::get()),
@@ -625,7 +581,7 @@ fn claim_rewards_works() {
 			actual_amount: 200,
 			deduction_amount: 1800,
 		}));
-		
+
 		assert_eq!(TokensModule::free_balance(SEL, &VAULT::get()), 9800);
 		assert_eq!(TokensModule::free_balance(SEL, &ALICE::get()), 200);
 
@@ -635,10 +591,7 @@ fn claim_rewards_works() {
 			(100, vec![(SEL, 2000)].into_iter().collect())
 		);
 		assert_eq!(TokensModule::free_balance(SEL, &BOB::get()), 0);
-		assert_ok!(IncentivesModule::claim_rewards(
-			Origin::signed(BOB::get()),
-			PoolId::Loans(BTC)
-		));
+		assert_ok!(IncentivesModule::claim_rewards(Origin::signed(BOB::get()), PoolId::Loans(BTC)));
 
 		System::assert_has_event(Event::IncentivesModule(crate::Event::ClaimRewards {
 			who: BOB::get(),
@@ -767,31 +720,19 @@ fn on_initialize_should_work() {
 		assert_eq!(TokensModule::free_balance(SUSD, &VAULT::get()), 0);
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(BTC)),
-			PoolInfo {
-				total_shares: 1,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 1, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(DOT)),
-			PoolInfo {
-				total_shares: 0,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 0, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Dex(BTC_SUSD_LP)),
-			PoolInfo {
-				total_shares: 1,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 1, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Dex(DOT_SUSD_LP)),
-			PoolInfo {
-				total_shares: 1,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 1, ..Default::default() }
 		);
 
 		// per 10 blocks will accumulate rewards, nothing happened when on_initialize(9)
@@ -807,7 +748,7 @@ fn on_initialize_should_work() {
 		assert_eq!(TokensModule::free_balance(SUSD, &RewardsSource::get()), 10000 - 500);
 		assert_eq!(TokensModule::free_balance(SEL, &VAULT::get()), 1000 + 200 + 100);
 		assert_eq!(TokensModule::free_balance(SUSD, &VAULT::get()), 500 + (5 + 4)); // (5 + 4) from debit_issue,  500 from RewardsSource
-		// 1000 SEL and 500 SUSD are incentive reward
+																			// 1000 SEL and 500 SUSD are incentive reward
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(BTC)),
 			PoolInfo {
@@ -818,10 +759,7 @@ fn on_initialize_should_work() {
 		// because total_shares of PoolId::Loans(DOT) is zero, will not accumulate rewards
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(DOT)),
-			PoolInfo {
-				total_shares: 0,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 0, ..Default::default() }
 		);
 		// 100 SEL is incentive reward, 5 SUSD is dex saving reward
 		assert_eq!(
@@ -844,10 +782,7 @@ fn on_initialize_should_work() {
 		RewardsModule::add_share(&ALICE::get(), &PoolId::Loans(DOT), 1);
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(DOT)),
-			PoolInfo {
-				total_shares: 1,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 1, ..Default::default() }
 		);
 
 		IncentivesModule::on_initialize(20);
@@ -856,12 +791,9 @@ fn on_initialize_should_work() {
 			8700 - (1000 + 100 + 200)
 		);
 		assert_eq!(TokensModule::free_balance(SUSD, &RewardsSource::get()), 9500 - 500);
-		assert_eq!(
-			TokensModule::free_balance(SEL, &VAULT::get()),
-			1300 + (1000 + 100 + 200)
-		);
+		assert_eq!(TokensModule::free_balance(SEL, &VAULT::get()), 1300 + (1000 + 100 + 200));
 		assert_eq!(TokensModule::free_balance(SUSD, &VAULT::get()), 509 + (500 + 9)); // 9 from debit_issue,  500 from RewardsSource
-		// 1000 SEL and 500 SUSD are incentive reward
+																			  // 1000 SEL and 500 SUSD are incentive reward
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(BTC)),
 			PoolInfo {
@@ -888,10 +820,7 @@ fn on_initialize_should_work() {
 
 		mock_shutdown();
 		IncentivesModule::on_initialize(30);
-		assert_eq!(
-			TokensModule::free_balance(SEL, &RewardsSource::get()),
-			7400 - (100 + 200)
-		);
+		assert_eq!(TokensModule::free_balance(SEL, &RewardsSource::get()), 7400 - (100 + 200));
 		assert_eq!(TokensModule::free_balance(SUSD, &RewardsSource::get()), 9000);
 		assert_eq!(TokensModule::free_balance(SEL, &VAULT::get()), 2600 + (100 + 200));
 		assert_eq!(TokensModule::free_balance(SUSD, &VAULT::get()), 1018);
@@ -903,8 +832,8 @@ fn on_initialize_should_work() {
 				rewards: vec![(SEL, (2000, 0)), (SUSD, (1000, 0))].into_iter().collect(),
 			}
 		);
-		// after shutdown, PoolId::Dex will accumulate incentive rewards, but will not accumulate dex saving
-		// reward
+		// after shutdown, PoolId::Dex will accumulate incentive rewards, but will not accumulate
+		// dex saving reward
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Dex(BTC_SUSD_LP)),
 			PoolInfo {
@@ -912,8 +841,8 @@ fn on_initialize_should_work() {
 				rewards: vec![(SEL, (300, 0)), (SUSD, (10, 0))].into_iter().collect(),
 			}
 		);
-		// after shutdown, PoolId::Dex will accumulate incentive rewards, but will not accumulate dex saving
-		// reward
+		// after shutdown, PoolId::Dex will accumulate incentive rewards, but will not accumulate
+		// dex saving reward
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Dex(DOT_SUSD_LP)),
 			PoolInfo {
@@ -930,10 +859,7 @@ fn earning_booster_should_work() {
 		OnUpdateLoan::<Runtime>::happened(&(ALICE::get(), SEL, 100, 0));
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(SEL)),
-			PoolInfo {
-				total_shares: 100,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 100, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(PoolId::Loans(SEL), ALICE::get()),
@@ -943,10 +869,7 @@ fn earning_booster_should_work() {
 		OnEarningBonded::<Runtime>::happened(&(ALICE::get(), 80));
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(SEL)),
-			PoolInfo {
-				total_shares: 100 + 80 + 40,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 100 + 80 + 40, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(PoolId::Loans(SEL), ALICE::get()),
@@ -956,10 +879,7 @@ fn earning_booster_should_work() {
 		OnEarningUnbonded::<Runtime>::happened(&(ALICE::get(), 20));
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(SEL)),
-			PoolInfo {
-				total_shares: 100 + 60 + 30,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 100 + 60 + 30, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(PoolId::Loans(SEL), ALICE::get()),
@@ -969,10 +889,7 @@ fn earning_booster_should_work() {
 		OnUpdateLoan::<Runtime>::happened(&(ALICE::get(), SEL, -100, 100));
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(SEL)),
-			PoolInfo {
-				total_shares: 60 + 30,
-				..Default::default()
-			}
+			PoolInfo { total_shares: 60 + 30, ..Default::default() }
 		);
 		assert_eq!(
 			RewardsModule::shares_and_withdrawn_rewards(PoolId::Loans(SEL), ALICE::get()),

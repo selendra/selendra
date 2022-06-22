@@ -30,10 +30,7 @@ fn emergency_shutdown_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		System::set_block_number(1);
 		assert!(!EmergencyShutdownModule::is_shutdown());
-		assert_noop!(
-			EmergencyShutdownModule::emergency_shutdown(Origin::signed(5)),
-			BadOrigin,
-		);
+		assert_noop!(EmergencyShutdownModule::emergency_shutdown(Origin::signed(5)), BadOrigin,);
 		assert_ok!(EmergencyShutdownModule::emergency_shutdown(Origin::signed(1)));
 		System::assert_last_event(Event::EmergencyShutdownModule(crate::Event::Shutdown {
 			block_number: 1,

@@ -45,9 +45,7 @@ pub use precompile::{
 	OraclePrecompile, SchedulePrecompile,
 };
 pub use primitives::{
-	currency::{
-		TokenInfo, SEL, SUSD, DOT, KSM, RENBTC, KMD,
-	},
+	currency::{TokenInfo, DOT, KMD, KSM, RENBTC, SEL, SUSD},
 	AccountId,
 };
 

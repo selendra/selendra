@@ -31,7 +31,7 @@ use primitives::{DexShare, TokenSymbol};
 use sp_core::{H160, H256};
 use sp_runtime::{testing::Header, traits::IdentityLookup, AccountId32};
 use sp_std::cell::RefCell;
-pub use support::{SelTreasury, DEXManager, Price, Ratio, SwapLimit};
+pub use support::{DEXManager, Price, Ratio, SelTreasury, SwapLimit};
 
 pub type AccountId = AccountId32;
 pub type BlockNumber = u64;
@@ -138,7 +138,10 @@ impl SelTreasury<AccountId> for MockSelTreasury {
 
 pub struct MockDEX;
 impl DEXManager<AccountId, Balance, CurrencyId> for MockDEX {
-	fn get_liquidity_pool(currency_id_a: CurrencyId, currency_id_b: CurrencyId) -> (Balance, Balance) {
+	fn get_liquidity_pool(
+		currency_id_a: CurrencyId,
+		currency_id_b: CurrencyId,
+	) -> (Balance, Balance) {
 		match (currency_id_a, currency_id_b) {
 			(SUSD, BTC) => (500, 100),
 			(SUSD, DOT) => (400, 100),
@@ -148,7 +151,10 @@ impl DEXManager<AccountId, Balance, CurrencyId> for MockDEX {
 		}
 	}
 
-	fn get_liquidity_token_address(_currency_id_a: CurrencyId, _currency_id_b: CurrencyId) -> Option<H160> {
+	fn get_liquidity_token_address(
+		_currency_id_a: CurrencyId,
+		_currency_id_b: CurrencyId,
+	) -> Option<H160> {
 		unimplemented!()
 	}
 
@@ -276,14 +282,10 @@ impl Default for ExtBuilder {
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+		orml_tokens::GenesisConfig::<Runtime> { balances: self.balances }
+			.assimilate_storage(&mut t)
 			.unwrap();
-		orml_tokens::GenesisConfig::<Runtime> {
-			balances: self.balances,
-		}
-		.assimilate_storage(&mut t)
-		.unwrap();
 		t.into()
 	}
 }

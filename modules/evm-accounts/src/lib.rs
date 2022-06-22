@@ -46,7 +46,6 @@ use sp_runtime::{
 };
 use sp_std::{marker::PhantomData, vec::Vec};
 
-
 mod mock;
 mod tests;
 pub mod weights;
