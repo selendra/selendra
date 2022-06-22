@@ -1,8 +1,7 @@
 use frame_support::pallet_prelude::*;
 use sp_runtime::DispatchResult;
 use sp_std::vec::Vec;
-use xcm::latest::prelude::*;
-use xcm::VersionedMultiLocation;
+use xcm::{latest::prelude::*, VersionedMultiLocation};
 
 pub trait WeightToFeeConverter {
 	fn convert_weight_to_fee(location: &MultiLocation, weight: Weight) -> Option<u128>;
@@ -13,7 +12,10 @@ pub trait FixedConversionRateProvider {
 }
 
 pub trait AssetProcessor<AssetId, Metadata> {
-	fn pre_register(id: Option<AssetId>, asset_metadata: Metadata) -> Result<(AssetId, Metadata), DispatchError>;
+	fn pre_register(
+		id: Option<AssetId>,
+		asset_metadata: Metadata,
+	) -> Result<(AssetId, Metadata), DispatchError>;
 	fn post_register(_id: AssetId, _asset_metadata: Metadata) -> Result<(), DispatchError> {
 		Ok(())
 	}
@@ -39,8 +41,12 @@ pub trait Inspect {
 	type CustomMetadata: Parameter + Member + TypeInfo;
 
 	fn asset_id(location: &MultiLocation) -> Option<Self::AssetId>;
-	fn metadata(asset_id: &Self::AssetId) -> Option<AssetMetadata<Self::Balance, Self::CustomMetadata>>;
-	fn metadata_by_location(location: &MultiLocation) -> Option<AssetMetadata<Self::Balance, Self::CustomMetadata>>;
+	fn metadata(
+		asset_id: &Self::AssetId,
+	) -> Option<AssetMetadata<Self::Balance, Self::CustomMetadata>>;
+	fn metadata_by_location(
+		location: &MultiLocation,
+	) -> Option<AssetMetadata<Self::Balance, Self::CustomMetadata>>;
 	fn location(asset_id: &Self::AssetId) -> Result<Option<MultiLocation>, DispatchError>;
 }
 

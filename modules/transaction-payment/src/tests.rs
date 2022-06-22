@@ -1,25 +1,24 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Unit tests for the transaction payment module.
 
 #![cfg(test)]
 
 use super::*;
-use crate::mock::{AlternativeFeeSurplus, SUSDFeeSwapPath, CustomFeeSurplus, DotFeeSwapPath};
+use crate::mock::{AlternativeFeeSurplus, AusdFeeSwapPath, CustomFeeSurplus, DotFeeSwapPath};
 use frame_support::{
 	assert_noop, assert_ok,
 	weights::{DispatchClass, DispatchInfo, Pays},
@@ -37,9 +36,7 @@ use sp_runtime::{
 	testing::TestXt,
 	traits::{One, UniqueSaturatedInto},
 };
-use support::{BuyWeightRate, Price, TransactionPayment as TransactionPaymentT};
-use xcm::latest::prelude::*;
-use xcm::prelude::GeneralKey;
+use support::{Price, TransactionPayment as TransactionPaymentT};
 
 const CALL: <Runtime as frame_system::Config>::Call = Call::Currencies(module_currencies::Call::transfer {
 	dest: BOB,
@@ -148,7 +145,7 @@ fn enable_dex_and_tx_fee_pool() {
 	assert_ok!(Pallet::<Runtime>::enable_charge_fee_pool(
 		Origin::signed(ALICE),
 		SUSD,
-		SUSDFeeSwapPath::get(),
+		AusdFeeSwapPath::get(),
 		FeePoolSize::get(),
 		crate::mock::LowerSwapThreshold::get()
 	));
@@ -564,10 +561,10 @@ fn charges_fee_when_validate_with_fee_path_call() {
 fn charges_fee_when_validate_with_fee_currency_call() {
 	// Enable dex with Alice, and initialize tx charge fee pool
 	builder_with_dex_and_fee_pool(true).execute_with(|| {
-		let susd_acc = Pallet::<Runtime>::sub_account_id(SUSD);
+		let ausd_acc = Pallet::<Runtime>::sub_account_id(SUSD);
 		let dot_acc = Pallet::<Runtime>::sub_account_id(DOT);
-		let sub_susd_sel = Currencies::free_balance(SEL, &susd_acc);
-		let sub_susd_usd = Currencies::free_balance(SUSD, &susd_acc);
+		let sub_ausd_sel = Currencies::free_balance(SEL, &ausd_acc);
+		let sub_ausd_usd = Currencies::free_balance(SUSD, &ausd_acc);
 		let sub_dot_sel = Currencies::free_balance(SEL, &dot_acc);
 		let sub_dot_dot = Currencies::free_balance(DOT, &dot_acc);
 
@@ -589,19 +586,19 @@ fn charges_fee_when_validate_with_fee_currency_call() {
 		System::assert_has_event(crate::mock::Event::Tokens(orml_tokens::Event::Transfer {
 			currency_id: SUSD,
 			from: BOB,
-			to: susd_acc.clone(),
+			to: ausd_acc.clone(),
 			amount: 2630,
 		}));
 		System::assert_has_event(crate::mock::Event::PalletBalances(pallet_balances::Event::Transfer {
-			from: susd_acc.clone(),
+			from: ausd_acc.clone(),
 			to: BOB,
 			amount: 263,
 		}));
 
-		assert_eq!(sub_susd_sel - fee_amount, Currencies::free_balance(SEL, &susd_acc));
+		assert_eq!(sub_ausd_sel - fee_amount, Currencies::free_balance(SEL, &ausd_acc));
 		assert_eq!(
-			sub_susd_usd + fee_amount * 10,
-			Currencies::free_balance(SUSD, &susd_acc)
+			sub_ausd_usd + fee_amount * 10,
+			Currencies::free_balance(SUSD, &ausd_acc)
 		);
 
 		let fee: Balance = 50 * 2 + 100;
@@ -646,9 +643,9 @@ fn charges_fee_when_validate_with_fee_paid_by_native_token() {
 fn charges_fee_when_validate_with_fee_paid_by_default_token() {
 	// Enable dex with Alice, and initialize tx charge fee pool
 	builder_with_dex_and_fee_pool(true).execute_with(|| {
-		let susd_acc = Pallet::<Runtime>::sub_account_id(SUSD);
-		assert_eq!(100, Currencies::free_balance(SUSD, &susd_acc));
-		assert_eq!(10000, Currencies::free_balance(SEL, &susd_acc));
+		let ausd_acc = Pallet::<Runtime>::sub_account_id(SUSD);
+		assert_eq!(100, Currencies::free_balance(SUSD, &ausd_acc));
+		assert_eq!(10000, Currencies::free_balance(SEL, &ausd_acc));
 
 		// make a fake signature
 		let signature = MultiSignature::Sr25519(sp_core::sr25519::Signature([0u8; 64]));
@@ -661,8 +658,8 @@ fn charges_fee_when_validate_with_fee_paid_by_default_token() {
 			&INFO2,
 			50
 		));
-		assert_eq!(2700, Currencies::free_balance(SUSD, &susd_acc));
-		assert_eq!(9740, Currencies::free_balance(SEL, &susd_acc));
+		assert_eq!(2700, Currencies::free_balance(SUSD, &ausd_acc));
+		assert_eq!(9740, Currencies::free_balance(SEL, &ausd_acc));
 		assert_eq!(2400, Currencies::free_balance(SUSD, &BOB));
 		assert_eq!(10, Currencies::free_balance(SEL, &BOB));
 	});
@@ -674,7 +671,7 @@ fn charges_fee_when_validate_and_native_is_not_enough() {
 	builder_with_dex_and_fee_pool(true).execute_with(|| {
 		let sub_account = Pallet::<Runtime>::sub_account_id(SUSD);
 		let init_balance = FeePoolSize::get();
-		let susd_ed: Balance = <Currencies as MultiCurrency<AccountId>>::minimum_balance(SUSD);
+		let ausd_ed: Balance = <Currencies as MultiCurrency<AccountId>>::minimum_balance(SUSD);
 		let ed: Balance = <Currencies as MultiCurrency<AccountId>>::minimum_balance(SEL);
 		let rate: u128 = 10;
 
@@ -714,7 +711,7 @@ fn charges_fee_when_validate_and_native_is_not_enough() {
 		);
 		assert_eq!(
 			Currencies::free_balance(SUSD, &sub_account),
-			susd_ed + (fee + ed + surplus1) * rate
+			ausd_ed + (fee + ed + surplus1) * rate
 		);
 
 		// native balance is eq ED, cannot keep alive after charge, swap with foreign asset
@@ -735,7 +732,7 @@ fn charges_fee_when_validate_and_native_is_not_enough() {
 		// two tx, first receive: (fee+ED+surplus)*10, second receive: (fee2+surplus)*10
 		assert_eq!(
 			Currencies::free_balance(SUSD, &sub_account),
-			susd_ed + (fee + ed + surplus1 + fee2 + surplus2) * rate
+			ausd_ed + (fee + ed + surplus1 + fee2 + surplus2) * rate
 		);
 
 		// Bob only has ED of native asset, but has not enough SUSD, validate failed.
@@ -1360,49 +1357,6 @@ fn max_tip_has_same_priority() {
 		});
 }
 
-struct CurrencyIdConvert;
-impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
-	fn convert(location: MultiLocation) -> Option<CurrencyId> {
-		use CurrencyId::Token;
-		use TokenSymbol::*;
-
-		if location == MultiLocation::parent() {
-			return Some(Token(DOT));
-		}
-
-		match location {
-			MultiLocation {
-				interior: X1(GeneralKey(key)),
-				..
-			} => match &key[..] {
-				key => {
-					if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
-						Some(currency_id)
-					} else {
-						None
-					}
-				}
-			},
-			_ => None,
-		}
-	}
-}
-
-#[test]
-fn buy_weight_transaction_fee_pool_works() {
-	builder_with_dex_and_fee_pool(true).execute_with(|| {
-		// Location convert return None.
-		let location = MultiLocation::new(1, X1(Junction::Parachain(2000)));
-		let rate = <BuyWeightRateOfTransactionFeePool<Runtime, CurrencyIdConvert>>::calculate_rate(location);
-		assert_eq!(rate, None);
-
-		// DOT Token is in charge fee pool.
-		let location = MultiLocation::parent();
-		let rate = <BuyWeightRateOfTransactionFeePool<Runtime, CurrencyIdConvert>>::calculate_rate(location);
-		assert_eq!(rate, Some(Ratio::saturating_from_rational(1, 10)));
-	});
-}
-
 #[test]
 fn swap_from_pool_not_enough_currency() {
 	builder_with_dex_and_fee_pool(true).execute_with(|| {
@@ -1465,24 +1419,24 @@ fn swap_from_pool_with_enough_balance() {
 
 		// 1 SEL = 10 SUSD, swap 500 SEL with 5000 SUSD
 		let balance = 500 as u128;
-		let susd_balance = (balance * 11) as u128; // 5500 SUSD
+		let ausd_balance = (balance * 11) as u128; // 5500 SUSD
 		assert_ok!(Currencies::update_balance(
 			Origin::root(),
 			BOB,
 			SUSD,
-			susd_balance.unique_saturated_into(),
+			ausd_balance.unique_saturated_into(),
 		));
 		assert_eq!(0, Currencies::free_balance(SUSD, &usd_fee_account) - usd_ed);
 		let fee = balance; // 500 SEL
-		let expect_treasury_susd = (balance * 10) as u128; // 5000 SUSD
-		let expect_user_susd = balance; // (balance * 11) - (balance * 10) = balance = 500 SUSD
+		let expect_treasury_ausd = (balance * 10) as u128; // 5000 SUSD
+		let expect_user_ausd = balance; // (balance * 11) - (balance * 10) = balance = 500 SUSD
 		let expect_treasury_sel = pool_size - fee; // 1000 SEL - 500 SEL
 		let expect_user_sel = expect_user_sel + fee; // 500 SEL
 
 		assert_ok!(Pallet::<Runtime>::swap_from_pool_or_dex(&BOB, fee, SUSD));
-		assert_eq!(expect_user_susd, Currencies::free_balance(SUSD, &BOB));
+		assert_eq!(expect_user_ausd, Currencies::free_balance(SUSD, &BOB));
 		assert_eq!(
-			expect_treasury_susd,
+			expect_treasury_ausd,
 			Currencies::free_balance(SUSD, &usd_fee_account) - usd_ed
 		);
 		assert_eq!(expect_user_sel, Currencies::free_balance(SEL, &BOB));
@@ -1650,9 +1604,9 @@ fn charge_fee_failed_when_disable_dex() {
 		let fee_account = Pallet::<Runtime>::sub_account_id(SUSD);
 		let pool_size = FeePoolSize::get();
 		let swap_balance_threshold = (pool_size - 200) as u128;
-		let susd_ed = <Currencies as MultiCurrency<AccountId>>::minimum_balance(SUSD);
+		let ausd_ed = <Currencies as MultiCurrency<AccountId>>::minimum_balance(SUSD);
 		let ed = <Currencies as MultiCurrency<AccountId>>::minimum_balance(SEL);
-		let trading_path = SUSDFeeSwapPath::get();
+		let trading_path = AusdFeeSwapPath::get();
 
 		assert_ok!(Currencies::update_balance(
 			Origin::root(),
@@ -1670,7 +1624,7 @@ fn charge_fee_failed_when_disable_dex() {
 		enable_dex_and_tx_fee_pool();
 
 		// after runtime upgrade, tx success because of dex enabled and has enough token balance
-		// fee=50*2+100=200, ED=10, surplus=200*0.25=50, fee_amount=260, susd_swap=260*10=2600
+		// fee=50*2+100=200, ED=10, surplus=200*0.25=50, fee_amount=260, ausd_swap=260*10=2600
 		let surplus = AlternativeFeeSurplus::get().mul_ceil(200);
 		assert_ok!(ChargeTransactionPayment::<Runtime>::from(0).validate(&BOB, &CALL2, &INFO2, 50));
 		assert_eq!(100000 - (210 + surplus) * 10, Currencies::free_balance(SUSD, &BOB));
@@ -1695,16 +1649,16 @@ fn charge_fee_failed_when_disable_dex() {
 
 		// balance lt threshold, trigger swap from dex
 		assert_eq!(
-			susd_ed + (210 + surplus) * 10,
+			ausd_ed + (210 + surplus) * 10,
 			Currencies::free_balance(SUSD, &fee_account)
 		);
 		assert_eq!(9790 - surplus, Currencies::free_balance(SEL, &fee_account));
 		assert_ok!(ChargeTransactionPayment::<Runtime>::from(0).validate(&BOB, &CALL2, &INFO2, 50));
 		// AlternativeFeeSurplus=25%, swap 2600 SUSD with 6388 SEL, pool_size=9740+6388=16128
-		// fee=50*2+100=200, surplus=200*0.25=50, fee_amount=250, susd_swap=250*10=2500
+		// fee=50*2+100=200, surplus=200*0.25=50, fee_amount=250, ausd_swap=250*10=2500
 		let fee_sel = Currencies::free_balance(SEL, &fee_account);
 		assert_eq!(
-			susd_ed + (200 + surplus) * 10,
+			ausd_ed + (200 + surplus) * 10,
 			Currencies::free_balance(SUSD, &fee_account)
 		);
 		if AlternativeFeeSurplus::get() == Percent::from_percent(25) {
@@ -1848,7 +1802,7 @@ fn charge_fee_pool_operation_works() {
 		assert_ok!(Pallet::<Runtime>::enable_charge_fee_pool(
 			Origin::signed(ALICE),
 			SUSD,
-			SUSDFeeSwapPath::get(),
+			AusdFeeSwapPath::get(),
 			pool_size,
 			swap_threshold
 		));
@@ -1858,7 +1812,7 @@ fn charge_fee_pool_operation_works() {
 			crate::Event::ChargeFeePoolEnabled {
 				sub_account: sub_account.clone(),
 				currency_id: SUSD,
-				fee_swap_path: SUSDFeeSwapPath::get(),
+				fee_swap_path: AusdFeeSwapPath::get(),
 				exchange_rate: Ratio::saturating_from_rational(2, 10),
 				pool_size,
 				swap_threshold,
@@ -1869,33 +1823,48 @@ fn charge_fee_pool_operation_works() {
 			Pallet::<Runtime>::enable_charge_fee_pool(
 				Origin::signed(ALICE),
 				SUSD,
-				SUSDFeeSwapPath::get(),
+				AusdFeeSwapPath::get(),
 				pool_size,
 				swap_threshold
 			),
 			Error::<Runtime>::ChargeFeePoolAlreadyExisted
 		);
 
-		let susd_amount1 = <Currencies as MultiCurrency<AccountId>>::free_balance(SUSD, &sub_account);
+		assert_noop!(
+			Pallet::<Runtime>::enable_charge_fee_pool(
+				Origin::signed(ALICE),
+				KSM,
+				vec![KSM, SEL],
+				pool_size,
+				swap_threshold
+			),
+			Error::<Runtime>::DexNotAvailable
+		);
+		assert_noop!(
+			Pallet::<Runtime>::disable_charge_fee_pool(Origin::signed(ALICE), KSM),
+			Error::<Runtime>::InvalidToken
+		);
+
+		let ausd_amount1 = <Currencies as MultiCurrency<AccountId>>::free_balance(SUSD, &sub_account);
 		let sel_amount1 = crate::mock::PalletBalances::free_balance(&sub_account);
 		assert_ok!(Pallet::<Runtime>::disable_charge_fee_pool(Origin::signed(ALICE), SUSD));
 		assert_eq!(TokenExchangeRate::<Runtime>::get(SUSD), None);
 		System::assert_has_event(crate::mock::Event::TransactionPayment(
 			crate::Event::ChargeFeePoolDisabled {
 				currency_id: SUSD,
-				foreign_amount: susd_amount1,
+				foreign_amount: ausd_amount1,
 				native_amount: sel_amount1,
 			},
 		));
-		let susd_amount2 = <Currencies as MultiCurrency<AccountId>>::free_balance(SUSD, &sub_account);
+		let ausd_amount2 = <Currencies as MultiCurrency<AccountId>>::free_balance(SUSD, &sub_account);
 		let sel_amount2 = crate::mock::PalletBalances::free_balance(&sub_account);
 		assert_eq!(sel_amount2, 0);
-		assert_eq!(susd_amount2, 0);
+		assert_eq!(ausd_amount2, 0);
 
 		assert_ok!(Pallet::<Runtime>::enable_charge_fee_pool(
 			Origin::signed(ALICE),
 			SUSD,
-			SUSDFeeSwapPath::get(),
+			AusdFeeSwapPath::get(),
 			pool_size,
 			swap_threshold
 		));

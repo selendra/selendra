@@ -25,7 +25,9 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{ensure, pallet_prelude::*, traits::Get, BoundedVec, Parameter};
 use scale_info::TypeInfo;
 use sp_runtime::{
-	traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedSub, MaybeSerializeDeserialize, Member, One, Zero},
+	traits::{
+		AtLeast32BitUnsigned, CheckedAdd, CheckedSub, MaybeSerializeDeserialize, Member, One, Zero,
+	},
 	ArithmeticError, DispatchError, DispatchResult, RuntimeDebug,
 };
 use sp_std::vec::Vec;
@@ -87,8 +89,11 @@ pub mod module {
 		<T as Config>::ClassData,
 		ClassMetadataOf<T>,
 	>;
-	pub type TokenInfoOf<T> =
-		TokenInfo<<T as frame_system::Config>::AccountId, <T as Config>::TokenData, TokenMetadataOf<T>>;
+	pub type TokenInfoOf<T> = TokenInfo<
+		<T as frame_system::Config>::AccountId,
+		<T as Config>::TokenData,
+		TokenMetadataOf<T>,
+	>;
 
 	pub type GenesisTokenData<T> = (
 		<T as frame_system::Config>::AccountId, // Token owner
@@ -130,7 +135,8 @@ pub mod module {
 	/// Next available token ID.
 	#[pallet::storage]
 	#[pallet::getter(fn next_token_id)]
-	pub type NextTokenId<T: Config> = StorageMap<_, Twox64Concat, T::ClassId, T::TokenId, ValueQuery>;
+	pub type NextTokenId<T: Config> =
+		StorageMap<_, Twox64Concat, T::ClassId, T::TokenId, ValueQuery>;
 
 	/// Store class info.
 	///
@@ -177,11 +183,20 @@ pub mod module {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			self.tokens.iter().for_each(|token_class| {
-				let class_id = Pallet::<T>::create_class(&token_class.0, token_class.1.to_vec(), token_class.2.clone())
-					.expect("Create class cannot fail while building genesis");
+				let class_id = Pallet::<T>::create_class(
+					&token_class.0,
+					token_class.1.to_vec(),
+					token_class.2.clone(),
+				)
+				.expect("Create class cannot fail while building genesis");
 				for (account_id, token_metadata, token_data) in &token_class.3 {
-					Pallet::<T>::mint(account_id, class_id, token_metadata.to_vec(), token_data.clone())
-						.expect("Token mint cannot fail during genesis");
+					Pallet::<T>::mint(
+						account_id,
+						class_id,
+						token_metadata.to_vec(),
+						token_data.clone(),
+					)
+					.expect("Token mint cannot fail during genesis");
 				}
 			})
 		}
@@ -227,13 +242,17 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Transfer NFT(non fungible token) from `from` account to `to` account
-	pub fn transfer(from: &T::AccountId, to: &T::AccountId, token: (T::ClassId, T::TokenId)) -> DispatchResult {
+	pub fn transfer(
+		from: &T::AccountId,
+		to: &T::AccountId,
+		token: (T::ClassId, T::TokenId),
+	) -> DispatchResult {
 		Tokens::<T>::try_mutate(token.0, token.1, |token_info| -> DispatchResult {
 			let mut info = token_info.as_mut().ok_or(Error::<T>::TokenNotFound)?;
 			ensure!(info.owner == *from, Error::<T>::NoPermission);
 			if from == to {
 				// no change needed
-				return Ok(());
+				return Ok(())
 			}
 
 			info.owner = to.clone();
@@ -268,11 +287,7 @@ impl<T: Config> Pallet<T> {
 				Ok(())
 			})?;
 
-			let token_info = TokenInfo {
-				metadata: bounded_metadata,
-				owner: owner.clone(),
-				data,
-			};
+			let token_info = TokenInfo { metadata: bounded_metadata, owner: owner.clone(), data };
 			Tokens::<T>::insert(class_id, token_id, token_info);
 			TokensByOwner::<T>::insert((owner, class_id, token_id), ());
 

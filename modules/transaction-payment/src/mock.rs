@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Mocks for the transaction payment module.
 
@@ -28,7 +27,7 @@ use frame_support::{
 };
 use frame_system::EnsureSignedBy;
 use orml_traits::parameter_type_with_key;
-use primitives::{Amount, ReserveIdentifier, currency::TokenSymbol, TradingPair};
+use primitives::{Amount, ReserveIdentifier, TokenSymbol, TradingPair};
 use smallvec::smallvec;
 use sp_core::{crypto::AccountId32, H160, H256};
 use sp_runtime::{
@@ -192,7 +191,7 @@ parameter_types! {
 	pub static TransactionByteFee: u128 = 1;
 	pub static TipPerWeightStep: u128 = 1;
 	pub DefaultFeeTokens: Vec<CurrencyId> = vec![SUSD];
-	pub SUSDFeeSwapPath: Vec<CurrencyId> = vec![SUSD, SEL];
+	pub AusdFeeSwapPath: Vec<CurrencyId> = vec![SUSD, SEL];
 	pub DotFeeSwapPath: Vec<CurrencyId> = vec![DOT, SUSD, SEL];
 }
 
@@ -241,7 +240,7 @@ parameter_types! {
 	pub const HigerSwapThreshold: Balance = 9500;
 	pub const TransactionPaymentPalletId: PalletId = PalletId(*b"sel/fees");
 	pub const TreasuryPalletId: PalletId = PalletId(*b"sel/trsy");
-	pub KaruraTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
+	pub CardamomTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 ord_parameter_types! {
 	pub const ListingOrigin: AccountId = ALICE;
@@ -269,7 +268,7 @@ impl Config for Runtime {
 	type PriceSource = MockPriceSource;
 	type WeightInfo = ();
 	type PalletId = TransactionPaymentPalletId;
-	type TreasuryAccount = KaruraTreasuryAccount;
+	type TreasuryAccount = CardamomTreasuryAccount;
 	type UpdateOrigin = EnsureSignedBy<ListingOrigin, AccountId>;
 	type CustomFeeSurplus = CustomFeeSurplus;
 	type AlternativeFeeSurplus = AlternativeFeeSurplus;

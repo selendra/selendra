@@ -35,7 +35,7 @@ pub fn build() -> std::io::Result<Vec<u8>> {
 		Err(err_msg) => {
 			eprintln!("{}", err_msg);
 			std::process::exit(1);
-		}
+		},
 	};
 
 	let (wasm_binary, bloaty) = wasm_project::create_and_compile(
@@ -47,15 +47,9 @@ pub fn build() -> std::io::Result<Vec<u8>> {
 	);
 
 	let (wasm_binary, _wasm_binary_bloaty) = if let Some(wasm_binary) = wasm_binary {
-		(
-			wasm_binary.wasm_binary_path_escaped(),
-			bloaty.wasm_binary_bloaty_path_escaped(),
-		)
+		(wasm_binary.wasm_binary_path_escaped(), bloaty.wasm_binary_bloaty_path_escaped())
 	} else {
-		(
-			bloaty.wasm_binary_bloaty_path_escaped(),
-			bloaty.wasm_binary_bloaty_path_escaped(),
-		)
+		(bloaty.wasm_binary_bloaty_path_escaped(), bloaty.wasm_binary_bloaty_path_escaped())
 	};
 
 	let bytes = std::fs::read(wasm_binary)?;

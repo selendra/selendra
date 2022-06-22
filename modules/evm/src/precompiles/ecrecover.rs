@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::LinearCostPrecompile;
 use crate::runner::state::PrecompileFailure;
@@ -26,7 +25,10 @@ impl LinearCostPrecompile for ECRecover {
 	const BASE: u64 = 3000;
 	const WORD: u64 = 0;
 
-	fn execute(i: &[u8], _: u64) -> core::result::Result<(ExitSucceed, Vec<u8>), PrecompileFailure> {
+	fn execute(
+		i: &[u8],
+		_: u64,
+	) -> core::result::Result<(ExitSucceed, Vec<u8>), PrecompileFailure> {
 		let mut input = [0u8; 128];
 		input[..min(i.len(), 128)].copy_from_slice(&i[..min(i.len(), 128)]);
 
@@ -39,9 +41,7 @@ impl LinearCostPrecompile for ECRecover {
 
 		sig[64] = match input[63] {
 			v if v > 26 && input[32..63] == [0; 31] => v - 27,
-			_ => {
-				return Ok((ExitSucceed::Returned, [0u8; 0].to_vec()));
-			}
+			_ => return Ok((ExitSucceed::Returned, [0u8; 0].to_vec())),
 		};
 
 		let result = match sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg) {
@@ -49,7 +49,7 @@ impl LinearCostPrecompile for ECRecover {
 				let mut address = sp_io::hashing::keccak_256(&pubkey);
 				address[0..12].copy_from_slice(&[0u8; 12]);
 				address.to_vec()
-			}
+			},
 			Err(_) => [0u8; 0].to_vec(),
 		};
 

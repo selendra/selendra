@@ -103,9 +103,7 @@ fn pallet_multi_reservable_currency_deposit_events() {
 		.balances(vec![(ALICE, DOT, 1000), (BOB, DOT, 1000)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(<Tokens as MultiReservableCurrency<AccountId>>::reserve(
-				DOT, &ALICE, 500
-			));
+			assert_ok!(<Tokens as MultiReservableCurrency<AccountId>>::reserve(DOT, &ALICE, 500));
 			System::assert_last_event(Event::Tokens(crate::Event::Reserved {
 				currency_id: DOT,
 				who: ALICE,
@@ -196,9 +194,7 @@ fn pallet_fungibles_unbalanced_deposit_events() {
 		.build()
 		.execute_with(|| {
 			assert_ok!(<Tokens as MultiReservableCurrency<AccountId>>::reserve(DOT, &ALICE, 50));
-			assert_ok!(<Tokens as fungibles::Unbalanced<AccountId>>::set_balance(
-				DOT, &ALICE, 500
-			));
+			assert_ok!(<Tokens as fungibles::Unbalanced<AccountId>>::set_balance(DOT, &ALICE, 500));
 			System::assert_last_event(Event::Tokens(crate::Event::BalanceSet {
 				currency_id: DOT,
 				who: ALICE,
@@ -291,7 +287,9 @@ fn currency_adapter_pallet_currency_deposit_events() {
 				reserved_amount: 10,
 			}));
 
-			std::mem::forget(<MockCurrencyAdapter as PalletCurrency<AccountId>>::make_free_balance_be(&BOB, 200));
+			std::mem::forget(
+				<MockCurrencyAdapter as PalletCurrency<AccountId>>::make_free_balance_be(&BOB, 200),
+			);
 			System::assert_last_event(Event::Tokens(crate::Event::BalanceSet {
 				currency_id: DOT,
 				who: BOB,

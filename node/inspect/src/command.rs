@@ -1,63 +1,61 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! Command ran by the CLI
 
-use crate::{
-	cli::{InspectCmd, InspectSubCmd},
-	Inspector,
-};
+use crate::cli::{InspectCmd, InspectSubCmd};
+use crate::Inspector;
 use sc_cli::{CliConfiguration, ImportParams, Result, SharedParams};
-use sc_executor::NativeElseWasmExecutor;
-use sc_service::{new_full_client, Configuration, NativeExecutionDispatch};
+use sc_client_api::BlockBackend;
+use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block;
 use std::str::FromStr;
+use std::sync::Arc;
 
 impl InspectCmd {
 	/// Run the inspect command, passing the inspector.
-	pub fn run<B, RA, EX>(&self, config: Configuration) -> Result<()>
+	pub fn run<B, CL>(&self, client: Arc<CL>) -> Result<()>
 	where
 		B: Block,
 		B::Hash: FromStr,
-		RA: Send + Sync + 'static,
-		EX: NativeExecutionDispatch + 'static,
+		CL: BlockBackend<B> + HeaderBackend<B> + 'static,
 	{
-		let executor = NativeElseWasmExecutor::<EX>::new(
-			config.wasm_method,
-			config.default_heap_pages,
-			config.max_runtime_instances,
-			config.runtime_cache_size,
-		);
+		match Arc::try_unwrap(client) {
+			Ok(cli) => {
+				let inspect = Inspector::<B>::new(cli);
 
-		let client = new_full_client::<B, RA, _>(&config, None, executor)?;
-		let inspect = Inspector::<B>::new(client);
+				match &self.command {
+					InspectSubCmd::Block { input } => {
+						let input = input.parse()?;
+						let res = inspect.block(input).map_err(|e| format!("{}", e))?;
+						println!("{}", res);
+						Ok(())
+					}
+					InspectSubCmd::Extrinsic { input } => {
+						let input = input.parse()?;
+						let res = inspect.extrinsic(input).map_err(|e| format!("{}", e))?;
+						println!("{}", res);
+						Ok(())
+					}
+				}
+			}
 
-		match &self.command {
-			InspectSubCmd::Block { input } => {
-				let input = input.parse()?;
-				let res = inspect.block(input).map_err(|e| format!("{}", e))?;
-				println!("{}", res);
-				Ok(())
-			},
-			InspectSubCmd::Extrinsic { input } => {
-				let input = input.parse()?;
-				let res = inspect.extrinsic(input).map_err(|e| format!("{}", e))?;
-				println!("{}", res);
-				Ok(())
-			},
+			Err(_) => Err("Client try_unwrap failed".into()),
 		}
 	}
 }

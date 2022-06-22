@@ -37,41 +37,19 @@ struct AccessInfo {
 
 impl AccessInfo {
 	fn read(redundant: bool) -> Self {
-		let read = if redundant {
-			AccessType::Redundant
-		} else {
-			AccessType::Important
-		};
-		Self {
-			read,
-			written: AccessType::None,
-		}
+		let read = if redundant { AccessType::Redundant } else { AccessType::Important };
+		Self { read, written: AccessType::None }
 	}
 
 	fn written(redundant: bool) -> Self {
-		let written = if redundant {
-			AccessType::Redundant
-		} else {
-			AccessType::Important
-		};
-		Self {
-			read: AccessType::Redundant,
-			written,
-		}
+		let written = if redundant { AccessType::Redundant } else { AccessType::Important };
+		Self { read: AccessType::Redundant, written }
 	}
 
 	fn whitelisted(read: bool, write: bool) -> Self {
 		Self {
-			read: if read {
-				AccessType::Whitelisted
-			} else {
-				AccessType::None
-			},
-			written: if write {
-				AccessType::Whitelisted
-			} else {
-				AccessType::None
-			},
+			read: if read { AccessType::Whitelisted } else { AccessType::None },
+			written: if write { AccessType::Whitelisted } else { AccessType::None },
 		}
 	}
 }
@@ -129,16 +107,16 @@ impl BenchTracker {
 		match main_keys.get_mut(&key) {
 			Some(info) => {
 				if redundant {
-					return;
+					return
 				}
 				if info.written.is_important() {
-					return;
+					return
 				}
 				info.read.mark_important();
-			}
+			},
 			None => {
 				main_keys.insert(key, AccessInfo::read(redundant));
-			}
+			},
 		};
 	}
 
@@ -151,23 +129,23 @@ impl BenchTracker {
 				match reads.get_mut(&key) {
 					Some(info) => {
 						if redundant {
-							return;
+							return
 						}
 						if info.written.is_important() {
-							return;
+							return
 						}
 						info.read.mark_important();
-					}
+					},
 					None => {
 						reads.insert(key, AccessInfo::read(redundant));
-					}
+					},
 				};
-			}
+			},
 			None => {
 				let mut reads = HashMap::<StorageKey, AccessInfo>::new();
 				reads.insert(key, AccessInfo::read(redundant));
 				child_keys.insert(storage_key, reads);
-			}
+			},
 		};
 	}
 
@@ -177,13 +155,13 @@ impl BenchTracker {
 		match main_keys.get_mut(&key) {
 			Some(info) => {
 				if redundant {
-					return;
+					return
 				}
 				info.written.mark_important();
-			}
+			},
 			None => {
 				main_keys.insert(key, AccessInfo::written(redundant));
-			}
+			},
 		};
 	}
 
@@ -196,20 +174,20 @@ impl BenchTracker {
 				match changes.get_mut(&key) {
 					Some(info) => {
 						if redundant {
-							return;
+							return
 						}
 						info.written.mark_important();
-					}
+					},
 					None => {
 						changes.insert(key, AccessInfo::written(redundant));
-					}
+					},
 				};
-			}
+			},
 			None => {
 				let mut changes = HashMap::<StorageKey, AccessInfo>::new();
 				changes.insert(key, AccessInfo::written(redundant));
 				child_keys.insert(storage_key, changes);
-			}
+			},
 		};
 	}
 
@@ -280,7 +258,7 @@ impl BenchTracker {
 
 		if *depth == 0 {
 			*depth = 1;
-			return;
+			return
 		}
 
 		if *depth == 1 {

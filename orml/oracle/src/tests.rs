@@ -16,9 +16,12 @@ fn should_feed_values_from_member() {
 		);
 
 		assert_eq!(
-			ModuleOracle::feed_values(Origin::signed(account_id), vec![(50, 1000), (51, 900), (52, 800)])
-				.unwrap()
-				.pays_fee,
+			ModuleOracle::feed_values(
+				Origin::signed(account_id),
+				vec![(50, 1000), (51, 900), (52, 800)]
+			)
+			.unwrap()
+			.pays_fee,
 			Pays::No
 		);
 		System::assert_last_event(Event::ModuleOracle(crate::Event::NewFeedData {
@@ -28,26 +31,17 @@ fn should_feed_values_from_member() {
 
 		assert_eq!(
 			ModuleOracle::raw_values(&account_id, &50),
-			Some(TimestampedValue {
-				value: 1000,
-				timestamp: 12345,
-			})
+			Some(TimestampedValue { value: 1000, timestamp: 12345 })
 		);
 
 		assert_eq!(
 			ModuleOracle::raw_values(&account_id, &51),
-			Some(TimestampedValue {
-				value: 900,
-				timestamp: 12345,
-			})
+			Some(TimestampedValue { value: 900, timestamp: 12345 })
 		);
 
 		assert_eq!(
 			ModuleOracle::raw_values(&account_id, &52),
-			Some(TimestampedValue {
-				value: 800,
-				timestamp: 12345,
-			})
+			Some(TimestampedValue { value: 800, timestamp: 12345 })
 		);
 	});
 }
@@ -64,26 +58,17 @@ fn should_feed_values_from_root() {
 
 		assert_eq!(
 			ModuleOracle::raw_values(&root_feeder, &50),
-			Some(TimestampedValue {
-				value: 1000,
-				timestamp: 12345,
-			})
+			Some(TimestampedValue { value: 1000, timestamp: 12345 })
 		);
 
 		assert_eq!(
 			ModuleOracle::raw_values(&root_feeder, &51),
-			Some(TimestampedValue {
-				value: 900,
-				timestamp: 12345,
-			})
+			Some(TimestampedValue { value: 900, timestamp: 12345 })
 		);
 
 		assert_eq!(
 			ModuleOracle::raw_values(&root_feeder, &52),
-			Some(TimestampedValue {
-				value: 800,
-				timestamp: 12345,
-			})
+			Some(TimestampedValue { value: 800, timestamp: 12345 })
 		);
 	});
 }
@@ -94,7 +79,10 @@ fn should_not_feed_values_from_root_directly() {
 		let root_feeder: AccountId = RootOperatorAccountId::get();
 
 		assert_noop!(
-			ModuleOracle::feed_values(Origin::signed(root_feeder), vec![(50, 1000), (51, 900), (52, 800)]),
+			ModuleOracle::feed_values(
+				Origin::signed(root_feeder),
+				vec![(50, 1000), (51, 900), (52, 800)]
+			),
 			Error::<Test, _>::NoPermission,
 		);
 	});
@@ -115,14 +103,8 @@ fn should_read_raw_values() {
 		assert_eq!(
 			raw_values,
 			vec![
-				TimestampedValue {
-					value: 1000,
-					timestamp: 12345,
-				},
-				TimestampedValue {
-					value: 1200,
-					timestamp: 12345,
-				},
+				TimestampedValue { value: 1000, timestamp: 12345 },
+				TimestampedValue { value: 1200, timestamp: 12345 },
 			]
 		);
 	});
@@ -137,10 +119,7 @@ fn should_combined_data() {
 		assert_ok!(ModuleOracle::feed_values(Origin::signed(2), vec![(key, 1000)]));
 		assert_ok!(ModuleOracle::feed_values(Origin::signed(3), vec![(key, 1200)]));
 
-		let expected = Some(TimestampedValue {
-			value: 1200,
-			timestamp: 12345,
-		});
+		let expected = Some(TimestampedValue { value: 1200, timestamp: 12345 });
 
 		assert_eq!(ModuleOracle::get(&key), expected);
 
@@ -198,10 +177,7 @@ fn get_all_values_should_work() {
 		assert_ok!(ModuleOracle::feed_values(Origin::signed(1), vec![(jpy, 8000)]));
 
 		// enough eur prices
-		let eur_price = Some(TimestampedValue {
-			value: 1200,
-			timestamp: 12345,
-		});
+		let eur_price = Some(TimestampedValue { value: 1200, timestamp: 12345 });
 		assert_eq!(ModuleOracle::get(&eur), eur_price);
 
 		// not enough jpy prices
@@ -213,10 +189,7 @@ fn get_all_values_should_work() {
 		assert_ok!(ModuleOracle::feed_values(Origin::signed(2), vec![(jpy, 7000)]));
 
 		// enough jpy prices
-		let jpy_price = Some(TimestampedValue {
-			value: 8000,
-			timestamp: 12345,
-		});
+		let jpy_price = Some(TimestampedValue { value: 8000, timestamp: 12345 });
 		assert_eq!(ModuleOracle::get(&jpy), jpy_price);
 
 		assert_eq!(ModuleOracle::get_all_values(), vec![(eur, eur_price), (jpy, jpy_price)]);
@@ -262,10 +235,7 @@ fn values_are_updated_on_feed() {
 		assert_ok!(ModuleOracle::feed_values(Origin::signed(3), vec![(50, 1100)]));
 		assert_eq!(
 			ModuleOracle::values(50),
-			Some(TimestampedValue {
-				value: 1000,
-				timestamp: 12345,
-			})
+			Some(TimestampedValue { value: 1000, timestamp: 12345 })
 		);
 	});
 }

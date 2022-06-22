@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra Foundation.
+// Copyright (C) 2020-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,9 +12,6 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! Unit tests for the incentives module.
 
@@ -628,7 +625,7 @@ fn claim_rewards_works() {
 			actual_amount: 200,
 			deduction_amount: 1800,
 		}));
-
+		
 		assert_eq!(TokensModule::free_balance(SEL, &VAULT::get()), 9800);
 		assert_eq!(TokensModule::free_balance(SEL, &ALICE::get()), 200);
 
@@ -650,6 +647,7 @@ fn claim_rewards_works() {
 			actual_amount: 90,
 			deduction_amount: 810,
 		}));
+
 		assert_eq!(TokensModule::free_balance(SEL, &VAULT::get()), 9710);
 		assert_eq!(TokensModule::free_balance(SEL, &BOB::get()), 90);
 
@@ -808,7 +806,7 @@ fn on_initialize_should_work() {
 		);
 		assert_eq!(TokensModule::free_balance(SUSD, &RewardsSource::get()), 10000 - 500);
 		assert_eq!(TokensModule::free_balance(SEL, &VAULT::get()), 1000 + 200 + 100);
-		assert_eq!(TokensModule::free_balance(SUSD, &VAULT::get()), 500); // (5 + 4) from debit_issue,  500 from RewardsSource
+		assert_eq!(TokensModule::free_balance(SUSD, &VAULT::get()), 500 + (5 + 4)); // (5 + 4) from debit_issue,  500 from RewardsSource
 		// 1000 SEL and 500 SUSD are incentive reward
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(BTC)),
@@ -817,7 +815,7 @@ fn on_initialize_should_work() {
 				rewards: vec![(SEL, (1000, 0)), (SUSD, (500, 0))].into_iter().collect(),
 			}
 		);
-		// // because total_shares of PoolId::Loans(DOT) is zero, will not accumulate rewards
+		// because total_shares of PoolId::Loans(DOT) is zero, will not accumulate rewards
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(DOT)),
 			PoolInfo {
@@ -830,7 +828,7 @@ fn on_initialize_should_work() {
 			RewardsModule::pool_infos(PoolId::Dex(BTC_SUSD_LP)),
 			PoolInfo {
 				total_shares: 1,
-				rewards: vec![(SEL, (100, 0))].into_iter().collect(),
+				rewards: vec![(SEL, (100, 0)), (SUSD, (5, 0))].into_iter().collect(),
 			}
 		);
 		// 200 SEL is incentive reward, 4 SUSD is dex saving reward
@@ -838,7 +836,7 @@ fn on_initialize_should_work() {
 			RewardsModule::pool_infos(PoolId::Dex(DOT_SUSD_LP)),
 			PoolInfo {
 				total_shares: 1,
-				rewards: vec![(SEL, (200, 0))].into_iter().collect(),
+				rewards: vec![(SEL, (200, 0)), (SUSD, (4, 0))].into_iter().collect(),
 			}
 		);
 
@@ -862,7 +860,7 @@ fn on_initialize_should_work() {
 			TokensModule::free_balance(SEL, &VAULT::get()),
 			1300 + (1000 + 100 + 200)
 		);
-		assert_eq!(TokensModule::free_balance(SUSD, &VAULT::get()), 509 + 500); // 9 from debit_issue,  500 from RewardsSource
+		assert_eq!(TokensModule::free_balance(SUSD, &VAULT::get()), 509 + (500 + 9)); // 9 from debit_issue,  500 from RewardsSource
 		// 1000 SEL and 500 SUSD are incentive reward
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(BTC)),
@@ -876,7 +874,7 @@ fn on_initialize_should_work() {
 			RewardsModule::pool_infos(PoolId::Dex(BTC_SUSD_LP)),
 			PoolInfo {
 				total_shares: 1,
-				rewards: vec![(SEL, (200, 0)), (SUSD, (5, 0))].into_iter().collect(),
+				rewards: vec![(SEL, (200, 0)), (SUSD, (10, 0))].into_iter().collect(),
 			}
 		);
 		// 200 SEL is incentive reward, 4 SUSD is dex saving reward
@@ -884,7 +882,7 @@ fn on_initialize_should_work() {
 			RewardsModule::pool_infos(PoolId::Dex(DOT_SUSD_LP)),
 			PoolInfo {
 				total_shares: 1,
-				rewards: vec![(SEL, (400, 0)), (SUSD, (4, 0))].into_iter().collect(),
+				rewards: vec![(SEL, (400, 0)), (SUSD, (8, 0))].into_iter().collect(),
 			}
 		);
 
@@ -896,7 +894,7 @@ fn on_initialize_should_work() {
 		);
 		assert_eq!(TokensModule::free_balance(SUSD, &RewardsSource::get()), 9000);
 		assert_eq!(TokensModule::free_balance(SEL, &VAULT::get()), 2600 + (100 + 200));
-		assert_eq!(TokensModule::free_balance(SUSD, &VAULT::get()), 1009);
+		assert_eq!(TokensModule::free_balance(SUSD, &VAULT::get()), 1018);
 		// PoolId::Loans will not accumulate incentive rewards after shutdown
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Loans(BTC)),
@@ -911,7 +909,7 @@ fn on_initialize_should_work() {
 			RewardsModule::pool_infos(PoolId::Dex(BTC_SUSD_LP)),
 			PoolInfo {
 				total_shares: 1,
-				rewards: vec![(SEL, (300, 0)), (SUSD, (5, 0))].into_iter().collect(),
+				rewards: vec![(SEL, (300, 0)), (SUSD, (10, 0))].into_iter().collect(),
 			}
 		);
 		// after shutdown, PoolId::Dex will accumulate incentive rewards, but will not accumulate dex saving
@@ -920,7 +918,7 @@ fn on_initialize_should_work() {
 			RewardsModule::pool_infos(PoolId::Dex(DOT_SUSD_LP)),
 			PoolInfo {
 				total_shares: 1,
-				rewards: vec![(SEL, (600, 0)), (SUSD, (4, 0))].into_iter().collect(),
+				rewards: vec![(SEL, (600, 0)), (SUSD, (8, 0))].into_iter().collect(),
 			}
 		);
 	});

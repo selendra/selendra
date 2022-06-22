@@ -1,5 +1,4 @@
-use frame_support::dispatch::DispatchResult;
-use frame_support::weights::Weight;
+use frame_support::{dispatch::DispatchResult, weights::Weight};
 use xcm::latest::prelude::*;
 
 /// Abstraction over cross-chain token transfers.

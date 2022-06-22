@@ -1,23 +1,23 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use codec::{Decode, Encode};
 use primitives::{
-	currency::AssetIds, CurrencyId,
+	currency::AssetIds,
 	evm::{CallInfo, EvmAddress},
+	CurrencyId,
 };
 use sp_core::H160;
 use sp_runtime::{
@@ -131,7 +131,8 @@ pub trait EVMManager<AccountId, Balance> {
 	/// Query the constants `PublicationFee` value from evm module.
 	fn query_publication_fee() -> Balance;
 	/// Transfer the maintainer of the contract address.
-	fn transfer_maintainer(from: AccountId, contract: H160, new_maintainer: H160) -> DispatchResult;
+	fn transfer_maintainer(from: AccountId, contract: H160, new_maintainer: H160)
+		-> DispatchResult;
 	/// Publish contract
 	fn publish_contract_precompile(who: AccountId, contract: H160) -> DispatchResult;
 	/// Query the developer status of an account
@@ -174,13 +175,9 @@ pub trait AddressMapping<AccountId> {
 }
 
 /// A mapping between AssetId and AssetMetadata.
-pub trait AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata> {
+pub trait AssetIdMapping<AssetMetadata> {
 	/// Returns the AssetMetadata associated with a given `AssetIds`.
 	fn get_asset_metadata(asset_ids: AssetIds) -> Option<AssetMetadata>;
-	/// Returns the MultiLocation associated with a given ForeignAssetId.
-	fn get_multi_location(foreign_asset_id: ForeignAssetId) -> Option<MultiLocation>;
-	/// Returns the CurrencyId associated with a given MultiLocation.
-	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId>;
 }
 
 /// A mapping between u32 and Erc20 address.

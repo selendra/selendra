@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra Foundation.
+// Copyright (C) 2020-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -35,8 +35,7 @@ use sp_runtime::{
 	traits::{AccountIdConversion, IdentityLookup},
 	DispatchResult,
 };
-use support::mocks::MockStableAsset;
-use support::{LockablePrice, RiskManager, SpecificJointsSwap};
+use support::{LockablePrice, RiskManager};
 
 pub type AccountId = u128;
 pub type BlockNumber = u64;
@@ -145,19 +144,6 @@ impl RiskManager<AccountId, CurrencyId, Balance, Balance> for MockRiskManager {
 	}
 }
 
-parameter_types! {
-	pub const LoansPalletId: PalletId = PalletId(*b"sel/loan");
-}
-
-impl loans::Config for Runtime {
-	type Event = Event;
-	type Currency = Tokens;
-	type RiskManager = MockRiskManager;
-	type CDPTreasury = CDPTreasuryModule;
-	type PalletId = LoansPalletId;
-	type OnUpdateLoan = ();
-}
-
 pub struct MockLockablePrice;
 impl LockablePrice<CurrencyId> for MockLockablePrice {
 	fn lock_price(_currency_id: CurrencyId) -> DispatchResult {
@@ -175,22 +161,15 @@ ord_parameter_types! {
 
 parameter_types! {
 	pub const GetStableCurrencyId: CurrencyId = SUSD;
-	pub const CDPTreasuryPalletId: PalletId = PalletId(*b"sel/cdpt");
+	pub const SelTreasuryPalletId: PalletId = PalletId(*b"sel/cdpt");
 	pub TreasuryAccount: AccountId = PalletId(*b"sel/hztr").into_account_truncating();
 	pub AlternativeSwapPathJointList: Vec<Vec<CurrencyId>> = vec![];
 }
 
-impl cdp_treasury::Config for Runtime {
-	type Event = Event;
+impl treasury::Config for Runtime {
 	type Currency = Currencies;
 	type GetStableCurrencyId = GetStableCurrencyId;
-	type UpdateOrigin = EnsureSignedBy<One, AccountId>;
-	type DEX = ();
-	type Swap = SpecificJointsSwap<(), AlternativeSwapPathJointList>;
-	type PalletId = CDPTreasuryPalletId;
-	type TreasuryAccount = TreasuryAccount;
-	type WeightInfo = ();
-	type StableAsset = MockStableAsset<CurrencyId, Balance, AccountId, BlockNumber>;
+	type PalletId = SelTreasuryPalletId;
 }
 
 ord_parameter_types! {
@@ -199,9 +178,8 @@ ord_parameter_types! {
 
 impl Config for Runtime {
 	type Event = Event;
-	type CollateralCurrencyIds = MockCollateralCurrencyIds;
 	type PriceSource = MockLockablePrice;
-	type CDPTreasury = CDPTreasuryModule;
+	type SelTreasury = SelTreasuryModule;
 	type ShutdownOrigin = EnsureSignedBy<One, AccountId>;
 	type WeightInfo = ();
 }
@@ -220,8 +198,7 @@ construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
 		PalletBalances: pallet_balances::{Pallet, Call, Storage, Event<T>},
 		Currencies: orml_currencies::{Pallet, Call},
-		CDPTreasuryModule: cdp_treasury::{Pallet, Storage, Call, Event<T>},
-		Loans: loans::{Pallet, Storage, Call, Event<T>},
+		SelTreasuryModule: treasury::{Pallet, Storage, Call},
 	}
 );
 

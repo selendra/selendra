@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Mocks for the prices module.
 
@@ -25,7 +24,7 @@ use frame_support::{
 };
 use frame_system::EnsureSignedBy;
 use orml_traits::{parameter_type_with_key, DataFeeder};
-use primitives::{currency::DexShare, Amount, currency::TokenSymbol};
+use primitives::{currency::DexShare, Amount, TokenSymbol};
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,
@@ -33,7 +32,7 @@ use sp_runtime::{
 	DispatchError, FixedPointNumber,
 };
 use sp_std::cell::RefCell;
-use support::{mocks::MockErc20InfoMapping, ExchangeRate, SwapLimit, ExchangeRateProvider};
+use support::{mocks::MockErc20InfoMapping, SwapLimit};
 
 pub type AccountId = u128;
 pub type BlockNumber = u64;
@@ -43,7 +42,6 @@ pub const SUSD: CurrencyId = CurrencyId::Token(TokenSymbol::SUSD);
 pub const BTC: CurrencyId = CurrencyId::Token(TokenSymbol::RENBTC);
 pub const DOT: CurrencyId = CurrencyId::Token(TokenSymbol::DOT);
 pub const KSM: CurrencyId = CurrencyId::Token(TokenSymbol::KSM);
-pub const KMDKSM: CurrencyId = CurrencyId::StableAssetPoolToken(0);
 pub const LP_SUSD_DOT: CurrencyId =
 	CurrencyId::DexShare(DexShare::Token(TokenSymbol::SUSD), DexShare::Token(TokenSymbol::DOT));
 
@@ -114,17 +112,6 @@ impl DataProvider<CurrencyId, Price> for MockDataProvider {
 impl DataFeeder<CurrencyId, Price, AccountId> for MockDataProvider {
 	fn feed_value(_: AccountId, _: CurrencyId, _: Price) -> sp_runtime::DispatchResult {
 		Ok(())
-	}
-}
-
-pub struct MockLiquidStakingExchangeProvider;
-impl ExchangeRateProvider for MockLiquidStakingExchangeProvider {
-	fn get_exchange_rate() -> ExchangeRate {
-		if CHANGED.with(|v| *v.borrow_mut()) {
-			ExchangeRate::saturating_from_rational(3, 5)
-		} else {
-			ExchangeRate::saturating_from_rational(1, 2)
-		}
 	}
 }
 
@@ -209,15 +196,6 @@ impl orml_tokens::Config for Runtime {
 	type OnKilledTokenAccount = ();
 }
 
-parameter_type_with_key! {
-	pub PricingPegged: |currency_id: CurrencyId| -> Option<CurrencyId> {
-		#[allow(clippy::match_ref_pats)] // false positive
-		match currency_id {
-			&KMDKSM => Some(KSM),
-			_ => None,
-		}
-	};
-}
 
 ord_parameter_types! {
 	pub const One: AccountId = 1;
@@ -239,7 +217,6 @@ impl Config for Runtime {
 	type DEX = MockDEX;
 	type Currency = Tokens;
 	type Erc20InfoMapping = MockErc20InfoMapping;
-	type PricingPegged = PricingPegged;
 	type WeightInfo = ();
 }
 

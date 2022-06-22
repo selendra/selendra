@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
@@ -61,15 +60,9 @@ pub mod module {
 	#[pallet::generate_deposit(fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Paused transaction
-		TransactionPaused {
-			pallet_name_bytes: Vec<u8>,
-			function_name_bytes: Vec<u8>,
-		},
+		TransactionPaused { pallet_name_bytes: Vec<u8>, function_name_bytes: Vec<u8> },
 		/// Unpaused transaction
-		TransactionUnpaused {
-			pallet_name_bytes: Vec<u8>,
-			function_name_bytes: Vec<u8>,
-		},
+		TransactionUnpaused { pallet_name_bytes: Vec<u8>, function_name_bytes: Vec<u8> },
 	}
 
 	/// The paused transaction map
@@ -77,7 +70,8 @@ pub mod module {
 	/// map (PalletNameBytes, FunctionNameBytes) => Option<()>
 	#[pallet::storage]
 	#[pallet::getter(fn paused_transactions)]
-	pub type PausedTransactions<T: Config> = StorageMap<_, Twox64Concat, (Vec<u8>, Vec<u8>), (), OptionQuery>;
+	pub type PausedTransactions<T: Config> =
+		StorageMap<_, Twox64Concat, (Vec<u8>, Vec<u8>), (), OptionQuery>;
 
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
@@ -90,25 +84,33 @@ pub mod module {
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(T::WeightInfo::pause_transaction())]
 		#[transactional]
-		pub fn pause_transaction(origin: OriginFor<T>, pallet_name: Vec<u8>, function_name: Vec<u8>) -> DispatchResult {
+		pub fn pause_transaction(
+			origin: OriginFor<T>,
+			pallet_name: Vec<u8>,
+			function_name: Vec<u8>,
+		) -> DispatchResult {
 			T::UpdateOrigin::ensure_origin(origin)?;
 
 			// not allowed to pause calls of this pallet to ensure safe
-			let pallet_name_string = sp_std::str::from_utf8(&pallet_name).map_err(|_| Error::<T>::InvalidCharacter)?;
+			let pallet_name_string =
+				sp_std::str::from_utf8(&pallet_name).map_err(|_| Error::<T>::InvalidCharacter)?;
 			ensure!(
 				pallet_name_string != <Self as PalletInfoAccess>::name(),
 				Error::<T>::CannotPause
 			);
 
-			PausedTransactions::<T>::mutate_exists((pallet_name.clone(), function_name.clone()), |maybe_paused| {
-				if maybe_paused.is_none() {
-					*maybe_paused = Some(());
-					Self::deposit_event(Event::TransactionPaused {
-						pallet_name_bytes: pallet_name,
-						function_name_bytes: function_name,
-					});
-				}
-			});
+			PausedTransactions::<T>::mutate_exists(
+				(pallet_name.clone(), function_name.clone()),
+				|maybe_paused| {
+					if maybe_paused.is_none() {
+						*maybe_paused = Some(());
+						Self::deposit_event(Event::TransactionPaused {
+							pallet_name_bytes: pallet_name,
+							function_name_bytes: function_name,
+						});
+					}
+				},
+			);
 			Ok(())
 		}
 
@@ -137,10 +139,7 @@ where
 	<T as frame_system::Config>::Call: GetCallMetadata,
 {
 	fn contains(call: &T::Call) -> bool {
-		let CallMetadata {
-			function_name,
-			pallet_name,
-		} = call.get_call_metadata();
+		let CallMetadata { function_name, pallet_name } = call.get_call_metadata();
 		PausedTransactions::<T>::contains_key((pallet_name.as_bytes(), function_name.as_bytes()))
 	}
 }

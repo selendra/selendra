@@ -131,10 +131,10 @@ macro_rules! run_benches {
 			match $crate::bench_runner::run::<$block>(wasm) {
 				Ok(output) => {
 					$crate::handler::handle(output, storage_info);
-				}
+				},
 				Err(e) => {
 					eprintln!("{:?}", e);
-				}
+				},
 			};
 			Ok(())
 		}

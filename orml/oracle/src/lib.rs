@@ -53,9 +53,22 @@ pub mod module {
 	use super::*;
 
 	pub(crate) type MomentOf<T, I = ()> = <<T as Config<I>>::Time as Time>::Moment;
-	pub(crate) type TimestampedValueOf<T, I = ()> = TimestampedValue<<T as Config<I>>::OracleValue, MomentOf<T, I>>;
+	pub(crate) type TimestampedValueOf<T, I = ()> =
+		TimestampedValue<<T as Config<I>>::OracleValue, MomentOf<T, I>>;
 
-	#[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone, Copy, Ord, PartialOrd, TypeInfo, MaxEncodedLen)]
+	#[derive(
+		Encode,
+		Decode,
+		RuntimeDebug,
+		Eq,
+		PartialEq,
+		Clone,
+		Copy,
+		Ord,
+		PartialOrd,
+		TypeInfo,
+		MaxEncodedLen,
+	)]
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	pub struct TimestampedValue<Value, Moment> {
 		pub value: Value,
@@ -107,17 +120,20 @@ pub mod module {
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
 		/// New feed data is submitted.
-		NewFeedData {
-			sender: T::AccountId,
-			values: Vec<(T::OracleKey, T::OracleValue)>,
-		},
+		NewFeedData { sender: T::AccountId, values: Vec<(T::OracleKey, T::OracleValue)> },
 	}
 
 	/// Raw values for each oracle operators
 	#[pallet::storage]
 	#[pallet::getter(fn raw_values)]
-	pub type RawValues<T: Config<I>, I: 'static = ()> =
-		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, TimestampedValueOf<T, I>>;
+	pub type RawValues<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		T::AccountId,
+		Twox64Concat,
+		T::OracleKey,
+		TimestampedValueOf<T, I>,
+	>;
 
 	/// Up to date combined value from Raw Values
 	#[pallet::storage]
@@ -191,7 +207,10 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		T::CombineData::combine_data(key, values, Self::values(key))
 	}
 
-	fn do_feed_values(who: Option<T::AccountId>, values: Vec<(T::OracleKey, T::OracleValue)>) -> DispatchResult {
+	fn do_feed_values(
+		who: Option<T::AccountId>,
+		values: Vec<(T::OracleKey, T::OracleValue)>,
+	) -> DispatchResult {
 		// ensure feeder is authorized
 		let who = if let Some(who) = who {
 			ensure!(T::Members::contains(&who), Error::<T, I>::NoPermission);
@@ -208,10 +227,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
 		let now = T::Time::now();
 		for (key, value) in &values {
-			let timestamped = TimestampedValue {
-				value: value.clone(),
-				timestamp: now,
-			};
+			let timestamped = TimestampedValue { value: value.clone(), timestamp: now };
 			RawValues::<T, I>::insert(&who, &key, timestamped);
 
 			// Update `Values` storage if `combined` yielded result.
@@ -227,7 +243,11 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 }
 
 impl<T: Config<I>, I: 'static> ChangeMembers<T::AccountId> for Pallet<T, I> {
-	fn change_members_sorted(_incoming: &[T::AccountId], outgoing: &[T::AccountId], _new: &[T::AccountId]) {
+	fn change_members_sorted(
+		_incoming: &[T::AccountId],
+		outgoing: &[T::AccountId],
+		_new: &[T::AccountId],
+	) {
 		// remove values
 		for removed in outgoing {
 			RawValues::<T, I>::remove_prefix(removed, None);
@@ -244,7 +264,9 @@ impl<T: Config<I>, I: 'static> DataProvider<T::OracleKey, T::OracleValue> for Pa
 		Self::get(key).map(|timestamped_value| timestamped_value.value)
 	}
 }
-impl<T: Config<I>, I: 'static> DataProviderExtended<T::OracleKey, TimestampedValueOf<T, I>> for Pallet<T, I> {
+impl<T: Config<I>, I: 'static> DataProviderExtended<T::OracleKey, TimestampedValueOf<T, I>>
+	for Pallet<T, I>
+{
 	fn get_no_op(key: &T::OracleKey) -> Option<TimestampedValueOf<T, I>> {
 		Self::get(key)
 	}
@@ -255,7 +277,9 @@ impl<T: Config<I>, I: 'static> DataProviderExtended<T::OracleKey, TimestampedVal
 	}
 }
 
-impl<T: Config<I>, I: 'static> DataFeeder<T::OracleKey, T::OracleValue, T::AccountId> for Pallet<T, I> {
+impl<T: Config<I>, I: 'static> DataFeeder<T::OracleKey, T::OracleValue, T::AccountId>
+	for Pallet<T, I>
+{
 	fn feed_value(who: T::AccountId, key: T::OracleKey, value: T::OracleValue) -> DispatchResult {
 		Self::do_feed_values(Some(who), vec![(key, value)])
 	}

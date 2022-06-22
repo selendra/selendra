@@ -12,10 +12,7 @@ pub struct BenchResult {
 
 impl BenchResult {
 	pub fn with_name(name: &str) -> Self {
-		Self {
-			method: name.as_bytes().to_vec(),
-			..Default::default()
-		}
+		Self { method: name.as_bytes().to_vec(), ..Default::default() }
 	}
 }
 

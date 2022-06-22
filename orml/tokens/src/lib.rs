@@ -18,8 +18,8 @@
 //! The tokens module provides implementations for following traits.
 //!
 //! - `MultiCurrency` - Abstraction over a fungible multi-currency system.
-//! - `MultiCurrencyExtended` - Extended `MultiCurrency` with additional helper
-//!   types and methods, like updating balance
+//! - `MultiCurrencyExtended` - Extended `MultiCurrency` with additional helper types and methods,
+//!   like updating balance
 //! by a given signed integer amount.
 //!
 //! ## Interface
@@ -46,10 +46,10 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{
 		tokens::{fungible, fungibles, DepositConsequence, WithdrawConsequence},
-		BalanceStatus as Status, Contains, Currency as PalletCurrency, DefensiveSaturating, ExistenceRequirement, Get,
-		Imbalance, LockableCurrency as PalletLockableCurrency,
-		NamedReservableCurrency as PalletNamedReservableCurrency, ReservableCurrency as PalletReservableCurrency,
-		SignedImbalance, WithdrawReasons,
+		BalanceStatus as Status, Contains, Currency as PalletCurrency, DefensiveSaturating,
+		ExistenceRequirement, Get, Imbalance, LockableCurrency as PalletLockableCurrency,
+		NamedReservableCurrency as PalletNamedReservableCurrency,
+		ReservableCurrency as PalletReservableCurrency, SignedImbalance, WithdrawReasons,
 	},
 	transactional, BoundedVec,
 };
@@ -57,8 +57,8 @@ use frame_system::{ensure_signed, pallet_prelude::*};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{
-		AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, MaybeSerializeDeserialize, Member, Saturating,
-		StaticLookup, Zero,
+		AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, MaybeSerializeDeserialize, Member,
+		Saturating, StaticLookup, Zero,
 	},
 	ArithmeticError, DispatchError, DispatchResult, RuntimeDebug,
 };
@@ -67,8 +67,8 @@ use sp_std::{cmp, convert::Infallible, marker, prelude::*, vec::Vec};
 use orml_traits::{
 	arithmetic::{self, Signed},
 	currency::TransferAll,
-	BalanceStatus, GetByKey, Happened, LockIdentifier, MultiCurrency, MultiCurrencyExtended, MultiLockableCurrency,
-	MultiReservableCurrency, NamedMultiReservableCurrency, OnDust,
+	BalanceStatus, GetByKey, Happened, LockIdentifier, MultiCurrency, MultiCurrencyExtended,
+	MultiLockableCurrency, MultiReservableCurrency, NamedMultiReservableCurrency, OnDust,
 };
 
 mod imbalances;
@@ -86,7 +86,8 @@ pub use impls::*;
 pub use weights::WeightInfo;
 
 pub struct TransferDust<T, GetAccountId>(marker::PhantomData<(T, GetAccountId)>);
-impl<T, GetAccountId> OnDust<T::AccountId, T::CurrencyId, T::Balance> for TransferDust<T, GetAccountId>
+impl<T, GetAccountId> OnDust<T::AccountId, T::CurrencyId, T::Balance>
+	for TransferDust<T, GetAccountId>
 where
 	T: Config,
 	GetAccountId: Get<T::AccountId>,
@@ -109,7 +110,13 @@ impl<T: Config> OnDust<T::AccountId, T::CurrencyId, T::Balance> for BurnDust<T> 
 	fn on_dust(who: &T::AccountId, currency_id: T::CurrencyId, amount: T::Balance) {
 		// burn the dust, ignore the result,
 		// if failed will leave some dust which still could be recycled.
-		let _ = Pallet::<T>::do_withdraw(currency_id, who, amount, ExistenceRequirement::AllowDeath, true);
+		let _ = Pallet::<T>::do_withdraw(
+			currency_id,
+			who,
+			amount,
+			ExistenceRequirement::AllowDeath,
+			true,
+		);
 	}
 }
 
@@ -201,7 +208,13 @@ pub mod module {
 			+ MaxEncodedLen;
 
 		/// The currency ID type
-		type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord + TypeInfo + MaxEncodedLen;
+		type CurrencyId: Parameter
+			+ Member
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Ord
+			+ TypeInfo
+			+ MaxEncodedLen;
 
 		/// Weight information for extrinsics in this module.
 		type WeightInfo: WeightInfo;
@@ -261,18 +274,10 @@ pub mod module {
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// An account was created with some free balance.
-		Endowed {
-			currency_id: T::CurrencyId,
-			who: T::AccountId,
-			amount: T::Balance,
-		},
+		Endowed { currency_id: T::CurrencyId, who: T::AccountId, amount: T::Balance },
 		/// An account was removed whose balance was non-zero but below
 		/// ExistentialDeposit, resulting in an outright loss.
-		DustLost {
-			currency_id: T::CurrencyId,
-			who: T::AccountId,
-			amount: T::Balance,
-		},
+		DustLost { currency_id: T::CurrencyId, who: T::AccountId, amount: T::Balance },
 		/// Transfer succeeded.
 		Transfer {
 			currency_id: T::CurrencyId,
@@ -281,17 +286,9 @@ pub mod module {
 			amount: T::Balance,
 		},
 		/// Some balance was reserved (moved from free to reserved).
-		Reserved {
-			currency_id: T::CurrencyId,
-			who: T::AccountId,
-			amount: T::Balance,
-		},
+		Reserved { currency_id: T::CurrencyId, who: T::AccountId, amount: T::Balance },
 		/// Some balance was unreserved (moved from reserved to free).
-		Unreserved {
-			currency_id: T::CurrencyId,
-			who: T::AccountId,
-			amount: T::Balance,
-		},
+		Unreserved { currency_id: T::CurrencyId, who: T::AccountId, amount: T::Balance },
 		/// Some reserved balance was repatriated (moved from reserved to
 		/// another account).
 		ReserveRepatriated {
@@ -309,16 +306,9 @@ pub mod module {
 			reserved: T::Balance,
 		},
 		/// The total issuance of an currency has been set
-		TotalIssuanceSet {
-			currency_id: T::CurrencyId,
-			amount: T::Balance,
-		},
+		TotalIssuanceSet { currency_id: T::CurrencyId, amount: T::Balance },
 		/// Some balances were withdrawn (e.g. pay for transaction fee)
-		Withdrawn {
-			currency_id: T::CurrencyId,
-			who: T::AccountId,
-			amount: T::Balance,
-		},
+		Withdrawn { currency_id: T::CurrencyId, who: T::AccountId, amount: T::Balance },
 		/// Some balances were slashed (e.g. due to mis-behavior)
 		Slashed {
 			currency_id: T::CurrencyId,
@@ -327,11 +317,7 @@ pub mod module {
 			reserved_amount: T::Balance,
 		},
 		/// Deposited some balance into an account
-		Deposited {
-			currency_id: T::CurrencyId,
-			who: T::AccountId,
-			amount: T::Balance,
-		},
+		Deposited { currency_id: T::CurrencyId, who: T::AccountId, amount: T::Balance },
 		/// Some funds are locked
 		LockSet {
 			lock_id: LockIdentifier,
@@ -340,17 +326,14 @@ pub mod module {
 			amount: T::Balance,
 		},
 		/// Some locked funds were unlocked
-		LockRemoved {
-			lock_id: LockIdentifier,
-			currency_id: T::CurrencyId,
-			who: T::AccountId,
-		},
+		LockRemoved { lock_id: LockIdentifier, currency_id: T::CurrencyId, who: T::AccountId },
 	}
 
 	/// The total issuance of a token type.
 	#[pallet::storage]
 	#[pallet::getter(fn total_issuance)]
-	pub type TotalIssuance<T: Config> = StorageMap<_, Twox64Concat, T::CurrencyId, T::Balance, ValueQuery>;
+	pub type TotalIssuance<T: Config> =
+		StorageMap<_, Twox64Concat, T::CurrencyId, T::Balance, ValueQuery>;
 
 	/// Any liquidity locks of a token type under an account.
 	/// NOTE: Should only be accessed when setting, changing and freeing a lock.
@@ -423,22 +406,20 @@ pub mod module {
 				"duplicate endowed accounts in genesis."
 			);
 
-			self.balances
-				.iter()
-				.for_each(|(account_id, currency_id, initial_balance)| {
-					assert!(
-						*initial_balance >= T::ExistentialDeposits::get(currency_id),
-						"the balance of any account should always be more than existential deposit.",
-					);
-					Pallet::<T>::mutate_account(account_id, *currency_id, |account_data, _| {
-						account_data.free = *initial_balance
-					});
-					TotalIssuance::<T>::mutate(*currency_id, |total_issuance| {
-						*total_issuance = total_issuance
-							.checked_add(initial_balance)
-							.expect("total issuance cannot overflow when building genesis")
-					});
+			self.balances.iter().for_each(|(account_id, currency_id, initial_balance)| {
+				assert!(
+					*initial_balance >= T::ExistentialDeposits::get(currency_id),
+					"the balance of any account should always be more than existential deposit.",
+				);
+				Pallet::<T>::mutate_account(account_id, *currency_id, |account_data, _| {
+					account_data.free = *initial_balance
 				});
+				TotalIssuance::<T>::mutate(*currency_id, |total_issuance| {
+					*total_issuance = total_issuance
+						.checked_add(initial_balance)
+						.expect("total issuance cannot overflow when building genesis")
+				});
+			});
 		}
 	}
 
@@ -490,10 +471,9 @@ pub mod module {
 		///
 		/// - `dest`: The recipient of the transfer.
 		/// - `currency_id`: currency type.
-		/// - `keep_alive`: A boolean to determine if the `transfer_all`
-		///   operation should send all of the funds the account has, causing
-		///   the sender account to be killed (false), or transfer everything
-		///   except at least the existential deposit, which will guarantee to
+		/// - `keep_alive`: A boolean to determine if the `transfer_all` operation should send all
+		///   of the funds the account has, causing the sender account to be killed (false), or
+		///   transfer everything except at least the existential deposit, which will guarantee to
 		///   keep the sender account alive (true).
 		#[pallet::weight(T::WeightInfo::transfer_all())]
 		pub fn transfer_all(
@@ -504,10 +484,19 @@ pub mod module {
 		) -> DispatchResult {
 			let from = ensure_signed(origin)?;
 			let to = T::Lookup::lookup(dest)?;
-			let reducible_balance =
-				<Self as fungibles::Inspect<T::AccountId>>::reducible_balance(currency_id, &from, keep_alive);
-			<Self as fungibles::Transfer<_>>::transfer(currency_id, &from, &to, reducible_balance, keep_alive)
-				.map(|_| ())
+			let reducible_balance = <Self as fungibles::Inspect<T::AccountId>>::reducible_balance(
+				currency_id,
+				&from,
+				keep_alive,
+			);
+			<Self as fungibles::Transfer<_>>::transfer(
+				currency_id,
+				&from,
+				&to,
+				reducible_balance,
+				keep_alive,
+			)
+			.map(|_| ())
 		}
 
 		/// Same as the [`transfer`] call, but with a check that the transfer
@@ -577,13 +566,15 @@ pub mod module {
 			let who = T::Lookup::lookup(who)?;
 
 			Self::try_mutate_account(&who, currency_id, |account, _| -> DispatchResult {
-				let mut new_total = new_free.checked_add(&new_reserved).ok_or(ArithmeticError::Overflow)?;
-				let (new_free, new_reserved) = if new_free + new_reserved < T::ExistentialDeposits::get(&currency_id) {
-					new_total = Zero::zero();
-					(Zero::zero(), Zero::zero())
-				} else {
-					(new_free, new_reserved)
-				};
+				let mut new_total =
+					new_free.checked_add(&new_reserved).ok_or(ArithmeticError::Overflow)?;
+				let (new_free, new_reserved) =
+					if new_free + new_reserved < T::ExistentialDeposits::get(&currency_id) {
+						new_total = Zero::zero();
+						(Zero::zero(), Zero::zero())
+					} else {
+						(new_free, new_reserved)
+					};
 				let old_total = account.total();
 
 				account.free = new_free;
@@ -625,11 +616,11 @@ impl<T: Config> Pallet<T> {
 		account: &AccountData<T::Balance>,
 	) -> DepositConsequence {
 		if amount.is_zero() {
-			return DepositConsequence::Success;
+			return DepositConsequence::Success
 		}
 
 		if TotalIssuance::<T>::get(currency_id).checked_add(&amount).is_none() {
-			return DepositConsequence::Overflow;
+			return DepositConsequence::Overflow
 		}
 
 		let new_total_balance = match account.total().checked_add(&amount) {
@@ -638,7 +629,7 @@ impl<T: Config> Pallet<T> {
 		};
 
 		if new_total_balance < T::ExistentialDeposits::get(&currency_id) {
-			return DepositConsequence::BelowMinimum;
+			return DepositConsequence::BelowMinimum
 		}
 
 		// NOTE: We assume that we are a provider, so don't need to do any checks in the
@@ -654,11 +645,11 @@ impl<T: Config> Pallet<T> {
 		account: &AccountData<T::Balance>,
 	) -> WithdrawConsequence<T::Balance> {
 		if amount.is_zero() {
-			return WithdrawConsequence::Success;
+			return WithdrawConsequence::Success
 		}
 
 		if TotalIssuance::<T>::get(currency_id).checked_sub(&amount).is_none() {
-			return WithdrawConsequence::Underflow;
+			return WithdrawConsequence::Underflow
 		}
 
 		let new_total_balance = match account.total().checked_sub(&amount) {
@@ -675,7 +666,7 @@ impl<T: Config> Pallet<T> {
 			if frame_system::Pallet::<T>::can_dec_provider(who) {
 				WithdrawConsequence::ReducedToZero(new_total_balance)
 			} else {
-				return WithdrawConsequence::WouldDie;
+				return WithdrawConsequence::WouldDie
 			}
 		} else {
 			WithdrawConsequence::Success
@@ -689,7 +680,7 @@ impl<T: Config> Pallet<T> {
 
 		// Eventual free funds must be no less than the frozen balance.
 		if new_free_balance < account.frozen() {
-			return WithdrawConsequence::Frozen;
+			return WithdrawConsequence::Frozen
 		}
 
 		success
@@ -704,7 +695,7 @@ impl<T: Config> Pallet<T> {
 		amount: T::Balance,
 	) -> DispatchResult {
 		if amount.is_zero() {
-			return Ok(());
+			return Ok(())
 		}
 
 		let new_balance = Self::free_balance(currency_id, who)
@@ -801,7 +792,11 @@ impl<T: Config> Pallet<T> {
 	/// to do it. If it will cause the account to be removed dust, shouldn't use
 	/// it, because maybe the account that should be reaped to remain due to
 	/// failed transfer/withdraw dust.
-	pub(crate) fn set_free_balance(currency_id: T::CurrencyId, who: &T::AccountId, amount: T::Balance) {
+	pub(crate) fn set_free_balance(
+		currency_id: T::CurrencyId,
+		who: &T::AccountId,
+		amount: T::Balance,
+	) {
 		Self::mutate_account(who, currency_id, |account, _| {
 			account.free = amount;
 
@@ -820,7 +815,11 @@ impl<T: Config> Pallet<T> {
 	/// to do it. If it will cause the account to be removed dust, shouldn't use
 	/// it, because maybe the account that should be reaped to remain due to
 	/// failed transfer/withdraw dust.
-	pub(crate) fn set_reserved_balance(currency_id: T::CurrencyId, who: &T::AccountId, amount: T::Balance) {
+	pub(crate) fn set_reserved_balance(
+		currency_id: T::CurrencyId,
+		who: &T::AccountId,
+		amount: T::Balance,
+	) {
 		Self::mutate_account(who, currency_id, |account, _| {
 			account.reserved = amount;
 
@@ -891,45 +890,49 @@ impl<T: Config> Pallet<T> {
 		existence_requirement: ExistenceRequirement,
 	) -> DispatchResult {
 		if amount.is_zero() || from == to {
-			return Ok(());
+			return Ok(())
 		}
 
 		Self::try_mutate_account(to, currency_id, |to_account, _existed| -> DispatchResult {
-			Self::try_mutate_account(from, currency_id, |from_account, _existed| -> DispatchResult {
-				from_account.free = from_account
-					.free
-					.checked_sub(&amount)
-					.ok_or(Error::<T>::BalanceTooLow)?;
-				to_account.free = to_account.free.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
+			Self::try_mutate_account(
+				from,
+				currency_id,
+				|from_account, _existed| -> DispatchResult {
+					from_account.free =
+						from_account.free.checked_sub(&amount).ok_or(Error::<T>::BalanceTooLow)?;
+					to_account.free =
+						to_account.free.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
 
-				let ed = T::ExistentialDeposits::get(&currency_id);
-				// if the total of `to_account` is below existential deposit, would return an
-				// error.
-				// Note: if `to_account` is in `T::DustRemovalWhitelist`, can bypass this check.
-				ensure!(
-					to_account.total() >= ed || T::DustRemovalWhitelist::contains(to),
-					Error::<T>::ExistentialDeposit
-				);
+					let ed = T::ExistentialDeposits::get(&currency_id);
+					// if the total of `to_account` is below existential deposit, would return an
+					// error.
+					// Note: if `to_account` is in `T::DustRemovalWhitelist`, can bypass this check.
+					ensure!(
+						to_account.total() >= ed || T::DustRemovalWhitelist::contains(to),
+						Error::<T>::ExistentialDeposit
+					);
 
-				Self::ensure_can_withdraw(currency_id, from, amount)?;
+					Self::ensure_can_withdraw(currency_id, from, amount)?;
 
-				let allow_death = existence_requirement == ExistenceRequirement::AllowDeath;
-				let allow_death = allow_death && frame_system::Pallet::<T>::can_dec_provider(from);
-				let would_be_dead = if from_account.total() < ed {
-					if from_account.total().is_zero() {
-						true
+					let allow_death = existence_requirement == ExistenceRequirement::AllowDeath;
+					let allow_death =
+						allow_death && frame_system::Pallet::<T>::can_dec_provider(from);
+					let would_be_dead = if from_account.total() < ed {
+						if from_account.total().is_zero() {
+							true
+						} else {
+							// Note: if account is not in `T::DustRemovalWhitelist`, account will
+							// eventually be reaped due to the dust removal.
+							!T::DustRemovalWhitelist::contains(from)
+						}
 					} else {
-						// Note: if account is not in `T::DustRemovalWhitelist`, account will eventually
-						// be reaped due to the dust removal.
-						!T::DustRemovalWhitelist::contains(from)
-					}
-				} else {
-					false
-				};
+						false
+					};
 
-				ensure!(allow_death || !would_be_dead, Error::<T>::KeepAlive);
-				Ok(())
-			})?;
+					ensure!(allow_death || !would_be_dead, Error::<T>::KeepAlive);
+					Ok(())
+				},
+			)?;
 			Ok(())
 		})?;
 
@@ -958,7 +961,7 @@ impl<T: Config> Pallet<T> {
 		change_total_issuance: bool,
 	) -> DispatchResult {
 		if amount.is_zero() {
-			return Ok(());
+			return Ok(())
 		}
 
 		Self::try_mutate_account(who, currency_id, |account, _existed| -> DispatchResult {
@@ -988,11 +991,7 @@ impl<T: Config> Pallet<T> {
 				TotalIssuance::<T>::mutate(currency_id, |v| *v -= amount);
 			}
 
-			Self::deposit_event(Event::Withdrawn {
-				currency_id,
-				who: who.clone(),
-				amount,
-			});
+			Self::deposit_event(Event::Withdrawn { currency_id, who: who.clone(), amount });
 			Ok(())
 		})
 	}
@@ -1001,9 +1000,8 @@ impl<T: Config> Pallet<T> {
 	///
 	/// `require_existed`:
 	/// - true, the account must already exist, do not require ED.
-	/// - false, possibly creating a new account, require ED if the account does
-	///   not yet exist, but except this account is in the dust removal
-	///   whitelist.
+	/// - false, possibly creating a new account, require ED if the account does not yet exist, but
+	///   except this account is in the dust removal whitelist.
 	///
 	/// `change_total_issuance`:
 	/// - true, increase the issued amount to total issuance.
@@ -1016,7 +1014,7 @@ impl<T: Config> Pallet<T> {
 		change_total_issuance: bool,
 	) -> DispatchResult {
 		if amount.is_zero() {
-			return Ok(());
+			return Ok(())
 		}
 
 		Self::try_mutate_account(who, currency_id, |account, existed| -> DispatchResult {
@@ -1040,11 +1038,7 @@ impl<T: Config> Pallet<T> {
 			}
 			account.free += amount;
 
-			Self::deposit_event(Event::Deposited {
-				currency_id,
-				who: who.clone(),
-				amount,
-			});
+			Self::deposit_event(Event::Deposited { currency_id, who: who.clone(), amount });
 			Ok(())
 		})
 	}
@@ -1070,7 +1064,11 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 		Self::accounts(who, currency_id).free
 	}
 
-	fn ensure_can_withdraw(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
+	fn ensure_can_withdraw(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
 		Self::ensure_can_withdraw(currency_id, who, amount)
 	}
 
@@ -1084,12 +1082,20 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 		Self::do_transfer(currency_id, from, to, amount, ExistenceRequirement::AllowDeath)
 	}
 
-	fn deposit(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
+	fn deposit(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
 		// do not require existing
 		Self::do_deposit(currency_id, who, amount, false, true)
 	}
 
-	fn withdraw(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
+	fn withdraw(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
 		// allow death
 		Self::do_withdraw(currency_id, who, amount, ExistenceRequirement::AllowDeath, true)
 	}
@@ -1097,7 +1103,7 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 	// Check if `value` amount of free balance can be slashed from `who`.
 	fn can_slash(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance) -> bool {
 		if value.is_zero() {
-			return true;
+			return true
 		}
 		Self::free_balance(currency_id, who) >= value
 	}
@@ -1109,9 +1115,13 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 	/// should be used prior to `slash()` to avoid having to draw from
 	/// reserved funds, however we err on the side of punishment if things
 	/// are inconsistent or `can_slash` wasn't used appropriately.
-	fn slash(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> Self::Balance {
+	fn slash(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> Self::Balance {
 		if amount.is_zero() {
-			return amount;
+			return amount
 		}
 
 		let account = Self::accounts(who, currency_id);
@@ -1132,7 +1142,11 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 		if !reserved_slashed_amount.is_zero() {
 			// Cannot underflow due to above line
 			remaining_slash -= reserved_slashed_amount;
-			Self::set_reserved_balance(currency_id, who, account.reserved - reserved_slashed_amount);
+			Self::set_reserved_balance(
+				currency_id,
+				who,
+				account.reserved - reserved_slashed_amount,
+			);
 		}
 
 		// Cannot underflow because the slashed value cannot be greater than total
@@ -1152,9 +1166,13 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 impl<T: Config> MultiCurrencyExtended<T::AccountId> for Pallet<T> {
 	type Amount = T::Amount;
 
-	fn update_balance(currency_id: Self::CurrencyId, who: &T::AccountId, by_amount: Self::Amount) -> DispatchResult {
+	fn update_balance(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		by_amount: Self::Amount,
+	) -> DispatchResult {
 		if by_amount.is_zero() {
-			return Ok(());
+			return Ok(())
 		}
 
 		// Ensure this doesn't overflow. There isn't any traits that exposes
@@ -1165,8 +1183,8 @@ impl<T: Config> MultiCurrencyExtended<T::AccountId> for Pallet<T> {
 			by_amount.abs()
 		};
 
-		let by_balance =
-			TryInto::<Self::Balance>::try_into(by_amount_abs).map_err(|_| Error::<T>::AmountIntoBalanceFailed)?;
+		let by_balance = TryInto::<Self::Balance>::try_into(by_amount_abs)
+			.map_err(|_| Error::<T>::AmountIntoBalanceFailed)?;
 		if by_amount.is_positive() {
 			Self::deposit(currency_id, who, by_balance)
 		} else {
@@ -1187,30 +1205,19 @@ impl<T: Config> MultiLockableCurrency<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if amount.is_zero() {
-			return Ok(());
+			return Ok(())
 		}
 		let mut new_lock = Some(BalanceLock { id: lock_id, amount });
 		let mut locks = Self::locks(who, currency_id)
 			.into_iter()
-			.filter_map(|lock| {
-				if lock.id == lock_id {
-					new_lock.take()
-				} else {
-					Some(lock)
-				}
-			})
+			.filter_map(|lock| if lock.id == lock_id { new_lock.take() } else { Some(lock) })
 			.collect::<Vec<_>>();
 		if let Some(lock) = new_lock {
 			locks.push(lock)
 		}
 		Self::update_locks(currency_id, who, &locks[..])?;
 
-		Self::deposit_event(Event::LockSet {
-			lock_id,
-			currency_id,
-			who: who.clone(),
-			amount,
-		});
+		Self::deposit_event(Event::LockSet { lock_id, currency_id, who: who.clone(), amount });
 		Ok(())
 	}
 
@@ -1223,17 +1230,16 @@ impl<T: Config> MultiLockableCurrency<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if amount.is_zero() {
-			return Ok(());
+			return Ok(())
 		}
 		let mut new_lock = Some(BalanceLock { id: lock_id, amount });
 		let mut locks = Self::locks(who, currency_id)
 			.into_iter()
 			.filter_map(|lock| {
 				if lock.id == lock_id {
-					new_lock.take().map(|nl| BalanceLock {
-						id: lock.id,
-						amount: lock.amount.max(nl.amount),
-					})
+					new_lock
+						.take()
+						.map(|nl| BalanceLock { id: lock.id, amount: lock.amount.max(nl.amount) })
 				} else {
 					Some(lock)
 				}
@@ -1245,17 +1251,17 @@ impl<T: Config> MultiLockableCurrency<T::AccountId> for Pallet<T> {
 		Self::update_locks(currency_id, who, &locks[..])
 	}
 
-	fn remove_lock(lock_id: LockIdentifier, currency_id: Self::CurrencyId, who: &T::AccountId) -> DispatchResult {
+	fn remove_lock(
+		lock_id: LockIdentifier,
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+	) -> DispatchResult {
 		let mut locks = Self::locks(who, currency_id);
 		locks.retain(|lock| lock.id != lock_id);
 		let locks_vec = locks.to_vec();
 		Self::update_locks(currency_id, who, &locks_vec[..])?;
 
-		Self::deposit_event(Event::LockRemoved {
-			lock_id,
-			currency_id,
-			who: who.clone(),
-		});
+		Self::deposit_event(Event::LockRemoved { lock_id, currency_id, who: who.clone() });
 		Ok(())
 	}
 }
@@ -1264,9 +1270,13 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 	/// Check if `who` can reserve `value` from their free balance.
 	///
 	/// Always `true` if value to be reserved is zero.
-	fn can_reserve(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance) -> bool {
+	fn can_reserve(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		value: Self::Balance,
+	) -> bool {
 		if value.is_zero() {
-			return true;
+			return true
 		}
 		Self::ensure_can_withdraw(currency_id, who, value).is_ok()
 	}
@@ -1275,9 +1285,13 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 	/// be slashed.
 	///
 	/// Is a no-op if the value to be slashed is zero.
-	fn slash_reserved(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance) -> Self::Balance {
+	fn slash_reserved(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		value: Self::Balance,
+	) -> Self::Balance {
 		if value.is_zero() {
-			return value;
+			return value
 		}
 
 		let reserved_balance = Self::reserved_balance(currency_id, who);
@@ -1305,9 +1319,13 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 	/// balance.
 	///
 	/// Is a no-op if value to be reserved is zero.
-	fn reserve(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance) -> DispatchResult {
+	fn reserve(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		value: Self::Balance,
+	) -> DispatchResult {
 		if value.is_zero() {
-			return Ok(());
+			return Ok(())
 		}
 		Self::ensure_can_withdraw(currency_id, who, value)?;
 
@@ -1315,11 +1333,7 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 			account.free -= value;
 			account.reserved += value;
 
-			Self::deposit_event(Event::Reserved {
-				currency_id,
-				who: who.clone(),
-				amount: value,
-			});
+			Self::deposit_event(Event::Reserved { currency_id, who: who.clone(), amount: value });
 			Ok(())
 		})
 	}
@@ -1328,9 +1342,13 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 	/// unreserved.
 	///
 	/// Is a no-op if the value to be unreserved is zero.
-	fn unreserve(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance) -> Self::Balance {
+	fn unreserve(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		value: Self::Balance,
+	) -> Self::Balance {
 		if value.is_zero() {
-			return value;
+			return value
 		}
 
 		Self::mutate_account(who, currency_id, |account, _| {
@@ -1352,8 +1370,7 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 	///
 	/// Is a no-op if:
 	/// - the value to be moved is zero; or
-	/// - the `slashed` id equal to `beneficiary` and the `status` is
-	///   `Reserved`.
+	/// - the `slashed` id equal to `beneficiary` and the `status` is `Reserved`.
 	fn repatriate_reserved(
 		currency_id: Self::CurrencyId,
 		slashed: &T::AccountId,
@@ -1362,14 +1379,15 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 		status: BalanceStatus,
 	) -> sp_std::result::Result<Self::Balance, DispatchError> {
 		if value.is_zero() {
-			return Ok(value);
+			return Ok(value)
 		}
 
 		if slashed == beneficiary {
 			return match status {
 				BalanceStatus::Free => Ok(Self::unreserve(currency_id, slashed, value)),
-				BalanceStatus::Reserved => Ok(value.saturating_sub(Self::reserved_balance(currency_id, slashed))),
-			};
+				BalanceStatus::Reserved =>
+					Ok(value.saturating_sub(Self::reserved_balance(currency_id, slashed))),
+			}
 		}
 
 		let from_account = Self::accounts(slashed, currency_id);
@@ -1378,10 +1396,10 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 		match status {
 			BalanceStatus::Free => {
 				Self::set_free_balance(currency_id, beneficiary, to_account.free + actual);
-			}
+			},
 			BalanceStatus::Reserved => {
 				Self::set_reserved_balance(currency_id, beneficiary, to_account.reserved + actual);
-			}
+			},
 		}
 		Self::set_reserved_balance(currency_id, slashed, from_account.reserved - actual);
 
@@ -1422,7 +1440,7 @@ impl<T: Config> NamedMultiReservableCurrency<T::AccountId> for Pallet<T> {
 		value: Self::Balance,
 	) -> DispatchResult {
 		if value.is_zero() {
-			return Ok(());
+			return Ok(())
 		}
 
 		Reserves::<T>::try_mutate(who, currency_id, |reserves| -> DispatchResult {
@@ -1430,12 +1448,12 @@ impl<T: Config> NamedMultiReservableCurrency<T::AccountId> for Pallet<T> {
 				Ok(index) => {
 					// this add can't overflow but just to be defensive.
 					reserves[index].amount = reserves[index].amount.defensive_saturating_add(value);
-				}
+				},
 				Err(index) => {
 					reserves
 						.try_insert(index, ReserveData { id: *id, amount: value })
 						.map_err(|_| Error::<T>::TooManyReserves)?;
-				}
+				},
 			};
 			<Self as MultiReservableCurrency<_>>::reserve(currency_id, who, value)
 		})
@@ -1452,7 +1470,7 @@ impl<T: Config> NamedMultiReservableCurrency<T::AccountId> for Pallet<T> {
 		value: Self::Balance,
 	) -> Self::Balance {
 		if value.is_zero() {
-			return Zero::zero();
+			return Zero::zero()
 		}
 
 		Reserves::<T>::mutate_exists(who, currency_id, |maybe_reserves| -> Self::Balance {
@@ -1461,7 +1479,11 @@ impl<T: Config> NamedMultiReservableCurrency<T::AccountId> for Pallet<T> {
 					Ok(index) => {
 						let to_change = cmp::min(reserves[index].amount, value);
 
-						let remain = <Self as MultiReservableCurrency<_>>::unreserve(currency_id, who, to_change);
+						let remain = <Self as MultiReservableCurrency<_>>::unreserve(
+							currency_id,
+							who,
+							to_change,
+						);
 
 						// remain should always be zero but just to be defensive here.
 						let actual = to_change.defensive_saturating_sub(remain);
@@ -1480,7 +1502,7 @@ impl<T: Config> NamedMultiReservableCurrency<T::AccountId> for Pallet<T> {
 						}
 
 						value - actual
-					}
+					},
 					Err(_) => value,
 				}
 			} else {
@@ -1500,7 +1522,7 @@ impl<T: Config> NamedMultiReservableCurrency<T::AccountId> for Pallet<T> {
 		value: Self::Balance,
 	) -> Self::Balance {
 		if value.is_zero() {
-			return Zero::zero();
+			return Zero::zero()
 		}
 
 		Reserves::<T>::mutate(who, currency_id, |reserves| -> Self::Balance {
@@ -1508,7 +1530,11 @@ impl<T: Config> NamedMultiReservableCurrency<T::AccountId> for Pallet<T> {
 				Ok(index) => {
 					let to_change = cmp::min(reserves[index].amount, value);
 
-					let remain = <Self as MultiReservableCurrency<_>>::slash_reserved(currency_id, who, to_change);
+					let remain = <Self as MultiReservableCurrency<_>>::slash_reserved(
+						currency_id,
+						who,
+						to_change,
+					);
 
 					// remain should always be zero but just to be defensive here.
 					let actual = to_change.defensive_saturating_sub(remain);
@@ -1523,7 +1549,7 @@ impl<T: Config> NamedMultiReservableCurrency<T::AccountId> for Pallet<T> {
 						reserved_amount: actual,
 					});
 					value - actual
-				}
+				},
 				Err(_) => value,
 			}
 		})
@@ -1535,8 +1561,7 @@ impl<T: Config> NamedMultiReservableCurrency<T::AccountId> for Pallet<T> {
 	///
 	/// Is a no-op if:
 	/// - the value to be moved is zero; or
-	/// - the `slashed` id equal to `beneficiary` and the `status` is
-	///   `Reserved`.
+	/// - the `slashed` id equal to `beneficiary` and the `status` is `Reserved`.
 	fn repatriate_reserved_named(
 		id: &Self::ReserveIdentifier,
 		currency_id: Self::CurrencyId,
@@ -1546,14 +1571,15 @@ impl<T: Config> NamedMultiReservableCurrency<T::AccountId> for Pallet<T> {
 		status: Status,
 	) -> Result<Self::Balance, DispatchError> {
 		if value.is_zero() {
-			return Ok(Zero::zero());
+			return Ok(Zero::zero())
 		}
 
 		if slashed == beneficiary {
 			return match status {
 				Status::Free => Ok(Self::unreserve_named(id, currency_id, slashed, value)),
-				Status::Reserved => Ok(value.saturating_sub(Self::reserved_balance_named(id, currency_id, slashed))),
-			};
+				Status::Reserved =>
+					Ok(value.saturating_sub(Self::reserved_balance_named(id, currency_id, slashed))),
+			}
 		}
 
 		Reserves::<T>::try_mutate(
@@ -1585,11 +1611,12 @@ impl<T: Config> NamedMultiReservableCurrency<T::AccountId> for Pallet<T> {
 											let actual = to_change.defensive_saturating_sub(remain);
 
 											// this add can't overflow but just to be defensive.
-											reserves[index].amount =
-												reserves[index].amount.defensive_saturating_add(actual);
+											reserves[index].amount = reserves[index]
+												.amount
+												.defensive_saturating_add(actual);
 
 											Ok(actual)
-										}
+										},
 										Err(index) => {
 											let remain = <Self as MultiReservableCurrency<_>>::repatriate_reserved(
 												currency_id,
@@ -1606,15 +1633,12 @@ impl<T: Config> NamedMultiReservableCurrency<T::AccountId> for Pallet<T> {
 											reserves
 												.try_insert(
 													index,
-													ReserveData {
-														id: *id,
-														amount: actual,
-													},
+													ReserveData { id: *id, amount: actual },
 												)
 												.map_err(|_| Error::<T>::TooManyReserves)?;
 
 											Ok(actual)
-										}
+										},
 									}
 								},
 							)?
@@ -1635,7 +1659,7 @@ impl<T: Config> NamedMultiReservableCurrency<T::AccountId> for Pallet<T> {
 						reserves[index].amount -= actual;
 
 						Ok(value - actual)
-					}
+					},
 					Err(_) => Ok(value),
 				}
 			},
@@ -1659,7 +1683,11 @@ impl<T: Config> fungibles::Inspect<T::AccountId> for Pallet<T> {
 		Self::accounts(who, asset_id).total()
 	}
 
-	fn reducible_balance(asset_id: Self::AssetId, who: &T::AccountId, keep_alive: bool) -> Self::Balance {
+	fn reducible_balance(
+		asset_id: Self::AssetId,
+		who: &T::AccountId,
+		keep_alive: bool,
+	) -> Self::Balance {
 		let a = Self::accounts(who, asset_id);
 		// Liquid balance is what is neither reserved nor locked/frozen.
 		let liquid = a.free.saturating_sub(a.frozen);
@@ -1668,7 +1696,8 @@ impl<T: Config> fungibles::Inspect<T::AccountId> for Pallet<T> {
 		} else {
 			// `must_remain_to_exist` is the part of liquid balance which must remain to
 			// keep total over ED.
-			let must_remain_to_exist = T::ExistentialDeposits::get(&asset_id).saturating_sub(a.total() - liquid);
+			let must_remain_to_exist =
+				T::ExistentialDeposits::get(&asset_id).saturating_sub(a.total() - liquid);
 			liquid.saturating_sub(must_remain_to_exist)
 		}
 	}
@@ -1692,8 +1721,13 @@ impl<T: Config> fungibles::Inspect<T::AccountId> for Pallet<T> {
 }
 
 impl<T: Config> fungibles::Mutate<T::AccountId> for Pallet<T> {
-	fn mint_into(asset_id: Self::AssetId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
-		Self::deposit_consequence(who, asset_id, amount, &Self::accounts(who, asset_id)).into_result()?;
+	fn mint_into(
+		asset_id: Self::AssetId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
+		Self::deposit_consequence(who, asset_id, amount, &Self::accounts(who, asset_id))
+			.into_result()?;
 		// do not require existing
 		Self::do_deposit(asset_id, who, amount, false, true)
 	}
@@ -1703,10 +1737,13 @@ impl<T: Config> fungibles::Mutate<T::AccountId> for Pallet<T> {
 		who: &T::AccountId,
 		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError> {
-		let extra = Self::withdraw_consequence(who, asset_id, amount, &Self::accounts(who, asset_id)).into_result()?;
+		let extra =
+			Self::withdraw_consequence(who, asset_id, amount, &Self::accounts(who, asset_id))
+				.into_result()?;
 		let actual = amount + extra;
 		// allow death
-		Self::do_withdraw(asset_id, who, actual, ExistenceRequirement::AllowDeath, true).map(|_| actual)
+		Self::do_withdraw(asset_id, who, actual, ExistenceRequirement::AllowDeath, true)
+			.map(|_| actual)
 	}
 }
 
@@ -1728,7 +1765,11 @@ impl<T: Config> fungibles::Transfer<T::AccountId> for Pallet<T> {
 }
 
 impl<T: Config> fungibles::Unbalanced<T::AccountId> for Pallet<T> {
-	fn set_balance(asset_id: Self::AssetId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
+	fn set_balance(
+		asset_id: Self::AssetId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
 		// Balance is the same type and will not overflow
 		Self::mutate_account(who, asset_id, |account, _| {
 			account.free = amount;
@@ -1747,10 +1788,7 @@ impl<T: Config> fungibles::Unbalanced<T::AccountId> for Pallet<T> {
 		// Balance is the same type and will not overflow
 		TotalIssuance::<T>::mutate(asset_id, |t| *t = amount);
 
-		Self::deposit_event(Event::TotalIssuanceSet {
-			currency_id: asset_id,
-			amount,
-		});
+		Self::deposit_event(Event::TotalIssuanceSet { currency_id: asset_id, amount });
 	}
 }
 
@@ -1763,7 +1801,7 @@ impl<T: Config> fungibles::InspectHold<T::AccountId> for Pallet<T> {
 		let a = Self::accounts(who, asset_id);
 		let min_balance = T::ExistentialDeposits::get(&asset_id).max(a.frozen);
 		if a.reserved.checked_add(&amount).is_none() {
-			return false;
+			return false
 		}
 		// We require it to be min_balance + amount to ensure that the full reserved
 		// funds may be slashed without compromising locked funds or destroying the
@@ -1788,7 +1826,7 @@ impl<T: Config> fungibles::MutateHold<T::AccountId> for Pallet<T> {
 		best_effort: bool,
 	) -> Result<T::Balance, DispatchError> {
 		if amount.is_zero() {
-			return Ok(amount);
+			return Ok(amount)
 		}
 
 		// Done on a best-effort basis.
@@ -1819,7 +1857,10 @@ impl<T: Config> fungibles::MutateHold<T::AccountId> for Pallet<T> {
 	) -> Result<Self::Balance, DispatchError> {
 		let status = if on_hold { Status::Reserved } else { Status::Free };
 		ensure!(
-			amount <= <Self as fungibles::InspectHold<T::AccountId>>::balance_on_hold(asset_id, source) || best_effort,
+			amount <=
+				<Self as fungibles::InspectHold<T::AccountId>>::balance_on_hold(
+					asset_id, source
+				) || best_effort,
 			Error::<T>::BalanceTooLow
 		);
 		let gap = Self::repatriate_reserved(asset_id, source, dest, amount, status)?;
@@ -1857,7 +1898,7 @@ where
 
 	fn burn(mut amount: Self::Balance) -> Self::PositiveImbalance {
 		if amount.is_zero() {
-			return PositiveImbalance::zero();
+			return PositiveImbalance::zero()
 		}
 		let currency_id = GetCurrencyId::get();
 		TotalIssuance::<T>::mutate(currency_id, |issued| {
@@ -1876,7 +1917,7 @@ where
 
 	fn issue(mut amount: Self::Balance) -> Self::NegativeImbalance {
 		if amount.is_zero() {
-			return NegativeImbalance::zero();
+			return NegativeImbalance::zero()
 		}
 		TotalIssuance::<T>::mutate(GetCurrencyId::get(), |issued| {
 			*issued = issued.checked_add(&amount).unwrap_or_else(|| {
@@ -1916,7 +1957,7 @@ where
 
 	fn slash(who: &T::AccountId, value: Self::Balance) -> (Self::NegativeImbalance, Self::Balance) {
 		if value.is_zero() {
-			return (Self::NegativeImbalance::zero(), value);
+			return (Self::NegativeImbalance::zero(), value)
 		}
 
 		let currency_id = GetCurrencyId::get();
@@ -1933,7 +1974,11 @@ where
 		if !remaining_slash.is_zero() {
 			let reserved_slashed_amount = account.reserved.min(remaining_slash);
 			remaining_slash -= reserved_slashed_amount;
-			Pallet::<T>::set_reserved_balance(currency_id, who, account.reserved - reserved_slashed_amount);
+			Pallet::<T>::set_reserved_balance(
+				currency_id,
+				who,
+				account.reserved - reserved_slashed_amount,
+			);
 
 			Pallet::<T>::deposit_event(Event::Slashed {
 				currency_id,
@@ -1963,7 +2008,8 @@ where
 		value: Self::Balance,
 	) -> sp_std::result::Result<Self::PositiveImbalance, DispatchError> {
 		// do not change total issuance
-		Pallet::<T>::do_deposit(GetCurrencyId::get(), who, value, true, false).map(|_| PositiveImbalance::new(value))
+		Pallet::<T>::do_deposit(GetCurrencyId::get(), who, value, true, false)
+			.map(|_| PositiveImbalance::new(value))
 	}
 
 	/// Deposit some `value` into the free balance of `who`, possibly creating a
@@ -1993,7 +2039,9 @@ where
 		Pallet::<T>::try_mutate_account(
 			who,
 			currency_id,
-			|account, existed| -> Result<SignedImbalance<Self::Balance, Self::PositiveImbalance>, ()> {
+			|account,
+			 existed|
+			 -> Result<SignedImbalance<Self::Balance, Self::PositiveImbalance>, ()> {
 				// If we're attempting to set an existing account to less than ED, then
 				// bypass the entire operation. It's a no-op if you follow it through, but
 				// since this is an instance where we might account for a negative imbalance
@@ -2033,8 +2081,15 @@ where
 		<Pallet<T> as MultiReservableCurrency<_>>::can_reserve(GetCurrencyId::get(), who, value)
 	}
 
-	fn slash_reserved(who: &T::AccountId, value: Self::Balance) -> (Self::NegativeImbalance, Self::Balance) {
-		let actual = <Pallet<T> as MultiReservableCurrency<_>>::slash_reserved(GetCurrencyId::get(), who, value);
+	fn slash_reserved(
+		who: &T::AccountId,
+		value: Self::Balance,
+	) -> (Self::NegativeImbalance, Self::Balance) {
+		let actual = <Pallet<T> as MultiReservableCurrency<_>>::slash_reserved(
+			GetCurrencyId::get(),
+			who,
+			value,
+		);
 		(Self::NegativeImbalance::zero(), actual)
 	}
 
@@ -2066,7 +2121,8 @@ where
 	}
 }
 
-impl<T, GetCurrencyId> PalletNamedReservableCurrency<T::AccountId> for CurrencyAdapter<T, GetCurrencyId>
+impl<T, GetCurrencyId> PalletNamedReservableCurrency<T::AccountId>
+	for CurrencyAdapter<T, GetCurrencyId>
 where
 	T: Config,
 	GetCurrencyId: Get<T::CurrencyId>,
@@ -2074,15 +2130,37 @@ where
 	type ReserveIdentifier = T::ReserveIdentifier;
 
 	fn reserved_balance_named(id: &Self::ReserveIdentifier, who: &T::AccountId) -> Self::Balance {
-		<Pallet<T> as NamedMultiReservableCurrency<_>>::reserved_balance_named(id, GetCurrencyId::get(), who)
+		<Pallet<T> as NamedMultiReservableCurrency<_>>::reserved_balance_named(
+			id,
+			GetCurrencyId::get(),
+			who,
+		)
 	}
 
-	fn reserve_named(id: &Self::ReserveIdentifier, who: &T::AccountId, value: Self::Balance) -> DispatchResult {
-		<Pallet<T> as NamedMultiReservableCurrency<_>>::reserve_named(id, GetCurrencyId::get(), who, value)
+	fn reserve_named(
+		id: &Self::ReserveIdentifier,
+		who: &T::AccountId,
+		value: Self::Balance,
+	) -> DispatchResult {
+		<Pallet<T> as NamedMultiReservableCurrency<_>>::reserve_named(
+			id,
+			GetCurrencyId::get(),
+			who,
+			value,
+		)
 	}
 
-	fn unreserve_named(id: &Self::ReserveIdentifier, who: &T::AccountId, value: Self::Balance) -> Self::Balance {
-		<Pallet<T> as NamedMultiReservableCurrency<_>>::unreserve_named(id, GetCurrencyId::get(), who, value)
+	fn unreserve_named(
+		id: &Self::ReserveIdentifier,
+		who: &T::AccountId,
+		value: Self::Balance,
+	) -> Self::Balance {
+		<Pallet<T> as NamedMultiReservableCurrency<_>>::unreserve_named(
+			id,
+			GetCurrencyId::get(),
+			who,
+			value,
+		)
 	}
 
 	fn slash_reserved_named(
@@ -2090,8 +2168,12 @@ where
 		who: &T::AccountId,
 		value: Self::Balance,
 	) -> (Self::NegativeImbalance, Self::Balance) {
-		let actual =
-			<Pallet<T> as NamedMultiReservableCurrency<_>>::slash_reserved_named(id, GetCurrencyId::get(), who, value);
+		let actual = <Pallet<T> as NamedMultiReservableCurrency<_>>::slash_reserved_named(
+			id,
+			GetCurrencyId::get(),
+			who,
+			value,
+		);
 		(Self::NegativeImbalance::zero(), actual)
 	}
 
@@ -2121,12 +2203,32 @@ where
 	type Moment = T::BlockNumber;
 	type MaxLocks = ();
 
-	fn set_lock(id: LockIdentifier, who: &T::AccountId, amount: Self::Balance, _reasons: WithdrawReasons) {
-		let _ = <Pallet<T> as MultiLockableCurrency<_>>::set_lock(id, GetCurrencyId::get(), who, amount);
+	fn set_lock(
+		id: LockIdentifier,
+		who: &T::AccountId,
+		amount: Self::Balance,
+		_reasons: WithdrawReasons,
+	) {
+		let _ = <Pallet<T> as MultiLockableCurrency<_>>::set_lock(
+			id,
+			GetCurrencyId::get(),
+			who,
+			amount,
+		);
 	}
 
-	fn extend_lock(id: LockIdentifier, who: &T::AccountId, amount: Self::Balance, _reasons: WithdrawReasons) {
-		let _ = <Pallet<T> as MultiLockableCurrency<_>>::extend_lock(id, GetCurrencyId::get(), who, amount);
+	fn extend_lock(
+		id: LockIdentifier,
+		who: &T::AccountId,
+		amount: Self::Balance,
+		_reasons: WithdrawReasons,
+	) {
+		let _ = <Pallet<T> as MultiLockableCurrency<_>>::extend_lock(
+			id,
+			GetCurrencyId::get(),
+			who,
+			amount,
+		);
 	}
 
 	fn remove_lock(id: LockIdentifier, who: &T::AccountId) {
@@ -2137,16 +2239,18 @@ where
 impl<T: Config> TransferAll<T::AccountId> for Pallet<T> {
 	#[transactional]
 	fn transfer_all(source: &T::AccountId, dest: &T::AccountId) -> DispatchResult {
-		Accounts::<T>::iter_prefix(source).try_for_each(|(currency_id, account_data)| -> DispatchResult {
-			// allow death
-			Self::do_transfer(
-				currency_id,
-				source,
-				dest,
-				account_data.free,
-				ExistenceRequirement::AllowDeath,
-			)
-		})
+		Accounts::<T>::iter_prefix(source).try_for_each(
+			|(currency_id, account_data)| -> DispatchResult {
+				// allow death
+				Self::do_transfer(
+					currency_id,
+					source,
+					dest,
+					account_data.free,
+					ExistenceRequirement::AllowDeath,
+				)
+			},
+		)
 	}
 }
 
@@ -2167,12 +2271,19 @@ where
 		<Pallet<T> as fungibles::Inspect<_>>::balance(GetCurrencyId::get(), who)
 	}
 	fn reducible_balance(who: &T::AccountId, keep_alive: bool) -> Self::Balance {
-		<Pallet<T> as fungibles::Inspect<_>>::reducible_balance(GetCurrencyId::get(), who, keep_alive)
+		<Pallet<T> as fungibles::Inspect<_>>::reducible_balance(
+			GetCurrencyId::get(),
+			who,
+			keep_alive,
+		)
 	}
 	fn can_deposit(who: &T::AccountId, amount: Self::Balance, mint: bool) -> DepositConsequence {
 		<Pallet<T> as fungibles::Inspect<_>>::can_deposit(GetCurrencyId::get(), who, amount, mint)
 	}
-	fn can_withdraw(who: &T::AccountId, amount: Self::Balance) -> WithdrawConsequence<Self::Balance> {
+	fn can_withdraw(
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> WithdrawConsequence<Self::Balance> {
 		<Pallet<T> as fungibles::Inspect<_>>::can_withdraw(GetCurrencyId::get(), who, amount)
 	}
 }
@@ -2185,7 +2296,10 @@ where
 	fn mint_into(who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
 		<Pallet<T> as fungibles::Mutate<_>>::mint_into(GetCurrencyId::get(), who, amount)
 	}
-	fn burn_from(who: &T::AccountId, amount: Self::Balance) -> Result<Self::Balance, DispatchError> {
+	fn burn_from(
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> Result<Self::Balance, DispatchError> {
 		<Pallet<T> as fungibles::Mutate<_>>::burn_from(GetCurrencyId::get(), who, amount)
 	}
 }
@@ -2201,7 +2315,13 @@ where
 		amount: T::Balance,
 		keep_alive: bool,
 	) -> Result<T::Balance, DispatchError> {
-		<Pallet<T> as fungibles::Transfer<_>>::transfer(GetCurrencyId::get(), source, dest, amount, keep_alive)
+		<Pallet<T> as fungibles::Transfer<_>>::transfer(
+			GetCurrencyId::get(),
+			source,
+			dest,
+			amount,
+			keep_alive,
+		)
 	}
 }
 
@@ -2239,8 +2359,17 @@ where
 	fn hold(who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
 		<Pallet<T> as fungibles::MutateHold<_>>::hold(GetCurrencyId::get(), who, amount)
 	}
-	fn release(who: &T::AccountId, amount: Self::Balance, best_effort: bool) -> Result<T::Balance, DispatchError> {
-		<Pallet<T> as fungibles::MutateHold<_>>::release(GetCurrencyId::get(), who, amount, best_effort)
+	fn release(
+		who: &T::AccountId,
+		amount: Self::Balance,
+		best_effort: bool,
+	) -> Result<T::Balance, DispatchError> {
+		<Pallet<T> as fungibles::MutateHold<_>>::release(
+			GetCurrencyId::get(),
+			who,
+			amount,
+			best_effort,
+		)
 	}
 	fn transfer_held(
 		source: &T::AccountId,

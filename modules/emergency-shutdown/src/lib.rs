@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra Foundation.
+// Copyright (C) 2020-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -32,11 +32,10 @@
 #![allow(clippy::unused_unit)]
 
 use frame_support::{pallet_prelude::*, transactional};
-use frame_system::{ensure_signed, pallet_prelude::*};
+use frame_system::pallet_prelude::*;
 use primitives::{Balance, CurrencyId};
-use sp_runtime::{traits::Zero, FixedPointNumber};
 use sp_std::prelude::*;
-use support::{CDPTreasury, EmergencyShutdown, LockablePrice, Ratio};
+use support::{EmergencyShutdown, LockablePrice, SelTreasury};
 
 mod mock;
 mod tests;
@@ -50,17 +49,14 @@ pub mod module {
 	use super::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + loans::Config {
+	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-
-		/// The list of valid collateral currency types
-		type CollateralCurrencyIds: Get<Vec<CurrencyId>>;
 
 		/// Price source to freeze currencies' price
 		type PriceSource: LockablePrice<CurrencyId>;
 
 		/// CDP treasury to escrow collateral assets after settlement
-		type CDPTreasury: CDPTreasury<Self::AccountId, Balance = Balance, CurrencyId = CurrencyId>;
+		type SelTreasury: SelTreasury<Self::AccountId, Balance = Balance, CurrencyId = CurrencyId>;
 
 		/// The origin which may trigger emergency shutdown. Root can always do
 		/// this.
@@ -124,20 +120,11 @@ pub mod module {
 		/// Start emergency shutdown
 		///
 		/// The dispatch origin of this call must be `ShutdownOrigin`.
-		#[pallet::weight((T::WeightInfo::emergency_shutdown(T::CollateralCurrencyIds::get().len() as u32), DispatchClass::Operational))]
+		#[pallet::weight((T::WeightInfo::emergency_shutdown(), DispatchClass::Operational))]
 		#[transactional]
 		pub fn emergency_shutdown(origin: OriginFor<T>) -> DispatchResult {
 			T::ShutdownOrigin::ensure_origin(origin)?;
 			ensure!(!Self::is_shutdown(), Error::<T>::AlreadyShutdown);
-
-			// get all collateral types
-			let collateral_currency_ids = T::CollateralCurrencyIds::get();
-
-			// lock price for every collateral
-			for currency_id in collateral_currency_ids {
-				// TODO: check the results
-				let _ = <T as Config>::PriceSource::lock_price(currency_id);
-			}
 
 			IsShutdown::<T>::put(true);
 			Self::deposit_event(Event::Shutdown {
@@ -146,69 +133,18 @@ pub mod module {
 			Ok(())
 		}
 
-		/// Open final redemption if settlement is completed.
+		/// Stop emergency shutdown
 		///
 		/// The dispatch origin of this call must be `ShutdownOrigin`.
-		#[pallet::weight((T::WeightInfo::open_collateral_refund(), DispatchClass::Operational))]
+		#[pallet::weight((T::WeightInfo::emergency_shutdown(), DispatchClass::Operational))]
 		#[transactional]
-		pub fn open_collateral_refund(origin: OriginFor<T>) -> DispatchResult {
+		pub fn stop_emergency_shutdown(origin: OriginFor<T>) -> DispatchResult {
 			T::ShutdownOrigin::ensure_origin(origin)?;
-			ensure!(Self::is_shutdown(), Error::<T>::MustAfterShutdown); // must after shutdown
+			ensure!(!Self::is_shutdown(), Error::<T>::AlreadyShutdown);
 
-			// Ensure all debits of CDPs have been settled, and all collateral has
-			// been done or canceled. Settle all collaterals type CDPs which have debit,
-			// cancel all collateral in forward stage and wait for all collateral
-			// in reverse stage to be ended.
-			let collateral_currency_ids = T::CollateralCurrencyIds::get();
-			for currency_id in collateral_currency_ids {
-				// there's on debit in CDP
-				ensure!(
-					<loans::Pallet<T>>::total_positions(currency_id).debit.is_zero(),
-					Error::<T>::ExistUnhandledDebit,
-				);
-			}
-
-			// Open refund stage
-			CanRefund::<T>::put(true);
-			Self::deposit_event(Event::OpenRefund {
+			IsShutdown::<T>::put(false);
+			Self::deposit_event(Event::Shutdown {
 				block_number: <frame_system::Pallet<T>>::block_number(),
-			});
-			Ok(())
-		}
-
-		/// Refund a basket of remaining collateral assets to caller
-		///
-		/// - `amount`: stable currency amount used to refund.
-		#[pallet::weight(T::WeightInfo::refund_collaterals(T::CollateralCurrencyIds::get().len() as u32))]
-		#[transactional]
-		pub fn refund_collaterals(origin: OriginFor<T>, #[pallet::compact] amount: Balance) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-			ensure!(Self::can_refund(), Error::<T>::CanNotRefund);
-
-			let refund_ratio: Ratio = <T as Config>::CDPTreasury::get_debit_proportion(amount);
-			let collateral_currency_ids = T::CollateralCurrencyIds::get();
-
-			// burn caller's stable currency by CDP treasury
-			<T as Config>::CDPTreasury::burn_debit(&who, amount)?;
-
-			let mut refund_assets: Vec<(CurrencyId, Balance)> = vec![];
-			// refund collaterals to caller by CDP treasury
-			for currency_id in collateral_currency_ids {
-				let refund_amount =
-					refund_ratio.saturating_mul_int(<T as Config>::CDPTreasury::get_total_collaterals(currency_id));
-
-				if !refund_amount.is_zero() {
-					let res = <T as Config>::CDPTreasury::withdraw_collateral(&who, currency_id, refund_amount);
-					if res.is_ok() {
-						refund_assets.push((currency_id, refund_amount));
-					}
-				}
-			}
-
-			Self::deposit_event(Event::Refund {
-				who,
-				stable_coin_amount: amount,
-				refund_list: refund_assets,
 			});
 			Ok(())
 		}

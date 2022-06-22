@@ -1,41 +1,38 @@
-
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
-
 #![cfg_attr(not(feature = "std"), no_std)]
-
-pub mod evm;
-mod dex;
-mod incentives;
-mod funan;
-
-pub mod mocks;
-
-pub use crate::evm::*;
-pub use crate::dex::*;
-pub use crate::incentives::*;
-pub use crate::funan::*;
-
-use sp_std::prelude::*;
-use xcm::latest::prelude::*;
+#![allow(clippy::upper_case_acronyms)]
+#![allow(clippy::from_over_into)]
 
 use codec::FullCodec;
 use frame_support::pallet_prelude::{DispatchClass, Pays, Weight};
 use primitives::{task::TaskResult, Multiplier, ReserveIdentifier, CurrencyId};
-use sp_runtime::{traits::CheckedDiv, DispatchResult, FixedU128, DispatchError, transaction_validity::TransactionValidityError};
+use sp_runtime::{
+	traits::CheckedDiv, transaction_validity::TransactionValidityError, DispatchError,
+	DispatchResult, FixedU128,
+};
+use sp_std::prelude::*;
+
+pub mod dex;
+pub mod evm;
+pub mod funan;
+pub mod incentives;
+pub mod mocks;
+
+pub use crate::{dex::*, evm::*, funan::*, incentives::*};
 
 pub type Price = FixedU128;
 pub type ExchangeRate = FixedU128;
@@ -45,7 +42,9 @@ pub type Rate = FixedU128;
 pub trait PriceProvider<CurrencyId> {
 	fn get_price(currency_id: CurrencyId) -> Option<Price>;
 	fn get_relative_price(base: CurrencyId, quote: CurrencyId) -> Option<Price> {
-		if let (Some(base_price), Some(quote_price)) = (Self::get_price(base), Self::get_price(quote)) {
+		if let (Some(base_price), Some(quote_price)) =
+			(Self::get_price(base), Self::get_price(quote))
+		{
 			base_price.checked_div(&quote_price)
 		} else {
 			None
@@ -67,13 +66,21 @@ pub trait ExchangeRateProvider {
 }
 
 pub trait TransactionPayment<AccountId, Balance, NegativeImbalance> {
-	fn reserve_fee(who: &AccountId, fee: Balance, named: Option<ReserveIdentifier>) -> Result<Balance, DispatchError>;
+	fn reserve_fee(
+		who: &AccountId,
+		fee: Balance,
+		named: Option<ReserveIdentifier>,
+	) -> Result<Balance, DispatchError>;
 	fn unreserve_fee(who: &AccountId, fee: Balance, named: Option<ReserveIdentifier>) -> Balance;
 	fn unreserve_and_charge_fee(
 		who: &AccountId,
 		weight: Weight,
 	) -> Result<(Balance, NegativeImbalance), TransactionValidityError>;
-	fn refund_fee(who: &AccountId, weight: Weight, payed: NegativeImbalance) -> Result<(), TransactionValidityError>;
+	fn refund_fee(
+		who: &AccountId,
+		weight: Weight,
+		payed: NegativeImbalance,
+	) -> Result<(), TransactionValidityError>;
 	fn charge_fee(
 		who: &AccountId,
 		len: u32,
@@ -88,7 +95,11 @@ pub trait TransactionPayment<AccountId, Balance, NegativeImbalance> {
 
 /// Used to interface with the Compound's Cash module
 pub trait CompoundCashTrait<Balance, Moment> {
-	fn set_future_yield(next_cash_yield: Balance, yield_index: u128, timestamp_effective: Moment) -> DispatchResult;
+	fn set_future_yield(
+		next_cash_yield: Balance,
+		yield_index: u128,
+		timestamp_effective: Moment,
+	) -> DispatchResult;
 }
 
 pub trait CallBuilder {
@@ -126,15 +137,11 @@ pub trait CallBuilder {
 	///  params:
 	/// - to: The destination for the transfer
 	/// - amount: The amount of staking currency to be transferred.
-	fn balances_transfer_keep_alive(to: Self::AccountId, amount: Self::Balance) -> Self::RelayChainCall;
+	fn balances_transfer_keep_alive(
+		to: Self::AccountId,
+		amount: Self::Balance,
+	) -> Self::RelayChainCall;
 
-	/// Wrap the final calls into the Xcm format.
-	///  params:
-	/// - call: The call to be executed
-	/// - extra_fee: Extra fee (in staking currency) used for buy the `weight` and `debt`.
-	/// - weight: the weight limit used for XCM.
-	/// - debt: the weight limit used to process the `call`.
-	fn finalize_call_into_xcm_message(call: Self::RelayChainCall, extra_fee: Self::Balance, weight: Weight) -> Xcm<()>;
 }
 
 /// Dispatchable tasks
@@ -168,8 +175,4 @@ pub trait OnNewEra<EraIndex> {
 
 pub trait NomineesProvider<AccountId> {
 	fn nominees() -> Vec<AccountId>;
-}
-
-pub trait BuyWeightRate {
-	fn calculate_rate(location: MultiLocation) -> Option<Ratio>;
 }

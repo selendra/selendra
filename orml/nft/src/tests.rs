@@ -58,7 +58,9 @@ fn mint_should_fail() {
 			ArithmeticError::Overflow,
 		);
 
-		NextTokenId::<Runtime>::mutate(CLASS_ID, |id| *id = <Runtime as Config>::TokenId::max_value());
+		NextTokenId::<Runtime>::mutate(CLASS_ID, |id| {
+			*id = <Runtime as Config>::TokenId::max_value()
+		});
 		assert_noop!(
 			NonFungibleTokenModule::mint(&BOB, CLASS_ID, vec![1], ()),
 			Error::<Runtime>::NoAvailableTokenId

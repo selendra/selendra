@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Unit tests for the prices module.
 
@@ -115,6 +114,16 @@ fn lp_token_fair_price_works() {
 }
 
 #[test]
+fn access_price_of_liquid_crowdloan() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_eq!(
+			PricesModule::access_price(DOT),
+			Some(Price::from_inner(10_000_000_000_000_000_000_000_000_000u128))
+		); // 100 USD, right shift the decimal point (18-12) places
+	});
+}
+
+#[test]
 fn access_price_of_stable_currency() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_eq!(
@@ -127,6 +136,21 @@ fn access_price_of_stable_currency() {
 			PricesModule::access_price(SUSD),
 			Some(Price::saturating_from_integer(1000000u128))
 		);
+	});
+}
+
+#[test]
+fn access_price_of_liquid_currency() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_eq!(
+			PricesModule::access_price(DOT),
+			Some(Price::saturating_from_integer(10000000000u128))
+		); // 100 USD, right shift the decimal point (18-12) places
+		mock_oracle_update();
+		assert_eq!(
+			PricesModule::access_price(DOT),
+			Some(Price::saturating_from_integer(1000000000u128))
+		); // 10 USD, right shift the decimal point (18-12) places
 	});
 }
 
@@ -209,15 +233,10 @@ fn access_price_of_other_currency() {
 fn access_price_of_pegged_currency() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_eq!(PricesModule::access_price(KSM), None);
-		assert_eq!(PricesModule::access_price(KMDKSM), None);
 
 		mock_oracle_update();
 		assert_eq!(
 			PricesModule::access_price(KSM),
-			Some(Price::saturating_from_integer(200000000u128))
-		); // 200 USD, right shift the decimal point (18-12) places
-		assert_eq!(
-			PricesModule::access_price(KMDKSM),
 			Some(Price::saturating_from_integer(200000000u128))
 		); // 200 USD, right shift the decimal point (18-12) places
 	});
