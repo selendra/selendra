@@ -304,25 +304,27 @@ impl pallet_multisig::Config for Runtime {
 }
 
 parameter_types! {
+	pub const Burn: Permill = Permill::from_percent(10);
+	pub const TipFindersFee: Percent = Percent::from_percent(20);
 	pub const ProposalBond: Permill = Permill::from_percent(5);
+	pub const CuratorDepositMultiplier: Permill = Permill::from_percent(50);
+
 	pub ProposalBondMinimum: Balance = 10 * dollar(SEL);
 	pub ProposalBondMaximum: Balance = 50 * dollar(SEL);
-	pub const SpendPeriod: BlockNumber = 14 * DAYS;
-	pub const Burn: Permill = Permill::from_percent(0);
-
-	pub const TipCountdown: BlockNumber = 2 * DAYS;
-	pub const TipFindersFee: Percent = Percent::from_percent(5);
 	pub TipReportDepositBase: Balance = deposit(1, 0);
 	pub BountyDepositBase: Balance = deposit(1, 0);
-	pub const BountyDepositPayoutDelay: BlockNumber = 6 * DAYS;
-	pub const BountyUpdatePeriod: BlockNumber = 35 * DAYS;
-	pub const CuratorDepositMultiplier: Permill = Permill::from_percent(50);
 	pub CuratorDepositMin: Balance = dollar(SEL);
 	pub CuratorDepositMax: Balance = 100 * dollar(SEL);
 	pub BountyValueMinimum: Balance = 5 * dollar(SEL);
 	pub DataDepositPerByte: Balance = deposit(0, 1);
-	pub const MaximumReasonLength: u32 = 8192;
 
+	pub const SpendPeriod: BlockNumber = 14 * DAYS;
+	pub const TipCountdown: BlockNumber = 2 * DAYS;
+	pub const BountyDepositPayoutDelay: BlockNumber = 6 * DAYS;
+	pub const BountyUpdatePeriod: BlockNumber = 35 * DAYS;
+
+	pub const MaximumReasonLength: u32 = 8192;
+	pub const MaxApprovals: u32 = 100;
 	pub const SevenDays: BlockNumber = 7 * DAYS;
 	pub const OneDay: BlockNumber = DAYS;
 }
@@ -342,7 +344,7 @@ impl pallet_treasury::Config for Runtime {
 	type BurnDestination = ();
 	type SpendFunds = Bounties;
 	type WeightInfo = ();
-	type MaxApprovals = ConstU32<30>;
+	type MaxApprovals = MaxApprovals;
 }
 
 impl pallet_bounties::Config for Runtime {
@@ -486,7 +488,6 @@ impl module_prices::Config for Runtime {
 parameter_types! {
 	pub const GetNativeCurrencyId: CurrencyId = SEL;
 	pub const GetStableCurrencyId: CurrencyId = SUSD;
-	pub const GetStakingCurrencyId: CurrencyId = DOT;
 	pub Erc20HoldingAccount: H160 = primitives::evm::ERC20_HOLDING_ACCOUNT;
 }
 
@@ -726,7 +727,6 @@ impl module_evm_accounts::Config for Runtime {
 impl module_asset_registry::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type StakingCurrencyId = GetStakingCurrencyId;
 	type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
 	type RegisterOrigin = EnsureRootOrHalfGeneralCouncil;
 	type WeightInfo = weights::module_asset_registry::WeightInfo<Runtime>;

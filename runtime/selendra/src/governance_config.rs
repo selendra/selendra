@@ -29,13 +29,12 @@ impl orml_authority::Config for Runtime {
 }
 
 parameter_types! {
-	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
-	pub const VotingPeriod: BlockNumber = 5 * DAYS;
-	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
+	pub LaunchPeriod: BlockNumber = prod_or_fast!(28 * DAYS, 1, "SEL_LAUNCH_PERIOD");
+	pub VotingPeriod: BlockNumber = prod_or_fast!(28 * DAYS, 1 * MINUTES, "SEL_VOTING_PERIOD");
+	pub FastTrackVotingPeriod: BlockNumber = prod_or_fast!(3 * HOURS, 1 * MINUTES, "SEL_FAST_TRACK_VOTING_PERIOD");
+	pub EnactmentPeriod: BlockNumber = prod_or_fast!(28 * DAYS, 1, "SEL_ENACTMENT_PERIOD");
+	pub CooloffPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1, "SEL_COOLOFF_PERIOD");
 	pub MinimumDeposit: Balance = 200 * dollar(SEL);
-	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
-	pub const VoteLockingPeriod: BlockNumber = 14 * DAYS;
-	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -48,7 +47,7 @@ impl pallet_democracy::Config for Runtime {
 	type EnactmentPeriod = EnactmentPeriod;
 	type LaunchPeriod = LaunchPeriod;
 	type VotingPeriod = VotingPeriod;
-	type VoteLockingPeriod = VoteLockingPeriod;
+	type VoteLockingPeriod = EnactmentPeriod;
 	type MinimumDeposit = MinimumDeposit;
 	/// A straight majority of the council can decide what their next motion is.
 	type ExternalOrigin = EnsureRootOrHalfGeneralCouncil;
@@ -85,10 +84,9 @@ impl pallet_democracy::Config for Runtime {
 }
 
 parameter_types! {
-	pub const GeneralCouncilMotionDuration: BlockNumber = 3 * DAYS;
+	pub GeneralCouncilMotionDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "DOT_MOTION_DURATION");
 	pub const CouncilDefaultMaxProposals: u32 = 20;
 	pub const CouncilDefaultMaxMembers: u32 = 30;
-	pub const OperatorDefaultMembers: u32 = 50;
 }
 
 impl pallet_collective::Config<GeneralCouncilInstance> for Runtime {
@@ -116,7 +114,7 @@ impl pallet_membership::Config<GeneralCouncilMembershipInstance> for Runtime {
 }
 
 parameter_types! {
-	pub const FinancialCouncilMotionDuration: BlockNumber = 3 * DAYS;
+	pub FinancialCouncilMotionDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "DOT_MOTION_DURATION");
 }
 
 impl pallet_collective::Config<FinancialCouncilInstance> for Runtime {
@@ -144,7 +142,7 @@ impl pallet_membership::Config<FinancialCouncilMembershipInstance> for Runtime {
 }
 
 parameter_types! {
-	pub const TechnicalCommitteeMotionDuration: BlockNumber = 3 * DAYS;
+	pub TechnicalCommitteeMotionDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "DOT_MOTION_DURATION");
 }
 
 impl pallet_collective::Config<TechnicalCommitteeInstance> for Runtime {
@@ -171,6 +169,10 @@ impl pallet_membership::Config<TechnicalCommitteeMembershipInstance> for Runtime
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const OperatorDefaultMembers: u32 = 50;
+}
+
 impl pallet_membership::Config<OperatorMembershipInstanceSelendra> for Runtime {
 	type Event = Event;
 	type AddOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
@@ -185,13 +187,13 @@ impl pallet_membership::Config<OperatorMembershipInstanceSelendra> for Runtime {
 }
 
 parameter_types! {
+	/// Weekly council elections; scaling up to monthly eventually.
+	pub TermDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "DOT_TERM_DURATION");
 	pub CandidacyBond: Balance = 100 * dollar(SEL);
 	// 1 storage item created, key size is 32 bytes, value size is 16+16.
 	pub VotingBondBase: Balance = deposit(1, 64);
 	// additional data per vote is 32 bytes (account id).
 	pub VotingBondFactor: Balance = deposit(0, 32);
-	/// Weekly council elections; scaling up to monthly eventually.
-	pub TermDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "DOT_TERM_DURATION");
 	/// 13 members initially, to be increased to 23 eventually.
 	pub const DesiredMembers: u32 = 13;
 	pub const DesiredRunnersUp: u32 = 20;

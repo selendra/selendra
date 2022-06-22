@@ -121,13 +121,9 @@ impl module_evm_bridge::Config for Runtime {
 	type EVM = EVM;
 }
 
-parameter_types! {
-	pub const KSMCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::KSM);
-}
 impl asset_registry::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type StakingCurrencyId = KSMCurrencyId;
 	type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
 	type RegisterOrigin = EnsureSignedBy<CouncilAccount, AccountId>;
 	type WeightInfo = ();
