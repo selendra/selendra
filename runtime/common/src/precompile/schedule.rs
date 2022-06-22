@@ -375,264 +375,265 @@ where
 	}
 }
 
-// #[cfg(test)]
-// mod tests {
-// 	use super::*;
+#[cfg(test)]
+mod tests {
+	use super::*;
 
-// 	use crate::precompile::mock::{
-// 		alice_evm_addr, bob_evm_addr, new_test_ext, run_to_block, Balances, Event as TestEvent, System,
-// Test, 	};
-// 	use hex_literal::hex;
-// 	use sp_core::H160;
+	use crate::precompile::mock::{
+		alice_evm_addr, bob_evm_addr, new_test_ext, run_to_block, Balances, Event as TestEvent,
+		System, Test,
+	};
+	use hex_literal::hex;
+	use sp_core::H160;
 
-// 	type SchedulePrecompile = crate::SchedulePrecompile<Test>;
+	type SchedulePrecompile = crate::SchedulePrecompile<Test>;
 
-// 	#[test]
-// 	fn schedule_precompile_should_work() {
-// 		new_test_ext().execute_with(|| {
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn schedule_precompile_should_work() {
+		new_test_ext().execute_with(|| {
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			// scheduleCall(address,address,uint256,uint256,uint256,bytes) -> 0x64c91905
-// 			// from
-// 			// target
-// 			// value
-// 			// gas_limit
-// 			// storage_limit
-// 			// min_delay
-// 			// offset
-// 			// input_len
-// 			// transfer bytes4(keccak256(signature)) 0xa9059cbb
-// 			// to address
-// 			// amount
-// 			let input = hex! {"
-// 				64c91905
-// 				000000000000000000000000 1000000000000000000000000000000000000001
-// 				000000000000000000000000 0000000000000000000100000000000000000000
-// 				00000000000000000000000000000000 00000000000000000000000000000000
-// 				000000000000000000000000000000000000000000000000 00000000000493e0
-// 				00000000000000000000000000000000000000000000000000000000 00000064
-// 				00000000000000000000000000000000000000000000000000000000 00000001
-// 				00000000000000000000000000000000000000000000000000000000 00000000
-// 				00000000000000000000000000000000000000000000000000000000 00000044
-// 				a9059cbb
-// 				000000000000000000000000 1000000000000000000000000000000000000002
-// 				00000000000000000000000000000000 000000000000000000000000000003e8
-// 			"};
+			// scheduleCall(address,address,uint256,uint256,uint256,bytes) -> 0x64c91905
+			// from
+			// target
+			// value
+			// gas_limit
+			// storage_limit
+			// min_delay
+			// offset
+			// input_len
+			// transfer bytes4(keccak256(signature)) 0xa9059cbb
+			// to address
+			// amount
+			let input = hex! {"
+				64c91905
+				000000000000000000000000 1000000000000000000000000000000000000001
+				000000000000000000000000 0000000000000000000100000000000000000000
+				00000000000000000000000000000000 00000000000000000000000000000000
+				000000000000000000000000000000000000000000000000 00000000000493e0
+				00000000000000000000000000000000000000000000000000000000 00000064
+				00000000000000000000000000000000000000000000000000000000 00000001
+				00000000000000000000000000000000000000000000000000000000 00000000
+				00000000000000000000000000000000000000000000000000000000 00000044
+				a9059cbb
+				000000000000000000000000 1000000000000000000000000000000000000002
+				00000000000000000000000000000000 000000000000000000000000000003e8
+			"};
 
-// 			let resp = SchedulePrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(sp_core::bytes::to_hex(&resp.output[..], false), "0x\
-// 				0000000000000000000000000000000000000000000000000000000000000020\
-// 				0000000000000000000000000000000000000000000000000000000000000029\
-// 				305363686564756c6543616c6c000000001000000000000000000000000000000000000001824f12000000000000000000000000000000000000000000000000\
-// 			");
+			let resp = SchedulePrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(sp_core::bytes::to_hex(&resp.output[..], false), "0x\
+				0000000000000000000000000000000000000000000000000000000000000020\
+				0000000000000000000000000000000000000000000000000000000000000029\
+				305363686564756c6543616c6c000000001000000000000000000000000000000000000001824f12000000000000000000000000000000000000000000000000\
+			");
 
-// 			let event = TestEvent::Scheduler(pallet_scheduler::Event::<Test>::Scheduled { when: 3, index: 0
-// }); 			assert!(System::events().iter().any(|record| record.event == event));
+			let event = TestEvent::Scheduler(pallet_scheduler::Event::<Test>::Scheduled { when: 3, index: 0
+}); 			assert!(System::events().iter().any(|record| record.event == event));
 
-// 			// cancelCall(address,bytes) -> 0x93e32661
-// 			// who
-// 			// offset
-// 			// task_id_len
-// 			// task_id
-// 			let cancel_input = hex! {"
-// 				93e32661
-// 				000000000000000000000000 1000000000000000000000000000000000000001
-// 				00000000000000000000000000000000000000000000000000000000 00000000
-// 				00000000000000000000000000000000000000000000000000000000 00000029
-// 				305363686564756c6543616c6c000000001000000000000000000000000000000000000001824f1200
-// 			"};
+			// cancelCall(address,bytes) -> 0x93e32661
+			// who
+			// offset
+			// task_id_len
+			// task_id
+			let cancel_input = hex! {"
+				93e32661
+				000000000000000000000000 1000000000000000000000000000000000000001
+				00000000000000000000000000000000000000000000000000000000 00000000
+				00000000000000000000000000000000000000000000000000000000 00000029
+				305363686564756c6543616c6c000000001000000000000000000000000000000000000001824f1200
+			"};
 
-// 			let resp = SchedulePrecompile::execute(&cancel_input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.cost, 0);
-// 			let event = TestEvent::Scheduler(pallet_scheduler::Event::<Test>::Canceled { when: 3, index: 0
-// }); 			assert!(System::events().iter().any(|record| record.event == event));
+			let resp = SchedulePrecompile::execute(&cancel_input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.cost, 0);
+			let event = TestEvent::Scheduler(pallet_scheduler::Event::<Test>::Canceled { when: 3, index: 0
+}); 			assert!(System::events().iter().any(|record| record.event == event));
 
-// 			// schedule call again
-// 			let resp = SchedulePrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.cost, 0);
-// 			assert_eq!(sp_core::bytes::to_hex(&resp.output[..], false), "0x\
-// 				0000000000000000000000000000000000000000000000000000000000000020\
-// 				0000000000000000000000000000000000000000000000000000000000000029\
-// 				305363686564756c6543616c6c010000001000000000000000000000000000000000000001824f12000000000000000000000000000000000000000000000000\
-// 			");
+			// schedule call again
+			let resp = SchedulePrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.cost, 0);
+			assert_eq!(sp_core::bytes::to_hex(&resp.output[..], false), "0x\
+				0000000000000000000000000000000000000000000000000000000000000020\
+				0000000000000000000000000000000000000000000000000000000000000029\
+				305363686564756c6543616c6c010000001000000000000000000000000000000000000001824f12000000000000000000000000000000000000000000000000\
+			");
 
-// 			run_to_block(2);
+			run_to_block(2);
 
-// 			// rescheduleCall(address,uint256,bytes) -> 0x28302f34
-// 			// who
-// 			// min_delay
-// 			// offset
-// 			// task_id_len
-// 			// task_id
-// 			let reschedule_input = hex! {"
-// 				28302f34
-// 				000000000000000000000000 1000000000000000000000000000000000000001
-// 				00000000000000000000000000000000 00000000000000000000000000000002
-// 				00000000000000000000000000000000000000000000000000000000 00000000
-// 				00000000000000000000000000000000000000000000000000000000 00000029
-// 				305363686564756c6543616c6c010000001000000000000000000000000000000000000001824f1200
-// 			"};
+			// rescheduleCall(address,uint256,bytes) -> 0x28302f34
+			// who
+			// min_delay
+			// offset
+			// task_id_len
+			// task_id
+			let reschedule_input = hex! {"
+				28302f34
+				000000000000000000000000 1000000000000000000000000000000000000001
+				00000000000000000000000000000000 00000000000000000000000000000002
+				00000000000000000000000000000000000000000000000000000000 00000000
+				00000000000000000000000000000000000000000000000000000000 00000029
+				305363686564756c6543616c6c010000001000000000000000000000000000000000000001824f1200
+			"};
 
-// 			let resp = SchedulePrecompile::execute(&reschedule_input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.cost, 0);
-// 			assert_eq!(resp.output, [0u8; 0].to_vec());
+			let resp = SchedulePrecompile::execute(&reschedule_input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.cost, 0);
+			assert_eq!(resp.output, [0u8; 0].to_vec());
 
-// 			let event = TestEvent::Scheduler(pallet_scheduler::Event::<Test>::Scheduled { when: 5, index: 0
-// }); 			assert!(System::events().iter().any(|record| record.event == event));
+			let event = TestEvent::Scheduler(pallet_scheduler::Event::<Test>::Scheduled { when: 5, index: 0
+}); 			assert!(System::events().iter().any(|record| record.event == event));
 
-// 			let from_account = <Test as
-// module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr()); 			let to_account = <Test as
-// module_evm::Config>::AddressMapping::get_account_id(&bob_evm_addr()); 			#[cfg(not(feature =
-// "with-ethereum-compatibility"))] 			{
-// 				assert_eq!(Balances::free_balance(from_account.clone()), 999999700000);
-// 				assert_eq!(Balances::reserved_balance(from_account.clone()), 300000);
-// 				assert_eq!(Balances::free_balance(to_account.clone()), 1000000000000);
-// 			}
-// 			#[cfg(feature = "with-ethereum-compatibility")]
-// 			{
-// 				assert_eq!(Balances::free_balance(from_account.clone()), 1000000000000);
-// 				assert_eq!(Balances::reserved_balance(from_account.clone()), 0);
-// 				assert_eq!(Balances::free_balance(to_account.clone()), 1000000000000);
-// 			}
+			let from_account = <Test as
+module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr()); 			let to_account = <Test as
+module_evm::Config>::AddressMapping::get_account_id(&bob_evm_addr()); 			#[cfg(not(feature =
+"with-ethereum-compatibility"))] 			{
+				assert_eq!(Balances::free_balance(from_account.clone()), 999999700000);
+				assert_eq!(Balances::reserved_balance(from_account.clone()), 300000);
+				assert_eq!(Balances::free_balance(to_account.clone()), 1000000000000);
+			}
+			#[cfg(feature = "with-ethereum-compatibility")]
+			{
+				assert_eq!(Balances::free_balance(from_account.clone()), 1000000000000);
+				assert_eq!(Balances::reserved_balance(from_account.clone()), 0);
+				assert_eq!(Balances::free_balance(to_account.clone()), 1000000000000);
+			}
 
-// 			run_to_block(5);
-// 			#[cfg(not(feature = "with-ethereum-compatibility"))]
-// 			{
-// 				assert_eq!(Balances::free_balance(from_account.clone()), 999999931325);
-// 				assert_eq!(Balances::reserved_balance(from_account), 0);
-// 				assert_eq!(Balances::free_balance(to_account), 1000000001000);
-// 			}
-// 			#[cfg(feature = "with-ethereum-compatibility")]
-// 			{
-// 				assert_eq!(Balances::free_balance(from_account.clone()), 999999999000);
-// 				assert_eq!(Balances::reserved_balance(from_account), 0);
-// 				assert_eq!(Balances::free_balance(to_account), 1000000001000);
-// 			}
-// 		});
-// 	}
+			run_to_block(5);
+			#[cfg(not(feature = "with-ethereum-compatibility"))]
+			{
+				assert_eq!(Balances::free_balance(from_account.clone()), 999999931325);
+				assert_eq!(Balances::reserved_balance(from_account), 0);
+				assert_eq!(Balances::free_balance(to_account), 1000000001000);
+			}
+			#[cfg(feature = "with-ethereum-compatibility")]
+			{
+				assert_eq!(Balances::free_balance(from_account.clone()), 999999999000);
+				assert_eq!(Balances::reserved_balance(from_account), 0);
+				assert_eq!(Balances::free_balance(to_account), 1000000001000);
+			}
+		});
+	}
 
-// 	#[test]
-// 	fn schedule_precompile_should_handle_invalid_input() {
-// 		new_test_ext().execute_with(|| {
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn schedule_precompile_should_handle_invalid_input() {
+		new_test_ext().execute_with(|| {
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			// scheduleCall(address,address,uint256,uint256,uint256,bytes) -> 0x64c91905
-// 			// from
-// 			// target
-// 			// value
-// 			// gas_limit
-// 			// storage_limit
-// 			// min_delay
-// 			// offset
-// 			// input_len
-// 			// input_data
-// 			let input = hex! {"
-// 				64c91905
-// 				000000000000000000000000 1000000000000000000000000000000000000001
-// 				000000000000000000000000 0000000000000000000100000000000000000000
-// 				00000000000000000000000000000000 00000000000000000000000000000000
-// 				000000000000000000000000000000000000000000000000 00000000000493e0
-// 				00000000000000000000000000000000000000000000000000000000 00000064
-// 				00000000000000000000000000000000000000000000000000000000 00000001
-// 				00000000000000000000000000000000000000000000000000000000 00000000
-// 				00000000000000000000000000000000000000000000000000000000 00000001
-// 				00000000000000000000000000000000000000000000000000000000 00000000
-// 				12000000000000000000000000000000000000000000000000000000
-// 			"};
+			// scheduleCall(address,address,uint256,uint256,uint256,bytes) -> 0x64c91905
+			// from
+			// target
+			// value
+			// gas_limit
+			// storage_limit
+			// min_delay
+			// offset
+			// input_len
+			// input_data
+			let input = hex! {"
+				64c91905
+				000000000000000000000000 1000000000000000000000000000000000000001
+				000000000000000000000000 0000000000000000000100000000000000000000
+				00000000000000000000000000000000 00000000000000000000000000000000
+				000000000000000000000000000000000000000000000000 00000000000493e0
+				00000000000000000000000000000000000000000000000000000000 00000064
+				00000000000000000000000000000000000000000000000000000000 00000001
+				00000000000000000000000000000000000000000000000000000000 00000000
+				00000000000000000000000000000000000000000000000000000000 00000001
+				00000000000000000000000000000000000000000000000000000000 00000000
+				12000000000000000000000000000000000000000000000000000000
+			"};
 
-// 			let resp = SchedulePrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.cost, 0);
-// 			assert_eq!(sp_core::bytes::to_hex(&resp.output[..], false), "0x\
-// 				0000000000000000000000000000000000000000000000000000000000000020\
-// 				0000000000000000000000000000000000000000000000000000000000000029\
-// 				305363686564756c6543616c6c000000001000000000000000000000000000000000000001824f12000000000000000000000000000000000000000000000000\
-// 			");
+			let resp = SchedulePrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.cost, 0);
+			assert_eq!(sp_core::bytes::to_hex(&resp.output[..], false), "0x\
+				0000000000000000000000000000000000000000000000000000000000000020\
+				0000000000000000000000000000000000000000000000000000000000000029\
+				305363686564756c6543616c6c000000001000000000000000000000000000000000000001824f12000000000000000000000000000000000000000000000000\
+			");
 
-// 			let from_account = <Test as
-// module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr()); 			let to_account = <Test as
-// module_evm::Config>::AddressMapping::get_account_id(&bob_evm_addr()); 			#[cfg(not(feature =
-// "with-ethereum-compatibility"))] 			{
-// 				assert_eq!(Balances::free_balance(from_account.clone()), 999999700000);
-// 				assert_eq!(Balances::reserved_balance(from_account.clone()), 300000);
-// 				assert_eq!(Balances::free_balance(to_account.clone()), 1000000000000);
-// 			}
-// 			#[cfg(feature = "with-ethereum-compatibility")]
-// 			{
-// 				assert_eq!(Balances::free_balance(from_account.clone()), 1000000000000);
-// 				assert_eq!(Balances::reserved_balance(from_account.clone()), 0);
-// 				assert_eq!(Balances::free_balance(to_account.clone()), 1000000000000);
-// 			}
+			let from_account = <Test as
+module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr()); 			let to_account = <Test as
+module_evm::Config>::AddressMapping::get_account_id(&bob_evm_addr()); 			#[cfg(not(feature =
+"with-ethereum-compatibility"))] 			{
+				assert_eq!(Balances::free_balance(from_account.clone()), 999999700000);
+				assert_eq!(Balances::reserved_balance(from_account.clone()), 300000);
+				assert_eq!(Balances::free_balance(to_account.clone()), 1000000000000);
+			}
+			#[cfg(feature = "with-ethereum-compatibility")]
+			{
+				assert_eq!(Balances::free_balance(from_account.clone()), 1000000000000);
+				assert_eq!(Balances::reserved_balance(from_account.clone()), 0);
+				assert_eq!(Balances::free_balance(to_account.clone()), 1000000000000);
+			}
 
-// 			// cancelCall(address,bytes) -> 0x93e32661
-// 			// who
-// 			// offset
-// 			// task_id_len
-// 			// task_id
-// 			let cancel_input = hex! {"
-// 				93e32661
-// 				000000000000000000000000 1000000000000000000000000000000000000002
-// 				00000000000000000000000000000000000000000000000000000000 00000000
-// 				00000000000000000000000000000000000000000000000000000000 00000029
-// 				305363686564756c6543616c6c000000001000000000000000000000000000000000000001824f1200
-// 			"};
-// 			assert_eq!(
-// 				SchedulePrecompile::execute(&cancel_input, Some(10_000), &context, false),
-// 				Err(PrecompileFailure::Revert {
-// 					exit_status: ExitRevert::Reverted,
-// 					output: "NoPermission".into(),
-// 					cost: target_gas_limit(Some(10_000)).unwrap()
-// 				})
-// 			);
+			// cancelCall(address,bytes) -> 0x93e32661
+			// who
+			// offset
+			// task_id_len
+			// task_id
+			let cancel_input = hex! {"
+				93e32661
+				000000000000000000000000 1000000000000000000000000000000000000002
+				00000000000000000000000000000000000000000000000000000000 00000000
+				00000000000000000000000000000000000000000000000000000000 00000029
+				305363686564756c6543616c6c000000001000000000000000000000000000000000000001824f1200
+			"};
+			assert_eq!(
+				SchedulePrecompile::execute(&cancel_input, Some(10_000), &context, false),
+				Err(PrecompileFailure::Revert {
+					exit_status: ExitRevert::Reverted,
+					output: "NoPermission".into(),
+					cost: target_gas_limit(Some(10_000)).unwrap()
+				})
+			);
 
-// 			run_to_block(4);
-// 			#[cfg(not(feature = "with-ethereum-compatibility"))]
-// 			{
-// 				assert_eq!(Balances::free_balance(from_account.clone()), 999999978926);
-// 				assert_eq!(Balances::reserved_balance(from_account), 0);
-// 				assert_eq!(Balances::free_balance(to_account), 1000000000000);
-// 			}
-// 			#[cfg(feature = "with-ethereum-compatibility")]
-// 			{
-// 				assert_eq!(Balances::free_balance(from_account.clone()), 1000000000000);
-// 				assert_eq!(Balances::reserved_balance(from_account.clone()), 0);
-// 				assert_eq!(Balances::free_balance(to_account.clone()), 1000000000000);
-// 			}
-// 		});
-// 	}
+			run_to_block(4);
+			#[cfg(not(feature = "with-ethereum-compatibility"))]
+			{
+				assert_eq!(Balances::free_balance(from_account.clone()), 999999978926);
+				assert_eq!(Balances::reserved_balance(from_account), 0);
+				assert_eq!(Balances::free_balance(to_account), 1000000000000);
+			}
+			#[cfg(feature = "with-ethereum-compatibility")]
+			{
+				assert_eq!(Balances::free_balance(from_account.clone()), 1000000000000);
+				assert_eq!(Balances::reserved_balance(from_account.clone()), 0);
+				assert_eq!(Balances::free_balance(to_account.clone()), 1000000000000);
+			}
+		});
+	}
 
-// 	#[test]
-// 	fn task_id_max_and_min() {
-// 		let task_id = TaskInfo {
-// 			prefix: b"ScheduleCall".to_vec(),
-// 			id: u32::MAX,
-// 			sender: H160::default(),
-// 			fee: Balance::MAX,
-// 		}
-// 		.encode();
+	#[test]
+	fn task_id_max_and_min() {
+		let task_id = TaskInfo {
+			prefix: b"ScheduleCall".to_vec(),
+			id: u32::MAX,
+			sender: H160::default(),
+			fee: Balance::MAX,
+		}
+		.encode();
 
-// 		assert_eq!(54, task_id.len());
+		assert_eq!(54, task_id.len());
 
-// 		let task_id = TaskInfo {
-// 			prefix: b"ScheduleCall".to_vec(),
-// 			id: u32::MIN,
-// 			sender: H160::default(),
-// 			fee: Balance::MIN,
-// 		}
-// 		.encode();
+		let task_id = TaskInfo {
+			prefix: b"ScheduleCall".to_vec(),
+			id: u32::MIN,
+			sender: H160::default(),
+			fee: Balance::MIN,
+		}
+		.encode();
 
-// 		assert_eq!(38, task_id.len());
-// 	}
-// }
+		assert_eq!(38, task_id.len());
+	}
+}

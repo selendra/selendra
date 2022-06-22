@@ -127,19 +127,3 @@ pub mod election {
 	/// The accuracy type used for genesis election provider;
 	pub type OnChainAccuracy = sp_runtime::Perbill;
 }
-
-#[cfg(test)]
-mod tests {
-	use crate::{constants::fee::base_tx_in_sel, Balance};
-	use frame_support::weights::constants::ExtrinsicBaseWeight;
-
-	#[test]
-	fn check_weight() {
-		let p = base_tx_in_sel();
-		let q = Balance::from(ExtrinsicBaseWeight::get());
-
-		assert_eq!(p, 1_000_000_000);
-		assert_eq!(q, 85_795_000);
-		assert_eq!(p / q, 11)
-	}
-}

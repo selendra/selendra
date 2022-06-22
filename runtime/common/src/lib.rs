@@ -20,16 +20,16 @@
 
 pub mod bench;
 pub mod check_nonce;
+pub mod currency;
+pub mod evm;
 pub mod origin;
 pub mod precompile;
-pub mod evm;
 
 #[cfg(test)]
 mod mock;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-
 
 use sp_runtime::Perbill;
 use sp_std::prelude::*;
@@ -46,7 +46,6 @@ use frame_support::{
 };
 use frame_system::limits;
 
-
 pub use module_support::{ExchangeRate, PrecompileCallerFilter, Price, Rate, Ratio};
 pub use precompile::{
 	AllPrecompiles, DEXPrecompile, EVMPrecompile, MultiCurrencyPrecompile, NFTPrecompile,
@@ -59,10 +58,12 @@ pub use primitives::{
 use primitives::{Balance, CurrencyId};
 
 pub use check_nonce::CheckNonce;
-pub use origin::*;
+pub use currency::*;
 pub use evm::*;
+pub use origin::*;
 
 pub type TimeStampedPrice = orml_oracle::TimestampedValue<Price, primitives::Moment>;
+
 // TODO: somehow estimate this value. Start from a conservative value.
 pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
 /// The ratio that `Normal` extrinsics should occupy. Start from a conservative value.
@@ -106,23 +107,6 @@ parameter_types! {
 		})
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
-}
-
-// TODO: make those const fn
-pub fn dollar(currency_id: CurrencyId) -> Balance {
-	10u128.saturating_pow(currency_id.decimals().expect("Not support Non-Token decimals").into())
-}
-
-pub fn cent(currency_id: CurrencyId) -> Balance {
-	dollar(currency_id) / 100
-}
-
-pub fn millicent(currency_id: CurrencyId) -> Balance {
-	cent(currency_id) / 1000
-}
-
-pub fn microcent(currency_id: CurrencyId) -> Balance {
-	millicent(currency_id) / 1000
 }
 
 /// The type used to represent the kinds of proxying allowed.

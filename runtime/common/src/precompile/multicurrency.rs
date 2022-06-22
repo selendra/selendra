@@ -292,286 +292,286 @@ where
 	}
 }
 
-// #[cfg(test)]
-// mod tests {
-// 	use super::*;
+#[cfg(test)]
+mod tests {
+	use super::*;
 
-// 	use crate::precompile::mock::{
-// 		sel_evm_address, alice, ausd_evm_address, bob, erc20_address_not_exists, lp_sel_ausd_evm_address,
-// new_test_ext, 		Balances, Test,
-// 	};
-// 	use frame_support::assert_noop;
-// 	use hex_literal::hex;
+	use crate::precompile::mock::{
+		alice, ausd_evm_address, bob, erc20_address_not_exists, lp_sel_ausd_evm_address,
+		new_test_ext, sel_evm_address, Balances, Test,
+	};
+	use frame_support::assert_noop;
+	use hex_literal::hex;
 
-// 	type MultiCurrencyPrecompile = crate::MultiCurrencyPrecompile<Test>;
+	type MultiCurrencyPrecompile = crate::MultiCurrencyPrecompile<Test>;
 
-// 	#[test]
-// 	fn handles_invalid_currency_id() {
-// 		new_test_ext().execute_with(|| {
-// 			// call with not exists erc20
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: erc20_address_not_exists(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn handles_invalid_currency_id() {
+		new_test_ext().execute_with(|| {
+			// call with not exists erc20
+			let context = Context {
+				address: Default::default(),
+				caller: erc20_address_not_exists(),
+				apparent_value: Default::default(),
+			};
 
-// 			// symbol() -> 0x95d89b41
-// 			let input = hex! {"
-// 				95d89b41
-// 			"};
+			// symbol() -> 0x95d89b41
+			let input = hex! {"
+				95d89b41
+			"};
 
-// 			assert_noop!(
-// 				MultiCurrencyPrecompile::execute(&input, Some(10_000), &context, false),
-// 				PrecompileFailure::Revert {
-// 					exit_status: ExitRevert::Reverted,
-// 					output: "invalid currency id".into(),
-// 					cost: target_gas_limit(Some(10_000)).unwrap(),
-// 				}
-// 			);
-// 		});
-// 	}
+			assert_noop!(
+				MultiCurrencyPrecompile::execute(&input, Some(10_000), &context, false),
+				PrecompileFailure::Revert {
+					exit_status: ExitRevert::Reverted,
+					output: "invalid currency id".into(),
+					cost: target_gas_limit(Some(10_000)).unwrap(),
+				}
+			);
+		});
+	}
 
-// 	#[test]
-// 	fn name_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let mut context = Context {
-// 				address: Default::default(),
-// 				caller: Default::default(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn name_works() {
+		new_test_ext().execute_with(|| {
+			let mut context = Context {
+				address: Default::default(),
+				caller: Default::default(),
+				apparent_value: Default::default(),
+			};
 
-// 			// name() -> 0x06fdde03
-// 			let input = hex! {"
-// 				06fdde03
-// 			"};
+			// name() -> 0x06fdde03
+			let input = hex! {"
+				06fdde03
+			"};
 
-// 			// Token
-// 			context.caller = sel_evm_address();
+			// Token
+			context.caller = sel_evm_address();
 
-// 			let expected_output = hex! {"
-// 				0000000000000000000000000000000000000000000000000000000000000020
-// 				0000000000000000000000000000000000000000000000000000000000000005
-// 				4163616c61000000000000000000000000000000000000000000000000000000
-// 			"};
+			let expected_output = hex! {"
+				0000000000000000000000000000000000000000000000000000000000000020
+				0000000000000000000000000000000000000000000000000000000000000008
+				53656c656e647261000000000000000000000000000000000000000000000000
+			"};
 
-// 			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
+			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
 
-// 			// DexShare
-// 			context.caller = lp_sel_ausd_evm_address();
+			// // DexShare
+			// context.caller = lp_sel_ausd_evm_address();
 
-// 			let expected_output = hex! {"
-// 				0000000000000000000000000000000000000000000000000000000000000020
-// 				0000000000000000000000000000000000000000000000000000000000000017
-// 				4c50204163616c61202d204163616c6120446f6c6c6172000000000000000000
-// 			"};
+			// let expected_output = hex! {"
+			// 	0000000000000000000000000000000000000000000000000000000000000020
+			// 	0000000000000000000000000000000000000000000000000000000000000017
+			// 	4c50204163616c61202d204163616c6120446f6c6c6172000000000000000000
+			// "};
 
-// 			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
-// 		});
-// 	}
+			// let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
+			// assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			// assert_eq!(resp.output, expected_output.to_vec());
+		});
+	}
 
-// 	#[test]
-// 	fn symbol_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let mut context = Context {
-// 				address: Default::default(),
-// 				caller: Default::default(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn symbol_works() {
+		new_test_ext().execute_with(|| {
+			let mut context = Context {
+				address: Default::default(),
+				caller: Default::default(),
+				apparent_value: Default::default(),
+			};
 
-// 			// symbol() -> 0x95d89b41
-// 			let input = hex! {"
-// 				95d89b41
-// 			"};
+			// symbol() -> 0x95d89b41
+			let input = hex! {"
+				95d89b41
+			"};
 
-// 			// Token
-// 			context.caller = sel_evm_address();
+			// Token
+			context.caller = sel_evm_address();
 
-// 			let expected_output = hex! {"
-// 				0000000000000000000000000000000000000000000000000000000000000020
-// 				0000000000000000000000000000000000000000000000000000000000000003
-// 				4143410000000000000000000000000000000000000000000000000000000000
-// 			"};
+			let expected_output = hex! {"
+				0000000000000000000000000000000000000000000000000000000000000020
+				0000000000000000000000000000000000000000000000000000000000000003
+				53454c0000000000000000000000000000000000000000000000000000000000
+			"};
 
-// 			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
+			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
 
-// 			// DexShare
-// 			context.caller = lp_sel_ausd_evm_address();
+			// DexShare
+			context.caller = lp_sel_ausd_evm_address();
 
-// 			let expected_output = hex! {"
-// 				0000000000000000000000000000000000000000000000000000000000000020
-// 				000000000000000000000000000000000000000000000000000000000000000b
-// 				4c505f4143415f41555344000000000000000000000000000000000000000000
-// 			"};
+			let expected_output = hex! {"
+				0000000000000000000000000000000000000000000000000000000000000020
+				000000000000000000000000000000000000000000000000000000000000000b
+				4c505f53454c5f53555344000000000000000000000000000000000000000000
+			"};
 
-// 			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
-// 		});
-// 	}
+			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
+		});
+	}
 
-// 	#[test]
-// 	fn decimals_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let mut context = Context {
-// 				address: Default::default(),
-// 				caller: Default::default(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn decimals_works() {
+		new_test_ext().execute_with(|| {
+			let mut context = Context {
+				address: Default::default(),
+				caller: Default::default(),
+				apparent_value: Default::default(),
+			};
 
-// 			// decimals() -> 0x313ce567
-// 			let input = hex! {"
-// 				313ce567
-// 			"};
+			// decimals() -> 0x313ce567
+			let input = hex! {"
+				313ce567
+			"};
 
-// 			// Token
-// 			context.caller = sel_evm_address();
+			// Token
+			context.caller = sel_evm_address();
 
-// 			let expected_output = hex! {"
-// 				00000000000000000000000000000000 0000000000000000000000000000000c
-// 			"};
+			let expected_output = hex! {"
+				00000000000000000000000000000000 0000000000000000000000000000000c
+			"};
 
-// 			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
+			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
 
-// 			// DexShare
-// 			context.caller = lp_sel_ausd_evm_address();
+			// DexShare
+			context.caller = lp_sel_ausd_evm_address();
 
-// 			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
-// 		});
-// 	}
+			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
+		});
+	}
 
-// 	#[test]
-// 	fn total_supply_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let mut context = Context {
-// 				address: Default::default(),
-// 				caller: Default::default(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn total_supply_works() {
+		new_test_ext().execute_with(|| {
+			let mut context = Context {
+				address: Default::default(),
+				caller: Default::default(),
+				apparent_value: Default::default(),
+			};
 
-// 			// totalSupply() -> 0x18160ddd
-// 			let input = hex! {"
-// 				18160ddd
-// 			"};
+			// totalSupply() -> 0x18160ddd
+			let input = hex! {"
+				18160ddd
+			"};
 
-// 			// Token
-// 			context.caller = ausd_evm_address();
+			// Token
+			context.caller = ausd_evm_address();
 
-// 			// 2_000_000_000
-// 			let expected_output = hex! {"
-// 				00000000000000000000000000000000 00000000000000000000000077359400
-// 			"};
+			// 2_000_000_000
+			let expected_output = hex! {"
+				00000000000000000000000000000000 00000000000000000000000077359400
+			"};
 
-// 			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
+			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
 
-// 			// DexShare
-// 			context.caller = lp_sel_ausd_evm_address();
+			// DexShare
+			context.caller = lp_sel_ausd_evm_address();
 
-// 			let expected_output = hex! {"
-// 				00000000000000000000000000000000 00000000000000000000000000000000
-// 			"};
+			let expected_output = hex! {"
+				00000000000000000000000000000000 00000000000000000000000000000000
+			"};
 
-// 			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
-// 		});
-// 	}
+			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
+		});
+	}
 
-// 	#[test]
-// 	fn balance_of_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let mut context = Context {
-// 				address: Default::default(),
-// 				caller: Default::default(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn balance_of_works() {
+		new_test_ext().execute_with(|| {
+			let mut context = Context {
+				address: Default::default(),
+				caller: Default::default(),
+				apparent_value: Default::default(),
+			};
 
-// 			// balanceOf(address) -> 0x70a08231
-// 			// account
-// 			let input = hex! {"
-// 				70a08231
-// 				000000000000000000000000 1000000000000000000000000000000000000001
-// 			"};
+			// balanceOf(address) -> 0x70a08231
+			// account
+			let input = hex! {"
+				70a08231
+				000000000000000000000000 1000000000000000000000000000000000000001
+			"};
 
-// 			// Token
-// 			context.caller = sel_evm_address();
+			// Token
+			context.caller = sel_evm_address();
 
-// 			// INITIAL_BALANCE = 1_000_000_000_000
-// 			let expected_output = hex! {"
-// 				00000000000000000000000000000000 0000000000000000000000e8d4a51000
-// 			"};
+			// INITIAL_BALANCE = 1_000_000_000_000
+			let expected_output = hex! {"
+				00000000000000000000000000000000 0000000000000000000000e8d4a51000
+			"};
 
-// 			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
+			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
 
-// 			// DexShare
-// 			context.caller = lp_sel_ausd_evm_address();
+			// DexShare
+			context.caller = lp_sel_ausd_evm_address();
 
-// 			let expected_output = hex! {"
-// 				00000000000000000000000000000000 00000000000000000000000000000000
-// 			"};
+			let expected_output = hex! {"
+				00000000000000000000000000000000 00000000000000000000000000000000
+			"};
 
-// 			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
-// 		})
-// 	}
+			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
+		})
+	}
 
-// 	#[test]
-// 	fn transfer_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let mut context = Context {
-// 				address: Default::default(),
-// 				caller: Default::default(),
-// 				apparent_value: Default::default(),
-// 			};
+	#[test]
+	fn transfer_works() {
+		new_test_ext().execute_with(|| {
+			let mut context = Context {
+				address: Default::default(),
+				caller: Default::default(),
+				apparent_value: Default::default(),
+			};
 
-// 			// transfer(address,address,uint256) -> 0xbeabacc8
-// 			// from
-// 			// to
-// 			// amount
-// 			let input = hex! {"
-// 				beabacc8
-// 				000000000000000000000000 1000000000000000000000000000000000000001
-// 				000000000000000000000000 1000000000000000000000000000000000000002
-// 				00000000000000000000000000000000 00000000000000000000000000000001
-// 			"};
+			// transfer(address,address,uint256) -> 0xbeabacc8
+			// from
+			// to
+			// amount
+			let input = hex! {"
+				beabacc8
+				000000000000000000000000 1000000000000000000000000000000000000001
+				000000000000000000000000 1000000000000000000000000000000000000002
+				00000000000000000000000000000000 00000000000000000000000000000001
+			"};
 
-// 			let from_balance = Balances::free_balance(alice());
-// 			let to_balance = Balances::free_balance(bob());
+			let from_balance = Balances::free_balance(alice());
+			let to_balance = Balances::free_balance(bob());
 
-// 			// Token
-// 			context.caller = sel_evm_address();
+			// Token
+			context.caller = sel_evm_address();
 
-// 			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, [0u8; 0].to_vec());
+			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, [0u8; 0].to_vec());
 
-// 			assert_eq!(Balances::free_balance(alice()), from_balance - 1);
-// 			assert_eq!(Balances::free_balance(bob()), to_balance + 1);
+			assert_eq!(Balances::free_balance(alice()), from_balance - 1);
+			assert_eq!(Balances::free_balance(bob()), to_balance + 1);
 
-// 			// DexShare
-// 			context.caller = lp_sel_ausd_evm_address();
-// 			assert_noop!(
-// 				MultiCurrencyPrecompile::execute(&input, Some(100_000), &context, false),
-// 				PrecompileFailure::Revert {
-// 					exit_status: ExitRevert::Reverted,
-// 					output: "BalanceTooLow".into(),
-// 					cost: target_gas_limit(Some(100_000)).unwrap(),
-// 				}
-// 			);
-// 		})
-// 	}
-// }
+			// DexShare
+			context.caller = lp_sel_ausd_evm_address();
+			assert_noop!(
+				MultiCurrencyPrecompile::execute(&input, Some(100_000), &context, false),
+				PrecompileFailure::Revert {
+					exit_status: ExitRevert::Reverted,
+					output: "BalanceTooLow".into(),
+					cost: target_gas_limit(Some(100_000)).unwrap(),
+				}
+			);
+		})
+	}
+}

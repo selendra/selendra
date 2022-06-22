@@ -513,318 +513,320 @@ where
 	}
 }
 
-// #[cfg(test)]
-// mod tests {
-// 	use super::*;
+#[cfg(test)]
+mod tests {
+	use super::*;
 
-// 	use crate::precompile::mock::{alice_evm_addr, new_test_ext, DexModule, Origin, Test, ALICE, SUSD,
-// RENBTC}; 	use frame_support::{assert_noop, assert_ok};
-// 	use hex_literal::hex;
-// 	use module_evm::ExitRevert;
+	use crate::precompile::mock::{
+		alice_evm_addr, new_test_ext, DexModule, Origin, Test, ALICE, RENBTC, SUSD,
+	};
+	use frame_support::{assert_noop, assert_ok};
+	use hex_literal::hex;
+	use module_evm::ExitRevert;
 
-// 	type DEXPrecompile = crate::DEXPrecompile<Test>;
+	type DEXPrecompile = crate::DEXPrecompile<Test>;
 
-// 	#[test]
-// 	fn get_liquidity_works() {
-// 		new_test_ext().execute_with(|| {
-// 			// enable RENBTC/SUSD
-// 			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
+	#[test]
+	fn get_liquidity_works() {
+		new_test_ext().execute_with(|| {
+			// enable RENBTC/SUSD
+			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
 
-// 			assert_ok!(DexModule::add_liquidity(
-// 				Origin::signed(ALICE),
-// 				RENBTC,
-// 				SUSD,
-// 				1_000,
-// 				1_000_000,
-// 				0,
-// 				true
-// 			));
+			assert_ok!(DexModule::add_liquidity(
+				Origin::signed(ALICE),
+				RENBTC,
+				SUSD,
+				1_000,
+				1_000_000,
+				0,
+				true
+			));
 
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			// getLiquidityPool(address,address) -> 0xf4f31ede
-// 			// RENBTC
-// 			// SUSD
-// 			let input = hex! {"
-// 				f4f31ede
-// 				000000000000000000000000 0000000000000000000100000000000000000014
-// 				000000000000000000000000 0000000000000000000100000000000000000001
-// 			"};
+			// getLiquidityPool(address,address) -> 0xf4f31ede
+			// RENBTC
+			// SUSD
+			let input = hex! {"
+				f4f31ede
+				000000000000000000000000 0000000000000000000100000000000000000014
+				000000000000000000000000 0000000000000000000100000000000000000001
+			"};
 
-// 			// 1_000
-// 			// 1_000_000
-// 			let expected_output = hex! {"
-// 				00000000000000000000000000000000 000000000000000000000000000003e8
-// 				00000000000000000000000000000000 000000000000000000000000000f4240
-// 			"};
+			// 1_000
+			// 1_000_000
+			let expected_output = hex! {"
+				00000000000000000000000000000000 000000000000000000000000000003e8
+				00000000000000000000000000000000 000000000000000000000000000f4240
+			"};
 
-// 			let resp = DEXPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
-// 		});
-// 	}
+			let resp = DEXPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
+		});
+	}
 
-// 	#[test]
-// 	fn get_liquidity_token_address_works() {
-// 		new_test_ext().execute_with(|| {
-// 			// enable RENBTC/SUSD
-// 			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
+	#[test]
+	fn get_liquidity_token_address_works() {
+		new_test_ext().execute_with(|| {
+			// enable RENBTC/SUSD
+			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
 
-// 			assert_ok!(DexModule::add_liquidity(
-// 				Origin::signed(ALICE),
-// 				RENBTC,
-// 				SUSD,
-// 				1_000,
-// 				1_000_000,
-// 				0,
-// 				true
-// 			));
+			assert_ok!(DexModule::add_liquidity(
+				Origin::signed(ALICE),
+				RENBTC,
+				SUSD,
+				1_000,
+				1_000_000,
+				0,
+				true
+			));
 
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			// getLiquidityTokenAddress(address,address) -> 0xffd73c4a
-// 			// RENBTC
-// 			// SUSD
-// 			let input = hex! {"
-// 				ffd73c4a
-// 				000000000000000000000000 0000000000000000000100000000000000000014
-// 				000000000000000000000000 0000000000000000000100000000000000000001
-// 			"};
+			// getLiquidityTokenAddress(address,address) -> 0xffd73c4a
+			// RENBTC
+			// SUSD
+			let input = hex! {"
+				ffd73c4a
+				000000000000000000000000 0000000000000000000100000000000000000014
+				000000000000000000000000 0000000000000000000100000000000000000001
+			"};
 
-// 			// LP_RENBTC_SUSD
-// 			let expected_output = hex! {"
-// 				000000000000000000000000 0000000000000000000200000000010000000014
-// 			"};
+			// LP_RENBTC_SUSD
+			let expected_output = hex! {"
+				000000000000000000000000 0000000000000000000200000000010000000014
+			"};
 
-// 			let resp = DEXPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
+			let resp = DEXPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
 
-// 			// getLiquidityTokenAddress(address,address) -> 0xffd73c4a
-// 			// RENBTC
-// 			// unkonwn token
-// 			let input = hex! {"
-// 				ffd73c4a
-// 				000000000000000000000000 0000000000000000000100000000000000000014
-// 				000000000000000000000000 00000000000000000001000000000000000000ff
-// 			"};
+			// getLiquidityTokenAddress(address,address) -> 0xffd73c4a
+			// RENBTC
+			// unkonwn token
+			let input = hex! {"
+				ffd73c4a
+				000000000000000000000000 0000000000000000000100000000000000000014
+				000000000000000000000000 00000000000000000001000000000000000000ff
+			"};
 
-// 			assert_noop!(
-// 				DEXPrecompile::execute(&input, Some(10_000), &context, false),
-// 				PrecompileFailure::Revert {
-// 					exit_status: ExitRevert::Reverted,
-// 					output: "invalid currency id".into(),
-// 					cost: target_gas_limit(Some(10_000)).unwrap(),
-// 				}
-// 			);
-// 		});
-// 	}
+			assert_noop!(
+				DEXPrecompile::execute(&input, Some(10_000), &context, false),
+				PrecompileFailure::Revert {
+					exit_status: ExitRevert::Reverted,
+					output: "invalid currency id".into(),
+					cost: target_gas_limit(Some(10_000)).unwrap(),
+				}
+			);
+		});
+	}
 
-// 	#[test]
-// 	fn get_swap_target_amount_works() {
-// 		new_test_ext().execute_with(|| {
-// 			// enable RENBTC/SUSD
-// 			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
+	#[test]
+	fn get_swap_target_amount_works() {
+		new_test_ext().execute_with(|| {
+			// enable RENBTC/SUSD
+			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
 
-// 			assert_ok!(DexModule::add_liquidity(
-// 				Origin::signed(ALICE),
-// 				RENBTC,
-// 				SUSD,
-// 				1_000,
-// 				1_000_000,
-// 				0,
-// 				true
-// 			));
+			assert_ok!(DexModule::add_liquidity(
+				Origin::signed(ALICE),
+				RENBTC,
+				SUSD,
+				1_000,
+				1_000_000,
+				0,
+				true
+			));
 
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			// getSwapTargetAmount(address[],uint256) -> 0x4d60beb1
-// 			// offset
-// 			// supply_amount
-// 			// path_len
-// 			// RENBTC
-// 			// SUSD
-// 			let input = hex! {"
-// 				4d60beb1
-// 				00000000000000000000000000000000 00000000000000000000000000000000
-// 				00000000000000000000000000000000 00000000000000000000000000000001
-// 				00000000000000000000000000000000000000000000000000000000 00000002
-// 				000000000000000000000000 0000000000000000000100000000000000000014
-// 				000000000000000000000000 0000000000000000000100000000000000000001
-// 			"};
+			// getSwapTargetAmount(address[],uint256) -> 0x4d60beb1
+			// offset
+			// supply_amount
+			// path_len
+			// RENBTC
+			// SUSD
+			let input = hex! {"
+				4d60beb1
+				00000000000000000000000000000000 00000000000000000000000000000000
+				00000000000000000000000000000000 00000000000000000000000000000001
+				00000000000000000000000000000000000000000000000000000000 00000002
+				000000000000000000000000 0000000000000000000100000000000000000014
+				000000000000000000000000 0000000000000000000100000000000000000001
+			"};
 
-// 			// 989
-// 			let expected_output = hex! {"
-// 				00000000000000000000000000000000 000000000000000000000000000003dd
-// 			"};
+			// 989
+			let expected_output = hex! {"
+				00000000000000000000000000000000 000000000000000000000000000003dd
+			"};
 
-// 			let resp = DEXPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
-// 		});
-// 	}
+			let resp = DEXPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
+		});
+	}
 
-// 	#[test]
-// 	fn get_swap_supply_amount_works() {
-// 		new_test_ext().execute_with(|| {
-// 			// enable RENBTC/SUSD
-// 			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
+	#[test]
+	fn get_swap_supply_amount_works() {
+		new_test_ext().execute_with(|| {
+			// enable RENBTC/SUSD
+			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
 
-// 			assert_ok!(DexModule::add_liquidity(
-// 				Origin::signed(ALICE),
-// 				RENBTC,
-// 				SUSD,
-// 				1_000,
-// 				1_000_000,
-// 				0,
-// 				true
-// 			));
+			assert_ok!(DexModule::add_liquidity(
+				Origin::signed(ALICE),
+				RENBTC,
+				SUSD,
+				1_000,
+				1_000_000,
+				0,
+				true
+			));
 
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			// getSwapSupplyAmount(address[],uint256) -> 0xdbcd19a2
-// 			// offset
-// 			// target_amount
-// 			// path_len
-// 			// RENBTC
-// 			// SUSD
-// 			let input = hex! {"
-// 				dbcd19a2
-// 				00000000000000000000000000000000 00000000000000000000000000000000
-// 				00000000000000000000000000000000 00000000000000000000000000000001
-// 				00000000000000000000000000000000000000000000000000000000 00000002
-// 				000000000000000000000000 0000000000000000000100000000000000000014
-// 				000000000000000000000000 0000000000000000000100000000000000000001
-// 			"};
+			// getSwapSupplyAmount(address[],uint256) -> 0xdbcd19a2
+			// offset
+			// target_amount
+			// path_len
+			// RENBTC
+			// SUSD
+			let input = hex! {"
+				dbcd19a2
+				00000000000000000000000000000000 00000000000000000000000000000000
+				00000000000000000000000000000000 00000000000000000000000000000001
+				00000000000000000000000000000000000000000000000000000000 00000002
+				000000000000000000000000 0000000000000000000100000000000000000014
+				000000000000000000000000 0000000000000000000100000000000000000001
+			"};
 
-// 			// 1
-// 			let expected_output = hex! {"
-// 				00000000000000000000000000000000 00000000000000000000000000000001
-// 			"};
+			// 1
+			let expected_output = hex! {"
+				00000000000000000000000000000000 00000000000000000000000000000001
+			"};
 
-// 			let resp = DEXPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
-// 		});
-// 	}
+			let resp = DEXPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
+		});
+	}
 
-// 	#[test]
-// 	fn swap_with_exact_supply_works() {
-// 		new_test_ext().execute_with(|| {
-// 			// enable RENBTC/SUSD
-// 			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
+	#[test]
+	fn swap_with_exact_supply_works() {
+		new_test_ext().execute_with(|| {
+			// enable RENBTC/SUSD
+			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
 
-// 			assert_ok!(DexModule::add_liquidity(
-// 				Origin::signed(ALICE),
-// 				RENBTC,
-// 				SUSD,
-// 				1_000,
-// 				1_000_000,
-// 				0,
-// 				true
-// 			));
+			assert_ok!(DexModule::add_liquidity(
+				Origin::signed(ALICE),
+				RENBTC,
+				SUSD,
+				1_000,
+				1_000_000,
+				0,
+				true
+			));
 
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			// swapWithExactSupply(address,address[],uint256,uint256) -> 0x579baa18
-// 			// who
-// 			// offset
-// 			// supply_amount
-// 			// min_target_amount
-// 			// path_len
-// 			// RENBTC
-// 			// SUSD
-// 			let input = hex! {"
-// 				579baa18
-// 				000000000000000000000000 1000000000000000000000000000000000000001
-// 				00000000000000000000000000000000 00000000000000000000000000000000
-// 				00000000000000000000000000000000 00000000000000000000000000000001
-// 				00000000000000000000000000000000 00000000000000000000000000000000
-// 				00000000000000000000000000000000000000000000000000000000 00000002
-// 				000000000000000000000000 0000000000000000000100000000000000000014
-// 				000000000000000000000000 0000000000000000000100000000000000000001
-// 			"};
+			// swapWithExactSupply(address,address[],uint256,uint256) -> 0x579baa18
+			// who
+			// offset
+			// supply_amount
+			// min_target_amount
+			// path_len
+			// RENBTC
+			// SUSD
+			let input = hex! {"
+				579baa18
+				000000000000000000000000 1000000000000000000000000000000000000001
+				00000000000000000000000000000000 00000000000000000000000000000000
+				00000000000000000000000000000000 00000000000000000000000000000001
+				00000000000000000000000000000000 00000000000000000000000000000000
+				00000000000000000000000000000000000000000000000000000000 00000002
+				000000000000000000000000 0000000000000000000100000000000000000014
+				000000000000000000000000 0000000000000000000100000000000000000001
+			"};
 
-// 			// 989
-// 			let expected_output = hex! {"
-// 				00000000000000000000000000000000 000000000000000000000000000003dd
-// 			"};
+			// 989
+			let expected_output = hex! {"
+				00000000000000000000000000000000 000000000000000000000000000003dd
+			"};
 
-// 			let resp = DEXPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
-// 		});
-// 	}
+			let resp = DEXPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
+		});
+	}
 
-// 	#[test]
-// 	fn dex_precompile_swap_with_exact_target_should_work() {
-// 		new_test_ext().execute_with(|| {
-// 			// enable RENBTC/SUSD
-// 			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
+	#[test]
+	fn dex_precompile_swap_with_exact_target_should_work() {
+		new_test_ext().execute_with(|| {
+			// enable RENBTC/SUSD
+			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
 
-// 			assert_ok!(DexModule::add_liquidity(
-// 				Origin::signed(ALICE),
-// 				RENBTC,
-// 				SUSD,
-// 				1_000,
-// 				1_000_000,
-// 				0,
-// 				true
-// 			));
+			assert_ok!(DexModule::add_liquidity(
+				Origin::signed(ALICE),
+				RENBTC,
+				SUSD,
+				1_000,
+				1_000_000,
+				0,
+				true
+			));
 
-// 			let context = Context {
-// 				address: Default::default(),
-// 				caller: alice_evm_addr(),
-// 				apparent_value: Default::default(),
-// 			};
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-// 			// swapWithExactSupply(address,address[],uint256,uint256) -> 0x9782ac81
-// 			// who
-// 			// offset
-// 			// target_amount
-// 			// max_supply_amount
-// 			// path_len
-// 			// RENBTC
-// 			// SUSD
-// 			let input = hex! {"
-// 				9782ac81
-// 				000000000000000000000000 1000000000000000000000000000000000000001
-// 				00000000000000000000000000000000 00000000000000000000000000000000
-// 				00000000000000000000000000000000 00000000000000000000000000000001
-// 				00000000000000000000000000000000 00000000000000000000000000000001
-// 				00000000000000000000000000000000000000000000000000000000 00000002
-// 				000000000000000000000000 0000000000000000000100000000000000000014
-// 				000000000000000000000000 0000000000000000000100000000000000000001
-// 			"};
+			// swapWithExactSupply(address,address[],uint256,uint256) -> 0x9782ac81
+			// who
+			// offset
+			// target_amount
+			// max_supply_amount
+			// path_len
+			// RENBTC
+			// SUSD
+			let input = hex! {"
+				9782ac81
+				000000000000000000000000 1000000000000000000000000000000000000001
+				00000000000000000000000000000000 00000000000000000000000000000000
+				00000000000000000000000000000000 00000000000000000000000000000001
+				00000000000000000000000000000000 00000000000000000000000000000001
+				00000000000000000000000000000000000000000000000000000000 00000002
+				000000000000000000000000 0000000000000000000100000000000000000014
+				000000000000000000000000 0000000000000000000100000000000000000001
+			"};
 
-// 			// 1
-// 			let expected_output = hex! {"
-// 				00000000000000000000000000000000 00000000000000000000000000000001
-// 			"};
+			// 1
+			let expected_output = hex! {"
+				00000000000000000000000000000000 00000000000000000000000000000001
+			"};
 
-// 			let resp = DEXPrecompile::execute(&input, None, &context, false).unwrap();
-// 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
-// 			assert_eq!(resp.output, expected_output.to_vec());
-// 		});
-// 	}
-// }
+			let resp = DEXPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
+		});
+	}
+}
