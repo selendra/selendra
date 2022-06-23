@@ -19,7 +19,7 @@
 pub mod selendra;
 
 use sc_chain_spec::ChainSpecExtension;
-use selendra_primitives::{AccountId, AccountPublic, Balance, currency::TokenInfo};
+use selendra_primitives::{currency::TokenInfo, AccountId, AccountPublic, Balance};
 use selendra_runtime::{Block, SessionKeys};
 use serde::{Deserialize, Serialize};
 
