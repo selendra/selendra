@@ -115,8 +115,8 @@ pub use runtime_common::{
 /// This runtime version.
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("selendra"),
-	impl_name: create_runtime_str!("selendra"),
+	spec_name: create_runtime_str!("cardamom"),
+	impl_name: create_runtime_str!("cardamom"),
 	authoring_version: 1,
 	spec_version: 101,
 	impl_version: 0,
