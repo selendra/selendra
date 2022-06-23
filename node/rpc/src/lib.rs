@@ -39,7 +39,6 @@ use sp_keystore::SyncCryptoStorePtr;
 
 use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 use sc_consensus_babe_rpc::{Babe, BabeApiServer};
-use sc_consensus_manual_seal::rpc::{EngineCommand, ManualSeal, ManualSealApiServer};
 use sc_finality_grandpa_rpc::{Grandpa, GrandpaApiServer};
 use sc_rpc::dev::{Dev, DevApiServer};
 use sc_sync_state_rpc::{SyncState, SyncStateApiServer};
@@ -96,8 +95,6 @@ pub struct FullDeps<C, P, SC, B> {
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
 	pub grandpa: GrandpaDeps<B>,
-	/// Manual seal command sink
-	pub command_sink: Option<futures::channel::mpsc::Sender<EngineCommand<Hash>>>,
 }
 
 /// Instantiate all Full RPC extensions.
@@ -140,7 +137,6 @@ where
 		deny_unsafe,
 		babe,
 		grandpa,
-		command_sink,
 	} = deps;
 
 	let BabeDeps { keystore, babe_config, shared_epoch_changes } = babe;
@@ -192,14 +188,6 @@ where
 	module.merge(Tokens::new(client.clone()).into_rpc())?;
 	module.merge(EVM::new(client.clone(), deny_unsafe).into_rpc())?;
 	module.merge(Dev::new(client, deny_unsafe).into_rpc())?;
-
-	if let Some(command_sink) = command_sink {
-		module.merge(
-			// We provide the rpc handler with the sending end of the channel to allow the rpc
-			// send EngineCommands to the background block authorship task.
-			ManualSeal::new(command_sink).into_rpc(),
-		)?;
-	}
 
 	Ok(module)
 }
