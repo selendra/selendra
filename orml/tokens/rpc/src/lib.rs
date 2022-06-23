@@ -20,7 +20,11 @@ pub use orml_tokens_rpc_runtime_api::TokensApi as TokensRuntimeApi;
 #[rpc(client, server)]
 pub trait TokensApi<BlockHash, CurrencyId, Balance> {
 	#[method(name = "tokens_queryExistentialDeposit")]
-	fn query_existential_deposit(&self, currency_id: CurrencyId, at: Option<BlockHash>) -> RpcResult<NumberOrHex>;
+	fn query_existential_deposit(
+		&self,
+		currency_id: CurrencyId,
+		at: Option<BlockHash>,
+	) -> RpcResult<NumberOrHex>;
 }
 
 /// Provides RPC methods to query existential deposit of currency.
@@ -33,10 +37,7 @@ pub struct Tokens<C, P> {
 impl<C, P> Tokens<C, P> {
 	/// Creates a new instance of the `Tokens` helper.
 	pub fn new(client: Arc<C>) -> Self {
-		Self {
-			client,
-			_marker: Default::default(),
-		}
+		Self { client, _marker: Default::default() }
 	}
 }
 
@@ -55,7 +56,8 @@ impl From<Error> for i32 {
 }
 
 #[async_trait]
-impl<C, Block, CurrencyId, Balance> TokensApiServer<<Block as BlockT>::Hash, CurrencyId, Balance> for Tokens<C, Block>
+impl<C, Block, CurrencyId, Balance> TokensApiServer<<Block as BlockT>::Hash, CurrencyId, Balance>
+	for Tokens<C, Block>
 where
 	Block: BlockT,
 	C: ProvideRuntimeApi<Block> + HeaderBackend<Block> + Send + Sync + 'static,
