@@ -83,7 +83,7 @@ pub fn local_testnet_config() -> ChainSpec {
 		"Local Testnet",
 		"local_testnet",
 		ChainType::Local,
-		local_testnet_genesis,
+		local_selendra_genesis,
 		vec![],
 		None,
 		None,
@@ -116,7 +116,7 @@ pub fn staging_config() -> ChainSpec {
 fn development_config_genesis() -> GenesisConfig {
 	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
 
-	testnet_genesis(
+	selendra_genesis(
 		wasm_binary,
 		vec![authority_keys_from_seed("Alice")],
 		get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -124,9 +124,9 @@ fn development_config_genesis() -> GenesisConfig {
 	)
 }
 
-fn local_testnet_genesis() -> GenesisConfig {
+fn local_selendra_genesis() -> GenesisConfig {
 	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
-	testnet_genesis(
+	selendra_genesis(
 		wasm_binary,
 		vec![
 			authority_keys_from_seed("Alice"),
@@ -232,11 +232,11 @@ fn staging_config_genesis() -> GenesisConfig {
 	let endowed_accounts: Vec<AccountId> = vec![root_key.clone()];
 	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
 
-	testnet_genesis(wasm_binary, initial_authorities, root_key, Some(endowed_accounts))
+	selendra_genesis(wasm_binary, initial_authorities, root_key, Some(endowed_accounts))
 }
 
 /// Helper function to create GenesisConfig for testing
-pub fn testnet_genesis(
+pub fn selendra_genesis(
 	wasm_binary: &[u8],
 	initial_authorities: Vec<(
 		AccountId,
