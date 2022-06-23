@@ -15,9 +15,18 @@ pub use orml_oracle_rpc_runtime_api::OracleApi as OracleRuntimeApi;
 #[rpc(client, server)]
 pub trait OracleApi<BlockHash, ProviderId, Key, Value> {
 	#[method(name = "oracle_getValue")]
-	fn get_value(&self, provider_id: ProviderId, key: Key, at: Option<BlockHash>) -> RpcResult<Option<Value>>;
+	fn get_value(
+		&self,
+		provider_id: ProviderId,
+		key: Key,
+		at: Option<BlockHash>,
+	) -> RpcResult<Option<Value>>;
 	#[method(name = "oracle_getAllValues")]
-	fn get_all_values(&self, provider_id: ProviderId, at: Option<BlockHash>) -> RpcResult<Vec<(Key, Option<Value>)>>;
+	fn get_all_values(
+		&self,
+		provider_id: ProviderId,
+		at: Option<BlockHash>,
+	) -> RpcResult<Vec<(Key, Option<Value>)>>;
 }
 
 /// Provides RPC methods to query oracle value.
@@ -30,10 +39,7 @@ pub struct Oracle<C, B> {
 impl<C, B> Oracle<C, B> {
 	/// Creates a new instance of the `Oracle` helper.
 	pub fn new(client: Arc<C>) -> Self {
-		Self {
-			client,
-			_marker: Default::default(),
-		}
+		Self { client, _marker: Default::default() }
 	}
 }
 
@@ -50,8 +56,8 @@ impl From<Error> for i32 {
 }
 
 #[async_trait]
-impl<C, Block, ProviderId, Key, Value> OracleApiServer<<Block as BlockT>::Hash, ProviderId, Key, Value>
-	for Oracle<C, Block>
+impl<C, Block, ProviderId, Key, Value>
+	OracleApiServer<<Block as BlockT>::Hash, ProviderId, Key, Value> for Oracle<C, Block>
 where
 	Block: BlockT,
 	C: ProvideRuntimeApi<Block> + HeaderBackend<Block> + Send + Sync + 'static,

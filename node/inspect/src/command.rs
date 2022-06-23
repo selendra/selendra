@@ -18,14 +18,15 @@
 
 //! Command ran by the CLI
 
-use crate::cli::{InspectCmd, InspectSubCmd};
-use crate::Inspector;
+use crate::{
+	cli::{InspectCmd, InspectSubCmd},
+	Inspector,
+};
 use sc_cli::{CliConfiguration, ImportParams, Result, SharedParams};
 use sc_client_api::BlockBackend;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block;
-use std::str::FromStr;
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 
 impl InspectCmd {
 	/// Run the inspect command, passing the inspector.
@@ -45,15 +46,15 @@ impl InspectCmd {
 						let res = inspect.block(input).map_err(|e| format!("{}", e))?;
 						println!("{}", res);
 						Ok(())
-					}
+					},
 					InspectSubCmd::Extrinsic { input } => {
 						let input = input.parse()?;
 						let res = inspect.extrinsic(input).map_err(|e| format!("{}", e))?;
 						println!("{}", res);
 						Ok(())
-					}
+					},
 				}
-			}
+			},
 
 			Err(_) => Err("Client try_unwrap failed".into()),
 		}

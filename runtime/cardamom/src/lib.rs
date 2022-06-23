@@ -65,7 +65,6 @@ use pallet_grandpa::{
 use pallet_session::historical::{self as pallet_session_historical};
 use pallet_transaction_payment::RuntimeDispatchInfo;
 
-use frame_system::EnsureRoot;
 use frame_support::{
 	construct_runtime, log,
 	pallet_prelude::InvalidTransaction,
@@ -76,6 +75,7 @@ use frame_support::{
 	weights::{constants::RocksDbWeight, Weight},
 	RuntimeDebug,
 };
+use frame_system::EnsureRoot;
 
 use module_asset_registry::{AssetIdMaps, EvmErc20InfoMapping};
 use module_currencies::BasicCurrencyAdapter;

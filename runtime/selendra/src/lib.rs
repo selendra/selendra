@@ -39,6 +39,8 @@ mod governance_config;
 use codec::{Decode, DecodeLimit, Encode};
 use scale_info::TypeInfo;
 
+#[cfg(feature = "std")]
+pub use pallet_staking::StakerStatus;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 use sp_std::prelude::*;
@@ -65,7 +67,6 @@ use pallet_grandpa::{
 use pallet_session::historical::{self as pallet_session_historical};
 use pallet_transaction_payment::RuntimeDispatchInfo;
 
-use frame_system::EnsureRoot;
 use frame_support::{
 	construct_runtime, log,
 	pallet_prelude::InvalidTransaction,
@@ -76,6 +77,7 @@ use frame_support::{
 	weights::{constants::RocksDbWeight, Weight},
 	RuntimeDebug,
 };
+use frame_system::EnsureRoot;
 
 use module_asset_registry::{AssetIdMaps, EvmErc20InfoMapping};
 use module_currencies::BasicCurrencyAdapter;
@@ -89,7 +91,7 @@ use orml_traits::{
 	GetByKey,
 };
 
-use consensus_config::EpochDuration;
+pub use consensus_config::{EpochDuration, MaxNominations};
 pub use constants::{fee::*, time::*};
 use primitives::currency::AssetIds;
 
