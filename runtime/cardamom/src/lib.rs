@@ -54,7 +54,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BadOrigin, BlakeTwo256, Block as BlockT,
-		BlockNumberProvider, Convert, NumberFor, SaturatedConversion, StaticLookup, Zero,
+		Convert, NumberFor, SaturatedConversion, StaticLookup,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, DispatchResult, FixedPointNumber, Perbill, Percent, Permill, Perquintill,
@@ -813,23 +813,11 @@ parameter_types!(
 	pub MinimumWeightRemainInBlock: Weight = RuntimeBlockWeights::get().max_block / 50;
 );
 
-pub struct MockBlockNumberProvider;
-
-impl BlockNumberProvider for MockBlockNumberProvider {
-	type BlockNumber = u32;
-
-	fn current_block_number() -> Self::BlockNumber {
-		Zero::zero()
-	}
-}
-
 impl module_idle_scheduler::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
 	type Task = ScheduledTasks;
 	type MinimumWeightRemainInBlock = MinimumWeightRemainInBlock;
-	type RelayChainBlockNumberProvider = MockBlockNumberProvider;
-	type DisableBlockThreshold = ConstU32<6>;
 }
 
 construct_runtime!(
@@ -895,9 +883,6 @@ construct_runtime!(
 		// NOTE: OperatorMembership must be placed after Oracle or else will have race condition on initialization
 		SelendraOracle: orml_oracle::<Instance1> = 70,
 		OperatorMembershipSelendra: pallet_membership::<Instance5> = 71,
-
-		// Nft
-
 
 		// Selendra Core
 		Prices: module_prices = 90,
