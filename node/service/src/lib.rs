@@ -38,7 +38,7 @@ use sp_core::crypto::Pair;
 use sp_runtime::{generic, traits::Block as BlockT};
 use std::sync::Arc;
 
-use executor::ExecutorDispatch;
+pub use executor::ExecutorDispatch;
 
 /// The full client type definition.
 pub type FullClient =

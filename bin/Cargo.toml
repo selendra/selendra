@@ -1,0 +1,35 @@
+
+[package]
+name = "selendra"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+default-run = "selendra"
+
+[[bin]]
+name = "selendra"
+path = "src/main.rs"
+
+[dependencies]
+futures = "0.3.21"
+parity-util-mem = { version = "0.11", default-features = false, features = ["jemalloc-global"] }
+selendra-cli = { path = "../node/cli" }
+selendra-service = { path = "../node/service" }
+
+[features]
+default = []
+# runtime-benchmarks = [
+# 	"selendra-cli/runtime-benchmarks",
+# ]
+# with-cardamom-runtime = [
+# 	"selendra-service/with-cardamom-runtime",
+# 	"selendra-cli/with-cardamom-runtime",
+# ]
+# with-selendra-runtime = [
+# 	"selendra-service/with-selendra-runtime",
+# 	"selendra-cli/with-selendra-runtime",
+# ]
+# with-all-runtime = [
+# 	"selendra-service/with-all-runtime",
+# 	"selendra-cli/with-all-runtime",
+# ]

@@ -23,40 +23,43 @@ use crate::{
 	Inspector,
 };
 use sc_cli::{CliConfiguration, ImportParams, Result, SharedParams};
-use sc_client_api::BlockBackend;
-use sp_blockchain::HeaderBackend;
+use sc_executor::NativeElseWasmExecutor;
+use sc_service::{new_full_client, Configuration, NativeExecutionDispatch};
 use sp_runtime::traits::Block;
-use std::{str::FromStr, sync::Arc};
+use std::str::FromStr;
 
 impl InspectCmd {
 	/// Run the inspect command, passing the inspector.
-	pub fn run<B, CL>(&self, client: Arc<CL>) -> Result<()>
+	pub fn run<B, RA, EX>(&self, config: Configuration) -> Result<()>
 	where
 		B: Block,
 		B::Hash: FromStr,
-		CL: BlockBackend<B> + HeaderBackend<B> + 'static,
+		RA: Send + Sync + 'static,
+		EX: NativeExecutionDispatch + 'static,
 	{
-		match Arc::try_unwrap(client) {
-			Ok(cli) => {
-				let inspect = Inspector::<B>::new(cli);
+		let executor = NativeElseWasmExecutor::<EX>::new(
+			config.wasm_method,
+			config.default_heap_pages,
+			config.max_runtime_instances,
+			config.runtime_cache_size,
+		);
 
-				match &self.command {
-					InspectSubCmd::Block { input } => {
-						let input = input.parse()?;
-						let res = inspect.block(input).map_err(|e| format!("{}", e))?;
-						println!("{}", res);
-						Ok(())
-					},
-					InspectSubCmd::Extrinsic { input } => {
-						let input = input.parse()?;
-						let res = inspect.extrinsic(input).map_err(|e| format!("{}", e))?;
-						println!("{}", res);
-						Ok(())
-					},
-				}
+		let client = new_full_client::<B, RA, _>(&config, None, executor)?;
+		let inspect = Inspector::<B>::new(client);
+
+		match &self.command {
+			InspectSubCmd::Block { input } => {
+				let input = input.parse()?;
+				let res = inspect.block(input).map_err(|e| format!("{}", e))?;
+				println!("{}", res);
+				Ok(())
 			},
-
-			Err(_) => Err("Client try_unwrap failed".into()),
+			InspectSubCmd::Extrinsic { input } => {
+				let input = input.parse()?;
+				let res = inspect.extrinsic(input).map_err(|e| format!("{}", e))?;
+				println!("{}", res);
+				Ok(())
+			},
 		}
 	}
 }

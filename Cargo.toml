@@ -2,9 +2,11 @@ cargo-features = ["resolver"]
 
 [workspace]
 members = [
+	"bin",
 	"node/service",
 	"node/inspect",
 	"node/rpc",
+	"node/cli",
 	"runtime/selendra",
 	"runtime/common",
 	"primitives",

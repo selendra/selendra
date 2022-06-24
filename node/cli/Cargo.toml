@@ -1,0 +1,57 @@
+[package]
+name = "selendra-cli"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+log = "0.4.17"
+clap = { version = "3.1.6", features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "3.0.0" }
+
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true }
+sc-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+grandpa = { package = "sc-finality-grandpa", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true }
+try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true }
+
+inspect = { package = "selendra-inspect", path = "../inspect" }
+service = { package = "selendra-service", path = "../service", default-features = false, optional = true }
+selendra-runtime = { path = "../../runtime/selendra" }
+selendra-primitives = { path = "../../primitives" }
+
+[build-dependencies]
+substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+
+[features]
+default = [ "wasmtime", "cli" ]
+wasmtime = [ "sc-cli/wasmtime" ]
+cli = [
+	"service",
+	"sp-core",
+	"sc-cli",
+	"sc-service",
+	"frame-benchmarking-cli",
+	"try-runtime-cli",
+]
+# runtime-benchmarks = [ "service/runtime-benchmarks" ]
+# try-runtime = [
+# 	"try-runtime-cli",
+# 	"service/try-runtime",
+# ]
+# with-cardamom-runtime = [
+# 	"service/with-cardamom-runtime",
+# ]
+# with-selendra-runtime = [
+# 	"service/with-selendra-runtime",
+# ]
+# with-all-runtime = [
+# 	"with-cardamom-runtime",
+# 	"with-selendra-runtime",
+# 	"service/with-all-runtime",
+# ]
