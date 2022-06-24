@@ -16,50 +16,28 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+#[cfg(feature = "with-selendra-runtime")]
 pub mod selendra;
+#[cfg(feature = "with-cardamom-runtime")]
+pub mod cardamom;
 
-use sc_chain_spec::ChainSpecExtension;
-use selendra_primitives::{currency::TokenInfo, AccountId, AccountPublic, Balance};
-use selendra_runtime::{Block, SessionKeys, GenesisConfig};
-use serde::{Deserialize, Serialize};
+#[cfg(feature = "with-selendra-runtime")]
+pub use selendra::ChainSpec;
+#[cfg(not(feature = "with-selendra-runtime"))]
+pub use cardamom::ChainSpec;
 
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 
-use sp_core::{sr25519, Pair, Public};
-
 use sp_runtime::traits::IdentifyAccount;
+use sp_core::{sr25519, Pair, Public};
+use sc_chain_spec::ChainSpecExtension;
+
+use selendra_primitives::{currency::TokenInfo, AccountId, AccountPublic, Balance};
 
 const TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
-
-/// Specialized `ChainSpec`.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
-
-/// Node `ChainSpec` extensions.
-///
-/// Additional parameters for some Substrate core modules,
-/// customizable from the chain spec.
-#[derive(Default, Clone, Serialize, Deserialize, ChainSpecExtension)]
-#[serde(rename_all = "camelCase")]
-pub struct Extensions {
-	/// Block numbers with known hashes.
-	pub fork_blocks: sc_client_api::ForkBlocks<Block>,
-	/// Known bad block hashes.
-	pub bad_blocks: sc_client_api::BadBlocks<Block>,
-	/// The light sync state extension used by the sync-state rpc.
-	pub light_sync_state: sc_sync_state_rpc::LightSyncStateExtension,
-}
-
-fn session_keys(
-	grandpa: GrandpaId,
-	babe: BabeId,
-	im_online: ImOnlineId,
-	authority_discovery: AuthorityDiscoveryId,
-) -> SessionKeys {
-	SessionKeys { grandpa, babe, im_online, authority_discovery }
-}
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
