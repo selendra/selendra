@@ -30,7 +30,6 @@ sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "pol
 sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
@@ -51,7 +50,6 @@ sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sc-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sc-consensus-manual-seal = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sc-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sc-consensus-uncles = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
@@ -83,27 +81,29 @@ selendra-rpc = { path = "../rpc" }
 module-evm-rpc-runtime-api = { path = "../../modules/evm/rpc/runtime_api" }
 
 runtime-common = { path = "../../runtime/common" }
-cardamom-runtime = { path = "../../runtime/cardamom", optional = true }
-selendra-runtime = { path = "../../runtime/selendra", optional = true }
+# cardamom-runtime = { path = "../../runtime/cardamom", optional = true }
+# selendra-runtime = { path = "../../runtime/selendra", optional = true }
+selendra-runtime = { path = "../../runtime/selendra" }
 
 [features]
-default = [ "std", "with-selendra-runtime" ]
+# default = [ "std", "with-selendra-runtime" ]
+default = [ "std" ]
 std = []
-runtime-benchmarks = [
-	"cardamom-runtime/runtime-benchmarks",
-	"selendra-runtime/runtime-benchmarks",
-]
-try-runtime = [
-	"cardamom-runtime/try-runtime",
-	"selendra-runtime/try-runtime",
-]
-with-cardamom-runtime = [
-	"cardamom-runtime",
-]
-with-selendra-runtime = [
-	"selendra-runtime",
-]
-with-all-runtime = [
-	"with-cardamom-runtime",
-	"with-selendra-runtime",
-]
+# runtime-benchmarks = [
+# 	"cardamom-runtime/runtime-benchmarks",
+# 	"selendra-runtime/runtime-benchmarks",
+# ]
+# try-runtime = [
+# 	"cardamom-runtime/try-runtime",
+# 	"selendra-runtime/try-runtime",
+# ]
+# with-cardamom-runtime = [
+# 	"cardamom-runtime",
+# ]
+# with-selendra-runtime = [
+# 	"selendra-runtime",
+# ]
+# with-all-runtime = [
+# 	"with-cardamom-runtime",
+# 	"with-selendra-runtime",
+# ]

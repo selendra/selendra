@@ -13,7 +13,16 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-#![allow(clippy::large_enum_variant)]
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+//! A CLI extension for substrate node, adding sub-command to pretty print debug info
+//! about blocks and extrinsics.
+//!
+//! The blocks and extrinsics can either be retrieved from the database (on-chain),
+//! or a raw SCALE-encoding can be provided.
+
+#![warn(missing_docs)]
 
 pub mod cli;
 pub mod command;
@@ -62,31 +71,24 @@ impl<TBlock: Block> PrettyPrinter<TBlock> for DebugPrinter {
 		fmt: &mut fmt::Formatter,
 		extrinsic: &TBlock::Extrinsic,
 	) -> fmt::Result {
-		writeln!(fmt, " {:?}", extrinsic)?;
+		writeln!(fmt, " {:#?}", extrinsic)?;
 		writeln!(fmt, " Bytes: {:?}", HexDisplay::from(&extrinsic.encode()))?;
 		Ok(())
 	}
 }
 
 /// Aggregated error for `Inspector` operations.
-#[derive(Debug, derive_more::From, derive_more::Display)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
 	/// Could not decode Block or Extrinsic.
-	Codec(codec::Error),
+	#[error(transparent)]
+	Codec(#[from] codec::Error),
 	/// Error accessing blockchain DB.
-	Blockchain(sp_blockchain::Error),
+	#[error(transparent)]
+	Blockchain(#[from] sp_blockchain::Error),
 	/// Given block has not been found.
+	#[error("{0}")]
 	NotFound(String),
-}
-
-impl std::error::Error for Error {
-	fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-		match *self {
-			Self::Codec(ref e) => Some(e),
-			Self::Blockchain(ref e) => Some(e),
-			Self::NotFound(_) => None,
-		}
-	}
 }
 
 /// A helper trait to access block headers and bodies.
@@ -252,7 +254,7 @@ impl<Hash: FromStr + Debug, Number: FromStr + Debug> FromStr for ExtrinsicAddres
 
 		let index = it
 			.next()
-			.ok_or_else(|| "Extrinsic index missing: example \"5:0\"".to_string())?
+			.ok_or("Extrinsic index missing: example \"5:0\"")?
 			.parse()
 			.map_err(|e| format!("Invalid index format: {}", e))?;
 
@@ -294,7 +296,7 @@ mod tests {
 		let b2 = ExtrinsicAddress::from_str("0 0");
 		let b3 = ExtrinsicAddress::from_str("0x0012345f");
 
-		assert_eq!(e0, Ok(ExtrinsicAddress::Bytes(vec![0x12, 0x34])));
+		assert_eq!(e0, Err("Extrinsic index missing: example \"5:0\"".into()));
 		assert_eq!(
 			b0,
 			Ok(ExtrinsicAddress::Block(
@@ -303,7 +305,7 @@ mod tests {
 			))
 		);
 		assert_eq!(b1, Ok(ExtrinsicAddress::Block(BlockAddress::Number(1234), 0)));
-		assert_eq!(b2, Ok(ExtrinsicAddress::Bytes(vec![0, 0])));
+		assert_eq!(b2, Ok(ExtrinsicAddress::Block(BlockAddress::Number(0), 0)));
 		assert_eq!(b3, Ok(ExtrinsicAddress::Bytes(vec![0, 0x12, 0x34, 0x5f])));
 	}
 }

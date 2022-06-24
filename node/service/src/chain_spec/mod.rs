@@ -20,7 +20,7 @@ pub mod selendra;
 
 use sc_chain_spec::ChainSpecExtension;
 use selendra_primitives::{currency::TokenInfo, AccountId, AccountPublic, Balance};
-use selendra_runtime::{Block, SessionKeys};
+use selendra_runtime::{Block, SessionKeys, GenesisConfig};
 use serde::{Deserialize, Serialize};
 
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
@@ -33,6 +33,9 @@ use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::IdentifyAccount;
 
 const TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
+
+/// Specialized `ChainSpec`.
+pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
 /// Node `ChainSpec` extensions.
 ///

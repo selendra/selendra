@@ -151,6 +151,13 @@ where
 	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
 	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
 
+	// Making synchronous calls in light client freezes the browser currently,
+	// more context: https://github.com/paritytech/substrate/pull/3480
+	// These RPCs should use an asynchronous caller instead.
+	module.merge(Oracle::new(client.clone()).into_rpc())?;
+	module.merge(Tokens::new(client.clone()).into_rpc())?;
+	module.merge(EVM::new(client.clone(), deny_unsafe).into_rpc())?;
+
 	module.merge(
 		Babe::new(
 			client.clone(),
@@ -179,14 +186,6 @@ where
 	)?;
 
 	module.merge(StateMigration::new(client.clone(), backend, deny_unsafe).into_rpc())?;
-	module.merge(Dev::new(client.clone(), deny_unsafe).into_rpc())?;
-
-	// Making synchronous calls in light client freezes the browser currently,
-	// more context: https://github.com/paritytech/substrate/pull/3480
-	// These RPCs should use an asynchronous caller instead.
-	module.merge(Oracle::new(client.clone()).into_rpc())?;
-	module.merge(Tokens::new(client.clone()).into_rpc())?;
-	module.merge(EVM::new(client.clone(), deny_unsafe).into_rpc())?;
 	module.merge(Dev::new(client, deny_unsafe).into_rpc())?;
 
 	Ok(module)

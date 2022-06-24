@@ -20,8 +20,8 @@
 
 use super::{
 	authority_keys_from_seed, get_account_id_from_seed, session_keys, testnet_accounts, AccountId,
-	AuthorityDiscoveryId, BabeId, Balance, Extensions, GrandpaId, ImOnlineId, TokenInfo,
-	TELEMETRY_URL,
+	AuthorityDiscoveryId, BabeId, Balance, GrandpaId, ImOnlineId, TokenInfo,
+	TELEMETRY_URL, ChainSpec
 };
 use hex_literal::hex;
 use serde_json::map::Map;
@@ -42,9 +42,6 @@ use selendra_runtime::{
 pub fn selendra_config() -> Result<ChainSpec, String> {
 	ChainSpec::from_json_bytes(&include_bytes!("../../chain-specs/selendra.json")[..])
 }
-
-/// Specialized `ChainSpec`.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
 fn selendra_properties() -> Properties {
 	let mut properties = Map::new();
