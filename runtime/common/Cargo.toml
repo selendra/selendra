@@ -51,8 +51,6 @@ module-evm-accounts = { path = "../../modules/evm-accounts", default-features = 
 module-asset-registry = { path = "../../modules/asset-registry", default-features = false, optional = true }
 module-evm-bridge = { path = "../../modules/evm-bridge", default-features = false, optional = true }
 primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
-module-treasury = { path = "../../modules/treasury", default-features = false, optional = true }
-module-incentives = { path = "../../modules/incentives", default-features = false }
 
 # orml
 orml-oracle = { path = "../../orml/oracle", default-features = false }
@@ -61,7 +59,6 @@ orml-bencher = { path = "../../orml/bencher", default-features = false, optional
 orml-tokens = { path = "../../orml/tokens", default-features = false, optional = true }
 orml-nft = { path = "../../orml/nft", default-features = false, optional = true }
 orml-currencies = { path = "../../orml/currencies", default-features = false, optional = true }
-orml-rewards = { path = "../../orml/rewards", default-features = false, optional = true }
 
 [features]
 default = ["std"]
@@ -95,7 +92,6 @@ std = [
 	"orml-tokens/std",
 	"orml-nft/std",
 	"orml-currencies/std",
-	"orml-rewards/std",
 
 	"module-evm/std",
 	"module-idle-scheduler/std",
@@ -109,8 +105,6 @@ std = [
 	"module-evm-accounts/std",
 	"module-asset-registry/std",
 	"module-evm-bridge/std",
-	"module-treasury/std",
-	"module-incentives/std",
 ]
 with-ethereum-compatibility = [
 	"module-evm/with-ethereum-compatibility",
@@ -133,7 +127,6 @@ bench = [
 
 	"module-asset-registry",
 	"module-evm-bridge",
-	"module-treasury",
 ]
 
 # Set timing constants (e.g. session period) to faster versions to speed up testing.

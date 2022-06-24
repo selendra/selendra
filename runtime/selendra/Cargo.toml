@@ -81,25 +81,21 @@ orml-oracle-rpc-runtime-api = { path = "../../orml/oracle/rpc/runtime-api", defa
 orml-tokens = { path = "../../orml/tokens", default-features = false }
 orml-tokens-rpc-runtime-api = { path = "../../orml/tokens/rpc/runtime-api", default-features = false }
 orml-traits = { path = "../../orml/traits", default-features = false }
-orml-rewards = { path = "../../orml/rewards", default-features = false }
 orml-nft= { path = "../../orml/nft", default-features = false }
 
 # modules
 module-transaction-pause = { path = "../../modules/transaction-pause", default-features = false }
 module-transaction-payment = { path = "../../modules/transaction-payment", default-features = false }
 module-asset-registry = { path = "../../modules/asset-registry", default-features = false }
-module-treasury = { path = "../../modules/treasury", default-features = false }
 module-currencies = { path = "../../modules/currencies", default-features = false }
 module-dex = { path = "../../modules/dex", default-features = false }
 module-dex-oracle = { path = "../../modules/dex-oracle", default-features = false }
-module-emergency-shutdown = { path = "../../modules/emergency-shutdown", default-features = false }
 module-evm = { path = "../../modules/evm", default-features = false }
 module-evm-accounts = { path = "../../modules/evm-accounts", default-features = false }
 module-evm-bridge = { path = "../../modules/evm-bridge", default-features = false }
 module-evm-rpc-runtime-api = { path = "../../modules/evm/rpc/runtime_api",  default-features = false }
 module-nft = { path = "../../modules/nft", default-features = false }
 module-prices = { path = "../../modules/prices", default-features = false }
-module-incentives = { path = "../../modules/incentives", default-features = false }
 module-support = { path = "../../modules/support", default-features = false }
 module-idle-scheduler = { path = "../../modules/idle-scheduler", default-features = false }
 
@@ -183,7 +179,6 @@ std = [
 	"orml-tokens/std",
 	"orml-tokens-rpc-runtime-api/std",
 	"orml-traits/std",
-	"orml-rewards/std",
 	"orml-nft/std",
 
 	"module-transaction-pause/std",
@@ -192,7 +187,6 @@ std = [
 	"module-currencies/std",
 	"module-dex/std",
 	"module-dex-oracle/std",
-	"module-emergency-shutdown/std",
 	"module-evm/std",
 	"module-evm-accounts/std",
 	"module-evm-bridge/std",
@@ -284,23 +278,19 @@ try-runtime = [
 	"orml-authority/try-runtime",
 	"orml-oracle/try-runtime",
 	"orml-tokens/try-runtime",
-	"orml-rewards/try-runtime",
 	"orml-nft/try-runtime",
 
 	"module-transaction-pause/try-runtime",
 	"module-transaction-payment/try-runtime",
 	"module-asset-registry/try-runtime",
-	"module-treasury/try-runtime",
 	"module-currencies/try-runtime",
 	"module-dex/try-runtime",
 	"module-dex-oracle/try-runtime",
-	"module-emergency-shutdown/try-runtime",
 	"module-evm/try-runtime",
 	"module-evm-accounts/try-runtime",
 	"module-evm-bridge/try-runtime",
 	"module-nft/try-runtime",
 	"module-prices/try-runtime",
-	"module-incentives/try-runtime",
 ]
 
 # By default some types have documentation, `no-metadata-docs` allows to reduce the documentation

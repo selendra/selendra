@@ -390,7 +390,6 @@ mod tests {
 	use frame_support::assert_ok;
 	use hex_literal::hex;
 	use module_support::Rate;
-	use orml_rewards::PoolInfo;
 	use orml_traits::MultiCurrency;
 	use sp_runtime::FixedU128;
 
@@ -490,10 +489,6 @@ mod tests {
 			assert_eq!(res.exit_status, ExitSucceed::Returned);
 
 			assert_eq!(
-				Rewards::pool_infos(PoolId::Dex(LP_SEL_SUSD)),
-				PoolInfo { total_shares: 1048576, ..Default::default() }
-			);
-			assert_eq!(
 				Rewards::shares_and_withdrawn_rewards(PoolId::Dex(LP_SEL_SUSD), alice()),
 				(1048576, Default::default())
 			);
@@ -531,10 +526,6 @@ mod tests {
 			assert_eq!(res.exit_status, ExitSucceed::Returned);
 
 			assert_eq!(
-				Rewards::pool_infos(PoolId::Dex(LP_SEL_SUSD)),
-				PoolInfo { total_shares: 99744, ..Default::default() }
-			);
-			assert_eq!(
 				Rewards::shares_and_withdrawn_rewards(PoolId::Dex(LP_SEL_SUSD), alice()),
 				(99744, Default::default())
 			);
@@ -564,14 +555,6 @@ mod tests {
 			Rewards::add_share(&bob(), &PoolId::Loans(SEL), 100);
 			assert_ok!(Rewards::accumulate_reward(&PoolId::Loans(SEL), SEL, 1_000));
 
-			assert_eq!(
-				Rewards::pool_infos(PoolId::Loans(SEL)),
-				PoolInfo {
-					total_shares: 200,
-					rewards: vec![(SEL, (3_000, 1_000))].into_iter().collect(),
-				}
-			);
-
 			// claimRewards(address,PoolId,address) => 0xe12eab9b
 			// who
 			// pool
@@ -586,13 +569,6 @@ mod tests {
 			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
 			assert_eq!(res.exit_status, ExitSucceed::Returned);
 
-			assert_eq!(
-				Rewards::pool_infos(PoolId::Loans(SEL)),
-				PoolInfo {
-					total_shares: 200,
-					rewards: vec![(SEL, (3_750, 2_500))].into_iter().collect(),
-				}
-			);
 			assert_eq!(
 				Rewards::shares_and_withdrawn_rewards(PoolId::Loans(SEL), alice()),
 				(100, vec![(SEL, 1_500)].into_iter().collect())

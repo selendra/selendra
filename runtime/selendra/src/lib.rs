@@ -82,7 +82,7 @@ use module_asset_registry::{AssetIdMaps, EvmErc20InfoMapping};
 use module_currencies::BasicCurrencyAdapter;
 use module_evm::{runner::RunnerExtended, CallInfo, CreateInfo, EvmChainId, EvmTask};
 use module_evm_accounts::EvmAddressMapping;
-use module_support::{AssetIdMapping, DispatchableTask, PoolId};
+use module_support::{AssetIdMapping, DispatchableTask};
 use module_transaction_payment::TargetedFeeAdjustment;
 
 use orml_traits::{
@@ -561,14 +561,6 @@ where
 	type Extrinsic = UncheckedExtrinsic;
 }
 
-impl module_emergency_shutdown::Config for Runtime {
-	type Event = Event;
-	type PriceSource = Prices;
-	type SelTreasury = SelTreasury;
-	type ShutdownOrigin = EnsureRoot<AccountId>;
-	type WeightInfo = weights::module_emergency_shutdown::WeightInfo<Runtime>;
-}
-
 parameter_types! {
 	pub const GetExchangeFee: (u32, u32) = (3, 1000);	// 0.3%
 	pub const ExtendedProvisioningBlocks: BlockNumber = 2 * DAYS;
@@ -582,7 +574,6 @@ impl module_dex::Config for Runtime {
 	type TradingPathLimit = TradingPathLimit;
 	type PalletId = DEXPalletId;
 	type Erc20InfoMapping = EvmErc20InfoMapping<Runtime>;
-	type DEXIncentives = Incentives;
 	type WeightInfo = weights::module_dex::WeightInfo<Runtime>;
 	type ListingOrigin = EnsureRootOrHalfCouncil;
 	type ExtendedProvisioningBlocks = ExtendedProvisioningBlocks;
@@ -594,12 +585,6 @@ impl module_dex_oracle::Config for Runtime {
 	type Time = Timestamp;
 	type UpdateOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::module_dex_oracle::WeightInfo<Runtime>;
-}
-
-impl module_treasury::Config for Runtime {
-	type Currency = Currencies;
-	type GetStableCurrencyId = GetStableCurrencyId;
-	type PalletId = SelTreasuryPalletId;
 }
 
 impl module_transaction_pause::Config for Runtime {
@@ -661,35 +646,6 @@ impl module_asset_registry::Config for Runtime {
 	type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
 	type RegisterOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::module_asset_registry::WeightInfo<Runtime>;
-}
-
-impl orml_rewards::Config for Runtime {
-	type Share = Balance;
-	type Balance = Balance;
-	type PoolId = PoolId;
-	type CurrencyId = CurrencyId;
-	type Handler = Incentives;
-}
-
-parameter_types! {
-	pub const AccumulatePeriod: BlockNumber = MINUTES;
-	pub const EarnShareBooster: Permill = Permill::from_percent(30);
-}
-
-impl module_incentives::Config for Runtime {
-	type Event = Event;
-	type RewardsSource = UnreleasedNativeVaultAccountId;
-	type StableCurrencyId = GetStableCurrencyId;
-	type NativeCurrencyId = GetNativeCurrencyId;
-	type EarnShareBooster = EarnShareBooster;
-	type AccumulatePeriod = AccumulatePeriod;
-	type UpdateOrigin = EnsureRootOrThreeFourthsCouncil;
-	type SelTreasury = SelTreasury;
-	type Currency = Currencies;
-	type DEX = Dex;
-	type EmergencyShutdown = EmergencyShutdown;
-	type PalletId = IncentivesPalletId;
-	type WeightInfo = weights::module_incentives::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -940,20 +896,16 @@ construct_runtime!(
 		SelendraOracle: orml_oracle::<Instance1> = 70,
 		OperatorMembershipSelendra: pallet_membership::<Instance5> = 71,
 
-		// ORML Core
-		Rewards: orml_rewards = 81,
-		OrmlNFT: orml_nft exclude_parts { Call } = 82,
+		// Nft
+
 
 		// Selendra Core
 		Prices: module_prices = 90,
 		Dex: module_dex = 91,
 		DexOracle: module_dex_oracle = 92,
 
-		SelTreasury: module_treasury = 103,
-		EmergencyShutdown: module_emergency_shutdown = 105,
-
 		// Selendra Other
-		Incentives: module_incentives = 120,
+		OrmlNFT: orml_nft exclude_parts { Call } = 120,
 		NFT: module_nft = 121,
 		AssetRegistry: module_asset_registry = 122,
 

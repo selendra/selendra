@@ -341,7 +341,6 @@ pub fn cardamom_genesis(
 			initial_added_liquidity_pools: vec![],
 		},
 		evm: EVMConfig { chain_id: 67u64, accounts: Default::default() },
-		sel_treasury: Default::default(),
 		sudo: SudoConfig { key: Some(root_key) },
 	}
 }

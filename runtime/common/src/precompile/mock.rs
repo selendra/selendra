@@ -30,7 +30,7 @@ use frame_system::{offchain::SendTransactionTypes, EnsureRoot, EnsureSignedBy};
 use module_evm::{EvmChainId, EvmTask};
 use module_evm_accounts::EvmAddressMapping;
 use module_support::{
-	AddressMapping as AddressMappingT, DEXIncentives, DispatchableTask, EmergencyShutdown, PoolId,
+	AddressMapping as AddressMappingT, DEXIncentives, DispatchableTask, EmergencyShutdown,
 	PriceProvider,
 };
 use orml_traits::{parameter_type_with_key, MultiReservableCurrency};
@@ -48,7 +48,7 @@ use sp_runtime::{
 		AccountIdConversion, BlakeTwo256, BlockNumberProvider, Convert, IdentityLookup,
 		One as OneT, Zero,
 	},
-	AccountId32, DispatchResult, FixedPointNumber, FixedU128, Perbill, Percent, Permill,
+	AccountId32, DispatchResult, FixedPointNumber, FixedU128, Perbill, Percent,
 };
 use sp_std::prelude::*;
 
@@ -394,7 +394,6 @@ impl module_dex::Config for Test {
 	type PalletId = DEXPalletId;
 	type Erc20InfoMapping = EvmErc20InfoMapping;
 	type WeightInfo = ();
-	type DEXIncentives = MockDEXIncentives;
 	type ListingOrigin = EnsureSignedBy<ListingOrigin, AccountId>;
 	type ExtendedProvisioningBlocks = ConstU32<0>;
 	type OnLiquidityPoolUpdated = ();
@@ -418,20 +417,6 @@ impl EmergencyShutdown for MockEmergencyShutdown {
 	}
 }
 
-parameter_types! {
-	pub const SelTreasuryPalletId: PalletId = PalletId(*b"sel/cdpt");
-	pub SelTreasuryAccount: AccountId = PalletId(*b"sel/hztr").into_account_truncating();
-	pub AlternativeSwapPathJointList: Vec<Vec<CurrencyId>> = vec![
-		vec![SUSD],
-	];
-}
-
-impl module_treasury::Config for Test {
-	type Currency = Currencies;
-	type GetStableCurrencyId = GetStableCurrencyId;
-	type PalletId = SelTreasuryPalletId;
-}
-
 pub type AdaptedBasicCurrency =
 	module_currencies::BasicCurrencyAdapter<Test, Balances, Amount, BlockNumber>;
 
@@ -439,7 +424,7 @@ pub type EvmErc20InfoMapping = module_asset_registry::EvmErc20InfoMapping<Test>;
 
 parameter_types! {
 	pub NetworkContractSource: H160 = alice_evm_addr();
-	pub PrecompilesValue: AllPrecompiles<Test> = AllPrecompiles::<_>::mandala();
+	pub PrecompilesValue: AllPrecompiles<Test> = AllPrecompiles::<_>::cardamom();
 }
 
 ord_parameter_types! {
@@ -510,39 +495,6 @@ impl module_prices::Config for Test {
 	type WeightInfo = ();
 }
 
-impl orml_rewards::Config for Test {
-	type Share = Balance;
-	type Balance = Balance;
-	type PoolId = PoolId;
-	type CurrencyId = CurrencyId;
-	type Handler = Incentives;
-}
-
-parameter_types! {
-	pub const IncentivesPalletId: PalletId = PalletId(*b"sel/inct");
-}
-
-ord_parameter_types! {
-	pub const EarnShareBooster: Permill = Permill::from_percent(50);
-	pub const RewardsSource: AccountId = REWARDS_SOURCE;
-}
-
-impl module_incentives::Config for Test {
-	type Event = Event;
-	type RewardsSource = RewardsSource;
-	type AccumulatePeriod = ConstU32<10>;
-	type StableCurrencyId = GetStableCurrencyId;
-	type NativeCurrencyId = GetNativeCurrencyId;
-	type EarnShareBooster = EarnShareBooster;
-	type UpdateOrigin = EnsureSignedBy<One, AccountId>;
-	type SelTreasury = SelTreasury;
-	type Currency = Tokens;
-	type DEX = DexModule;
-	type EmergencyShutdown = MockEmergencyShutdown;
-	type PalletId = IncentivesPalletId;
-	type WeightInfo = ();
-}
-
 pub const ALICE: AccountId = AccountId::new([1u8; 32]);
 pub const BOB: AccountId = AccountId::new([2u8; 32]);
 pub const EVA: AccountId = AccountId::new([5u8; 32]);
@@ -600,7 +552,6 @@ frame_support::construct_runtime!(
 		Tokens: orml_tokens exclude_parts { Call },
 		Balances: pallet_balances,
 		Currencies: module_currencies,
-		SelTreasury: module_treasury,
 		EVMBridge: module_evm_bridge exclude_parts { Call },
 		AssetRegistry: module_asset_registry,
 		NFTModule: module_nft,
@@ -613,8 +564,6 @@ frame_support::construct_runtime!(
 		EVMModule: module_evm,
 		EvmAccounts: module_evm_accounts,
 		IdleScheduler: module_idle_scheduler,
-		Incentives: module_incentives,
-		Rewards: orml_rewards,
 	}
 );
 

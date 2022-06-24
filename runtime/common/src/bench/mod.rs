@@ -64,8 +64,7 @@ fn setup_liquidity() {
 		SUSD,
 		1_000,
 		1_000_000,
-		0,
-		true
+		0
 	));
 }
 

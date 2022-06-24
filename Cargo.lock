@@ -721,25 +721,21 @@ dependencies = [
  "module-currencies",
  "module-dex",
  "module-dex-oracle",
- "module-emergency-shutdown",
  "module-evm",
  "module-evm-accounts",
  "module-evm-bridge",
  "module-evm-rpc-runtime-api",
  "module-idle-scheduler",
- "module-incentives",
  "module-nft",
  "module-prices",
  "module-support",
  "module-transaction-pause",
  "module-transaction-payment",
- "module-treasury",
  "orml-authority",
  "orml-benchmarking",
  "orml-nft",
  "orml-oracle",
  "orml-oracle-rpc-runtime-api",
- "orml-rewards",
  "orml-tokens",
  "orml-tokens-rpc-runtime-api",
  "orml-traits",
@@ -4058,28 +4054,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "module-emergency-shutdown"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "module-support",
- "module-treasury",
- "orml-currencies",
- "orml-tokens",
- "orml-traits",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "selendra-primitives",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "module-evm"
 version = "0.1.0"
 dependencies = [
@@ -4218,27 +4192,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "module-incentives"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "module-support",
- "orml-rewards",
- "orml-tokens",
- "orml-traits",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "selendra-primitives",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "module-nft"
 version = "0.1.0"
 dependencies = [
@@ -4352,28 +4305,6 @@ dependencies = [
  "selendra-primitives",
  "serde",
  "smallvec",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "module-treasury"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "module-dex",
- "module-support",
- "orml-currencies",
- "orml-tokens",
- "orml-traits",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "selendra-primitives",
- "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -4929,22 +4860,6 @@ version = "0.4.1-dev"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
- "sp-std",
-]
-
-[[package]]
-name = "orml-rewards"
-version = "0.4.1-dev"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-traits",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
  "sp-std",
 ]
 
@@ -6637,18 +6552,15 @@ dependencies = [
  "module-evm-bridge",
  "module-evm-utility-macro",
  "module-idle-scheduler",
- "module-incentives",
  "module-nft",
  "module-prices",
  "module-support",
  "module-transaction-payment",
- "module-treasury",
  "num_enum",
  "orml-bencher",
  "orml-currencies",
  "orml-nft",
  "orml-oracle",
- "orml-rewards",
  "orml-tokens",
  "orml-traits",
  "pallet-balances",
@@ -8105,25 +8017,21 @@ dependencies = [
  "module-currencies",
  "module-dex",
  "module-dex-oracle",
- "module-emergency-shutdown",
  "module-evm",
  "module-evm-accounts",
  "module-evm-bridge",
  "module-evm-rpc-runtime-api",
  "module-idle-scheduler",
- "module-incentives",
  "module-nft",
  "module-prices",
  "module-support",
  "module-transaction-pause",
  "module-transaction-payment",
- "module-treasury",
  "orml-authority",
  "orml-benchmarking",
  "orml-nft",
  "orml-oracle",
  "orml-oracle-rpc-runtime-api",
- "orml-rewards",
  "orml-tokens",
  "orml-tokens-rpc-runtime-api",
  "orml-traits",
