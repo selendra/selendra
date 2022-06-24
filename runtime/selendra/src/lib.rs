@@ -54,7 +54,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BadOrigin, BlakeTwo256, Block as BlockT,
-		BlockNumberProvider, Convert, NumberFor, SaturatedConversion, StaticLookup, Zero,
+		Convert, NumberFor, SaturatedConversion, StaticLookup,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, DispatchResult, FixedPointNumber, Perbill, Percent, Permill, Perquintill,
@@ -813,23 +813,11 @@ parameter_types!(
 	pub MinimumWeightRemainInBlock: Weight = RuntimeBlockWeights::get().max_block / 50;
 );
 
-pub struct MockBlockNumberProvider;
-
-impl BlockNumberProvider for MockBlockNumberProvider {
-	type BlockNumber = u32;
-
-	fn current_block_number() -> Self::BlockNumber {
-		Zero::zero()
-	}
-}
-
 impl module_idle_scheduler::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
 	type Task = ScheduledTasks;
 	type MinimumWeightRemainInBlock = MinimumWeightRemainInBlock;
-	type RelayChainBlockNumberProvider = MockBlockNumberProvider;
-	type DisableBlockThreshold = ConstU32<6>;
 }
 
 construct_runtime!(
@@ -896,26 +884,23 @@ construct_runtime!(
 		SelendraOracle: orml_oracle::<Instance1> = 70,
 		OperatorMembershipSelendra: pallet_membership::<Instance5> = 71,
 
-		// Nft
-
-
 		// Selendra Core
 		Prices: module_prices = 90,
 		Dex: module_dex = 91,
 		DexOracle: module_dex_oracle = 92,
 
 		// Selendra Other
-		OrmlNFT: orml_nft exclude_parts { Call } = 120,
-		NFT: module_nft = 121,
-		AssetRegistry: module_asset_registry = 122,
+		OrmlNFT: orml_nft exclude_parts { Call } = 100,
+		NFT: module_nft = 101,
+		AssetRegistry: module_asset_registry = 102,
 
 		// Smart contracts
-		EVM: module_evm = 130,
-		EVMBridge: module_evm_bridge exclude_parts { Call } = 131,
-		EvmAccounts: module_evm_accounts = 132,
+		EVM: module_evm = 110,
+		EVMBridge: module_evm_bridge exclude_parts { Call } = 111,
+		EvmAccounts: module_evm_accounts = 112,
 
 		// Temporary
-		Sudo: pallet_sudo = 255,
+		Sudo: pallet_sudo = 150,
 	}
 );
 

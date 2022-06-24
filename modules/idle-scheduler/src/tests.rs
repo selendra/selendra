@@ -119,7 +119,7 @@ fn on_idle_works() {
 			ScheduledTasks::BalancesTask(BalancesTask::OnIdle)
 		));
 		// simulate relay block number jumping 10 blocks
-		sp_io::storage::set(&RELAY_BLOCK_KEY, &10_u32.encode());
+		sp_io::storage::set(&BLOCK_KEY, &10_u32.encode());
 		assert_eq!(IdleScheduler::on_idle(System::block_number(), u64::MAX), u64::MAX);
 
 		System::set_block_number(1);
@@ -129,6 +129,6 @@ fn on_idle_works() {
 			IdleScheduler::on_idle(System::block_number(), u64::MAX),
 			BASE_WEIGHT + <()>::on_idle_base() + <()>::clear_tasks()
 		);
-		assert!(!PreviousRelayBlockNumber::<Runtime>::exists());
+		assert!(!PreviousBlockNumber::<Runtime>::exists());
 	});
 }
