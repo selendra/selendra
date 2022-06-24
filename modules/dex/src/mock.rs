@@ -23,7 +23,7 @@ use frame_support::{
 	traits::{ConstU32, ConstU64, Everything, Nothing},
 };
 use frame_system::EnsureSignedBy;
-use orml_traits::{parameter_type_with_key, MultiReservableCurrency};
+use orml_traits::parameter_type_with_key;
 use primitives::{Amount, TokenSymbol};
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup};
@@ -100,26 +100,6 @@ impl orml_tokens::Config for Runtime {
 	type OnKilledTokenAccount = ();
 }
 
-pub struct MockDEXIncentives;
-impl DEXIncentives<AccountId, CurrencyId, Balance> for MockDEXIncentives {
-	fn do_deposit_dex_share(
-		who: &AccountId,
-		lp_currency_id: CurrencyId,
-		amount: Balance,
-	) -> DispatchResult {
-		Tokens::reserve(lp_currency_id, who, amount)
-	}
-
-	fn do_withdraw_dex_share(
-		who: &AccountId,
-		lp_currency_id: CurrencyId,
-		amount: Balance,
-	) -> DispatchResult {
-		let _ = Tokens::unreserve(lp_currency_id, who, amount);
-		Ok(())
-	}
-}
-
 ord_parameter_types! {
 	pub const ListingOrigin: AccountId = 3;
 }
@@ -154,7 +134,6 @@ impl Config for Runtime {
 	type PalletId = DEXPalletId;
 	type Erc20InfoMapping = MockErc20InfoMapping;
 	type WeightInfo = ();
-	type DEXIncentives = MockDEXIncentives;
 	type ListingOrigin = EnsureSignedBy<ListingOrigin, AccountId>;
 	type ExtendedProvisioningBlocks = ConstU64<2000>;
 	type OnLiquidityPoolUpdated = MockOnLiquidityPoolUpdated;

@@ -39,7 +39,6 @@ use sp_std::{collections::btree_set::BTreeSet, marker::PhantomData};
 pub mod dex;
 pub mod evm;
 pub mod evm_accounts;
-pub mod incentives;
 pub mod input;
 pub mod multicurrency;
 pub mod nft;
@@ -50,7 +49,6 @@ use crate::SystemContractsFilter;
 pub use dex::DEXPrecompile;
 pub use evm::EVMPrecompile;
 pub use evm_accounts::EVMAccountsPrecompile;
-pub use incentives::IncentivesPrecompile;
 pub use multicurrency::MultiCurrencyPrecompile;
 pub use nft::NFTPrecompile;
 pub use oracle::OraclePrecompile;
@@ -79,7 +77,6 @@ pub const ORACLE: H160 = H160(hex!("0000000000000000000000000000000000000403"));
 pub const SCHEDULER: H160 = H160(hex!("0000000000000000000000000000000000000404"));
 pub const DEX: H160 = H160(hex!("0000000000000000000000000000000000000405"));
 pub const EVM_ACCOUNTS: H160 = H160(hex!("0000000000000000000000000000000000000408"));
-pub const INCENTIVES: H160 = H160(hex!("000000000000000000000000000000000000040a"));
 
 pub fn target_gas_limit(target_gas: Option<u64>) -> Option<u64> {
 	target_gas.map(|x| x.saturating_div(10).saturating_mul(9)) // 90%
@@ -118,7 +115,6 @@ where
 				// SCHEDULER,
 				DEX,
 				EVM_ACCOUNTS,
-				/* INCENTIVES */
 			]),
 			_marker: Default::default(),
 		}
@@ -148,37 +144,6 @@ where
 				// SCHEDULER,
 				DEX,
 				EVM_ACCOUNTS,
-				/* INCENTIVES */
-			]),
-			_marker: Default::default(),
-		}
-	}
-
-	pub fn mandala() -> Self {
-		Self {
-			active: BTreeSet::from([
-				ECRECOVER,
-				SHA256,
-				RIPEMD,
-				IDENTITY,
-				MODEXP,
-				BN_ADD,
-				BN_MUL,
-				BN_PAIRING,
-				BLAKE2F,
-				// Non-standard precompile starts with 128
-				ECRECOVER_PUBLICKEY,
-				SHA3_256,
-				SHA3_512,
-				// Selendra precompile
-				MULTI_CURRENCY,
-				NFT,
-				EVM,
-				ORACLE,
-				SCHEDULER,
-				DEX,
-				EVM_ACCOUNTS,
-				INCENTIVES,
 			]),
 			_marker: Default::default(),
 		}
@@ -195,7 +160,6 @@ where
 	OraclePrecompile<R>: Precompile,
 	DEXPrecompile<R>: Precompile,
 	SchedulePrecompile<R>: Precompile,
-	IncentivesPrecompile<R>: Precompile,
 {
 	fn execute(
 		&self,
@@ -286,8 +250,6 @@ where
 				Some(DEXPrecompile::<R>::execute(input, target_gas, context, is_static))
 			} else if address == EVM_ACCOUNTS {
 				Some(EVMAccountsPrecompile::<R>::execute(input, target_gas, context, is_static))
-			} else if address == INCENTIVES {
-				Some(IncentivesPrecompile::<R>::execute(input, target_gas, context, is_static))
 			} else {
 				None
 			}
