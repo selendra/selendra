@@ -291,7 +291,7 @@ pub fn cardamom_genesis(
 			members: vec![],
 			phantom: Default::default(),
 		},
-		technical_committee_membership: Default::default(),
+		technical_membership: Default::default(),
 		financial_council_membership: Default::default(),
 		council_membership: Default::default(),
 		operator_membership_selendra: OperatorMembershipSelendraConfig {

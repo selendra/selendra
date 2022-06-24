@@ -29,7 +29,7 @@ pub type TechnicalCommitteeInstance = pallet_collective::Instance4;
 pub type CouncilMembershipInstance = pallet_membership::Instance1;
 pub type FinancialCouncilMembershipInstance = pallet_membership::Instance2;
 pub type HomaCouncilMembershipInstance = pallet_membership::Instance3;
-pub type TechnicalCommitteeMembershipInstance = pallet_membership::Instance4;
+pub type TechnicalMembershipInstance = pallet_membership::Instance4;
 pub type OperatorMembershipInstanceSelendra = pallet_membership::Instance5;
 
 // General Council

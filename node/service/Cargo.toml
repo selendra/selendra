@@ -89,7 +89,7 @@ default = [ "std", "with-selendra-runtime" ]
 std = []
 
 runtime-benchmarks = [
-	"cardamom-runtime/runtime-benchmarks",
+	# "cardamom-runtime/runtime-benchmarks",
 	"selendra-runtime/runtime-benchmarks",
 ]
 
