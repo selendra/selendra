@@ -1,6 +1,6 @@
 use super::{
 	authority::AuthorityConfigImpl, deposit, dollar, prod_or_fast, weights, AuthoritysOriginId,
-	Balances, Call, Event, FinancialCouncil, GeneralCouncil, Origin, OriginCaller,
+	Balances, Call, Event, FinancialCouncil, Council, Origin, OriginCaller,
 	PhragmenElectionPalletId, PreimageByteDeposit, Runtime, Scheduler, SelendraOracle,
 	TechnicalCommittee, Treasury, DAYS, HOURS, MINUTES, SEL,
 };
@@ -9,11 +9,11 @@ use frame_system::EnsureRoot;
 
 use primitives::{AccountId, Balance, BlockNumber};
 use runtime_common::{
-	CurrencyToVote, EnsureRootOrAllGeneralCouncil, EnsureRootOrAllTechnicalCommittee,
-	EnsureRootOrHalfGeneralCouncil, EnsureRootOrThreeFourthsGeneralCouncil,
-	EnsureRootOrTwoThirdsGeneralCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
-	FinancialCouncilInstance, FinancialCouncilMembershipInstance, GeneralCouncilInstance,
-	GeneralCouncilMembershipInstance, OperatorMembershipInstanceSelendra,
+	CurrencyToVote, EnsureRootOrAllCouncil, EnsureRootOrAllTechnicalCommittee,
+	EnsureRootOrHalfCouncil, EnsureRootOrThreeFourthsCouncil,
+	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
+	FinancialCouncilInstance, FinancialCouncilMembershipInstance, CouncilInstance,
+	CouncilMembershipInstance, OperatorMembershipInstanceSelendra,
 	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance,
 };
 
@@ -50,12 +50,12 @@ impl pallet_democracy::Config for Runtime {
 	type VoteLockingPeriod = EnactmentPeriod;
 	type MinimumDeposit = MinimumDeposit;
 	/// A straight majority of the council can decide what their next motion is.
-	type ExternalOrigin = EnsureRootOrHalfGeneralCouncil;
+	type ExternalOrigin = EnsureRootOrHalfCouncil;
 	/// A majority can have the next scheduled referendum be a straight majority-carries vote.
-	type ExternalMajorityOrigin = EnsureRootOrHalfGeneralCouncil;
+	type ExternalMajorityOrigin = EnsureRootOrHalfCouncil;
 	/// A unanimous council can have the next scheduled referendum be a straight default-carries
 	/// (NTB) vote.
-	type ExternalDefaultOrigin = EnsureRootOrAllGeneralCouncil;
+	type ExternalDefaultOrigin = EnsureRootOrAllCouncil;
 	/// Two thirds of the technical committee can have an ExternalMajority/ExternalDefault vote
 	/// be tabled immediately and with a shorter voting/enactment period.
 	type FastTrackOrigin = EnsureRootOrTwoThirdsTechnicalCommittee;
@@ -63,7 +63,7 @@ impl pallet_democracy::Config for Runtime {
 	type InstantAllowed = InstantAllowed;
 	type FastTrackVotingPeriod = FastTrackVotingPeriod;
 	// To cancel a proposal which has been passed, 2/3 of the council must agree to it.
-	type CancellationOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
+	type CancellationOrigin = EnsureRootOrTwoThirdsCouncil;
 	type BlacklistOrigin = EnsureRoot<AccountId>;
 	// To cancel a proposal before it has been passed, the technical committee must be unanimous or
 	// Root must agree.
@@ -74,7 +74,7 @@ impl pallet_democracy::Config for Runtime {
 	type CooloffPeriod = CooloffPeriod;
 	type PreimageByteDeposit = PreimageByteDeposit;
 	type OperationalPreimageOrigin =
-		pallet_collective::EnsureMember<AccountId, GeneralCouncilInstance>;
+		pallet_collective::EnsureMember<AccountId, CouncilInstance>;
 	type Slash = Treasury;
 	type Scheduler = Scheduler;
 	type PalletsOrigin = OriginCaller;
@@ -84,37 +84,37 @@ impl pallet_democracy::Config for Runtime {
 }
 
 parameter_types! {
-	pub GeneralCouncilMotionDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "DOT_MOTION_DURATION");
+	pub CouncilMotionDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "SEL_MOTION_DURATION");
 	pub const CouncilDefaultMaxProposals: u32 = 20;
 	pub const CouncilDefaultMaxMembers: u32 = 30;
 }
 
-impl pallet_collective::Config<GeneralCouncilInstance> for Runtime {
+impl pallet_collective::Config<CouncilInstance> for Runtime {
 	type Origin = Origin;
 	type Proposal = Call;
 	type Event = Event;
-	type MotionDuration = GeneralCouncilMotionDuration;
+	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = CouncilDefaultMaxProposals;
 	type MaxMembers = CouncilDefaultMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = ();
 }
 
-impl pallet_membership::Config<GeneralCouncilMembershipInstance> for Runtime {
+impl pallet_membership::Config<CouncilMembershipInstance> for Runtime {
 	type Event = Event;
-	type AddOrigin = EnsureRootOrThreeFourthsGeneralCouncil;
-	type RemoveOrigin = EnsureRootOrThreeFourthsGeneralCouncil;
-	type SwapOrigin = EnsureRootOrThreeFourthsGeneralCouncil;
-	type ResetOrigin = EnsureRootOrThreeFourthsGeneralCouncil;
-	type PrimeOrigin = EnsureRootOrThreeFourthsGeneralCouncil;
-	type MembershipInitialized = GeneralCouncil;
-	type MembershipChanged = GeneralCouncil;
+	type AddOrigin = EnsureRootOrThreeFourthsCouncil;
+	type RemoveOrigin = EnsureRootOrThreeFourthsCouncil;
+	type SwapOrigin = EnsureRootOrThreeFourthsCouncil;
+	type ResetOrigin = EnsureRootOrThreeFourthsCouncil;
+	type PrimeOrigin = EnsureRootOrThreeFourthsCouncil;
+	type MembershipInitialized = Council;
+	type MembershipChanged = Council;
 	type MaxMembers = CouncilDefaultMaxMembers;
 	type WeightInfo = ();
 }
 
 parameter_types! {
-	pub FinancialCouncilMotionDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "DOT_MOTION_DURATION");
+	pub FinancialCouncilMotionDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "SEL_MOTION_DURATION");
 }
 
 impl pallet_collective::Config<FinancialCouncilInstance> for Runtime {
@@ -130,11 +130,11 @@ impl pallet_collective::Config<FinancialCouncilInstance> for Runtime {
 
 impl pallet_membership::Config<FinancialCouncilMembershipInstance> for Runtime {
 	type Event = Event;
-	type AddOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type RemoveOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type SwapOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type ResetOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type PrimeOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
+	type AddOrigin = EnsureRootOrTwoThirdsCouncil;
+	type RemoveOrigin = EnsureRootOrTwoThirdsCouncil;
+	type SwapOrigin = EnsureRootOrTwoThirdsCouncil;
+	type ResetOrigin = EnsureRootOrTwoThirdsCouncil;
+	type PrimeOrigin = EnsureRootOrTwoThirdsCouncil;
 	type MembershipInitialized = FinancialCouncil;
 	type MembershipChanged = FinancialCouncil;
 	type MaxMembers = CouncilDefaultMaxMembers;
@@ -142,7 +142,7 @@ impl pallet_membership::Config<FinancialCouncilMembershipInstance> for Runtime {
 }
 
 parameter_types! {
-	pub TechnicalCommitteeMotionDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "DOT_MOTION_DURATION");
+	pub TechnicalCommitteeMotionDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "SEL_MOTION_DURATION");
 }
 
 impl pallet_collective::Config<TechnicalCommitteeInstance> for Runtime {
@@ -158,11 +158,11 @@ impl pallet_collective::Config<TechnicalCommitteeInstance> for Runtime {
 
 impl pallet_membership::Config<TechnicalCommitteeMembershipInstance> for Runtime {
 	type Event = Event;
-	type AddOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type RemoveOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type SwapOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type ResetOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type PrimeOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
+	type AddOrigin = EnsureRootOrTwoThirdsCouncil;
+	type RemoveOrigin = EnsureRootOrTwoThirdsCouncil;
+	type SwapOrigin = EnsureRootOrTwoThirdsCouncil;
+	type ResetOrigin = EnsureRootOrTwoThirdsCouncil;
+	type PrimeOrigin = EnsureRootOrTwoThirdsCouncil;
 	type MembershipInitialized = TechnicalCommittee;
 	type MembershipChanged = TechnicalCommittee;
 	type MaxMembers = CouncilDefaultMaxMembers;
@@ -175,11 +175,11 @@ parameter_types! {
 
 impl pallet_membership::Config<OperatorMembershipInstanceSelendra> for Runtime {
 	type Event = Event;
-	type AddOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type RemoveOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type SwapOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type ResetOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
-	type PrimeOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
+	type AddOrigin = EnsureRootOrTwoThirdsCouncil;
+	type RemoveOrigin = EnsureRootOrTwoThirdsCouncil;
+	type SwapOrigin = EnsureRootOrTwoThirdsCouncil;
+	type ResetOrigin = EnsureRootOrTwoThirdsCouncil;
+	type PrimeOrigin = EnsureRootOrTwoThirdsCouncil;
 	type MembershipInitialized = ();
 	type MembershipChanged = SelendraOracle;
 	type MaxMembers = OperatorDefaultMembers;
@@ -188,7 +188,7 @@ impl pallet_membership::Config<OperatorMembershipInstanceSelendra> for Runtime {
 
 parameter_types! {
 	/// Weekly council elections; scaling up to monthly eventually.
-	pub TermDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "DOT_TERM_DURATION");
+	pub TermDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "SEL_TERM_DURATION");
 	pub CandidacyBond: Balance = 100 * dollar(SEL);
 	// 1 storage item created, key size is 32 bytes, value size is 16+16.
 	pub VotingBondBase: Balance = deposit(1, 64);
@@ -203,10 +203,10 @@ impl pallet_elections_phragmen::Config for Runtime {
 	type Event = Event;
 	type PalletId = PhragmenElectionPalletId;
 	type Currency = Balances;
-	type ChangeMembers = GeneralCouncil;
+	type ChangeMembers = Council;
 	// NOTE: this implies that council's genesis members cannot be set directly and must come from
 	// this module.
-	type InitializeMembers = GeneralCouncil;
+	type InitializeMembers = Council;
 	type CurrencyToVote = CurrencyToVote;
 	type CandidacyBond = CandidacyBond;
 	type VotingBondBase = VotingBondBase;

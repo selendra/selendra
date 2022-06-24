@@ -107,9 +107,9 @@ pub use primitives::{
 
 pub use runtime_common::{
 	cent, dollar, microcent, prod_or_fast, AllPrecompiles, EnsureRootOrHalfFinancialCouncil,
-	EnsureRootOrHalfGeneralCouncil, EnsureRootOrOneGeneralCouncil,
-	EnsureRootOrOneThirdsTechnicalCommittee, EnsureRootOrThreeFourthsGeneralCouncil,
-	EnsureRootOrTwoThirdsGeneralCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, GasToWeight,
+	EnsureRootOrHalfCouncil, EnsureRootOrOneCouncil,
+	EnsureRootOrOneThirdsTechnicalCommittee, EnsureRootOrThreeFourthsCouncil,
+	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, GasToWeight,
 	MaxTipsOfPriority, OperationalFeeMultiplier, Price, ProxyType, Rate, Ratio, RuntimeBlockLength,
 	RuntimeBlockWeights, TimeStampedPrice, TipPerWeightStep, DOT, KMD, SEL, SUSD,
 };
@@ -299,8 +299,8 @@ parameter_types! {
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
-	type ApproveOrigin = EnsureRootOrHalfGeneralCouncil;
-	type RejectOrigin = EnsureRootOrHalfGeneralCouncil;
+	type ApproveOrigin = EnsureRootOrHalfCouncil;
+	type RejectOrigin = EnsureRootOrHalfCouncil;
 	type Event = Event;
 	type OnSlash = Treasury;
 	type ProposalBond = ProposalBond;
@@ -445,7 +445,7 @@ impl module_prices::Config for Runtime {
 	type Source = AggregatedDataProvider;
 	type GetStableCurrencyId = GetStableCurrencyId;
 	type StableCurrencyFixedPrice = StableCurrencyFixedPrice;
-	type LockOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
+	type LockOrigin = EnsureRootOrTwoThirdsCouncil;
 	type DEX = Dex;
 	type Currency = Currencies;
 	type Erc20InfoMapping = EvmErc20InfoMapping<Runtime>;
@@ -468,7 +468,7 @@ impl module_currencies::Config for Runtime {
 	type AddressMapping = EvmAddressMapping<Runtime>;
 	type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
 	type GasToWeight = GasToWeight;
-	type SweepOrigin = EnsureRootOrOneGeneralCouncil;
+	type SweepOrigin = EnsureRootOrOneCouncil;
 	type OnDust = module_currencies::TransferDust<Runtime, SelendraTreasuryAccount>;
 }
 
@@ -585,7 +585,7 @@ impl module_dex::Config for Runtime {
 	type Erc20InfoMapping = EvmErc20InfoMapping<Runtime>;
 	type DEXIncentives = Incentives;
 	type WeightInfo = weights::module_dex::WeightInfo<Runtime>;
-	type ListingOrigin = EnsureRootOrHalfGeneralCouncil;
+	type ListingOrigin = EnsureRootOrHalfCouncil;
 	type ExtendedProvisioningBlocks = ExtendedProvisioningBlocks;
 	type OnLiquidityPoolUpdated = ();
 }
@@ -593,7 +593,7 @@ impl module_dex::Config for Runtime {
 impl module_dex_oracle::Config for Runtime {
 	type DEX = Dex;
 	type Time = Timestamp;
-	type UpdateOrigin = EnsureRootOrHalfGeneralCouncil;
+	type UpdateOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::module_dex_oracle::WeightInfo<Runtime>;
 }
 
@@ -605,7 +605,7 @@ impl module_treasury::Config for Runtime {
 
 impl module_transaction_pause::Config for Runtime {
 	type Event = Event;
-	type UpdateOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
+	type UpdateOrigin = EnsureRootOrTwoThirdsCouncil;
 	type WeightInfo = weights::module_transaction_pause::WeightInfo<Runtime>;
 }
 
@@ -641,7 +641,7 @@ impl module_transaction_payment::Config for Runtime {
 	type WeightInfo = weights::module_transaction_payment::WeightInfo<Runtime>;
 	type PalletId = TransactionPaymentPalletId;
 	type TreasuryAccount = SelendraTreasuryAccount;
-	type UpdateOrigin = EnsureRootOrHalfGeneralCouncil;
+	type UpdateOrigin = EnsureRootOrHalfCouncil;
 	type CustomFeeSurplus = CustomFeeSurplus;
 	type AlternativeFeeSurplus = AlternativeFeeSurplus;
 	type DefaultFeeTokens = DefaultFeeTokens;
@@ -660,7 +660,7 @@ impl module_asset_registry::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
-	type RegisterOrigin = EnsureRootOrHalfGeneralCouncil;
+	type RegisterOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::module_asset_registry::WeightInfo<Runtime>;
 }
 
@@ -684,7 +684,7 @@ impl module_incentives::Config for Runtime {
 	type NativeCurrencyId = GetNativeCurrencyId;
 	type EarnShareBooster = EarnShareBooster;
 	type AccumulatePeriod = AccumulatePeriod;
-	type UpdateOrigin = EnsureRootOrThreeFourthsGeneralCouncil;
+	type UpdateOrigin = EnsureRootOrThreeFourthsCouncil;
 	type SelTreasury = SelTreasury;
 	type Currency = Currencies;
 	type DEX = Dex;
@@ -732,7 +732,7 @@ impl InstanceFilter<Call> for ProxyType {
 				matches!(
 					c,
 					Call::Authority(..) |
-						Call::Democracy(..) | Call::GeneralCouncil(..) |
+						Call::Democracy(..) | Call::Council(..) |
 						Call::FinancialCouncil(..) |
 						Call::TechnicalCommittee(..) |
 						Call::Treasury(..) | Call::Bounties(..) |
@@ -834,7 +834,7 @@ impl module_evm::Config for Runtime {
 	type DeveloperDeposit = DeveloperDeposit;
 	type PublicationFee = PublicationFee;
 	type TreasuryAccount = SelendraTreasuryAccount;
-	type FreePublicationOrigin = EnsureRootOrHalfGeneralCouncil;
+	type FreePublicationOrigin = EnsureRootOrHalfCouncil;
 	type Runner = module_evm::runner::stack::Runner<Self>;
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Babe>;
 	type Task = ScheduledTasks;
@@ -926,8 +926,8 @@ construct_runtime!(
 
 		// Governance
 		Authority: orml_authority = 60,
-		GeneralCouncil: pallet_collective::<Instance1> = 61,
-		GeneralCouncilMembership: pallet_membership::<Instance1> = 62,
+		Council: pallet_collective::<Instance1> = 61,
+		CouncilMembership: pallet_membership::<Instance1> = 62,
 		FinancialCouncil: pallet_collective::<Instance2> = 63,
 		FinancialCouncilMembership: pallet_membership::<Instance2> = 64,
 		PhragmenElection: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 65,

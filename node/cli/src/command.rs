@@ -22,9 +22,13 @@ use crate::{
 use service::{chain_spec, new_partial, FullClient, ExecutorDispatch};
 use frame_benchmarking_cli::*;
 use selendra_primitives::Block;
-use selendra_runtime::RuntimeApi;
 use sc_cli::{ChainSpec, Result, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
+
+#[cfg(feature = "with-selendra-runtime")]
+use selendra_runtime::RuntimeApi;
+#[cfg(not(feature = "with-selendra-runtime"))]
+use cardamom_runtime::RuntimeApi;
 
 use std::sync::Arc;
 
@@ -60,10 +64,23 @@ impl SubstrateCli for Cli {
 					"Please specify which chain you want to run, e.g. --dev or --chain=local"
 						.into(),
 				),
-			"dev" => Box::new(chain_spec::selendra::development_config()),
-			"local" => Box::new(chain_spec::selendra::local_testnet_config()),
+			#[cfg(feature = "with-selendra-runtime")]
+			"dev" | "selendra-dev" => Box::new(chain_spec::selendra::development_config()),
+			#[cfg(feature = "with-selendra-runtime")]
+			"selendra-local" => Box::new(chain_spec::selendra::local_testnet_config()),
+			#[cfg(feature = "with-selendra-runtime")]
+			"selendra-staging" => Box::new(chain_spec::selendra::staging_config()),
+			#[cfg(feature = "with-selendra-runtime")]
 			"selendra" => Box::new(chain_spec::selendra::selendra_config()?),
-			"staging" => Box::new(chain_spec::selendra::staging_config()),
+
+			#[cfg(not(feature = "with-selendra-runtime"))]
+			"dev" | "cardamom-dev" => Box::new(chain_spec::selendra::development_config()),
+			#[cfg(feature = "with-cardamom-runtime")]
+			"cardamom-local" => Box::new(chain_spec::selendra::local_testnet_config()),
+			#[cfg(feature = "with-cardamom-runtime")]
+			"cardamom-staging" => Box::new(chain_spec::selendra::staging_config()),
+			#[cfg(feature = "with-cardamom-runtime")]
+			"cardamom" => Box::new(chain_spec::selendra::selendra_config()?),
 			path =>
 				Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
 		};
@@ -71,7 +88,10 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&selendra_runtime::VERSION
+		#[cfg(feature = "with-selendra-runtime")]
+		return &selendra_runtime::VERSION;
+		#[cfg(not(feature = "with-selendra-runtime"))]
+		return &cardamom_runtime::VERSION;
 	}
 }
 
