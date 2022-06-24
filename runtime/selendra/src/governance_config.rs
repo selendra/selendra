@@ -14,7 +14,7 @@ use runtime_common::{
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
 	FinancialCouncilInstance, FinancialCouncilMembershipInstance, CouncilInstance,
 	CouncilMembershipInstance, OperatorMembershipInstanceSelendra,
-	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance,
+	TechnicalCommitteeInstance, TechnicalMembershipInstance,
 };
 
 impl orml_authority::Config for Runtime {
@@ -156,7 +156,7 @@ impl pallet_collective::Config<TechnicalCommitteeInstance> for Runtime {
 	type WeightInfo = ();
 }
 
-impl pallet_membership::Config<TechnicalCommitteeMembershipInstance> for Runtime {
+impl pallet_membership::Config<TechnicalMembershipInstance> for Runtime {
 	type Event = Event;
 	type AddOrigin = EnsureRootOrTwoThirdsCouncil;
 	type RemoveOrigin = EnsureRootOrTwoThirdsCouncil;

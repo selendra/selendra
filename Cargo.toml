@@ -7,6 +7,7 @@ members = [
 	"node/inspect",
 	"node/rpc",
 	"node/cli",
+	"runtime/cardamom",
 	"runtime/selendra",
 	"runtime/common",
 	"primitives",
@@ -28,7 +29,6 @@ members = [
 	"modules/transaction-pause",
 	"modules/transaction-payment",
 	"modules/treasury"
-
 ]
 
 exclude = [
