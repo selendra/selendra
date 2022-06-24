@@ -1,7 +1,7 @@
 [package]
 name = "module-evm-utility-macro"
 version = "0.1.0"
-authors = ["Selendra <info.selendra.org>"]
+authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [lib]

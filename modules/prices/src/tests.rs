@@ -1,6 +1,6 @@
-// This file is part of SELla.
+// This file is part of Selendra.
 
-// Copyright (C) 2020-2022 SELla Foundation.
+// Copyright (C) 2020-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,9 +12,6 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! Unit tests for the prices module.
 
@@ -39,8 +36,8 @@ fn lp_token_fair_price_works() {
 	)
 	.unwrap();
 	assert!(
-		lp_token_fair_price_0 <= Price::saturating_from_integer(400)
-			&& lp_token_fair_price_0 >= Price::saturating_from_integer(399)
+		lp_token_fair_price_0 <= Price::saturating_from_integer(400) &&
+			lp_token_fair_price_0 >= Price::saturating_from_integer(399)
 	);
 
 	assert_eq!(
@@ -117,6 +114,16 @@ fn lp_token_fair_price_works() {
 }
 
 #[test]
+fn access_price_of_liquid_crowdloan() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_eq!(
+			PricesModule::access_price(DOT),
+			Some(Price::from_inner(10_000_000_000_000_000_000_000_000_000u128))
+		); // 100 USD, right shift the decimal point (18-12) places
+	});
+}
+
+#[test]
 fn access_price_of_stable_currency() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_eq!(
@@ -129,6 +136,21 @@ fn access_price_of_stable_currency() {
 			PricesModule::access_price(SUSD),
 			Some(Price::saturating_from_integer(1000000u128))
 		);
+	});
+}
+
+#[test]
+fn access_price_of_liquid_currency() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_eq!(
+			PricesModule::access_price(DOT),
+			Some(Price::saturating_from_integer(10000000000u128))
+		); // 100 USD, right shift the decimal point (18-12) places
+		mock_oracle_update();
+		assert_eq!(
+			PricesModule::access_price(DOT),
+			Some(Price::saturating_from_integer(1000000000u128))
+		); // 10 USD, right shift the decimal point (18-12) places
 	});
 }
 
@@ -211,15 +233,10 @@ fn access_price_of_other_currency() {
 fn access_price_of_pegged_currency() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_eq!(PricesModule::access_price(KSM), None);
-		assert_eq!(PricesModule::access_price(KMDKSM), None);
 
 		mock_oracle_update();
 		assert_eq!(
 			PricesModule::access_price(KSM),
-			Some(Price::saturating_from_integer(200000000u128))
-		); // 200 USD, right shift the decimal point (18-12) places
-		assert_eq!(
-			PricesModule::access_price(KMDKSM),
 			Some(Price::saturating_from_integer(200000000u128))
 		); // 200 USD, right shift the decimal point (18-12) places
 	});
@@ -296,7 +313,9 @@ fn unlock_price_work() {
 			Some(Price::saturating_from_integer(500000000000000u128))
 		);
 		assert_ok!(PricesModule::unlock_price(Origin::signed(1), BTC));
-		System::assert_last_event(Event::PricesModule(crate::Event::UnlockPrice { currency_id: BTC }));
+		System::assert_last_event(Event::PricesModule(crate::Event::UnlockPrice {
+			currency_id: BTC,
+		}));
 		assert_eq!(PricesModule::locked_price(BTC), None);
 	});
 }
@@ -336,14 +355,8 @@ fn price_providers_work() {
 			Some(Price::saturating_from_integer(500000000000000u128))
 		);
 		assert_eq!(PriorityLockedPriceProvider::<Runtime>::get_price(KSM), None);
-		assert_eq!(
-			PriorityLockedPriceProvider::<Runtime>::get_price(LP_SUSD_DOT),
-			lp_price_1
-		);
-		assert_eq!(
-			PriorityLockedPriceProvider::<Runtime>::get_relative_price(BTC, KSM),
-			None
-		);
+		assert_eq!(PriorityLockedPriceProvider::<Runtime>::get_price(LP_SUSD_DOT), lp_price_1);
+		assert_eq!(PriorityLockedPriceProvider::<Runtime>::get_relative_price(BTC, KSM), None);
 
 		assert_eq!(LockedPriceProvider::<Runtime>::get_price(SUSD), None);
 		assert_eq!(LockedPriceProvider::<Runtime>::get_price(BTC), None);
@@ -412,10 +425,7 @@ fn price_providers_work() {
 			PriorityLockedPriceProvider::<Runtime>::get_price(KSM),
 			Some(Price::saturating_from_integer(200000000u128))
 		);
-		assert_eq!(
-			PriorityLockedPriceProvider::<Runtime>::get_price(LP_SUSD_DOT),
-			lp_price_1
-		);
+		assert_eq!(PriorityLockedPriceProvider::<Runtime>::get_price(LP_SUSD_DOT), lp_price_1);
 		assert_eq!(
 			PriorityLockedPriceProvider::<Runtime>::get_relative_price(BTC, KSM),
 			Some(Price::saturating_from_integer(2500000u128))
@@ -454,10 +464,7 @@ fn price_providers_work() {
 			PriorityLockedPriceProvider::<Runtime>::get_price(KSM),
 			Some(Price::saturating_from_integer(200000000u128))
 		);
-		assert_eq!(
-			PriorityLockedPriceProvider::<Runtime>::get_price(LP_SUSD_DOT),
-			lp_price_2
-		);
+		assert_eq!(PriorityLockedPriceProvider::<Runtime>::get_price(LP_SUSD_DOT), lp_price_2);
 		assert_eq!(
 			PriorityLockedPriceProvider::<Runtime>::get_relative_price(BTC, KSM),
 			Some(Price::saturating_from_integer(2000000u128))

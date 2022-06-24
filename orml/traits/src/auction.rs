@@ -1,6 +1,5 @@
 use crate::Change;
-use codec::FullCodec;
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{AtLeast32Bit, Bounded, MaybeSerializeDeserialize},
@@ -27,17 +26,32 @@ pub struct AuctionInfo<AccountId, Balance, BlockNumber> {
 /// Abstraction over a simple auction system.
 pub trait Auction<AccountId, BlockNumber> {
 	/// The id of an AuctionInfo
-	type AuctionId: FullCodec + Default + Copy + Eq + PartialEq + MaybeSerializeDeserialize + Bounded + Debug;
+	type AuctionId: FullCodec
+		+ Default
+		+ Copy
+		+ Eq
+		+ PartialEq
+		+ MaybeSerializeDeserialize
+		+ Bounded
+		+ Debug;
 	/// The price to bid.
 	type Balance: AtLeast32Bit + FullCodec + Copy + MaybeSerializeDeserialize + Debug + Default;
 
 	/// The auction info of `id`
-	fn auction_info(id: Self::AuctionId) -> Option<AuctionInfo<AccountId, Self::Balance, BlockNumber>>;
+	fn auction_info(
+		id: Self::AuctionId,
+	) -> Option<AuctionInfo<AccountId, Self::Balance, BlockNumber>>;
 	/// Update the auction info of `id` with `info`
-	fn update_auction(id: Self::AuctionId, info: AuctionInfo<AccountId, Self::Balance, BlockNumber>) -> DispatchResult;
+	fn update_auction(
+		id: Self::AuctionId,
+		info: AuctionInfo<AccountId, Self::Balance, BlockNumber>,
+	) -> DispatchResult;
 	/// Create new auction with specific startblock and endblock, return the id
 	/// of the auction
-	fn new_auction(start: BlockNumber, end: Option<BlockNumber>) -> result::Result<Self::AuctionId, DispatchError>;
+	fn new_auction(
+		start: BlockNumber,
+		end: Option<BlockNumber>,
+	) -> result::Result<Self::AuctionId, DispatchError>;
 	/// Remove auction by `id`
 	fn remove_auction(id: Self::AuctionId);
 }

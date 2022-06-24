@@ -6,7 +6,12 @@ use sp_std::fmt::Debug;
 /// Trait to complement the Inspect trait
 pub trait InspectExtended<AccountId>: Inspect<AccountId> {
 	/// The balance of account.
-	type Balance: AtLeast32BitUnsigned + FullCodec + Copy + MaybeSerializeDeserialize + Debug + Default;
+	type Balance: AtLeast32BitUnsigned
+		+ FullCodec
+		+ Copy
+		+ MaybeSerializeDeserialize
+		+ Debug
+		+ Default;
 
 	/// The number of NFTs assigned to `who`.
 	fn balance(who: &AccountId) -> Self::Balance;

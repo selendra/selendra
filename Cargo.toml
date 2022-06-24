@@ -1,19 +1,90 @@
+cargo-features = ["resolver"]
+
 [workspace]
 members = [
-    "primitives",
-    "node/cli",
-    "node/inspect",
-    "node/rpc",
-    "node/executor",
-    "node/test",
-    "runtime/selendra",
+	"bin",
+	"node/service",
+	"node/inspect",
+	"node/rpc",
+	"node/cli",
+	"runtime/selendra",
+	"runtime/common",
+	"primitives",
+	"modules/asset-registry",
+	"modules/currencies",
+	"modules/dex",
+	"modules/dex-oracle",
+	"modules/emergency-shutdown",
+	"modules/evm",
+	"modules/evm-accounts",
+	"modules/evm-bridge",
+	"modules/evm-utility",
+	"modules/idle-scheduler",
+	"modules/incentives",
+	"modules/nft",
+	"modules/prices",
+	"modules/stable-asset",
+	"modules/support",
+	"modules/transaction-pause",
+	"modules/transaction-payment",
+	"modules/treasury"
+
 ]
 
+exclude = [
+	"evm-tests",
+]
+
+resolver = "2"
+
+[profile.dev]
+split-debuginfo = "unpacked"
+
 [profile.release]
+# Selendra runtime requires unwinding.
 panic = "unwind"
-opt-level = 3
 
 [profile.production]
 inherits = "release"
 lto = true
 codegen-units = 1
+
+# The list of dependencies below (which can be both direct and indirect dependencies) are crates
+# that are suspected to be CPU-intensive, and that are unlikely to require debugging (as some of
+# their debug info might be missing) or to require to be frequently recompiled. We compile these
+# dependencies with `opt-level=3` even in "dev" mode in order to make "dev" mode more usable.
+# The majority of these crates are cryptographic libraries.
+#
+# Note that this does **not** affect crates that depend on Substrate. In other words, if you add
+# a dependency on Substrate, you have to copy-paste this list in your own `Cargo.toml` (assuming
+# that you want the same list). This list is only relevant when running `cargo build` from within
+# the Substrate workspace.
+#
+# If you see an error mentioning "profile package spec ... did not match any packages", it
+# probably concerns this list.
+#
+# This list is ordered alphabetically.
+[profile.dev.package]
+blake2 = { opt-level = 3 }
+blake2-rfc = { opt-level = 3 }
+crypto-mac = { opt-level = 3 }
+curve25519-dalek = { opt-level = 3 }
+ed25519-dalek = { opt-level = 3 }
+futures-channel = { opt-level = 3 }
+hashbrown = { opt-level = 3 }
+hash-db = { opt-level = 3 }
+hmac = { opt-level = 3 }
+integer-sqrt = { opt-level = 3 }
+keccak = { opt-level = 3 }
+libsecp256k1 = { opt-level = 3 }
+num-bigint = { opt-level = 3 }
+parking_lot = { opt-level = 3 }
+parking_lot_core = { opt-level = 3 }
+primitive-types = { opt-level = 3 }
+sha2 = { opt-level = 3 }
+sha3 = { opt-level = 3 }
+smallvec = { opt-level = 3 }
+twox-hash = { opt-level = 3 }
+uint = { opt-level = 3 }
+wasmi = { opt-level = 3 }
+zeroize = { opt-level = 3 }

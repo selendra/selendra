@@ -6,8 +6,8 @@ use super::*;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ChangeMembers, ConstU32, ConstU64, ContainsLengthBound, Everything, GenesisBuild, SaturatingCurrencyToVote,
-		SortedMembers,
+		ChangeMembers, ConstU32, ConstU64, ContainsLengthBound, Everything, GenesisBuild,
+		SaturatingCurrencyToVote, SortedMembers,
 	},
 	PalletId,
 };
@@ -166,10 +166,7 @@ impl ChangeMembers<AccountId> for TestChangeMembers {
 		new_plus_outgoing.extend_from_slice(outgoing);
 		new_plus_outgoing.sort();
 
-		assert_eq!(
-			old_plus_incoming, new_plus_outgoing,
-			"change members call is incorrect!"
-		);
+		assert_eq!(old_plus_incoming, new_plus_outgoing, "change members call is incorrect!");
 
 		MEMBERS.with(|m| *m.borrow_mut() = new.to_vec());
 		PRIME.with(|p| *p.borrow_mut() = None);
@@ -309,10 +306,7 @@ pub struct ExtBuilder {
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self {
-			balances: vec![],
-			treasury_genesis: false,
-		}
+		Self { balances: vec![], treasury_genesis: false }
 	}
 }
 
@@ -323,18 +317,18 @@ impl ExtBuilder {
 	}
 
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+
+		tokens::GenesisConfig::<Runtime> { balances: self.balances }
+			.assimilate_storage(&mut t)
 			.unwrap();
 
-		tokens::GenesisConfig::<Runtime> {
-			balances: self.balances,
-		}
-		.assimilate_storage(&mut t)
-		.unwrap();
-
 		if self.treasury_genesis {
-			GenesisBuild::<Runtime>::assimilate_storage(&pallet_treasury::GenesisConfig::default(), &mut t).unwrap();
+			GenesisBuild::<Runtime>::assimilate_storage(
+				&pallet_treasury::GenesisConfig::default(),
+				&mut t,
+			)
+			.unwrap();
 
 			pallet_elections_phragmen::GenesisConfig::<Runtime> {
 				members: vec![(TREASURY_ACCOUNT, 10)],

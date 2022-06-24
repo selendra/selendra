@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! # Prices Module
 //!
@@ -29,12 +28,10 @@
 
 use frame_support::{pallet_prelude::*, transactional};
 use frame_system::pallet_prelude::*;
-use orml_traits::{DataFeeder, DataProvider, GetByKey, MultiCurrency};
+use orml_traits::{DataFeeder, DataProvider, MultiCurrency};
 use primitives::{Balance, CurrencyId};
 use sp_core::U256;
-use sp_runtime::{
-	FixedPointNumber,
-};
+use sp_runtime::FixedPointNumber;
 use sp_std::marker::PhantomData;
 use support::{DEXManager, Erc20InfoMapping, LockablePrice, Price, PriceProvider};
 
@@ -54,7 +51,8 @@ pub mod module {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The data source, such as Oracle.
-		type Source: DataProvider<CurrencyId, Price> + DataFeeder<CurrencyId, Price, Self::AccountId>;
+		type Source: DataProvider<CurrencyId, Price>
+			+ DataFeeder<CurrencyId, Price, Self::AccountId>;
 
 		/// The stable currency id, it should be SUSD in Selendra.
 		#[pallet::constant]
@@ -76,10 +74,6 @@ pub mod module {
 		/// Mapping between CurrencyId and ERC20 address so user can use Erc20.
 		type Erc20InfoMapping: Erc20InfoMapping;
 
-		/// If a currency is pegged to another currency in price, price of this currency is
-		/// equal to the price of another.
-		type PricingPegged: GetByKey<CurrencyId, Option<CurrencyId>>;
-
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
 	}
@@ -96,10 +90,7 @@ pub mod module {
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Lock price.
-		LockPrice {
-			currency_id: CurrencyId,
-			locked_price: Price,
-		},
+		LockPrice { currency_id: CurrencyId, locked_price: Price },
 		/// Unlock price.
 		UnlockPrice { currency_id: CurrencyId },
 	}
@@ -153,13 +144,6 @@ impl<T: Config> Pallet<T> {
 	///
 	/// Note: this returns the price for 1 basic unit
 	fn access_price(currency_id: CurrencyId) -> Option<Price> {
-		// if it's configured pegged to another currency id
-		let currency_id = if let Some(pegged_currency_id) = T::PricingPegged::get(&currency_id) {
-			pegged_currency_id
-		} else {
-			currency_id
-		};
-
 		let maybe_price = if currency_id == T::GetStableCurrencyId::get() {
 			// if is stable currency, use fixed price
 			Some(T::StableCurrencyFixedPrice::get())
@@ -169,22 +153,27 @@ impl<T: Config> Pallet<T> {
 
 			// directly return the fair price
 			return {
-				if let (Some(price_0), Some(price_1)) = (Self::access_price(token_0), Self::access_price(token_1)) {
+				if let (Some(price_0), Some(price_1)) =
+					(Self::access_price(token_0), Self::access_price(token_1))
+				{
 					let (pool_0, pool_1) = T::DEX::get_liquidity_pool(token_0, token_1);
 					let total_shares = T::Currency::total_issuance(currency_id);
 					lp_token_fair_price(total_shares, pool_0, pool_1, price_0, price_1)
 				} else {
 					None
 				}
-			};
+			}
 		} else {
 			// get real-time price from oracle
 			T::Source::get(&currency_id)
 		};
 
-		let maybe_adjustment_multiplier = 10u128.checked_pow(T::Erc20InfoMapping::decimals(currency_id)?.into());
+		let maybe_adjustment_multiplier =
+			10u128.checked_pow(T::Erc20InfoMapping::decimals(currency_id)?.into());
 
-		if let (Some(price), Some(adjustment_multiplier)) = (maybe_price, maybe_adjustment_multiplier) {
+		if let (Some(price), Some(adjustment_multiplier)) =
+			(maybe_price, maybe_adjustment_multiplier)
+		{
 			// return the price for 1 basic unit
 			Price::checked_from_rational(price.into_inner(), adjustment_multiplier)
 		} else {
@@ -198,10 +187,7 @@ impl<T: Config> LockablePrice<CurrencyId> for Pallet<T> {
 	fn lock_price(currency_id: CurrencyId) -> DispatchResult {
 		let price = Self::access_price(currency_id).ok_or(Error::<T>::AccessPriceFailed)?;
 		LockedPrice::<T>::insert(currency_id, price);
-		Pallet::<T>::deposit_event(Event::LockPrice {
-			currency_id,
-			locked_price: price,
-		});
+		Pallet::<T>::deposit_event(Event::LockPrice { currency_id, locked_price: price });
 		Ok(())
 	}
 

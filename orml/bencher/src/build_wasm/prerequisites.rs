@@ -40,14 +40,16 @@ pub fn copy_file_if_changed(src: PathBuf, dst: PathBuf) {
 	let dst_file = fs::read_to_string(&dst).ok();
 
 	if src_file != dst_file {
-		fs::copy(&src, &dst)
-			.unwrap_or_else(|_| panic!("Copying `{}` to `{}` can not fail; qed", src.display(), dst.display()));
+		fs::copy(&src, &dst).unwrap_or_else(|_| {
+			panic!("Copying `{}` to `{}` can not fail; qed", src.display(), dst.display())
+		});
 	}
 }
 
 /// Get a cargo command that compiles with nightly
 fn get_nightly_cargo() -> CargoCommand {
-	let env_cargo = CargoCommand::new(&env::var("CARGO").expect("`CARGO` env variable is always set by cargo"));
+	let env_cargo =
+		CargoCommand::new(&env::var("CARGO").expect("`CARGO` env variable is always set by cargo"));
 	let default_cargo = CargoCommand::new("cargo");
 	let rustup_run_nightly = CargoCommand::new_with_args("rustup", &["run", "nightly", "cargo"]);
 	let wasm_toolchain = env::var(WASM_BUILD_TOOLCHAIN).ok();
@@ -77,11 +79,7 @@ fn get_rustup_nightly(selected: Option<String>) -> Option<CargoCommand> {
 	let version = match selected {
 		Some(selected) => selected,
 		None => {
-			let output = Command::new("rustup")
-				.args(&["toolchain", "list"])
-				.output()
-				.ok()?
-				.stdout;
+			let output = Command::new("rustup").args(&["toolchain", "list"]).output().ok()?.stdout;
 			let lines = output.as_slice().lines();
 
 			let mut latest_nightly = None;
@@ -93,7 +91,7 @@ fn get_rustup_nightly(selected: Option<String>) -> Option<CargoCommand> {
 			}
 
 			latest_nightly?.trim_end_matches(&host).into()
-		}
+		},
 	};
 
 	Some(CargoCommand::new_with_args("rustup", &["run", &version, "cargo"]))
@@ -108,10 +106,7 @@ pub struct CargoCommand {
 
 impl CargoCommand {
 	fn new(program: &str) -> Self {
-		CargoCommand {
-			program: program.into(),
-			args: Vec::new(),
-		}
+		CargoCommand { program: program.into(), args: Vec::new() }
 	}
 
 	fn new_with_args(program: &str, args: &[&str]) -> Self {
@@ -133,9 +128,8 @@ impl CargoCommand {
 		// this env variable is set, we can assume that whatever rust compiler we have,
 		// it is a nightly compiler. For "more" information, see:
 		// https://github.com/rust-lang/rust/blob/fa0f7d0080d8e7e9eb20aa9cbf8013f96c81287f/src/libsyntax/feature_gate/check.rs#L891
-		env::var("RUSTC_BOOTSTRAP").is_ok()
-			|| self
-				.command()
+		env::var("RUSTC_BOOTSTRAP").is_ok() ||
+			self.command()
 				.arg("--version")
 				.output()
 				.map_err(|_| ())
@@ -179,7 +173,7 @@ pub fn check() -> Result<CargoCommandVersioned, String> {
 	let cargo_command = get_nightly_cargo();
 
 	if !cargo_command.is_nightly() {
-		return Err(red_bold("Rust nightly not installed, please install it!"));
+		return Err(red_bold("Rust nightly not installed, please install it!"))
 	}
 
 	check_wasm_toolchain_installed(cargo_command)
@@ -251,7 +245,9 @@ fn create_check_toolchain_project(project_dir: &Path) {
 	);
 }
 
-fn check_wasm_toolchain_installed(cargo_command: CargoCommand) -> Result<CargoCommandVersioned, String> {
+fn check_wasm_toolchain_installed(
+	cargo_command: CargoCommand,
+) -> Result<CargoCommandVersioned, String> {
 	let temp = tempdir().expect("Creating temp dir does not fail; qed");
 	fs::create_dir_all(temp.path().join("src")).expect("Creating src dir does not fail; qed");
 	create_check_toolchain_project(temp.path());
@@ -283,9 +279,8 @@ fn check_wasm_toolchain_installed(cargo_command: CargoCommand) -> Result<CargoCo
 			))
 		} else {
 			match String::from_utf8(s.stderr) {
-				Ok(ref err) if err.contains("linker `rust-lld` not found") => {
-					Err(red_bold("`rust-lld` not found, please install it!"))
-				}
+				Ok(ref err) if err.contains("linker `rust-lld` not found") =>
+					Err(red_bold("`rust-lld` not found, please install it!")),
 				Ok(ref err) => Err(format!(
 					"{}\n\n{}\n{}\n{}{}\n",
 					err_msg,

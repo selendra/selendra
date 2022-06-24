@@ -25,7 +25,7 @@ pub trait DataProviderExtended<Key, TimestampedValue> {
 #[allow(dead_code)] // rust cannot detect usage in macro_rules
 pub fn median<T: Ord + Clone>(mut items: Vec<T>) -> Option<T> {
 	if items.is_empty() {
-		return None;
+		return None
 	}
 
 	let mid_index = items.len() / 2;
@@ -114,7 +114,13 @@ mod tests {
 	mock_data_provider!(Provider3, MOCK_PRICE_3);
 	mock_data_provider!(Provider4, MOCK_PRICE_4);
 
-	create_median_value_data_provider!(Providers, u8, u8, u8, [Provider1, Provider2, Provider3, Provider4]);
+	create_median_value_data_provider!(
+		Providers,
+		u8,
+		u8,
+		u8,
+		[Provider1, Provider2, Provider3, Provider4]
+	);
 
 	#[test]
 	fn median_value_data_provider_works() {

@@ -65,7 +65,12 @@ impl RewardHandler<AccountId, CurrencyId> for Handler {
 	type Balance = Balance;
 	type PoolId = PoolId;
 
-	fn payout(who: &AccountId, pool: &Self::PoolId, currency_id: CurrencyId, amount: Self::Balance) {
+	fn payout(
+		who: &AccountId,
+		pool: &Self::PoolId,
+		currency_id: CurrencyId,
+		amount: Self::Balance,
+	) {
 		RECEIVED_PAYOUT.with(|v| {
 			let mut old_map = v.borrow().clone();
 			if let Some(before) = old_map.get_mut(&(*pool, *who, currency_id)) {
@@ -111,9 +116,7 @@ impl Default for ExtBuilder {
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let t = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
-			.unwrap();
+		let t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 		t.into()
 	}

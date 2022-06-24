@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::Rate;
 use codec::{Decode, Encode};
@@ -37,20 +36,40 @@ pub trait IncentivesManager<AccountId, Balance, CurrencyId, PoolId> {
 	/// Gets fixed reward rate for `PoolId::Dex` per period
 	fn get_dex_reward_rate(pool_id: PoolId) -> Rate;
 	/// Stake LP token to add shares to pool
-	fn deposit_dex_share(who: &AccountId, lp_currency_id: CurrencyId, amount: Balance) -> DispatchResult;
+	fn deposit_dex_share(
+		who: &AccountId,
+		lp_currency_id: CurrencyId,
+		amount: Balance,
+	) -> DispatchResult;
 	/// Unstake LP token to remove shares from pool
-	fn withdraw_dex_share(who: &AccountId, lp_currency_id: CurrencyId, amount: Balance) -> DispatchResult;
+	fn withdraw_dex_share(
+		who: &AccountId,
+		lp_currency_id: CurrencyId,
+		amount: Balance,
+	) -> DispatchResult;
 	/// Claim all available rewards for specific `PoolId`
 	fn claim_rewards(who: AccountId, pool_id: PoolId) -> DispatchResult;
 	/// Gets deduction reate for claiming reward early
 	fn get_claim_reward_deduction_rate(pool_id: PoolId) -> Rate;
 	/// Gets the pending rewards for a pool, for an account
-	fn get_pending_rewards(pool_id: PoolId, who: AccountId, reward_currency: Vec<CurrencyId>) -> Vec<Balance>;
+	fn get_pending_rewards(
+		pool_id: PoolId,
+		who: AccountId,
+		reward_currency: Vec<CurrencyId>,
+	) -> Vec<Balance>;
 }
 
 pub trait DEXIncentives<AccountId, CurrencyId, Balance> {
-	fn do_deposit_dex_share(who: &AccountId, lp_currency_id: CurrencyId, amount: Balance) -> DispatchResult;
-	fn do_withdraw_dex_share(who: &AccountId, lp_currency_id: CurrencyId, amount: Balance) -> DispatchResult;
+	fn do_deposit_dex_share(
+		who: &AccountId,
+		lp_currency_id: CurrencyId,
+		amount: Balance,
+	) -> DispatchResult;
+	fn do_withdraw_dex_share(
+		who: &AccountId,
+		lp_currency_id: CurrencyId,
+		amount: Balance,
+	) -> DispatchResult;
 }
 
 #[cfg(feature = "std")]

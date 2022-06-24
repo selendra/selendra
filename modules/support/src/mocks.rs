@@ -1,25 +1,27 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
-
 #![allow(clippy::type_complexity)]
+#![allow(unused_imports)]
+
 use crate::{AddressMapping, CurrencyId, Erc20InfoMapping, TransactionPayment};
 use codec::Encode;
 use frame_support::pallet_prelude::{DispatchClass, Pays, Weight};
-use nutsfinance_stable_asset::{
-	traits::StableAsset, PoolTokenIndex, RedeemProportionResult, StableAssetPoolId, StableAssetPoolInfo, SwapResult,
+use module_stable_asset::{
+	traits::StableAsset, PoolTokenIndex, RedeemProportionResult, StableAssetPoolId,
+	StableAssetPoolInfo, SwapResult,
 };
 use primitives::{
 	currency::TokenInfo,
@@ -90,10 +92,7 @@ impl Erc20InfoMapping for MockErc20InfoMapping {
 	}
 
 	fn decode_evm_address(v: EvmAddress) -> Option<CurrencyId> {
-		let token = v.as_bytes()[H160_POSITION_TOKEN]
-			.try_into()
-			.map(CurrencyId::Token)
-			.ok()?;
+		let token = v.as_bytes()[H160_POSITION_TOKEN].try_into().map(CurrencyId::Token).ok()?;
 		EvmAddress::try_from(token)
 			.map(|addr| if addr == v { Some(token) } else { None })
 			.ok()?
@@ -112,7 +111,11 @@ impl<AccountId, Balance: Default + Copy, NegativeImbalance: Imbalance<Balance>>
 		Ok(Default::default())
 	}
 
-	fn unreserve_fee(_who: &AccountId, _fee: Balance, _named: Option<ReserveIdentifier>) -> Balance {
+	fn unreserve_fee(
+		_who: &AccountId,
+		_fee: Balance,
+		_named: Option<ReserveIdentifier>,
+	) -> Balance {
 		Default::default()
 	}
 
@@ -164,9 +167,14 @@ impl<
 			ReserveIdentifier = ReserveIdentifier,
 			Balance = Balance,
 		>,
-	> TransactionPayment<AccountId, Balance, NegativeImbalance> for MockReservedTransactionPayment<Currency>
+	> TransactionPayment<AccountId, Balance, NegativeImbalance>
+	for MockReservedTransactionPayment<Currency>
 {
-	fn reserve_fee(who: &AccountId, fee: Balance, named: Option<ReserveIdentifier>) -> Result<Balance, DispatchError> {
+	fn reserve_fee(
+		who: &AccountId,
+		fee: Balance,
+		named: Option<ReserveIdentifier>,
+	) -> Result<Balance, DispatchError> {
 		Currency::reserve_named(&named.unwrap(), who, fee)?;
 		Ok(fee)
 	}
@@ -231,7 +239,15 @@ impl<CurrencyId, Balance, AccountId, BlockNumber> StableAsset
 
 	fn pool(
 		_id: StableAssetPoolId,
-	) -> Option<StableAssetPoolInfo<Self::AssetId, Self::Balance, Self::Balance, Self::AccountId, Self::BlockNumber>> {
+	) -> Option<
+		StableAssetPoolInfo<
+			Self::AssetId,
+			Self::Balance,
+			Self::Balance,
+			Self::AccountId,
+			Self::BlockNumber,
+		>,
+	> {
 		unimplemented!()
 	}
 
@@ -339,7 +355,11 @@ impl<CurrencyId, Balance, AccountId, BlockNumber> StableAsset
 		unimplemented!()
 	}
 
-	fn modify_a(_pool_id: StableAssetPoolId, _a: Self::Balance, _future_a_block: Self::BlockNumber) -> DispatchResult {
+	fn modify_a(
+		_pool_id: StableAssetPoolId,
+		_a: Self::Balance,
+		_future_a_block: Self::BlockNumber,
+	) -> DispatchResult {
 		unimplemented!()
 	}
 
@@ -351,7 +371,15 @@ impl<CurrencyId, Balance, AccountId, BlockNumber> StableAsset
 			Self::AccountId,
 			Self::BlockNumber,
 		>,
-	) -> Option<StableAssetPoolInfo<Self::AssetId, Self::Balance, Self::Balance, Self::AccountId, Self::BlockNumber>> {
+	) -> Option<
+		StableAssetPoolInfo<
+			Self::AssetId,
+			Self::Balance,
+			Self::Balance,
+			Self::AccountId,
+			Self::BlockNumber,
+		>,
+	> {
 		unimplemented!()
 	}
 
@@ -363,7 +391,15 @@ impl<CurrencyId, Balance, AccountId, BlockNumber> StableAsset
 			Self::AccountId,
 			Self::BlockNumber,
 		>,
-	) -> Option<StableAssetPoolInfo<Self::AssetId, Self::Balance, Self::Balance, Self::AccountId, Self::BlockNumber>> {
+	) -> Option<
+		StableAssetPoolInfo<
+			Self::AssetId,
+			Self::Balance,
+			Self::Balance,
+			Self::AccountId,
+			Self::BlockNumber,
+		>,
+	> {
 		unimplemented!()
 	}
 

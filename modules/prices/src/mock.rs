@@ -1,6 +1,6 @@
-// This file is part of SELla.
+// This file is part of Selendra.
 
-// Copyright (C) 2020-2022 SELla Foundation.
+// Copyright (C) 2020-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -13,9 +13,6 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
-
 //! Mocks for the prices module.
 
 #![cfg(test)]
@@ -27,7 +24,7 @@ use frame_support::{
 };
 use frame_system::EnsureSignedBy;
 use orml_traits::{parameter_type_with_key, DataFeeder};
-use primitives::{currency::DexShare, Amount, currency::TokenSymbol};
+use primitives::{currency::DexShare, Amount, TokenSymbol};
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,
@@ -35,7 +32,7 @@ use sp_runtime::{
 	DispatchError, FixedPointNumber,
 };
 use sp_std::cell::RefCell;
-use support::{mocks::MockErc20InfoMapping, ExchangeRate, SwapLimit, ExchangeRateProvider};
+use support::{mocks::MockErc20InfoMapping, SwapLimit};
 
 pub type AccountId = u128;
 pub type BlockNumber = u64;
@@ -45,7 +42,6 @@ pub const SUSD: CurrencyId = CurrencyId::Token(TokenSymbol::SUSD);
 pub const BTC: CurrencyId = CurrencyId::Token(TokenSymbol::RENBTC);
 pub const DOT: CurrencyId = CurrencyId::Token(TokenSymbol::DOT);
 pub const KSM: CurrencyId = CurrencyId::Token(TokenSymbol::KSM);
-pub const KMDKSM: CurrencyId = CurrencyId::StableAssetPoolToken(0);
 pub const LP_SUSD_DOT: CurrencyId =
 	CurrencyId::DexShare(DexShare::Token(TokenSymbol::SUSD), DexShare::Token(TokenSymbol::DOT));
 
@@ -119,27 +115,22 @@ impl DataFeeder<CurrencyId, Price, AccountId> for MockDataProvider {
 	}
 }
 
-pub struct MockLiquidStakingExchangeProvider;
-impl ExchangeRateProvider for MockLiquidStakingExchangeProvider {
-	fn get_exchange_rate() -> ExchangeRate {
-		if CHANGED.with(|v| *v.borrow_mut()) {
-			ExchangeRate::saturating_from_rational(3, 5)
-		} else {
-			ExchangeRate::saturating_from_rational(1, 2)
-		}
-	}
-}
-
 pub struct MockDEX;
 impl DEXManager<AccountId, Balance, CurrencyId> for MockDEX {
-	fn get_liquidity_pool(currency_id_a: CurrencyId, currency_id_b: CurrencyId) -> (Balance, Balance) {
+	fn get_liquidity_pool(
+		currency_id_a: CurrencyId,
+		currency_id_b: CurrencyId,
+	) -> (Balance, Balance) {
 		match (currency_id_a, currency_id_b) {
 			(SUSD, DOT) => (10000, 200),
 			_ => (0, 0),
 		}
 	}
 
-	fn get_liquidity_token_address(_currency_id_a: CurrencyId, _currency_id_b: CurrencyId) -> Option<H160> {
+	fn get_liquidity_token_address(
+		_currency_id_a: CurrencyId,
+		_currency_id_b: CurrencyId,
+	) -> Option<H160> {
 		unimplemented!()
 	}
 
@@ -211,16 +202,6 @@ impl orml_tokens::Config for Runtime {
 	type OnKilledTokenAccount = ();
 }
 
-parameter_type_with_key! {
-	pub PricingPegged: |currency_id: CurrencyId| -> Option<CurrencyId> {
-		#[allow(clippy::match_ref_pats)] // false positive
-		match currency_id {
-			&KMDKSM => Some(KSM),
-			_ => None,
-		}
-	};
-}
-
 ord_parameter_types! {
 	pub const One: AccountId = 1;
 }
@@ -241,7 +222,6 @@ impl Config for Runtime {
 	type DEX = MockDEX;
 	type Currency = Tokens;
 	type Erc20InfoMapping = MockErc20InfoMapping;
-	type PricingPegged = PricingPegged;
 	type WeightInfo = ();
 }
 
@@ -270,9 +250,7 @@ impl Default for ExtBuilder {
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let t = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
-			.unwrap();
+		let t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 		t.into()
 	}

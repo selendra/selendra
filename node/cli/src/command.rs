@@ -1,32 +1,30 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use super::command_helper::{inherent_benchmark_data, BenchmarkExtrinsicBuilder};
 use crate::{
-	chain_spec, service,
-	service::{new_partial, FullClient},
 	Cli, Subcommand,
 };
+use service::{chain_spec, new_partial, FullClient, ExecutorDispatch};
 use frame_benchmarking_cli::*;
-use sc_cli::{ChainSpec, Result, RuntimeVersion, SubstrateCli};
-use sc_service::PartialComponents;
-use selendra_node_executor::ExecutorDispatch;
 use selendra_primitives::Block;
 use selendra_runtime::RuntimeApi;
-use sp_core::crypto::Ss58AddressFormat;
+use sc_cli::{ChainSpec, Result, RuntimeVersion, SubstrateCli};
+use sc_service::PartialComponents;
 
 use std::sync::Arc;
 
@@ -48,11 +46,11 @@ impl SubstrateCli for Cli {
 	}
 
 	fn support_url() -> String {
-		"https://github.com/paritytech/substrate/issues/new".into()
+		"https://github.com/selendra/selendra/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {
-		2021
+		2021-2022
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -62,11 +60,10 @@ impl SubstrateCli for Cli {
 					"Please specify which chain you want to run, e.g. --dev or --chain=local"
 						.into(),
 				),
-			"selendra-dev" => Box::new(chain_spec::development_config()),
-			"dev" => Box::new(chain_spec::development_config()),
-			"local" => Box::new(chain_spec::local_testnet_config()),
-			"selendra" => Box::new(chain_spec::flaming_fir_config()?),
-			"staging" => Box::new(chain_spec::staging_testnet_config()),
+			"dev" => Box::new(chain_spec::selendra::development_config()),
+			"local" => Box::new(chain_spec::selendra::local_testnet_config()),
+			"selendra" => Box::new(chain_spec::selendra::selendra_config()?),
+			"staging" => Box::new(chain_spec::selendra::staging_config()),
 			path =>
 				Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
 		};
@@ -78,12 +75,6 @@ impl SubstrateCli for Cli {
 	}
 }
 
-fn set_default_ss58_version(_spec: &Box<dyn sc_service::ChainSpec>) {
-	let ss58_version = Ss58AddressFormat::custom(204);
-
-	sp_core::crypto::set_default_ss58_version(ss58_version);
-}
-
 /// Parse command line arguments into service configuration.
 pub fn run() -> Result<()> {
 	let cli = Cli::from_args();
@@ -91,10 +82,6 @@ pub fn run() -> Result<()> {
 	match &cli.subcommand {
 		None => {
 			let runner = cli.create_runner(&cli.run)?;
-
-			let chain_spec = &runner.config().chain_spec;
-			set_default_ss58_version(chain_spec);
-
 			runner.run_node_until_exit(|config| async move {
 				service::new_full(config, cli.no_hardware_benchmarks)
 					.map_err(sc_cli::Error::Service)
@@ -103,16 +90,10 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Inspect(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 
-			let chain_spec = &runner.config().chain_spec;
-			set_default_ss58_version(chain_spec);
-
 			runner.sync_run(|config| cmd.run::<Block, RuntimeApi, ExecutorDispatch>(config))
 		},
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-
-			let chain_spec = &runner.config().chain_spec;
-			set_default_ss58_version(chain_spec);
 
 			runner.sync_run(|config| {
 				// This switch needs to be in the client, since the client decides
@@ -140,12 +121,7 @@ pub fn run() -> Result<()> {
 
 						cmd.run(config, client, db, storage)
 					},
-					BenchmarkCmd::Overhead(cmd) => {
-						let PartialComponents { client, .. } = new_partial(&config)?;
-						let ext_builder = BenchmarkExtrinsicBuilder::new(client.clone());
-
-						cmd.run(config, client, inherent_benchmark_data()?, Arc::new(ext_builder))
-					},
+					BenchmarkCmd::Overhead(_) => todo!(),
 					BenchmarkCmd::Machine(cmd) =>
 						cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()),
 				}
@@ -157,18 +133,10 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Vanity(cmd)) => cmd.run(),
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-
-			let chain_spec = &runner.config().chain_spec;
-			set_default_ss58_version(chain_spec);
-
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		},
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-
-			let chain_spec = &runner.config().chain_spec;
-			set_default_ss58_version(chain_spec);
-
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, import_queue, .. } =
 					new_partial(&config)?;
@@ -177,10 +145,6 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-
-			let chain_spec = &runner.config().chain_spec;
-			set_default_ss58_version(chain_spec);
-
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, .. } = new_partial(&config)?;
 				Ok((cmd.run(client, config.database), task_manager))
@@ -188,10 +152,6 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::ExportState(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-
-			let chain_spec = &runner.config().chain_spec;
-			set_default_ss58_version(chain_spec);
-
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, .. } = new_partial(&config)?;
 				Ok((cmd.run(client, config.chain_spec), task_manager))
@@ -199,10 +159,6 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-
-			let chain_spec = &runner.config().chain_spec;
-			set_default_ss58_version(chain_spec);
-
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, import_queue, .. } =
 					new_partial(&config)?;
@@ -215,10 +171,6 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-
-			let chain_spec = &runner.config().chain_spec;
-			set_default_ss58_version(chain_spec);
-
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, backend, .. } = new_partial(&config)?;
 				let aux_revert = Box::new(|client: Arc<FullClient>, backend, blocks| {
@@ -232,10 +184,6 @@ pub fn run() -> Result<()> {
 		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-
-			let chain_spec = &runner.config().chain_spec;
-			set_default_ss58_version(chain_spec);
-
 			runner.async_run(|config| {
 				// we don't need any of the components of new_partial, just a runtime, or a task
 				// manager to do `async_run`.

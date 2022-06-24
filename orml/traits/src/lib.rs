@@ -14,9 +14,10 @@ use serde::{Deserialize, Serialize};
 pub use asset_registry::{FixedConversionRateProvider, WeightToFeeConverter};
 pub use auction::{Auction, AuctionHandler, AuctionInfo, OnNewBidResult};
 pub use currency::{
-	BalanceStatus, BasicCurrency, BasicCurrencyExtended, BasicLockableCurrency, BasicReservableCurrency,
-	LockIdentifier, MultiCurrency, MultiCurrencyExtended, MultiLockableCurrency, MultiReservableCurrency,
-	NamedBasicReservableCurrency, NamedMultiReservableCurrency, OnDust,
+	BalanceStatus, BasicCurrency, BasicCurrencyExtended, BasicLockableCurrency,
+	BasicReservableCurrency, LockIdentifier, MultiCurrency, MultiCurrencyExtended,
+	MultiLockableCurrency, MultiReservableCurrency, NamedBasicReservableCurrency,
+	NamedMultiReservableCurrency, OnDust,
 };
 pub use data_provider::{DataFeeder, DataProvider, DataProviderExtended};
 pub use get_by_key::GetByKey;

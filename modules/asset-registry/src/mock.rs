@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Mocks for asset registry module.
 
@@ -28,7 +27,8 @@ use frame_support::{
 use frame_system::EnsureSignedBy;
 use module_support::{mocks::MockAddressMapping, AddressMapping};
 use primitives::{
-	evm::convert_decimals_to_evm, evm::EvmAddress, AccountId, Balance, CurrencyId, ReserveIdentifier, currency::TokenSymbol,
+	evm::{convert_decimals_to_evm, EvmAddress},
+	AccountId, Balance, CurrencyId, ReserveIdentifier, TokenSymbol,
 };
 use sp_core::{H160, H256, U256};
 use std::str::FromStr;
@@ -121,13 +121,9 @@ impl module_evm_bridge::Config for Runtime {
 	type EVM = EVM;
 }
 
-parameter_types! {
-	pub const KSMCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::KSM);
-}
 impl asset_registry::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type StakingCurrencyId = KSMCurrencyId;
 	type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
 	type RegisterOrigin = EnsureSignedBy<CouncilAccount, AccountId>;
 	type WeightInfo = ();
@@ -174,7 +170,8 @@ pub const ALICE_BALANCE: u128 = 100_000_000_000_000_000_000_000u128;
 
 pub fn deploy_contracts() {
 	let json: serde_json::Value =
-		serde_json::from_str(include_str!("../../evm/evm-test/Erc20DemoContract2.json")).unwrap();
+		serde_json::from_str(include_str!("../../../ts-tests/build/Erc20DemoContract2.json"))
+			.unwrap();
 	let code = hex::decode(json.get("bytecode").unwrap().as_str().unwrap()).unwrap();
 	assert_ok!(EVM::create(Origin::signed(alice()), code, 0, 2_100_000, 10000, vec![]));
 
@@ -184,9 +181,18 @@ pub fn deploy_contracts() {
 		logs: vec![module_evm::Log {
 			address: H160::from_str("0x5dddfce53ee040d9eb21afbc0ae1bb4dbb0ba643").unwrap(),
 			topics: vec![
-				H256::from_str("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef").unwrap(),
-				H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
-				H256::from_str("0x0000000000000000000000001000000000000000000000000000000000000001").unwrap(),
+				H256::from_str(
+					"0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+				)
+				.unwrap(),
+				H256::from_str(
+					"0x0000000000000000000000000000000000000000000000000000000000000000",
+				)
+				.unwrap(),
+				H256::from_str(
+					"0x0000000000000000000000001000000000000000000000000000000000000001",
+				)
+				.unwrap(),
 			],
 			data: {
 				let mut buf = [0u8; 32];
@@ -198,16 +204,14 @@ pub fn deploy_contracts() {
 		used_storage: 5462,
 	}));
 
-	assert_ok!(EVM::publish_free(
-		Origin::signed(CouncilAccount::get()),
-		erc20_address()
-	));
+	assert_ok!(EVM::publish_free(Origin::signed(CouncilAccount::get()), erc20_address()));
 }
 
 // Specify contract address
 pub fn deploy_contracts_same_prefix() {
 	let json: serde_json::Value =
-		serde_json::from_str(include_str!("../../evm/evm-test/Erc20DemoContract2.json")).unwrap();
+		serde_json::from_str(include_str!("../../../ts-tests/build/Erc20DemoContract2.json"))
+			.unwrap();
 	let code = hex::decode(json.get("bytecode").unwrap().as_str().unwrap()).unwrap();
 	assert_ok!(EVM::create_predeploy_contract(
 		Origin::signed(NetworkContractAccount::get()),
@@ -225,9 +229,18 @@ pub fn deploy_contracts_same_prefix() {
 		logs: vec![module_evm::Log {
 			address: erc20_address_same_prefix(),
 			topics: vec![
-				H256::from_str("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef").unwrap(),
-				H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
-				H256::from_str("0x0000000000000000000000001000000000000000000000000000000000000001").unwrap(),
+				H256::from_str(
+					"0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+				)
+				.unwrap(),
+				H256::from_str(
+					"0x0000000000000000000000000000000000000000000000000000000000000000",
+				)
+				.unwrap(),
+				H256::from_str(
+					"0x0000000000000000000000001000000000000000000000000000000000000001",
+				)
+				.unwrap(),
 			],
 			data: {
 				let mut buf = [0u8; 32];
@@ -261,9 +274,7 @@ impl ExtBuilder {
 	}
 
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
-			.unwrap();
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 		asset_registry::GenesisConfig::<Runtime> {
 			assets: vec![(CurrencyId::Token(TokenSymbol::SEL), 1)],

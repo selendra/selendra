@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Mocks for the evm-accounts module.
 
@@ -24,7 +23,7 @@ use frame_support::{
 	traits::{ConstU128, ConstU64, Everything, Nothing},
 };
 use orml_traits::parameter_type_with_key;
-use primitives::{Amount, Balance, CurrencyId, currency::TokenSymbol};
+use primitives::{Amount, Balance, CurrencyId, TokenSymbol};
 use sp_core::{crypto::AccountId32, H256};
 use sp_io::hashing::keccak_256;
 use sp_runtime::{testing::Header, traits::IdentityLookup};
@@ -109,7 +108,8 @@ impl orml_currencies::Config for Runtime {
 	type GetNativeCurrencyId = GetNativeCurrencyId;
 	type WeightInfo = ();
 }
-pub type AdaptedBasicCurrency = orml_currencies::BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+pub type AdaptedBasicCurrency =
+	orml_currencies::BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
 
 impl Config for Runtime {
 	type Event = Event;
@@ -147,15 +147,11 @@ impl Default for ExtBuilder {
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
-			.unwrap();
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
-		pallet_balances::GenesisConfig::<Runtime> {
-			balances: vec![(bob_account_id(), 100000)],
-		}
-		.assimilate_storage(&mut t)
-		.unwrap();
+		pallet_balances::GenesisConfig::<Runtime> { balances: vec![(bob_account_id(), 100000)] }
+			.assimilate_storage(&mut t)
+			.unwrap();
 
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));

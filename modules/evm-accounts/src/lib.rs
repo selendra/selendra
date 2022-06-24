@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! # Evm Accounts Module
 //!
@@ -36,8 +35,7 @@ use module_evm_utility_macro::keccak256;
 use module_support::{AddressMapping, EVMAccountsManager};
 use orml_traits::currency::TransferAll;
 use primitives::{evm::EvmAddress, to_bytes, AccountIndex};
-use sp_core::crypto::AccountId32;
-use sp_core::{H160, H256};
+use sp_core::{crypto::AccountId32, H160, H256};
 use sp_io::{
 	crypto::secp256k1_ecdsa_recover,
 	hashing::{blake2_256, keccak_256},
@@ -88,10 +86,7 @@ pub mod module {
 	pub enum Event<T: Config> {
 		/// Mapping between Substrate accounts and EVM accounts
 		/// claim account.
-		ClaimAccount {
-			account_id: T::AccountId,
-			evm_address: EvmAddress,
-		},
+		ClaimAccount { account_id: T::AccountId, evm_address: EvmAddress },
 	}
 
 	/// Error for evm accounts module.
@@ -114,14 +109,16 @@ pub mod module {
 	/// Accounts: map EvmAddress => Option<AccountId>
 	#[pallet::storage]
 	#[pallet::getter(fn accounts)]
-	pub type Accounts<T: Config> = StorageMap<_, Twox64Concat, EvmAddress, T::AccountId, OptionQuery>;
+	pub type Accounts<T: Config> =
+		StorageMap<_, Twox64Concat, EvmAddress, T::AccountId, OptionQuery>;
 
 	/// The EvmAddress for Substrate Accounts
 	///
 	/// EvmAddresses: map AccountId => Option<EvmAddress>
 	#[pallet::storage]
 	#[pallet::getter(fn evm_addresses)]
-	pub type EvmAddresses<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, EvmAddress, OptionQuery>;
+	pub type EvmAddresses<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, EvmAddress, OptionQuery>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -147,13 +144,11 @@ pub mod module {
 
 			// ensure account_id and eth_address has not been mapped
 			ensure!(!EvmAddresses::<T>::contains_key(&who), Error::<T>::AccountIdHasMapped);
-			ensure!(
-				!Accounts::<T>::contains_key(eth_address),
-				Error::<T>::EthAddressHasMapped
-			);
+			ensure!(!Accounts::<T>::contains_key(eth_address), Error::<T>::EthAddressHasMapped);
 
 			// recover evm address from signature
-			let address = Self::verify_eip712_signature(&who, &eth_signature).ok_or(Error::<T>::BadSignature)?;
+			let address = Self::verify_eip712_signature(&who, &eth_signature)
+				.ok_or(Error::<T>::BadSignature)?;
 			ensure!(eth_address == address, Error::<T>::InvalidSignature);
 
 			// check if the evm padded address already exists
@@ -166,10 +161,7 @@ pub mod module {
 			Accounts::<T>::insert(eth_address, &who);
 			EvmAddresses::<T>::insert(&who, eth_address);
 
-			Self::deposit_event(Event::ClaimAccount {
-				account_id: who,
-				evm_address: eth_address,
-			});
+			Self::deposit_event(Event::ClaimAccount { account_id: who, evm_address: eth_address });
 
 			Ok(())
 		}
@@ -237,12 +229,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn evm_account_domain_separator() -> [u8; 32] {
-		let domain_hash = keccak256!("EIP712Domain(string name,string version,uint256 chainId,bytes32 salt)");
+		let domain_hash =
+			keccak256!("EIP712Domain(string name,string version,uint256 chainId,bytes32 salt)");
 		let mut domain_seperator_msg = domain_hash.to_vec();
 		domain_seperator_msg.extend_from_slice(keccak256!("Selendra EVM claim")); // name
 		domain_seperator_msg.extend_from_slice(keccak256!("1")); // version
 		domain_seperator_msg.extend_from_slice(&to_bytes(T::ChainId::get())); // chain id
-		domain_seperator_msg.extend_from_slice(frame_system::Pallet::<T>::block_hash(T::BlockNumber::zero()).as_ref()); // genesis block hash
+		domain_seperator_msg.extend_from_slice(
+			frame_system::Pallet::<T>::block_hash(T::BlockNumber::zero()).as_ref(),
+		); // genesis block hash
 		keccak_256(domain_seperator_msg.as_slice())
 	}
 
@@ -331,8 +326,8 @@ where
 	// Returns true if a given AccountId is associated with a given EvmAddress
 	// and false if is not.
 	fn is_linked(account_id: &T::AccountId, evm: &EvmAddress) -> bool {
-		Self::get_evm_address(account_id).as_ref() == Some(evm)
-			|| &account_to_default_evm_address(account_id.into_ref()) == evm
+		Self::get_evm_address(account_id).as_ref() == Some(evm) ||
+			&account_to_default_evm_address(account_id.into_ref()) == evm
 	}
 }
 
@@ -353,7 +348,8 @@ impl<T: Config> StaticLookup for Pallet<T> {
 
 	fn lookup(a: Self::Source) -> Result<Self::Target, LookupError> {
 		match a {
-			MultiAddress::Address20(i) => Ok(T::AddressMapping::get_account_id(&EvmAddress::from_slice(&i))),
+			MultiAddress::Address20(i) =>
+				Ok(T::AddressMapping::get_account_id(&EvmAddress::from_slice(&i))),
 			_ => Err(LookupError),
 		}
 	}

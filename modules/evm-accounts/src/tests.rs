@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Unit tests for the evm-accounts module.
 
@@ -36,8 +35,8 @@ fn claim_account_work() {
 			evm_address: EvmAccountsModule::eth_address(&alice()),
 		}));
 		assert!(
-			Accounts::<Runtime>::contains_key(EvmAccountsModule::eth_address(&alice()))
-				&& EvmAddresses::<Runtime>::contains_key(ALICE)
+			Accounts::<Runtime>::contains_key(EvmAccountsModule::eth_address(&alice())) &&
+				EvmAddresses::<Runtime>::contains_key(ALICE)
 		);
 	});
 }
@@ -106,15 +105,9 @@ fn evm_get_account_id() {
 		));
 
 		assert_eq!(EvmAddressMapping::<Runtime>::get_account_id(&evm_account), ALICE);
-		assert_eq!(
-			EvmAddressMapping::<Runtime>::get_evm_address(&ALICE).unwrap(),
-			evm_account
-		);
+		assert_eq!(EvmAddressMapping::<Runtime>::get_evm_address(&ALICE).unwrap(), evm_account);
 
-		assert!(EvmAddressMapping::<Runtime>::is_linked(
-			&evm_account_to_default,
-			&evm_account
-		));
+		assert!(EvmAddressMapping::<Runtime>::is_linked(&evm_account_to_default, &evm_account));
 		assert!(EvmAddressMapping::<Runtime>::is_linked(&ALICE, &evm_account));
 	});
 }
@@ -122,7 +115,8 @@ fn evm_get_account_id() {
 #[test]
 fn account_to_evm() {
 	ExtBuilder::default().build().execute_with(|| {
-		let default_evm_account = EvmAddress::from_str("f0bd9ffde7f9f4394d8cc1d86bf24d87e5d5a9a9").unwrap();
+		let default_evm_account =
+			EvmAddress::from_str("f0bd9ffde7f9f4394d8cc1d86bf24d87e5d5a9a9").unwrap();
 		assert_eq!(EvmAddressMapping::<Runtime>::get_evm_address(&ALICE), None);
 
 		let alice_evm_account = EvmAccountsModule::eth_address(&alice());
@@ -152,7 +146,8 @@ fn account_to_evm() {
 #[test]
 fn account_to_evm_with_create_default() {
 	ExtBuilder::default().build().execute_with(|| {
-		let default_evm_account = EvmAddress::from_str("f0bd9ffde7f9f4394d8cc1d86bf24d87e5d5a9a9").unwrap();
+		let default_evm_account =
+			EvmAddress::from_str("f0bd9ffde7f9f4394d8cc1d86bf24d87e5d5a9a9").unwrap();
 		assert_eq!(
 			EvmAddressMapping::<Runtime>::get_or_create_evm_address(&ALICE),
 			default_evm_account
@@ -166,10 +161,7 @@ fn account_to_evm_with_create_default() {
 			Some(default_evm_account)
 		);
 
-		assert_eq!(
-			EvmAddressMapping::<Runtime>::get_account_id(&default_evm_account),
-			ALICE
-		);
+		assert_eq!(EvmAddressMapping::<Runtime>::get_account_id(&default_evm_account), ALICE);
 
 		assert!(EvmAddressMapping::<Runtime>::is_linked(&ALICE, &default_evm_account));
 

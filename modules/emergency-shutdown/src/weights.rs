@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra Foundation.
+// Copyright (C) 2020-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -49,60 +49,30 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions needed for module_emergency_shutdown.
 pub trait WeightInfo {
-	fn emergency_shutdown(c: u32, ) -> Weight;
-	fn open_collateral_refund() -> Weight;
-	fn refund_collaterals(c: u32, ) -> Weight;
+	fn emergency_shutdown() -> Weight;
 }
 
 /// Weights for module_emergency_shutdown using the Selendra node and recommended hardware.
 pub struct SelendraWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SelendraWeight<T> {
-	fn emergency_shutdown(c: u32, ) -> Weight {
+	fn emergency_shutdown() -> Weight {
 		(232_768_000 as Weight)
 			// Standard Error: 565_000
-			.saturating_add((20_539_000 as Weight).saturating_mul(c as Weight))
+			.saturating_add((20_539_000 as Weight).saturating_mul(10 as Weight))
 			.saturating_add(T::DbWeight::get().reads(60 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes((3 as Weight).saturating_mul(c as Weight)))
-	}
-	fn open_collateral_refund() -> Weight {
-		(62_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(17 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	fn refund_collaterals(c: u32, ) -> Weight {
-		(122_271_000 as Weight)
-			// Standard Error: 215_000
-			.saturating_add((34_100_000 as Weight).saturating_mul(c as Weight))
-			.saturating_add(T::DbWeight::get().reads(12 as Weight))
-			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(c as Weight)))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes((2 as Weight).saturating_mul(c as Weight)))
+			.saturating_add(T::DbWeight::get().writes((3 as Weight).saturating_mul(10 as Weight)))
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	fn emergency_shutdown(c: u32, ) -> Weight {
+	fn emergency_shutdown() -> Weight {
 		(232_768_000 as Weight)
 			// Standard Error: 565_000
-			.saturating_add((20_539_000 as Weight).saturating_mul(c as Weight))
+			.saturating_add((20_539_000 as Weight).saturating_mul(10 as Weight))
 			.saturating_add(RocksDbWeight::get().reads(60 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes((3 as Weight).saturating_mul(c as Weight)))
-	}
-	fn open_collateral_refund() -> Weight {
-		(62_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(17 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-	}
-	fn refund_collaterals(c: u32, ) -> Weight {
-		(122_271_000 as Weight)
-			// Standard Error: 215_000
-			.saturating_add((34_100_000 as Weight).saturating_mul(c as Weight))
-			.saturating_add(RocksDbWeight::get().reads(12 as Weight))
-			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(c as Weight)))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes((2 as Weight).saturating_mul(c as Weight)))
+			.saturating_add(RocksDbWeight::get().writes((3 as Weight).saturating_mul(10 as Weight)))
 	}
 }

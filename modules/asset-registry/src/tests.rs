@@ -1,18 +1,17 @@
-// Copyright 2021-2022 Selendra.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2020-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Unit tests for asset registry module.
 
@@ -22,441 +21,12 @@ use super::*;
 use frame_support::{assert_noop, assert_ok};
 use mock::{
 	alice, deploy_contracts, deploy_contracts_same_prefix, erc20_address, erc20_address_not_exists,
-	erc20_address_same_prefix, AssetRegistry, CouncilAccount, Event, ExtBuilder, Origin, Runtime, System,
+	erc20_address_same_prefix, AssetRegistry, CouncilAccount, Event, ExtBuilder, Origin, Runtime,
+	System,
 };
-use primitives::currency::TokenSymbol;
+use primitives::TokenSymbol;
 use sp_core::H160;
 use std::str::FromStr;
-
-#[test]
-fn versioned_multi_location_convert_work() {
-	ExtBuilder::default().build().execute_with(|| {
-		// v0
-		let v0_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(xcm::v0::Junction::Parachain(1000)));
-		let location: MultiLocation = v0_location.try_into().unwrap();
-		assert_eq!(
-			location,
-			MultiLocation {
-				parents: 0,
-				interior: xcm::v1::Junctions::X1(xcm::v1::Junction::Parachain(1000))
-			}
-		);
-
-		// v1
-		let v1_location = VersionedMultiLocation::V1(MultiLocation {
-			parents: 0,
-			interior: xcm::v1::Junctions::X1(xcm::v1::Junction::Parachain(1000)),
-		});
-		let location: MultiLocation = v1_location.try_into().unwrap();
-		assert_eq!(
-			location,
-			MultiLocation {
-				parents: 0,
-				interior: xcm::v1::Junctions::X1(xcm::v1::Junction::Parachain(1000))
-			}
-		);
-
-		// handle all of VersionedMultiLocation
-		assert!(match location.into() {
-			VersionedMultiLocation::V0 { .. } | VersionedMultiLocation::V1 { .. } => true,
-		});
-	});
-}
-
-#[test]
-fn register_foreign_asset_work() {
-	ExtBuilder::default().build().execute_with(|| {
-		let v0_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(xcm::v0::Junction::Parachain(1000)));
-
-		assert_ok!(AssetRegistry::register_foreign_asset(
-			Origin::signed(CouncilAccount::get()),
-			Box::new(v0_location.clone()),
-			Box::new(AssetMetadata {
-				name: b"Token Name".to_vec(),
-				symbol: b"TN".to_vec(),
-				decimals: 12,
-				minimal_balance: 1,
-			})
-		));
-
-		let location: MultiLocation = v0_location.try_into().unwrap();
-		System::assert_last_event(Event::AssetRegistry(crate::Event::ForeignAssetRegistered {
-			asset_id: 0,
-			asset_address: location.clone(),
-			metadata: AssetMetadata {
-				name: b"Token Name".to_vec(),
-				symbol: b"TN".to_vec(),
-				decimals: 12,
-				minimal_balance: 1,
-			},
-		}));
-
-		assert_eq!(ForeignAssetLocations::<Runtime>::get(0), Some(location.clone()));
-		assert_eq!(
-			AssetMetadatas::<Runtime>::get(AssetIds::ForeignAssetId(0)),
-			Some(AssetMetadata {
-				name: b"Token Name".to_vec(),
-				symbol: b"TN".to_vec(),
-				decimals: 12,
-				minimal_balance: 1,
-			})
-		);
-		assert_eq!(
-			LocationToCurrencyIds::<Runtime>::get(location),
-			Some(CurrencyId::ForeignAsset(0))
-		);
-	});
-}
-
-#[test]
-fn register_foreign_asset_should_not_work() {
-	ExtBuilder::default().build().execute_with(|| {
-		let v0_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(xcm::v0::Junction::Parachain(1000)));
-		assert_ok!(AssetRegistry::register_foreign_asset(
-			Origin::signed(CouncilAccount::get()),
-			Box::new(v0_location.clone()),
-			Box::new(AssetMetadata {
-				name: b"Token Name".to_vec(),
-				symbol: b"TN".to_vec(),
-				decimals: 12,
-				minimal_balance: 1,
-			})
-		));
-
-		assert_noop!(
-			AssetRegistry::register_foreign_asset(
-				Origin::signed(CouncilAccount::get()),
-				Box::new(v0_location),
-				Box::new(AssetMetadata {
-					name: b"Token Name".to_vec(),
-					symbol: b"TN".to_vec(),
-					decimals: 12,
-					minimal_balance: 1,
-				})
-			),
-			Error::<Runtime>::MultiLocationExisted
-		);
-
-		NextForeignAssetId::<Runtime>::set(u16::MAX);
-		assert_noop!(
-			AssetRegistry::register_foreign_asset(
-				Origin::signed(CouncilAccount::get()),
-				Box::new(VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(
-					xcm::v0::Junction::Parachain(1000)
-				))),
-				Box::new(AssetMetadata {
-					name: b"Token Name".to_vec(),
-					symbol: b"TN".to_vec(),
-					decimals: 12,
-					minimal_balance: 1,
-				})
-			),
-			ArithmeticError::Overflow
-		);
-	});
-}
-
-#[test]
-fn update_foreign_asset_work() {
-	ExtBuilder::default().build().execute_with(|| {
-		let v0_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(xcm::v0::Junction::Parachain(1000)));
-
-		assert_ok!(AssetRegistry::register_foreign_asset(
-			Origin::signed(CouncilAccount::get()),
-			Box::new(v0_location.clone()),
-			Box::new(AssetMetadata {
-				name: b"Token Name".to_vec(),
-				symbol: b"TN".to_vec(),
-				decimals: 12,
-				minimal_balance: 1,
-			})
-		));
-
-		assert_ok!(AssetRegistry::update_foreign_asset(
-			Origin::signed(CouncilAccount::get()),
-			0,
-			Box::new(v0_location.clone()),
-			Box::new(AssetMetadata {
-				name: b"New Token Name".to_vec(),
-				symbol: b"NTN".to_vec(),
-				decimals: 13,
-				minimal_balance: 2,
-			})
-		));
-
-		let location: MultiLocation = v0_location.try_into().unwrap();
-		System::assert_last_event(Event::AssetRegistry(crate::Event::ForeignAssetUpdated {
-			asset_id: 0,
-			asset_address: location.clone(),
-			metadata: AssetMetadata {
-				name: b"New Token Name".to_vec(),
-				symbol: b"NTN".to_vec(),
-				decimals: 13,
-				minimal_balance: 2,
-			},
-		}));
-
-		assert_eq!(
-			AssetMetadatas::<Runtime>::get(AssetIds::ForeignAssetId(0)),
-			Some(AssetMetadata {
-				name: b"New Token Name".to_vec(),
-				symbol: b"NTN".to_vec(),
-				decimals: 13,
-				minimal_balance: 2,
-			})
-		);
-		assert_eq!(ForeignAssetLocations::<Runtime>::get(0), Some(location.clone()));
-		assert_eq!(
-			LocationToCurrencyIds::<Runtime>::get(location.clone()),
-			Some(CurrencyId::ForeignAsset(0))
-		);
-
-		// modify location
-		let new_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(xcm::v0::Junction::Parachain(2000)));
-		assert_ok!(AssetRegistry::update_foreign_asset(
-			Origin::signed(CouncilAccount::get()),
-			0,
-			Box::new(new_location.clone()),
-			Box::new(AssetMetadata {
-				name: b"New Token Name".to_vec(),
-				symbol: b"NTN".to_vec(),
-				decimals: 13,
-				minimal_balance: 2,
-			})
-		));
-		assert_eq!(
-			AssetMetadatas::<Runtime>::get(AssetIds::ForeignAssetId(0)),
-			Some(AssetMetadata {
-				name: b"New Token Name".to_vec(),
-				symbol: b"NTN".to_vec(),
-				decimals: 13,
-				minimal_balance: 2,
-			})
-		);
-		let new_location: MultiLocation = new_location.try_into().unwrap();
-		assert_eq!(ForeignAssetLocations::<Runtime>::get(0), Some(new_location.clone()));
-		assert_eq!(LocationToCurrencyIds::<Runtime>::get(location), None);
-		assert_eq!(
-			LocationToCurrencyIds::<Runtime>::get(new_location),
-			Some(CurrencyId::ForeignAsset(0))
-		);
-	});
-}
-
-#[test]
-fn update_foreign_asset_should_not_work() {
-	ExtBuilder::default().build().execute_with(|| {
-		let v0_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(xcm::v0::Junction::Parachain(1000)));
-
-		assert_noop!(
-			AssetRegistry::update_foreign_asset(
-				Origin::signed(CouncilAccount::get()),
-				0,
-				Box::new(v0_location.clone()),
-				Box::new(AssetMetadata {
-					name: b"New Token Name".to_vec(),
-					symbol: b"NTN".to_vec(),
-					decimals: 13,
-					minimal_balance: 2,
-				})
-			),
-			Error::<Runtime>::AssetIdNotExists
-		);
-
-		assert_ok!(AssetRegistry::register_foreign_asset(
-			Origin::signed(CouncilAccount::get()),
-			Box::new(v0_location.clone()),
-			Box::new(AssetMetadata {
-				name: b"Token Name".to_vec(),
-				symbol: b"TN".to_vec(),
-				decimals: 12,
-				minimal_balance: 1,
-			})
-		));
-
-		assert_ok!(AssetRegistry::update_foreign_asset(
-			Origin::signed(CouncilAccount::get()),
-			0,
-			Box::new(v0_location),
-			Box::new(AssetMetadata {
-				name: b"New Token Name".to_vec(),
-				symbol: b"NTN".to_vec(),
-				decimals: 13,
-				minimal_balance: 2,
-			})
-		));
-
-		// existed location
-		let new_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(xcm::v0::Junction::Parachain(2000)));
-		assert_ok!(AssetRegistry::register_foreign_asset(
-			Origin::signed(CouncilAccount::get()),
-			Box::new(new_location.clone()),
-			Box::new(AssetMetadata {
-				name: b"Token Name".to_vec(),
-				symbol: b"TN".to_vec(),
-				decimals: 12,
-				minimal_balance: 1,
-			})
-		));
-		assert_noop!(
-			AssetRegistry::update_foreign_asset(
-				Origin::signed(CouncilAccount::get()),
-				0,
-				Box::new(new_location),
-				Box::new(AssetMetadata {
-					name: b"New Token Name".to_vec(),
-					symbol: b"NTN".to_vec(),
-					decimals: 13,
-					minimal_balance: 2,
-				})
-			),
-			Error::<Runtime>::MultiLocationExisted
-		);
-	});
-}
-
-#[test]
-fn register_stable_asset_work() {
-	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(AssetRegistry::register_stable_asset(
-			Origin::signed(CouncilAccount::get()),
-			Box::new(AssetMetadata {
-				name: b"Token Name".to_vec(),
-				symbol: b"TN".to_vec(),
-				decimals: 12,
-				minimal_balance: 1,
-			})
-		));
-
-		System::assert_last_event(Event::AssetRegistry(crate::Event::AssetRegistered {
-			asset_id: AssetIds::StableAssetId(0),
-			metadata: AssetMetadata {
-				name: b"Token Name".to_vec(),
-				symbol: b"TN".to_vec(),
-				decimals: 12,
-				minimal_balance: 1,
-			},
-		}));
-
-		assert_eq!(
-			AssetMetadatas::<Runtime>::get(AssetIds::StableAssetId(0)),
-			Some(AssetMetadata {
-				name: b"Token Name".to_vec(),
-				symbol: b"TN".to_vec(),
-				decimals: 12,
-				minimal_balance: 1,
-			})
-		);
-	});
-}
-
-#[test]
-fn register_stable_asset_should_not_work() {
-	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(AssetRegistry::register_stable_asset(
-			Origin::signed(CouncilAccount::get()),
-			Box::new(AssetMetadata {
-				name: b"Token Name".to_vec(),
-				symbol: b"TN".to_vec(),
-				decimals: 12,
-				minimal_balance: 1,
-			})
-		));
-
-		NextStableAssetId::<Runtime>::set(0);
-		assert_noop!(
-			AssetRegistry::register_stable_asset(
-				Origin::signed(CouncilAccount::get()),
-				Box::new(AssetMetadata {
-					name: b"Token Name".to_vec(),
-					symbol: b"TN".to_vec(),
-					decimals: 12,
-					minimal_balance: 1,
-				})
-			),
-			Error::<Runtime>::AssetIdExisted
-		);
-
-		NextStableAssetId::<Runtime>::set(u32::MAX);
-		assert_noop!(
-			AssetRegistry::register_stable_asset(
-				Origin::signed(CouncilAccount::get()),
-				Box::new(AssetMetadata {
-					name: b"Token Name".to_vec(),
-					symbol: b"TN".to_vec(),
-					decimals: 12,
-					minimal_balance: 1,
-				})
-			),
-			ArithmeticError::Overflow
-		);
-	});
-}
-
-#[test]
-fn update_stable_asset_work() {
-	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(AssetRegistry::register_stable_asset(
-			Origin::signed(CouncilAccount::get()),
-			Box::new(AssetMetadata {
-				name: b"Token Name".to_vec(),
-				symbol: b"TN".to_vec(),
-				decimals: 12,
-				minimal_balance: 1,
-			})
-		));
-
-		assert_ok!(AssetRegistry::update_stable_asset(
-			Origin::signed(CouncilAccount::get()),
-			0,
-			Box::new(AssetMetadata {
-				name: b"New Token Name".to_vec(),
-				symbol: b"NTN".to_vec(),
-				decimals: 13,
-				minimal_balance: 2,
-			})
-		));
-
-		System::assert_last_event(Event::AssetRegistry(crate::Event::AssetUpdated {
-			asset_id: AssetIds::StableAssetId(0),
-			metadata: AssetMetadata {
-				name: b"New Token Name".to_vec(),
-				symbol: b"NTN".to_vec(),
-				decimals: 13,
-				minimal_balance: 2,
-			},
-		}));
-
-		assert_eq!(
-			AssetMetadatas::<Runtime>::get(AssetIds::StableAssetId(0)),
-			Some(AssetMetadata {
-				name: b"New Token Name".to_vec(),
-				symbol: b"NTN".to_vec(),
-				decimals: 13,
-				minimal_balance: 2,
-			})
-		);
-	});
-}
-
-#[test]
-fn update_stable_asset_should_not_work() {
-	ExtBuilder::default().build().execute_with(|| {
-		assert_noop!(
-			AssetRegistry::update_stable_asset(
-				Origin::signed(CouncilAccount::get()),
-				0,
-				Box::new(AssetMetadata {
-					name: b"New Token Name".to_vec(),
-					symbol: b"NTN".to_vec(),
-					decimals: 13,
-					minimal_balance: 2,
-				})
-			),
-			Error::<Runtime>::AssetIdNotExists
-		);
-	});
-}
 
 #[test]
 fn register_erc20_asset_work() {
@@ -601,7 +171,9 @@ fn register_native_asset_works() {
 		}));
 
 		assert_eq!(
-			AssetMetadatas::<Runtime>::get(AssetIds::NativeAssetId(CurrencyId::Token(TokenSymbol::DOT))),
+			AssetMetadatas::<Runtime>::get(AssetIds::NativeAssetId(CurrencyId::Token(
+				TokenSymbol::DOT
+			))),
 			Some(AssetMetadata {
 				name: b"Token Name".to_vec(),
 				symbol: b"TN".to_vec(),
@@ -676,32 +248,15 @@ fn update_native_asset_works() {
 		}));
 
 		assert_eq!(
-			AssetMetadatas::<Runtime>::get(AssetIds::NativeAssetId(CurrencyId::Token(TokenSymbol::DOT))),
+			AssetMetadatas::<Runtime>::get(AssetIds::NativeAssetId(CurrencyId::Token(
+				TokenSymbol::DOT
+			))),
 			Some(AssetMetadata {
 				name: b"New Token Name".to_vec(),
 				symbol: b"NTN".to_vec(),
 				decimals: 13,
 				minimal_balance: 2,
 			})
-		);
-	});
-}
-
-#[test]
-fn update_erc20_asset_should_not_work() {
-	ExtBuilder::default().build().execute_with(|| {
-		assert_noop!(
-			AssetRegistry::update_stable_asset(
-				Origin::signed(CouncilAccount::get()),
-				0,
-				Box::new(AssetMetadata {
-					name: b"New Token Name".to_vec(),
-					symbol: b"NTN".to_vec(),
-					decimals: 13,
-					minimal_balance: 2,
-				})
-			),
-			Error::<Runtime>::AssetIdNotExists
 		);
 	});
 }
@@ -781,7 +336,9 @@ fn symbol_works() {
 			);
 
 			assert_eq!(
-				EvmErc20InfoMapping::<Runtime>::symbol(CurrencyId::Erc20(erc20_address_not_exists())),
+				EvmErc20InfoMapping::<Runtime>::symbol(CurrencyId::Erc20(
+					erc20_address_not_exists()
+				)),
 				None
 			);
 
@@ -849,7 +406,9 @@ fn decimals_works() {
 			);
 
 			assert_eq!(
-				EvmErc20InfoMapping::<Runtime>::decimals(CurrencyId::Erc20(erc20_address_not_exists())),
+				EvmErc20InfoMapping::<Runtime>::decimals(CurrencyId::Erc20(
+					erc20_address_not_exists()
+				)),
 				None
 			);
 
@@ -902,18 +461,24 @@ fn encode_evm_address_works() {
 
 			// Token
 			assert_eq!(
-				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Token(TokenSymbol::SEL)),
+				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Token(
+					TokenSymbol::SEL
+				)),
 				H160::from_str("0x0000000000000000000100000000000000000000").ok()
 			);
 
 			// Erc20
 			assert_eq!(
-				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(erc20_address())),
+				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(
+					erc20_address()
+				)),
 				Some(erc20_address())
 			);
 
 			assert_eq!(
-				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(erc20_address_not_exists())),
+				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(
+					erc20_address_not_exists()
+				)),
 				Some(erc20_address_not_exists())
 			);
 
@@ -966,16 +531,10 @@ fn encode_evm_address_works() {
 				None
 			);
 
-			// StableAssetPoolToken
-			assert_eq!(
-				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::StableAssetPoolToken(1)),
-				H160::from_str("0x0000000000000000000300000000000000000001").ok()
-			);
-
 			// ForeignAsset
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::ForeignAsset(1)),
-				H160::from_str("0x0000000000000000000400000000000000000001").ok()
+				H160::from_str("0x0000000000000000000300000000000000000001").ok()
 			);
 		});
 }
@@ -996,7 +555,10 @@ fn decode_evm_address_works() {
 			// Token
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::decode_evm_address(
-					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Token(TokenSymbol::SEL)).unwrap()
+					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Token(
+						TokenSymbol::SEL
+					))
+					.unwrap()
 				),
 				Some(CurrencyId::Token(TokenSymbol::SEL))
 			);
@@ -1004,15 +566,20 @@ fn decode_evm_address_works() {
 			// Erc20
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::decode_evm_address(
-					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(erc20_address())).unwrap()
+					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(
+						erc20_address()
+					))
+					.unwrap()
 				),
 				Some(CurrencyId::Erc20(erc20_address()))
 			);
 
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::decode_evm_address(
-					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(erc20_address_not_exists()))
-						.unwrap()
+					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::Erc20(
+						erc20_address_not_exists()
+					))
+					.unwrap()
 				),
 				None,
 			);
@@ -1081,24 +648,18 @@ fn decode_evm_address_works() {
 			);
 
 			// Allow non-system contracts
-			let non_system_contracts = H160::from_str("0x1000000000000000000000000000000000000000").unwrap();
+			let non_system_contracts =
+				H160::from_str("0x1000000000000000000000000000000000000000").unwrap();
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::decode_evm_address(non_system_contracts),
 				Some(CurrencyId::Erc20(non_system_contracts))
 			);
 
-			// StableAssetPoolToken
-			assert_eq!(
-				EvmErc20InfoMapping::<Runtime>::decode_evm_address(
-					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::StableAssetPoolToken(1)).unwrap()
-				),
-				Some(CurrencyId::StableAssetPoolToken(1))
-			);
-
 			// ForeignAsset
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::decode_evm_address(
-					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::ForeignAsset(1)).unwrap()
+					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::ForeignAsset(1))
+						.unwrap()
 				),
 				Some(CurrencyId::ForeignAsset(1))
 			);

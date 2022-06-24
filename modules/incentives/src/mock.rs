@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra Foundation.
+// Copyright (C) 2020-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,9 +12,6 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! Mocks for the incentives module.
 
@@ -30,11 +27,11 @@ use frame_support::{
 };
 use frame_system::EnsureSignedBy;
 use orml_traits::parameter_type_with_key;
-use primitives::{currency::{DexShare, TokenSymbol}};
+use primitives::{DexShare, TokenSymbol};
 use sp_core::{H160, H256};
 use sp_runtime::{testing::Header, traits::IdentityLookup, AccountId32};
 use sp_std::cell::RefCell;
-pub use support::{CDPTreasury, DEXManager, Price, Ratio, SwapLimit};
+pub use support::{DEXManager, Price, Ratio, SelTreasury, SwapLimit};
 
 pub type AccountId = AccountId32;
 pub type BlockNumber = u64;
@@ -113,20 +110,12 @@ impl orml_tokens::Config for Runtime {
 	type OnKilledTokenAccount = ();
 }
 
-pub struct MockCDPTreasury;
-impl CDPTreasury<AccountId> for MockCDPTreasury {
+pub struct MockSelTreasury;
+impl SelTreasury<AccountId> for MockSelTreasury {
 	type Balance = Balance;
 	type CurrencyId = CurrencyId;
 
-	fn get_surplus_pool() -> Balance {
-		unimplemented!()
-	}
-
 	fn get_debit_pool() -> Balance {
-		unimplemented!()
-	}
-
-	fn get_total_collaterals(_: CurrencyId) -> Balance {
 		unimplemented!()
 	}
 
@@ -138,10 +127,6 @@ impl CDPTreasury<AccountId> for MockCDPTreasury {
 		unimplemented!()
 	}
 
-	fn on_system_surplus(_: Balance) -> DispatchResult {
-		unimplemented!()
-	}
-
 	fn issue_debit(who: &AccountId, debit: Balance, _: bool) -> DispatchResult {
 		TokensModule::deposit(SUSD, who, debit)
 	}
@@ -149,27 +134,14 @@ impl CDPTreasury<AccountId> for MockCDPTreasury {
 	fn burn_debit(_: &AccountId, _: Balance) -> DispatchResult {
 		unimplemented!()
 	}
-
-	fn deposit_surplus(_: &AccountId, _: Balance) -> DispatchResult {
-		unimplemented!()
-	}
-
-	fn withdraw_surplus(_: &AccountId, _: Balance) -> DispatchResult {
-		unimplemented!()
-	}
-
-	fn deposit_collateral(_: &AccountId, _: CurrencyId, _: Balance) -> DispatchResult {
-		unimplemented!()
-	}
-
-	fn withdraw_collateral(_: &AccountId, _: CurrencyId, _: Balance) -> DispatchResult {
-		unimplemented!()
-	}
 }
 
 pub struct MockDEX;
 impl DEXManager<AccountId, Balance, CurrencyId> for MockDEX {
-	fn get_liquidity_pool(currency_id_a: CurrencyId, currency_id_b: CurrencyId) -> (Balance, Balance) {
+	fn get_liquidity_pool(
+		currency_id_a: CurrencyId,
+		currency_id_b: CurrencyId,
+	) -> (Balance, Balance) {
 		match (currency_id_a, currency_id_b) {
 			(SUSD, BTC) => (500, 100),
 			(SUSD, DOT) => (400, 100),
@@ -179,7 +151,10 @@ impl DEXManager<AccountId, Balance, CurrencyId> for MockDEX {
 		}
 	}
 
-	fn get_liquidity_token_address(_currency_id_a: CurrencyId, _currency_id_b: CurrencyId) -> Option<H160> {
+	fn get_liquidity_token_address(
+		_currency_id_a: CurrencyId,
+		_currency_id_b: CurrencyId,
+	) -> Option<H160> {
 		unimplemented!()
 	}
 
@@ -255,7 +230,7 @@ impl orml_rewards::Config for Runtime {
 parameter_types! {
 	pub const StableCurrencyId: CurrencyId = SUSD;
 	pub const GetNativeCurrencyId: CurrencyId = SEL;
-	pub const IncentivesPalletId: PalletId = PalletId(*b"aca/inct");
+	pub const IncentivesPalletId: PalletId = PalletId(*b"sel/inct");
 }
 
 ord_parameter_types! {
@@ -271,7 +246,7 @@ impl Config for Runtime {
 	type NativeCurrencyId = GetNativeCurrencyId;
 	type EarnShareBooster = EarnShareBooster;
 	type UpdateOrigin = EnsureSignedBy<ROOT, AccountId>;
-	type CDPTreasury = MockCDPTreasury;
+	type SelTreasury = MockSelTreasury;
 	type Currency = TokensModule;
 	type DEX = MockDEX;
 	type EmergencyShutdown = MockEmergencyShutdown;
@@ -307,14 +282,10 @@ impl Default for ExtBuilder {
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+		orml_tokens::GenesisConfig::<Runtime> { balances: self.balances }
+			.assimilate_storage(&mut t)
 			.unwrap();
-		orml_tokens::GenesisConfig::<Runtime> {
-			balances: self.balances,
-		}
-		.assimilate_storage(&mut t)
-		.unwrap();
 		t.into()
 	}
 }
