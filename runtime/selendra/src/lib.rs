@@ -28,7 +28,6 @@ pub mod constants;
 
 // runtime support
 mod authority;
-mod benchmarking;
 mod voter_bags;
 mod weights;
 
@@ -55,7 +54,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BadOrigin, BlakeTwo256, Block as BlockT,
-		BlockNumberProvider, Convert, NumberFor, SaturatedConversion, StaticLookup, Zero,
+		Convert, NumberFor, SaturatedConversion, StaticLookup,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, DispatchResult, FixedPointNumber, Perbill, Percent, Permill, Perquintill,
@@ -83,7 +82,7 @@ use module_asset_registry::{AssetIdMaps, EvmErc20InfoMapping};
 use module_currencies::BasicCurrencyAdapter;
 use module_evm::{runner::RunnerExtended, CallInfo, CreateInfo, EvmChainId, EvmTask};
 use module_evm_accounts::EvmAddressMapping;
-use module_support::{AssetIdMapping, DispatchableTask, PoolId};
+use module_support::{AssetIdMapping, DispatchableTask};
 use module_transaction_payment::TargetedFeeAdjustment;
 
 use orml_traits::{
@@ -107,9 +106,9 @@ pub use primitives::{
 
 pub use runtime_common::{
 	cent, dollar, microcent, prod_or_fast, AllPrecompiles, EnsureRootOrHalfFinancialCouncil,
-	EnsureRootOrHalfGeneralCouncil, EnsureRootOrOneGeneralCouncil,
-	EnsureRootOrOneThirdsTechnicalCommittee, EnsureRootOrThreeFourthsGeneralCouncil,
-	EnsureRootOrTwoThirdsGeneralCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, GasToWeight,
+	EnsureRootOrHalfCouncil, EnsureRootOrOneCouncil,
+	EnsureRootOrOneThirdsTechnicalCommittee, EnsureRootOrThreeFourthsCouncil,
+	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, GasToWeight,
 	MaxTipsOfPriority, OperationalFeeMultiplier, Price, ProxyType, Rate, Ratio, RuntimeBlockLength,
 	RuntimeBlockWeights, TimeStampedPrice, TipPerWeightStep, DOT, KMD, SEL, SUSD,
 };
@@ -299,8 +298,8 @@ parameter_types! {
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
-	type ApproveOrigin = EnsureRootOrHalfGeneralCouncil;
-	type RejectOrigin = EnsureRootOrHalfGeneralCouncil;
+	type ApproveOrigin = EnsureRootOrHalfCouncil;
+	type RejectOrigin = EnsureRootOrHalfCouncil;
 	type Event = Event;
 	type OnSlash = Treasury;
 	type ProposalBond = ProposalBond;
@@ -445,7 +444,7 @@ impl module_prices::Config for Runtime {
 	type Source = AggregatedDataProvider;
 	type GetStableCurrencyId = GetStableCurrencyId;
 	type StableCurrencyFixedPrice = StableCurrencyFixedPrice;
-	type LockOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
+	type LockOrigin = EnsureRootOrTwoThirdsCouncil;
 	type DEX = Dex;
 	type Currency = Currencies;
 	type Erc20InfoMapping = EvmErc20InfoMapping<Runtime>;
@@ -468,7 +467,7 @@ impl module_currencies::Config for Runtime {
 	type AddressMapping = EvmAddressMapping<Runtime>;
 	type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
 	type GasToWeight = GasToWeight;
-	type SweepOrigin = EnsureRootOrOneGeneralCouncil;
+	type SweepOrigin = EnsureRootOrOneCouncil;
 	type OnDust = module_currencies::TransferDust<Runtime, SelendraTreasuryAccount>;
 }
 
@@ -562,14 +561,6 @@ where
 	type Extrinsic = UncheckedExtrinsic;
 }
 
-impl module_emergency_shutdown::Config for Runtime {
-	type Event = Event;
-	type PriceSource = Prices;
-	type SelTreasury = SelTreasury;
-	type ShutdownOrigin = EnsureRoot<AccountId>;
-	type WeightInfo = weights::module_emergency_shutdown::WeightInfo<Runtime>;
-}
-
 parameter_types! {
 	pub const GetExchangeFee: (u32, u32) = (3, 1000);	// 0.3%
 	pub const ExtendedProvisioningBlocks: BlockNumber = 2 * DAYS;
@@ -583,9 +574,8 @@ impl module_dex::Config for Runtime {
 	type TradingPathLimit = TradingPathLimit;
 	type PalletId = DEXPalletId;
 	type Erc20InfoMapping = EvmErc20InfoMapping<Runtime>;
-	type DEXIncentives = Incentives;
 	type WeightInfo = weights::module_dex::WeightInfo<Runtime>;
-	type ListingOrigin = EnsureRootOrHalfGeneralCouncil;
+	type ListingOrigin = EnsureRootOrHalfCouncil;
 	type ExtendedProvisioningBlocks = ExtendedProvisioningBlocks;
 	type OnLiquidityPoolUpdated = ();
 }
@@ -593,19 +583,13 @@ impl module_dex::Config for Runtime {
 impl module_dex_oracle::Config for Runtime {
 	type DEX = Dex;
 	type Time = Timestamp;
-	type UpdateOrigin = EnsureRootOrHalfGeneralCouncil;
+	type UpdateOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::module_dex_oracle::WeightInfo<Runtime>;
-}
-
-impl module_treasury::Config for Runtime {
-	type Currency = Currencies;
-	type GetStableCurrencyId = GetStableCurrencyId;
-	type PalletId = SelTreasuryPalletId;
 }
 
 impl module_transaction_pause::Config for Runtime {
 	type Event = Event;
-	type UpdateOrigin = EnsureRootOrTwoThirdsGeneralCouncil;
+	type UpdateOrigin = EnsureRootOrTwoThirdsCouncil;
 	type WeightInfo = weights::module_transaction_pause::WeightInfo<Runtime>;
 }
 
@@ -641,7 +625,7 @@ impl module_transaction_payment::Config for Runtime {
 	type WeightInfo = weights::module_transaction_payment::WeightInfo<Runtime>;
 	type PalletId = TransactionPaymentPalletId;
 	type TreasuryAccount = SelendraTreasuryAccount;
-	type UpdateOrigin = EnsureRootOrHalfGeneralCouncil;
+	type UpdateOrigin = EnsureRootOrHalfCouncil;
 	type CustomFeeSurplus = CustomFeeSurplus;
 	type AlternativeFeeSurplus = AlternativeFeeSurplus;
 	type DefaultFeeTokens = DefaultFeeTokens;
@@ -660,37 +644,8 @@ impl module_asset_registry::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
-	type RegisterOrigin = EnsureRootOrHalfGeneralCouncil;
+	type RegisterOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::module_asset_registry::WeightInfo<Runtime>;
-}
-
-impl orml_rewards::Config for Runtime {
-	type Share = Balance;
-	type Balance = Balance;
-	type PoolId = PoolId;
-	type CurrencyId = CurrencyId;
-	type Handler = Incentives;
-}
-
-parameter_types! {
-	pub const AccumulatePeriod: BlockNumber = MINUTES;
-	pub const EarnShareBooster: Permill = Permill::from_percent(30);
-}
-
-impl module_incentives::Config for Runtime {
-	type Event = Event;
-	type RewardsSource = UnreleasedNativeVaultAccountId;
-	type StableCurrencyId = GetStableCurrencyId;
-	type NativeCurrencyId = GetNativeCurrencyId;
-	type EarnShareBooster = EarnShareBooster;
-	type AccumulatePeriod = AccumulatePeriod;
-	type UpdateOrigin = EnsureRootOrThreeFourthsGeneralCouncil;
-	type SelTreasury = SelTreasury;
-	type Currency = Currencies;
-	type DEX = Dex;
-	type EmergencyShutdown = EmergencyShutdown;
-	type PalletId = IncentivesPalletId;
-	type WeightInfo = weights::module_incentives::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -732,7 +687,7 @@ impl InstanceFilter<Call> for ProxyType {
 				matches!(
 					c,
 					Call::Authority(..) |
-						Call::Democracy(..) | Call::GeneralCouncil(..) |
+						Call::Democracy(..) | Call::Council(..) |
 						Call::FinancialCouncil(..) |
 						Call::TechnicalCommittee(..) |
 						Call::Treasury(..) | Call::Bounties(..) |
@@ -834,7 +789,7 @@ impl module_evm::Config for Runtime {
 	type DeveloperDeposit = DeveloperDeposit;
 	type PublicationFee = PublicationFee;
 	type TreasuryAccount = SelendraTreasuryAccount;
-	type FreePublicationOrigin = EnsureRootOrHalfGeneralCouncil;
+	type FreePublicationOrigin = EnsureRootOrHalfCouncil;
 	type Runner = module_evm::runner::stack::Runner<Self>;
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Babe>;
 	type Task = ScheduledTasks;
@@ -858,23 +813,11 @@ parameter_types!(
 	pub MinimumWeightRemainInBlock: Weight = RuntimeBlockWeights::get().max_block / 50;
 );
 
-pub struct MockBlockNumberProvider;
-
-impl BlockNumberProvider for MockBlockNumberProvider {
-	type BlockNumber = u32;
-
-	fn current_block_number() -> Self::BlockNumber {
-		Zero::zero()
-	}
-}
-
 impl module_idle_scheduler::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
 	type Task = ScheduledTasks;
 	type MinimumWeightRemainInBlock = MinimumWeightRemainInBlock;
-	type RelayChainBlockNumberProvider = MockBlockNumberProvider;
-	type DisableBlockThreshold = ConstU32<6>;
 }
 
 construct_runtime!(
@@ -926,13 +869,13 @@ construct_runtime!(
 
 		// Governance
 		Authority: orml_authority = 60,
-		GeneralCouncil: pallet_collective::<Instance1> = 61,
-		GeneralCouncilMembership: pallet_membership::<Instance1> = 62,
+		Council: pallet_collective::<Instance1> = 61,
+		CouncilMembership: pallet_membership::<Instance1> = 62,
 		FinancialCouncil: pallet_collective::<Instance2> = 63,
 		FinancialCouncilMembership: pallet_membership::<Instance2> = 64,
 		PhragmenElection: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 65,
 		TechnicalCommittee: pallet_collective::<Instance4> = 67,
-		TechnicalCommitteeMembership: pallet_membership::<Instance4> = 68,
+		TechnicalMembership: pallet_membership::<Instance4> = 68,
 		Democracy: pallet_democracy = 69,
 
 		// Oracle
@@ -941,30 +884,23 @@ construct_runtime!(
 		SelendraOracle: orml_oracle::<Instance1> = 70,
 		OperatorMembershipSelendra: pallet_membership::<Instance5> = 71,
 
-		// ORML Core
-		Rewards: orml_rewards = 81,
-		OrmlNFT: orml_nft exclude_parts { Call } = 82,
-
 		// Selendra Core
 		Prices: module_prices = 90,
 		Dex: module_dex = 91,
 		DexOracle: module_dex_oracle = 92,
 
-		SelTreasury: module_treasury = 103,
-		EmergencyShutdown: module_emergency_shutdown = 105,
-
 		// Selendra Other
-		Incentives: module_incentives = 120,
-		NFT: module_nft = 121,
-		AssetRegistry: module_asset_registry = 122,
+		OrmlNFT: orml_nft exclude_parts { Call } = 100,
+		NFT: module_nft = 101,
+		AssetRegistry: module_asset_registry = 102,
 
 		// Smart contracts
-		EVM: module_evm = 130,
-		EVMBridge: module_evm_bridge exclude_parts { Call } = 131,
-		EvmAccounts: module_evm_accounts = 132,
+		EVM: module_evm = 110,
+		EVMBridge: module_evm_bridge exclude_parts { Call } = 111,
+		EvmAccounts: module_evm_accounts = 112,
 
 		// Temporary
-		Sudo: pallet_sudo = 255,
+		Sudo: pallet_sudo = 150,
 	}
 );
 
@@ -1013,28 +949,38 @@ pub type Executive = frame_executive::Executive<
 
 #[cfg(feature = "runtime-benchmarks")]
 #[macro_use]
-extern crate orml_benchmarking;
+extern crate frame_benchmarking;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benches {
 	define_benchmarks!(
+		// Substrate
+		[frame_benchmarking, BaselineBench::<Runtime>]
 		[pallet_babe, Babe]
-		[module_dex, benchmarking::dex]
-		[module_dex_oracle, benchmarking::dex_oracle]
-		[module_asset_registry, benchmarking::asset_registry]
-		[module_emergency_shutdown, benchmarking::emergency_shutdown]
-		[module_evm, benchmarking::evm]
-		[module_treasury, benchmarking::treasury]
-		[module_transaction_pause, benchmarking::transaction_pause]
-		[module_transaction_payment, benchmarking::transaction_payment]
-		[module_incentives, benchmarking::incentives]
-		[module_prices, benchmarking::prices]
-		[module_evm_accounts, benchmarking::evm_accounts]
-		[module_currencies, benchmarking::currencies]
-		[orml_tokens, benchmarking::tokens]
-		[orml_authority, benchmarking::authority]
-		[orml_oracle, benchmarking::oracle]
-		[module_idle_scheduler, benchmarking::idle_scheduler]
+		[pallet_bags_list, VoterList]
+		[pallet_balances, Balances]
+		[pallet_bounties, Bounties]
+		[pallet_collective, Council]
+		[pallet_democracy, Democracy]
+		[pallet_election_provider_multi_phase, ElectionProviderMultiPhase]
+		[pallet_election_provider_support_benchmarking, EPSBench::<Runtime>]
+		[pallet_elections_phragmen, PhragmenElection]
+		[pallet_grandpa, Grandpa]
+		[pallet_im_online, ImOnline]
+		[pallet_membership, TechnicalMembership]
+		[pallet_multisig, Multisig]
+		[pallet_nomination_pools, NominationPoolsBench::<Runtime>]
+		[pallet_offences, OffencesBench::<Runtime>]
+		[pallet_preimage, Preimage]
+		[pallet_proxy, Proxy]
+		[pallet_scheduler, Scheduler]
+		[pallet_session, SessionBench::<Runtime>]
+		[pallet_staking, Staking]
+		[frame_system, SystemBench::<Runtime>]
+		[pallet_timestamp, Timestamp]
+		[pallet_tips, Tips]
+		[pallet_treasury, Treasury]
+		[pallet_utility, Utility]
 	);
 }
 
@@ -1357,37 +1303,58 @@ impl_runtime_apis! {
 		}
 	}
 
-	// benchmarks for selendra modules
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (
 			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,
 		) {
-			use frame_benchmarking::{list_benchmark as frame_list_benchmark, Benchmarking, BenchmarkList};
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
-			use module_nft::benchmarking::Pallet as NftBench;
+
+			// Trying to add benchmarks directly to the Session Pallet caused cyclic dependency
+			// issues. To get around that, we separated the Session benchmarks into its own crate,
+			// which is why we need these two lines below.
+			use pallet_session_benchmarking::Pallet as SessionBench;
+			use pallet_offences_benchmarking::Pallet as OffencesBench;
+			use pallet_election_provider_support_benchmarking::Pallet as EPSBench;
+			use frame_system_benchmarking::Pallet as SystemBench;
+			use baseline::Pallet as BaselineBench;
+			use pallet_nomination_pools_benchmarking::Pallet as NominationPoolsBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
-
-			frame_list_benchmark!(list, extra, module_nft, NftBench::<Runtime>);
 			list_benchmarks!(list, extra);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
-			return (list, storage_info)
+			(list, storage_info)
 		}
 
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark as frame_add_benchmark, TrackedStorageKey};
-			use module_nft::benchmarking::Pallet as NftBench;
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch,  TrackedStorageKey};
+
+			// Trying to add benchmarks directly to the Session Pallet caused cyclic dependency
+			// issues. To get around that, we separated the Session benchmarks into its own crate,
+			// which is why we need these two lines below.
+			use pallet_session_benchmarking::Pallet as SessionBench;
+			use pallet_offences_benchmarking::Pallet as OffencesBench;
+			use pallet_election_provider_support_benchmarking::Pallet as EPSBench;
+			use frame_system_benchmarking::Pallet as SystemBench;
+			use baseline::Pallet as BaselineBench;
+			use pallet_nomination_pools_benchmarking::Pallet as NominationPoolsBench;
+
+			impl pallet_session_benchmarking::Config for Runtime {}
+			impl pallet_offences_benchmarking::Config for Runtime {}
+			impl pallet_election_provider_support_benchmarking::Config for Runtime {}
+			impl frame_system_benchmarking::Config for Runtime {}
+			impl baseline::Config for Runtime {}
+			impl pallet_nomination_pools_benchmarking::Config for Runtime {}
 
 			let whitelist: Vec<TrackedStorageKey> = vec![
 				// Block Number
-				// frame_system::Number::<Runtime>::hashed_key().to_vec(),
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519sel4983ac").to_vec().into(),
+				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
 				// Total Issuance
 				hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
 				// Execution Phase
@@ -1396,18 +1363,15 @@ impl_runtime_apis! {
 				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
 				// System Events
 				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
-				// Caller 0 Account
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da946c154ffd9992e395af90b5b13cc6f295c77033fce8a9045824a6690bbf99c6db269502f0a8d1d2a008542d5690a0749").to_vec().into(),
+				// System BlockWeight
+				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef734abf5cb34d6244378cddbf18e849d96").to_vec().into(),
 				// Treasury Account
 				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da95ecffd7b6c0f78751baa9d281e0bfa3a6d6f646c70792f74727372790000000000000000000000000000000000000000").to_vec().into(),
 			];
+
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
-
-			frame_add_benchmark!(params, batches, module_nft, NftBench::<Runtime>);
 			add_benchmarks!(params, batches);
-
-			if batches.is_empty() { return Err("Benchmark not found for this module.".into()) }
 			Ok(batches)
 		}
 	}

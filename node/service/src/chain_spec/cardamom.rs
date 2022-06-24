@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-//! Selendra chain configurations.
+//! Cardamom chain configurations.
 
 use super::{
 	authority_keys_from_seed, get_account_id_from_seed, testnet_accounts, AccountId,
@@ -33,7 +33,7 @@ use sc_telemetry::TelemetryEndpoints;
 use sp_core::{crypto::UncheckedInto, sr25519};
 use sp_runtime::Perbill;
 
-use selendra_runtime::{
+use cardamom_runtime::{
 	dollar, AuthorityDiscoveryConfig, BabeConfig, BalancesConfig, DemocracyConfig, DexConfig,
 	EVMConfig, CouncilConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig,
 	OperatorMembershipSelendraConfig, OrmlNFTConfig, SS58Prefix, SessionConfig, StakerStatus,
@@ -69,16 +69,16 @@ fn session_keys(
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
 /// Flaming Fir testnet generator
-pub fn selendra_config() -> Result<ChainSpec, String> {
-	ChainSpec::from_json_bytes(&include_bytes!("../../chain-specs/selendra.json")[..])
+pub fn cardamom_config() -> Result<ChainSpec, String> {
+	ChainSpec::from_json_bytes(&include_bytes!("../../chain-specs/cardamom.json")[..])
 }
 
-fn selendra_properties() -> Properties {
+fn cardamom_properties() -> Properties {
 	let mut properties = Map::new();
 	let mut token_symbol: Vec<String> = vec![];
 	let mut token_decimals: Vec<u32> = vec![];
 	[SEL, SUSD].iter().for_each(|token| {
-		token_symbol.push(token.symbol().unwrap().to_string());
+		token_symbol.push("CDM".to_string());
 		token_decimals.push(token.decimals().unwrap() as u32);
 	});
 	properties.insert("tokenSymbol".into(), token_symbol.into());
@@ -99,7 +99,7 @@ pub fn development_config() -> ChainSpec {
 		None,
 		None,
 		None,
-		Some(selendra_properties()),
+		Some(cardamom_properties()),
 		Default::default(),
 	)
 }
@@ -110,12 +110,12 @@ pub fn local_testnet_config() -> ChainSpec {
 		"Local Testnet",
 		"local_testnet",
 		ChainType::Local,
-		local_selendra_genesis,
+		local_cardamom_genesis,
 		vec![],
 		None,
 		None,
 		None,
-		Some(selendra_properties()),
+		Some(cardamom_properties()),
 		Default::default(),
 	)
 }
@@ -135,15 +135,15 @@ pub fn staging_config() -> ChainSpec {
 		),
 		None,
 		None,
-		Some(selendra_properties()),
+		Some(cardamom_properties()),
 		Default::default(),
 	)
 }
 
 fn development_config_genesis() -> GenesisConfig {
-	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
+	let wasm_binary = cardamom_runtime::WASM_BINARY.unwrap_or_default();
 
-	selendra_genesis(
+	cardamom_genesis(
 		wasm_binary,
 		vec![authority_keys_from_seed("Alice")],
 		get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -151,9 +151,9 @@ fn development_config_genesis() -> GenesisConfig {
 	)
 }
 
-fn local_selendra_genesis() -> GenesisConfig {
-	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
-	selendra_genesis(
+fn local_cardamom_genesis() -> GenesisConfig {
+	let wasm_binary = cardamom_runtime::WASM_BINARY.unwrap_or_default();
+	cardamom_genesis(
 		wasm_binary,
 		vec![
 			authority_keys_from_seed("Alice"),
@@ -257,13 +257,13 @@ fn staging_config_genesis() -> GenesisConfig {
 	.into();
 
 	let endowed_accounts: Vec<AccountId> = vec![root_key.clone()];
-	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
+	let wasm_binary = cardamom_runtime::WASM_BINARY.unwrap_or_default();
 
-	selendra_genesis(wasm_binary, initial_authorities, root_key, Some(endowed_accounts))
+	cardamom_genesis(wasm_binary, initial_authorities, root_key, Some(endowed_accounts))
 }
 
 /// Helper function to create GenesisConfig for testing
-pub fn selendra_genesis(
+pub fn cardamom_genesis(
 	wasm_binary: &[u8],
 	initial_authorities: Vec<(
 		AccountId,
@@ -325,7 +325,7 @@ pub fn selendra_genesis(
 		phragmen_election: Default::default(),
 		babe: BabeConfig {
 			authorities: vec![],
-			epoch_config: Some(selendra_runtime::BABE_GENESIS_EPOCH_CONFIG),
+			epoch_config: Some(cardamom_runtime::BABE_GENESIS_EPOCH_CONFIG),
 		},
 		im_online: ImOnlineConfig { keys: vec![] },
 		authority_discovery: AuthorityDiscoveryConfig { keys: vec![] },

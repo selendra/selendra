@@ -705,7 +705,6 @@ fn on_liquidity_pool_updated_work() {
 				5_000_000_000_000,
 				1_000_000_000_000,
 				0,
-				false,
 			));
 			assert_eq!(SUSD_DOT_POOL_RECORD.with(|v| *v.borrow()), (0, 0));
 
@@ -716,7 +715,6 @@ fn on_liquidity_pool_updated_work() {
 				5_000_000_000_000,
 				1_000_000_000_000,
 				0,
-				false,
 			));
 			assert_eq!(SUSD_DOT_POOL_RECORD.with(|v| *v.borrow()), (5000000000000, 1000000000000));
 		});
@@ -1101,7 +1099,6 @@ fn add_liquidity_work() {
 					100_000_000,
 					100_000_000,
 					0,
-					false
 				),
 				Error::<Runtime>::MustBeEnabled
 			);
@@ -1112,8 +1109,7 @@ fn add_liquidity_work() {
 					DOT,
 					0,
 					100_000_000,
-					0,
-					false
+					0
 				),
 				Error::<Runtime>::InvalidLiquidityIncrement
 			);
@@ -1136,7 +1132,6 @@ fn add_liquidity_work() {
 				5_000_000_000_000,
 				1_000_000_000_000,
 				0,
-				false,
 			));
 			System::assert_last_event(Event::DexModule(crate::Event::AddLiquidity {
 				who: ALICE,
@@ -1168,7 +1163,7 @@ fn add_liquidity_work() {
 			assert_eq!(Tokens::free_balance(DOT, &BOB), 1_000_000_000_000_000_000);
 
 			assert_noop!(
-				DexModule::add_liquidity(Origin::signed(BOB), SUSD, DOT, 4, 1, 0, true,),
+				DexModule::add_liquidity(Origin::signed(BOB), SUSD, DOT, 4, 1, 0),
 				Error::<Runtime>::InvalidLiquidityIncrement,
 			);
 
@@ -1179,8 +1174,7 @@ fn add_liquidity_work() {
 					DOT,
 					50_000_000_000_000,
 					8_000_000_000_000,
-					80_000_000_000_001,
-					true,
+					80_000_000_000_001
 				),
 				Error::<Runtime>::UnacceptableShareIncrement
 			);
@@ -1191,8 +1185,7 @@ fn add_liquidity_work() {
 				DOT,
 				50_000_000_000_000,
 				8_000_000_000_000,
-				80_000_000_000_000,
-				true,
+				80_000_000_000_000
 			));
 			System::assert_last_event(Event::DexModule(crate::Event::AddLiquidity {
 				who: BOB,
@@ -1232,8 +1225,7 @@ fn remove_liquidity_work() {
 				DOT,
 				5_000_000_000_000,
 				1_000_000_000_000,
-				0,
-				false
+				0
 			));
 			assert_noop!(
 				DexModule::remove_liquidity(
@@ -1243,7 +1235,6 @@ fn remove_liquidity_work() {
 					100_000_000,
 					0,
 					0,
-					false,
 				),
 				Error::<Runtime>::InvalidCurrencyId
 			);
@@ -1266,7 +1257,6 @@ fn remove_liquidity_work() {
 					8_000_000_000_000,
 					4_000_000_000_001,
 					800_000_000_000,
-					false,
 				),
 				Error::<Runtime>::UnacceptableLiquidityWithdrawn
 			);
@@ -1278,7 +1268,6 @@ fn remove_liquidity_work() {
 					8_000_000_000_000,
 					4_000_000_000_000,
 					800_000_000_001,
-					false,
 				),
 				Error::<Runtime>::UnacceptableLiquidityWithdrawn
 			);
@@ -1289,7 +1278,6 @@ fn remove_liquidity_work() {
 				8_000_000_000_000,
 				4_000_000_000_000,
 				800_000_000_000,
-				false,
 			));
 			System::assert_last_event(Event::DexModule(crate::Event::RemoveLiquidity {
 				who: ALICE,
@@ -1316,7 +1304,6 @@ fn remove_liquidity_work() {
 				2_000_000_000_000,
 				0,
 				0,
-				false,
 			));
 			System::assert_last_event(Event::DexModule(crate::Event::RemoveLiquidity {
 				who: ALICE,
@@ -1339,8 +1326,7 @@ fn remove_liquidity_work() {
 				DOT,
 				5_000_000_000_000,
 				1_000_000_000_000,
-				0,
-				true
+				0
 			));
 			assert_eq!(Tokens::free_balance(SUSDDOTPair::get().dex_share_currency_id(), &BOB), 0);
 			assert_eq!(
@@ -1353,8 +1339,7 @@ fn remove_liquidity_work() {
 				DOT,
 				2_000_000_000_000,
 				0,
-				0,
-				true,
+				0
 			));
 			assert_eq!(Tokens::free_balance(SUSDDOTPair::get().dex_share_currency_id(), &BOB), 0);
 			assert_eq!(
@@ -1379,7 +1364,6 @@ fn do_swap_with_exact_supply_work() {
 				500_000_000_000_000,
 				100_000_000_000_000,
 				0,
-				false,
 			));
 			assert_ok!(DexModule::add_liquidity(
 				Origin::signed(ALICE),
@@ -1388,7 +1372,6 @@ fn do_swap_with_exact_supply_work() {
 				100_000_000_000_000,
 				10_000_000_000,
 				0,
-				false,
 			));
 
 			assert_eq!(
@@ -1498,7 +1481,6 @@ fn do_swap_with_exact_target_work() {
 				500_000_000_000_000,
 				100_000_000_000_000,
 				0,
-				false,
 			));
 			assert_ok!(DexModule::add_liquidity(
 				Origin::signed(ALICE),
@@ -1507,7 +1489,6 @@ fn do_swap_with_exact_target_work() {
 				100_000_000_000_000,
 				10_000_000_000,
 				0,
-				false,
 			));
 
 			assert_eq!(
@@ -1827,7 +1808,6 @@ fn swap_with_specific_path_work() {
 				500_000_000_000_000,
 				100_000_000_000_000,
 				0,
-				false,
 			));
 
 			assert_noop!(
@@ -1932,7 +1912,6 @@ fn specific_joint_swap_work() {
 				5_000_000_000_000,
 				1_000_000_000_000,
 				0,
-				false,
 			));
 			assert_ok!(DexModule::add_liquidity(
 				Origin::signed(ALICE),
@@ -1941,7 +1920,6 @@ fn specific_joint_swap_work() {
 				5_000_000_000_000,
 				1_000_000_000_000,
 				0,
-				false,
 			));
 
 			assert_eq!(

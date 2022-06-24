@@ -119,8 +119,8 @@ fn enable_dex_and_tx_fee_pool() {
 	}
 
 	// enable dex
-	assert_ok!(DEXModule::add_liquidity(Origin::signed(ALICE), SEL, SUSD, 10000, 1000, 0, false));
-	assert_ok!(DEXModule::add_liquidity(Origin::signed(ALICE), DOT, SUSD, 100, 1000, 0, false));
+	assert_ok!(DEXModule::add_liquidity(Origin::signed(ALICE), SEL, SUSD, 10000, 1000, 0));
+	assert_ok!(DEXModule::add_liquidity(Origin::signed(ALICE), DOT, SUSD, 100, 1000, 0));
 
 	// enable tx fee pool
 	assert_ok!(Pallet::<Runtime>::enable_charge_fee_pool(
@@ -1724,8 +1724,7 @@ fn charge_fee_pool_operation_works() {
 			SUSD,
 			10000,
 			1000,
-			0,
-			false
+			0
 		));
 
 		let treasury_account: AccountId = <Runtime as Config>::TreasuryAccount::get();

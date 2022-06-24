@@ -21,46 +21,46 @@ use frame_system::EnsureRoot;
 
 use primitives::AccountId;
 
-pub type GeneralCouncilInstance = pallet_collective::Instance1;
+pub type CouncilInstance = pallet_collective::Instance1;
 pub type FinancialCouncilInstance = pallet_collective::Instance2;
 pub type HomaCouncilInstance = pallet_collective::Instance3;
 pub type TechnicalCommitteeInstance = pallet_collective::Instance4;
 
-pub type GeneralCouncilMembershipInstance = pallet_membership::Instance1;
+pub type CouncilMembershipInstance = pallet_membership::Instance1;
 pub type FinancialCouncilMembershipInstance = pallet_membership::Instance2;
 pub type HomaCouncilMembershipInstance = pallet_membership::Instance3;
-pub type TechnicalCommitteeMembershipInstance = pallet_membership::Instance4;
+pub type TechnicalMembershipInstance = pallet_membership::Instance4;
 pub type OperatorMembershipInstanceSelendra = pallet_membership::Instance5;
 
 // General Council
-pub type EnsureRootOrAllGeneralCouncil = EnsureOneOf<
+pub type EnsureRootOrAllCouncil = EnsureOneOf<
 	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, GeneralCouncilInstance, 1, 1>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 1>,
 >;
 
-pub type EnsureRootOrHalfGeneralCouncil = EnsureOneOf<
+pub type EnsureRootOrHalfCouncil = EnsureOneOf<
 	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, GeneralCouncilInstance, 1, 2>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 2>,
 >;
 
-pub type EnsureRootOrOneThirdsGeneralCouncil = EnsureOneOf<
+pub type EnsureRootOrOneThirdsCouncil = EnsureOneOf<
 	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, GeneralCouncilInstance, 1, 3>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 3>,
 >;
 
-pub type EnsureRootOrTwoThirdsGeneralCouncil = EnsureOneOf<
+pub type EnsureRootOrTwoThirdsCouncil = EnsureOneOf<
 	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, GeneralCouncilInstance, 2, 3>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 2, 3>,
 >;
 
-pub type EnsureRootOrThreeFourthsGeneralCouncil = EnsureOneOf<
+pub type EnsureRootOrThreeFourthsCouncil = EnsureOneOf<
 	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, GeneralCouncilInstance, 3, 4>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 3, 4>,
 >;
 
-pub type EnsureRootOrOneGeneralCouncil = EnsureOneOf<
+pub type EnsureRootOrOneCouncil = EnsureOneOf<
 	EnsureRoot<AccountId>,
-	pallet_collective::EnsureMember<AccountId, GeneralCouncilInstance>,
+	pallet_collective::EnsureMember<AccountId, CouncilInstance>,
 >;
 
 // Financial Council

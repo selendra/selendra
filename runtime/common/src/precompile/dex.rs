@@ -294,8 +294,7 @@ where
 					currency_id_b,
 					max_amount_a,
 					max_amount_b,
-					min_share_increment,
-					false,
+					min_share_increment
 				)
 				.map_err(|e| PrecompileFailure::Revert {
 					exit_status: ExitRevert::Reverted,
@@ -334,8 +333,7 @@ where
 					currency_id_b,
 					remove_share,
 					min_withdrawn_a,
-					min_withdrawn_b,
-					false,
+					min_withdrawn_b
 				)
 				.map_err(|e| PrecompileFailure::Revert {
 					exit_status: ExitRevert::Reverted,
@@ -538,8 +536,7 @@ mod tests {
 				SUSD,
 				1_000,
 				1_000_000,
-				0,
-				true
+				0
 			));
 
 			let context = Context {
@@ -582,8 +579,7 @@ mod tests {
 				SUSD,
 				1_000,
 				1_000_000,
-				0,
-				true
+				0
 			));
 
 			let context = Context {
@@ -642,8 +638,7 @@ mod tests {
 				SUSD,
 				1_000,
 				1_000_000,
-				0,
-				true
+				0
 			));
 
 			let context = Context {
@@ -690,8 +685,7 @@ mod tests {
 				SUSD,
 				1_000,
 				1_000_000,
-				0,
-				true
+				0
 			));
 
 			let context = Context {
@@ -738,8 +732,7 @@ mod tests {
 				SUSD,
 				1_000,
 				1_000_000,
-				0,
-				true
+				0
 			));
 
 			let context = Context {
@@ -790,8 +783,7 @@ mod tests {
 				SUSD,
 				1_000,
 				1_000_000,
-				0,
-				true
+				0
 			));
 
 			let context = Context {

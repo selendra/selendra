@@ -7,6 +7,7 @@ members = [
 	"node/inspect",
 	"node/rpc",
 	"node/cli",
+	"runtime/cardamom",
 	"runtime/selendra",
 	"runtime/common",
 	"primitives",
@@ -14,21 +15,17 @@ members = [
 	"modules/currencies",
 	"modules/dex",
 	"modules/dex-oracle",
-	"modules/emergency-shutdown",
 	"modules/evm",
 	"modules/evm-accounts",
 	"modules/evm-bridge",
 	"modules/evm-utility",
 	"modules/idle-scheduler",
-	"modules/incentives",
 	"modules/nft",
 	"modules/prices",
 	"modules/stable-asset",
 	"modules/support",
 	"modules/transaction-pause",
 	"modules/transaction-payment",
-	"modules/treasury"
-
 ]
 
 exclude = [

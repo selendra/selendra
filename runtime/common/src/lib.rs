@@ -13,7 +13,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-//! Common runtime code for Selendra, Cardamom and Mandala.
+//! Common runtime code for Selendra, Cardamom.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "256"]

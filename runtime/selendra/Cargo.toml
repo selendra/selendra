@@ -37,6 +37,7 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "polk
 frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 frame-try-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false, optional = true }
 frame-election-provider-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", default-features = false }
+frame-system-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", default-features = false, optional = true }
 
 pallet-authority-discovery = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", default-features = false }
 pallet-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false}
@@ -47,6 +48,7 @@ pallet-bounties = { git = "https://github.com/paritytech/substrate", branch = "p
 pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-democracy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features =false }
 pallet-election-provider-multi-phase = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", default-features = false }
+pallet-election-provider-support-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", default-features = false, optional = true }
 pallet-elections-phragmen = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", default-features = false }
 pallet-im-online = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", default-features = false }
@@ -59,6 +61,7 @@ pallet-offences-benchmarking = { git = "https://github.com/paritytech/substrate.
 pallet-proxy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-scheduler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false, features = ["historical"] }
+pallet-session-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false, optional = true }
 pallet-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-staking-reward-curve = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-sudo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
@@ -71,7 +74,6 @@ pallet-utility = { git = "https://github.com/paritytech/substrate", branch = "po
 pallet-preimage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 
 # orml
-
 orml-authority = { path = "../../orml/authority", default-features = false }
 orml-benchmarking = { path = "../../orml/benchmarking", default-features = false, optional = true }
 orml-oracle = { path = "../../orml/oracle", default-features = false }
@@ -79,25 +81,21 @@ orml-oracle-rpc-runtime-api = { path = "../../orml/oracle/rpc/runtime-api", defa
 orml-tokens = { path = "../../orml/tokens", default-features = false }
 orml-tokens-rpc-runtime-api = { path = "../../orml/tokens/rpc/runtime-api", default-features = false }
 orml-traits = { path = "../../orml/traits", default-features = false }
-orml-rewards = { path = "../../orml/rewards", default-features = false }
 orml-nft= { path = "../../orml/nft", default-features = false }
 
 # modules
 module-transaction-pause = { path = "../../modules/transaction-pause", default-features = false }
 module-transaction-payment = { path = "../../modules/transaction-payment", default-features = false }
 module-asset-registry = { path = "../../modules/asset-registry", default-features = false }
-module-treasury = { path = "../../modules/treasury", default-features = false }
 module-currencies = { path = "../../modules/currencies", default-features = false }
 module-dex = { path = "../../modules/dex", default-features = false }
 module-dex-oracle = { path = "../../modules/dex-oracle", default-features = false }
-module-emergency-shutdown = { path = "../../modules/emergency-shutdown", default-features = false }
 module-evm = { path = "../../modules/evm", default-features = false }
 module-evm-accounts = { path = "../../modules/evm-accounts", default-features = false }
 module-evm-bridge = { path = "../../modules/evm-bridge", default-features = false }
 module-evm-rpc-runtime-api = { path = "../../modules/evm/rpc/runtime_api",  default-features = false }
 module-nft = { path = "../../modules/nft", default-features = false }
 module-prices = { path = "../../modules/prices", default-features = false }
-module-incentives = { path = "../../modules/incentives", default-features = false }
 module-support = { path = "../../modules/support", default-features = false }
 module-idle-scheduler = { path = "../../modules/idle-scheduler", default-features = false }
 
@@ -181,23 +179,19 @@ std = [
 	"orml-tokens/std",
 	"orml-tokens-rpc-runtime-api/std",
 	"orml-traits/std",
-	"orml-rewards/std",
 	"orml-nft/std",
 
 	"module-transaction-pause/std",
 	"module-transaction-payment/std",
 	"module-asset-registry/std",
-	"module-treasury/std",
 	"module-currencies/std",
 	"module-dex/std",
 	"module-dex-oracle/std",
-	"module-emergency-shutdown/std",
 	"module-evm/std",
 	"module-evm-accounts/std",
 	"module-evm-bridge/std",
 	"module-nft/std",
 	"module-prices/std",
-	"module-incentives/std",
 	"module-support/std",
 	"module-idle-scheduler/std",
 	"primitives/std",
@@ -210,20 +204,35 @@ runtime-benchmarks = [
 
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
+	"frame-system-benchmarking",
 	"frame-system/runtime-benchmarks",
 	"sp-api/disable-logging",
 	"sp-runtime/runtime-benchmarks",
 
 	"pallet-babe/runtime-benchmarks",
 	"pallet-bags-list/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-bounties/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
-	"pallet-elections-phragmen/runtime-benchmarks",
+	"pallet-democracy/runtime-benchmarks",
 	"pallet-election-provider-multi-phase/runtime-benchmarks",
+	"pallet-election-provider-support-benchmarking/runtime-benchmarks",
+	"pallet-elections-phragmen/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-im-online/runtime-benchmarks",
+	"pallet-membership/runtime-benchmarks",
+	"pallet-multisig/runtime-benchmarks",
 	"pallet-nomination-pools-benchmarking",
 	"pallet-offences-benchmarking",
+	"pallet-preimage/runtime-benchmarks",
+	"pallet-proxy/runtime-benchmarks",
+	"pallet-scheduler/runtime-benchmarks",
+	"pallet-session-benchmarking",
+	"pallet-staking/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
+	"pallet-tips/runtime-benchmarks",
+	"pallet-treasury/runtime-benchmarks",
+	"pallet-utility/runtime-benchmarks",
 
 	"orml-authority/runtime-benchmarks",
 	"orml-tokens/runtime-benchmarks",
@@ -269,23 +278,19 @@ try-runtime = [
 	"orml-authority/try-runtime",
 	"orml-oracle/try-runtime",
 	"orml-tokens/try-runtime",
-	"orml-rewards/try-runtime",
 	"orml-nft/try-runtime",
 
 	"module-transaction-pause/try-runtime",
 	"module-transaction-payment/try-runtime",
 	"module-asset-registry/try-runtime",
-	"module-treasury/try-runtime",
 	"module-currencies/try-runtime",
 	"module-dex/try-runtime",
 	"module-dex-oracle/try-runtime",
-	"module-emergency-shutdown/try-runtime",
 	"module-evm/try-runtime",
 	"module-evm-accounts/try-runtime",
 	"module-evm-bridge/try-runtime",
 	"module-nft/try-runtime",
 	"module-prices/try-runtime",
-	"module-incentives/try-runtime",
 ]
 
 # By default some types have documentation, `no-metadata-docs` allows to reduce the documentation
