@@ -1,6 +1,6 @@
 use super::{
 	authority::AuthorityConfigImpl, deposit, dollar, prod_or_fast, weights, AuthoritysOriginId,
-	Balances, Call, Event, FinancialCouncil, Council, Origin, OriginCaller,
+	Balances, Call, Event, Council, Origin, OriginCaller,
 	PhragmenElectionPalletId, PreimageByteDeposit, Runtime, Scheduler, SelendraOracle,
 	TechnicalCommittee, Treasury, DAYS, HOURS, MINUTES, SEL,
 };
@@ -12,7 +12,7 @@ use runtime_common::{
 	CurrencyToVote, EnsureRootOrAllCouncil, EnsureRootOrAllTechnicalCommittee,
 	EnsureRootOrHalfCouncil, EnsureRootOrThreeFourthsCouncil,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
-	FinancialCouncilInstance, FinancialCouncilMembershipInstance, CouncilInstance,
+	CouncilInstance,
 	CouncilMembershipInstance, OperatorMembershipInstanceSelendra,
 	TechnicalCommitteeInstance, TechnicalMembershipInstance,
 };
@@ -109,34 +109,6 @@ impl pallet_membership::Config<CouncilMembershipInstance> for Runtime {
 	type PrimeOrigin = EnsureRootOrThreeFourthsCouncil;
 	type MembershipInitialized = Council;
 	type MembershipChanged = Council;
-	type MaxMembers = CouncilDefaultMaxMembers;
-	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub FinancialCouncilMotionDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "SEL_MOTION_DURATION");
-}
-
-impl pallet_collective::Config<FinancialCouncilInstance> for Runtime {
-	type Origin = Origin;
-	type Proposal = Call;
-	type Event = Event;
-	type MotionDuration = FinancialCouncilMotionDuration;
-	type MaxProposals = CouncilDefaultMaxProposals;
-	type MaxMembers = CouncilDefaultMaxMembers;
-	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = ();
-}
-
-impl pallet_membership::Config<FinancialCouncilMembershipInstance> for Runtime {
-	type Event = Event;
-	type AddOrigin = EnsureRootOrTwoThirdsCouncil;
-	type RemoveOrigin = EnsureRootOrTwoThirdsCouncil;
-	type SwapOrigin = EnsureRootOrTwoThirdsCouncil;
-	type ResetOrigin = EnsureRootOrTwoThirdsCouncil;
-	type PrimeOrigin = EnsureRootOrTwoThirdsCouncil;
-	type MembershipInitialized = FinancialCouncil;
-	type MembershipChanged = FinancialCouncil;
 	type MaxMembers = CouncilDefaultMaxMembers;
 	type WeightInfo = ();
 }

@@ -22,7 +22,7 @@ use pallet_grandpa::AuthorityId as GrandpaId;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use primitives::{AccountId, Balance, BlockNumber, Moment};
 use runtime_common::{
-	dollar, CurrencyToVote, EnsureRootOrHalfFinancialCouncil, StakingBenchmarkingConfig,
+	dollar, CurrencyToVote, EnsureRootOrHalfCouncil, StakingBenchmarkingConfig,
 };
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::{
@@ -140,7 +140,7 @@ impl pallet_staking::Config for Runtime {
 	type BondingDuration = BondingDuration;
 	type SlashDeferDuration = SlashDeferDuration;
 	/// A super-majority of the council can cancel the slash.
-	type SlashCancelOrigin = EnsureRootOrHalfFinancialCouncil;
+	type SlashCancelOrigin = EnsureRootOrHalfCouncil;
 	type SessionInterface = Self;
 	type EraPayout = pallet_staking::ConvertCurve<RewardCurve>;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
@@ -281,7 +281,7 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
 	type Fallback = onchain::BoundedExecution<OnChainSeqPhragmen>;
 	type GovernanceFallback = onchain::BoundedExecution<OnChainSeqPhragmen>;
 	type Solver = SequentialPhragmen<AccountId, SolutionAccuracyOf<Self>, OffchainRandomBalancing>;
-	type ForceOrigin = EnsureRootOrHalfFinancialCouncil;
+	type ForceOrigin = EnsureRootOrHalfCouncil;
 	type MaxElectableTargets = MaxElectableTargets;
 	type MaxElectingVoters = MaxElectingVoters;
 	type BenchmarkingConfig = ElectionBenchmarkConfig;

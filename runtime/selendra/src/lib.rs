@@ -105,7 +105,7 @@ pub use primitives::{
 };
 
 pub use runtime_common::{
-	cent, dollar, microcent, prod_or_fast, AllPrecompiles, EnsureRootOrHalfFinancialCouncil,
+	cent, dollar, microcent, prod_or_fast, AllPrecompiles,
 	EnsureRootOrHalfCouncil, EnsureRootOrOneCouncil,
 	EnsureRootOrOneThirdsTechnicalCommittee, EnsureRootOrThreeFourthsCouncil,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, GasToWeight,
@@ -688,7 +688,6 @@ impl InstanceFilter<Call> for ProxyType {
 					c,
 					Call::Authority(..) |
 						Call::Democracy(..) | Call::Council(..) |
-						Call::FinancialCouncil(..) |
 						Call::TechnicalCommittee(..) |
 						Call::Treasury(..) | Call::Bounties(..) |
 						Call::Tips(..)
@@ -871,8 +870,6 @@ construct_runtime!(
 		Authority: orml_authority = 60,
 		Council: pallet_collective::<Instance1> = 61,
 		CouncilMembership: pallet_membership::<Instance1> = 62,
-		FinancialCouncil: pallet_collective::<Instance2> = 63,
-		FinancialCouncilMembership: pallet_membership::<Instance2> = 64,
 		PhragmenElection: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 65,
 		TechnicalCommittee: pallet_collective::<Instance4> = 67,
 		TechnicalMembership: pallet_membership::<Instance4> = 68,
