@@ -16,14 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(feature = "with-cardamom-runtime")]
-pub mod cardamom;
-#[cfg(feature = "with-selendra-runtime")]
 pub mod selendra;
-
-#[cfg(not(feature = "with-selendra-runtime"))]
-pub use cardamom::ChainSpec;
-#[cfg(feature = "with-selendra-runtime")]
 pub use selendra::ChainSpec;
 
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
@@ -38,6 +31,7 @@ use sp_runtime::traits::IdentifyAccount;
 use selendra_primitives::{currency::TokenInfo, AccountId, AccountPublic, Balance};
 
 const TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
+const DEFAULT_PROTOCOL_ID: &str = "sel";
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {

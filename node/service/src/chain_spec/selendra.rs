@@ -21,7 +21,7 @@
 use super::{
 	authority_keys_from_seed, get_account_id_from_seed, testnet_accounts, AccountId,
 	AuthorityDiscoveryId, BabeId, Balance, ChainSpecExtension, GrandpaId, ImOnlineId, TokenInfo,
-	TELEMETRY_URL,
+	TELEMETRY_URL, DEFAULT_PROTOCOL_ID
 };
 
 use hex_literal::hex;
@@ -124,8 +124,8 @@ pub fn local_testnet_config() -> ChainSpec {
 pub fn staging_config() -> ChainSpec {
 	let boot_nodes = vec![];
 	ChainSpec::from_genesis(
-		"Staging Testnet",
-		"staging_testnet",
+		"Selendra Staging",
+		"selendra_staging",
 		ChainType::Live,
 		staging_config_genesis,
 		boot_nodes,
@@ -133,7 +133,7 @@ pub fn staging_config() -> ChainSpec {
 			TelemetryEndpoints::new(vec![(TELEMETRY_URL.to_string(), 0)])
 				.expect("Staging telemetry url is valid; qed"),
 		),
-		None,
+		Some(DEFAULT_PROTOCOL_ID),
 		None,
 		Some(selendra_properties()),
 		Default::default(),
@@ -203,13 +203,13 @@ fn staging_config_genesis() -> GenesisConfig {
 			hex!["0b0b8e106f8db92ba44c441ea61a1877d7df51a4569ee67fe390530cf0c60923"]
 				.unchecked_into(),
 			// 5CPhhXA3bYy3AAKBMNfA4fbA4UCyUx6Nb4WQrbFTExYXDmGk
-			hex!["482dbd7297a39fa145c570552249c2ca9dd47e281f0c500c971b59c9dcdcd82e"]
+			hex!["0e7d21b970155d93584c3e293ffac20bad264cf30c7d4cd564f68b2f7a818942"]
 				.unchecked_into(),
 			// 5CPhhXA3bYy3AAKBMNfA4fbA4UCyUx6Nb4WQrbFTExYXDmGk
-			hex!["482dbd7297a39fa145c570552249c2ca9dd47e281f0c500c971b59c9dcdcd82e"]
+			hex!["0e7d21b970155d93584c3e293ffac20bad264cf30c7d4cd564f68b2f7a818942"]
 				.unchecked_into(),
 			// 5CPhhXA3bYy3AAKBMNfA4fbA4UCyUx6Nb4WQrbFTExYXDmGk
-			hex!["482dbd7297a39fa145c570552249c2ca9dd47e281f0c500c971b59c9dcdcd82e"]
+			hex!["0e7d21b970155d93584c3e293ffac20bad264cf30c7d4cd564f68b2f7a818942"]
 				.unchecked_into(),
 		),
 		(
@@ -256,7 +256,7 @@ fn staging_config_genesis() -> GenesisConfig {
 	]
 	.into();
 
-	let endowed_accounts: Vec<AccountId> = vec![root_key.clone()];
+	let endowed_accounts: Vec<AccountId> = vec![];
 	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
 
 	selendra_genesis(wasm_binary, initial_authorities, root_key, Some(endowed_accounts))
@@ -276,14 +276,18 @@ pub fn selendra_genesis(
 	root_key: AccountId,
 	endowed_accounts: Option<Vec<AccountId>>,
 ) -> GenesisConfig {
-	let endowment: Balance = 10_000_000 * dollar(SEL);
-	let stash: Balance = endowment / 1000;
+	let endowment: Balance = 1_000_000_000 * dollar(SEL);
+	let stash: Balance = endowment / 1_000_000;
 	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
 	GenesisConfig {
 		system: SystemConfig { code: wasm_binary.to_vec() },
 		balances: BalancesConfig {
-			balances: endowed_accounts.iter().cloned().map(|x| (x, endowment)).collect(),
+			balances: endowed_accounts
+				.iter()
+				.map(|k: &AccountId| (k.clone(), endowment))
+				.chain(initial_authorities.iter().map(|x| (x.0.clone(), stash)))
+				.collect(),
 		},
 		council: CouncilConfig::default(),
 		technical_committee: TechnicalCommitteeConfig {

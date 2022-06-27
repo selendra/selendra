@@ -29,7 +29,7 @@ selendra-primitives = { path = "../../primitives" }
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
 [features]
-default = [ "wasmtime", "cli", "with-selendra-runtime" ]
+default = [ "wasmtime", "cli"]
 wasmtime = [ "sc-cli/wasmtime" ]
 cli = [
 	"service",
@@ -46,10 +46,3 @@ try-runtime = [
 	"service/try-runtime",
 ]
 
-with-cardamom-runtime = [
-	"service/with-cardamom-runtime",
-]
-
-with-selendra-runtime = [
-	"service/with-selendra-runtime",
-]

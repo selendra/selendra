@@ -114,7 +114,7 @@ substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", bran
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
 [features]
-default = ["std"]
+default = ["std", "with-ethereum-compatibility"]
 no_std = []
 std = [
 	"codec/std",

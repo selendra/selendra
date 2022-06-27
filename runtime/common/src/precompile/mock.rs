@@ -231,7 +231,7 @@ parameter_types! {
 	pub MaxSwapSlippageCompareToOracle: Ratio = Ratio::one();
 	pub const TreasuryPalletId: PalletId = PalletId(*b"sel/trsy");
 	pub const TransactionPaymentPalletId: PalletId = PalletId(*b"sel/fees");
-	pub CardamomTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
+	pub SelendraTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 	pub const CustomFeeSurplus: Percent = Percent::from_percent(50);
 	pub const AlternativeFeeSurplus: Percent = Percent::from_percent(25);
 	pub DefaultFeeTokens: Vec<CurrencyId> = vec![SUSD];
@@ -257,7 +257,7 @@ impl module_transaction_payment::Config for Test {
 	type PriceSource = module_prices::RealTimePriceProvider<Test>;
 	type WeightInfo = ();
 	type PalletId = TransactionPaymentPalletId;
-	type TreasuryAccount = CardamomTreasuryAccount;
+	type TreasuryAccount = SelendraTreasuryAccount;
 	type UpdateOrigin = EnsureSignedBy<ListingOrigin, AccountId>;
 	type CustomFeeSurplus = CustomFeeSurplus;
 	type AlternativeFeeSurplus = AlternativeFeeSurplus;
@@ -409,7 +409,7 @@ pub type EvmErc20InfoMapping = module_asset_registry::EvmErc20InfoMapping<Test>;
 
 parameter_types! {
 	pub NetworkContractSource: H160 = alice_evm_addr();
-	pub PrecompilesValue: AllPrecompiles<Test> = AllPrecompiles::<_>::cardamom();
+	pub PrecompilesValue: AllPrecompiles<Test> = AllPrecompiles::<_>::selendra();
 }
 
 ord_parameter_types! {

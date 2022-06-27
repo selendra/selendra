@@ -206,7 +206,7 @@ parameter_types! {
 	pub MaxSwapSlippageCompareToOracle: Ratio = Ratio::one();
 	pub const TreasuryPalletId: PalletId = PalletId(*b"sel/trsy");
 	pub const TransactionPaymentPalletId: PalletId = PalletId(*b"sel/fees");
-	pub CardamomTreasuryAccount: AccountId32 = TreasuryPalletId::get().into_account_truncating();
+	pub SelendraTreasuryAccount: AccountId32 = TreasuryPalletId::get().into_account_truncating();
 	pub const CustomFeeSurplus: Percent = Percent::from_percent(50);
 	pub const AlternativeFeeSurplus: Percent = Percent::from_percent(25);
 	pub DefaultFeeTokens: Vec<CurrencyId> = vec![SUSD];
@@ -247,7 +247,7 @@ impl module_transaction_payment::Config for Runtime {
 	type PriceSource = MockPriceSource;
 	type WeightInfo = ();
 	type PalletId = TransactionPaymentPalletId;
-	type TreasuryAccount = CardamomTreasuryAccount;
+	type TreasuryAccount = SelendraTreasuryAccount;
 	type UpdateOrigin = EnsureSignedBy<ListingOrigin, AccountId32>;
 	type CustomFeeSurplus = CustomFeeSurplus;
 	type AlternativeFeeSurplus = AlternativeFeeSurplus;

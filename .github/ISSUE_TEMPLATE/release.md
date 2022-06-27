@@ -7,7 +7,7 @@ title: Selendra Release checklist
 
 This is the release checklist for Selendra new version. **All** following
 checks should be completed before publishing a new release of the
-Selendra/Cardamom runtime or client.
+Selendra runtime or client.
 
 ### Runtime Releases
 
@@ -31,7 +31,7 @@ candidate branch or started an additional release candidate branch (rc-2, rc-3, 
     runtime state is correctly updated for any public (non-private/test)
     networks.
 - [ ] Check with the Signer's team to make sure metadata update QR are lined up
-- [ ] Push runtime upgrade to Cardamom and verify network stability.
+- [ ] Push runtime upgrade to Selendra testnet and verify network stability.
 
 ### All Releases
 

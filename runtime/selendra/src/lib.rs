@@ -810,7 +810,7 @@ construct_runtime!(
 		Authority: orml_authority = 60,
 		Council: pallet_collective::<Instance1> = 61,
 		CouncilMembership: pallet_membership::<Instance1> = 62,
-		PhragmenElection: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 65,
+		PhragmenElection: pallet_elections_phragmen = 65,
 		TechnicalCommittee: pallet_collective::<Instance4> = 67,
 		TechnicalMembership: pallet_membership::<Instance4> = 68,
 		Democracy: pallet_democracy = 69,
