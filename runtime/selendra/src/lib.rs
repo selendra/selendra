@@ -90,9 +90,9 @@ use orml_traits::{
 	GetByKey,
 };
 
-use crate::evm_config::{StorageDepositPerByte, TxFeePerGas};
 #[cfg(test)]
 use crate::evm_config::NewContractExtraBytes;
+use crate::evm_config::{StorageDepositPerByte, TxFeePerGas};
 pub use consensus_config::{EpochDuration, MaxNominations};
 pub use constants::{fee::*, time::*};
 use primitives::currency::AssetIds;
