@@ -1,8 +1,8 @@
 use super::{
-	dollar, parameter_types, weights, AllPrecompiles, Babe, Balances,
-	Currencies, DispatchableTask,EnsureRootOrHalfCouncil,
-	EnsureRootOrTwoThirdsTechnicalCommittee, Event, GasToWeight, IdleScheduler,
-	Runtime, RuntimeBlockWeights, RuntimeDebug, SelendraTreasuryAccount, Weight, EVM, H160, SEL,
+	dollar, parameter_types, weights, AllPrecompiles, Babe, Balances, Currencies, DispatchableTask,
+	EnsureRootOrHalfCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, Event, GasToWeight,
+	IdleScheduler, Runtime, RuntimeBlockWeights, RuntimeDebug, SelendraTreasuryAccount, Weight,
+	EVM, H160, SEL,
 };
 
 use codec::{Decode, Encode};
