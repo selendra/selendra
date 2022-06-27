@@ -116,8 +116,8 @@ pub use runtime_common::{
 /// This runtime version.
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("selendra"),
-	impl_name: create_runtime_str!("selendra"),
+	spec_name: create_runtime_str!("cardamom"),
+	impl_name: create_runtime_str!("cardamom"),
 	authoring_version: 1,
 	spec_version: 101,
 	impl_version: 0,
@@ -819,6 +819,30 @@ impl module_idle_scheduler::Config for Runtime {
 	type MinimumWeightRemainInBlock = MinimumWeightRemainInBlock;
 }
 
+parameter_types! {
+	pub BasicDeposit: Balance = 10 * dollar(SEL);       // 258 bytes on-chain
+	pub FieldDeposit: Balance = 250 * cent(SEL);        // 66 bytes on-chain
+	pub SubAccountDeposit: Balance = 2 * dollar(SEL);   // 53 bytes on-chain
+	pub const MaxSubAccounts: u32 = 100;
+	pub const MaxAdditionalFields: u32 = 100;
+	pub const MaxRegistrars: u32 = 20;
+}
+
+impl pallet_identity::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type BasicDeposit = BasicDeposit;
+	type FieldDeposit = FieldDeposit;
+	type SubAccountDeposit = SubAccountDeposit;
+	type MaxSubAccounts = MaxSubAccounts;
+	type MaxAdditionalFields = MaxAdditionalFields;
+	type MaxRegistrars = MaxRegistrars;
+	type Slashed = Treasury;
+	type ForceOrigin = EnsureRootOrHalfCouncil;
+	type RegistrarOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -881,23 +905,26 @@ construct_runtime!(
 		SelendraOracle: orml_oracle::<Instance1> = 70,
 		OperatorMembershipSelendra: pallet_membership::<Instance5> = 71,
 
+		// Identity
+		Identity: pallet_identity = 81,
+
 		// Selendra Core
 		Prices: module_prices = 90,
 		Dex: module_dex = 91,
 		DexOracle: module_dex_oracle = 92,
 
 		// Selendra Other
-		OrmlNFT: orml_nft exclude_parts { Call } = 120,
-		NFT: module_nft = 121,
-		AssetRegistry: module_asset_registry = 122,
+		OrmlNFT: orml_nft exclude_parts { Call } = 100,
+		NFT: module_nft = 101,
+		AssetRegistry: module_asset_registry = 102,
 
 		// Smart contracts
-		EVM: module_evm = 130,
-		EVMBridge: module_evm_bridge exclude_parts { Call } = 131,
-		EvmAccounts: module_evm_accounts = 132,
+		EVM: module_evm = 110,
+		EVMBridge: module_evm_bridge exclude_parts { Call } = 111,
+		EvmAccounts: module_evm_accounts = 112,
 
 		// Temporary
-		Sudo: pallet_sudo = 255,
+		Sudo: pallet_sudo = 150,
 	}
 );
 

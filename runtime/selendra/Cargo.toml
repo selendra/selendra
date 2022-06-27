@@ -51,6 +51,7 @@ pallet-election-provider-multi-phase = { git = "https://github.com/paritytech/su
 pallet-election-provider-support-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", default-features = false, optional = true }
 pallet-elections-phragmen = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", default-features = false }
+pallet-identity = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", default-features = false }
 pallet-im-online = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", default-features = false }
 pallet-membership = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-multisig = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
@@ -154,6 +155,7 @@ std = [
 	"pallet-elections-phragmen/std",
 	"pallet-election-provider-multi-phase/std",
 	"pallet-grandpa/std",
+	"pallet-identity/std",
 	"pallet-im-online/std",
 	"pallet-membership/std",
 	"pallet-multisig/std",
@@ -219,6 +221,7 @@ runtime-benchmarks = [
 	"pallet-election-provider-support-benchmarking/runtime-benchmarks",
 	"pallet-elections-phragmen/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
+	"pallet-identity/runtime-benchmarks",
 	"pallet-im-online/runtime-benchmarks",
 	"pallet-membership/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
@@ -257,6 +260,7 @@ try-runtime = [
 	"pallet-elections-phragmen/try-runtime",
 	"pallet-election-provider-multi-phase/try-runtime",
 	"pallet-grandpa/try-runtime",
+	"pallet-identity/try-runtime",
 	"pallet-im-online/try-runtime",
 	"pallet-membership/try-runtime",
 	"pallet-multisig/try-runtime",
@@ -310,3 +314,8 @@ on-chain-release-build = [
 
 # Set timing constants (e.g. session period) to faster versions to speed up testing.
 fast-runtime = []
+
+with-ethereum-compatibility = [
+	"module-evm/with-ethereum-compatibility",
+	"runtime-common/with-ethereum-compatibility",
+]
