@@ -819,6 +819,30 @@ impl module_idle_scheduler::Config for Runtime {
 	type MinimumWeightRemainInBlock = MinimumWeightRemainInBlock;
 }
 
+parameter_types! {
+	pub BasicDeposit: Balance = 10 * dollar(SEL);       // 258 bytes on-chain
+	pub FieldDeposit: Balance = 250 * cent(SEL);        // 66 bytes on-chain
+	pub SubAccountDeposit: Balance = 2 * dollar(SEL);   // 53 bytes on-chain
+	pub const MaxSubAccounts: u32 = 100;
+	pub const MaxAdditionalFields: u32 = 100;
+	pub const MaxRegistrars: u32 = 20;
+}
+
+impl pallet_identity::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type BasicDeposit = BasicDeposit;
+	type FieldDeposit = FieldDeposit;
+	type SubAccountDeposit = SubAccountDeposit;
+	type MaxSubAccounts = MaxSubAccounts;
+	type MaxAdditionalFields = MaxAdditionalFields;
+	type MaxRegistrars = MaxRegistrars;
+	type Slashed = Treasury;
+	type ForceOrigin = EnsureRootOrHalfCouncil;
+	type RegistrarOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -880,6 +904,9 @@ construct_runtime!(
 		// NOTE: OperatorMembership must be placed after Oracle or else will have race condition on initialization
 		SelendraOracle: orml_oracle::<Instance1> = 70,
 		OperatorMembershipSelendra: pallet_membership::<Instance5> = 71,
+
+		// Identity
+		Identity: pallet_identity = 81,
 
 		// Selendra Core
 		Prices: module_prices = 90,
