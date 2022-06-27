@@ -286,13 +286,11 @@ pub fn selendra_genesis(
 			balances: endowed_accounts.iter().cloned().map(|x| (x, endowment)).collect(),
 		},
 		council: CouncilConfig::default(),
-		financial_council: Default::default(),
 		technical_committee: TechnicalCommitteeConfig {
 			members: vec![],
 			phantom: Default::default(),
 		},
 		technical_membership: Default::default(),
-		financial_council_membership: Default::default(),
 		council_membership: Default::default(),
 		operator_membership_selendra: OperatorMembershipSelendraConfig {
 			members: vec![],

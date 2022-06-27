@@ -22,12 +22,10 @@ use frame_system::EnsureRoot;
 use primitives::AccountId;
 
 pub type CouncilInstance = pallet_collective::Instance1;
-pub type FinancialCouncilInstance = pallet_collective::Instance2;
 pub type HomaCouncilInstance = pallet_collective::Instance3;
 pub type TechnicalCommitteeInstance = pallet_collective::Instance4;
 
 pub type CouncilMembershipInstance = pallet_membership::Instance1;
-pub type FinancialCouncilMembershipInstance = pallet_membership::Instance2;
 pub type HomaCouncilMembershipInstance = pallet_membership::Instance3;
 pub type TechnicalMembershipInstance = pallet_membership::Instance4;
 pub type OperatorMembershipInstanceSelendra = pallet_membership::Instance5;
@@ -61,32 +59,6 @@ pub type EnsureRootOrThreeFourthsCouncil = EnsureOneOf<
 pub type EnsureRootOrOneCouncil = EnsureOneOf<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureMember<AccountId, CouncilInstance>,
->;
-
-// Financial Council
-pub type EnsureRootOrAllFinancialCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 1, 1>,
->;
-
-pub type EnsureRootOrHalfFinancialCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 1, 2>,
->;
-
-pub type EnsureRootOrOneThirdsFinancialCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 1, 3>,
->;
-
-pub type EnsureRootOrTwoThirdsFinancialCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 2, 3>,
->;
-
-pub type EnsureRootOrThreeFourthsFinancialCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 3, 4>,
 >;
 
 // Homa Council
