@@ -45,8 +45,8 @@ use scale_info::TypeInfo;
 use sp_core::{H160, H256};
 use sp_runtime::{
 	traits::{
-		AccountIdConversion, BlakeTwo256, BlockNumberProvider, Convert, IdentityLookup,
-		One as OneT, Zero,
+		AccountIdConversion, BlakeTwo256, Convert, IdentityLookup,
+		One as OneT,
 	},
 	AccountId32, DispatchResult, FixedPointNumber, FixedU128, Perbill, Percent,
 };

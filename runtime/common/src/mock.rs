@@ -33,7 +33,7 @@ use sp_core::{H160, H256};
 pub use sp_runtime::AccountId32;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, BlockNumberProvider, Convert, IdentityLookup, Zero},
+	traits::{BlakeTwo256, Convert, IdentityLookup},
 };
 use std::str::FromStr;
 
