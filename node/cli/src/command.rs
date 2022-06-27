@@ -16,19 +16,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	Cli, Subcommand,
-};
-use service::{chain_spec, new_partial, FullClient, ExecutorDispatch};
+use crate::{Cli, Subcommand};
 use frame_benchmarking_cli::*;
-use selendra_primitives::Block;
 use sc_cli::{ChainSpec, Result, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
+use selendra_primitives::Block;
+use service::{chain_spec, new_partial, ExecutorDispatch, FullClient};
 
-#[cfg(feature = "with-selendra-runtime")]
-use selendra_runtime::RuntimeApi;
 #[cfg(not(feature = "with-selendra-runtime"))]
 use cardamom_runtime::RuntimeApi;
+#[cfg(feature = "with-selendra-runtime")]
+use selendra_runtime::RuntimeApi;
 
 use std::sync::Arc;
 
@@ -54,7 +52,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn copyright_start_year() -> i32 {
-		2021-2022
+		2021 - 2022
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -89,8 +87,10 @@ impl SubstrateCli for Cli {
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
 		#[cfg(feature = "with-selendra-runtime")]
+		#[rustfmt::skip]
 		return &selendra_runtime::VERSION;
 		#[cfg(not(feature = "with-selendra-runtime"))]
+		#[rustfmt::skip]
 		return &cardamom_runtime::VERSION;
 	}
 }

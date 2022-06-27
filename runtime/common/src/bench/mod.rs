@@ -58,14 +58,7 @@ fn setup_liquidity() {
 	// enable RENBTC/SUSD
 	assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
 
-	assert_ok!(DexModule::add_liquidity(
-		Origin::signed(ALICE),
-		RENBTC,
-		SUSD,
-		1_000,
-		1_000_000,
-		0
-	));
+	assert_ok!(DexModule::add_liquidity(Origin::signed(ALICE), RENBTC, SUSD, 1_000, 1_000_000, 0));
 }
 
 fn oracle_get_price(b: &mut Bencher) {

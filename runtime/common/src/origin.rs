@@ -56,10 +56,8 @@ pub type EnsureRootOrThreeFourthsCouncil = EnsureOneOf<
 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 3, 4>,
 >;
 
-pub type EnsureRootOrOneCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureMember<AccountId, CouncilInstance>,
->;
+pub type EnsureRootOrOneCouncil =
+	EnsureOneOf<EnsureRoot<AccountId>, pallet_collective::EnsureMember<AccountId, CouncilInstance>>;
 
 // Homa Council
 pub type EnsureRootOrAllHomaCouncil = EnsureOneOf<

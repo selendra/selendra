@@ -1718,14 +1718,7 @@ fn charge_fee_pool_operation_works() {
 			10000.unique_saturated_into(),
 		));
 
-		assert_ok!(DEXModule::add_liquidity(
-			Origin::signed(ALICE),
-			SEL,
-			SUSD,
-			10000,
-			1000,
-			0
-		));
+		assert_ok!(DEXModule::add_liquidity(Origin::signed(ALICE), SEL, SUSD, 10000, 1000, 0));
 
 		let treasury_account: AccountId = <Runtime as Config>::TreasuryAccount::get();
 		let sub_account: AccountId =

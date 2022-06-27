@@ -406,8 +406,7 @@ pub mod module {
 		///   pool.
 		/// - `max_amount_b`: maximum amount of currency_id_b is allowed to inject to liquidity
 		///   pool.
-		/// - `min_share_increment`: minimum acceptable share amount.
-		///   incentives
+		/// - `min_share_increment`: minimum acceptable share amount. incentives
 		#[pallet::weight(<T as Config>::WeightInfo::add_liquidity())]
 		#[transactional]
 		pub fn add_liquidity(

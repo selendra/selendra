@@ -1103,14 +1103,7 @@ fn add_liquidity_work() {
 				Error::<Runtime>::MustBeEnabled
 			);
 			assert_noop!(
-				DexModule::add_liquidity(
-					Origin::signed(ALICE),
-					SUSD,
-					DOT,
-					0,
-					100_000_000,
-					0,
-				),
+				DexModule::add_liquidity(Origin::signed(ALICE), SUSD, DOT, 0, 100_000_000, 0,),
 				Error::<Runtime>::InvalidLiquidityIncrement
 			);
 
@@ -1274,17 +1267,17 @@ fn remove_liquidity_work() {
 			// assert_eq!(DexModule::get_liquidity(SUSD, DOT), (0, 0));
 			// assert_eq!(Tokens::free_balance(SUSD, &DexModule::account_id()), 0);
 			// assert_eq!(Tokens::free_balance(DOT, &DexModule::account_id()), 0);
-			// assert_eq!(Tokens::free_balance(SUSDDOTPair::get().dex_share_currency_id(), &ALICE), 0);
-			// assert_eq!(Tokens::free_balance(SUSD, &ALICE), 1_000_000_000_000_000_000);
+			// assert_eq!(Tokens::free_balance(SUSDDOTPair::get().dex_share_currency_id(), &ALICE),
+			// 0); assert_eq!(Tokens::free_balance(SUSD, &ALICE), 1_000_000_000_000_000_000);
 			// assert_eq!(Tokens::free_balance(DOT, &ALICE), 1_000_000_000_000_000_000);
 
-			// assert_eq!(Tokens::free_balance(SUSDDOTPair::get().dex_share_currency_id(), &BOB), 0);
-			// assert_eq!(
+			// assert_eq!(Tokens::free_balance(SUSDDOTPair::get().dex_share_currency_id(), &BOB),
+			// 0); assert_eq!(
 			// 	Tokens::reserved_balance(SUSDDOTPair::get().dex_share_currency_id(), &BOB),
 			// 	10_000_000_000_000
 			// );
-			// assert_eq!(Tokens::free_balance(SUSDDOTPair::get().dex_share_currency_id(), &BOB), 0);
-			// assert_eq!(
+			// assert_eq!(Tokens::free_balance(SUSDDOTPair::get().dex_share_currency_id(), &BOB),
+			// 0); assert_eq!(
 			// 	Tokens::reserved_balance(SUSDDOTPair::get().dex_share_currency_id(), &BOB),
 			// 	8_000_000_000_000
 			// );

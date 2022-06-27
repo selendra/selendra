@@ -2123,7 +2123,6 @@ fn auto_publish_works() {
 		// 	})
 		// );
 
-
 		// publish the factory
 		assert_ok!(EVM::publish_free(Origin::signed(CouncilAccount::get()), factory));
 
