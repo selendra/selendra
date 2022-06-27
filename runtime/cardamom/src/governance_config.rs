@@ -1,20 +1,18 @@
 use super::{
 	authority::AuthorityConfigImpl, deposit, dollar, prod_or_fast, weights, AuthoritysOriginId,
-	Balances, Call, Event, Council, Origin, OriginCaller,
-	PhragmenElectionPalletId, PreimageByteDeposit, Runtime, Scheduler, SelendraOracle,
-	TechnicalCommittee, Treasury, DAYS, HOURS, MINUTES, SEL,
+	Balances, Call, Council, Event, Origin, OriginCaller, PhragmenElectionPalletId,
+	PreimageByteDeposit, Runtime, Scheduler, SelendraOracle, TechnicalCommittee, Treasury, DAYS,
+	HOURS, MINUTES, SEL,
 };
 use frame_support::parameter_types;
 use frame_system::EnsureRoot;
 
 use primitives::{AccountId, Balance, BlockNumber};
 use runtime_common::{
-	CurrencyToVote, EnsureRootOrAllCouncil, EnsureRootOrAllTechnicalCommittee,
-	EnsureRootOrHalfCouncil, EnsureRootOrThreeFourthsCouncil,
+	CouncilInstance, CouncilMembershipInstance, CurrencyToVote, EnsureRootOrAllCouncil,
+	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrThreeFourthsCouncil,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
-	CouncilInstance,
-	CouncilMembershipInstance, OperatorMembershipInstanceSelendra,
-	TechnicalCommitteeInstance, TechnicalMembershipInstance,
+	OperatorMembershipInstanceSelendra, TechnicalCommitteeInstance, TechnicalMembershipInstance,
 };
 
 impl orml_authority::Config for Runtime {
@@ -73,8 +71,7 @@ impl pallet_democracy::Config for Runtime {
 	type VetoOrigin = pallet_collective::EnsureMember<AccountId, TechnicalCommitteeInstance>;
 	type CooloffPeriod = CooloffPeriod;
 	type PreimageByteDeposit = PreimageByteDeposit;
-	type OperationalPreimageOrigin =
-		pallet_collective::EnsureMember<AccountId, CouncilInstance>;
+	type OperationalPreimageOrigin = pallet_collective::EnsureMember<AccountId, CouncilInstance>;
 	type Slash = Treasury;
 	type Scheduler = Scheduler;
 	type PalletsOrigin = OriginCaller;

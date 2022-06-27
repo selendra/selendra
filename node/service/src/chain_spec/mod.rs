@@ -16,24 +16,24 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(feature = "with-selendra-runtime")]
-pub mod selendra;
 #[cfg(feature = "with-cardamom-runtime")]
 pub mod cardamom;
-
 #[cfg(feature = "with-selendra-runtime")]
-pub use selendra::ChainSpec;
+pub mod selendra;
+
 #[cfg(not(feature = "with-selendra-runtime"))]
 pub use cardamom::ChainSpec;
+#[cfg(feature = "with-selendra-runtime")]
+pub use selendra::ChainSpec;
 
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 
-use sp_runtime::traits::IdentifyAccount;
-use sp_core::{sr25519, Pair, Public};
 use sc_chain_spec::ChainSpecExtension;
+use sp_core::{sr25519, Pair, Public};
+use sp_runtime::traits::IdentifyAccount;
 
 use selendra_primitives::{currency::TokenInfo, AccountId, AccountPublic, Balance};
 

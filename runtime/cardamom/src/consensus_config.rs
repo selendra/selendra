@@ -21,9 +21,7 @@ use pallet_election_provider_multi_phase::SolutionAccuracyOf;
 use pallet_grandpa::AuthorityId as GrandpaId;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use primitives::{AccountId, Balance, BlockNumber, Moment};
-use runtime_common::{
-	dollar, CurrencyToVote, EnsureRootOrHalfCouncil, StakingBenchmarkingConfig,
-};
+use runtime_common::{dollar, CurrencyToVote, EnsureRootOrHalfCouncil, StakingBenchmarkingConfig};
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::{
 	curve::PiecewiseLinear,

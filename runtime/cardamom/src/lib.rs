@@ -33,10 +33,10 @@ mod weights;
 
 // runtime config
 mod consensus_config;
+mod evm_config;
 mod governance_config;
 
 use codec::{Decode, DecodeLimit, Encode};
-use scale_info::TypeInfo;
 
 #[cfg(feature = "std")]
 pub use pallet_staking::StakerStatus;
@@ -53,8 +53,8 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BadOrigin, BlakeTwo256, Block as BlockT,
-		Convert, NumberFor, SaturatedConversion, StaticLookup,
+		AccountIdConversion, AccountIdLookup, BadOrigin, BlakeTwo256, Block as BlockT, Convert,
+		NumberFor, SaturatedConversion, StaticLookup,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, DispatchResult, FixedPointNumber, Perbill, Percent, Permill, Perquintill,
@@ -80,7 +80,7 @@ use frame_system::EnsureRoot;
 
 use module_asset_registry::{AssetIdMaps, EvmErc20InfoMapping};
 use module_currencies::BasicCurrencyAdapter;
-use module_evm::{runner::RunnerExtended, CallInfo, CreateInfo, EvmChainId, EvmTask};
+use module_evm::{runner::RunnerExtended, CallInfo, CreateInfo};
 use module_evm_accounts::EvmAddressMapping;
 use module_support::{AssetIdMapping, DispatchableTask};
 use module_transaction_payment::TargetedFeeAdjustment;
@@ -90,26 +90,27 @@ use orml_traits::{
 	GetByKey,
 };
 
+use crate::evm_config::{StorageDepositPerByte, TxFeePerGas};
+#[cfg(test)]
+use crate::evm_config::NewContractExtraBytes;
 pub use consensus_config::{EpochDuration, MaxNominations};
 pub use constants::{fee::*, time::*};
 use primitives::currency::AssetIds;
 
 pub use primitives::{
 	accounts::*,
-	define_combined_task,
 	evm::{AccessListItem, BlockLimits, EstimateResourcesRequest, EthereumTransactionMessage},
-	task::TaskResult,
 	unchecked_extrinsic::SelendraUncheckedExtrinsic,
 	AccountId, AccountIndex, Amount, AuthoritysOriginId, Balance, BlockNumber, CurrencyId,
 	DataProviderId, Hash, Moment, Multiplier, Nonce, ReserveIdentifier, Signature, TokenSymbol,
 };
 
 pub use runtime_common::{
-	cent, dollar, microcent, prod_or_fast, AllPrecompiles,
-	EnsureRootOrHalfCouncil, EnsureRootOrOneCouncil,
-	EnsureRootOrOneThirdsTechnicalCommittee, EnsureRootOrThreeFourthsCouncil,
-	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, GasToWeight,
-	MaxTipsOfPriority, OperationalFeeMultiplier, Price, ProxyType, Rate, Ratio, RuntimeBlockLength,
+	cent, dollar, microcent, prod_or_fast, AllPrecompiles, EnsureRootOrHalfCouncil,
+	EnsureRootOrOneCouncil, EnsureRootOrOneThirdsTechnicalCommittee,
+	EnsureRootOrThreeFourthsCouncil, EnsureRootOrTwoThirdsCouncil,
+	EnsureRootOrTwoThirdsTechnicalCommittee, GasToWeight, MaxTipsOfPriority,
+	OperationalFeeMultiplier, Price, ProxyType, Rate, Ratio, RuntimeBlockLength,
 	RuntimeBlockWeights, TimeStampedPrice, TipPerWeightStep, DOT, KMD, SEL, SUSD,
 };
 
@@ -631,15 +632,6 @@ impl module_transaction_payment::Config for Runtime {
 	type DefaultFeeTokens = DefaultFeeTokens;
 }
 
-impl module_evm_accounts::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type AddressMapping = EvmAddressMapping<Runtime>;
-	type TransferAll = Currencies;
-	type ChainId = EvmChainId<Runtime>;
-	type WeightInfo = weights::module_evm_accounts::WeightInfo<Runtime>;
-}
-
 impl module_asset_registry::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
@@ -741,82 +733,6 @@ impl pallet_proxy::Config for Runtime {
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = AnnouncementDepositBase;
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
-}
-
-parameter_types! {
-	pub const NewContractExtraBytes: u32 = 10_000;
-	pub NetworkContractSource: H160 = H160::from_low_u64_be(0);
-	pub DeveloperDeposit: Balance = 1_000 * dollar(SEL);
-	pub PublicationFee: Balance = 1_000_000 * dollar(SEL);
-	pub PrecompilesValue: AllPrecompiles<Runtime> = AllPrecompiles::<_>::selendra();
-}
-
-#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub struct StorageDepositPerByte;
-impl<I: From<Balance>> frame_support::traits::Get<I> for StorageDepositPerByte {
-	fn get() -> I {
-		// NOTE: SEL decimals is 12, convert to 18.
-		// 30 * millicent(SEL) * 10^6
-		I::from(300_000_000_000_000)
-	}
-}
-
-#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub struct TxFeePerGas;
-impl<I: From<Balance>> frame_support::traits::Get<I> for TxFeePerGas {
-	fn get() -> I {
-		// NOTE: 200 GWei
-		// ensure suffix is 0x0000
-		I::from(200u128.saturating_mul(10u128.saturating_pow(9)) & !0xffff)
-	}
-}
-
-impl module_evm::Config for Runtime {
-	type AddressMapping = EvmAddressMapping<Runtime>;
-	type Currency = Balances;
-	type TransferAll = Currencies;
-	type NewContractExtraBytes = NewContractExtraBytes;
-	type StorageDepositPerByte = StorageDepositPerByte;
-	type TxFeePerGas = TxFeePerGas;
-	type Event = Event;
-	type PrecompilesType = AllPrecompiles<Self>;
-	type PrecompilesValue = PrecompilesValue;
-	type GasToWeight = GasToWeight;
-	type ChargeTransactionPayment = module_transaction_payment::ChargeTransactionPayment<Runtime>;
-	type NetworkContractOrigin = EnsureRootOrTwoThirdsTechnicalCommittee;
-	type NetworkContractSource = NetworkContractSource;
-	type DeveloperDeposit = DeveloperDeposit;
-	type PublicationFee = PublicationFee;
-	type TreasuryAccount = SelendraTreasuryAccount;
-	type FreePublicationOrigin = EnsureRootOrHalfCouncil;
-	type Runner = module_evm::runner::stack::Runner<Self>;
-	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Babe>;
-	type Task = ScheduledTasks;
-	type IdleScheduler = IdleScheduler;
-	type WeightInfo = weights::module_evm::WeightInfo<Runtime>;
-}
-
-impl module_evm_bridge::Config for Runtime {
-	type EVM = EVM;
-}
-
-define_combined_task! {
-	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
-	pub enum ScheduledTasks {
-		EvmTask(EvmTask<Runtime>),
-	}
-}
-
-parameter_types!(
-	// At least 2% of max block weight should remain before idle tasks are dispatched.
-	pub MinimumWeightRemainInBlock: Weight = RuntimeBlockWeights::get().max_block / 50;
-);
-
-impl module_idle_scheduler::Config for Runtime {
-	type Event = Event;
-	type WeightInfo = ();
-	type Task = ScheduledTasks;
-	type MinimumWeightRemainInBlock = MinimumWeightRemainInBlock;
 }
 
 parameter_types! {

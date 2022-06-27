@@ -26,10 +26,7 @@ use frame_system::pallet_prelude::*;
 pub use module_support::{DispatchableTask, IdleScheduler};
 use scale_info::TypeInfo;
 use selendra_primitives::{task::TaskResult, BlockNumber, Nonce};
-use sp_runtime::{
-	traits::One,
-	ArithmeticError,
-};
+use sp_runtime::{traits::One, ArithmeticError};
 use sp_std::{cmp::PartialEq, fmt::Debug, prelude::*};
 
 mod mock;

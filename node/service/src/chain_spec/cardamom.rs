@@ -20,13 +20,13 @@
 
 use super::{
 	authority_keys_from_seed, get_account_id_from_seed, testnet_accounts, AccountId,
-	AuthorityDiscoveryId, BabeId, Balance, GrandpaId, ImOnlineId, TokenInfo,
-	TELEMETRY_URL, ChainSpecExtension
+	AuthorityDiscoveryId, BabeId, Balance, ChainSpecExtension, GrandpaId, ImOnlineId, TokenInfo,
+	TELEMETRY_URL,
 };
 
 use hex_literal::hex;
-use serde_json::map::Map;
 use serde::{Deserialize, Serialize};
+use serde_json::map::Map;
 
 use sc_service::{ChainType, Properties};
 use sc_telemetry::TelemetryEndpoints;
@@ -34,11 +34,11 @@ use sp_core::{crypto::UncheckedInto, sr25519};
 use sp_runtime::Perbill;
 
 use cardamom_runtime::{
-	dollar, AuthorityDiscoveryConfig, BabeConfig, BalancesConfig, DemocracyConfig, DexConfig,
-	EVMConfig, CouncilConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig,
-	OperatorMembershipSelendraConfig, OrmlNFTConfig, SS58Prefix, SessionConfig, StakerStatus,
-	StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig, TokensConfig, SEL, SUSD,
-	SessionKeys, Block
+	dollar, AuthorityDiscoveryConfig, BabeConfig, BalancesConfig, Block, CouncilConfig,
+	DemocracyConfig, DexConfig, EVMConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig,
+	OperatorMembershipSelendraConfig, OrmlNFTConfig, SS58Prefix, SessionConfig, SessionKeys,
+	StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig, TokensConfig,
+	SEL, SUSD,
 };
 
 /// Node `ChainSpec` extensions.
@@ -167,7 +167,7 @@ fn local_cardamom_genesis() -> GenesisConfig {
 }
 
 fn staging_config_genesis() -> GenesisConfig {
-	// #[rustfmt::skip]
+	#[rustfmt::skip]
 	let initial_authorities: Vec<(
 		AccountId,
 		AccountId,
