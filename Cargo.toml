@@ -7,7 +7,6 @@ members = [
 	"node/inspect",
 	"node/rpc",
 	"node/cli",
-	"runtime/cardamom",
 	"runtime/selendra",
 	"runtime/common",
 	"primitives",

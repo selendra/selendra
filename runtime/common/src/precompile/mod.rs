@@ -119,35 +119,6 @@ where
 			_marker: Default::default(),
 		}
 	}
-
-	pub fn cardamom() -> Self {
-		Self {
-			active: BTreeSet::from([
-				ECRECOVER,
-				SHA256,
-				RIPEMD,
-				IDENTITY,
-				MODEXP,
-				BN_ADD,
-				BN_MUL,
-				BN_PAIRING,
-				BLAKE2F,
-				// Non-standard precompile starts with 128
-				ECRECOVER_PUBLICKEY,
-				SHA3_256,
-				SHA3_512,
-				// Selendra precompile
-				MULTI_CURRENCY,
-				// NFT,
-				EVM,
-				ORACLE,
-				// SCHEDULER,
-				DEX,
-				EVM_ACCOUNTS,
-			]),
-			_marker: Default::default(),
-		}
-	}
 }
 
 impl<R> PrecompileSet for AllPrecompiles<R>
