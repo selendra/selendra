@@ -54,7 +54,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BadOrigin, BlakeTwo256, Block as BlockT, Convert,
-		NumberFor, SaturatedConversion, StaticLookup,
+		NumberFor, SaturatedConversion, StaticLookup, ConvertInto
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, DispatchResult, FixedPointNumber, Perbill, Percent, Permill, Perquintill,
@@ -693,6 +693,8 @@ impl InstanceFilter<Call> for ProxyType {
 				Call::OperatorMembershipSelendra(..) |
 				Call::Treasury(..) |
 				Call::Bounties(..) |
+				Call::Vesting(pallet_vesting::Call::vest{..}) |
+				Call::Vesting(pallet_vesting::Call::vest_other{..}) |
 				Call::Tips(..) |
 				Call::Identity(..) |
 				// Specifically omitting Vesting `vested_transfer`, and `force_vested_transfer`
@@ -717,7 +719,7 @@ impl InstanceFilter<Call> for ProxyType {
 				)
 			},
 			ProxyType::Staking => {
-				matches!(c, Call::Staking(..) | Call::Session(..)
+				matches!(c, Call::Staking(..) | Call::Session(..))
 			},
 			ProxyType::IdentityJudgement => matches!(
 				c,
@@ -797,6 +799,20 @@ impl pallet_identity::Config for Runtime {
 	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
 }
 
+parameter_types! {
+	pub MinVestedTransfer: Balance = 1 * dollar(SEL);
+}
+
+impl pallet_vesting::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type BlockNumberToBalance = ConvertInto;
+	type MinVestedTransfer = MinVestedTransfer;
+	type WeightInfo = ();
+	const MAX_VESTING_SCHEDULES: u32 = 28;
+}
+
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -843,6 +859,9 @@ construct_runtime!(
 		// norminator
 		VoterList: pallet_bags_list = 40,
 		NominationPools: pallet_nomination_pools = 41,
+
+		// Vesting
+		Vesting: pallet_vesting = 50,
 
 		// Governance
 		Authority: orml_authority = 60,
