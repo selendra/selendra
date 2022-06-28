@@ -125,8 +125,11 @@ parameter_types! {
 )]
 pub enum ProxyType {
 	Any,
+	NonTransfer,
 	CancelProxy,
 	Governance,
+	Staking,
+	IdentityJudgement,
 	Swap,
 	DexLiquidity,
 }
