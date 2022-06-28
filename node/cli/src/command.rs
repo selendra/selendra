@@ -16,19 +16,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	Cli, Subcommand,
-};
-use service::{chain_spec, new_partial, FullClient, ExecutorDispatch};
+use crate::{Cli, Subcommand};
 use frame_benchmarking_cli::*;
-use selendra_primitives::Block;
+use sp_core::crypto::Ss58AddressFormat;
 use sc_cli::{ChainSpec, Result, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
+use selendra_primitives::Block;
+use service::{chain_spec, new_partial, ExecutorDispatch, FullClient};
 
-#[cfg(feature = "with-selendra-runtime")]
 use selendra_runtime::RuntimeApi;
-#[cfg(not(feature = "with-selendra-runtime"))]
-use cardamom_runtime::RuntimeApi;
 
 use std::sync::Arc;
 
@@ -54,7 +50,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn copyright_start_year() -> i32 {
-		2021-2022
+		2021 - 2022
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -64,23 +60,10 @@ impl SubstrateCli for Cli {
 					"Please specify which chain you want to run, e.g. --dev or --chain=local"
 						.into(),
 				),
-			#[cfg(feature = "with-selendra-runtime")]
 			"dev" | "selendra-dev" => Box::new(chain_spec::selendra::development_config()),
-			#[cfg(feature = "with-selendra-runtime")]
 			"selendra-local" => Box::new(chain_spec::selendra::local_testnet_config()),
-			#[cfg(feature = "with-selendra-runtime")]
 			"selendra-staging" => Box::new(chain_spec::selendra::staging_config()),
-			#[cfg(feature = "with-selendra-runtime")]
 			"selendra" => Box::new(chain_spec::selendra::selendra_config()?),
-
-			#[cfg(not(feature = "with-selendra-runtime"))]
-			"dev" | "cardamom-dev" => Box::new(chain_spec::selendra::development_config()),
-			#[cfg(feature = "with-cardamom-runtime")]
-			"cardamom-local" => Box::new(chain_spec::selendra::local_testnet_config()),
-			#[cfg(feature = "with-cardamom-runtime")]
-			"cardamom-staging" => Box::new(chain_spec::selendra::staging_config()),
-			#[cfg(feature = "with-cardamom-runtime")]
-			"cardamom" => Box::new(chain_spec::selendra::selendra_config()?),
 			path =>
 				Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
 		};
@@ -88,11 +71,13 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		#[cfg(feature = "with-selendra-runtime")]
-		return &selendra_runtime::VERSION;
-		#[cfg(not(feature = "with-selendra-runtime"))]
-		return &cardamom_runtime::VERSION;
+		&selendra_runtime::VERSION
 	}
+}
+
+fn set_default_ss58_version(_spec: &Box<dyn sc_service::ChainSpec>) {
+	let ss58_version = Ss58AddressFormat::custom(204);
+	sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
 /// Parse command line arguments into service configuration.
@@ -102,6 +87,10 @@ pub fn run() -> Result<()> {
 	match &cli.subcommand {
 		None => {
 			let runner = cli.create_runner(&cli.run)?;
+
+			let chain_spec = &runner.config().chain_spec;
+			set_default_ss58_version(chain_spec);
+
 			runner.run_node_until_exit(|config| async move {
 				service::new_full(config, cli.no_hardware_benchmarks)
 					.map_err(sc_cli::Error::Service)
@@ -110,10 +99,16 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Inspect(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 
+			let chain_spec = &runner.config().chain_spec;
+			set_default_ss58_version(chain_spec);
+
 			runner.sync_run(|config| cmd.run::<Block, RuntimeApi, ExecutorDispatch>(config))
 		},
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
+			let chain_spec = &runner.config().chain_spec;
+			set_default_ss58_version(chain_spec);
 
 			runner.sync_run(|config| {
 				// This switch needs to be in the client, since the client decides
@@ -153,10 +148,18 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Vanity(cmd)) => cmd.run(),
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
+			let chain_spec = &runner.config().chain_spec;
+			set_default_ss58_version(chain_spec);
+
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		},
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
+			let chain_spec = &runner.config().chain_spec;
+			set_default_ss58_version(chain_spec);
+
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, import_queue, .. } =
 					new_partial(&config)?;
@@ -165,6 +168,10 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
+			let chain_spec = &runner.config().chain_spec;
+			set_default_ss58_version(chain_spec);
+
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, .. } = new_partial(&config)?;
 				Ok((cmd.run(client, config.database), task_manager))
@@ -172,6 +179,10 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::ExportState(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
+			let chain_spec = &runner.config().chain_spec;
+			set_default_ss58_version(chain_spec);
+
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, .. } = new_partial(&config)?;
 				Ok((cmd.run(client, config.chain_spec), task_manager))
@@ -179,6 +190,10 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
+			let chain_spec = &runner.config().chain_spec;
+			set_default_ss58_version(chain_spec);
+
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, import_queue, .. } =
 					new_partial(&config)?;
@@ -187,10 +202,18 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
+			let chain_spec = &runner.config().chain_spec;
+			set_default_ss58_version(chain_spec);
+
 			runner.sync_run(|config| cmd.run(config.database))
 		},
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
+			let chain_spec = &runner.config().chain_spec;
+			set_default_ss58_version(chain_spec);
+
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, backend, .. } = new_partial(&config)?;
 				let aux_revert = Box::new(|client: Arc<FullClient>, backend, blocks| {
@@ -204,6 +227,10 @@ pub fn run() -> Result<()> {
 		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
+			let chain_spec = &runner.config().chain_spec;
+			set_default_ss58_version(chain_spec);
+
 			runner.async_run(|config| {
 				// we don't need any of the components of new_partial, just a runtime, or a task
 				// manager to do `async_run`.
@@ -221,6 +248,10 @@ pub fn run() -> Result<()> {
 			.into()),
 		Some(Subcommand::ChainInfo(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
+			let chain_spec = &runner.config().chain_spec;
+			set_default_ss58_version(chain_spec);
+
 			runner.sync_run(|config| cmd.run::<Block>(&config))
 		},
 	}

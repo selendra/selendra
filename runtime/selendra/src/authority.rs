@@ -20,10 +20,9 @@
 
 use crate::{
 	AccountId, AccountIdConversion, AuthoritysOriginId, BadOrigin, BlockNumber, DispatchResult,
-	EnsureRoot, EnsureRootOrHalfFinancialCouncil, EnsureRootOrHalfCouncil,
-	EnsureRootOrOneThirdsTechnicalCommittee, EnsureRootOrThreeFourthsCouncil,
-	EnsureRootOrTwoThirdsTechnicalCommittee, OneDay, Origin, OriginCaller, SevenDays,
-	TreasuryPalletId, TreasuryReservePalletId, HOURS,
+	EnsureRoot, EnsureRootOrHalfCouncil, EnsureRootOrOneThirdsTechnicalCommittee,
+	EnsureRootOrThreeFourthsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, OneDay, Origin,
+	OriginCaller, SevenDays, TreasuryPalletId, TreasuryReservePalletId, HOURS,
 };
 pub use frame_support::traits::{schedule::Priority, EnsureOrigin, OriginTrait};
 use frame_system::ensure_root;
@@ -35,7 +34,6 @@ impl orml_authority::AuthorityConfig<Origin, OriginCaller, BlockNumber> for Auth
 	fn check_schedule_dispatch(origin: Origin, _priority: Priority) -> DispatchResult {
 		EnsureRoot::<AccountId>::try_origin(origin)
 			.or_else(|o| EnsureRootOrHalfCouncil::try_origin(o).map(|_| ()))
-			.or_else(|o| EnsureRootOrHalfFinancialCouncil::try_origin(o).map(|_| ()))
 			.map_or_else(|_| Err(BadOrigin.into()), |_| Ok(()))
 	}
 
@@ -125,24 +123,8 @@ fn cmp_privilege(left: &OriginCaller, right: &OriginCaller) -> Option<Ordering> 
 
 		// Checks which one has more yes votes.
 		(
-			OriginCaller::Council(pallet_collective::RawOrigin::Members(
-				l_yes_votes,
-				l_count,
-			)),
-			OriginCaller::Council(pallet_collective::RawOrigin::Members(
-				r_yes_votes,
-				r_count,
-			)),
-		) => Some((l_yes_votes * r_count).cmp(&(r_yes_votes * l_count))),
-		(
-			OriginCaller::FinancialCouncil(pallet_collective::RawOrigin::Members(
-				l_yes_votes,
-				l_count,
-			)),
-			OriginCaller::FinancialCouncil(pallet_collective::RawOrigin::Members(
-				r_yes_votes,
-				r_count,
-			)),
+			OriginCaller::Council(pallet_collective::RawOrigin::Members(l_yes_votes, l_count)),
+			OriginCaller::Council(pallet_collective::RawOrigin::Members(r_yes_votes, r_count)),
 		) => Some((l_yes_votes * r_count).cmp(&(r_yes_votes * l_count))),
 		// For every other origin we don't care, as they are not used in schedule_dispatch
 		_ => None,

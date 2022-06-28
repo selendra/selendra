@@ -31,7 +31,7 @@ use primitives::{
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, BlockNumberProvider, IdentityLookup},
+	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
 };
 use std::{collections::BTreeMap, str::FromStr};

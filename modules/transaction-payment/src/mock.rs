@@ -180,7 +180,6 @@ impl module_dex::Config for Runtime {
 	type TradingPathLimit = TradingPathLimit;
 	type PalletId = DEXPalletId;
 	type Erc20InfoMapping = ();
-	type DEXIncentives = ();
 	type WeightInfo = ();
 	type ListingOrigin = frame_system::EnsureSignedBy<Zero, AccountId>;
 	type ExtendedProvisioningBlocks = ConstU64<0>;
@@ -243,7 +242,7 @@ parameter_types! {
 	pub const HigerSwapThreshold: Balance = 9500;
 	pub const TransactionPaymentPalletId: PalletId = PalletId(*b"sel/fees");
 	pub const TreasuryPalletId: PalletId = PalletId(*b"sel/trsy");
-	pub CardamomTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
+	pub SelendraTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 ord_parameter_types! {
 	pub const ListingOrigin: AccountId = ALICE;
@@ -271,7 +270,7 @@ impl Config for Runtime {
 	type PriceSource = MockPriceSource;
 	type WeightInfo = ();
 	type PalletId = TransactionPaymentPalletId;
-	type TreasuryAccount = CardamomTreasuryAccount;
+	type TreasuryAccount = SelendraTreasuryAccount;
 	type UpdateOrigin = EnsureSignedBy<ListingOrigin, AccountId>;
 	type CustomFeeSurplus = CustomFeeSurplus;
 	type AlternativeFeeSurplus = AlternativeFeeSurplus;

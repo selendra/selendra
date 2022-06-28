@@ -294,7 +294,7 @@ where
 					currency_id_b,
 					max_amount_a,
 					max_amount_b,
-					min_share_increment
+					min_share_increment,
 				)
 				.map_err(|e| PrecompileFailure::Revert {
 					exit_status: ExitRevert::Reverted,
@@ -333,7 +333,7 @@ where
 					currency_id_b,
 					remove_share,
 					min_withdrawn_a,
-					min_withdrawn_b
+					min_withdrawn_b,
 				)
 				.map_err(|e| PrecompileFailure::Revert {
 					exit_status: ExitRevert::Reverted,

@@ -34,6 +34,7 @@ use module_evm::{
 	runner::state::{PrecompileFailure, PrecompileOutput, PrecompileResult},
 	Context, ExitError, ExitRevert, ExitSucceed,
 };
+#[allow(unused_imports)]
 use module_support::{AddressMapping, TransactionPayment};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use pallet_scheduler::TaskAddress;
@@ -563,9 +564,10 @@ module_evm::Config>::AddressMapping::get_account_id(&bob_evm_addr()); 			#[cfg(n
 			");
 
 			let from_account = <Test as
-module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr()); 			let to_account = <Test as
-module_evm::Config>::AddressMapping::get_account_id(&bob_evm_addr()); 			#[cfg(not(feature =
-"with-ethereum-compatibility"))] 			{
+				module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr());
+			let to_account = <Test as
+				module_evm::Config>::AddressMapping::get_account_id(&bob_evm_addr());
+			#[cfg(not(feature = "with-ethereum-compatibility"))] 			{
 				assert_eq!(Balances::free_balance(from_account.clone()), 999999700000);
 				assert_eq!(Balances::reserved_balance(from_account.clone()), 300000);
 				assert_eq!(Balances::free_balance(to_account.clone()), 1000000000000);

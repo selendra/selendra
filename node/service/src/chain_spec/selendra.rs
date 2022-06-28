@@ -20,13 +20,13 @@
 
 use super::{
 	authority_keys_from_seed, get_account_id_from_seed, testnet_accounts, AccountId,
-	AuthorityDiscoveryId, BabeId, Balance, GrandpaId, ImOnlineId, TokenInfo,
-	TELEMETRY_URL, ChainSpecExtension
+	AuthorityDiscoveryId, BabeId, Balance, ChainSpecExtension, GrandpaId, ImOnlineId, TokenInfo,
+	TELEMETRY_URL, DEFAULT_PROTOCOL_ID
 };
 
 use hex_literal::hex;
-use serde_json::map::Map;
 use serde::{Deserialize, Serialize};
+use serde_json::map::Map;
 
 use sc_service::{ChainType, Properties};
 use sc_telemetry::TelemetryEndpoints;
@@ -34,11 +34,11 @@ use sp_core::{crypto::UncheckedInto, sr25519};
 use sp_runtime::Perbill;
 
 use selendra_runtime::{
-	dollar, AuthorityDiscoveryConfig, BabeConfig, BalancesConfig, DemocracyConfig, DexConfig,
-	EVMConfig, CouncilConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig,
-	OperatorMembershipSelendraConfig, OrmlNFTConfig, SS58Prefix, SessionConfig, StakerStatus,
-	StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig, TokensConfig, SEL, SUSD,
-	SessionKeys, Block
+	dollar, AuthorityDiscoveryConfig, BabeConfig, BalancesConfig, Block, CouncilConfig,
+	DemocracyConfig, DexConfig, EVMConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig,
+	OperatorMembershipSelendraConfig, OrmlNFTConfig, SS58Prefix, SessionConfig, SessionKeys,
+	StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig, TokensConfig,
+	SEL, SUSD,
 };
 
 /// Node `ChainSpec` extensions.
@@ -124,8 +124,8 @@ pub fn local_testnet_config() -> ChainSpec {
 pub fn staging_config() -> ChainSpec {
 	let boot_nodes = vec![];
 	ChainSpec::from_genesis(
-		"Staging Testnet",
-		"staging_testnet",
+		"Selendra Staging",
+		"selendra_staging",
 		ChainType::Live,
 		staging_config_genesis,
 		boot_nodes,
@@ -133,7 +133,7 @@ pub fn staging_config() -> ChainSpec {
 			TelemetryEndpoints::new(vec![(TELEMETRY_URL.to_string(), 0)])
 				.expect("Staging telemetry url is valid; qed"),
 		),
-		None,
+		Some(DEFAULT_PROTOCOL_ID),
 		None,
 		Some(selendra_properties()),
 		Default::default(),
@@ -143,7 +143,7 @@ pub fn staging_config() -> ChainSpec {
 fn development_config_genesis() -> GenesisConfig {
 	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
 
-	selendra_genesis(
+	selendra_development_genesis(
 		wasm_binary,
 		vec![authority_keys_from_seed("Alice")],
 		get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -153,7 +153,7 @@ fn development_config_genesis() -> GenesisConfig {
 
 fn local_selendra_genesis() -> GenesisConfig {
 	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
-	selendra_genesis(
+	selendra_development_genesis(
 		wasm_binary,
 		vec![
 			authority_keys_from_seed("Alice"),
@@ -167,7 +167,7 @@ fn local_selendra_genesis() -> GenesisConfig {
 }
 
 fn staging_config_genesis() -> GenesisConfig {
-	// #[rustfmt::skip]
+	#[rustfmt::skip]
 	let initial_authorities: Vec<(
 		AccountId,
 		AccountId,
@@ -203,13 +203,13 @@ fn staging_config_genesis() -> GenesisConfig {
 			hex!["0b0b8e106f8db92ba44c441ea61a1877d7df51a4569ee67fe390530cf0c60923"]
 				.unchecked_into(),
 			// 5CPhhXA3bYy3AAKBMNfA4fbA4UCyUx6Nb4WQrbFTExYXDmGk
-			hex!["482dbd7297a39fa145c570552249c2ca9dd47e281f0c500c971b59c9dcdcd82e"]
+			hex!["0e7d21b970155d93584c3e293ffac20bad264cf30c7d4cd564f68b2f7a818942"]
 				.unchecked_into(),
 			// 5CPhhXA3bYy3AAKBMNfA4fbA4UCyUx6Nb4WQrbFTExYXDmGk
-			hex!["482dbd7297a39fa145c570552249c2ca9dd47e281f0c500c971b59c9dcdcd82e"]
+			hex!["0e7d21b970155d93584c3e293ffac20bad264cf30c7d4cd564f68b2f7a818942"]
 				.unchecked_into(),
 			// 5CPhhXA3bYy3AAKBMNfA4fbA4UCyUx6Nb4WQrbFTExYXDmGk
-			hex!["482dbd7297a39fa145c570552249c2ca9dd47e281f0c500c971b59c9dcdcd82e"]
+			hex!["0e7d21b970155d93584c3e293ffac20bad264cf30c7d4cd564f68b2f7a818942"]
 				.unchecked_into(),
 		),
 		(
@@ -251,8 +251,8 @@ fn staging_config_genesis() -> GenesisConfig {
 	];
 
 	let root_key: AccountId = hex![
-		// 5EFWY51UxSopvC8BrzTujUD5fCv1eEYVyGV5NJs7a3fVFB2P
-		"60b60ebdcce971da7cc8ae0ce7368ee2c7c4a24cd28f145b8ff3633b7b66db56"
+		// 5DiQQJEKjLf9ucHzitkVehzHtZmj8rvYBzGiqbfwcqVa6mpg
+		"48fccd18e5901ad0a484cfc4859f57c163219fa6911c3ba824c2d9743167795f"
 	]
 	.into();
 
@@ -276,6 +276,91 @@ pub fn selendra_genesis(
 	root_key: AccountId,
 	endowed_accounts: Option<Vec<AccountId>>,
 ) -> GenesisConfig {
+	let endowment: Balance = 1_000_000_000 * dollar(SEL);
+	let stash: Balance = endowment / 1_000_000;
+	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
+
+	GenesisConfig {
+		system: SystemConfig { code: wasm_binary.to_vec() },
+		balances: BalancesConfig {
+			balances: endowed_accounts
+				.iter()
+				.map(|k: &AccountId| (k.clone(), endowment))
+				.chain(initial_authorities.iter().map(|x| (x.0.clone(), stash)))
+				.collect(),
+		},
+		council: CouncilConfig::default(),
+		technical_committee: TechnicalCommitteeConfig {
+			members: vec![],
+			phantom: Default::default(),
+		},
+		technical_membership: Default::default(),
+		council_membership: Default::default(),
+		operator_membership_selendra: OperatorMembershipSelendraConfig {
+			members: vec![],
+			phantom: Default::default(),
+		},
+		session: SessionConfig {
+			keys: initial_authorities
+				.iter()
+				.map(|x| {
+					(
+						x.0.clone(),
+						x.0.clone(),
+						session_keys(x.2.clone(), x.3.clone(), x.4.clone(), x.5.clone()),
+					)
+				})
+				.collect::<Vec<_>>(),
+		},
+		staking: StakingConfig {
+			validator_count: initial_authorities.len() as u32,
+			stakers: initial_authorities
+				.iter()
+				.map(|x| (x.0.clone(), x.1.clone(), stash, StakerStatus::Validator))
+				.collect(),
+			minimum_validator_count: initial_authorities.len() as u32,
+			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
+			slash_reward_fraction: Perbill::from_percent(10),
+			..Default::default()
+		},
+		democracy: DemocracyConfig::default(),
+		phragmen_election: Default::default(),
+		babe: BabeConfig {
+			authorities: vec![],
+			epoch_config: Some(selendra_runtime::BABE_GENESIS_EPOCH_CONFIG),
+		},
+		im_online: ImOnlineConfig { keys: vec![] },
+		authority_discovery: AuthorityDiscoveryConfig { keys: vec![] },
+		grandpa: GrandpaConfig { authorities: vec![] },
+		treasury: Default::default(),
+		nomination_pools: Default::default(),
+		tokens: TokensConfig { balances: vec![] },
+		asset_registry: Default::default(),
+		orml_nft: OrmlNFTConfig { tokens: vec![] },
+		dex: DexConfig {
+			initial_listing_trading_pairs: vec![],
+			initial_enabled_trading_pairs: vec![],
+			initial_added_liquidity_pools: vec![],
+		},
+		evm: EVMConfig { chain_id: 67u64, accounts: Default::default() },
+		sudo: SudoConfig { key: Some(root_key) },
+	}
+}
+
+/// Helper function to create GenesisConfig for testing
+pub fn selendra_development_genesis(
+	wasm_binary: &[u8],
+	initial_authorities: Vec<(
+		AccountId,
+		AccountId,
+		GrandpaId,
+		BabeId,
+		ImOnlineId,
+		AuthorityDiscoveryId,
+	)>,
+	root_key: AccountId,
+	endowed_accounts: Option<Vec<AccountId>>,
+) -> GenesisConfig {
 	let endowment: Balance = 10_000_000 * dollar(SEL);
 	let stash: Balance = endowment / 1000;
 	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
@@ -286,13 +371,11 @@ pub fn selendra_genesis(
 			balances: endowed_accounts.iter().cloned().map(|x| (x, endowment)).collect(),
 		},
 		council: CouncilConfig::default(),
-		financial_council: Default::default(),
 		technical_committee: TechnicalCommitteeConfig {
 			members: vec![],
 			phantom: Default::default(),
 		},
 		technical_membership: Default::default(),
-		financial_council_membership: Default::default(),
 		council_membership: Default::default(),
 		operator_membership_selendra: OperatorMembershipSelendraConfig {
 			members: vec![],

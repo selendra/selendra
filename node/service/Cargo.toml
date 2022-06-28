@@ -81,30 +81,20 @@ selendra-rpc = { path = "../rpc" }
 module-evm-rpc-runtime-api = { path = "../../modules/evm/rpc/runtime_api" }
 
 runtime-common = { path = "../../runtime/common" }
-cardamom-runtime = { path = "../../runtime/cardamom", optional = true }
-selendra-runtime = { path = "../../runtime/selendra", optional = true }
+selendra-runtime = { path = "../../runtime/selendra" }
 
 [features]
-default = [ "std", "with-selendra-runtime" ]
+default = [ "std" ]
 std = []
 
 runtime-benchmarks = [
-	# "cardamom-runtime/runtime-benchmarks",
 	"selendra-runtime/runtime-benchmarks",
 ]
 
 try-runtime = [
-	"cardamom-runtime/try-runtime",
 	"selendra-runtime/try-runtime",
-]
-with-cardamom-runtime = [
-	"cardamom-runtime",
-]
-with-selendra-runtime = [
-	"selendra-runtime",
 ]
 
 fast-runtime = [
 	"selendra-runtime/fast-runtime",
-	"cardamom-runtime/fast-runtime",
 ]

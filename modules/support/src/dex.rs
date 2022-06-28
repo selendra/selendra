@@ -63,7 +63,7 @@ pub trait DEXManager<AccountId, Balance, CurrencyId> {
 		currency_id_b: CurrencyId,
 		max_amount_a: Balance,
 		max_amount_b: Balance,
-		min_share_increment: Balance
+		min_share_increment: Balance,
 	) -> Result<(Balance, Balance, Balance), DispatchError>;
 
 	fn remove_liquidity(
@@ -72,7 +72,7 @@ pub trait DEXManager<AccountId, Balance, CurrencyId> {
 		currency_id_b: CurrencyId,
 		remove_share: Balance,
 		min_withdrawn_a: Balance,
-		min_withdrawn_b: Balance
+		min_withdrawn_b: Balance,
 	) -> Result<(Balance, Balance), DispatchError>;
 }
 
@@ -195,7 +195,7 @@ where
 		_currency_id_b: CurrencyId,
 		_max_amount_a: Balance,
 		_max_amount_b: Balance,
-		_min_share_increment: Balance
+		_min_share_increment: Balance,
 	) -> Result<(Balance, Balance, Balance), DispatchError> {
 		Ok(Default::default())
 	}
@@ -206,7 +206,7 @@ where
 		_currency_id_b: CurrencyId,
 		_remove_share: Balance,
 		_min_withdrawn_a: Balance,
-		_min_withdrawn_b: Balance
+		_min_withdrawn_b: Balance,
 	) -> Result<(Balance, Balance), DispatchError> {
 		Ok(Default::default())
 	}
