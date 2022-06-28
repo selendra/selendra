@@ -673,18 +673,56 @@ impl InstanceFilter<Call> for ProxyType {
 			// otherwise `BadOrigin` will be returned in Call::Utility.
 			_ if matches!(c, Call::Utility(..)) => true,
 			ProxyType::Any => true,
+			ProxyType::NonTransfer => matches!(
+				c,
+				Call::System(..) |
+				Call::Babe(..) |
+				Call::Timestamp(..) |
+				// Specifically omitting Indices `transfer`, `force_transfer`
+				// Specifically omitting the entire Balances pallet
+				Call::Authorship(..) |
+				Call::Staking(..) |
+				Call::Session(..) |
+				Call::Grandpa(..) |
+				Call::ImOnline(..) |
+				Call::Democracy(..) |
+				Call::Council(..) |
+				Call::TechnicalCommittee(..) |
+				Call::PhragmenElection(..) |
+				Call::TechnicalMembership(..) |
+				Call::OperatorMembershipSelendra(..) |
+				Call::Treasury(..) |
+				Call::Bounties(..) |
+				Call::Tips(..) |
+				Call::Identity(..) |
+				// Specifically omitting Vesting `vested_transfer`, and `force_vested_transfer`
+				Call::Scheduler(..) |
+				Call::Proxy(..) |
+				Call::Multisig(..) |
+				Call::VoterList(..)
+			),
 			ProxyType::CancelProxy =>
 				matches!(c, Call::Proxy(pallet_proxy::Call::reject_announcement { .. })),
 			ProxyType::Governance => {
 				matches!(
 					c,
 					Call::Authority(..) |
-						Call::Democracy(..) | Call::Council(..) |
-						Call::TechnicalCommittee(..) |
-						Call::Treasury(..) | Call::Bounties(..) |
-						Call::Tips(..)
+					Call::Democracy(..) |
+					Call::Council(..) |
+					Call::TechnicalCommittee(..) |
+					Call::Treasury(..) |
+					Call::Bounties(..) |
+					Call::PhragmenElection(..) |
+					Call::Tips(..)
 				)
 			},
+			ProxyType::Staking => {
+				matches!(c, Call::Staking(..) | Call::Session(..)
+			},
+			ProxyType::IdentityJudgement => matches!(
+				c,
+				Call::Identity(pallet_identity::Call::provide_judgement { .. })
+			),
 			ProxyType::Swap => {
 				matches!(
 					c,
