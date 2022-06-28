@@ -1,6 +1,6 @@
-// This file is part of Substrate.
+// This file is part of Selendra.
 
-// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.
+// Copyright (C) 2020-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -46,7 +46,7 @@ pub enum Subcommand {
 		name = "inspect",
 		about = "Decode given block or extrinsic using current native runtime."
 	)]
-	Inspect(selendra_node_inspect::cli::InspectCmd),
+	Inspect(inspect::cli::InspectCmd),
 
 	/// Sub-commands concerned with benchmarking.
 	/// The pallet benchmarking moved to the `pallet` sub-command.

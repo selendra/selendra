@@ -1,0 +1,44 @@
+[package]
+name = "module-stable-asset"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.orf>"]
+description = "Substrate-based runtime version of NUTS stable assets."
+edition = "2021"
+license = "Apache-2.0"
+readme = "README.md"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.1", default-features = false, features = ["derive"] }
+
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+
+[dev-dependencies]
+serde = { version = "1.0.101" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+
+[features]
+default = ["std"]
+std = [
+	"codec/std",
+	"scale-info/std",
+	"sp-std/std",
+	"sp-runtime/std",
+	"frame-support/std",
+	"frame-system/std",
+]
+runtime-benchmarks = [
+	"codec/std",
+	"sp-std/std",
+	"sp-runtime/std",
+	"frame-support/std",
+	"frame-system/std",
+]

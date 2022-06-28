@@ -1,0 +1,30 @@
+{
+  "name": "@selendra-network/contracts",
+  "version": "4.2.1",
+  "description": "SelendraNetwork Smart Contract library for Solidity",
+  "files": [
+    "**/*.js",
+    "**/*.ts",
+    "**/*.sol",
+    "/build/contracts/*.json"
+  ],
+  "scripts": {
+    "prepare": "bash ../scripts/prepare-contracts-package.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SelendraNetwork/predeploy-contracts.git"
+  },
+  "keywords": [
+    "smart",
+    "solidity",
+    "contracts",
+    "SelendraNetwork"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SelendraNetwork/predeploy-contracts/issues"
+  },
+  "homepage": "https://github.com/SelendraNetwork/predeploy-contracts"
+}

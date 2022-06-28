@@ -1,6 +1,6 @@
-// This file is part of Substrate.
+// This file is part of Selendra.
 
-// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.
+// Copyright (C) 2020-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -16,32 +16,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-//! Substrate CLI library.
-//!
-//! This package has two Cargo features:
-//!
-//! - `cli` (default): exposes functions that parse command-line options, then start and run the
-//! node as a CLI application.
-//!
-//! - `browser`: exposes the content of the `browser` module, which consists of exported symbols
-//! that are meant to be passed through the `wasm-bindgen` utility and called from JavaScript.
-//! Despite its name the produced WASM can theoretically also be used from NodeJS, although this
-//! hasn't been tested.
+// //! Selendra CLI library.
 
-#![warn(missing_docs)]
+#![warn(unused_extern_crates)]
 
-pub mod chain_spec;
-
-#[macro_use]
-pub mod service;
 #[cfg(feature = "cli")]
 mod cli;
 #[cfg(feature = "cli")]
 mod command;
-#[cfg(feature = "cli")]
-mod command_helper;
 
 #[cfg(feature = "cli")]
 pub use cli::*;
+
 #[cfg(feature = "cli")]
 pub use command::*;
+
+#[cfg(feature = "cli")]
+pub use sc_cli::{Error, Result};

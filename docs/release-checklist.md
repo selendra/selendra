@@ -2,7 +2,7 @@
 
 ### Burn In
 
-Ensure that Selendra DevOps has run the new release on Cardamom, Selendra, 
+Ensure that Selendra DevOps has run the new release on Selendra,
 validators for at least 12 hours prior to publishing the release.
 
 ### Build Artifacts
@@ -72,5 +72,5 @@ date to include them.
 ### Benchmarks
 
 There are three benchmarking machines reserved for updating the weights at
-release-time. To initialise a benchmark run for each production runtime (Cardamom, Selendra).
+release-time. To initialise a benchmark run for each production runtime Selendra.
 

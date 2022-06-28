@@ -1,6 +1,6 @@
-// This file is part of Substrate.
+// This file is part of Selendra.
 
-// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
+// Copyright (C) 2020-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -16,19 +16,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use super::command_helper::{inherent_benchmark_data, BenchmarkExtrinsicBuilder};
-use crate::{
-	chain_spec, service,
-	service::{new_partial, FullClient},
-	Cli, Subcommand,
-};
+use crate::{Cli, Subcommand};
 use frame_benchmarking_cli::*;
+use sp_core::crypto::Ss58AddressFormat;
 use sc_cli::{ChainSpec, Result, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
-use selendra_node_executor::ExecutorDispatch;
 use selendra_primitives::Block;
+use service::{chain_spec, new_partial, ExecutorDispatch, FullClient};
+
 use selendra_runtime::RuntimeApi;
-use sp_core::crypto::Ss58AddressFormat;
 
 use std::sync::Arc;
 
@@ -50,11 +46,11 @@ impl SubstrateCli for Cli {
 	}
 
 	fn support_url() -> String {
-		"https://github.com/paritytech/substrate/issues/new".into()
+		"https://github.com/selendra/selendra/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {
-		2021
+		2021 - 2022
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -64,11 +60,10 @@ impl SubstrateCli for Cli {
 					"Please specify which chain you want to run, e.g. --dev or --chain=local"
 						.into(),
 				),
-			"selendra-dev" => Box::new(chain_spec::development_config()),
-			"dev" => Box::new(chain_spec::development_config()),
-			"local" => Box::new(chain_spec::local_testnet_config()),
-			"selendra" => Box::new(chain_spec::flaming_fir_config()?),
-			"staging" => Box::new(chain_spec::staging_testnet_config()),
+			"dev" | "selendra-dev" => Box::new(chain_spec::selendra::development_config()),
+			"selendra-local" => Box::new(chain_spec::selendra::local_testnet_config()),
+			"selendra-staging" => Box::new(chain_spec::selendra::staging_config()),
+			"selendra" => Box::new(chain_spec::selendra::selendra_config()?),
 			path =>
 				Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
 		};
@@ -82,7 +77,6 @@ impl SubstrateCli for Cli {
 
 fn set_default_ss58_version(_spec: &Box<dyn sc_service::ChainSpec>) {
 	let ss58_version = Ss58AddressFormat::custom(204);
-
 	sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
@@ -142,12 +136,7 @@ pub fn run() -> Result<()> {
 
 						cmd.run(config, client, db, storage)
 					},
-					BenchmarkCmd::Overhead(cmd) => {
-						let PartialComponents { client, .. } = new_partial(&config)?;
-						let ext_builder = BenchmarkExtrinsicBuilder::new(client.clone());
-
-						cmd.run(config, client, inherent_benchmark_data()?, Arc::new(ext_builder))
-					},
+					BenchmarkCmd::Overhead(_) => todo!(),
 					BenchmarkCmd::Machine(cmd) =>
 						cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()),
 				}
@@ -213,6 +202,10 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
+			let chain_spec = &runner.config().chain_spec;
+			set_default_ss58_version(chain_spec);
+
 			runner.sync_run(|config| cmd.run(config.database))
 		},
 		Some(Subcommand::Revert(cmd)) => {
@@ -255,6 +248,10 @@ pub fn run() -> Result<()> {
 			.into()),
 		Some(Subcommand::ChainInfo(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
+			let chain_spec = &runner.config().chain_spec;
+			set_default_ss58_version(chain_spec);
+
 			runner.sync_run(|config| cmd.run::<Block>(&config))
 		},
 	}

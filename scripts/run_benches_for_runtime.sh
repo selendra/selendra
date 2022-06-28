@@ -37,15 +37,6 @@ while read -r line; do
 done < "${runtime}_pallets"
 rm "${runtime}_pallets"
 
-# Benchmark base weights
-! ./target/production/selendra benchmark overhead \
-  --chain="${runtime}-dev" \
-  --execution=wasm \
-  --wasm-execution=compiled \
-  --weight-path="runtime/${runtime}/constants/src/weights/" \
-  --warmup=10 \
-  --repeat=100
-
 
 # This true makes sure that $? is 0 instead of
 # carrying over a failure which would otherwise cause
