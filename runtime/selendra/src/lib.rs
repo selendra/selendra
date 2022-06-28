@@ -153,7 +153,7 @@ impl_opaque_keys! {
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u8 = 42;
+	pub const SS58Prefix: u8 = 204;
 }
 
 pub struct BaseCallFilter;
