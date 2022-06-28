@@ -59,6 +59,7 @@ pallet-nomination-pools = { git = "https://github.com/paritytech/substrate.git",
 pallet-nomination-pools-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", default-features = false, optional = true }
 pallet-offences = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", default-features = false }
 pallet-offences-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", default-features = false, optional = true }
+pallet-preimage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-proxy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-scheduler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false, features = ["historical"] }
@@ -72,7 +73,7 @@ pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", 
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-utility = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-pallet-preimage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+pallet-vesting = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.24", default-features = false }
 
 # orml
 orml-authority = { path = "../../orml/authority", default-features = false }
@@ -161,6 +162,7 @@ std = [
 	"pallet-multisig/std",
 	"pallet-nomination-pools/std",
 	"pallet-offences/std",
+	"pallet-preimage/std",
 	"pallet-proxy/std",
 	"pallet-scheduler/std",
 	"pallet-session/std",
@@ -172,7 +174,7 @@ std = [
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-treasury/std",
 	"pallet-utility/std",
-	"pallet-preimage/std",
+	"pallet-vesting/std",
 
 	"orml-authority/std",
 	"orml-benchmarking/std",
@@ -236,6 +238,7 @@ runtime-benchmarks = [
 	"pallet-tips/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
+	"pallet-vesting/runtime-benchmarks",
 
 	"orml-authority/runtime-benchmarks",
 	"orml-tokens/runtime-benchmarks",
@@ -278,6 +281,7 @@ try-runtime = [
 	"pallet-bounties/try-runtime",
 	"pallet-tips/try-runtime",
 	"pallet-preimage/try-runtime",
+	"pallet-vesting/try-runtime",
 
 	"orml-authority/try-runtime",
 	"orml-oracle/try-runtime",

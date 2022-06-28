@@ -38,7 +38,7 @@ use selendra_runtime::{
 	DemocracyConfig, DexConfig, EVMConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig,
 	OperatorMembershipSelendraConfig, OrmlNFTConfig, SS58Prefix, SessionConfig, SessionKeys,
 	StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig, TokensConfig,
-	SEL, SUSD,
+	SEL, SUSD, VestingConfig,
 };
 
 /// Node `ChainSpec` extensions.
@@ -332,6 +332,7 @@ pub fn selendra_genesis(
 		im_online: ImOnlineConfig { keys: vec![] },
 		authority_discovery: AuthorityDiscoveryConfig { keys: vec![] },
 		grandpa: GrandpaConfig { authorities: vec![] },
+		vesting: VestingConfig { vesting: vec![] },
 		treasury: Default::default(),
 		nomination_pools: Default::default(),
 		tokens: TokensConfig { balances: vec![] },
@@ -415,6 +416,7 @@ pub fn selendra_development_genesis(
 		grandpa: GrandpaConfig { authorities: vec![] },
 		treasury: Default::default(),
 		nomination_pools: Default::default(),
+		vesting: VestingConfig { vesting: vec![] },
 		tokens: TokensConfig { balances: vec![] },
 		asset_registry: Default::default(),
 		orml_nft: OrmlNFTConfig { tokens: vec![] },
