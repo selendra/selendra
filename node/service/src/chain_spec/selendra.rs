@@ -143,7 +143,7 @@ pub fn staging_config() -> ChainSpec {
 fn development_config_genesis() -> GenesisConfig {
 	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
 
-	selendra_genesis(
+	selendra_development_genesis(
 		wasm_binary,
 		vec![authority_keys_from_seed("Alice")],
 		get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -153,7 +153,7 @@ fn development_config_genesis() -> GenesisConfig {
 
 fn local_selendra_genesis() -> GenesisConfig {
 	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
-	selendra_genesis(
+	selendra_development_genesis(
 		wasm_binary,
 		vec![
 			authority_keys_from_seed("Alice"),
@@ -251,12 +251,12 @@ fn staging_config_genesis() -> GenesisConfig {
 	];
 
 	let root_key: AccountId = hex![
-		// 5EFWY51UxSopvC8BrzTujUD5fCv1eEYVyGV5NJs7a3fVFB2P
-		"60b60ebdcce971da7cc8ae0ce7368ee2c7c4a24cd28f145b8ff3633b7b66db56"
+		// 5DiQQJEKjLf9ucHzitkVehzHtZmj8rvYBzGiqbfwcqVa6mpg
+		"48fccd18e5901ad0a484cfc4859f57c163219fa6911c3ba824c2d9743167795f"
 	]
 	.into();
 
-	let endowed_accounts: Vec<AccountId> = vec![];
+	let endowed_accounts: Vec<AccountId> = vec![root_key.clone()];
 	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
 
 	selendra_genesis(wasm_binary, initial_authorities, root_key, Some(endowed_accounts))
@@ -288,6 +288,87 @@ pub fn selendra_genesis(
 				.map(|k: &AccountId| (k.clone(), endowment))
 				.chain(initial_authorities.iter().map(|x| (x.0.clone(), stash)))
 				.collect(),
+		},
+		council: CouncilConfig::default(),
+		technical_committee: TechnicalCommitteeConfig {
+			members: vec![],
+			phantom: Default::default(),
+		},
+		technical_membership: Default::default(),
+		council_membership: Default::default(),
+		operator_membership_selendra: OperatorMembershipSelendraConfig {
+			members: vec![],
+			phantom: Default::default(),
+		},
+		session: SessionConfig {
+			keys: initial_authorities
+				.iter()
+				.map(|x| {
+					(
+						x.0.clone(),
+						x.0.clone(),
+						session_keys(x.2.clone(), x.3.clone(), x.4.clone(), x.5.clone()),
+					)
+				})
+				.collect::<Vec<_>>(),
+		},
+		staking: StakingConfig {
+			validator_count: initial_authorities.len() as u32,
+			stakers: initial_authorities
+				.iter()
+				.map(|x| (x.0.clone(), x.1.clone(), stash, StakerStatus::Validator))
+				.collect(),
+			minimum_validator_count: initial_authorities.len() as u32,
+			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
+			slash_reward_fraction: Perbill::from_percent(10),
+			..Default::default()
+		},
+		democracy: DemocracyConfig::default(),
+		phragmen_election: Default::default(),
+		babe: BabeConfig {
+			authorities: vec![],
+			epoch_config: Some(selendra_runtime::BABE_GENESIS_EPOCH_CONFIG),
+		},
+		im_online: ImOnlineConfig { keys: vec![] },
+		authority_discovery: AuthorityDiscoveryConfig { keys: vec![] },
+		grandpa: GrandpaConfig { authorities: vec![] },
+		treasury: Default::default(),
+		nomination_pools: Default::default(),
+		tokens: TokensConfig { balances: vec![] },
+		asset_registry: Default::default(),
+		orml_nft: OrmlNFTConfig { tokens: vec![] },
+		dex: DexConfig {
+			initial_listing_trading_pairs: vec![],
+			initial_enabled_trading_pairs: vec![],
+			initial_added_liquidity_pools: vec![],
+		},
+		evm: EVMConfig { chain_id: 67u64, accounts: Default::default() },
+		sudo: SudoConfig { key: Some(root_key) },
+	}
+}
+
+/// Helper function to create GenesisConfig for testing
+pub fn selendra_development_genesis(
+	wasm_binary: &[u8],
+	initial_authorities: Vec<(
+		AccountId,
+		AccountId,
+		GrandpaId,
+		BabeId,
+		ImOnlineId,
+		AuthorityDiscoveryId,
+	)>,
+	root_key: AccountId,
+	endowed_accounts: Option<Vec<AccountId>>,
+) -> GenesisConfig {
+	let endowment: Balance = 10_000_000 * dollar(SEL);
+	let stash: Balance = endowment / 1000;
+	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
+
+	GenesisConfig {
+		system: SystemConfig { code: wasm_binary.to_vec() },
+		balances: BalancesConfig {
+			balances: endowed_accounts.iter().cloned().map(|x| (x, endowment)).collect(),
 		},
 		council: CouncilConfig::default(),
 		technical_committee: TechnicalCommitteeConfig {
