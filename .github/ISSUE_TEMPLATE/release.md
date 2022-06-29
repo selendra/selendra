@@ -13,13 +13,13 @@ Selendra runtime or client.
 
 These checks should be performed on the codebase prior to forking to a release-candidate branch.
 
-- [ ] Verify [`spec_version`](https://github.com/selendra/selendra/blob/master/docs/release-checklist.md#spec-version) has been incremented since the last release for any native runtimes from any existing use on public (non-private) networks. If the runtime was published (release or         pre-release), either the `spec_version` or `impl` must be bumped.
+- [x] Verify [`spec_version`](https://github.com/selendra/selendra/blob/master/docs/release-checklist.md#spec-version) has been incremented since the last release for any native runtimes from any existing use on public (non-private) networks. If the runtime was published (release or         pre-release), either the `spec_version` or `impl` must be bumped.
 
-- [ ] Verify previously [completed migrations](https://github.com/selendra/selendra/blob/master/docs/release-checklist.md#old-migrations-removed) are removed for any public (non-private/test) networks.
+- [x] Verify previously [completed migrations](https://github.com/selendra/selendra/blob/master/docs/release-checklist.md#old-migrations-removed) are removed for any public (non-private/test) networks.
 
-- [ ] Verify pallet and [extrinsic ordering](https://github.com/selendra/selendra/blob/master/docs/release-checklist.md#extrinsic-ordering) has stayed the same. Bump `transaction_version` if not.
+- [x] Verify pallet and [extrinsic ordering](https://github.com/selendra/selendra/blob/master/docs/release-checklist.md#extrinsic-ordering) has stayed the same. Bump `transaction_version` if not.
 
-- [ ] Verify new extrinsics have been correctly whitelisted/blacklisted for
+- [x] Verify new extrinsics have been correctly whitelisted/blacklisted for
     [proxy filters](https://github.com/selendra/selendra/blob/master/docs/release-checklist.md#proxy-filtering).
 
 - [ ] Verify [benchmarks](https://github.com/selendra/selendra/blob/master/docs/release-checklist.md#benchmarks) have been updated for any modified
