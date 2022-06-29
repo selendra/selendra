@@ -1,3 +1,10 @@
 # Selednra 2.0 Docs
 
-This section is collection of papers, checklist, and concept notes for Selendra Development.
+A collection of; 
+
+- papers, 
+- checklist, 
+- concept notes 
+- papers 
+
+For Selendra Blockchain Development journey.
