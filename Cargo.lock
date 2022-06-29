@@ -7977,6 +7977,7 @@ dependencies = [
  "module-evm-accounts",
  "module-evm-bridge",
  "module-evm-rpc-runtime-api",
+ "module-evm-utility",
  "module-idle-scheduler",
  "module-nft",
  "module-prices",

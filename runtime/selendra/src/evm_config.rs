@@ -23,20 +23,34 @@ impl module_evm_accounts::Config for Runtime {
 }
 
 parameter_types! {
-	pub const NewContractExtraBytes: u32 = 10_000;
 	pub NetworkContractSource: H160 = H160::from_low_u64_be(0);
-	pub DeveloperDeposit: Balance = 10 * dollar(SEL);
-	pub PublicationFee: Balance = 100 * dollar(SEL);
 	pub PrecompilesValue: AllPrecompiles<Runtime> = AllPrecompiles::<_>::selendra();
+}
+
+#[cfg(feature = "with-ethereum-compatibility")]
+parameter_types! {
+	pub const NewContractExtraBytes: u32 = 0;
+	pub const DeveloperDeposit: Balance = 0;
+	pub const PublicationFee: Balance = 0;
+}
+
+#[cfg(not(feature = "with-ethereum-compatibility"))]
+parameter_types! {
+	pub const NewContractExtraBytes: u32 = 10_000;
+	pub DeveloperDeposit: Balance = 10 * dollar(SEL);
+	pub PublicationFee: Balance = 50 * dollar(SEL);
 }
 
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct StorageDepositPerByte;
 impl<I: From<Balance>> frame_support::traits::Get<I> for StorageDepositPerByte {
 	fn get() -> I {
+		#[cfg(not(feature = "with-ethereum-compatibility"))]
 		// NOTE: SEL decimals is 12, convert to 18.
-		// 30 * millicent(SEL) * 10^6
-		I::from(300_000_000_000_000)
+		// 10 * millicent(SEL) * 10^6
+		return I::from(100_000_000_000_000);
+		#[cfg(feature = "with-ethereum-compatibility")]
+		return I::from(0);
 	}
 }
 
@@ -49,6 +63,9 @@ impl<I: From<Balance>> frame_support::traits::Get<I> for TxFeePerGas {
 		I::from(200u128.saturating_mul(10u128.saturating_pow(9)) & !0xffff)
 	}
 }
+
+#[cfg(feature = "with-ethereum-compatibility")]
+static LONDON_CONFIG: module_evm_utility::evm::Config = module_evm_utility::evm::Config::london();
 
 impl module_evm::Config for Runtime {
 	type AddressMapping = EvmAddressMapping<Runtime>;
@@ -73,6 +90,11 @@ impl module_evm::Config for Runtime {
 	type Task = ScheduledTasks;
 	type IdleScheduler = IdleScheduler;
 	type WeightInfo = weights::module_evm::WeightInfo<Runtime>;
+
+	#[cfg(feature = "with-ethereum-compatibility")]
+	fn config() -> &'static module_evm_utility::evm::Config {
+		&LONDON_CONFIG
+	}
 }
 
 impl module_evm_bridge::Config for Runtime {

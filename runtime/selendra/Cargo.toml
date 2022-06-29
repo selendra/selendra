@@ -96,6 +96,7 @@ module-evm = { path = "../../modules/evm", default-features = false }
 module-evm-accounts = { path = "../../modules/evm-accounts", default-features = false }
 module-evm-bridge = { path = "../../modules/evm-bridge", default-features = false }
 module-evm-rpc-runtime-api = { path = "../../modules/evm/rpc/runtime_api",  default-features = false }
+module-evm-utility = { path = "../../modules/evm-utility", default-features = false }
 module-nft = { path = "../../modules/nft", default-features = false }
 module-prices = { path = "../../modules/prices", default-features = false }
 module-support = { path = "../../modules/support", default-features = false }
@@ -115,7 +116,7 @@ substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", bran
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
 [features]
-default = ["std", "with-ethereum-compatibility"]
+default = ["std"]
 no_std = []
 std = [
 	"codec/std",
@@ -194,6 +195,7 @@ std = [
 	"module-evm/std",
 	"module-evm-accounts/std",
 	"module-evm-bridge/std",
+	"module-evm-utility/std",
 	"module-nft/std",
 	"module-prices/std",
 	"module-support/std",
