@@ -491,9 +491,10 @@ mod tests {
 }); 			assert!(System::events().iter().any(|record| record.event == event));
 
 			let from_account = <Test as
-module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr()); 			let to_account = <Test as
-module_evm::Config>::AddressMapping::get_account_id(&bob_evm_addr()); 			#[cfg(not(feature =
-"with-ethereum-compatibility"))] 			{
+				module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr());
+			let to_account = <Test as
+				module_evm::Config>::AddressMapping::get_account_id(&bob_evm_addr());
+				#[cfg(not(feature ="with-ethereum-compatibility"))] 			{
 				assert_eq!(Balances::free_balance(from_account.clone()), 999999700000);
 				assert_eq!(Balances::reserved_balance(from_account.clone()), 300000);
 				assert_eq!(Balances::free_balance(to_account.clone()), 1000000000000);
