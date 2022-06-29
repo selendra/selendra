@@ -21,7 +21,7 @@
 use super::{
 	authority_keys_from_seed, get_account_id_from_seed, testnet_accounts, AccountId,
 	AuthorityDiscoveryId, BabeId, Balance, ChainSpecExtension, GrandpaId, ImOnlineId, TokenInfo,
-	TELEMETRY_URL, DEFAULT_PROTOCOL_ID
+	DEFAULT_PROTOCOL_ID, TELEMETRY_URL,
 };
 
 use hex_literal::hex;
@@ -38,7 +38,7 @@ use selendra_runtime::{
 	DemocracyConfig, DexConfig, EVMConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig,
 	OperatorMembershipSelendraConfig, OrmlNFTConfig, SS58Prefix, SessionConfig, SessionKeys,
 	StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig, TokensConfig,
-	SEL, SUSD, VestingConfig,
+	VestingConfig, SEL, SUSD,
 };
 
 /// Node `ChainSpec` extensions.
