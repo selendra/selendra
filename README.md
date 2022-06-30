@@ -3,8 +3,8 @@
 An interoperable nominated Proof-of-Stake network for developing and running Substrate-based and EVM compatible blockchain applications.
 
 ## Mission
-Our mission is to bring blockchain benefits a step closer to the ordinary people, whom have been overlooked and under-served, and to be a catalyst to help advance and strengthen the industry as a whole.
 
+Our mission is to bring blockchain benefits a step closer to the ordinary people who had been overlooked and underserved, and to accelerate the advancement and strengthening the industry as a whole.
 
 ## Acknowledgement
 
