@@ -393,6 +393,15 @@ pub mod module {
 			foreign_amount: Balance,
 			native_amount: Balance,
 		},
+		/// A transaction `actual_fee`, of which `actual_tip` was added to the minimum inclusion
+		/// fee, has been paid by `who`. `actual_surplus` indicate extra amount when paid by none
+		/// native token.
+		TransactionFeePaid {
+			who: T::AccountId,
+			actual_fee: PalletBalanceOf<T>,
+			actual_tip: PalletBalanceOf<T>,
+			actual_surplus: PalletBalanceOf<T>,
+		},
 	}
 
 	/// The next fee multiplier.
@@ -1163,7 +1172,7 @@ where
 		(
 			PalletBalanceOf<T>,
 			Option<NegativeImbalanceOf<T>>,
-			Option<PalletBalanceOf<T>>,
+			PalletBalanceOf<T>,
 			T::AccountId,
 		),
 		TransactionValidityError,
@@ -1173,7 +1182,7 @@ where
 
 		// Only mess with balances if fee is not zero.
 		if fee.is_zero() {
-			return Ok((fee, None, None, who.clone()))
+			return Ok((fee, None, 0, who.clone()));
 		}
 
 		let reason = if tip.is_zero() {
@@ -1193,7 +1202,7 @@ where
 			reason,
 			ExistenceRequirement::KeepAlive,
 		) {
-			Ok(imbalance) => Ok((fee + fee_surplus, Some(imbalance), Some(fee_surplus), payer)),
+			Ok(imbalance) => Ok((fee + fee_surplus, Some(imbalance), fee_surplus, payer)),
 			Err(_) => Err(InvalidTransaction::Payment.into()),
 		}
 	}
@@ -1291,8 +1300,8 @@ where
 		PalletBalanceOf<T>,
 		Self::AccountId,
 		Option<NegativeImbalanceOf<T>>,
-		PalletBalanceOf<T>,         // fee includes surplus
-		Option<PalletBalanceOf<T>>, // surplus
+		PalletBalanceOf<T>, // fee includes surplus
+		PalletBalanceOf<T>, // surplus
 	);
 
 	fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> {
@@ -1350,11 +1359,10 @@ where
 				actual_tip = tip.saturating_sub(refund_tip);
 			}
 			// the refund surplus also need to return back to user
-			if let Some(surplus) = surplus {
-				let percent = Percent::from_rational(surplus, fee.saturating_sub(surplus));
-				let actual_surplus = percent.mul_ceil(actual_fee);
-				refund = refund.saturating_sub(actual_surplus);
-			}
+			let percent = Percent::from_rational(surplus, fee.saturating_sub(surplus));
+			let actual_surplus = percent.mul_ceil(actual_fee);
+			refund = refund.saturating_sub(actual_surplus);
+
 			let actual_payment = match <T as Config>::Currency::deposit_into_existing(&who, refund)
 			{
 				Ok(refund_imbalance) => {
@@ -1373,9 +1381,14 @@ where
 			let (tip, fee) = actual_payment.split(actual_tip);
 
 			// distribute fee
-			<T as Config>::OnTransactionPayment::on_unbalanceds(
-				Some(fee).into_iter().chain(Some(tip)),
-			);
+			<T as Config>::OnTransactionPayment::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
+
+			Pallet::<T>::deposit_event(Event::<T>::TransactionFeePaid {
+				who,
+				actual_fee,
+				actual_tip,
+				actual_surplus,
+			});
 		}
 		Ok(())
 	}
