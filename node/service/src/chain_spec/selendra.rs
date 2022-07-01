@@ -73,6 +73,11 @@ pub fn selendra_config() -> Result<ChainSpec, String> {
 	ChainSpec::from_json_bytes(&include_bytes!("../../chain-specs/selendra.json")[..])
 }
 
+/// Flaming Fir testnet generator
+pub fn testnet_config() -> Result<ChainSpec, String> {
+	ChainSpec::from_json_bytes(&include_bytes!("../../chain-specs/testnet.json")[..])
+}
+
 fn selendra_properties() -> Properties {
 	let mut properties = Map::new();
 	let mut token_symbol: Vec<String> = vec![];
