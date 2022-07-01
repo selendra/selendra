@@ -8,6 +8,6 @@ Our mission is to bring blockchain benefits a step closer to the ordinary people
 
 ## Acknowledgement
 
-This is a work in progress, we will update more information as we progress. Refer to the token economy working paper for more details. 
+Selendra project is inspired by the excellent work of many growing projects in the Polkadot ecosystem and many other blockchain developers around the world. Our progress in the past, the present and the future is only possible thanks to the open sources software community, framework, and tools. Thank you!
 
-Selendra project and text is inspired by the excellent work of many growing projects in the Polkadot ecosystem and blockchain developers around the world. Thank you!.
+This is a work in progress, we will update more information as we progress further. Please refer to the token economy working paper for more details. 
