@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -13,26 +13,29 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::upper_case_acronyms)]
 #![allow(clippy::from_over_into)]
+#![allow(clippy::type_complexity)]
 
-use codec::FullCodec;
 use frame_support::pallet_prelude::{DispatchClass, Pays, Weight};
 use primitives::{task::TaskResult, CurrencyId, Multiplier, ReserveIdentifier};
 use sp_runtime::{
 	traits::CheckedDiv, transaction_validity::TransactionValidityError, DispatchError,
 	DispatchResult, FixedU128,
 };
-use sp_std::prelude::*;
 
 pub mod dex;
 pub mod evm;
 pub mod funan;
 pub mod incentives;
 pub mod mocks;
+pub mod stable_asset;
 
-pub use crate::{dex::*, evm::*, funan::*, incentives::*};
+pub use crate::{dex::*, evm::*, funan::*, incentives::*, stable_asset::*};
 
 pub type Price = FixedU128;
 pub type ExchangeRate = FixedU128;
@@ -93,56 +96,6 @@ pub trait TransactionPayment<AccountId, Balance, NegativeImbalance> {
 	fn apply_multiplier_to_fee(fee: Balance, multiplier: Option<Multiplier>) -> Balance;
 }
 
-/// Used to interface with the Compound's Cash module
-pub trait CompoundCashTrait<Balance, Moment> {
-	fn set_future_yield(
-		next_cash_yield: Balance,
-		yield_index: u128,
-		timestamp_effective: Moment,
-	) -> DispatchResult;
-}
-
-pub trait CallBuilder {
-	type AccountId: FullCodec;
-	type Balance: FullCodec;
-	type RelayChainCall: FullCodec;
-
-	/// Execute multiple calls in a batch.
-	/// Param:
-	/// - calls: List of calls to be executed
-	fn utility_batch_call(calls: Vec<Self::RelayChainCall>) -> Self::RelayChainCall;
-
-	/// Execute a call, replacing the `Origin` with a sub-account.
-	///  params:
-	/// - call: The call to be executed. Can be nested with `utility_batch_call`
-	/// - index: The index of sub-account to be used as the new origin.
-	fn utility_as_derivative_call(call: Self::RelayChainCall, index: u16) -> Self::RelayChainCall;
-
-	/// Bond extra on relay-chain.
-	///  params:
-	/// - amount: The amount of staking currency to bond.
-	fn staking_bond_extra(amount: Self::Balance) -> Self::RelayChainCall;
-
-	/// Unbond on relay-chain.
-	///  params:
-	/// - amount: The amount of staking currency to unbond.
-	fn staking_unbond(amount: Self::Balance) -> Self::RelayChainCall;
-
-	/// Withdraw unbonded staking on the relay-chain.
-	///  params:
-	/// - num_slashing_spans: The number of slashing spans to withdraw from.
-	fn staking_withdraw_unbonded(num_slashing_spans: u32) -> Self::RelayChainCall;
-
-	/// Transfer Staking currency to another account, disallowing "death".
-	///  params:
-	/// - to: The destination for the transfer
-	/// - amount: The amount of staking currency to be transferred.
-	fn balances_transfer_keep_alive(
-		to: Self::AccountId,
-		amount: Self::Balance,
-	) -> Self::RelayChainCall;
-}
-
 /// Dispatchable tasks
 pub trait DispatchableTask {
 	fn dispatch(self, weight: Weight) -> TaskResult;
@@ -165,8 +118,4 @@ impl<Task> IdleScheduler<Task> for () {
 	fn schedule(_task: Task) -> DispatchResult {
 		unimplemented!()
 	}
-}
-
-pub trait NomineesProvider<AccountId> {
-	fn nominees() -> Vec<AccountId>;
 }

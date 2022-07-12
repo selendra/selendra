@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 // Synchronize with https://github.com/rust-blockchain/evm/blob/9ac4d47b5e/src/executor/stack/executor.rs
 
@@ -740,7 +743,9 @@ impl<'config, 'precompiles, S: StackState<'config>, P: PrecompileSet>
 		}
 
 		let address = match self.create_address(scheme) {
-			Err(e) => return Capture::Exit((ExitReason::Error(e), None, Vec::new())),
+			Err(e) => {
+				return Capture::Exit((ExitReason::Error(e), None, Vec::new()))
+			},
 			Ok(address) => address,
 		};
 
@@ -965,7 +970,9 @@ impl<'config, 'precompiles, S: StackState<'config>, P: PrecompileSet>
 					for Log { address, topics, data } in logs {
 						match self.log(address, topics, data) {
 							Ok(_) => continue,
-							Err(error) => return Capture::Exit((ExitReason::Error(error), output)),
+							Err(error) => {
+								return Capture::Exit((ExitReason::Error(error), output))
+							},
 						}
 					}
 
@@ -996,13 +1003,12 @@ impl<'config, 'precompiles, S: StackState<'config>, P: PrecompileSet>
 		#[cfg(not(feature = "tracing"))]
 		let reason = self.execute(&mut runtime);
 		#[cfg(feature = "tracing")]
-		//let reason = module_evm_utility::evm::tracing::using(&mut Tracer, || self.execute(&mut
-		// runtime));
+		//let reason = module_evm_utility::evm::tracing::using(&mut Tracer, || self.execute(&mut runtime));
 		let reason = module_evm_utility::evm_runtime::tracing::using(&mut Tracer, || {
 			self.execute(&mut runtime)
 		});
-		//let reason = module_evm_utility::evm_gasometer::tracing::using(&mut Tracer, ||
-		// self.execute(&mut runtime));
+		//let reason = module_evm_utility::evm_gasometer::tracing::using(&mut Tracer, || self.execute(&mut
+		// runtime));
 
 		log::debug!(target: "evm", "Call execution using address {}: {:?}", code_address, reason);
 
@@ -1227,8 +1233,7 @@ impl<'config, 'precompiles, S: StackState<'config>, P: PrecompileSet> Handler
 		opcode: Opcode,
 		stack: &Stack,
 	) -> Result<(), ExitError> {
-		// log::trace!(target: "evm", "Running opcode: {:?}, Pre gas-left: {:?}", opcode,
-		// gasometer.gas());
+		// log::trace!(target: "evm", "Running opcode: {:?}, Pre gas-left: {:?}", opcode, gasometer.gas());
 
 		if let Some(cost) = gasometer::static_opcode_cost(opcode) {
 			self.state.metadata_mut().gasometer.record_cost(cost)?;

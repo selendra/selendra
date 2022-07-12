@@ -2,8 +2,7 @@
   "name": "predeploy-contracts",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "https://github.com/SelendraNetwork/predeploy-contracts.git",
-  "author": "Shaopeng Wang <spxwang@gmail.com>",
+  "author": "Selendra <info@selendra.org>",
   "license": "Apache-2.0",
   "files": [
     "/contracts/**/*.sol",
@@ -16,7 +15,8 @@
     "test": "hardhat run --network hardhat scripts/deploy.ts",
     "test-mandala": "hardhat run --network mandala scripts/deploy.ts",
     "prepack": "scripts/prepack.sh",
-    "generate-bytecode": "hardhat run generate/generate.js"
+    "generate-bytecode": "hardhat run generate/generate.js",
+    "lint": "solhint contracts/**/*.sol"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
@@ -25,6 +25,7 @@
     "ethereum-waffle": "^3.4.4",
     "handlebars": "^4.7.7",
     "hardhat": "^2.9.3",
+    "solhint": "^3.3.7",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.3"
   }

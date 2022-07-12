@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use codec::{Decode, Encode};
 use frame_support::weights::DispatchInfo;
@@ -185,147 +188,127 @@ where
 	}
 }
 
-// #[cfg(test)]
-// mod tests {
-// 	use super::*;
-// 	use crate::mock::{new_test_ext, AccountId32, Call, TestRuntime};
-// 	use frame_support::{assert_noop, assert_ok};
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::mock::{new_test_ext, AccountId32, Call, TestRuntime};
+	use frame_support::{assert_noop, assert_ok};
 
-// 	/// A simple call, which one doesn't matter.
-// 	pub const CALL: &<TestRuntime as frame_system::Config>::Call =
-// 		&Call::System(frame_system::Call::set_heap_pages { pages: 0u64 });
+	/// A simple call, which one doesn't matter.
+	pub const CALL: &<TestRuntime as frame_system::Config>::Call =
+		&Call::System(frame_system::Call::set_heap_pages { pages: 0u64 });
 
-// 	#[test]
-// 	fn check_nonce_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let alice = AccountId32::from([8; 32]);
-// 			frame_system::Account::<TestRuntime>::insert(
-// 				&alice,
-// 				frame_system::AccountInfo {
-// 					nonce: 1,
-// 					consumers: 0,
-// 					providers: 0,
-// 					sufficients: 0,
-// 					data: pallet_balances::AccountData::default(),
-// 				},
-// 			);
-// 			let info = DispatchInfo::default();
-// 			// stale
-// 			assert_noop!(
-// 				CheckNonce::<TestRuntime>::from(0).validate(&alice, CALL, &info, 0),
-// 				InvalidTransaction::Stale
-// 			);
-// 			assert_noop!(
-// 				CheckNonce::<TestRuntime>::from(0).pre_dispatch(&alice, CALL, &info, 0),
-// 				InvalidTransaction::Stale
-// 			);
-// 			// correct
-// 			assert_ok!(CheckNonce::<TestRuntime>::from(1).validate(&alice, CALL, &info, 0));
-// 			assert_ok!(CheckNonce::<TestRuntime>::from(1).pre_dispatch(&alice, CALL, &info, 0));
-// 			// future
-// 			assert_ok!(CheckNonce::<TestRuntime>::from(5).validate(&alice, CALL, &info, 0));
-// 			assert_noop!(
-// 				CheckNonce::<TestRuntime>::from(5).pre_dispatch(&alice, CALL, &info, 0),
-// 				InvalidTransaction::Future
-// 			);
-// 		})
-// 	}
+	#[test]
+	fn check_nonce_works() {
+		new_test_ext().execute_with(|| {
+			let alice = AccountId32::from([8; 32]);
+			frame_system::Account::<TestRuntime>::insert(
+				&alice,
+				frame_system::AccountInfo {
+					nonce: 1,
+					consumers: 0,
+					providers: 0,
+					sufficients: 0,
+					data: pallet_balances::AccountData::default(),
+				},
+			);
+			let info = DispatchInfo::default();
+			// stale
+			assert_noop!(
+				CheckNonce::<TestRuntime>::from(0).validate(&alice, CALL, &info, 0),
+				InvalidTransaction::Stale
+			);
+			assert_noop!(
+				CheckNonce::<TestRuntime>::from(0).pre_dispatch(&alice, CALL, &info, 0),
+				InvalidTransaction::Stale
+			);
+			// correct
+			assert_ok!(CheckNonce::<TestRuntime>::from(1).validate(&alice, CALL, &info, 0));
+			assert_ok!(CheckNonce::<TestRuntime>::from(1).pre_dispatch(&alice, CALL, &info, 0));
+			// future
+			assert_ok!(CheckNonce::<TestRuntime>::from(5).validate(&alice, CALL, &info, 0));
+			assert_noop!(
+				CheckNonce::<TestRuntime>::from(5).pre_dispatch(&alice, CALL, &info, 0),
+				InvalidTransaction::Future
+			);
+		})
+	}
 
-// 	#[test]
-// 	fn check_evm_nonce_works() {
-// 		new_test_ext().execute_with(|| {
-// 			let alice = AccountId32::from([8; 32]);
-// 			frame_system::Account::<TestRuntime>::insert(
-// 				&alice,
-// 				frame_system::AccountInfo {
-// 					nonce: 2,
-// 					consumers: 0,
-// 					providers: 0,
-// 					sufficients: 0,
-// 					data: pallet_balances::AccountData::default(),
-// 				},
-// 			);
+	#[test]
+	fn check_evm_nonce_works() {
+		new_test_ext().execute_with(|| {
+			let alice = AccountId32::from([8; 32]);
+			frame_system::Account::<TestRuntime>::insert(
+				&alice,
+				frame_system::AccountInfo {
+					nonce: 2,
+					consumers: 0,
+					providers: 0,
+					sufficients: 0,
+					data: pallet_balances::AccountData::default(),
+				},
+			);
 
-// 			let address =
-// 				<TestRuntime as module_evm::Config>::AddressMapping::get_evm_address(&alice).unwrap_or_else(|| {
-// 					<TestRuntime as module_evm::Config>::AddressMapping::get_default_evm_address(&alice)
-// 				});
+			let address =
+				<TestRuntime as module_evm::Config>::AddressMapping::get_evm_address(&alice)
+					.unwrap_or_else(|| {
+						<TestRuntime as module_evm::Config>::AddressMapping::get_default_evm_address(
+							&alice,
+						)
+					});
 
-// 			module_evm::Accounts::<TestRuntime>::insert(
-// 				&address,
-// 				module_evm::AccountInfo {
-// 					nonce: 1,
-// 					contract_info: None,
-// 				},
-// 			);
+			module_evm::Accounts::<TestRuntime>::insert(
+				&address,
+				module_evm::AccountInfo { nonce: 1, contract_info: None },
+			);
 
-// 			let info = DispatchInfo::default();
-// 			// stale
-// 			assert_noop!(
-// 				CheckNonce::<TestRuntime> {
-// 					nonce: 0u32,
-// 					is_eth_tx: true,
-// 					eth_tx_valid_until: 10
-// 				}
-// 				.validate(&alice, CALL, &info, 0),
-// 				InvalidTransaction::Stale
-// 			);
-// 			assert_noop!(
-// 				CheckNonce::<TestRuntime> {
-// 					nonce: 0u32,
-// 					is_eth_tx: true,
-// 					eth_tx_valid_until: 10
-// 				}
-// 				.pre_dispatch(&alice, CALL, &info, 0),
-// 				InvalidTransaction::Stale
-// 			);
+			let info = DispatchInfo::default();
+			// stale
+			assert_noop!(
+				CheckNonce::<TestRuntime> { nonce: 0u32, is_eth_tx: true, eth_tx_valid_until: 10 }
+					.validate(&alice, CALL, &info, 0),
+				InvalidTransaction::Stale
+			);
+			assert_noop!(
+				CheckNonce::<TestRuntime> { nonce: 0u32, is_eth_tx: true, eth_tx_valid_until: 10 }
+					.pre_dispatch(&alice, CALL, &info, 0),
+				InvalidTransaction::Stale
+			);
 
-// 			assert_eq!(
-// 				CheckNonce::<TestRuntime> {
-// 					nonce: 1u32,
-// 					is_eth_tx: true,
-// 					eth_tx_valid_until: 10
-// 				}
-// 				.validate(&alice, CALL, &info, 0),
-// 				Ok(ValidTransaction {
-// 					priority: 0,
-// 					requires: vec![],
-// 					provides: vec![Encode::encode(&(address, 1u32))],
-// 					longevity: 10,
-// 					propagate: true,
-// 				})
-// 			);
-// 			assert_ok!(CheckNonce::<TestRuntime> {
-// 				nonce: 1u32,
-// 				is_eth_tx: true,
-// 				eth_tx_valid_until: 10
-// 			}
-// 			.pre_dispatch(&alice, CALL, &info, 0),);
+			assert_eq!(
+				CheckNonce::<TestRuntime> { nonce: 1u32, is_eth_tx: true, eth_tx_valid_until: 10 }
+					.validate(&alice, CALL, &info, 0),
+				Ok(ValidTransaction {
+					priority: 0,
+					requires: vec![],
+					provides: vec![Encode::encode(&(address, 1u32))],
+					longevity: 10,
+					propagate: true,
+				})
+			);
+			assert_ok!(CheckNonce::<TestRuntime> {
+				nonce: 1u32,
+				is_eth_tx: true,
+				eth_tx_valid_until: 10
+			}
+			.pre_dispatch(&alice, CALL, &info, 0),);
 
-// 			assert_eq!(
-// 				CheckNonce::<TestRuntime> {
-// 					nonce: 3u32,
-// 					is_eth_tx: true,
-// 					eth_tx_valid_until: 10
-// 				}
-// 				.validate(&alice, CALL, &info, 0),
-// 				Ok(ValidTransaction {
-// 					priority: 0,
-// 					requires: vec![Encode::encode(&(address, 2u32))],
-// 					provides: vec![Encode::encode(&(address, 3u32))],
-// 					longevity: 10,
-// 					propagate: true,
-// 				})
-// 			);
-// 			assert_noop!(
-// 				CheckNonce::<TestRuntime> {
-// 					nonce: 3u32,
-// 					is_eth_tx: true,
-// 					eth_tx_valid_until: 10
-// 				}
-// 				.pre_dispatch(&alice, CALL, &info, 0),
-// 				InvalidTransaction::Future
-// 			);
-// 		})
-// 	}
-// }
+			assert_eq!(
+				CheckNonce::<TestRuntime> { nonce: 3u32, is_eth_tx: true, eth_tx_valid_until: 10 }
+					.validate(&alice, CALL, &info, 0),
+				Ok(ValidTransaction {
+					priority: 0,
+					requires: vec![Encode::encode(&(address, 2u32))],
+					provides: vec![Encode::encode(&(address, 3u32))],
+					longevity: 10,
+					propagate: true,
+				})
+			);
+			assert_noop!(
+				CheckNonce::<TestRuntime> { nonce: 3u32, is_eth_tx: true, eth_tx_valid_until: 10 }
+					.pre_dispatch(&alice, CALL, &info, 0),
+				InvalidTransaction::Future
+			);
+		})
+	}
+}

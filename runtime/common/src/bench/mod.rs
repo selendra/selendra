@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2021 Selendra.
+// Copyright (C) 2021-2021 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -42,7 +42,7 @@ fn whitelist_keys(b: &mut Bencher, caller: Option<H160>) {
 
 	// System::Number
 	b.whitelist(
-		hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519sel4983ac")
+		hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac")
 			.to_vec(),
 		true,
 		true,
@@ -53,12 +53,20 @@ fn whitelist_keys(b: &mut Bencher, caller: Option<H160>) {
 fn setup_liquidity() {
 	// faucet alice
 	assert_ok!(Currencies::update_balance(Origin::root(), ALICE, RENBTC, 1_000_000));
-	assert_ok!(Currencies::update_balance(Origin::root(), ALICE, SUSD, 1_000_000_000));
+	assert_ok!(Currencies::update_balance(Origin::root(), ALICE, KUSD, 1_000_000_000));
 
-	// enable RENBTC/SUSD
-	assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
+	// enable RENBTC/KUSD
+	assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, KUSD,));
 
-	assert_ok!(DexModule::add_liquidity(Origin::signed(ALICE), RENBTC, SUSD, 1_000, 1_000_000, 0));
+	assert_ok!(DexModule::add_liquidity(
+		Origin::signed(ALICE),
+		RENBTC,
+		KUSD,
+		1_000,
+		1_000_000,
+		0,
+		true
+	));
 }
 
 fn oracle_get_price(b: &mut Bencher) {

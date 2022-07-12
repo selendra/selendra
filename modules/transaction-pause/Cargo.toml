@@ -7,19 +7,17 @@ edition = "2021"
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
 scale-info = { version = "2.1", default-features = false, features = ["derive"] }
-
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-orml-tokens = { path = "../../orml/tokens" }
-orml-traits = { path = "../../orml/traits" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5"}
 primitives = { package = "selendra-primitives", path = "../../primitives" }
 smallvec = "1.4.1"
 
@@ -28,9 +26,8 @@ default = ["std"]
 std = [
 	"scale-info/std",
 	"sp-runtime/std",
-	"sp-std/std",
 	"frame-support/std",
 	"frame-system/std",
-	
+	"sp-std/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

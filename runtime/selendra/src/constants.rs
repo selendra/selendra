@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -13,7 +13,10 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-//! A set of constant values used in Selendra runtime.
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+//! A set of constant values used in dev runtime.
 
 /// Time and blocks.
 pub mod time {
@@ -29,27 +32,27 @@ pub mod time {
 	pub const HOURS: BlockNumber = MINUTES * 60;
 	pub const DAYS: BlockNumber = HOURS * 24;
 
-	pub fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 10 * dollar(SEL) + (bytes as Balance) * millicent(SEL)
-	}
-
 	// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
+
+	pub fn deposit(items: u32, bytes: u32) -> Balance {
+		items as Balance * 2 * dollar(SEL) + (bytes as Balance) * 10 * millicent(SEL)
+	}
 }
 
 /// Fee-related
 pub mod fee {
 	use frame_support::weights::{
-		constants::ExtrinsicBaseWeight, WeightToFeeCoefficient, WeightToFeeCoefficients,
-		WeightToFeePolynomial,
+		constants::{ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
+		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
 	};
 	use primitives::Balance;
-	use runtime_common::{millicent, SEL};
+	use runtime_common::{cent, SEL};
 	use smallvec::smallvec;
 	use sp_runtime::Perbill;
 
 	pub fn base_tx_in_sel() -> Balance {
-		millicent(SEL)
+		cent(SEL) / 10
 	}
 
 	/// Handles converting a weight scalar to a fee value, based on the scale
@@ -67,17 +70,41 @@ pub mod fee {
 	impl WeightToFeePolynomial for WeightToFee {
 		type Balance = Balance;
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 1/100
-			// millicent
-			let p = base_tx_in_sel();
-			let q = 100 * Balance::from(ExtrinsicBaseWeight::get());
+			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
+			let p = base_tx_in_sel(); // 1_000_000_000;
+			let q = Balance::from(ExtrinsicBaseWeight::get()); // 125_000_000
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,
 				negative: false,
-				coeff_frac: Perbill::from_rational(p % q, q),
-				coeff_integer: p / q,
+				coeff_frac: Perbill::from_rational(p % q, q), // zero
+				coeff_integer: p / q,                         // 8
 			}]
 		}
+	}
+
+	pub fn sel_per_second() -> u128 {
+		let base_weight = Balance::from(ExtrinsicBaseWeight::get());
+		let base_tx_per_second = (WEIGHT_PER_SECOND as u128) / base_weight;
+		base_tx_per_second * base_tx_in_sel()
+	}
+
+	pub fn dot_per_second() -> u128 {
+		sel_per_second() / 100
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::{constants::fee::base_tx_in_sel, Balance};
+	use frame_support::weights::constants::ExtrinsicBaseWeight;
+
+	#[test]
+	fn check_weight() {
+		let p = base_tx_in_sel();
+		let q = Balance::from(ExtrinsicBaseWeight::get());
+
+		assert_eq!(p, 1_000_000_000);
+		assert_eq!(q, 85_795_000);
 	}
 }
 

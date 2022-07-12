@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! # Transaction Payment Module
 //!
@@ -794,8 +797,7 @@ where
 		let total_native = <T as Config>::Currency::free_balance(who);
 
 		if fee.saturating_add(native_existential_deposit) <= total_native {
-			// User's locked balance can't be transferable, which means can't be used for fee
-			// payment.
+			// User's locked balance can't be transferable, which means can't be used for fee payment.
 			if let Some(new_free_balance) = total_native.checked_sub(fee) {
 				if T::Currency::ensure_can_withdraw(who, fee, reason, new_free_balance).is_ok() {
 					return None
@@ -855,8 +857,8 @@ where
 					.map(|_| (who.clone(), fee_surplus))
 			},
 			Some(Call::with_fee_paid_by { call: _, payer_addr, payer_sig: _ }) => {
-				// validate payer signature in runtime side, because `SignedExtension` between
-				// different runtime may be different.
+				// validate payer signature in runtime side, because `SignedExtension` between different runtime
+				// may be different.
 				Self::native_then_alternative_or_default(
 					payer_addr,
 					fee,
@@ -904,8 +906,7 @@ where
 				}
 			}
 
-			// migration of `GlobalFeeSwapPath`. after Dapp using `with_fee_currency`, we can delete
-			// this.
+			// migration of `GlobalFeeSwapPath`. after Dapp using `with_fee_currency`, we can delete this.
 			let global_fee_swap_path = GlobalFeeSwapPath::<T>::iter_values()
 				.map(|v| v.into_inner())
 				.collect::<Vec<_>>();
@@ -1169,12 +1170,7 @@ where
 		info: &DispatchInfoOf<CallOf<T>>,
 		len: usize,
 	) -> Result<
-		(
-			PalletBalanceOf<T>,
-			Option<NegativeImbalanceOf<T>>,
-			PalletBalanceOf<T>,
-			T::AccountId,
-		),
+		(PalletBalanceOf<T>, Option<NegativeImbalanceOf<T>>, PalletBalanceOf<T>, T::AccountId),
 		TransactionValidityError,
 	> {
 		let tip = self.0;
@@ -1182,7 +1178,7 @@ where
 
 		// Only mess with balances if fee is not zero.
 		if fee.is_zero() {
-			return Ok((fee, None, 0, who.clone()));
+			return Ok((fee, None, 0, who.clone()))
 		}
 
 		let reason = if tip.is_zero() {
@@ -1246,9 +1242,8 @@ where
 		// tipPerWeight = tipPerWight / TipPerWeightStep * TipPerWeightStep
 		//              = tip / bounded_{weight|length} / TipPerWeightStep * TipPerWeightStep
 		// priority = tipPerWeight * max_block_{weight|length}
-		// MaxTipsOfPriority = 10_000 CDM/SEL = 10^16.
-		// `MaxTipsOfPriority * max_block_{weight|length}` will overflow, so div `TipPerWeightStep`
-		// here.
+		// MaxTipsOfPriority = 10_000 SEL = 10^16.
+		// `MaxTipsOfPriority * max_block_{weight|length}` will overflow, so div `TipPerWeightStep` here.
 		let max_reward = |val: PalletBalanceOf<T>| {
 			val.checked_div(T::TipPerWeightStep::get())
 				.expect("TipPerWeightStep is non-zero; qed")
@@ -1381,7 +1376,9 @@ where
 			let (tip, fee) = actual_payment.split(actual_tip);
 
 			// distribute fee
-			<T as Config>::OnTransactionPayment::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
+			<T as Config>::OnTransactionPayment::on_unbalanceds(
+				Some(fee).into_iter().chain(Some(tip)),
+			);
 
 			Pallet::<T>::deposit_event(Event::<T>::TransactionFeePaid {
 				who,
@@ -1509,6 +1506,8 @@ impl<T: Config, AnyCall: GetDispatchInfo + Encode> EstimateCallFee<AnyCall, Pall
 	for Pallet<T>
 where
 	PalletBalanceOf<T>: FixedPointOperand,
+	<T as frame_system::Config>::Call:
+		Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo>,
 {
 	fn estimate_call_fee(call: &AnyCall, post_info: PostDispatchInfo) -> PalletBalanceOf<T> {
 		let len = call.encoded_size() as u32;

@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! Unit tests for the dex oracle module.
 
@@ -26,31 +29,31 @@ use sp_runtime::{traits::BadOrigin, FixedPointNumber};
 fn enable_average_price_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		Timestamp::set_timestamp(1000);
-		assert_noop!(DexOracle::enable_average_price(Origin::signed(0), SUSD, DOT, 0), BadOrigin);
+		assert_noop!(DexOracle::enable_average_price(Origin::signed(0), KUSD, DOT, 0), BadOrigin);
 		assert_noop!(
-			DexOracle::enable_average_price(Origin::signed(1), SUSD, LP_SUSD_DOT, 0),
+			DexOracle::enable_average_price(Origin::signed(1), KUSD, LP_KUSD_DOT, 0),
 			Error::<Runtime>::InvalidCurrencyId
 		);
 		assert_noop!(
-			DexOracle::enable_average_price(Origin::signed(1), SUSD, DOT, 0),
+			DexOracle::enable_average_price(Origin::signed(1), KUSD, DOT, 0),
 			Error::<Runtime>::IntervalIsZero
 		);
 		assert_noop!(
-			DexOracle::enable_average_price(Origin::signed(1), SUSD, DOT, 12000),
+			DexOracle::enable_average_price(Origin::signed(1), KUSD, DOT, 12000),
 			Error::<Runtime>::InvalidPool
 		);
 
-		set_pool(&SUSDDOTPair::get(), 1_000, 100);
-		assert_eq!(DexOracle::cumulatives(SUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
-		assert_eq!(DexOracle::average_prices(SUSDDOTPair::get()), None);
+		set_pool(&KUSDDOTPair::get(), 1_000, 100);
+		assert_eq!(DexOracle::cumulatives(KUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
+		assert_eq!(DexOracle::average_prices(KUSDDOTPair::get()), None);
 
-		assert_ok!(DexOracle::enable_average_price(Origin::signed(1), SUSD, DOT, 12000));
+		assert_ok!(DexOracle::enable_average_price(Origin::signed(1), KUSD, DOT, 12000));
 		assert_eq!(
-			DexOracle::cumulatives(SUSDDOTPair::get()),
+			DexOracle::cumulatives(KUSDDOTPair::get()),
 			(U256::from(0), U256::from(0), 1000)
 		);
 		assert_eq!(
-			DexOracle::average_prices(SUSDDOTPair::get()),
+			DexOracle::average_prices(KUSDDOTPair::get()),
 			Some((
 				ExchangeRate::saturating_from_rational(100, 1000),
 				ExchangeRate::saturating_from_rational(1000, 100),
@@ -62,7 +65,7 @@ fn enable_average_price_work() {
 		);
 
 		assert_noop!(
-			DexOracle::enable_average_price(Origin::signed(1), SUSD, DOT, 12000),
+			DexOracle::enable_average_price(Origin::signed(1), KUSD, DOT, 12000),
 			Error::<Runtime>::AveragePriceAlreadyEnabled
 		);
 	});
@@ -71,12 +74,12 @@ fn enable_average_price_work() {
 #[test]
 fn disable_average_price_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		set_pool(&SUSDDOTPair::get(), 1_000, 100);
+		set_pool(&KUSDDOTPair::get(), 1_000, 100);
 		Timestamp::set_timestamp(100);
-		assert_ok!(DexOracle::enable_average_price(Origin::signed(1), SUSD, DOT, 1000));
-		assert_eq!(DexOracle::cumulatives(SUSDDOTPair::get()), (U256::from(0), U256::from(0), 100));
+		assert_ok!(DexOracle::enable_average_price(Origin::signed(1), KUSD, DOT, 1000));
+		assert_eq!(DexOracle::cumulatives(KUSDDOTPair::get()), (U256::from(0), U256::from(0), 100));
 		assert_eq!(
-			DexOracle::average_prices(SUSDDOTPair::get()),
+			DexOracle::average_prices(KUSDDOTPair::get()),
 			Some((
 				ExchangeRate::saturating_from_rational(100, 1000),
 				ExchangeRate::saturating_from_rational(1000, 100),
@@ -87,9 +90,9 @@ fn disable_average_price_work() {
 			))
 		);
 
-		assert_noop!(DexOracle::disable_average_price(Origin::signed(0), SUSD, DOT), BadOrigin);
+		assert_noop!(DexOracle::disable_average_price(Origin::signed(0), KUSD, DOT), BadOrigin);
 		assert_noop!(
-			DexOracle::disable_average_price(Origin::signed(1), SUSD, LP_SUSD_DOT),
+			DexOracle::disable_average_price(Origin::signed(1), KUSD, LP_KUSD_DOT),
 			Error::<Runtime>::InvalidCurrencyId
 		);
 		assert_noop!(
@@ -97,19 +100,19 @@ fn disable_average_price_work() {
 			Error::<Runtime>::AveragePriceMustBeEnabled
 		);
 
-		assert_ok!(DexOracle::disable_average_price(Origin::signed(1), SUSD, DOT));
-		assert_eq!(DexOracle::cumulatives(SUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
-		assert_eq!(DexOracle::average_prices(SUSDDOTPair::get()), None);
+		assert_ok!(DexOracle::disable_average_price(Origin::signed(1), KUSD, DOT));
+		assert_eq!(DexOracle::cumulatives(KUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
+		assert_eq!(DexOracle::average_prices(KUSDDOTPair::get()), None);
 	});
 }
 
 #[test]
 fn update_average_price_interval_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		set_pool(&SUSDDOTPair::get(), 1_000, 100);
-		assert_ok!(DexOracle::enable_average_price(Origin::signed(1), SUSD, DOT, 1000));
+		set_pool(&KUSDDOTPair::get(), 1_000, 100);
+		assert_ok!(DexOracle::enable_average_price(Origin::signed(1), KUSD, DOT, 1000));
 		assert_eq!(
-			DexOracle::average_prices(SUSDDOTPair::get()),
+			DexOracle::average_prices(KUSDDOTPair::get()),
 			Some((
 				ExchangeRate::saturating_from_rational(100, 1000),
 				ExchangeRate::saturating_from_rational(1000, 100),
@@ -121,11 +124,11 @@ fn update_average_price_interval_work() {
 		);
 
 		assert_noop!(
-			DexOracle::update_average_price_interval(Origin::signed(0), SUSD, DOT, 0),
+			DexOracle::update_average_price_interval(Origin::signed(0), KUSD, DOT, 0),
 			BadOrigin
 		);
 		assert_noop!(
-			DexOracle::update_average_price_interval(Origin::signed(1), SUSD, LP_SUSD_DOT, 0),
+			DexOracle::update_average_price_interval(Origin::signed(1), KUSD, LP_KUSD_DOT, 0),
 			Error::<Runtime>::InvalidCurrencyId
 		);
 		assert_noop!(
@@ -133,13 +136,13 @@ fn update_average_price_interval_work() {
 			Error::<Runtime>::AveragePriceMustBeEnabled
 		);
 		assert_noop!(
-			DexOracle::update_average_price_interval(Origin::signed(1), SUSD, DOT, 0),
+			DexOracle::update_average_price_interval(Origin::signed(1), KUSD, DOT, 0),
 			Error::<Runtime>::IntervalIsZero
 		);
 
-		assert_ok!(DexOracle::update_average_price_interval(Origin::signed(1), SUSD, DOT, 2000));
+		assert_ok!(DexOracle::update_average_price_interval(Origin::signed(1), KUSD, DOT, 2000));
 		assert_eq!(
-			DexOracle::average_prices(SUSDDOTPair::get()),
+			DexOracle::average_prices(KUSDDOTPair::get()),
 			Some((
 				ExchangeRate::saturating_from_rational(100, 1000),
 				ExchangeRate::saturating_from_rational(1000, 100),
@@ -156,20 +159,20 @@ fn update_average_price_interval_work() {
 fn try_update_cumulative_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		// initialize cumulative price
-		set_pool(&SUSDDOTPair::get(), 1_000, 100);
-		assert_ok!(DexOracle::enable_average_price(Origin::signed(1), SUSD, DOT, 1000));
-		assert_eq!(DexOracle::cumulatives(SUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
+		set_pool(&KUSDDOTPair::get(), 1_000, 100);
+		assert_ok!(DexOracle::enable_average_price(Origin::signed(1), KUSD, DOT, 1000));
+		assert_eq!(DexOracle::cumulatives(KUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
 
 		// will not cumulative if now is not gt than the last update cumulative timestamp.
 		assert_eq!(Timestamp::now(), 0);
-		DexOracle::try_update_cumulative(&SUSDDOTPair::get(), 500, 200);
-		assert_eq!(DexOracle::cumulatives(SUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
+		DexOracle::try_update_cumulative(&KUSDDOTPair::get(), 500, 200);
+		assert_eq!(DexOracle::cumulatives(KUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
 
 		Timestamp::set_timestamp(100);
 		assert_eq!(Timestamp::now(), 100);
-		DexOracle::try_update_cumulative(&SUSDDOTPair::get(), 500, 200);
+		DexOracle::try_update_cumulative(&KUSDDOTPair::get(), 500, 200);
 		assert_eq!(
-			DexOracle::cumulatives(SUSDDOTPair::get()),
+			DexOracle::cumulatives(KUSDDOTPair::get()),
 			(
 				U256::from(40_000_000_000_000_000_000u128),
 				U256::from(250_000_000_000_000_000_000u128),
@@ -179,9 +182,9 @@ fn try_update_cumulative_work() {
 
 		Timestamp::set_timestamp(200);
 		assert_eq!(Timestamp::now(), 200);
-		DexOracle::try_update_cumulative(&SUSDDOTPair::get(), 1_000, 100);
+		DexOracle::try_update_cumulative(&KUSDDOTPair::get(), 1_000, 100);
 		assert_eq!(
-			DexOracle::cumulatives(SUSDDOTPair::get()),
+			DexOracle::cumulatives(KUSDDOTPair::get()),
 			(
 				U256::from(50_000_000_000_000_000_000u128),
 				U256::from(1_250_000_000_000_000_000_000u128),
@@ -201,11 +204,11 @@ fn on_initialize_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		// initialize average prices
 		assert_eq!(Timestamp::now(), 0);
-		set_pool(&SUSDDOTPair::get(), 1000, 100);
-		assert_ok!(DexOracle::enable_average_price(Origin::signed(1), SUSD, DOT, 1000));
-		assert_eq!(DexOracle::cumulatives(SUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
+		set_pool(&KUSDDOTPair::get(), 1000, 100);
+		assert_ok!(DexOracle::enable_average_price(Origin::signed(1), KUSD, DOT, 1000));
+		assert_eq!(DexOracle::cumulatives(KUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
 		assert_eq!(
-			DexOracle::average_prices(SUSDDOTPair::get()),
+			DexOracle::average_prices(KUSDDOTPair::get()),
 			Some((
 				ExchangeRate::saturating_from_rational(1, 10),
 				ExchangeRate::saturating_from_rational(10, 1),
@@ -230,13 +233,13 @@ fn on_initialize_work() {
 			))
 		);
 
-		// elapsed time is lt all update interval of trading pairs, no trading pairs will not update
-		// average price.
+		// elapsed time is lt all update interval of trading pairs, no trading pairs will not update average
+		// price.
 		Timestamp::set_timestamp(999);
 		DexOracle::on_initialize(1);
-		assert_eq!(DexOracle::cumulatives(SUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
+		assert_eq!(DexOracle::cumulatives(KUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
 		assert_eq!(
-			DexOracle::average_prices(SUSDDOTPair::get()),
+			DexOracle::average_prices(KUSDDOTPair::get()),
 			Some((
 				ExchangeRate::saturating_from_rational(1, 10),
 				ExchangeRate::saturating_from_rational(10, 1),
@@ -259,12 +262,12 @@ fn on_initialize_work() {
 			))
 		);
 
-		// elapsed time is lt the update interval of SUSD/DOT, update average price of SUSD/DOT
-		// after try update cumulatives.
+		// elapsed time is lt the update interval of KUSD/DOT, update average price of KUSD/DOT after try
+		// update cumulatives.
 		Timestamp::set_timestamp(1200);
 		DexOracle::on_initialize(2);
 		assert_eq!(
-			DexOracle::cumulatives(SUSDDOTPair::get()),
+			DexOracle::cumulatives(KUSDDOTPair::get()),
 			(
 				U256::from(120_000_000_000_000_000_000u128),
 				U256::from(12_000_000_000_000_000_000_000u128),
@@ -272,7 +275,7 @@ fn on_initialize_work() {
 			)
 		);
 		assert_eq!(
-			DexOracle::average_prices(SUSDDOTPair::get()),
+			DexOracle::average_prices(KUSDDOTPair::get()),
 			Some((
 				ExchangeRate::saturating_from_rational(1, 10),
 				ExchangeRate::saturating_from_rational(10, 1),
@@ -295,13 +298,13 @@ fn on_initialize_work() {
 			))
 		);
 
-		// elapsed time is lt the update interval of SEL/DOT, update average price of SEL/DOT after
-		// try update cumulatives.
+		// elapsed time is lt the update interval of SEL/DOT, update average price of SEL/DOT after try
+		// update cumulatives.
 		set_pool(&SELDOTPair::get(), 1000, 2000);
 		Timestamp::set_timestamp(2100);
 		DexOracle::on_initialize(3);
 		assert_eq!(
-			DexOracle::cumulatives(SUSDDOTPair::get()),
+			DexOracle::cumulatives(KUSDDOTPair::get()),
 			(
 				U256::from(120_000_000_000_000_000_000u128),
 				U256::from(12_000_000_000_000_000_000_000u128),
@@ -309,7 +312,7 @@ fn on_initialize_work() {
 			)
 		);
 		assert_eq!(
-			DexOracle::average_prices(SUSDDOTPair::get()),
+			DexOracle::average_prices(KUSDDOTPair::get()),
 			Some((
 				ExchangeRate::saturating_from_rational(1, 10),
 				ExchangeRate::saturating_from_rational(10, 1),
@@ -339,12 +342,12 @@ fn on_initialize_work() {
 			))
 		);
 
-		set_pool(&SUSDDOTPair::get(), 2000, 100);
+		set_pool(&KUSDDOTPair::get(), 2000, 100);
 		set_pool(&SELDOTPair::get(), 1000, 4000);
 		Timestamp::set_timestamp(5000);
 		DexOracle::on_initialize(4);
 		assert_eq!(
-			DexOracle::cumulatives(SUSDDOTPair::get()),
+			DexOracle::cumulatives(KUSDDOTPair::get()),
 			(
 				U256::from(310_000_000_000_000_000_000u128),
 				U256::from(88_000_000_000_000_000_000_000u128),
@@ -352,7 +355,7 @@ fn on_initialize_work() {
 			)
 		);
 		assert_eq!(
-			DexOracle::average_prices(SUSDDOTPair::get()),
+			DexOracle::average_prices(KUSDDOTPair::get()),
 			Some((
 				ExchangeRate::saturating_from_rational(100, 2000),
 				ExchangeRate::saturating_from_rational(2000, 100),
@@ -385,10 +388,10 @@ fn on_initialize_work() {
 		// mock update cumulatives, the average prices are not updated.
 		Timestamp::set_timestamp(5500);
 		DexOracle::on_initialize(5);
-		DexOracle::try_update_cumulative(&SUSDDOTPair::get(), 100, 100);
+		DexOracle::try_update_cumulative(&KUSDDOTPair::get(), 100, 100);
 		DexOracle::try_update_cumulative(&SELDOTPair::get(), 2000, 200);
 		assert_eq!(
-			DexOracle::cumulatives(SUSDDOTPair::get()),
+			DexOracle::cumulatives(KUSDDOTPair::get()),
 			(
 				U256::from(810_000_000_000_000_000_000u128),
 				U256::from(88_500_000_000_000_000_000_000u128),
@@ -396,7 +399,7 @@ fn on_initialize_work() {
 			)
 		);
 		assert_eq!(
-			DexOracle::average_prices(SUSDDOTPair::get()),
+			DexOracle::average_prices(KUSDDOTPair::get()),
 			Some((
 				ExchangeRate::saturating_from_rational(100, 2000),
 				ExchangeRate::saturating_from_rational(2000, 100),
@@ -426,13 +429,13 @@ fn on_initialize_work() {
 			))
 		);
 
-		// update average prices of SUSD/DOT and SEL/DOT
-		set_pool(&SUSDDOTPair::get(), 1000, 100);
+		// update average prices of KUSD/DOT and SEL/DOT
+		set_pool(&KUSDDOTPair::get(), 1000, 100);
 		set_pool(&SELDOTPair::get(), 1000, 1000);
 		Timestamp::set_timestamp(7000);
 		DexOracle::on_initialize(6);
 		assert_eq!(
-			DexOracle::cumulatives(SUSDDOTPair::get()),
+			DexOracle::cumulatives(KUSDDOTPair::get()),
 			(
 				U256::from(960_000_000_000_000_000_000u128),
 				U256::from(103_500_000_000_000_000_000_000u128),
@@ -440,7 +443,7 @@ fn on_initialize_work() {
 			)
 		);
 		assert_eq!(
-			DexOracle::average_prices(SUSDDOTPair::get()),
+			DexOracle::average_prices(KUSDDOTPair::get()),
 			Some((
 				ExchangeRate::saturating_from_rational(325, 1000),
 				ExchangeRate::saturating_from_rational(775, 100),
@@ -475,35 +478,35 @@ fn on_initialize_work() {
 #[test]
 fn dex_price_providers_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_eq!(CurrentDEXPriceProvider::<Runtime>::get_relative_price(SUSD, DOT), None);
-		assert_eq!(CurrentDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD), None);
-		assert_eq!(AverageDEXPriceProvider::<Runtime>::get_relative_price(SUSD, DOT), None);
-		assert_eq!(AverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD), None);
-		assert_eq!(PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(SUSD, DOT), None);
-		assert_eq!(PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD), None);
+		assert_eq!(CurrentDEXPriceProvider::<Runtime>::get_relative_price(KUSD, DOT), None);
+		assert_eq!(CurrentDEXPriceProvider::<Runtime>::get_relative_price(DOT, KUSD), None);
+		assert_eq!(AverageDEXPriceProvider::<Runtime>::get_relative_price(KUSD, DOT), None);
+		assert_eq!(AverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, KUSD), None);
+		assert_eq!(PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(KUSD, DOT), None);
+		assert_eq!(PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, KUSD), None);
 
-		set_pool(&SUSDDOTPair::get(), 1_000, 100);
+		set_pool(&KUSDDOTPair::get(), 1_000, 100);
 		assert_eq!(
-			CurrentDEXPriceProvider::<Runtime>::get_relative_price(SUSD, DOT),
+			CurrentDEXPriceProvider::<Runtime>::get_relative_price(KUSD, DOT),
 			Some(ExchangeRate::saturating_from_rational(1, 10))
 		);
 		assert_eq!(
-			CurrentDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD),
+			CurrentDEXPriceProvider::<Runtime>::get_relative_price(DOT, KUSD),
 			Some(ExchangeRate::saturating_from_rational(10, 1))
 		);
-		assert_eq!(AverageDEXPriceProvider::<Runtime>::get_relative_price(SUSD, DOT), None);
-		assert_eq!(AverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD), None);
+		assert_eq!(AverageDEXPriceProvider::<Runtime>::get_relative_price(KUSD, DOT), None);
+		assert_eq!(AverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, KUSD), None);
 		assert_eq!(
-			PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(SUSD, DOT),
+			PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(KUSD, DOT),
 			Some(ExchangeRate::saturating_from_rational(1, 10))
 		);
 		assert_eq!(
-			PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD),
+			PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, KUSD),
 			Some(ExchangeRate::saturating_from_rational(10, 1))
 		);
 
 		AveragePrices::<Runtime>::insert(
-			&SUSDDOTPair::get(),
+			&KUSDDOTPair::get(),
 			(
 				ExchangeRate::saturating_from_rational(2, 10),
 				ExchangeRate::saturating_from_rational(10, 2),
@@ -514,53 +517,53 @@ fn dex_price_providers_work() {
 			),
 		);
 		assert_eq!(
-			CurrentDEXPriceProvider::<Runtime>::get_relative_price(SUSD, DOT),
+			CurrentDEXPriceProvider::<Runtime>::get_relative_price(KUSD, DOT),
 			Some(ExchangeRate::saturating_from_rational(1, 10))
 		);
 		assert_eq!(
-			CurrentDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD),
+			CurrentDEXPriceProvider::<Runtime>::get_relative_price(DOT, KUSD),
 			Some(ExchangeRate::saturating_from_rational(10, 1))
 		);
 		assert_eq!(
-			AverageDEXPriceProvider::<Runtime>::get_relative_price(SUSD, DOT),
+			AverageDEXPriceProvider::<Runtime>::get_relative_price(KUSD, DOT),
 			Some(ExchangeRate::saturating_from_rational(2, 10))
 		);
 		assert_eq!(
-			AverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD),
+			AverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, KUSD),
 			Some(ExchangeRate::saturating_from_rational(10, 2))
 		);
 		assert_eq!(
-			PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(SUSD, DOT),
+			PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(KUSD, DOT),
 			Some(ExchangeRate::saturating_from_rational(2, 10))
 		);
 		assert_eq!(
-			PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD),
+			PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, KUSD),
 			Some(ExchangeRate::saturating_from_rational(10, 2))
 		);
 
-		set_pool(&SUSDDOTPair::get(), 300, 100);
+		set_pool(&KUSDDOTPair::get(), 300, 100);
 		assert_eq!(
-			CurrentDEXPriceProvider::<Runtime>::get_relative_price(SUSD, DOT),
+			CurrentDEXPriceProvider::<Runtime>::get_relative_price(KUSD, DOT),
 			Some(ExchangeRate::saturating_from_rational(100, 300))
 		);
 		assert_eq!(
-			CurrentDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD),
+			CurrentDEXPriceProvider::<Runtime>::get_relative_price(DOT, KUSD),
 			Some(ExchangeRate::saturating_from_rational(300, 100))
 		);
 		assert_eq!(
-			AverageDEXPriceProvider::<Runtime>::get_relative_price(SUSD, DOT),
+			AverageDEXPriceProvider::<Runtime>::get_relative_price(KUSD, DOT),
 			Some(ExchangeRate::saturating_from_rational(2, 10))
 		);
 		assert_eq!(
-			AverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD),
+			AverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, KUSD),
 			Some(ExchangeRate::saturating_from_rational(10, 2))
 		);
 		assert_eq!(
-			PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(SUSD, DOT),
+			PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(KUSD, DOT),
 			Some(ExchangeRate::saturating_from_rational(2, 10))
 		);
 		assert_eq!(
-			PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, SUSD),
+			PriorityAverageDEXPriceProvider::<Runtime>::get_relative_price(DOT, KUSD),
 			Some(ExchangeRate::saturating_from_rational(10, 2))
 		);
 	});

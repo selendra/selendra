@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 // Disable the following lints
 #![allow(clippy::type_complexity)]
@@ -34,7 +37,6 @@ use module_evm::{
 	runner::state::{PrecompileFailure, PrecompileOutput, PrecompileResult},
 	Context, ExitError, ExitRevert, ExitSucceed,
 };
-#[allow(unused_imports)]
 use module_support::{AddressMapping, TransactionPayment};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use pallet_scheduler::TaskAddress;
@@ -433,8 +435,8 @@ mod tests {
 				305363686564756c6543616c6c000000001000000000000000000000000000000000000001824f12000000000000000000000000000000000000000000000000\
 			");
 
-			let event = TestEvent::Scheduler(pallet_scheduler::Event::<Test>::Scheduled { when: 3, index: 0
-}); 			assert!(System::events().iter().any(|record| record.event == event));
+			let event = TestEvent::Scheduler(pallet_scheduler::Event::<Test>::Scheduled { when: 3, index: 0 });
+			assert!(System::events().iter().any(|record| record.event == event));
 
 			// cancelCall(address,bytes) -> 0x93e32661
 			// who
@@ -452,8 +454,8 @@ mod tests {
 			let resp = SchedulePrecompile::execute(&cancel_input, None, &context, false).unwrap();
 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
 			assert_eq!(resp.cost, 0);
-			let event = TestEvent::Scheduler(pallet_scheduler::Event::<Test>::Canceled { when: 3, index: 0
-}); 			assert!(System::events().iter().any(|record| record.event == event));
+			let event = TestEvent::Scheduler(pallet_scheduler::Event::<Test>::Canceled { when: 3, index: 0 });
+			assert!(System::events().iter().any(|record| record.event == event));
 
 			// schedule call again
 			let resp = SchedulePrecompile::execute(&input, None, &context, false).unwrap();
@@ -487,14 +489,13 @@ mod tests {
 			assert_eq!(resp.cost, 0);
 			assert_eq!(resp.output, [0u8; 0].to_vec());
 
-			let event = TestEvent::Scheduler(pallet_scheduler::Event::<Test>::Scheduled { when: 5, index: 0
-}); 			assert!(System::events().iter().any(|record| record.event == event));
+			let event = TestEvent::Scheduler(pallet_scheduler::Event::<Test>::Scheduled { when: 5, index: 0 });
+			assert!(System::events().iter().any(|record| record.event == event));
 
-			let from_account = <Test as
-				module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr());
-			let to_account = <Test as
-				module_evm::Config>::AddressMapping::get_account_id(&bob_evm_addr());
-				#[cfg(not(feature ="with-ethereum-compatibility"))] 			{
+			let from_account = <Test as module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr());
+			let to_account = <Test as module_evm::Config>::AddressMapping::get_account_id(&bob_evm_addr());
+			#[cfg(not(feature = "with-ethereum-compatibility"))]
+			{
 				assert_eq!(Balances::free_balance(from_account.clone()), 999999700000);
 				assert_eq!(Balances::reserved_balance(from_account.clone()), 300000);
 				assert_eq!(Balances::free_balance(to_account.clone()), 1000000000000);
@@ -564,11 +565,10 @@ mod tests {
 				305363686564756c6543616c6c000000001000000000000000000000000000000000000001824f12000000000000000000000000000000000000000000000000\
 			");
 
-			let from_account = <Test as
-				module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr());
-			let to_account = <Test as
-				module_evm::Config>::AddressMapping::get_account_id(&bob_evm_addr());
-			#[cfg(not(feature = "with-ethereum-compatibility"))] 			{
+			let from_account = <Test as module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr());
+			let to_account = <Test as module_evm::Config>::AddressMapping::get_account_id(&bob_evm_addr());
+			#[cfg(not(feature = "with-ethereum-compatibility"))]
+			{
 				assert_eq!(Balances::free_balance(from_account.clone()), 999999700000);
 				assert_eq!(Balances::reserved_balance(from_account.clone()), 300000);
 				assert_eq!(Balances::free_balance(to_account.clone()), 1000000000000);

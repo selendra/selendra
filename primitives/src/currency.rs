@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -13,9 +13,12 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 #![allow(clippy::from_over_into)]
 
-use crate::evm::EvmAddress;
+use crate::{evm::EvmAddress, *};
 use bstringify::bstringify;
 use codec::{Decode, Encode, MaxEncodedLen};
 pub use module_stable_asset::StableAssetPoolId;
@@ -115,32 +118,44 @@ macro_rules! create_currency_id {
 				address: EvmAddress,
 			}
 
-			let mut tokens = vec![
-				$(
-					Token {
+			// Selendra tokens
+			let mut selendra_tokens = vec![];
+			$(
+				if $val < 128 {
+					selendra_tokens.push(Token {
 						symbol: stringify!($symbol).to_string(),
 						address: EvmAddress::try_from(CurrencyId::Token(TokenSymbol::$symbol)).unwrap(),
-					},
-				)*
-			];
+					});
+				}
+			)*
 
-			let mut lp_tokens = vec![
+			selendra_tokens.push(Token {
+				symbol: "SA_DOT".to_string(),
+				address: EvmAddress::try_from(CurrencyId::StableAssetPoolToken(0)).unwrap(),
+			});
+
+			selendra_tokens.push(Token {
+				symbol: "SA_3USD".to_string(),
+				address: EvmAddress::try_from(CurrencyId::StableAssetPoolToken(1)).unwrap(),
+			});
+
+			let mut selendra_lp_tokens = vec![
 				Token {
-					symbol: "LP_SEL_SUSD".to_string(),
-					address: EvmAddress::try_from(CurrencyId::DexShare(DexShare::Token(SEL), DexShare::Token(SUSD))).unwrap(),
+					symbol: "LP_SEL_KUSD".to_string(),
+					address: EvmAddress::try_from(TradingPair::from_currency_ids(CurrencyId::Token(SEL), CurrencyId::Token(KUSD)).unwrap().dex_share_currency_id()).unwrap(),
 				},
 				Token {
-					symbol: "LP_DOT_SUSD".to_string(),
-					address: EvmAddress::try_from(CurrencyId::DexShare(DexShare::Token(DOT), DexShare::Token(SUSD))).unwrap(),
+					symbol: "LP_DOT_KUSD".to_string(),
+					address: EvmAddress::try_from(TradingPair::from_currency_ids(CurrencyId::Token(DOT), CurrencyId::Token(KUSD)).unwrap().dex_share_currency_id()).unwrap(),
 				},
 				Token {
-					symbol: "LP_RENBTC_SUSD".to_string(),
-					address: EvmAddress::try_from(CurrencyId::DexShare(DexShare::Token(RENBTC), DexShare::Token(SUSD))).unwrap(),
+					symbol: "LP_RENBTC_KUSD".to_string(),
+					address: EvmAddress::try_from(TradingPair::from_currency_ids(CurrencyId::Token(RENBTC), CurrencyId::Token(KUSD)).unwrap().dex_share_currency_id()).unwrap(),
 				},
 			];
-			tokens.append(&mut lp_tokens);
+			selendra_tokens.append(&mut selendra_lp_tokens);
 
-			frame_support::assert_ok!(std::fs::write("../predeploy-contracts/resources/tokens.json", serde_json::to_string_pretty(&tokens).unwrap()));
+			frame_support::assert_ok!(std::fs::write("../predeploy-contracts/resources/selendra_tokens.json", serde_json::to_string_pretty(&selendra_tokens).unwrap()));
 		}
     }
 }
@@ -149,27 +164,26 @@ create_currency_id! {
 	// Represent a Token symbol with 8 bit
 	//
 	// 0 - 127: Selendra Ecosystem tokens
-	// 0 - 19: Selendra native tokens
+	// 0 - 19: Selendra & Bridge native tokens
 	// 20 - 39: External tokens (e.g. bridged)
-	// 40 - 127: Polkadot parachain tokens
 	//
-	// 128 - 147: Polkadot & Kusama tokens
+	// 130 - 147: Kusama & Pokadot Bridge tokens
 	#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo, MaxEncodedLen)]
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	#[repr(u8)]
 	pub enum TokenSymbol {
-		// 0 - 19: Selendra native tokens
+		// 0 - 19: Selendra & Polkadot native tokens
 		SEL("Selendra", 12) = 0,
-		SUSD("Selendra Dollar", 12) = 1,
+		KUSD("Khmer Dollar", 12) = 1,
+		LSEL("Liquid Selendra", 12) = 2,
 
 		// 20 - 39: External tokens (e.g. bridged)
 		RENBTC("Ren Protocol BTC", 8) = 20,
-		CASH("Compound CASH", 8) = 21,
-		KMD("Kumandra", 12) = 22,
+		DAI("Dai Stable coin", 18) = 21,
 
-		// 128 - 147: Polkadot & Kusama tokens
-		DOT("Polkadot", 10) = 128,
+		// 130 - 147: Polkadot & Kumasam bridged tokens
 		KSM("Kusama", 12) = 130,
+		DOT("Polkadot", 10) = 131,
 	}
 }
 
@@ -182,6 +196,7 @@ pub trait TokenInfo {
 
 pub type ForeignAssetId = u16;
 pub type Erc20Id = u32;
+pub type Lease = BlockNumber;
 
 #[derive(
 	Encode,
@@ -202,6 +217,7 @@ pub enum DexShare {
 	Token(TokenSymbol),
 	Erc20(EvmAddress),
 	ForeignAsset(ForeignAssetId),
+	StableAssetPoolToken(StableAssetPoolId),
 }
 
 #[derive(
@@ -223,6 +239,7 @@ pub enum CurrencyId {
 	Token(TokenSymbol),
 	DexShare(DexShare, DexShare),
 	Erc20(EvmAddress),
+	StableAssetPoolToken(StableAssetPoolId),
 	ForeignAsset(ForeignAssetId),
 }
 
@@ -244,7 +261,13 @@ impl CurrencyId {
 	}
 
 	pub fn is_trading_pair_currency_id(&self) -> bool {
-		matches!(self, CurrencyId::Token(_) | CurrencyId::Erc20(_) | CurrencyId::ForeignAsset(_))
+		matches!(
+			self,
+			CurrencyId::Token(_) |
+				CurrencyId::Erc20(_) |
+				CurrencyId::ForeignAsset(_) |
+				CurrencyId::StableAssetPoolToken(_)
+		)
 	}
 
 	pub fn split_dex_share_currency_id(&self) -> Option<(Self, Self)> {
@@ -263,6 +286,8 @@ impl CurrencyId {
 			CurrencyId::Token(symbol) => DexShare::Token(symbol),
 			CurrencyId::Erc20(address) => DexShare::Erc20(address),
 			CurrencyId::ForeignAsset(foreign_asset_id) => DexShare::ForeignAsset(foreign_asset_id),
+			CurrencyId::StableAssetPoolToken(stable_asset_pool_id) =>
+				DexShare::StableAssetPoolToken(stable_asset_pool_id),
 			// Unsupported
 			CurrencyId::DexShare(..) => return None,
 		};
@@ -270,6 +295,8 @@ impl CurrencyId {
 			CurrencyId::Token(symbol) => DexShare::Token(symbol),
 			CurrencyId::Erc20(address) => DexShare::Erc20(address),
 			CurrencyId::ForeignAsset(foreign_asset_id) => DexShare::ForeignAsset(foreign_asset_id),
+			CurrencyId::StableAssetPoolToken(stable_asset_pool_id) =>
+				DexShare::StableAssetPoolToken(stable_asset_pool_id),
 			// Unsupported
 			CurrencyId::DexShare(..) => return None,
 		};
@@ -295,6 +322,9 @@ impl From<DexShare> for u32 {
 			DexShare::ForeignAsset(foreign_asset_id) => {
 				bytes[2..].copy_from_slice(&foreign_asset_id.to_be_bytes());
 			},
+			DexShare::StableAssetPoolToken(stable_asset_pool_id) => {
+				bytes[..].copy_from_slice(&stable_asset_pool_id.to_be_bytes());
+			},
 		}
 		u32::from_be_bytes(bytes)
 	}
@@ -306,6 +336,8 @@ impl Into<CurrencyId> for DexShare {
 			DexShare::Token(token) => CurrencyId::Token(token),
 			DexShare::Erc20(address) => CurrencyId::Erc20(address),
 			DexShare::ForeignAsset(foreign_asset_id) => CurrencyId::ForeignAsset(foreign_asset_id),
+			DexShare::StableAssetPoolToken(stable_asset_pool_id) =>
+				CurrencyId::StableAssetPoolToken(stable_asset_pool_id),
 		}
 	}
 }
@@ -329,6 +361,7 @@ impl Into<CurrencyId> for DexShare {
 pub enum CurrencyIdType {
 	Token = 1, // 0 is prefix of precompile and predeploy
 	DexShare,
+	StableAsset,
 	ForeignAsset,
 }
 
@@ -351,6 +384,7 @@ pub enum DexShareType {
 	Token,
 	Erc20,
 	ForeignAsset,
+	StableAssetPoolToken,
 }
 
 impl Into<DexShareType> for DexShare {
@@ -359,6 +393,7 @@ impl Into<DexShareType> for DexShare {
 			DexShare::Token(_) => DexShareType::Token,
 			DexShare::Erc20(_) => DexShareType::Erc20,
 			DexShare::ForeignAsset(_) => DexShareType::ForeignAsset,
+			DexShare::StableAssetPoolToken(_) => DexShareType::StableAssetPoolToken,
 		}
 	}
 }

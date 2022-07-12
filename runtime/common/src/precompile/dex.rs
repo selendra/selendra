@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use super::{
 	input::{Input, InputPricer, InputT, Output},
@@ -116,8 +119,7 @@ where
 					currency_id_a, currency_id_b
 				);
 
-				// If it does not exist, return address(0x0). Keep the behavior the same as
-				// mapping[key]
+				// If it does not exist, return address(0x0). Keep the behavior the same as mapping[key]
 				let address = <module_dex::Pallet<Runtime> as DEXManager<
 					Runtime::AccountId,
 					Balance,
@@ -295,6 +297,7 @@ where
 					max_amount_a,
 					max_amount_b,
 					min_share_increment,
+					false,
 				)
 				.map_err(|e| PrecompileFailure::Revert {
 					exit_status: ExitRevert::Reverted,
@@ -334,6 +337,7 @@ where
 					remove_share,
 					min_withdrawn_a,
 					min_withdrawn_b,
+					false,
 				)
 				.map_err(|e| PrecompileFailure::Revert {
 					exit_status: ExitRevert::Reverted,
@@ -516,7 +520,7 @@ mod tests {
 	use super::*;
 
 	use crate::precompile::mock::{
-		alice_evm_addr, new_test_ext, DexModule, Origin, Test, ALICE, RENBTC, SUSD,
+		alice_evm_addr, new_test_ext, DexModule, Origin, Test, ALICE, KUSD, RENBTC,
 	};
 	use frame_support::{assert_noop, assert_ok};
 	use hex_literal::hex;
@@ -527,16 +531,17 @@ mod tests {
 	#[test]
 	fn get_liquidity_works() {
 		new_test_ext().execute_with(|| {
-			// enable RENBTC/SUSD
-			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
+			// enable RENBTC/KUSD
+			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, KUSD,));
 
 			assert_ok!(DexModule::add_liquidity(
 				Origin::signed(ALICE),
 				RENBTC,
-				SUSD,
+				KUSD,
 				1_000,
 				1_000_000,
-				0
+				0,
+				true
 			));
 
 			let context = Context {
@@ -547,7 +552,7 @@ mod tests {
 
 			// getLiquidityPool(address,address) -> 0xf4f31ede
 			// RENBTC
-			// SUSD
+			// KUSD
 			let input = hex! {"
 				f4f31ede
 				000000000000000000000000 0000000000000000000100000000000000000014
@@ -570,16 +575,17 @@ mod tests {
 	#[test]
 	fn get_liquidity_token_address_works() {
 		new_test_ext().execute_with(|| {
-			// enable RENBTC/SUSD
-			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
+			// enable RENBTC/KUSD
+			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, KUSD,));
 
 			assert_ok!(DexModule::add_liquidity(
 				Origin::signed(ALICE),
 				RENBTC,
-				SUSD,
+				KUSD,
 				1_000,
 				1_000_000,
-				0
+				0,
+				true
 			));
 
 			let context = Context {
@@ -590,14 +596,14 @@ mod tests {
 
 			// getLiquidityTokenAddress(address,address) -> 0xffd73c4a
 			// RENBTC
-			// SUSD
+			// KUSD
 			let input = hex! {"
 				ffd73c4a
 				000000000000000000000000 0000000000000000000100000000000000000014
 				000000000000000000000000 0000000000000000000100000000000000000001
 			"};
 
-			// LP_RENBTC_SUSD
+			// LP_RENBTC_KUSD
 			let expected_output = hex! {"
 				000000000000000000000000 0000000000000000000200000000010000000014
 			"};
@@ -629,16 +635,17 @@ mod tests {
 	#[test]
 	fn get_swap_target_amount_works() {
 		new_test_ext().execute_with(|| {
-			// enable RENBTC/SUSD
-			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
+			// enable RENBTC/KUSD
+			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, KUSD,));
 
 			assert_ok!(DexModule::add_liquidity(
 				Origin::signed(ALICE),
 				RENBTC,
-				SUSD,
+				KUSD,
 				1_000,
 				1_000_000,
-				0
+				0,
+				true
 			));
 
 			let context = Context {
@@ -652,7 +659,7 @@ mod tests {
 			// supply_amount
 			// path_len
 			// RENBTC
-			// SUSD
+			// KUSD
 			let input = hex! {"
 				4d60beb1
 				00000000000000000000000000000000 00000000000000000000000000000000
@@ -676,16 +683,17 @@ mod tests {
 	#[test]
 	fn get_swap_supply_amount_works() {
 		new_test_ext().execute_with(|| {
-			// enable RENBTC/SUSD
-			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
+			// enable RENBTC/KUSD
+			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, KUSD,));
 
 			assert_ok!(DexModule::add_liquidity(
 				Origin::signed(ALICE),
 				RENBTC,
-				SUSD,
+				KUSD,
 				1_000,
 				1_000_000,
-				0
+				0,
+				true
 			));
 
 			let context = Context {
@@ -699,7 +707,7 @@ mod tests {
 			// target_amount
 			// path_len
 			// RENBTC
-			// SUSD
+			// KUSD
 			let input = hex! {"
 				dbcd19a2
 				00000000000000000000000000000000 00000000000000000000000000000000
@@ -723,16 +731,17 @@ mod tests {
 	#[test]
 	fn swap_with_exact_supply_works() {
 		new_test_ext().execute_with(|| {
-			// enable RENBTC/SUSD
-			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
+			// enable RENBTC/KUSD
+			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, KUSD,));
 
 			assert_ok!(DexModule::add_liquidity(
 				Origin::signed(ALICE),
 				RENBTC,
-				SUSD,
+				KUSD,
 				1_000,
 				1_000_000,
-				0
+				0,
+				true
 			));
 
 			let context = Context {
@@ -748,7 +757,7 @@ mod tests {
 			// min_target_amount
 			// path_len
 			// RENBTC
-			// SUSD
+			// KUSD
 			let input = hex! {"
 				579baa18
 				000000000000000000000000 1000000000000000000000000000000000000001
@@ -774,16 +783,17 @@ mod tests {
 	#[test]
 	fn dex_precompile_swap_with_exact_target_should_work() {
 		new_test_ext().execute_with(|| {
-			// enable RENBTC/SUSD
-			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, SUSD,));
+			// enable RENBTC/KUSD
+			assert_ok!(DexModule::enable_trading_pair(Origin::signed(ALICE), RENBTC, KUSD,));
 
 			assert_ok!(DexModule::add_liquidity(
 				Origin::signed(ALICE),
 				RENBTC,
-				SUSD,
+				KUSD,
 				1_000,
 				1_000_000,
-				0
+				0,
+				true
 			));
 
 			let context = Context {
@@ -799,7 +809,7 @@ mod tests {
 			// max_supply_amount
 			// path_len
 			// RENBTC
-			// SUSD
+			// KUSD
 			let input = hex! {"
 				9782ac81
 				000000000000000000000000 1000000000000000000000000000000000000001

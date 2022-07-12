@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2020-2022 Selendra Foundation.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! # Prices Module
 //!
@@ -28,12 +31,14 @@
 
 use frame_support::{pallet_prelude::*, transactional};
 use frame_system::pallet_prelude::*;
-use orml_traits::{DataFeeder, DataProvider, MultiCurrency};
+use orml_traits::{DataFeeder, DataProvider, GetByKey, MultiCurrency};
 use primitives::{Balance, CurrencyId};
 use sp_core::U256;
-use sp_runtime::FixedPointNumber;
+use sp_runtime::{traits::CheckedMul, FixedPointNumber};
 use sp_std::marker::PhantomData;
-use support::{DEXManager, Erc20InfoMapping, LockablePrice, Price, PriceProvider};
+use support::{
+	DEXManager, Erc20InfoMapping, ExchangeRateProvider, LockablePrice, Price, PriceProvider,
+};
 
 mod mock;
 mod tests;
@@ -54,7 +59,7 @@ pub mod module {
 		type Source: DataProvider<CurrencyId, Price>
 			+ DataFeeder<CurrencyId, Price, Self::AccountId>;
 
-		/// The stable currency id, it should be SUSD in Selendra.
+		/// The stable currency id, it should be KUSD in Selendra.
 		#[pallet::constant]
 		type GetStableCurrencyId: Get<CurrencyId>;
 
@@ -62,8 +67,20 @@ pub mod module {
 		#[pallet::constant]
 		type StableCurrencyFixedPrice: Get<Price>;
 
+		/// The Native currency id, it should be SEL in Selendra.
+		#[pallet::constant]
+		type GetNativeCurrencyId: Get<CurrencyId>;
+
+		/// The liquid currency id, it should be LSEL in Selendra.
+		#[pallet::constant]
+		type GetLiquidCurrencyId: Get<CurrencyId>;
+
 		/// The origin which may lock and unlock prices feed to system.
 		type LockOrigin: EnsureOrigin<Self::Origin>;
+
+		/// The provider of the exchange rate between liquid currency and
+		/// staking currency.
+		type LiquidNativeExchangeRateProvider: ExchangeRateProvider;
 
 		/// DEX provide liquidity info.
 		type DEX: DEXManager<Self::AccountId, Balance, CurrencyId>;
@@ -73,6 +90,10 @@ pub mod module {
 
 		/// Mapping between CurrencyId and ERC20 address so user can use Erc20.
 		type Erc20InfoMapping: Erc20InfoMapping;
+
+		/// If a currency is pegged to another currency in price, price of this currency is
+		/// equal to the price of another.
+		type PricingPegged: GetByKey<CurrencyId, Option<CurrencyId>>;
 
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
@@ -144,9 +165,21 @@ impl<T: Config> Pallet<T> {
 	///
 	/// Note: this returns the price for 1 basic unit
 	fn access_price(currency_id: CurrencyId) -> Option<Price> {
+		// if it's configured pegged to another currency id
+		let currency_id = if let Some(pegged_currency_id) = T::PricingPegged::get(&currency_id) {
+			pegged_currency_id
+		} else {
+			currency_id
+		};
+
 		let maybe_price = if currency_id == T::GetStableCurrencyId::get() {
 			// if is stable currency, use fixed price
 			Some(T::StableCurrencyFixedPrice::get())
+		} else if currency_id == T::GetLiquidCurrencyId::get() {
+			// directly return real-time the multiple of the price of StakingCurrencyId and the exchange rate
+			return Self::access_price(T::GetNativeCurrencyId::get()).and_then(|n| {
+				n.checked_mul(&T::LiquidNativeExchangeRateProvider::get_exchange_rate())
+			})
 		} else if let CurrencyId::DexShare(dex_share_0, dex_share_1) = currency_id {
 			let token_0: CurrencyId = dex_share_0.into();
 			let token_1: CurrencyId = dex_share_1.into();

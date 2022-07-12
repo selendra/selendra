@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -13,6 +13,9 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 use super::*;
 use crate::evm::{is_system_contract, EvmAddress, SYSTEM_CONTRACT_ADDRESS_PREFIX};
 use frame_support::assert_ok;
@@ -22,12 +25,12 @@ use std::str::FromStr;
 #[test]
 fn trading_pair_works() {
 	let sel = CurrencyId::Token(TokenSymbol::SEL);
-	let ausd = CurrencyId::Token(TokenSymbol::SUSD);
+	let kusd = CurrencyId::Token(TokenSymbol::KUSD);
 	let erc20 = CurrencyId::Erc20(
 		EvmAddress::from_str("0x0000000000000000000000000000000000000000").unwrap(),
 	);
-	let sel_ausd_lp =
-		CurrencyId::DexShare(DexShare::Token(TokenSymbol::SEL), DexShare::Token(TokenSymbol::SUSD));
+	let sel_kusd_lp =
+		CurrencyId::DexShare(DexShare::Token(TokenSymbol::SEL), DexShare::Token(TokenSymbol::KUSD));
 	let erc20_sel_lp = CurrencyId::DexShare(
 		DexShare::Token(TokenSymbol::SEL),
 		DexShare::Erc20(
@@ -35,14 +38,14 @@ fn trading_pair_works() {
 		),
 	);
 
-	assert_eq!(TradingPair::from_currency_ids(ausd, sel).unwrap(), TradingPair(sel, ausd));
-	assert_eq!(TradingPair::from_currency_ids(sel, ausd).unwrap(), TradingPair(sel, ausd));
+	assert_eq!(TradingPair::from_currency_ids(kusd, sel).unwrap(), TradingPair(sel, kusd));
+	assert_eq!(TradingPair::from_currency_ids(sel, kusd).unwrap(), TradingPair(sel, kusd));
 	assert_eq!(TradingPair::from_currency_ids(erc20, sel).unwrap(), TradingPair(sel, erc20));
 	assert_eq!(TradingPair::from_currency_ids(sel, sel), None);
 
 	assert_eq!(
-		TradingPair::from_currency_ids(ausd, sel).unwrap().dex_share_currency_id(),
-		sel_ausd_lp
+		TradingPair::from_currency_ids(kusd, sel).unwrap().dex_share_currency_id(),
+		sel_kusd_lp
 	);
 	assert_eq!(
 		TradingPair::from_currency_ids(sel, erc20).unwrap().dex_share_currency_id(),
@@ -60,7 +63,7 @@ fn currency_id_into_u32_works() {
 	let currency_id = DexShare::Token(TokenSymbol::SEL);
 	assert_eq!(Into::<u32>::into(currency_id), 0x00);
 
-	let currency_id = DexShare::Token(TokenSymbol::SUSD);
+	let currency_id = DexShare::Token(TokenSymbol::KUSD);
 	assert_eq!(Into::<u32>::into(currency_id), 0x01);
 
 	let currency_id = DexShare::Erc20(
@@ -94,7 +97,7 @@ fn currency_id_try_into_evm_address_works() {
 	assert_eq!(
 		EvmAddress::try_from(CurrencyId::DexShare(
 			DexShare::Token(TokenSymbol::SEL),
-			DexShare::Token(TokenSymbol::SUSD),
+			DexShare::Token(TokenSymbol::KUSD),
 		)),
 		Ok(EvmAddress::from_str("0x0000000000000000000200000000000000000001").unwrap())
 	);
@@ -117,6 +120,14 @@ fn currency_id_try_into_evm_address_works() {
 			DexShare::ForeignAsset(Default::default())
 		)),
 		Ok(EvmAddress::from_str("0x0000000000000000000202000000000200000000").unwrap())
+	);
+
+	assert_eq!(
+		EvmAddress::try_from(CurrencyId::DexShare(
+			DexShare::StableAssetPoolToken(Default::default()),
+			DexShare::StableAssetPoolToken(Default::default())
+		)),
+		Ok(EvmAddress::from_str("0x0000000000000000000203000000000300000000").unwrap())
 	);
 }
 

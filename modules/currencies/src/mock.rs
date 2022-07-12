@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! Mocks for the currencies module.
 
@@ -95,7 +98,7 @@ impl tokens::Config for Runtime {
 }
 
 pub const NATIVE_CURRENCY_ID: CurrencyId = CurrencyId::Token(TokenSymbol::SEL);
-pub const X_TOKEN_ID: CurrencyId = CurrencyId::Token(TokenSymbol::SUSD);
+pub const X_TOKEN_ID: CurrencyId = CurrencyId::Token(TokenSymbol::KUSD);
 pub const DOT: CurrencyId = CurrencyId::Token(TokenSymbol::DOT);
 
 parameter_types! {
@@ -250,8 +253,7 @@ pub const ALICE_BALANCE: u128 = 100_000_000_000_000_000_000_000u128;
 
 pub fn deploy_contracts() {
 	let json: serde_json::Value =
-		serde_json::from_str(include_str!("../../../ts-tests/build/Erc20DemoContract2.json"))
-			.unwrap();
+		serde_json::from_str(include_str!("../../evm/ts-tests/Erc20DemoContract2.json")).unwrap();
 	let code = hex::decode(json.get("bytecode").unwrap().as_str().unwrap()).unwrap();
 	assert_ok!(EVM::create(Origin::signed(alice()), code, 0, 2_100_000, 10000, vec![]));
 

@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
 	evm::EthereumTransactionMessage, signature::SelendraMultiSignature, to_bytes, Address, Balance,
@@ -211,8 +214,7 @@ impl<Call, Extra, ConvertEthTx, StorageDepositPerByte, TxFeePerGas, Lookup, Chec
 					target: "evm", "tx msg: {:?}", msg
 				);
 
-				let msg_hash = msg.hash(); // TODO: consider rewirte this to use `keccak_256` for hashing because it could be
-						   // faster
+				let msg_hash = msg.hash(); // TODO: consider rewirte this to use `keccak_256` for hashing because it could be faster
 
 				let signer = recover_signer(&sig, msg_hash.as_fixed_bytes())
 					.ok_or(InvalidTransaction::BadProof)?;
@@ -255,8 +257,7 @@ impl<Call, Extra, ConvertEthTx, StorageDepositPerByte, TxFeePerGas, Lookup, Chec
 					target: "evm", "tx msg: {:?}", msg
 				);
 
-				let msg_hash = msg.hash(); // TODO: consider rewirte this to use `keccak_256` for hashing because it could be
-						   // faster
+				let msg_hash = msg.hash(); // TODO: consider rewirte this to use `keccak_256` for hashing because it could be faster
 
 				let signer = recover_signer(&sig, msg_hash.as_fixed_bytes())
 					.ok_or(InvalidTransaction::BadProof)?;
@@ -462,10 +463,7 @@ mod tests {
 	// 	// access_list = vec![]
 	// 	let msg = EthereumTransactionMessage {
 	// 		chain_id: 595,
-	// 		genesis: H256::from_str(
-	// 			"0xafb55f3937d1377c23b8f351315b2792f5d2753bb95420c191d2dc70ad7196e8",
-	// 		)
-	// 		.unwrap(),
+	// 		genesis: H256::from_str("0xafb55f3937d1377c23b8f351315b2792f5d2753bb95420c191d2dc70ad7196e8").unwrap(),
 	// 		nonce: 0,
 	// 		tip: 2,
 	// 		gas_limit: 2100000,
@@ -476,17 +474,13 @@ mod tests {
 	// 		valid_until: 105,
 	// 		access_list: vec![],
 	// 	};
-	// 	let sign =
-	// hex!("c30a85ee9218af4e2892c82d65a8a7fbeee75c010973d42cee2e52309449d687056c09cf486a16d58d23b0ebfed63a0276d5fb1a464f645dc7607147a37f7a211c"
-	// ); 	assert_eq!(verify_eip712_signature(msg, sign), sender);
+	// 	let sign = hex!("c30a85ee9218af4e2892c82d65a8a7fbeee75c010973d42cee2e52309449d687056c09cf486a16d58d23b0ebfed63a0276d5fb1a464f645dc7607147a37f7a211c");
+	// 	assert_eq!(verify_eip712_signature(msg, sign), sender);
 
 	// 	// access_list.storage_keys = vec![]
 	// 	let msg = EthereumTransactionMessage {
 	// 		chain_id: 595,
-	// 		genesis: H256::from_str(
-	// 			"0xafb55f3937d1377c23b8f351315b2792f5d2753bb95420c191d2dc70ad7196e8",
-	// 		)
-	// 		.unwrap(),
+	// 		genesis: H256::from_str("0xafb55f3937d1377c23b8f351315b2792f5d2753bb95420c191d2dc70ad7196e8").unwrap(),
 	// 		nonce: 0,
 	// 		tip: 2,
 	// 		gas_limit: 2100000,
@@ -500,16 +494,12 @@ mod tests {
 	// 			storage_keys: vec![],
 	// 		}],
 	// 	};
-	// 	let sign =
-	// hex!("a94da7159e29f2a0c9aec08eb62cbb6eefd6ee277960a3c96b183b53201687ce19f1fd9c2cfdace8730fd5249ea11e57701cd0cc20386bbd9d3df5092fe218851c"
-	// ); 	assert_eq!(verify_eip712_signature(msg, sign), sender);
+	// 	let sign = hex!("a94da7159e29f2a0c9aec08eb62cbb6eefd6ee277960a3c96b183b53201687ce19f1fd9c2cfdace8730fd5249ea11e57701cd0cc20386bbd9d3df5092fe218851c");
+	// 	assert_eq!(verify_eip712_signature(msg, sign), sender);
 
 	// 	let msg = EthereumTransactionMessage {
 	// 		chain_id: 595,
-	// 		genesis: H256::from_str(
-	// 			"0xafb55f3937d1377c23b8f351315b2792f5d2753bb95420c191d2dc70ad7196e8",
-	// 		)
-	// 		.unwrap(),
+	// 		genesis: H256::from_str("0xafb55f3937d1377c23b8f351315b2792f5d2753bb95420c191d2dc70ad7196e8").unwrap(),
 	// 		nonce: 0,
 	// 		tip: 2,
 	// 		gas_limit: 2100000,
@@ -521,24 +511,14 @@ mod tests {
 	// 		access_list: vec![AccessListItem {
 	// 			address: hex!("0000000000000000000000000000000000000000").into(),
 	// 			storage_keys: vec![
-	// 				H256::from_str(
-	// 					"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-	// 				)
-	// 				.unwrap(),
-	// 				H256::from_str(
-	// 					"0x0000000000111111111122222222223333333333444444444455555555556666",
-	// 				)
-	// 				.unwrap(),
-	// 				H256::from_str(
-	// 					"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-	// 				)
-	// 				.unwrap(),
+	// 				H256::from_str("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef").unwrap(),
+	// 				H256::from_str("0x0000000000111111111122222222223333333333444444444455555555556666").unwrap(),
+	// 				H256::from_str("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef").unwrap(),
 	// 			],
 	// 		}],
 	// 	};
-	// 	let sign =
-	// hex!("dca9701b77bac69e5a88c7f040a6fa0a051f97305619e66e9182bf3416ca2d0e7b730cb732e2f747754f6b9307d78ce611aabb3692ea48314670a6a8c447dc9b1c"
-	// ); 	assert_eq!(verify_eip712_signature(msg.clone(), sign), sender);
+	// 	let sign = hex!("dca9701b77bac69e5a88c7f040a6fa0a051f97305619e66e9182bf3416ca2d0e7b730cb732e2f747754f6b9307d78ce611aabb3692ea48314670a6a8c447dc9b1c");
+	// 	assert_eq!(verify_eip712_signature(msg.clone(), sign), sender);
 
 	// 	let mut new_msg = msg.clone();
 	// 	new_msg.nonce += 1;
@@ -557,9 +537,7 @@ mod tests {
 	// 	assert_ne!(verify_eip712_signature(new_msg, sign), sender);
 
 	// 	let mut new_msg = msg.clone();
-	// 	new_msg.action = TransactionAction::Call(
-	// 		H160::from_str("0x1111111111222222222233333333334444444444").unwrap(),
-	// 	);
+	// 	new_msg.action = TransactionAction::Call(H160::from_str("0x1111111111222222222233333333334444444444").unwrap());
 	// 	assert_ne!(verify_eip712_signature(new_msg, sign), sender);
 
 	// 	let mut new_msg = msg.clone();

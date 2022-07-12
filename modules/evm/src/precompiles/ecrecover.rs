@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use super::LinearCostPrecompile;
 use crate::runner::state::PrecompileFailure;
@@ -41,7 +44,9 @@ impl LinearCostPrecompile for ECRecover {
 
 		sig[64] = match input[63] {
 			v if v > 26 && input[32..63] == [0; 31] => v - 27,
-			_ => return Ok((ExitSucceed::Returned, [0u8; 0].to_vec())),
+			_ => {
+				return Ok((ExitSucceed::Returned, [0u8; 0].to_vec()))
+			},
 		};
 
 		let result = match sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg) {

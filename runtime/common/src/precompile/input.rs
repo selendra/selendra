@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use frame_support::ensure;
 use sp_std::{marker::PhantomData, result::Result, vec::Vec};
@@ -316,7 +319,7 @@ mod tests {
 	use frame_support::{assert_err, assert_ok};
 	use hex_literal::hex;
 	use num_enum::TryFromPrimitive;
-	use sp_core::{bytes::from_hex, H160};
+	use sp_core::H160;
 	use sp_runtime::RuntimeDebug;
 	use std::str::FromStr;
 
@@ -448,12 +451,12 @@ mod tests {
 			00000000
 			000000000000000000000000 0000000000000000000100000000000000000000
 			000000000000000000000000 0000000000000000000100000000000000000001
-			ffffffffffffffffffffffff 0000000000000000000100000000000000000080
+			ffffffffffffffffffffffff 0000000000000000000100000000000000000083
 		"};
 
 		let input = TestInput::new(&data[..], None);
 		assert_ok!(input.currency_id_at(1), CurrencyId::Token(TokenSymbol::SEL));
-		assert_ok!(input.currency_id_at(2), CurrencyId::Token(TokenSymbol::SUSD));
+		assert_ok!(input.currency_id_at(2), CurrencyId::Token(TokenSymbol::KUSD));
 		assert_ok!(input.currency_id_at(3), CurrencyId::Token(TokenSymbol::DOT));
 	}
 
@@ -623,7 +626,7 @@ mod tests {
 		];
 
 		items.into_iter().for_each(|(input, value)| {
-			assert_eq!(decode_i128(&from_hex(input).unwrap()), value);
+			assert_eq!(decode_i128(&crate::from_hex(input).unwrap()), value);
 		});
 	}
 }

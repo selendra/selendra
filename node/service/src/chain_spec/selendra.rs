@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -34,11 +34,12 @@ use sp_core::{crypto::UncheckedInto, sr25519};
 use sp_runtime::Perbill;
 
 use selendra_runtime::{
-	dollar, AuthorityDiscoveryConfig, BabeConfig, BalancesConfig, Block, CouncilConfig,
-	DemocracyConfig, DexConfig, EVMConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig,
+	dollar, AuthorityDiscoveryConfig, BabeConfig, BalancesConfig, Block, CdpEngineConfig,
+	CdpTreasuryConfig, CouncilConfig, CouncilMembershipConfig, DexConfig, EVMConfig,
+	FinancialCouncilMembershipConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig, IndicesConfig,
 	OperatorMembershipSelendraConfig, OrmlNFTConfig, SS58Prefix, SessionConfig, SessionKeys,
-	StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig, TokensConfig,
-	VestingConfig, SEL, SUSD,
+	StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalMembershipConfig, TokensConfig,
+	KUSD, SEL,
 };
 
 /// Node `ChainSpec` extensions.
@@ -70,19 +71,19 @@ pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
 /// Flaming Fir testnet generator
 pub fn selendra_config() -> Result<ChainSpec, String> {
-	ChainSpec::from_json_bytes(&include_bytes!("../../chain-specs/selendra.json")[..])
+	ChainSpec::from_json_bytes(&include_bytes!("../../resources/selendra.json")[..])
 }
 
 /// Flaming Fir testnet generator
 pub fn testnet_config() -> Result<ChainSpec, String> {
-	ChainSpec::from_json_bytes(&include_bytes!("../../chain-specs/testnet.json")[..])
+	ChainSpec::from_json_bytes(&include_bytes!("../../resources/testnet.json")[..])
 }
 
 fn selendra_properties() -> Properties {
 	let mut properties = Map::new();
 	let mut token_symbol: Vec<String> = vec![];
 	let mut token_decimals: Vec<u32> = vec![];
-	[SEL, SUSD].iter().for_each(|token| {
+	[SEL, KUSD].iter().for_each(|token| {
 		token_symbol.push(token.symbol().unwrap().to_string());
 		token_decimals.push(token.decimals().unwrap() as u32);
 	});
@@ -158,6 +159,7 @@ fn development_config_genesis() -> GenesisConfig {
 
 fn local_selendra_genesis() -> GenesisConfig {
 	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
+
 	selendra_development_genesis(
 		wasm_binary,
 		vec![
@@ -268,6 +270,98 @@ fn staging_config_genesis() -> GenesisConfig {
 }
 
 /// Helper function to create GenesisConfig for testing
+pub fn selendra_development_genesis(
+	wasm_binary: &[u8],
+	initial_authorities: Vec<(
+		AccountId,
+		AccountId,
+		GrandpaId,
+		BabeId,
+		ImOnlineId,
+		AuthorityDiscoveryId,
+	)>,
+	root_key: AccountId,
+	endowed_accounts: Option<Vec<AccountId>>,
+) -> GenesisConfig {
+	let endowment: Balance = 10_000_000 * dollar(SEL);
+	let stash: Balance = endowment / 1000;
+	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
+
+	GenesisConfig {
+		system: SystemConfig { code: wasm_binary.to_vec() },
+		balances: BalancesConfig {
+			balances: endowed_accounts.iter().cloned().map(|x| (x, endowment)).collect(),
+		},
+		council: CouncilConfig::default(),
+		council_membership: CouncilMembershipConfig {
+			members: vec![],
+			phantom: Default::default(),
+		},
+		financial_council: Default::default(),
+		financial_council_membership: FinancialCouncilMembershipConfig {
+			members: vec![],
+			phantom: Default::default(),
+		},
+		technical_committee: Default::default(),
+		technical_membership: TechnicalMembershipConfig {
+			members: vec![],
+			phantom: Default::default(),
+		},
+		operator_membership_selendra: OperatorMembershipSelendraConfig {
+			members: vec![],
+			phantom: Default::default(),
+		},
+		session: SessionConfig {
+			keys: initial_authorities
+				.iter()
+				.map(|x| {
+					(
+						x.0.clone(),
+						x.0.clone(),
+						session_keys(x.2.clone(), x.3.clone(), x.4.clone(), x.5.clone()),
+					)
+				})
+				.collect::<Vec<_>>(),
+		},
+		staking: StakingConfig {
+			validator_count: initial_authorities.len() as u32,
+			stakers: initial_authorities
+				.iter()
+				.map(|x| (x.0.clone(), x.1.clone(), stash, StakerStatus::Validator))
+				.collect(),
+			minimum_validator_count: initial_authorities.len() as u32,
+			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
+			slash_reward_fraction: Perbill::from_percent(10),
+			..Default::default()
+		},
+		phragmen_election: Default::default(),
+		babe: BabeConfig {
+			authorities: vec![],
+			epoch_config: Some(selendra_runtime::BABE_GENESIS_EPOCH_CONFIG),
+		},
+		im_online: ImOnlineConfig { keys: vec![] },
+		authority_discovery: AuthorityDiscoveryConfig { keys: vec![] },
+		grandpa: GrandpaConfig { authorities: vec![] },
+		nomination_pools: Default::default(),
+		indices: IndicesConfig { indices: vec![] },
+		democracy: Default::default(),
+		treasury: Default::default(),
+		tokens: TokensConfig { balances: vec![] },
+		cdp_treasury: CdpTreasuryConfig { expected_collateral_auction_size: vec![] },
+		cdp_engine: CdpEngineConfig { collaterals_params: vec![] },
+		asset_registry: Default::default(),
+		evm: EVMConfig { chain_id: 597u64, accounts: Default::default() },
+		dex: DexConfig {
+			initial_listing_trading_pairs: vec![],
+			initial_enabled_trading_pairs: vec![],
+			initial_added_liquidity_pools: vec![],
+		},
+		orml_nft: OrmlNFTConfig { tokens: vec![] },
+		sudo: SudoConfig { key: Some(root_key) },
+	}
+}
+
+/// Helper function to create GenesisConfig for testing
 pub fn selendra_genesis(
 	wasm_binary: &[u8],
 	initial_authorities: Vec<(
@@ -295,12 +389,20 @@ pub fn selendra_genesis(
 				.collect(),
 		},
 		council: CouncilConfig::default(),
-		technical_committee: TechnicalCommitteeConfig {
+		council_membership: CouncilMembershipConfig {
 			members: vec![],
 			phantom: Default::default(),
 		},
-		technical_membership: Default::default(),
-		council_membership: Default::default(),
+		financial_council: Default::default(),
+		financial_council_membership: FinancialCouncilMembershipConfig {
+			members: vec![],
+			phantom: Default::default(),
+		},
+		technical_committee: Default::default(),
+		technical_membership: TechnicalMembershipConfig {
+			members: vec![],
+			phantom: Default::default(),
+		},
 		operator_membership_selendra: OperatorMembershipSelendraConfig {
 			members: vec![],
 			phantom: Default::default(),
@@ -328,7 +430,6 @@ pub fn selendra_genesis(
 			slash_reward_fraction: Perbill::from_percent(10),
 			..Default::default()
 		},
-		democracy: DemocracyConfig::default(),
 		phragmen_election: Default::default(),
 		babe: BabeConfig {
 			authorities: vec![],
@@ -337,100 +438,21 @@ pub fn selendra_genesis(
 		im_online: ImOnlineConfig { keys: vec![] },
 		authority_discovery: AuthorityDiscoveryConfig { keys: vec![] },
 		grandpa: GrandpaConfig { authorities: vec![] },
-		vesting: VestingConfig { vesting: vec![] },
-		treasury: Default::default(),
+		indices: IndicesConfig { indices: vec![] },
 		nomination_pools: Default::default(),
+		democracy: Default::default(),
+		treasury: Default::default(),
 		tokens: TokensConfig { balances: vec![] },
+		cdp_treasury: CdpTreasuryConfig { expected_collateral_auction_size: vec![] },
+		cdp_engine: CdpEngineConfig { collaterals_params: vec![] },
 		asset_registry: Default::default(),
-		orml_nft: OrmlNFTConfig { tokens: vec![] },
+		evm: EVMConfig { chain_id: 597u64, accounts: Default::default() },
 		dex: DexConfig {
 			initial_listing_trading_pairs: vec![],
 			initial_enabled_trading_pairs: vec![],
 			initial_added_liquidity_pools: vec![],
 		},
-		evm: EVMConfig { chain_id: 67u64, accounts: Default::default() },
-		sudo: SudoConfig { key: Some(root_key) },
-	}
-}
-
-/// Helper function to create GenesisConfig for testing
-pub fn selendra_development_genesis(
-	wasm_binary: &[u8],
-	initial_authorities: Vec<(
-		AccountId,
-		AccountId,
-		GrandpaId,
-		BabeId,
-		ImOnlineId,
-		AuthorityDiscoveryId,
-	)>,
-	root_key: AccountId,
-	endowed_accounts: Option<Vec<AccountId>>,
-) -> GenesisConfig {
-	let endowment: Balance = 10_000_000 * dollar(SEL);
-	let stash: Balance = endowment / 1000;
-	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
-
-	GenesisConfig {
-		system: SystemConfig { code: wasm_binary.to_vec() },
-		balances: BalancesConfig {
-			balances: endowed_accounts.iter().cloned().map(|x| (x, endowment)).collect(),
-		},
-		council: CouncilConfig::default(),
-		technical_committee: TechnicalCommitteeConfig {
-			members: vec![],
-			phantom: Default::default(),
-		},
-		technical_membership: Default::default(),
-		council_membership: Default::default(),
-		operator_membership_selendra: OperatorMembershipSelendraConfig {
-			members: vec![],
-			phantom: Default::default(),
-		},
-		session: SessionConfig {
-			keys: initial_authorities
-				.iter()
-				.map(|x| {
-					(
-						x.0.clone(),
-						x.0.clone(),
-						session_keys(x.2.clone(), x.3.clone(), x.4.clone(), x.5.clone()),
-					)
-				})
-				.collect::<Vec<_>>(),
-		},
-		staking: StakingConfig {
-			validator_count: initial_authorities.len() as u32,
-			stakers: initial_authorities
-				.iter()
-				.map(|x| (x.0.clone(), x.1.clone(), stash, StakerStatus::Validator))
-				.collect(),
-			minimum_validator_count: initial_authorities.len() as u32,
-			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
-			slash_reward_fraction: Perbill::from_percent(10),
-			..Default::default()
-		},
-		democracy: DemocracyConfig::default(),
-		phragmen_election: Default::default(),
-		babe: BabeConfig {
-			authorities: vec![],
-			epoch_config: Some(selendra_runtime::BABE_GENESIS_EPOCH_CONFIG),
-		},
-		im_online: ImOnlineConfig { keys: vec![] },
-		authority_discovery: AuthorityDiscoveryConfig { keys: vec![] },
-		grandpa: GrandpaConfig { authorities: vec![] },
-		treasury: Default::default(),
-		nomination_pools: Default::default(),
-		vesting: VestingConfig { vesting: vec![] },
-		tokens: TokensConfig { balances: vec![] },
-		asset_registry: Default::default(),
 		orml_nft: OrmlNFTConfig { tokens: vec![] },
-		dex: DexConfig {
-			initial_listing_trading_pairs: vec![],
-			initial_enabled_trading_pairs: vec![],
-			initial_added_liquidity_pools: vec![],
-		},
-		evm: EVMConfig { chain_id: 67u64, accounts: Default::default() },
 		sudo: SudoConfig { key: Some(root_key) },
 	}
 }

@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! Mocks for idle-scheduler module.
 
@@ -32,7 +35,7 @@ use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
 pub const BASE_WEIGHT: Weight = 1_000_000;
-pub const BLOCK_KEY: [u8; 32] = [0; 32];
+pub const RELAY_BLOCK_KEY: [u8; 32] = [0; 32];
 
 pub type AccountId = u32;
 impl frame_system::Config for Runtime {
@@ -122,7 +125,7 @@ impl ExtBuilder {
 
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));
-		ext.execute_with(|| sp_io::storage::set(&BLOCK_KEY, &0_u32.encode()));
+		ext.execute_with(|| sp_io::storage::set(&RELAY_BLOCK_KEY, &0_u32.encode()));
 		ext
 	}
 }

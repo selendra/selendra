@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2021 Selendra.
+// Copyright (C) 2021-2021 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -44,7 +44,7 @@ use sp_runtime::{
 
 type Balance = u128;
 type Ratio = FixedU128;
-pub const SUSD: CurrencyId = CurrencyId::Token(TokenSymbol::SUSD);
+pub const KUSD: CurrencyId = CurrencyId::Token(TokenSymbol::KUSD);
 
 mod evm_mod {
 	pub use super::super::super::*;
@@ -138,11 +138,22 @@ define_combined_task! {
 	}
 }
 
+pub struct MockBlockNumberProvider;
+impl BlockNumberProvider for MockBlockNumberProvider {
+	type BlockNumber = u32;
+
+	fn current_block_number() -> Self::BlockNumber {
+		Zero::zero()
+	}
+}
+
 impl module_idle_scheduler::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
 	type Task = ScheduledTasks;
 	type MinimumWeightRemainInBlock = ConstU64<0>;
+	type RelayChainBlockNumberProvider = MockBlockNumberProvider;
+	type DisableBlockThreshold = ConstU32<6>;
 }
 
 pub struct GasToWeight;
@@ -202,14 +213,14 @@ impl Config for Runtime {
 }
 
 parameter_types! {
-	pub const GetStableCurrencyId: CurrencyId = SUSD;
+	pub const GetStableCurrencyId: CurrencyId = KUSD;
 	pub MaxSwapSlippageCompareToOracle: Ratio = Ratio::one();
 	pub const TreasuryPalletId: PalletId = PalletId(*b"sel/trsy");
 	pub const TransactionPaymentPalletId: PalletId = PalletId(*b"sel/fees");
 	pub SelendraTreasuryAccount: AccountId32 = TreasuryPalletId::get().into_account_truncating();
 	pub const CustomFeeSurplus: Percent = Percent::from_percent(50);
 	pub const AlternativeFeeSurplus: Percent = Percent::from_percent(25);
-	pub DefaultFeeTokens: Vec<CurrencyId> = vec![SUSD];
+	pub DefaultFeeTokens: Vec<CurrencyId> = vec![KUSD];
 	pub const TradingPathLimit: u32 = 4;
 	pub const ExistenceRequirement: u128 = 1;
 }
