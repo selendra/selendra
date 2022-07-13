@@ -20,6 +20,7 @@
 
 /// Time and blocks.
 pub mod time {
+	use crate::parameter_types;
 	use primitives::{BlockNumber, Moment};
 	use runtime_common::prod_or_fast;
 
@@ -34,13 +35,19 @@ pub mod time {
 
 	// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
+
+	parameter_types! {
+		pub const OneDay: BlockNumber = DAYS;
+		pub const ZeroDay: BlockNumber = 0;
+		pub const SevenDays: BlockNumber = 7 * DAYS;
+	}
 }
 
 /// Fee-related
 pub mod fee {
 	use frame_support::weights::{
-		constants::ExtrinsicBaseWeight,
-		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
+		constants::ExtrinsicBaseWeight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		WeightToFeePolynomial,
 	};
 	use primitives::Balance;
 	use runtime_common::{cent, dollar, millicent, SEL};

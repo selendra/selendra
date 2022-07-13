@@ -159,13 +159,14 @@ impl Contains<Call> for BaseCallFilter {
 		let is_core_call = matches!(call, Call::System(_) | Call::Timestamp(_));
 		if is_core_call {
 			// always allow core call
-			return true;
+			return true
 		}
 
-		let is_paused = module_transaction_pause::PausedTransactionFilter::<Runtime>::contains(call);
+		let is_paused =
+			module_transaction_pause::PausedTransactionFilter::<Runtime>::contains(call);
 		if is_paused {
 			// no paused call
-			return false;
+			return false
 		}
 		true
 	}
@@ -318,25 +319,13 @@ impl module_transaction_payment::Config for Runtime {
 
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub ProposalBondMinimum: Balance = dollar(SEL);
-	pub ProposalBondMaximum: Balance = 5 * dollar(SEL);
-	pub const SpendPeriod: BlockNumber = DAYS;
-	pub const Burn: Permill = Permill::from_percent(0);
-	pub const TipCountdown: BlockNumber = DAYS;
-	pub const TipFindersFee: Percent = Percent::from_percent(10);
+	pub ProposalBondMinimum: Balance = 500 * dollar(SEL);
+	pub ProposalBondMaximum: Balance = 1000 * dollar(SEL);
+	pub const SpendPeriod: BlockNumber = 24 * DAYS;
+	pub const Burn: Permill = Permill::from_percent(5);
+	pub const TipCountdown: BlockNumber = 1 * DAYS;
+	pub const TipFindersFee: Percent = Percent::from_percent(20);
 	pub TipReportDepositBase: Balance = dollar(SEL);
-	pub const SevenDays: BlockNumber = 7 * DAYS;
-	pub const ZeroDay: BlockNumber = 0;
-	pub const OneDay: BlockNumber = DAYS;
-	pub BountyDepositBase: Balance = dollar(SEL);
-	pub const BountyDepositPayoutDelay: BlockNumber = DAYS;
-	pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
-	pub const CuratorDepositMultiplier: Permill = Permill::from_percent(50);
-	pub CuratorDepositMin: Balance = dollar(SEL);
-	pub CuratorDepositMax: Balance = 100 * dollar(SEL);
-	pub BountyValueMinimum: Balance = 5 * dollar(SEL);
-	pub DataDepositPerByte: Balance = cent(SEL);
-	pub const MaximumReasonLength: u32 = 16384;
 	pub const MaxApprovals: u32 = 100;
 }
 
@@ -346,16 +335,29 @@ impl pallet_treasury::Config for Runtime {
 	type ApproveOrigin = EnsureRootOrHalfCouncil;
 	type RejectOrigin = EnsureRootOrHalfCouncil;
 	type Event = Event;
-	type OnSlash = ();
+	type OnSlash = Treasury;
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
 	type ProposalBondMaximum = ProposalBondMaximum;
+	type MaxApprovals = MaxApprovals;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
 	type SpendFunds = Bounties;
-	type WeightInfo = ();
-	type MaxApprovals = MaxApprovals;
+	type WeightInfo = weights::pallet_treasury::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	pub const MaximumReasonLength: u32 = 16384;
+	pub BountyDepositBase: Balance = 10 * dollar(SEL);
+	pub const BountyDepositPayoutDelay: BlockNumber = 7 * DAYS;
+	pub const BountyUpdatePeriod: BlockNumber = 30 * DAYS;
+
+	pub const CuratorDepositMultiplier: Permill = Permill::from_percent(50);
+	pub CuratorDepositMin: Balance = dollar(SEL);
+	pub CuratorDepositMax: Balance = 100 * dollar(SEL);
+	pub BountyValueMinimum: Balance = 5 * dollar(SEL);
+	pub DataDepositPerByte: Balance = cent(SEL);
 }
 
 impl pallet_bounties::Config for Runtime {
@@ -473,7 +475,6 @@ parameter_type_with_key! {
 		}
 	};
 }
-
 
 pub struct EnsureRootOrTreasury;
 impl EnsureOrigin<Origin> for EnsureRootOrTreasury {
@@ -835,7 +836,6 @@ impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 }
-
 
 construct_runtime!(
 	pub enum Runtime where
