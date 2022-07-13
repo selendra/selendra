@@ -1,9 +1,9 @@
 use crate::{
-	dollar, parameter_types, weights, Balance, BlockNumber, Event, Runtime, DAYS, SEL,
-	TreasuryPalletId, Balances, Treasury, Bounties, PhragmenElection, DataDepositPerByte
+	dollar, parameter_types, weights, Balance, Balances, BlockNumber, Bounties, DataDepositPerByte,
+	Event, PhragmenElection, Runtime, Treasury, TreasuryPalletId, DAYS, SEL,
 };
 use runtime_common::EnsureRootOrHalfCouncil;
-use sp_runtime::{Permill, Percent};
+use sp_runtime::{Percent, Permill};
 
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
