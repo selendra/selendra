@@ -100,7 +100,8 @@ where
 				buf.copy_from_slice(&input_data[..]);
 				let account_id: Runtime::AccountId = AccountId32::from(buf).into();
 
-				// If it does not exist, return address(0x0). Keep the behavior the same as mapping[key]
+				// If it does not exist, return address(0x0). Keep the behavior the same as
+				// mapping[key]
 				let address = module_evm_accounts::Pallet::<Runtime>::get_evm_address(&account_id)
 					.unwrap_or_default();
 

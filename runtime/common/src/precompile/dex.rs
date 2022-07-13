@@ -119,7 +119,8 @@ where
 					currency_id_a, currency_id_b
 				);
 
-				// If it does not exist, return address(0x0). Keep the behavior the same as mapping[key]
+				// If it does not exist, return address(0x0). Keep the behavior the same as
+				// mapping[key]
 				let address = <module_dex::Pallet<Runtime> as DEXManager<
 					Runtime::AccountId,
 					Balance,

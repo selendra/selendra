@@ -546,8 +546,9 @@ impl<T: Config> Pallet<T> {
 				(pending_reward.saturating_sub(deduction_amount), deduction_amount)
 			};
 
-			// transfer to `who` maybe fail because of the reward amount is below ED and `who` is not alive.
-			// if transfer failed, do not throw err directly and try to put the tiny reward back to pool.
+			// transfer to `who` maybe fail because of the reward amount is below ED and `who` is
+			// not alive. if transfer failed, do not throw err directly and try to put the tiny
+			// reward back to pool.
 			let res = T::Currency::transfer(currency_id, &Self::account_id(), &who, actual_amount);
 			if res.is_err() {
 				let _ = <orml_rewards::Pallet<T>>::accumulate_reward(&pool_id, currency_id, actual_amount).map_err(|e| {

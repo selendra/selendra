@@ -217,7 +217,8 @@ impl<T: Config> Pallet<T> {
 					ensure!(input_currency_id != output_currency_id, Error::<T>::InvalidSwapPath);
 
 					// If there has been a swap before,
-					// the currency id of this swap must be the output currency id of the previous swap.
+					// the currency id of this swap must be the output currency id of the previous
+					// swap.
 					if let Some(currency_id) = previous_output_currency_id {
 						ensure!(currency_id == *input_currency_id, Error::<T>::InvalidSwapPath);
 					}
@@ -241,7 +242,8 @@ impl<T: Config> Pallet<T> {
 						.ok_or(Error::<T>::InvalidTokenIndex)?;
 
 					// If there has been a swap before,
-					// the currency id of this swap must be the output currency id of the previous swap.
+					// the currency id of this swap must be the output currency id of the previous
+					// swap.
 					if let Some(currency_id) = previous_output_currency_id {
 						ensure!(currency_id == *input_currency_id, Error::<T>::InvalidSwapPath);
 					}

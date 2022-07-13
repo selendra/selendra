@@ -389,9 +389,9 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 		}
 		match currency_id {
 			CurrencyId::Erc20(contract) => {
-				// deposit from erc20 holding account to receiver(who). in xcm case which receive erc20 from sibling
-				// parachain, we choose receiver to charge storage fee. we must make sure receiver has enough native
-				// token to charge storage fee.
+				// deposit from erc20 holding account to receiver(who). in xcm case which receive
+				// erc20 from sibling parachain, we choose receiver to charge storage fee. we must
+				// make sure receiver has enough native token to charge storage fee.
 				let sender = T::Erc20HoldingAccount::get();
 				let from = T::AddressMapping::get_account_id(&sender);
 				ensure!(
@@ -424,10 +424,10 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 
 		match currency_id {
 			CurrencyId::Erc20(contract) => {
-				// withdraw from sender(who) to erc20 holding account. in xcm case which receive erc20 from sibling
-				// parachain, sender is sibling parachain sovereign account. As the origin here is used to charge
-				// storage fee, we must make sure sibling parachain sovereign account has enough native token to
-				// charge storage fee.
+				// withdraw from sender(who) to erc20 holding account. in xcm case which receive
+				// erc20 from sibling parachain, sender is sibling parachain sovereign account. As
+				// the origin here is used to charge storage fee, we must make sure sibling
+				// parachain sovereign account has enough native token to charge storage fee.
 				let receiver = T::Erc20HoldingAccount::get();
 				let sender = T::AddressMapping::get_evm_address(who)
 					.ok_or(Error::<T>::EvmAccountNotFound)?;

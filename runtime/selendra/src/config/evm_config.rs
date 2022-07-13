@@ -46,7 +46,8 @@ impl<I: From<Balance>> frame_support::traits::Get<I> for StorageDepositPerByte {
 		#[cfg(not(feature = "with-ethereum-compatibility"))]
 		// NOTE: SEL decimals is 12, convert to 18.
 		// 10 * millicent(SEL) * 10^6
-		return I::from(100_000_000_000_000)
+		#[rustfmt::skip]
+		return I::from(100_000_000_000_000);
 		#[cfg(feature = "with-ethereum-compatibility")]
 		return I::from(0)
 	}

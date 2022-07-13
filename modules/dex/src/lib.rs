@@ -558,7 +558,8 @@ pub mod module {
 				CurrencyId::StableAssetPoolToken(_) => T::Erc20InfoMapping::name(currency_id)
 					.map(|_| ())
 					.ok_or(Error::<T>::AssetUnregistered),
-				CurrencyId::Token(_) | CurrencyId::DexShare(_, _) => Ok(()), /* No registration required */
+				CurrencyId::Token(_) | CurrencyId::DexShare(_, _) => Ok(()), /* No registration
+				                                                              * required */
 			};
 			check_asset_registry(currency_id_a)?;
 			check_asset_registry(currency_id_b)?;
@@ -700,7 +701,8 @@ pub mod module {
 						TradingPairStatus::<_, _>::Enabled,
 					);
 
-					// record initial exchange rate so that founders can use it to calculate their own shares
+					// record initial exchange rate so that founders can use it to calculate their
+					// own shares
 					InitialShareExchangeRates::<T>::insert(
 						trading_pair,
 						(share_exchange_rate_0, share_exchange_rate_1),
@@ -1310,7 +1312,8 @@ impl<T: Config> Pallet<T> {
 
 			numerator
 				.checked_div(denominator)
-				.and_then(|r| r.checked_add(U256::one())) // add 1 to result so that correct the possible losses caused by remainder discarding in
+				.and_then(|r| r.checked_add(U256::one())) // add 1 to result so that correct the possible losses caused by remainder
+				// discarding in
 				.and_then(|n| TryInto::<Balance>::try_into(n).ok())
 				.unwrap_or_else(Zero::zero)
 		}

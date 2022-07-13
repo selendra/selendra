@@ -797,7 +797,8 @@ where
 		let total_native = <T as Config>::Currency::free_balance(who);
 
 		if fee.saturating_add(native_existential_deposit) <= total_native {
-			// User's locked balance can't be transferable, which means can't be used for fee payment.
+			// User's locked balance can't be transferable, which means can't be used for fee
+			// payment.
 			if let Some(new_free_balance) = total_native.checked_sub(fee) {
 				if T::Currency::ensure_can_withdraw(who, fee, reason, new_free_balance).is_ok() {
 					return None
@@ -857,8 +858,8 @@ where
 					.map(|_| (who.clone(), fee_surplus))
 			},
 			Some(Call::with_fee_paid_by { call: _, payer_addr, payer_sig: _ }) => {
-				// validate payer signature in runtime side, because `SignedExtension` between different runtime
-				// may be different.
+				// validate payer signature in runtime side, because `SignedExtension` between
+				// different runtime may be different.
 				Self::native_then_alternative_or_default(
 					payer_addr,
 					fee,
@@ -906,7 +907,8 @@ where
 				}
 			}
 
-			// migration of `GlobalFeeSwapPath`. after Dapp using `with_fee_currency`, we can delete this.
+			// migration of `GlobalFeeSwapPath`. after Dapp using `with_fee_currency`, we can delete
+			// this.
 			let global_fee_swap_path = GlobalFeeSwapPath::<T>::iter_values()
 				.map(|v| v.into_inner())
 				.collect::<Vec<_>>();
@@ -1243,7 +1245,8 @@ where
 		//              = tip / bounded_{weight|length} / TipPerWeightStep * TipPerWeightStep
 		// priority = tipPerWeight * max_block_{weight|length}
 		// MaxTipsOfPriority = 10_000 SEL = 10^16.
-		// `MaxTipsOfPriority * max_block_{weight|length}` will overflow, so div `TipPerWeightStep` here.
+		// `MaxTipsOfPriority * max_block_{weight|length}` will overflow, so div `TipPerWeightStep`
+		// here.
 		let max_reward = |val: PalletBalanceOf<T>| {
 			val.checked_div(T::TipPerWeightStep::get())
 				.expect("TipPerWeightStep is non-zero; qed")

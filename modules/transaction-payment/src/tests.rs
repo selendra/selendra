@@ -1239,8 +1239,8 @@ fn should_alter_operational_priority() {
 				.unwrap()
 				.priority;
 			// final_fee = base_fee + len_fee + adjusted_weight_fee + tip = 0 + 20 + 100 + 5 = 125
-			// priority = final_fee * fee_multiplier * max_tx_per_block + (tip + 1) * max_tx_per_block
-			//          = 125 * 5 * 10 + 60 = 6310
+			// priority = final_fee * fee_multiplier * max_tx_per_block + (tip + 1) *
+			// max_tx_per_block          = 125 * 5 * 10 + 60 = 6310
 			assert_eq!(priority, 6310);
 
 			let priority = ChargeTransactionPayment::<Runtime>(2 * tip)
@@ -1248,8 +1248,8 @@ fn should_alter_operational_priority() {
 				.unwrap()
 				.priority;
 			// final_fee = base_fee + len_fee + adjusted_weight_fee + tip = 0 + 20 + 100 + 10 = 130
-			// priority = final_fee * fee_multiplier * max_tx_per_block + (tip + 1) * max_tx_per_block
-			//          = 130 * 5 * 10 + 110 = 6610
+			// priority = final_fee * fee_multiplier * max_tx_per_block + (tip + 1) *
+			// max_tx_per_block          = 130 * 5 * 10 + 110 = 6610
 			assert_eq!(priority, 6610);
 		});
 }
@@ -1287,8 +1287,8 @@ fn no_tip_has_some_priority() {
 				.unwrap()
 				.priority;
 			// final_fee = base_fee + len_fee + adjusted_weight_fee + tip = 0 + 20 + 100 + 0 = 120
-			// priority = final_fee * fee_multiplier * max_tx_per_block + (tip + 1) * max_tx_per_block
-			//          = 120 * 5 * 10 + 10 = 6010
+			// priority = final_fee * fee_multiplier * max_tx_per_block + (tip + 1) *
+			// max_tx_per_block          = 120 * 5 * 10 + 10 = 6010
 			assert_eq!(priority, 6010);
 		});
 }

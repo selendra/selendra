@@ -269,7 +269,8 @@ impl<T: Config> Pallet<T> {
 		let offset = U256::from_big_endian(&output[0..32]);
 		let length = U256::from_big_endian(&output[offset.as_usize()..offset.as_usize() + 32]);
 		ensure!(
-			// output is 32-byte aligned. ensure total_length >= offset + string length + string data length.
+			// output is 32-byte aligned. ensure total_length >= offset + string length + string
+			// data length.
 			output.len() >= offset.as_usize() + 32 + length.as_usize(),
 			Error::<T>::InvalidReturnValue
 		);

@@ -437,12 +437,13 @@ where
 								"gas required exceeds allowance {}",
 								cap
 							))),
-						// The execution has been done with block gas limit, so it is not a lack of gas from the user.
+						// The execution has been done with block gas limit, so it is not a lack of
+						// gas from the user.
 						other => error_on_execution_failure(&other, &data)?,
 					}
 				} else {
-					// The execution has already been done with block gas limit, so it is not a lack of gas from the
-					// user.
+					// The execution has already been done with block gas limit, so it is not a lack
+					// of gas from the user.
 					error_on_execution_failure(&ExitReason::Revert(revert), &data)?
 				}
 			},

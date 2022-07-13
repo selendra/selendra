@@ -928,8 +928,8 @@ impl<T: Config> Pallet<T> {
 				let token_0: CurrencyId = dex_share_0.into();
 				let token_1: CurrencyId = dex_share_1.into();
 
-				// NOTE: distribute half of the new issued stable coin to each components of lp token,
-				// need better distribution methods to avoid unused component tokens.
+				// NOTE: distribute half of the new issued stable coin to each components of lp
+				// token, need better distribution methods to avoid unused component tokens.
 				let stable_for_token_0 = increase_debit_value / 2;
 				let stable_for_token_1 = increase_debit_value.saturating_sub(stable_for_token_0);
 
@@ -1043,7 +1043,8 @@ impl<T: Config> Pallet<T> {
 				let stable_1 = Self::swap_stable_and_lp_token(token_1, available_1, true)?;
 				let total_stable = stable_0.saturating_add(stable_1);
 
-				// check whether the amount of stable token obtained by selling lptokens is enough as expected
+				// check whether the amount of stable token obtained by selling lptokens is enough
+				// as expected
 				ensure!(
 					total_stable >= min_decrease_debit_value,
 					Error::<T>::NotEnoughDebitDecrement

@@ -1474,9 +1474,9 @@ mod tests {
 
 	#[test]
 	fn ensure_can_create_contract() {
-		// Ensure that the `ExistentialDeposit` for creating the contract >= account `ExistentialDeposit`.
-		// Otherwise, the creation of the contract account will fail because it is less than
-		// ExistentialDeposit.
+		// Ensure that the `ExistentialDeposit` for creating the contract >= account
+		// `ExistentialDeposit`. Otherwise, the creation of the contract account will fail because
+		// it is less than ExistentialDeposit.
 		assert!(
 			Balance::from(NewContractExtraBytes::get()).saturating_mul(
 				<StorageDepositPerByte as frame_support::traits::Get<Balance>>::get() /

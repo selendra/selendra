@@ -1289,8 +1289,8 @@ impl<T: Config> Pallet<T> {
 			)
 		})?;
 
-		// this should happen after `Accounts` is updated because this could trigger another updates on
-		// `Accounts`
+		// this should happen after `Accounts` is updated because this could trigger another updates
+		// on `Accounts`
 		frame_system::Pallet::<T>::dec_providers(&contract_account)?;
 
 		Ok(())

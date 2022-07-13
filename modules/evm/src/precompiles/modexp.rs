@@ -207,8 +207,8 @@ pub trait ModexpImpl {
 		buf.copy_from_slice(&reader[64 + 24..96]);
 		let mod_len = u64::from_be_bytes(buf);
 
-		// Gas formula allows arbitrary large exp_len when base and modulus are empty, so we need to handle
-		// empty base first.
+		// Gas formula allows arbitrary large exp_len when base and modulus are empty, so we need to
+		// handle empty base first.
 		let r = if base_len == 0 && mod_len == 0 {
 			BigUint::zero()
 		} else {

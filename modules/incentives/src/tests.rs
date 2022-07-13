@@ -498,7 +498,8 @@ fn transfer_failed_when_claim_rewards() {
 			(100, Default::default())
 		);
 
-		// Alice claim rewards, but the rewards are put back to pool because transfer rewards failed.
+		// Alice claim rewards, but the rewards are put back to pool because transfer rewards
+		// failed.
 		assert_ok!(IncentivesModule::claim_rewards(
 			Origin::signed(ALICE::get()),
 			PoolId::Loans(BTC)
@@ -917,8 +918,8 @@ fn on_initialize_should_work() {
 				rewards: vec![(SEL, (2000, 0)), (LSEL, (50, 0))].into_iter().collect(),
 			}
 		);
-		// after shutdown, PoolId::Dex will accumulate incentive rewards, but will not accumulate dex saving
-		// reward
+		// after shutdown, PoolId::Dex will accumulate incentive rewards, but will not accumulate
+		// dex saving reward
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Dex(BTC_KUSD_LP)),
 			PoolInfo {
@@ -926,8 +927,8 @@ fn on_initialize_should_work() {
 				rewards: vec![(SEL, (300, 0)), (KUSD, (10, 0))].into_iter().collect(),
 			}
 		);
-		// after shutdown, PoolId::Dex will accumulate incentive rewards, but will not accumulate dex saving
-		// reward
+		// after shutdown, PoolId::Dex will accumulate incentive rewards, but will not accumulate
+		// dex saving reward
 		assert_eq!(
 			RewardsModule::pool_infos(PoolId::Dex(DOT_KUSD_LP)),
 			PoolInfo {

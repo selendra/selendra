@@ -591,8 +591,8 @@ impl<T: Config> Pallet<T> {
 
 					payment = payment
 						.checked_sub(refund)
-						// This should never fail because new bid payment are always greater or equal to last bid
-						// payment.
+						// This should never fail because new bid payment are always greater or
+						// equal to last bid payment.
 						.ok_or(Error::<T>::InvalidBidPrice)?;
 				}
 
@@ -754,8 +754,8 @@ impl<T: Config> Pallet<T> {
 		refund_collateral: Balance,
 	) {
 		if !refund_collateral.is_zero() {
-			// If failed, just the refund_recipient did not get the refund collateral. It can be fixed by
-			// treasury council.
+			// If failed, just the refund_recipient did not get the refund collateral. It can be
+			// fixed by treasury council.
 			let res = T::CDPTreasury::withdraw_collateral(
 				refund_recipient,
 				collateral_type,

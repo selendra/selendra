@@ -976,8 +976,8 @@ fn do_aggregated_swap_work() {
 		);
 		assert_eq!(Tokens::free_balance(DOT, &ALICE), 97_999_507_726u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 18_947_330_959u128);
-		// actually swap by ExactSupply, actual target amount may be slightly more than exact target amount
-		// of limit
+		// actually swap by ExactSupply, actual target amount may be slightly more than exact target
+		// amount of limit
 		assert_eq!(Tokens::free_balance(KUSD, &ALICE), 208_019_802_070u128);
 
 		assert_eq!(
@@ -1002,8 +1002,8 @@ fn do_aggregated_swap_work() {
 		);
 		assert_eq!(Tokens::free_balance(DOT, &ALICE), 96_346_025_710u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 18_947_330_959u128);
-		// actually swap by ExactSupply, actual target amount may be slightly more than exact target amount
-		// of limit
+		// actually swap by ExactSupply, actual target amount may be slightly more than exact target
+		// amount of limit
 		assert_eq!(Tokens::free_balance(KUSD, &ALICE), 2_988_931_350_012u128);
 	});
 }

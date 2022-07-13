@@ -2058,17 +2058,17 @@ fn auto_publish_works() {
 		// 		crate::Log {
 		// 			address: H160::from_str("0x7b8f8ca099f6e33cf1817cf67d0556429cfc54e4").unwrap(),
 		// 			topics: vec![
-		// 				H256::from_str("0xb0199510a4d57fac89f9b613861450ae948394f2abe3bf9918eb3c6890243f00").unwrap(),
-		// 				H256::from_str("0x00000000000000000000000030f612c54706d40f65self10b8f6989103c2af58").unwrap(),
-		// 			],
+		// 				H256::from_str("0xb0199510a4d57fac89f9b613861450ae948394f2abe3bf9918eb3c6890243f00").
+		// unwrap(), 				H256::from_str("
+		// 0x00000000000000000000000030f612c54706d40f65self10b8f6989103c2af58").unwrap(), 			],
 		// 			data: vec![],
 		// 		},
 		// 		crate::Log {
 		// 			address: factory,
 		// 			topics: vec![
-		// 				H256::from_str("0x6837ff1e738d95fc8bb5f12ce1513f42866f6c59c226c77342c4f36a1958ea10").unwrap(),
-		// 				H256::from_str("0x0000000000000000000000007b8f8ca099f6e33cf1817cf67d0556429cfc54e4").unwrap(),
-		// 			],
+		// 				H256::from_str("0x6837ff1e738d95fc8bb5f12ce1513f42866f6c59c226c77342c4f36a1958ea10").
+		// unwrap(), 				H256::from_str("
+		// 0x0000000000000000000000007b8f8ca099f6e33cf1817cf67d0556429cfc54e4").unwrap(), 			],
 		// 			data: vec![],
 		// 		},
 		// 	],
@@ -2079,7 +2079,8 @@ fn auto_publish_works() {
 		// assert_eq!(
 		// 	EVM::accounts(factory).unwrap().contract_info,
 		// 	Some(ContractInfo {
-		// 		code_hash: H256::from_str("0xd007bd109daec7dec73d897c079b67b3d2fd6ad4892a916c5e03e21bb60ff384")
+		// 		code_hash:
+		// H256::from_str("0xd007bd109daec7dec73d897c079b67b3d2fd6ad4892a916c5e03e21bb60ff384")
 		// 			.unwrap(),
 		// 		maintainer: alice(),
 		// 		published: false
@@ -2090,7 +2091,8 @@ fn auto_publish_works() {
 		// 		.unwrap()
 		// 		.contract_info,
 		// 	Some(ContractInfo {
-		// 		code_hash: H256::from_str("0xe12fa7753d9cd8de1f8b597fef33ab91c2749fe4a1022b648f949ab2566f391f")
+		// 		code_hash:
+		// H256::from_str("0xe12fa7753d9cd8de1f8b597fef33ab91c2749fe4a1022b648f949ab2566f391f")
 		// 			.unwrap(),
 		// 		maintainer: factory,
 		// 		published: false
@@ -2101,7 +2103,8 @@ fn auto_publish_works() {
 		// 		.unwrap()
 		// 		.contract_info,
 		// 	Some(ContractInfo {
-		// 		code_hash: H256::from_str("0x46460b564756d0e02bbfdc8fc3d47d1a68c3b3d8301b5de90da83d6d75e0b6c7")
+		// 		code_hash:
+		// H256::from_str("0x46460b564756d0e02bbfdc8fc3d47d1a68c3b3d8301b5de90da83d6d75e0b6c7")
 		// 			.unwrap(),
 		// 		maintainer: H160::from_str("0x7b8f8ca099f6e33cf1817cf67d0556429cfc54e4").unwrap(),
 		// 		published: false
@@ -2128,17 +2131,17 @@ fn auto_publish_works() {
 		// 			crate::Log {
 		// 				address: H160::from_str("0x39b26a36a8a175ce7d498b5ef187d1ab2f381bbd").unwrap(),
 		// 				topics: vec![
-		// 					H256::from_str("0xb0199510a4d57fac89f9b613861450ae948394f2abe3bf9918eb3c6890243f00").unwrap(),
-		// 					H256::from_str("0x000000000000000000000000769a55efaf4dbdd6f44efce668455522b61abb82").unwrap(),
-		// 				],
+		// 					H256::from_str("0xb0199510a4d57fac89f9b613861450ae948394f2abe3bf9918eb3c6890243f00").
+		// unwrap(), 					H256::from_str("
+		// 0x000000000000000000000000769a55efaf4dbdd6f44efce668455522b61abb82").unwrap(), 				],
 		// 				data: vec![],
 		// 			},
 		// 			crate::Log {
 		// 				address: factory,
 		// 				topics: vec![
-		// 					H256::from_str("0x6837ff1e738d95fc8bb5f12ce1513f42866f6c59c226c77342c4f36a1958ea10").unwrap(),
-		// 					H256::from_str("0x00000000000000000000000039b26a36a8a175ce7d498b5ef187d1ab2f381bbd").unwrap(),
-		// 				],
+		// 					H256::from_str("0x6837ff1e738d95fc8bb5f12ce1513f42866f6c59c226c77342c4f36a1958ea10").
+		// unwrap(), 					H256::from_str("
+		// 0x00000000000000000000000039b26a36a8a175ce7d498b5ef187d1ab2f381bbd").unwrap(), 				],
 		// 				data: vec![],
 		// 			},
 		// 		],
@@ -2149,7 +2152,8 @@ fn auto_publish_works() {
 		// 	assert_eq!(
 		// 		EVM::accounts(factory).unwrap().contract_info,
 		// 		Some(ContractInfo {
-		// 			code_hash: H256::from_str("0xd007bd109daec7dec73d897c079b67b3d2fd6ad4892a916c5e03e21bb60ff384")
+		// 			code_hash:
+		// H256::from_str("0xd007bd109daec7dec73d897c079b67b3d2fd6ad4892a916c5e03e21bb60ff384")
 		// 				.unwrap(),
 		// 			maintainer: alice(),
 		// 			published: true
@@ -2160,7 +2164,8 @@ fn auto_publish_works() {
 		// 			.unwrap()
 		// 			.contract_info,
 		// 		Some(ContractInfo {
-		// 			code_hash: H256::from_str("0xe12fa7753d9cd8de1f8b597fef33ab91c2749fe4a1022b648f949ab2566f391f")
+		// 			code_hash:
+		// H256::from_str("0xe12fa7753d9cd8de1f8b597fef33ab91c2749fe4a1022b648f949ab2566f391f")
 		// 				.unwrap(),
 		// 			maintainer: H160::from_str("0x5f8bd49cd9f0cb2bd5bb9d4320dfe9b61023249d").unwrap(),
 		// 			published: true
@@ -2171,7 +2176,8 @@ fn auto_publish_works() {
 		// 			.unwrap()
 		// 			.contract_info,
 		// 		Some(ContractInfo {
-		// 			code_hash: H256::from_str("0x46460b564756d0e02bbfdc8fc3d47d1a68c3b3d8301b5de90da83d6d75e0b6c7")
+		// 			code_hash:
+		// H256::from_str("0x46460b564756d0e02bbfdc8fc3d47d1a68c3b3d8301b5de90da83d6d75e0b6c7")
 		// 				.unwrap(),
 		// 			maintainer: H160::from_str("0x39b26a36a8a175ce7d498b5ef187d1ab2f381bbd").unwrap(),
 		// 			published: true
@@ -2194,9 +2200,9 @@ fn auto_publish_works() {
 		// 		logs: vec![crate::Log {
 		// 			address: H160::from_str("0x7b8f8ca099f6e33cf1817cf67d0556429cfc54e4").unwrap(),
 		// 			topics: vec![
-		// 				H256::from_str("0xb0199510a4d57fac89f9b613861450ae948394f2abe3bf9918eb3c6890243f00").unwrap(),
-		// 				H256::from_str("0x000000000000000000000000d8a09b53762a01c2beb363d5355f4eecf7b48360").unwrap(),
-		// 			],
+		// 				H256::from_str("0xb0199510a4d57fac89f9b613861450ae948394f2abe3bf9918eb3c6890243f00").
+		// unwrap(), 				H256::from_str("
+		// 0x000000000000000000000000d8a09b53762a01c2beb363d5355f4eecf7b48360").unwrap(), 			],
 		// 			data: vec![],
 		// 		}],
 		// 		used_gas: 147214,
@@ -2208,7 +2214,8 @@ fn auto_publish_works() {
 		// 			.unwrap()
 		// 			.contract_info,
 		// 		Some(ContractInfo {
-		// 			code_hash: H256::from_str("0x46460b564756d0e02bbfdc8fc3d47d1a68c3b3d8301b5de90da83d6d75e0b6c7")
+		// 			code_hash:
+		// H256::from_str("0x46460b564756d0e02bbfdc8fc3d47d1a68c3b3d8301b5de90da83d6d75e0b6c7")
 		// 				.unwrap(),
 		// 			maintainer: H160::from_str("0x7b8f8ca099f6e33cf1817cf67d0556429cfc54e4").unwrap(),
 		// 			published: true

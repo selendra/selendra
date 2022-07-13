@@ -73,8 +73,8 @@ fn can_process_tasks_up_to_weight_limit() {
 			ScheduledTasks::HomaLiteTask(HomaLiteTask::OnIdle)
 		));
 
-		// Given enough weights for only 2 tasks: MinimumWeightRemainInBlock::get() + BASE_WEIGHT*2 +
-		// on_idle_base()
+		// Given enough weights for only 2 tasks: MinimumWeightRemainInBlock::get() + BASE_WEIGHT*2
+		// + on_idle_base()
 		IdleScheduler::on_idle(
 			0,
 			100_002_000_000 + <()>::on_idle_base() + (<()>::clear_tasks() * 2),

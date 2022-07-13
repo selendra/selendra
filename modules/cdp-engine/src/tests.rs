@@ -1541,7 +1541,8 @@ fn offchain_worker_works_cdp() {
 		// currencies
 		run_to_block_offchain(System::block_number() + collateral_currencies_num);
 
-		// checks that offchain worker tx pool is empty (therefore tx to liquidate alice is not present)
+		// checks that offchain worker tx pool is empty (therefore tx to liquidate alice is not
+		// present)
 		assert!(pool_state.write().transactions.pop().is_none());
 		assert_eq!(LoansModule::positions(BTC, ALICE).debit, 500);
 		assert_eq!(LoansModule::positions(BTC, ALICE).collateral, 100);

@@ -233,8 +233,8 @@ fn on_initialize_work() {
 			))
 		);
 
-		// elapsed time is lt all update interval of trading pairs, no trading pairs will not update average
-		// price.
+		// elapsed time is lt all update interval of trading pairs, no trading pairs will not update
+		// average price.
 		Timestamp::set_timestamp(999);
 		DexOracle::on_initialize(1);
 		assert_eq!(DexOracle::cumulatives(KUSDDOTPair::get()), (U256::from(0), U256::from(0), 0));
@@ -262,8 +262,8 @@ fn on_initialize_work() {
 			))
 		);
 
-		// elapsed time is lt the update interval of KUSD/DOT, update average price of KUSD/DOT after try
-		// update cumulatives.
+		// elapsed time is lt the update interval of KUSD/DOT, update average price of KUSD/DOT
+		// after try update cumulatives.
 		Timestamp::set_timestamp(1200);
 		DexOracle::on_initialize(2);
 		assert_eq!(
@@ -298,8 +298,8 @@ fn on_initialize_work() {
 			))
 		);
 
-		// elapsed time is lt the update interval of SEL/DOT, update average price of SEL/DOT after try
-		// update cumulatives.
+		// elapsed time is lt the update interval of SEL/DOT, update average price of SEL/DOT after
+		// try update cumulatives.
 		set_pool(&SELDOTPair::get(), 1000, 2000);
 		Timestamp::set_timestamp(2100);
 		DexOracle::on_initialize(3);

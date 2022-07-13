@@ -176,7 +176,8 @@ impl<T: Config> Pallet<T> {
 			// if is stable currency, use fixed price
 			Some(T::StableCurrencyFixedPrice::get())
 		} else if currency_id == T::GetLiquidCurrencyId::get() {
-			// directly return real-time the multiple of the price of StakingCurrencyId and the exchange rate
+			// directly return real-time the multiple of the price of StakingCurrencyId and the
+			// exchange rate
 			return Self::access_price(T::GetNativeCurrencyId::get()).and_then(|n| {
 				n.checked_mul(&T::LiquidNativeExchangeRateProvider::get_exchange_rate())
 			})
