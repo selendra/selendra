@@ -271,14 +271,49 @@ impl module_currencies::Config for Runtime {
 
 parameter_types! {
 	pub TransactionByteFee: Balance = 10 * millicent(SEL);
+	pub DefaultFeeTokens: Vec<CurrencyId> = vec![KUSD, LSEL];
+	pub const CustomFeeSurplus: Percent = Percent::from_percent(50);
+	pub const AlternativeFeeSurplus: Percent = Percent::from_percent(25);
+	/// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
+	/// than this will decrease the weight and more will increase.
 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
-	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(1, 100_000);
-	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_000u128);
+	/// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
+	/// change the fees more rapidly.
+	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(3, 100_000);
+	/// Minimum amount of the multiplier. This value cannot be too low. A test case should ensure
+	/// that combined with `AdjustmentVariable`, we can recover from the minimum.
+	/// See `multiplier_can_grow_from_zero`.
+	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
 }
 
-impl pallet_sudo::Config for Runtime {
+pub type SlowAdjustingFeeUpdate<R> =
+	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+
+impl module_transaction_payment::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
+	type Currency = Balances;
+	type MultiCurrency = Currencies;
+	type NativeCurrencyId = GetNativeCurrencyId;
+	type WeightToFee = WeightToFee;
+	type DefaultFeeTokens = DefaultFeeTokens;
+	type CustomFeeSurplus = CustomFeeSurplus;
+	type AlternativeFeeSurplus = AlternativeFeeSurplus;
+	type AlternativeFeeSwapDeposit = NativeTokenExistentialDeposit;
+	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+	type TransactionByteFee = TransactionByteFee;
+	type OnTransactionPayment = ();
+	type TipPerWeightStep = TipPerWeightStep;
+	type MaxTipsOfPriority = MaxTipsOfPriority;
+	type TreasuryAccount = TreasuryAccount;
+	type DEX = Dex;
+	type TradingPathLimit = TradingPathLimit;
+	type PriceSource = module_prices::RealTimePriceProvider<Runtime>;
+	type MaxSwapSlippageCompareToOracle = MaxSwapSlippageCompareToOracle;
+	type PalletId = TransactionPaymentPalletId;
+	type UpdateOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::module_transaction_payment::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -567,40 +602,6 @@ impl module_transaction_pause::Config for Runtime {
 	type WeightInfo = weights::module_transaction_pause::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	pub DefaultFeeTokens: Vec<CurrencyId> = vec![KUSD, DOT, LSEL];
-	pub const CustomFeeSurplus: Percent = Percent::from_percent(50);
-	pub const AlternativeFeeSurplus: Percent = Percent::from_percent(25);
-}
-
-impl module_transaction_payment::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
-	type NativeCurrencyId = GetNativeCurrencyId;
-	type Currency = Balances;
-	type MultiCurrency = Currencies;
-	type OnTransactionPayment = ();
-	type AlternativeFeeSwapDeposit = NativeTokenExistentialDeposit;
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-	type TipPerWeightStep = TipPerWeightStep;
-	type MaxTipsOfPriority = MaxTipsOfPriority;
-	type WeightToFee = WeightToFee;
-	type TransactionByteFee = TransactionByteFee;
-	type FeeMultiplierUpdate =
-		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
-	type DEX = Dex;
-	type MaxSwapSlippageCompareToOracle = MaxSwapSlippageCompareToOracle;
-	type TradingPathLimit = TradingPathLimit;
-	type PriceSource = module_prices::RealTimePriceProvider<Runtime>;
-	type WeightInfo = weights::module_transaction_payment::WeightInfo<Runtime>;
-	type PalletId = TransactionPaymentPalletId;
-	type TreasuryAccount = TreasuryAccount;
-	type UpdateOrigin = EnsureRootOrHalfCouncil;
-	type CustomFeeSurplus = CustomFeeSurplus;
-	type AlternativeFeeSurplus = AlternativeFeeSurplus;
-	type DefaultFeeTokens = DefaultFeeTokens;
-}
-
 impl module_asset_registry::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
@@ -830,48 +831,11 @@ impl Convert<(Call, SignedExtra), Result<(), InvalidTransaction>> for PayerSigna
 	}
 }
 
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-/// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-/// A Block signed with a Justification
-pub type SignedBlock = generic::SignedBlock<Block>;
-/// BlockId type as expected by this runtime.
-pub type BlockId = generic::BlockId<Block>;
-/// The SignedExtension to the basic transaction logic.
-pub type SignedExtra = (
-	frame_system::CheckNonZeroSender<Runtime>,
-	frame_system::CheckSpecVersion<Runtime>,
-	frame_system::CheckTxVersion<Runtime>,
-	frame_system::CheckGenesis<Runtime>,
-	frame_system::CheckEra<Runtime>,
-	runtime_common::CheckNonce<Runtime>,
-	frame_system::CheckWeight<Runtime>,
-	module_transaction_payment::ChargeTransactionPayment<Runtime>,
-	module_evm::SetEvmOrigin<Runtime>,
-);
-/// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = SelendraUncheckedExtrinsic<
-	Call,
-	SignedExtra,
-	ConvertEthereumTx,
-	StorageDepositPerByte,
-	TxFeePerGas,
-	PayerSignatureVerification,
->;
-/// The payload being signed in transactions.
-pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
-/// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
-/// Executive: handles dispatch to the various modules.
-pub type Executive = frame_executive::Executive<
-	Runtime,
-	Block,
-	frame_system::ChainContext<Runtime>,
-	Runtime,
-	AllPalletsWithSystem,
-	(),
->;
+impl pallet_sudo::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+}
+
 
 construct_runtime!(
 	pub enum Runtime where
@@ -964,17 +928,60 @@ construct_runtime!(
 		AssetRegistry: module_asset_registry = 142,
 
 		// Smart contracts
-		EVM: module_evm = 180,
-		EVMBridge: module_evm_bridge exclude_parts { Call } = 181,
-		EvmAccounts: module_evm_accounts = 182,
+		EVM: module_evm = 150,
+		EVMBridge: module_evm_bridge exclude_parts { Call } = 151,
+		EvmAccounts: module_evm_accounts = 152,
 
 		// Stable asset
-		StableAsset: module_stable_asset = 200,
+		StableAsset: module_stable_asset = 190,
 
 		// Dev
-		Sudo: pallet_sudo = 255,
+		Sudo: pallet_sudo = 200,
 	}
 );
+
+/// Block header type as expected by this runtime.
+pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+/// Block type as expected by this runtime.
+pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+/// A Block signed with a Justification
+pub type SignedBlock = generic::SignedBlock<Block>;
+/// BlockId type as expected by this runtime.
+pub type BlockId = generic::BlockId<Block>;
+/// The SignedExtension to the basic transaction logic.
+pub type SignedExtra = (
+	frame_system::CheckNonZeroSender<Runtime>,
+	frame_system::CheckSpecVersion<Runtime>,
+	frame_system::CheckTxVersion<Runtime>,
+	frame_system::CheckGenesis<Runtime>,
+	frame_system::CheckEra<Runtime>,
+	runtime_common::CheckNonce<Runtime>,
+	frame_system::CheckWeight<Runtime>,
+	module_transaction_payment::ChargeTransactionPayment<Runtime>,
+	module_evm::SetEvmOrigin<Runtime>,
+);
+/// Unchecked extrinsic type as expected by this runtime.
+pub type UncheckedExtrinsic = SelendraUncheckedExtrinsic<
+	Call,
+	SignedExtra,
+	ConvertEthereumTx,
+	StorageDepositPerByte,
+	TxFeePerGas,
+	PayerSignatureVerification,
+>;
+/// The payload being signed in transactions.
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+/// Extrinsic type that has already been checked.
+pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
+/// Executive: handles dispatch to the various modules.
+pub type Executive = frame_executive::Executive<
+	Runtime,
+	Block,
+	frame_system::ChainContext<Runtime>,
+	Runtime,
+	AllPalletsWithSystem,
+	(),
+>;
 
 #[cfg(feature = "runtime-benchmarks")]
 #[macro_use]
