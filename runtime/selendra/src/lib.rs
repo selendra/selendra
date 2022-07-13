@@ -323,9 +323,6 @@ parameter_types! {
 	pub ProposalBondMaximum: Balance = 1000 * dollar(SEL);
 	pub const SpendPeriod: BlockNumber = 24 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(5);
-	pub const TipCountdown: BlockNumber = 1 * DAYS;
-	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub TipReportDepositBase: Balance = dollar(SEL);
 	pub const MaxApprovals: u32 = 100;
 }
 
@@ -349,15 +346,14 @@ impl pallet_treasury::Config for Runtime {
 
 parameter_types! {
 	pub const MaximumReasonLength: u32 = 16384;
-	pub BountyDepositBase: Balance = 10 * dollar(SEL);
-	pub const BountyDepositPayoutDelay: BlockNumber = 7 * DAYS;
-	pub const BountyUpdatePeriod: BlockNumber = 30 * DAYS;
-
+	pub const BountyDepositPayoutDelay: BlockNumber = 8 * DAYS;
+	pub const BountyUpdatePeriod: BlockNumber = 90 * DAYS;
 	pub const CuratorDepositMultiplier: Permill = Permill::from_percent(50);
-	pub CuratorDepositMin: Balance = dollar(SEL);
-	pub CuratorDepositMax: Balance = 100 * dollar(SEL);
-	pub BountyValueMinimum: Balance = 5 * dollar(SEL);
-	pub DataDepositPerByte: Balance = cent(SEL);
+	pub CuratorDepositMin: Balance = 50 * dollar(SEL);
+	pub CuratorDepositMax: Balance = 200 * dollar(SEL);
+	pub BountyValueMinimum: Balance = 200 * dollar(SEL);
+	pub DataDepositPerByte: Balance = 10 * cent(SEL);
+	pub BountyDepositBase: Balance = 10 * dollar(SEL);
 }
 
 impl pallet_bounties::Config for Runtime {
@@ -371,8 +367,14 @@ impl pallet_bounties::Config for Runtime {
 	type CuratorDepositMax = CuratorDepositMax;
 	type DataDepositPerByte = DataDepositPerByte;
 	type MaximumReasonLength = MaximumReasonLength;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_bounties::WeightInfo<Runtime>;
 	type ChildBountyManager = ();
+}
+
+parameter_types! {
+	pub const TipCountdown: BlockNumber = 1 * DAYS;
+	pub const TipFindersFee: Percent = Percent::from_percent(20);
+	pub TipReportDepositBase: Balance = dollar(SEL);
 }
 
 impl pallet_tips::Config for Runtime {
@@ -383,7 +385,7 @@ impl pallet_tips::Config for Runtime {
 	type TipCountdown = TipCountdown;
 	type TipFindersFee = TipFindersFee;
 	type TipReportDepositBase = TipReportDepositBase;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_tips::WeightInfo<Runtime>;
 }
 
 impl orml_auction::Config for Runtime {
