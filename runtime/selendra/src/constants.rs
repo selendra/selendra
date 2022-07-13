@@ -149,11 +149,13 @@ pub mod accounts {
 		pub const TreasuryReservePalletId: PalletId = PalletId(*b"sel/reve");
 		pub const PhragmenElectionPalletId: LockIdentifier = *b"sel/phre";
 		pub const NftPalletId: PalletId = PalletId(*b"sel/aNFT");
-		pub UnreleasedNativeVaultAccountId: AccountId = PalletId(*b"sel/urls").into_account_truncating();
 		// This Pallet is only used to payment fee pool, it's not added to whitelist by design.
 		// because transaction payment pallet will ensure the accounts always have enough ED.
 		pub const TransactionPaymentPalletId: PalletId = PalletId(*b"sel/fees");
 		pub const StableAssetPalletId: PalletId = PalletId(*b"nuts/sta");
+
+		pub UnreleasedNativeVaultAccountId: AccountId = PalletId(*b"sel/urls").into_account_truncating();
+		pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 	}
 
 	pub fn get_all_module_accounts() -> Vec<AccountId> {

@@ -218,8 +218,6 @@ impl pallet_timestamp::Config for Runtime {
 parameter_types! {
 	pub const MaxReserves: u32 = ReserveIdentifier::Count as u32;
 	pub NativeTokenExistentialDeposit: Balance = 10 * cent(SEL);
-	// For weight estimation, we assume that the most locks on an individual account will be 50.
-	// This number may need to be adjusted in the future if this assumption no longer holds true.
 	pub const MaxLocks: u32 = 50;
 }
 
@@ -228,12 +226,29 @@ impl pallet_balances::Config for Runtime {
 	type DustRemoval = Treasury;
 	type Event = Event;
 	type ExistentialDeposit = NativeTokenExistentialDeposit;
-	type AccountStore = frame_system::Pallet<Runtime>;
+	type AccountStore = System;
 	type MaxLocks = MaxLocks;
 	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = ReserveIdentifier;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_balances::WeightInfo<Runtime>;
 }
+
+impl orml_tokens::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = CurrencyId;
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
+	type MaxLocks = MaxLocks;
+	type MaxReserves = MaxReserves;
+	type ReserveIdentifier = ReserveIdentifier;
+	type DustRemovalWhitelist = DustRemovalWhitelist;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
+	type WeightInfo = weights::orml_tokens::WeightInfo<Runtime>;
+}
+
 
 parameter_types! {
 	pub TransactionByteFee: Balance = 10 * millicent(SEL);
@@ -403,26 +418,6 @@ parameter_type_with_key! {
 			},
 		}
 	};
-}
-
-parameter_types! {
-	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
-}
-
-impl orml_tokens::Config for Runtime {
-	type Event = Event;
-	type Balance = Balance;
-	type Amount = Amount;
-	type CurrencyId = CurrencyId;
-	type WeightInfo = weights::orml_tokens::WeightInfo<Runtime>;
-	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
-	type MaxLocks = MaxLocks;
-	type MaxReserves = MaxReserves;
-	type ReserveIdentifier = ReserveIdentifier;
-	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
 }
 
 parameter_types! {
