@@ -16,7 +16,10 @@ use frame_support::{
 	PalletId,
 };
 
-use crate::constants::time::{deposit, EPOCH_DURATION_IN_SLOTS, MILLISECS_PER_BLOCK, MINUTES};
+use crate::constants::{
+	fee::deposit,
+	time::{EPOCH_DURATION_IN_SLOTS, MILLISECS_PER_BLOCK, MINUTES},
+};
 use pallet_election_provider_multi_phase::SolutionAccuracyOf;
 use pallet_grandpa::AuthorityId as GrandpaId;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;

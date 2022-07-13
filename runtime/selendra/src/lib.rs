@@ -21,33 +21,70 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit.
 #![recursion_limit = "512"]
-#![allow(clippy::unnecessary_mut_passed)]
-#![allow(clippy::or_fun_call)]
-#![allow(clippy::from_over_into)]
-#![allow(clippy::upper_case_acronyms)]
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+/// The version infromation used to identify this runtime when compiled
+/// natively.
+#[cfg(feature = "std")]
+pub fn native_version() -> NativeVersion {
+	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
+}
+
+mod authority;
+pub mod constants;
+mod voter_bags;
+mod weights;
+
+// runtime config
+mod config;
+
+pub use authority::AuthorityConfigImpl;
 use codec::{Decode, DecodeLimit, Encode};
-use frame_support::pallet_prelude::InvalidTransaction;
-pub use frame_support::{
-	construct_runtime, log, parameter_types,
+
+use sp_api::impl_runtime_apis;
+use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160};
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
+use sp_runtime::{
+	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		ConstBool, ConstU128, ConstU16, ConstU32, Contains, ContainsLengthBound,
-		Currency as PalletCurrency, EnsureOrigin, EqualPrivilegeOnly, Everything, Get, Imbalance,
-		InstanceFilter, IsSubType, IsType, KeyOwnerProofSystem, LockIdentifier, Nothing,
-		OnRuntimeUpgrade, OnUnbalanced, Randomness, SortedMembers, U128CurrencyToVote,
-		WithdrawReasons,
+		AccountIdConversion, BadOrigin, BlakeTwo256, Block as BlockT, Bounded, Convert, NumberFor,
+		SaturatedConversion, StaticLookup, Verify,
 	},
-	weights::{
-		constants::{BlockExecutionWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight,
+	transaction_validity::{TransactionSource, TransactionValidity},
+	ApplyExtrinsicResult, DispatchResult, FixedPointNumber, Perbill, Percent, Permill, Perquintill,
+};
+use sp_std::prelude::*;
+#[cfg(feature = "std")]
+use sp_version::NativeVersion;
+use sp_version::RuntimeVersion;
+
+use pallet_grandpa::{
+	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
+};
+use pallet_session::historical::{self as pallet_session_historical};
+#[cfg(feature = "std")]
+pub use pallet_staking::StakerStatus;
+pub use pallet_timestamp::Call as TimestampCall;
+use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
+
+use frame_support::{
+	construct_runtime, log,
+	pallet_prelude::InvalidTransaction,
+	parameter_types,
+	traits::{
+		ConstBool, ConstU128, ConstU16, ConstU32, Contains, EnsureOrigin, EqualPrivilegeOnly,
+		InstanceFilter, KeyOwnerProofSystem, LockIdentifier, U128CurrencyToVote,
 	},
-	PalletId, RuntimeDebug, StorageValue,
+	weights::{constants::RocksDbWeight, Weight},
+	PalletId, RuntimeDebug,
 };
 use frame_system::{EnsureRoot, RawOrigin};
+
 use module_asset_registry::AssetIdMaps;
 use module_cdp_engine::CollateralCurrencyIds;
 use module_currencies::BasicCurrencyAdapter;
@@ -60,70 +97,22 @@ use orml_traits::{
 	create_median_value_data_provider, parameter_type_with_key, DataFeeder, DataProviderExtended,
 	GetByKey,
 };
-use pallet_grandpa::{
-	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
-};
-use pallet_session::historical::{self as pallet_session_historical};
-#[cfg(feature = "std")]
-pub use pallet_staking::StakerStatus;
-use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
-use primitives::{
-	evm::{AccessListItem, EthereumTransactionMessage},
-	unchecked_extrinsic::SelendraUncheckedExtrinsic,
-};
-use sp_api::impl_runtime_apis;
-use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160};
-use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
-	traits::{
-		AccountIdConversion, BadOrigin, BlakeTwo256, Block as BlockT, Bounded, Convert, NumberFor,
-		SaturatedConversion, StaticLookup, Verify,
-	},
-	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, DispatchResult, FixedPointNumber,
-};
-use sp_std::prelude::*;
 
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
-
-pub use pallet_timestamp::Call as TimestampCall;
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{Perbill, Percent, Permill, Perquintill};
-
-pub use authority::AuthorityConfigImpl;
-pub use constants::{fee::*, time::*};
 pub use primitives::{
 	currency::AssetIds,
-	evm::{BlockLimits, EstimateResourcesRequest},
-	AccountId, AccountIndex, Address, Amount, AuctionId, AuthoritysOriginId, Balance, BlockNumber,
-	CurrencyId, DataProviderId, EraIndex, Hash, Lease, Moment, Multiplier, Nonce,
-	ReserveIdentifier, Share, Signature, TokenSymbol, TradingPair,
+	evm::{AccessListItem, BlockLimits, EstimateResourcesRequest, EthereumTransactionMessage},
+	unchecked_extrinsic::SelendraUncheckedExtrinsic,
+	AccountId, AccountIndex, Amount, AuctionId, AuthoritysOriginId, Balance, BlockNumber,
+	CurrencyId, DataProviderId, Hash, Moment, Multiplier, Nonce, ReserveIdentifier, Signature,
+	TokenSymbol,
 };
 pub use runtime_common::{
-	cent, dollar, microcent, millicent, AllPrecompiles, BlockHashCount, CouncilInstance,
-	CouncilMembershipInstance, EnsureRootOrAllCouncil, EnsureRootOrAllTechnicalCommittee,
-	EnsureRootOrHalfCouncil, EnsureRootOrHalfFinancialCouncil, EnsureRootOrOneCouncil,
-	EnsureRootOrOneThirdsTechnicalCommittee, EnsureRootOrThreeFourthsCouncil,
-	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, ExchangeRate,
-	ExistentialDepositsTimesOneHundred, FinancialCouncilInstance,
-	FinancialCouncilMembershipInstance, GasToWeight, MaxTipsOfPriority,
-	OffchainSolutionWeightLimit, OperationalFeeMultiplier, OperatorMembershipInstanceSelendra,
-	Price, ProxyType, Rate, Ratio, RuntimeBlockLength, RuntimeBlockWeights, SystemContractsFilter,
-	TechnicalCommitteeInstance, TechnicalMembershipInstance, TimeStampedPrice, TipPerWeightStep,
-	DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL,
+	cent, dollar, millicent, AllPrecompiles, BlockHashCount, EnsureRootOrHalfCouncil,
+	EnsureRootOrOneCouncil, EnsureRootOrThreeFourthsCouncil, ExchangeRate,
+	ExistentialDepositsTimesOneHundred, GasToWeight, MaxTipsOfPriority, OperationalFeeMultiplier,
+	Price, ProxyType, Rate, Ratio, RuntimeBlockLength, RuntimeBlockWeights, TimeStampedPrice,
+	TipPerWeightStep, DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL,
 };
-
-mod authority;
-pub mod constants;
-mod voter_bags;
-mod weights;
-
-// runtime config
-mod config;
 
 use crate::config::{
 	consensus_config::EpochDuration,
@@ -133,6 +122,7 @@ use crate::config::{
 };
 #[cfg(test)]
 use config::evm_config::NewContractExtraBytes;
+pub use constants::{accounts::*, fee::*, time::*};
 
 /// This runtime version.
 #[sp_version::runtime_version]
@@ -146,13 +136,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	transaction_version: 1,
 	state_version: 0,
 };
-
-/// The version infromation used to identify this runtime when compiled
-/// natively.
-#[cfg(feature = "std")]
-pub fn native_version() -> NativeVersion {
-	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
-}
 
 /// The BABE epoch configuration at genesis.
 pub const BABE_GENESIS_EPOCH_CONFIG: sp_consensus_babe::BabeEpochConfiguration =
@@ -170,80 +153,55 @@ impl_opaque_keys! {
 	}
 }
 
-// Pallet accounts of runtime
-parameter_types! {
-	pub const TreasuryPalletId: PalletId = PalletId(*b"sel/trsy");
-	pub const LoansPalletId: PalletId = PalletId(*b"sel/loan");
-	pub const DEXPalletId: PalletId = PalletId(*b"sel/dexm");
-	pub const CDPTreasuryPalletId: PalletId = PalletId(*b"sel/cdpt");
-	pub const FunanTreasuryPalletId: PalletId = PalletId(*b"sel/hztr");
-	pub const IncentivesPalletId: PalletId = PalletId(*b"sel/inct");
-	pub const CollatorPotId: PalletId = PalletId(*b"sel/cpot");
-	// Treasury reserve
-	pub const TreasuryReservePalletId: PalletId = PalletId(*b"sel/reve");
-	pub const PhragmenElectionPalletId: LockIdentifier = *b"sel/phre";
-	pub const NftPalletId: PalletId = PalletId(*b"sel/aNFT");
-	pub UnreleasedNativeVaultAccountId: AccountId = PalletId(*b"sel/urls").into_account_truncating();
-	// This Pallet is only used to payment fee pool, it's not added to whitelist by design.
-	// because transaction payment pallet will ensure the accounts always have enough ED.
-	pub const TransactionPaymentPalletId: PalletId = PalletId(*b"sel/fees");
-	pub const StableAssetPalletId: PalletId = PalletId(*b"nuts/sta");
-}
+pub struct BaseCallFilter;
+impl Contains<Call> for BaseCallFilter {
+	fn contains(call: &Call) -> bool {
+		let is_core_call = matches!(call, Call::System(_) | Call::Timestamp(_));
+		if is_core_call {
+			// always allow core call
+			return true;
+		}
 
-pub fn get_all_module_accounts() -> Vec<AccountId> {
-	vec![
-		TreasuryPalletId::get().into_account_truncating(),
-		LoansPalletId::get().into_account_truncating(),
-		DEXPalletId::get().into_account_truncating(),
-		CDPTreasuryPalletId::get().into_account_truncating(),
-		FunanTreasuryPalletId::get().into_account_truncating(),
-		IncentivesPalletId::get().into_account_truncating(),
-		TreasuryReservePalletId::get().into_account_truncating(),
-		CollatorPotId::get().into_account_truncating(),
-		UnreleasedNativeVaultAccountId::get(),
-		StableAssetPalletId::get().into_account_truncating(),
-	]
+		let is_paused = module_transaction_pause::PausedTransactionFilter::<Runtime>::contains(call);
+		if is_paused {
+			// no paused call
+			return false;
+		}
+		true
+	}
 }
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u8 = 42; // Ss58AddressFormat::SubstrateAccount
-}
-
-pub struct BaseCallFilter;
-impl Contains<Call> for BaseCallFilter {
-	fn contains(call: &Call) -> bool {
-		!module_transaction_pause::PausedTransactionFilter::<Runtime>::contains(call) &&
-			!matches!(call, Call::Democracy(pallet_democracy::Call::propose { .. }),)
-	}
+	pub const SS58Prefix: u8 = 42;
 }
 
 impl frame_system::Config for Runtime {
-	type AccountId = AccountId;
+	type BaseCallFilter = BaseCallFilter;
+	type BlockWeights = RuntimeBlockWeights;
+	type BlockLength = RuntimeBlockLength;
+	type BlockHashCount = BlockHashCount;
+	type DbWeight = RocksDbWeight;
+	type Origin = Origin;
 	type Call = Call;
-	type Lookup = (Indices, EvmAccounts);
+	type Event = Event;
 	type Index = Nonce;
 	type BlockNumber = BlockNumber;
 	type Hash = Hash;
 	type Hashing = BlakeTwo256;
+	type AccountId = AccountId;
+	type AccountData = pallet_balances::AccountData<Balance>;
+	type Lookup = (Indices, EvmAccounts);
 	type Header = generic::Header<BlockNumber, BlakeTwo256>;
-	type Event = Event;
-	type Origin = Origin;
-	type BlockHashCount = BlockHashCount;
-	type BlockWeights = RuntimeBlockWeights;
-	type BlockLength = RuntimeBlockLength;
 	type Version = Version;
 	type PalletInfo = PalletInfo;
-	type AccountData = pallet_balances::AccountData<Balance>;
+	type OnSetCode = ();
 	type OnNewAccount = ();
 	type OnKilledAccount =
 		(module_evm::CallKillAccount<Runtime>, module_evm_accounts::CallKillAccount<Runtime>);
-	type DbWeight = RocksDbWeight;
-	type BaseCallFilter = BaseCallFilter;
-	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
-	type OnSetCode = ();
-	type MaxConsumers = ConstU32<16>;
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
 }
 
 parameter_types! {

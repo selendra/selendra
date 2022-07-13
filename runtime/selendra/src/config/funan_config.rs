@@ -2,11 +2,12 @@ use crate::{
 	dollar, parameter_types, weights, AccountId, AccountIdConversion, Auction, AuctionManager,
 	Balance, Balances, BlockNumber, CDPTreasuryPalletId, CdpEngine, CdpTreasury,
 	CollateralCurrencyIds, ConstU32, Currencies, Dex, EmergencyShutdown, EnsureRootOrHalfCouncil,
-	EnsureRootOrHalfFinancialCouncil, Event, ExchangeRate, ExistentialDeposits,
-	ExistentialDepositsTimesOneHundred, FixedPointNumber, FunanTreasuryPalletId,
-	GetNativeCurrencyId, GetStableCurrencyId, LoansPalletId, NativeTokenExistentialDeposit, Prices,
-	Rate, Ratio, RebasedStableAsset, Runtime, Timestamp, HOURS, KUSD, MINUTES, SEL,
+	Event, ExchangeRate, ExistentialDeposits, ExistentialDepositsTimesOneHundred, FixedPointNumber,
+	FunanTreasuryPalletId, GetNativeCurrencyId, GetStableCurrencyId, LoansPalletId,
+	NativeTokenExistentialDeposit, Prices, Rate, Ratio, RebasedStableAsset, Runtime, Timestamp,
+	HOURS, KUSD, MINUTES, SEL,
 };
+use runtime_common::EnsureRootOrHalfFinancialCouncil;
 
 parameter_types! {
 	pub MinimumIncrementSize: Rate = Rate::saturating_from_rational(2, 100);

@@ -20,8 +20,8 @@
 
 /// Time and blocks.
 pub mod time {
-	use primitives::{Balance, BlockNumber, Moment};
-	use runtime_common::{dollar, millicent, prod_or_fast, SEL};
+	use primitives::{BlockNumber, Moment};
+	use runtime_common::prod_or_fast;
 
 	pub const MILLISECS_PER_BLOCK: Moment = 6000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
@@ -34,20 +34,16 @@ pub mod time {
 
 	// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
-
-	pub fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 2 * dollar(SEL) + (bytes as Balance) * 10 * millicent(SEL)
-	}
 }
 
 /// Fee-related
 pub mod fee {
 	use frame_support::weights::{
-		constants::{ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
+		constants::ExtrinsicBaseWeight,
 		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
 	};
 	use primitives::Balance;
-	use runtime_common::{cent, SEL};
+	use runtime_common::{cent, dollar, millicent, SEL};
 	use smallvec::smallvec;
 	use sp_runtime::Perbill;
 
@@ -82,33 +78,12 @@ pub mod fee {
 		}
 	}
 
-	pub fn sel_per_second() -> u128 {
-		let base_weight = Balance::from(ExtrinsicBaseWeight::get());
-		let base_tx_per_second = (WEIGHT_PER_SECOND as u128) / base_weight;
-		base_tx_per_second * base_tx_in_sel()
-	}
-
-	pub fn dot_per_second() -> u128 {
-		sel_per_second() / 100
+	pub fn deposit(items: u32, bytes: u32) -> Balance {
+		items as Balance * 2 * dollar(SEL) + (bytes as Balance) * 10 * millicent(SEL)
 	}
 }
 
-#[cfg(test)]
-mod tests {
-	use crate::{constants::fee::base_tx_in_sel, Balance};
-	use frame_support::weights::constants::ExtrinsicBaseWeight;
-
-	#[test]
-	fn check_weight() {
-		let p = base_tx_in_sel();
-		let q = Balance::from(ExtrinsicBaseWeight::get());
-
-		assert_eq!(p, 1_000_000_000);
-		assert_eq!(q, 85_795_000);
-	}
-}
-
-/// Fee-related
+/// election-related
 pub mod election {
 	use crate::{RuntimeBlockLength, RuntimeBlockWeights};
 	use frame_support::{
@@ -153,4 +128,61 @@ pub mod election {
 
 	/// The accuracy type used for genesis election provider;
 	pub type OnChainAccuracy = sp_runtime::Perbill;
+}
+
+/// account-related
+pub mod accounts {
+	use crate::{parameter_types, AccountId, LockIdentifier, PalletId, Vec};
+	use sp_runtime::traits::AccountIdConversion;
+	use sp_std::vec;
+
+	// Pallet accounts of runtime
+	parameter_types! {
+		pub const TreasuryPalletId: PalletId = PalletId(*b"sel/trsy");
+		pub const LoansPalletId: PalletId = PalletId(*b"sel/loan");
+		pub const DEXPalletId: PalletId = PalletId(*b"sel/dexm");
+		pub const CDPTreasuryPalletId: PalletId = PalletId(*b"sel/cdpt");
+		pub const FunanTreasuryPalletId: PalletId = PalletId(*b"sel/hztr");
+		pub const IncentivesPalletId: PalletId = PalletId(*b"sel/inct");
+		pub const CollatorPotId: PalletId = PalletId(*b"sel/cpot");
+		// Treasury reserve
+		pub const TreasuryReservePalletId: PalletId = PalletId(*b"sel/reve");
+		pub const PhragmenElectionPalletId: LockIdentifier = *b"sel/phre";
+		pub const NftPalletId: PalletId = PalletId(*b"sel/aNFT");
+		pub UnreleasedNativeVaultAccountId: AccountId = PalletId(*b"sel/urls").into_account_truncating();
+		// This Pallet is only used to payment fee pool, it's not added to whitelist by design.
+		// because transaction payment pallet will ensure the accounts always have enough ED.
+		pub const TransactionPaymentPalletId: PalletId = PalletId(*b"sel/fees");
+		pub const StableAssetPalletId: PalletId = PalletId(*b"nuts/sta");
+	}
+
+	pub fn get_all_module_accounts() -> Vec<AccountId> {
+		vec![
+			TreasuryPalletId::get().into_account_truncating(),
+			LoansPalletId::get().into_account_truncating(),
+			DEXPalletId::get().into_account_truncating(),
+			CDPTreasuryPalletId::get().into_account_truncating(),
+			FunanTreasuryPalletId::get().into_account_truncating(),
+			IncentivesPalletId::get().into_account_truncating(),
+			TreasuryReservePalletId::get().into_account_truncating(),
+			CollatorPotId::get().into_account_truncating(),
+			UnreleasedNativeVaultAccountId::get(),
+			StableAssetPalletId::get().into_account_truncating(),
+		]
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::{constants::fee::base_tx_in_sel, Balance};
+	use frame_support::weights::constants::ExtrinsicBaseWeight;
+
+	#[test]
+	fn check_weight() {
+		let p = base_tx_in_sel();
+		let q = Balance::from(ExtrinsicBaseWeight::get());
+
+		assert_eq!(p, 1_000_000_000);
+		assert_eq!(q, 85_795_000);
+	}
 }

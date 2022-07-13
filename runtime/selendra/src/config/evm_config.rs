@@ -1,9 +1,9 @@
 use crate::{
 	config::utility_config::ScheduledTasks, dollar, parameter_types, weights, AllPrecompiles, Babe,
-	Balance, Balances, Currencies, EnsureRootOrHalfCouncil,
-	EnsureRootOrTwoThirdsTechnicalCommittee, Event, GasToWeight, IdleScheduler, Runtime,
-	RuntimeDebug, TreasuryAccount, EVM, H160, SEL,
+	Balance, Balances, Currencies, Event, GasToWeight, IdleScheduler, Runtime, RuntimeDebug,
+	TreasuryAccount, EVM, H160, SEL,
 };
+use runtime_common::{EnsureRootOrHalfCouncil, EnsureRootOrTwoThirdsTechnicalCommittee};
 
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;

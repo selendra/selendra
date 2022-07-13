@@ -18,7 +18,7 @@
 
 #![allow(clippy::from_over_into)]
 
-use crate::{evm::EvmAddress, *};
+use crate::evm::EvmAddress;
 use bstringify::bstringify;
 use codec::{Decode, Encode, MaxEncodedLen};
 pub use module_stable_asset::StableAssetPoolId;
@@ -142,15 +142,15 @@ macro_rules! create_currency_id {
 			let mut selendra_lp_tokens = vec![
 				Token {
 					symbol: "LP_SEL_KUSD".to_string(),
-					address: EvmAddress::try_from(TradingPair::from_currency_ids(CurrencyId::Token(SEL), CurrencyId::Token(KUSD)).unwrap().dex_share_currency_id()).unwrap(),
+					address: EvmAddress::try_from(crate::TradingPair::from_currency_ids(CurrencyId::Token(SEL), CurrencyId::Token(KUSD)).unwrap().dex_share_currency_id()).unwrap(),
 				},
 				Token {
 					symbol: "LP_DOT_KUSD".to_string(),
-					address: EvmAddress::try_from(TradingPair::from_currency_ids(CurrencyId::Token(DOT), CurrencyId::Token(KUSD)).unwrap().dex_share_currency_id()).unwrap(),
+					address: EvmAddress::try_from(crate::TradingPair::from_currency_ids(CurrencyId::Token(DOT), CurrencyId::Token(KUSD)).unwrap().dex_share_currency_id()).unwrap(),
 				},
 				Token {
 					symbol: "LP_RENBTC_KUSD".to_string(),
-					address: EvmAddress::try_from(TradingPair::from_currency_ids(CurrencyId::Token(RENBTC), CurrencyId::Token(KUSD)).unwrap().dex_share_currency_id()).unwrap(),
+					address: EvmAddress::try_from(crate::TradingPair::from_currency_ids(CurrencyId::Token(RENBTC), CurrencyId::Token(KUSD)).unwrap().dex_share_currency_id()).unwrap(),
 				},
 			];
 			selendra_tokens.append(&mut selendra_lp_tokens);
@@ -196,7 +196,6 @@ pub trait TokenInfo {
 
 pub type ForeignAssetId = u16;
 pub type Erc20Id = u32;
-pub type Lease = BlockNumber;
 
 #[derive(
 	Encode,

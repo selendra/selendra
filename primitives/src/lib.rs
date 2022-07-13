@@ -38,7 +38,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 
-pub use currency::{CurrencyId, DexShare, Lease, TokenSymbol};
+pub use currency::{CurrencyId, DexShare, TokenSymbol};
 pub use evm::{convert_decimals_from_evm, convert_decimals_to_evm};
 
 #[cfg(feature = "std")]
@@ -78,9 +78,6 @@ pub type Hash = sp_core::H256;
 
 /// An instant or duration in time.
 pub type Moment = u64;
-
-/// Counter for the number of eras that have passed.
-pub type EraIndex = u32;
 
 /// Balance of an account.
 pub type Balance = u128;

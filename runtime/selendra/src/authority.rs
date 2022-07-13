@@ -20,11 +20,15 @@
 
 use crate::{
 	AccountId, AccountIdConversion, AuthoritysOriginId, BadOrigin, BlockNumber, DispatchResult,
-	EnsureRoot, EnsureRootOrHalfCouncil, EnsureRootOrHalfFinancialCouncil,
-	EnsureRootOrOneThirdsTechnicalCommittee, EnsureRootOrThreeFourthsCouncil,
-	EnsureRootOrTwoThirdsTechnicalCommittee, FunanTreasuryPalletId, OneDay, Origin, OriginCaller,
-	SevenDays, TreasuryPalletId, TreasuryReservePalletId, ZeroDay, HOURS,
+	EnsureRoot, FunanTreasuryPalletId, OneDay, Origin, OriginCaller, SevenDays, TreasuryPalletId,
+	TreasuryReservePalletId, ZeroDay, HOURS,
 };
+use runtime_common::{
+	EnsureRootOrHalfCouncil, EnsureRootOrHalfFinancialCouncil,
+	EnsureRootOrOneThirdsTechnicalCommittee, EnsureRootOrThreeFourthsCouncil,
+	EnsureRootOrTwoThirdsTechnicalCommittee,
+};
+
 pub use frame_support::traits::{schedule::Priority, EnsureOrigin, OriginTrait};
 use frame_system::ensure_root;
 use orml_authority::EnsureDelayed;

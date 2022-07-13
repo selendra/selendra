@@ -1,8 +1,7 @@
 use crate::{
 	authority::AuthorityConfigImpl, cent, dollar, parameter_types, weights, AccountId,
 	AuthoritysOriginId, Balance, Balances, BlockNumber, Call, ConstBool, ConstU32, Council,
-	EnsureRoot, Event, FinancialCouncil, FinancialCouncilInstance,
-	FinancialCouncilMembershipInstance, Origin, OriginCaller, PhragmenElectionPalletId,
+	EnsureRoot, Event, FinancialCouncil, Origin, OriginCaller, PhragmenElectionPalletId,
 	PreimageByteDeposit, Runtime, Scheduler, SelendraOracle, TechnicalCommittee, Treasury,
 	U128CurrencyToVote, DAYS, HOURS, MINUTES, SEL,
 };
@@ -11,6 +10,7 @@ use runtime_common::{
 	CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrThreeFourthsCouncil,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
+	FinancialCouncilInstance, FinancialCouncilMembershipInstance,
 	OperatorMembershipInstanceSelendra, TechnicalCommitteeInstance, TechnicalMembershipInstance,
 };
 

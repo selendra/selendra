@@ -43,8 +43,8 @@ pub use primitives::{
 	define_combined_task,
 	evm::{convert_decimals_to_evm, EvmAddress},
 	task::TaskResult,
-	Address, Amount, AuctionId, BlockNumber, CurrencyId, DexShare, EraIndex, Header, Lease, Moment,
-	Nonce, ReserveIdentifier, Signature, TokenSymbol, TradingPair,
+	Address, Amount, AuctionId, BlockNumber, CurrencyId, DexShare, Headers, Moment, Nonce,
+	ReserveIdentifier, Signature, TokenSymbol, TradingPair,
 };
 use scale_info::TypeInfo;
 use sp_core::{H160, H256};
@@ -656,7 +656,6 @@ parameter_types! {
 	pub const LiquidCurrencyId: CurrencyId = LSEL;
 	pub DefaultExchangeRate: ExchangeRate = ExchangeRate::saturating_from_rational(1, 10);
 	pub ActiveSubAccountsIndexList: Vec<u16> = vec![0, 1, 2];
-	pub const BondingDuration: EraIndex = 28;
 	pub const MintThreshold: Balance = 0;
 	pub const RedeemThreshold: Balance = 0;
 }
