@@ -249,6 +249,25 @@ impl orml_tokens::Config for Runtime {
 	type WeightInfo = weights::orml_tokens::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+	pub const GetNativeCurrencyId: CurrencyId = SEL;
+	pub const GetStableCurrencyId: CurrencyId = KUSD;
+	pub Erc20HoldingAccount: H160 = primitives::evm::ERC20_HOLDING_ACCOUNT;
+}
+
+impl module_currencies::Config for Runtime {
+	type Event = Event;
+	type MultiCurrency = Tokens;
+	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+	type GetNativeCurrencyId = GetNativeCurrencyId;
+	type Erc20HoldingAccount = Erc20HoldingAccount;
+	type AddressMapping = EvmAddressMapping<Runtime>;
+	type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
+	type GasToWeight = GasToWeight;
+	type SweepOrigin = EnsureRootOrOneCouncil;
+	type OnDust = module_currencies::TransferDust<Runtime, TreasuryAccount>;
+	type WeightInfo = weights::module_currencies::WeightInfo<Runtime>;
+}
 
 parameter_types! {
 	pub TransactionByteFee: Balance = 10 * millicent(SEL);
@@ -420,25 +439,6 @@ parameter_type_with_key! {
 	};
 }
 
-parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = SEL;
-	pub const GetStableCurrencyId: CurrencyId = KUSD;
-	pub Erc20HoldingAccount: H160 = primitives::evm::ERC20_HOLDING_ACCOUNT;
-}
-
-impl module_currencies::Config for Runtime {
-	type Event = Event;
-	type MultiCurrency = Tokens;
-	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
-	type GetNativeCurrencyId = GetNativeCurrencyId;
-	type Erc20HoldingAccount = Erc20HoldingAccount;
-	type WeightInfo = weights::module_currencies::WeightInfo<Runtime>;
-	type AddressMapping = EvmAddressMapping<Runtime>;
-	type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
-	type GasToWeight = GasToWeight;
-	type SweepOrigin = EnsureRootOrOneCouncil;
-	type OnDust = module_currencies::TransferDust<Runtime, TreasuryAccount>;
-}
 
 pub struct EnsureRootOrTreasury;
 impl EnsureOrigin<Origin> for EnsureRootOrTreasury {
