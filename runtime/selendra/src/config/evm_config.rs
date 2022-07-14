@@ -1,12 +1,17 @@
 use crate::{
 	config::utility_config::ScheduledTasks, dollar, parameter_types, weights, AllPrecompiles, Babe,
 	Balance, Balances, Currencies, Event, GasToWeight, IdleScheduler, Runtime, RuntimeDebug,
-	TreasuryAccount, EVM, H160, SEL,
+	TreasuryAccount, EVM, H160, SEL, Call, SignedExtra, System, SignedPayload, Verify, Convert
 };
 use runtime_common::{EnsureRootOrHalfCouncil, EnsureRootOrTwoThirdsTechnicalCommittee};
+use primitives::evm::EthereumTransactionMessage;
 
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
+
+use frame_support::{
+	pallet_prelude::InvalidTransaction,
+};
 
 pub use module_evm::{EvmChainId, EvmTask};
 use module_evm_accounts::EvmAddressMapping;
@@ -98,4 +103,93 @@ impl module_evm::Config for Runtime {
 
 impl module_evm_bridge::Config for Runtime {
 	type EVM = EVM;
+}
+
+#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug)]
+pub struct ConvertEthereumTx;
+
+impl
+	Convert<
+		(Call, SignedExtra),
+		Result<(EthereumTransactionMessage, SignedExtra), InvalidTransaction>,
+	> for ConvertEthereumTx
+{
+	fn convert(
+		(call, mut extra): (Call, SignedExtra),
+	) -> Result<(EthereumTransactionMessage, SignedExtra), InvalidTransaction> {
+		match call {
+			Call::EVM(module_evm::Call::eth_call {
+				action,
+				input,
+				value,
+				gas_limit,
+				storage_limit,
+				access_list,
+				valid_until,
+			}) => {
+				if System::block_number() > valid_until {
+					return Err(InvalidTransaction::Stale)
+				}
+
+				let (_, _, _, _, mortality, check_nonce, _, charge, ..) = extra.clone();
+
+				if mortality != frame_system::CheckEra::from(sp_runtime::generic::Era::Immortal) {
+					// require immortal
+					return Err(InvalidTransaction::BadProof)
+				}
+
+				let nonce = check_nonce.nonce;
+				let tip = charge.0;
+
+				extra.5.mark_as_ethereum_tx(valid_until);
+
+				Ok((
+					EthereumTransactionMessage {
+						chain_id: EVM::chain_id(),
+						genesis: System::block_hash(0),
+						nonce,
+						tip,
+						gas_limit,
+						storage_limit,
+						action,
+						value,
+						input,
+						valid_until,
+						access_list,
+					},
+					extra,
+				))
+			},
+			_ => Err(InvalidTransaction::BadProof),
+		}
+	}
+}
+
+#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug)]
+pub struct PayerSignatureVerification;
+
+impl Convert<(Call, SignedExtra), Result<(), InvalidTransaction>> for PayerSignatureVerification {
+	fn convert((call, extra): (Call, SignedExtra)) -> Result<(), InvalidTransaction> {
+		if let Call::TransactionPayment(module_transaction_payment::Call::with_fee_paid_by {
+			call,
+			payer_addr,
+			payer_sig,
+		}) = call
+		{
+			let payer_account: [u8; 32] = payer_addr
+				.encode()
+				.as_slice()
+				.try_into()
+				.map_err(|_| InvalidTransaction::BadSigner)?;
+			// payer signature is aim at inner call of `with_fee_paid_by` call.
+			let raw_payload =
+				SignedPayload::new(*call, extra).map_err(|_| InvalidTransaction::BadSigner)?;
+			if !raw_payload
+				.using_encoded(|payload| payer_sig.verify(payload, &payer_account.into()))
+			{
+				return Err(InvalidTransaction::BadProof)
+			}
+		}
+		Ok(())
+	}
 }

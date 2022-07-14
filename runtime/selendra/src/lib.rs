@@ -42,7 +42,7 @@ mod weights;
 mod config;
 
 pub use authority::AuthorityConfigImpl;
-use codec::{Decode, DecodeLimit, Encode};
+use codec::{DecodeLimit, Encode};
 
 use sp_api::impl_runtime_apis;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
@@ -52,8 +52,8 @@ pub use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, BadOrigin, BlakeTwo256, Block as BlockT, Bounded, Convert, NumberFor,
-		SaturatedConversion, StaticLookup, Verify,
+		AccountIdConversion, BadOrigin, BlakeTwo256, Block as BlockT, Bounded, NumberFor,
+		SaturatedConversion, StaticLookup, Verify, Convert,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, DispatchResult, FixedPointNumber, Perbill, Percent, Permill,
@@ -74,7 +74,6 @@ use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
 
 use frame_support::{
 	construct_runtime, log,
-	pallet_prelude::InvalidTransaction,
 	parameter_types,
 	traits::{
 		ConstBool, ConstU128, ConstU16, ConstU32, Contains, InstanceFilter, KeyOwnerProofSystem,
@@ -115,7 +114,7 @@ pub use runtime_common::{
 use crate::config::{
 	consensus_config::EpochDuration,
 	dex_config::TradingPathLimit,
-	evm_config::{StorageDepositPerByte, TxFeePerGas},
+	evm_config::{StorageDepositPerByte, TxFeePerGas, PayerSignatureVerification, ConvertEthereumTx},
 	funan_config::MaxSwapSlippageCompareToOracle,
 };
 #[cfg(test)]
@@ -216,7 +215,6 @@ impl pallet_timestamp::Config for Runtime {
 
 parameter_types! {
 	pub const MaxReserves: u32 = ReserveIdentifier::Count as u32;
-	pub NativeTokenExistentialDeposit: Balance = 10 * cent(SEL);
 	pub const MaxLocks: u32 = 50;
 }
 
@@ -256,8 +254,6 @@ impl orml_tokens::Config for Runtime {
 }
 
 parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = SEL;
-	pub const GetStableCurrencyId: CurrencyId = KUSD;
 	pub Erc20HoldingAccount: H160 = primitives::evm::ERC20_HOLDING_ACCOUNT;
 }
 
@@ -384,19 +380,19 @@ impl pallet_scheduler::Config for Runtime {
 }
 
 parameter_types! {
+	pub const PreimageMaxSize: u32 = 4096 * 1024;
 	pub PreimageBaseDeposit: Balance = deposit(2, 64);
 	pub PreimageByteDeposit: Balance = deposit(0, 1);
 }
 
 impl pallet_preimage::Config for Runtime {
-	type WeightInfo = ();
 	type Event = Event;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureRoot<AccountId>;
-	// Max size 4MB allowed: 4096 * 1024
-	type MaxSize = ConstU32<4_194_304>;
+	type MaxSize = PreimageMaxSize;
 	type BaseDeposit = PreimageBaseDeposit;
 	type ByteDeposit = PreimageByteDeposit;
+	type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
 }
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
@@ -501,11 +497,6 @@ impl module_incentives::Config for Runtime {
 }
 
 parameter_types! {
-	pub const GetLiquidCurrencyId: CurrencyId = LSEL;
-	pub const GetStakingCurrencyId: CurrencyId = DOT;
-}
-
-parameter_types! {
 	pub CreateClassDeposit: Balance = 20 * dollar(SEL);
 	pub CreateTokenDeposit: Balance = 2 * dollar(SEL);
 	pub DataDepositPerByte: Balance = 10 * cent(SEL);
@@ -602,95 +593,6 @@ impl module_stable_asset::Config for Runtime {
 	type WeightInfo = weights::module_stable_asset::WeightInfo<Runtime>;
 	type ListingOrigin = EnsureRootOrHalfCouncil;
 	type EnsurePoolAssetId = EnsurePoolAssetId;
-}
-
-#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug)]
-pub struct ConvertEthereumTx;
-
-impl
-	Convert<
-		(Call, SignedExtra),
-		Result<(EthereumTransactionMessage, SignedExtra), InvalidTransaction>,
-	> for ConvertEthereumTx
-{
-	fn convert(
-		(call, mut extra): (Call, SignedExtra),
-	) -> Result<(EthereumTransactionMessage, SignedExtra), InvalidTransaction> {
-		match call {
-			Call::EVM(module_evm::Call::eth_call {
-				action,
-				input,
-				value,
-				gas_limit,
-				storage_limit,
-				access_list,
-				valid_until,
-			}) => {
-				if System::block_number() > valid_until {
-					return Err(InvalidTransaction::Stale)
-				}
-
-				let (_, _, _, _, mortality, check_nonce, _, charge, ..) = extra.clone();
-
-				if mortality != frame_system::CheckEra::from(sp_runtime::generic::Era::Immortal) {
-					// require immortal
-					return Err(InvalidTransaction::BadProof)
-				}
-
-				let nonce = check_nonce.nonce;
-				let tip = charge.0;
-
-				extra.5.mark_as_ethereum_tx(valid_until);
-
-				Ok((
-					EthereumTransactionMessage {
-						chain_id: EVM::chain_id(),
-						genesis: System::block_hash(0),
-						nonce,
-						tip,
-						gas_limit,
-						storage_limit,
-						action,
-						value,
-						input,
-						valid_until,
-						access_list,
-					},
-					extra,
-				))
-			},
-			_ => Err(InvalidTransaction::BadProof),
-		}
-	}
-}
-
-#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug)]
-pub struct PayerSignatureVerification;
-
-impl Convert<(Call, SignedExtra), Result<(), InvalidTransaction>> for PayerSignatureVerification {
-	fn convert((call, extra): (Call, SignedExtra)) -> Result<(), InvalidTransaction> {
-		if let Call::TransactionPayment(module_transaction_payment::Call::with_fee_paid_by {
-			call,
-			payer_addr,
-			payer_sig,
-		}) = call
-		{
-			let payer_account: [u8; 32] = payer_addr
-				.encode()
-				.as_slice()
-				.try_into()
-				.map_err(|_| InvalidTransaction::BadSigner)?;
-			// payer signature is aim at inner call of `with_fee_paid_by` call.
-			let raw_payload =
-				SignedPayload::new(*call, extra).map_err(|_| InvalidTransaction::BadSigner)?;
-			if !raw_payload
-				.using_encoded(|payload| payer_sig.verify(payload, &payer_account.into()))
-			{
-				return Err(InvalidTransaction::BadProof)
-			}
-		}
-		Ok(())
-	}
 }
 
 impl pallet_sudo::Config for Runtime {

@@ -47,9 +47,16 @@ pub mod time {
 pub mod currency {
 	use crate::{
 		cent, parameter_type_with_key, AssetIdMapping, AssetIdMaps, AssetIds, Balance, CurrencyId,
-		GetNativeCurrencyId, NativeTokenExistentialDeposit, Runtime,
+		Runtime, parameter_types, SEL, KUSD, LSEL
 	};
 	use primitives::TokenSymbol;
+
+	parameter_types! {
+		pub NativeTokenExistentialDeposit: Balance = 10 * cent(SEL);
+		pub const GetNativeCurrencyId: CurrencyId = SEL;
+		pub const GetStableCurrencyId: CurrencyId = KUSD;
+		pub const GetLiquidCurrencyId: CurrencyId = LSEL;
+	}
 
 	parameter_type_with_key! {
 		pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
