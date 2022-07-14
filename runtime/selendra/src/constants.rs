@@ -46,8 +46,8 @@ pub mod time {
 /// constant currency-related
 pub mod currency {
 	use crate::{
-		cent, parameter_type_with_key, AssetIdMapping, AssetIdMaps, AssetIds, Balance, CurrencyId,
-		Runtime, parameter_types, SEL, KUSD, LSEL
+		cent, parameter_type_with_key, parameter_types, AssetIdMapping, AssetIdMaps, AssetIds,
+		Balance, CurrencyId, Runtime, KUSD, LSEL, SEL,
 	};
 	use primitives::TokenSymbol;
 
