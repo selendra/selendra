@@ -10,7 +10,7 @@ runtime="$1"
 
 echo "[+] Running all benchmarks for $runtime"
 
-cargo +nightly build --profile production --locked --features=runtime-benchmarks
+cargo build --profile production --locked --features=runtime-benchmarks
 
 ./target/production/selendra benchmark pallet \
     --chain "${runtime}-dev" \
