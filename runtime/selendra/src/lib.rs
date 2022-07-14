@@ -58,7 +58,7 @@ use sp_runtime::{
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, DispatchResult, FixedPointNumber, Perbill, Percent, Permill,
 };
-use sp_std::prelude::*;
+use sp_std::{cmp::Ordering, prelude::*};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
@@ -77,13 +77,13 @@ use frame_support::{
 	pallet_prelude::InvalidTransaction,
 	parameter_types,
 	traits::{
-		ConstBool, ConstU128, ConstU16, ConstU32, Contains, EnsureOrigin, EqualPrivilegeOnly,
-		InstanceFilter, KeyOwnerProofSystem, LockIdentifier, U128CurrencyToVote,
+		ConstBool, ConstU128, ConstU16, ConstU32, Contains, InstanceFilter, KeyOwnerProofSystem,
+		LockIdentifier, PrivilegeCmp, U128CurrencyToVote,
 	},
 	weights::{constants::RocksDbWeight, Weight},
 	PalletId, RuntimeDebug,
 };
-use frame_system::{EnsureRoot, RawOrigin};
+use frame_system::EnsureRoot;
 
 use module_asset_registry::AssetIdMaps;
 use module_cdp_engine::CollateralCurrencyIds;
@@ -120,7 +120,7 @@ use crate::config::{
 };
 #[cfg(test)]
 use config::evm_config::NewContractExtraBytes;
-pub use constants::{accounts::*, fee::*, time::*};
+pub use constants::{accounts::*, currency::*, fee::*, time::*};
 
 /// This runtime version.
 #[sp_version::runtime_version]
@@ -232,6 +232,13 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = weights::pallet_balances::WeightInfo<Runtime>;
 }
 
+pub struct DustRemovalWhitelist;
+impl Contains<AccountId> for DustRemovalWhitelist {
+	fn contains(a: &AccountId) -> bool {
+		get_all_module_accounts().contains(a)
+	}
+}
+
 impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -311,8 +318,9 @@ impl orml_auction::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MinimumCount: u32 = 1;
-	pub const ExpiresIn: Moment = 1000 * 60 * 60; // 1 hours
+	pub const MinimumCount: u32 = 5;
+	pub const ExpiresIn: Moment = 1000 * 60 * 60; // 1 hours4-
+	pub const MaxHasDispatchedSize: u32 = 40;
 	pub RootOperatorAccountId: AccountId = AccountId::from([0xffu8; 32]);
 }
 
@@ -327,101 +335,37 @@ impl orml_oracle::Config<SelendraDataProvider> for Runtime {
 	type OracleValue = Price;
 	type RootOperatorAccountId = RootOperatorAccountId;
 	type Members = OperatorMembershipSelendra;
-	type MaxHasDispatchedSize = ConstU32<40>;
+	type MaxHasDispatchedSize = MaxHasDispatchedSize;
 	type WeightInfo = weights::orml_oracle::WeightInfo<Runtime>;
 }
 
-create_median_value_data_provider!(
-	AggregatedDataProvider,
-	CurrencyId,
-	Price,
-	TimeStampedPrice,
-	[SelendraOracle]
-);
-// Aggregated data provider cannot feed.
-impl DataFeeder<CurrencyId, Price, AccountId> for AggregatedDataProvider {
-	fn feed_value(_: AccountId, _: CurrencyId, _: Price) -> DispatchResult {
-		Err("Not supported".into())
-	}
-}
+/// Used the compare the privilege of an origin inside the scheduler.
+pub struct OriginPrivilegeCmp;
 
-pub struct DustRemovalWhitelist;
-impl Contains<AccountId> for DustRemovalWhitelist {
-	fn contains(a: &AccountId) -> bool {
-		get_all_module_accounts().contains(a)
-	}
-}
-
-parameter_type_with_key! {
-	pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
-		match currency_id {
-			CurrencyId::Token(symbol) => match symbol {
-				TokenSymbol::SEL => cent(*currency_id),
-				TokenSymbol::KUSD => cent(*currency_id),
-				TokenSymbol::LSEL |
-				TokenSymbol::DOT |
-				TokenSymbol::KSM |
-				TokenSymbol::DAI |
-				TokenSymbol::RENBTC => Balance::max_value() // unsupported
-			},
-			CurrencyId::DexShare(dex_share_0, _) => {
-				let currency_id_0: CurrencyId = (*dex_share_0).into();
-
-				// initial dex share amount is calculated based on currency_id_0,
-				// use the ED of currency_id_0 as the ED of lp token.
-				if currency_id_0 == GetNativeCurrencyId::get() {
-					NativeTokenExistentialDeposit::get()
-				} else if let CurrencyId::Erc20(address) = currency_id_0 {
-					// LP token with erc20
-					AssetIdMaps::<Runtime>::get_asset_metadata(AssetIds::Erc20(address)).
-						map_or(Balance::max_value(), |metatata| metatata.minimal_balance)
-				} else {
-					Self::get(&currency_id_0)
-				}
-			},
-			CurrencyId::Erc20(_) => Balance::max_value(), // not handled by orml-tokens
-			CurrencyId::StableAssetPoolToken(stable_asset_id) => {
-				AssetIdMaps::<Runtime>::get_asset_metadata(AssetIds::StableAssetId(*stable_asset_id)).
-					map_or(Balance::max_value(), |metatata| metatata.minimal_balance)
-			},
-			CurrencyId::ForeignAsset(foreign_asset_id) => {
-				AssetIdMaps::<Runtime>::get_asset_metadata(AssetIds::ForeignAssetId(*foreign_asset_id)).
-					map_or(Balance::max_value(), |metatata| metatata.minimal_balance)
-			},
+impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
+	fn cmp_privilege(left: &OriginCaller, right: &OriginCaller) -> Option<Ordering> {
+		if left == right {
+			return Some(Ordering::Equal)
 		}
-	};
-}
 
-pub struct EnsureRootOrTreasury;
-impl EnsureOrigin<Origin> for EnsureRootOrTreasury {
-	type Success = AccountId;
-
-	fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
-		Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
-			RawOrigin::Root => Ok(TreasuryPalletId::get().into_account_truncating()),
-			RawOrigin::Signed(caller) => {
-				if caller == TreasuryPalletId::get().into_account_truncating() {
-					Ok(caller)
-				} else {
-					Err(Origin::from(Some(caller)))
-				}
-			},
-			r => Err(Origin::from(r)),
-		})
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn successful_origin() -> Origin {
-		let zero_account_id =
-			AccountId::decode(&mut sp_runtime::traits::TrailingZeroInput::zeroes())
-				.expect("infinite length input; no invalid inputs for type; qed");
-		Origin::from(RawOrigin::Signed(zero_account_id))
+		match (left, right) {
+			// Root is greater than anything.
+			(OriginCaller::system(frame_system::RawOrigin::Root), _) => Some(Ordering::Greater),
+			// Check which one has more yes votes.
+			(
+				OriginCaller::Council(pallet_collective::RawOrigin::Members(l_yes_votes, l_count)),
+				OriginCaller::Council(pallet_collective::RawOrigin::Members(r_yes_votes, r_count)),
+			) => Some((l_yes_votes * r_count).cmp(&(r_yes_votes * l_count))),
+			// For every other origin we don't care, as they are not used for `ScheduleOrigin`.
+			_ => None,
+		}
 	}
 }
 
 parameter_types! {
-	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(10) * RuntimeBlockWeights::get().max_block;
-	// Retry a scheduled item every 25 blocks (5 minute) until the preimage exists.
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * RuntimeBlockWeights::get().max_block;
+	pub const MaxScheduledPerBlock: u32 = 50;
+	// Retry a scheduled item every 50 blocks (5 minute) until the preimage exists.
 	pub const NoPreimagePostponement: Option<u32> = Some(5 * MINUTES);
 }
 
@@ -432,11 +376,11 @@ impl pallet_scheduler::Config for Runtime {
 	type Call = Call;
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
-	type MaxScheduledPerBlock = ConstU32<50>;
-	type WeightInfo = ();
-	type OriginPrivilegeCmp = EqualPrivilegeOnly;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type OriginPrivilegeCmp = OriginPrivilegeCmp;
 	type PreimageProvider = Preimage;
 	type NoPreimagePostponement = NoPreimagePostponement;
+	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -899,6 +843,21 @@ pub type Executive = frame_executive::Executive<
 	AllPalletsWithSystem,
 	(),
 >;
+
+create_median_value_data_provider!(
+	AggregatedDataProvider,
+	CurrencyId,
+	Price,
+	TimeStampedPrice,
+	[SelendraOracle]
+);
+
+// Aggregated data provider cannot feed.
+impl DataFeeder<CurrencyId, Price, AccountId> for AggregatedDataProvider {
+	fn feed_value(_: AccountId, _: CurrencyId, _: Price) -> DispatchResult {
+		Err("Not supported".into())
+	}
+}
 
 #[cfg(feature = "runtime-benchmarks")]
 #[macro_use]

@@ -43,6 +43,55 @@ pub mod time {
 	}
 }
 
+/// constant currency-related
+pub mod currency {
+	use crate::{
+		cent, parameter_type_with_key, AssetIdMapping, AssetIdMaps, AssetIds, Balance, CurrencyId,
+		GetNativeCurrencyId, NativeTokenExistentialDeposit, Runtime,
+	};
+	use primitives::TokenSymbol;
+
+	parameter_type_with_key! {
+		pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+			match currency_id {
+				CurrencyId::Token(symbol) => match symbol {
+					TokenSymbol::SEL => cent(*currency_id),
+					TokenSymbol::KUSD => cent(*currency_id),
+					TokenSymbol::LSEL |
+					TokenSymbol::DOT |
+					TokenSymbol::KSM |
+					TokenSymbol::DAI |
+					TokenSymbol::RENBTC => Balance::max_value() // unsupported
+				},
+				CurrencyId::DexShare(dex_share_0, _) => {
+					let currency_id_0: CurrencyId = (*dex_share_0).into();
+
+					// initial dex share amount is calculated based on currency_id_0,
+					// use the ED of currency_id_0 as the ED of lp token.
+					if currency_id_0 == GetNativeCurrencyId::get() {
+						NativeTokenExistentialDeposit::get()
+					} else if let CurrencyId::Erc20(address) = currency_id_0 {
+						// LP token with erc20
+						AssetIdMaps::<Runtime>::get_asset_metadata(AssetIds::Erc20(address)).
+							map_or(Balance::max_value(), |metatata| metatata.minimal_balance)
+					} else {
+						Self::get(&currency_id_0)
+					}
+				},
+				CurrencyId::Erc20(_) => Balance::max_value(), // not handled by orml-tokens
+				CurrencyId::StableAssetPoolToken(stable_asset_id) => {
+					AssetIdMaps::<Runtime>::get_asset_metadata(AssetIds::StableAssetId(*stable_asset_id)).
+						map_or(Balance::max_value(), |metatata| metatata.minimal_balance)
+				},
+				CurrencyId::ForeignAsset(foreign_asset_id) => {
+					AssetIdMaps::<Runtime>::get_asset_metadata(AssetIds::ForeignAssetId(*foreign_asset_id)).
+						map_or(Balance::max_value(), |metatata| metatata.minimal_balance)
+				},
+			}
+		};
+	}
+}
+
 /// Fee-related
 pub mod fee {
 	use frame_support::weights::{

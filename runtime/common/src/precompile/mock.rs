@@ -43,7 +43,7 @@ pub use primitives::{
 	define_combined_task,
 	evm::{convert_decimals_to_evm, EvmAddress},
 	task::TaskResult,
-	Address, Amount, AuctionId, BlockNumber, CurrencyId, DexShare, Headers, Moment, Nonce,
+	Address, Amount, AuctionId, BlockNumber, CurrencyId, DexShare, Header, Moment, Nonce,
 	ReserveIdentifier, Signature, TokenSymbol, TradingPair,
 };
 use scale_info::TypeInfo;
