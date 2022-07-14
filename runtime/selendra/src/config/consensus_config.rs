@@ -1,8 +1,8 @@
 use crate::{
 	constants::election::{ElectionBenchmarkConfig, MinerMaxLength, MinerMaxWeight},
-	voter_bags, Babe, Balances, Call, ElectionProviderMultiPhase, Event, Historical, ImOnline,
-	Offences, Runtime, Session, SessionKeys, Staking, Timestamp, TransactionPayment, Treasury,
-	VoterList, Weight, SEL,
+	voter_bags, weights, Babe, Balances, Call, ElectionProviderMultiPhase, Event, Historical,
+	ImOnline, Offences, Runtime, Session, SessionKeys, Staking, Timestamp, TransactionPayment,
+	Treasury, VoterList, Weight, SEL,
 };
 use codec::Decode;
 
@@ -332,7 +332,7 @@ parameter_types! {
 impl pallet_bags_list::Config for Runtime {
 	type Event = Event;
 	type ScoreProvider = Staking;
-	type WeightInfo = pallet_bags_list::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_bags_list::WeightInfo<Runtime>;
 	type BagThresholds = BagThresholds;
 	type Score = VoteWeight;
 }

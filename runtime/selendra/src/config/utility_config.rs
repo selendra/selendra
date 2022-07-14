@@ -1,8 +1,7 @@
 use crate::{
-	cent, config::evm_config::EvmTask, deposit, dollar, millicent, parameter_types, weights,
-	AccountIndex, Balance, Balances, BlakeTwo256, Call, ConstU16, DispatchableTask, Event,
-	InstanceFilter, OriginCaller, ProxyType, Runtime, RuntimeBlockWeights, RuntimeDebug, Weight,
-	SEL,
+	cent, config::evm_config::EvmTask, deposit, dollar, parameter_types, weights, AccountIndex,
+	Balance, Balances, BlakeTwo256, Call, DispatchableTask, Event, InstanceFilter, OriginCaller,
+	ProxyType, Runtime, RuntimeBlockWeights, RuntimeDebug, Weight, SEL,
 };
 use codec::{Decode, Encode};
 use primitives::{define_combined_task, task::TaskResult};
@@ -12,22 +11,25 @@ impl pallet_utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type PalletsOrigin = OriginCaller;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_utility::WeightInfo<Runtime>;
 }
 
 parameter_types! {
-	pub MultisigDepositBase: Balance = 500 * millicent(SEL);
-	pub MultisigDepositFactor: Balance = 100 * millicent(SEL);
+	// One storage item; key size is 32; value is size 4+4+16+32 bytes = 56 bytes.
+	pub DepositBase: Balance = deposit(1, 88);
+	// Additional storage item size of 32 bytes.
+	pub DepositFactor: Balance = deposit(0, 32);
+	pub const MaxSignatories: u16 = 100;
 }
 
 impl pallet_multisig::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type Currency = Balances;
-	type DepositBase = MultisigDepositBase;
-	type DepositFactor = MultisigDepositFactor;
-	type MaxSignatories = ConstU16<100>;
-	type WeightInfo = ();
+	type DepositBase = DepositBase;
+	type DepositFactor = DepositFactor;
+	type MaxSignatories = MaxSignatories;
+	type WeightInfo = weights::pallet_multisig::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -68,7 +70,7 @@ impl module_idle_scheduler::Config for Runtime {
 }
 
 parameter_types! {
-	pub IndexDeposit: Balance = dollar(SEL);
+	pub IndexDeposit: Balance = 10 * dollar(SEL);
 }
 
 impl pallet_indices::Config for Runtime {
@@ -76,7 +78,7 @@ impl pallet_indices::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type Deposit = IndexDeposit;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_indices::WeightInfo<Runtime>;
 }
 
 parameter_types! {

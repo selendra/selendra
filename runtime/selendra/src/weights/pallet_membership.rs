@@ -32,7 +32,7 @@
 // --extrinsic=*
 // --execution=wasm
 // --wasm-execution=compiled
-// --output=./runtime/polkadot/src/weights/pallet_membership.rs
+// --output=./runtime/selendra/src/weights/pallet_membership.rs
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]

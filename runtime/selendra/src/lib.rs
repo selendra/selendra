@@ -75,7 +75,7 @@ use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
 use frame_support::{
 	construct_runtime, log, parameter_types,
 	traits::{
-		ConstU16, Contains, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, PrivilegeCmp,
+		Contains, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, PrivilegeCmp,
 		U128CurrencyToVote,
 	},
 	weights::{constants::RocksDbWeight, Weight},
