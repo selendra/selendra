@@ -169,6 +169,8 @@ pub enum ProxyType {
 	Any,
 	CancelProxy,
 	Governance,
+	Staking,
+	IdentityJudgement,
 	Auction,
 	Swap,
 	Loan,

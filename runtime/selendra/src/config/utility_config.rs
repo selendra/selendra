@@ -1,6 +1,6 @@
 use crate::{
-	cent, config::evm_config::EvmTask, deposit, dollar, millicent, parameter_types, AccountIndex,
-	Balance, Balances, BlakeTwo256, Call, ConstU16, ConstU32, DispatchableTask, Event,
+	cent, config::evm_config::EvmTask, deposit, dollar, millicent, parameter_types, weights,
+	AccountIndex, Balance, Balances, BlakeTwo256, Call, ConstU16, DispatchableTask, Event,
 	InstanceFilter, OriginCaller, ProxyType, Runtime, RuntimeBlockWeights, RuntimeDebug, Weight,
 	SEL,
 };
@@ -31,9 +31,10 @@ impl pallet_multisig::Config for Runtime {
 }
 
 parameter_types! {
-	pub ConfigDepositBase: Balance = 10 * cent(SEL);
-	pub FriendDepositFactor: Balance = cent(SEL);
-	pub RecoveryDeposit: Balance = 10 * cent(SEL);
+	pub ConfigDepositBase: Balance = 5 * dollar(SEL);
+	pub FriendDepositFactor: Balance = 500 * cent(SEL);
+	pub RecoveryDeposit: Balance = 10 * dollar(SEL);
+	pub const MaxFriends: u16 = 10;
 }
 
 impl pallet_recovery::Config for Runtime {
@@ -42,7 +43,7 @@ impl pallet_recovery::Config for Runtime {
 	type Currency = Balances;
 	type ConfigDepositBase = ConfigDepositBase;
 	type FriendDepositFactor = FriendDepositFactor;
-	type MaxFriends = ConstU32<9>;
+	type MaxFriends = MaxFriends;
 	type RecoveryDeposit = RecoveryDeposit;
 	type WeightInfo = ();
 }
@@ -85,6 +86,8 @@ parameter_types! {
 	pub ProxyDepositFactor: Balance = deposit(0, 33);
 	pub AnnouncementDepositBase: Balance = deposit(1, 8);
 	pub AnnouncementDepositFactor: Balance = deposit(0, 66);
+	pub const MaxProxies: u16 = 32;
+	pub const MaxPending: u16 = 32;
 }
 
 impl InstanceFilter<Call> for ProxyType {
@@ -108,6 +111,10 @@ impl InstanceFilter<Call> for ProxyType {
 						Call::Tips(..)
 				)
 			},
+			ProxyType::Staking => {
+				matches!(c, Call::Staking(..) | Call::Session(..))
+			},
+			ProxyType::IdentityJudgement => todo!(),
 			ProxyType::Auction => {
 				matches!(c, Call::Auction(orml_auction::Call::bid { .. }))
 			},
@@ -165,10 +172,10 @@ impl pallet_proxy::Config for Runtime {
 	type ProxyType = ProxyType;
 	type ProxyDepositBase = ProxyDepositBase;
 	type ProxyDepositFactor = ProxyDepositFactor;
-	type MaxProxies = ConstU32<32>;
-	type WeightInfo = ();
-	type MaxPending = ConstU32<32>;
+	type MaxPending = MaxPending;
+	type MaxProxies = MaxProxies;
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = AnnouncementDepositBase;
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
+	type WeightInfo = weights::pallet_proxy::WeightInfo<Runtime>;
 }
