@@ -38,8 +38,8 @@ parameter_types! {
 #[cfg(not(feature = "with-ethereum-compatibility"))]
 parameter_types! {
 	pub const NewContractExtraBytes: u32 = 10_000;
-	pub DeveloperDeposit: Balance = dollar(SEL);
-	pub PublicationFee: Balance = 10 * dollar(SEL);
+	pub DeveloperDeposit: Balance = 50 * dollar(SEL);
+	pub PublicationFee: Balance = 100 * dollar(SEL);
 }
 
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]

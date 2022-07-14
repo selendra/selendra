@@ -1,11 +1,11 @@
 use crate::{
-	dollar, parameter_types, weights, AccountId, AccountIdConversion, Auction, AuctionManager,
-	Balance, Balances, BlockNumber, CDPTreasuryPalletId, CdpEngine, CdpTreasury,
-	CollateralCurrencyIds, ConstU32, Currencies, Dex, EmergencyShutdown, EnsureRootOrHalfCouncil,
-	Event, ExchangeRate, ExistentialDeposits, ExistentialDepositsTimesOneHundred, FixedPointNumber,
+	deposit, dollar, parameter_types, weights, AccountId, AccountIdConversion, Auction,
+	AuctionManager, Balance, Balances, BlockNumber, CDPTreasuryPalletId, CdpEngine, CdpTreasury,
+	CollateralCurrencyIds, Currencies, Dex, EmergencyShutdown, EnsureRootOrHalfCouncil, Event,
+	ExchangeRate, ExistentialDeposits, ExistentialDepositsTimesOneHundred, FixedPointNumber,
 	FunanTreasuryPalletId, GetNativeCurrencyId, GetStableCurrencyId, LoansPalletId,
 	NativeTokenExistentialDeposit, Prices, Rate, Ratio, RebasedStableAsset, Runtime, Timestamp,
-	HOURS, KUSD, MINUTES, SEL,
+	HOURS, KUSD, MINUTES,
 };
 use runtime_common::EnsureRootOrHalfFinancialCouncil;
 
@@ -40,7 +40,7 @@ impl module_loans::Config for Runtime {
 }
 
 parameter_types! {
-	pub DepositPerAuthorization: Balance = dollar(SEL);
+	pub DepositPerAuthorization: Balance = deposit(1, 64);
 }
 
 impl module_funan::Config for Runtime {
@@ -53,6 +53,7 @@ impl module_funan::Config for Runtime {
 
 parameter_types! {
 	pub FunanTreasuryAccount: AccountId = FunanTreasuryPalletId::get().into_account_truncating();
+	pub const MaxAuctionsCount: u32 = 50;
 }
 
 pub type SelendraSwap = module_aggregated_dex::AggregatedSwap<Runtime>;
@@ -65,7 +66,7 @@ impl module_cdp_treasury::Config for Runtime {
 	type UpdateOrigin = EnsureRootOrHalfFinancialCouncil;
 	type DEX = Dex;
 	type Swap = SelendraSwap;
-	type MaxAuctionsCount = ConstU32<50>;
+	type MaxAuctionsCount = MaxAuctionsCount;
 	type PalletId = CDPTreasuryPalletId;
 	type TreasuryAccount = FunanTreasuryAccount;
 	type WeightInfo = weights::module_cdp_treasury::WeightInfo<Runtime>;
@@ -73,10 +74,10 @@ impl module_cdp_treasury::Config for Runtime {
 }
 
 parameter_types! {
-	pub DefaultLiquidationRatio: Ratio = Ratio::saturating_from_rational(110, 100);
+	pub DefaultLiquidationRatio: Ratio = Ratio::saturating_from_rational(150, 100);
 	pub DefaultDebitExchangeRate: ExchangeRate = ExchangeRate::saturating_from_rational(1, 10);
-	pub DefaultLiquidationPenalty: Rate = Rate::saturating_from_rational(5, 100);
-	pub MinimumDebitValue: Balance = dollar(KUSD);
+	pub DefaultLiquidationPenalty: Rate = Rate::saturating_from_rational(8, 100);
+	pub MinimumDebitValue: Balance = 25 * dollar(KUSD);
 	pub MaxSwapSlippageCompareToOracle: Ratio = Ratio::saturating_from_rational(15, 100);
 }
 

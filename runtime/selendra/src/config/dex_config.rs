@@ -1,8 +1,8 @@
 use crate::{
 	parameter_type_with_key, parameter_types, weights, AggregatedDataProvider, BlockNumber,
-	ConstU32, Currencies, CurrencyId, DEXPalletId, Dex, Event, FixedPointNumber,
-	GetLiquidCurrencyId, GetNativeCurrencyId, GetStableCurrencyId, Incentives, Price,
-	RebasedStableAsset, Runtime, Timestamp, Vec, DAYS, LSEL, SEL,
+	Currencies, CurrencyId, DEXPalletId, Dex, Event, FixedPointNumber, GetLiquidCurrencyId,
+	GetNativeCurrencyId, GetStableCurrencyId, Incentives, Price, RebasedStableAsset, Runtime,
+	Timestamp, Vec, DAYS, LSEL, SEL,
 };
 use module_asset_registry::EvmErc20InfoMapping;
 use module_support::{ExchangeRate, ExchangeRateProvider};
@@ -53,10 +53,6 @@ parameter_types! {
 	pub const GetExchangeFee: (u32, u32) = (1, 1000);	// 0.1%
 	pub const ExtendedProvisioningBlocks: BlockNumber = 2 * DAYS;
 	pub const TradingPathLimit: u32 = 4;
-	pub AlternativeSwapPathJointList: Vec<Vec<CurrencyId>> = vec![
-		vec![SEL],
-		vec![LSEL],
-	];
 }
 
 impl module_dex::Config for Runtime {
@@ -73,11 +69,19 @@ impl module_dex::Config for Runtime {
 	type OnLiquidityPoolUpdated = ();
 }
 
+parameter_types! {
+	pub AlternativeSwapPathJointList: Vec<Vec<CurrencyId>> = vec![
+		vec![SEL],
+		vec![LSEL],
+	];
+	pub const SwapPathLimit: u32 = 3;
+}
+
 impl module_aggregated_dex::Config for Runtime {
 	type DEX = Dex;
 	type StableAsset = RebasedStableAsset;
 	type GovernanceOrigin = EnsureRootOrHalfCouncil;
 	type DexSwapJointList = AlternativeSwapPathJointList;
-	type SwapPathLimit = ConstU32<3>;
+	type SwapPathLimit = SwapPathLimit;
 	type WeightInfo = ();
 }

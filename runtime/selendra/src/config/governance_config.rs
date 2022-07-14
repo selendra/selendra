@@ -1,13 +1,13 @@
 use crate::{
-	authority::AuthorityConfigImpl, cent, dollar, parameter_types, weights, AccountId,
-	AuthoritysOriginId, Balance, Balances, BlockNumber, Call, ConstBool, ConstU32, Council,
-	EnsureRoot, Event, FinancialCouncil, Origin, OriginCaller, PhragmenElectionPalletId,
-	PreimageByteDeposit, Runtime, Scheduler, SelendraOracle, TechnicalCommittee, Treasury,
-	U128CurrencyToVote, DAYS, HOURS, MINUTES, SEL,
+	authority::AuthorityConfigImpl, deposit, dollar, parameter_types, weights, AccountId,
+	AuthoritysOriginId, Balance, Balances, BlockNumber, Call, Council, EnsureRoot, Event,
+	FinancialCouncil, Origin, OriginCaller, PhragmenElectionPalletId, PreimageByteDeposit, Runtime,
+	Scheduler, SelendraOracle, TechnicalCommittee, Treasury, U128CurrencyToVote, DAYS, HOURS,
+	MINUTES, SEL,
 };
 
 use runtime_common::{
-	CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
+	prod_or_fast, CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrThreeFourthsCouncil,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
 	FinancialCouncilInstance, FinancialCouncilMembershipInstance,
@@ -26,12 +26,14 @@ impl orml_authority::Config for Runtime {
 }
 
 parameter_types! {
-	pub const LaunchPeriod: BlockNumber = 2 * HOURS;
-	pub const VotingPeriod: BlockNumber = HOURS;
-	pub const FastTrackVotingPeriod: BlockNumber = HOURS;
-	pub MinimumDeposit: Balance = 100 * cent(SEL);
-	pub const EnactmentPeriod: BlockNumber = MINUTES;
-	pub const CooloffPeriod: BlockNumber = MINUTES;
+	pub LaunchPeriod: BlockNumber = prod_or_fast!(28 * DAYS, 1, "SEL_LAUNCH_PERIOD");
+	pub VotingPeriod: BlockNumber = prod_or_fast!(28 * DAYS, 1 * MINUTES, "SEL_VOTING_PERIOD");
+	pub FastTrackVotingPeriod: BlockNumber = prod_or_fast!(3 * HOURS, 1 * MINUTES, "SEL_FAST_TRACK_VOTING_PERIOD");
+	pub EnactmentPeriod: BlockNumber = prod_or_fast!(28 * DAYS, 1, "SEL_ENACTMENT_PERIOD");
+	pub CooloffPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1, "SEL_COOLOFF_PERIOD");
+	pub MinimumDeposit: Balance = 100 * dollar(SEL);
+	pub const InstantAllowed: bool = true;
+	pub const MaxVotes: u32 = 100;
 }
 
 impl pallet_democracy::Config for Runtime {
@@ -54,7 +56,7 @@ impl pallet_democracy::Config for Runtime {
 	/// be tabled immediately and with a shorter voting/enactment period.
 	type FastTrackOrigin = EnsureRootOrTwoThirdsTechnicalCommittee;
 	type InstantOrigin = EnsureRootOrAllTechnicalCommittee;
-	type InstantAllowed = ConstBool<true>;
+	type InstantAllowed = InstantAllowed;
 	type FastTrackVotingPeriod = FastTrackVotingPeriod;
 	// To cancel a proposal which has been passed, 2/3 of the council must agree to it.
 	type CancellationOrigin = EnsureRootOrTwoThirdsCouncil;
@@ -71,17 +73,21 @@ impl pallet_democracy::Config for Runtime {
 	type Slash = Treasury;
 	type Scheduler = Scheduler;
 	type PalletsOrigin = OriginCaller;
-	type MaxVotes = ConstU32<100>;
-	//TODO: might need to weight for Selendra
-	type WeightInfo = pallet_democracy::weights::SubstrateWeight<Runtime>;
+	type MaxVotes = MaxVotes;
+	type WeightInfo = weights::pallet_democracy::WeightInfo<Runtime>;
 	type MaxProposals = CouncilDefaultMaxProposals;
 }
 
 parameter_types! {
-	pub CandidacyBond: Balance = 10 * dollar(SEL);
-	pub VotingBondBase: Balance = 2 * dollar(SEL);
-	pub VotingBondFactor: Balance = dollar(SEL);
-	pub const TermDuration: BlockNumber = 7 * DAYS;
+	pub CandidacyBond: Balance = 200 * dollar(SEL);
+	// 1 storage item created, key size is 32 bytes, value size is 16+16.
+	pub VotingBondBase: Balance = deposit(1, 64);
+	// additional data per vote is 32 bytes (account id).
+	pub VotingBondFactor: Balance = deposit(0, 32);
+	pub TermDuration: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "SEL_TERM_DURATION");
+	/// 10 members initially, to be increased to 20 eventually.
+	pub const DesiredMembers: u32 = 10;
+	pub const DesiredRunnersUp: u32 = 20;
 }
 
 impl pallet_elections_phragmen::Config for Runtime {
@@ -95,11 +101,16 @@ impl pallet_elections_phragmen::Config for Runtime {
 	type VotingBondFactor = VotingBondFactor;
 	type LoserCandidate = Treasury;
 	type KickedMember = Treasury;
-	type DesiredMembers = ConstU32<13>;
-	type DesiredRunnersUp = ConstU32<7>;
+	type DesiredMembers = DesiredMembers;
+	type DesiredRunnersUp = DesiredRunnersUp;
 	type TermDuration = TermDuration;
 	type PalletId = PhragmenElectionPalletId;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_elections_phragmen::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	pub const CouncilDefaultMaxProposals: u32 = 100;
+	pub const CouncilDefaultMaxMembers: u32 = 100;
 }
 
 impl pallet_membership::Config<OperatorMembershipInstanceSelendra> for Runtime {
@@ -111,8 +122,8 @@ impl pallet_membership::Config<OperatorMembershipInstanceSelendra> for Runtime {
 	type PrimeOrigin = EnsureRootOrTwoThirdsCouncil;
 	type MembershipInitialized = ();
 	type MembershipChanged = SelendraOracle;
-	type MaxMembers = ConstU32<50>;
-	type WeightInfo = ();
+	type MaxMembers = CouncilDefaultMaxMembers;
+	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -127,7 +138,7 @@ impl pallet_collective::Config<TechnicalCommitteeInstance> for Runtime {
 	type MaxProposals = CouncilDefaultMaxProposals;
 	type MaxMembers = CouncilDefaultMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
 }
 
 impl pallet_membership::Config<TechnicalMembershipInstance> for Runtime {
@@ -140,7 +151,7 @@ impl pallet_membership::Config<TechnicalMembershipInstance> for Runtime {
 	type MembershipInitialized = TechnicalCommittee;
 	type MembershipChanged = TechnicalCommittee;
 	type MaxMembers = CouncilDefaultMaxMembers;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -155,7 +166,7 @@ impl pallet_collective::Config<FinancialCouncilInstance> for Runtime {
 	type MaxProposals = CouncilDefaultMaxProposals;
 	type MaxMembers = CouncilDefaultMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
 }
 
 impl pallet_membership::Config<FinancialCouncilMembershipInstance> for Runtime {
@@ -168,13 +179,11 @@ impl pallet_membership::Config<FinancialCouncilMembershipInstance> for Runtime {
 	type MembershipInitialized = FinancialCouncil;
 	type MembershipChanged = FinancialCouncil;
 	type MaxMembers = CouncilDefaultMaxMembers;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
 }
 
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 7 * DAYS;
-	pub const CouncilDefaultMaxProposals: u32 = 100;
-	pub const CouncilDefaultMaxMembers: u32 = 100;
 }
 
 impl pallet_collective::Config<CouncilInstance> for Runtime {
@@ -185,7 +194,7 @@ impl pallet_collective::Config<CouncilInstance> for Runtime {
 	type MaxProposals = CouncilDefaultMaxProposals;
 	type MaxMembers = CouncilDefaultMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
 }
 
 impl pallet_membership::Config<CouncilMembershipInstance> for Runtime {
@@ -198,5 +207,5 @@ impl pallet_membership::Config<CouncilMembershipInstance> for Runtime {
 	type MembershipInitialized = Council;
 	type MembershipChanged = Council;
 	type MaxMembers = CouncilDefaultMaxMembers;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
 }
