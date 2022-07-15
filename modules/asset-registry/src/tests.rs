@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! Unit tests for asset registry module.
 
@@ -27,6 +30,149 @@ use mock::{
 use primitives::TokenSymbol;
 use sp_core::H160;
 use std::str::FromStr;
+
+#[test]
+fn register_stable_asset_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_ok!(AssetRegistry::register_stable_asset(
+			Origin::signed(CouncilAccount::get()),
+			Box::new(AssetMetadata {
+				name: b"Token Name".to_vec(),
+				symbol: b"TN".to_vec(),
+				decimals: 12,
+				minimal_balance: 1,
+			})
+		));
+
+		System::assert_last_event(Event::AssetRegistry(crate::Event::AssetRegistered {
+			asset_id: AssetIds::StableAssetId(0),
+			metadata: AssetMetadata {
+				name: b"Token Name".to_vec(),
+				symbol: b"TN".to_vec(),
+				decimals: 12,
+				minimal_balance: 1,
+			},
+		}));
+
+		assert_eq!(
+			AssetMetadatas::<Runtime>::get(AssetIds::StableAssetId(0)),
+			Some(AssetMetadata {
+				name: b"Token Name".to_vec(),
+				symbol: b"TN".to_vec(),
+				decimals: 12,
+				minimal_balance: 1,
+			})
+		);
+	});
+}
+
+#[test]
+fn register_stable_asset_should_not_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_ok!(AssetRegistry::register_stable_asset(
+			Origin::signed(CouncilAccount::get()),
+			Box::new(AssetMetadata {
+				name: b"Token Name".to_vec(),
+				symbol: b"TN".to_vec(),
+				decimals: 12,
+				minimal_balance: 1,
+			})
+		));
+
+		NextStableAssetId::<Runtime>::set(0);
+		assert_noop!(
+			AssetRegistry::register_stable_asset(
+				Origin::signed(CouncilAccount::get()),
+				Box::new(AssetMetadata {
+					name: b"Token Name".to_vec(),
+					symbol: b"TN".to_vec(),
+					decimals: 12,
+					minimal_balance: 1,
+				})
+			),
+			Error::<Runtime>::AssetIdExisted
+		);
+
+		NextStableAssetId::<Runtime>::set(u32::MAX);
+		assert_noop!(
+			AssetRegistry::register_stable_asset(
+				Origin::signed(CouncilAccount::get()),
+				Box::new(AssetMetadata {
+					name: b"Token Name".to_vec(),
+					symbol: b"TN".to_vec(),
+					decimals: 12,
+					minimal_balance: 1,
+				})
+			),
+			ArithmeticError::Overflow
+		);
+	});
+}
+
+#[test]
+fn update_stable_asset_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_ok!(AssetRegistry::register_stable_asset(
+			Origin::signed(CouncilAccount::get()),
+			Box::new(AssetMetadata {
+				name: b"Token Name".to_vec(),
+				symbol: b"TN".to_vec(),
+				decimals: 12,
+				minimal_balance: 1,
+			})
+		));
+
+		assert_ok!(AssetRegistry::update_stable_asset(
+			Origin::signed(CouncilAccount::get()),
+			0,
+			Box::new(AssetMetadata {
+				name: b"New Token Name".to_vec(),
+				symbol: b"NTN".to_vec(),
+				decimals: 13,
+				minimal_balance: 2,
+			})
+		));
+
+		System::assert_last_event(Event::AssetRegistry(crate::Event::AssetUpdated {
+			asset_id: AssetIds::StableAssetId(0),
+			metadata: AssetMetadata {
+				name: b"New Token Name".to_vec(),
+				symbol: b"NTN".to_vec(),
+				decimals: 13,
+				minimal_balance: 2,
+			},
+		}));
+
+		assert_eq!(
+			AssetMetadatas::<Runtime>::get(AssetIds::StableAssetId(0)),
+			Some(AssetMetadata {
+				name: b"New Token Name".to_vec(),
+				symbol: b"NTN".to_vec(),
+				decimals: 13,
+				minimal_balance: 2,
+			})
+		);
+	});
+}
+
+#[test]
+fn update_stable_asset_should_not_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_noop!(
+			AssetRegistry::update_stable_asset(
+				Origin::signed(CouncilAccount::get()),
+				0,
+				Box::new(AssetMetadata {
+					name: b"New Token Name".to_vec(),
+					symbol: b"NTN".to_vec(),
+					decimals: 13,
+					minimal_balance: 2,
+				})
+			),
+			Error::<Runtime>::AssetIdNotExists
+		);
+	});
+}
 
 #[test]
 fn register_erc20_asset_work() {
@@ -262,6 +408,25 @@ fn update_native_asset_works() {
 }
 
 #[test]
+fn update_erc20_asset_should_not_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_noop!(
+			AssetRegistry::update_stable_asset(
+				Origin::signed(CouncilAccount::get()),
+				0,
+				Box::new(AssetMetadata {
+					name: b"New Token Name".to_vec(),
+					symbol: b"NTN".to_vec(),
+					decimals: 13,
+					minimal_balance: 2,
+				})
+			),
+			Error::<Runtime>::AssetIdNotExists
+		);
+	});
+}
+
+#[test]
 fn name_works() {
 	ExtBuilder::default()
 		.balances(vec![(alice(), 1_000_000_000_000)])
@@ -288,13 +453,13 @@ fn name_works() {
 			);
 
 			assert_eq!(
-				EvmErc20InfoMapping::<Runtime>::name(CurrencyId::DexShare(DexShare::Token(TokenSymbol::SEL), DexShare::Token(TokenSymbol::SUSD))),
-				Some(b"LP Selendra - Selendra Dollar".to_vec())
+				EvmErc20InfoMapping::<Runtime>::name(CurrencyId::DexShare(DexShare::Token(TokenSymbol::SEL), DexShare::Token(TokenSymbol::KUSD))),
+				Some(b"LP Selendra - Khmer Dollar".to_vec())
 			);
 
 			assert_eq!(
-				EvmErc20InfoMapping::<Runtime>::name(CurrencyId::DexShare(DexShare::Erc20(erc20_address()), DexShare::Token(TokenSymbol::SUSD))),
-				Some(b"LP long string name, long string name, long string name, long string name, long string name - Selendra Dollar"[..32].to_vec())
+				EvmErc20InfoMapping::<Runtime>::name(CurrencyId::DexShare(DexShare::Erc20(erc20_address()), DexShare::Token(TokenSymbol::KUSD))),
+				Some(b"LP long string name, long string name, long string name, long string name, long string name - Khmer Dollar"[..32].to_vec())
 			);
 
 			assert_eq!(
@@ -311,6 +476,7 @@ fn name_works() {
 				EvmErc20InfoMapping::<Runtime>::name(CurrencyId::DexShare(DexShare::Erc20(erc20_address()), DexShare::Erc20(erc20_address_not_exists()))),
 				None
 			);
+
 		});
 }
 
@@ -345,17 +511,17 @@ fn symbol_works() {
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::symbol(CurrencyId::DexShare(
 					DexShare::Token(TokenSymbol::SEL),
-					DexShare::Token(TokenSymbol::SUSD)
+					DexShare::Token(TokenSymbol::KUSD)
 				)),
-				Some(b"LP_SEL_SUSD".to_vec())
+				Some(b"LP_SEL_KUSD".to_vec())
 			);
 
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::symbol(CurrencyId::DexShare(
 					DexShare::Erc20(erc20_address()),
-					DexShare::Token(TokenSymbol::SUSD)
+					DexShare::Token(TokenSymbol::KUSD)
 				)),
-				Some(b"LP_TestToken_SUSD".to_vec())
+				Some(b"LP_TestToken_KUSD".to_vec())
 			);
 
 			assert_eq!(
@@ -415,7 +581,7 @@ fn decimals_works() {
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::decimals(CurrencyId::DexShare(
 					DexShare::Token(TokenSymbol::SEL),
-					DexShare::Token(TokenSymbol::SUSD)
+					DexShare::Token(TokenSymbol::KUSD)
 				)),
 				Some(12)
 			);
@@ -423,7 +589,7 @@ fn decimals_works() {
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::decimals(CurrencyId::DexShare(
 					DexShare::Erc20(erc20_address()),
-					DexShare::Token(TokenSymbol::SUSD)
+					DexShare::Token(TokenSymbol::KUSD)
 				)),
 				Some(17)
 			);
@@ -486,7 +652,7 @@ fn encode_evm_address_works() {
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::DexShare(
 					DexShare::Token(TokenSymbol::SEL),
-					DexShare::Token(TokenSymbol::SUSD)
+					DexShare::Token(TokenSymbol::KUSD)
 				)),
 				H160::from_str("0x0000000000000000000200000000000000000001").ok()
 			);
@@ -494,14 +660,14 @@ fn encode_evm_address_works() {
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::DexShare(
 					DexShare::Erc20(erc20_address()),
-					DexShare::Token(TokenSymbol::SUSD)
+					DexShare::Token(TokenSymbol::KUSD)
 				)),
 				H160::from_str("0x00000000000000000002015dddfce50000000001").ok()
 			);
 
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::DexShare(
-					DexShare::Token(TokenSymbol::SUSD),
+					DexShare::Token(TokenSymbol::KUSD),
 					DexShare::Erc20(erc20_address())
 				)),
 				H160::from_str("0x000000000000000000020000000001015dddfce5").ok()
@@ -531,10 +697,18 @@ fn encode_evm_address_works() {
 				None
 			);
 
+			// StableAssetPoolToken
+			assert_eq!(
+				EvmErc20InfoMapping::<Runtime>::encode_evm_address(
+					CurrencyId::StableAssetPoolToken(1)
+				),
+				H160::from_str("0x0000000000000000000300000000000000000001").ok()
+			);
+
 			// ForeignAsset
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::ForeignAsset(1)),
-				H160::from_str("0x0000000000000000000300000000000000000001").ok()
+				H160::from_str("0x0000000000000000000400000000000000000001").ok()
 			);
 		});
 }
@@ -589,13 +763,13 @@ fn decode_evm_address_works() {
 				EvmErc20InfoMapping::<Runtime>::decode_evm_address(
 					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::DexShare(
 						DexShare::Token(TokenSymbol::SEL),
-						DexShare::Token(TokenSymbol::SUSD)
+						DexShare::Token(TokenSymbol::KUSD)
 					))
 					.unwrap(),
 				),
 				Some(CurrencyId::DexShare(
 					DexShare::Token(TokenSymbol::SEL),
-					DexShare::Token(TokenSymbol::SUSD)
+					DexShare::Token(TokenSymbol::KUSD)
 				))
 			);
 
@@ -603,13 +777,13 @@ fn decode_evm_address_works() {
 				EvmErc20InfoMapping::<Runtime>::decode_evm_address(
 					EvmErc20InfoMapping::<Runtime>::encode_evm_address(CurrencyId::DexShare(
 						DexShare::Erc20(erc20_address()),
-						DexShare::Token(TokenSymbol::SUSD)
+						DexShare::Token(TokenSymbol::KUSD)
 					))
 					.unwrap()
 				),
 				Some(CurrencyId::DexShare(
 					DexShare::Erc20(erc20_address()),
-					DexShare::Token(TokenSymbol::SUSD)
+					DexShare::Token(TokenSymbol::KUSD)
 				))
 			);
 
@@ -653,6 +827,17 @@ fn decode_evm_address_works() {
 			assert_eq!(
 				EvmErc20InfoMapping::<Runtime>::decode_evm_address(non_system_contracts),
 				Some(CurrencyId::Erc20(non_system_contracts))
+			);
+
+			// StableAssetPoolToken
+			assert_eq!(
+				EvmErc20InfoMapping::<Runtime>::decode_evm_address(
+					EvmErc20InfoMapping::<Runtime>::encode_evm_address(
+						CurrencyId::StableAssetPoolToken(1)
+					)
+					.unwrap()
+				),
+				Some(CurrencyId::StableAssetPoolToken(1))
 			);
 
 			// ForeignAsset

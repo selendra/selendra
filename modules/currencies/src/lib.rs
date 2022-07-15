@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! Currencies module.
 
@@ -386,7 +389,7 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 		}
 		match currency_id {
 			CurrencyId::Erc20(contract) => {
-				// deposit from erc20 holding account to receiver(who). which receive
+				// deposit from erc20 holding account to receiver(who). in xcm case which receive
 				// erc20 from sibling parachain, we choose receiver to charge storage fee. we must
 				// make sure receiver has enough native token to charge storage fee.
 				let sender = T::Erc20HoldingAccount::get();
@@ -421,7 +424,7 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 
 		match currency_id {
 			CurrencyId::Erc20(contract) => {
-				// withdraw from sender(who) to erc20 holding account. which receive
+				// withdraw from sender(who) to erc20 holding account. in xcm case which receive
 				// erc20 from sibling parachain, sender is sibling parachain sovereign account. As
 				// the origin here is used to charge storage fee, we must make sure sibling
 				// parachain sovereign account has enough native token to charge storage fee.

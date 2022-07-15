@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,15 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 use super::Precompile;
 use crate::runner::state::{PrecompileFailure, PrecompileOutput, PrecompileResult};
 use module_evm_utility::evm::{Context, ExitError, ExitSucceed};
 use num::{BigUint, One, Zero};
 use sp_core::U256;
+use sp_runtime::traits::UniqueSaturatedInto;
 use sp_std::{
 	cmp::{max, min},
 	vec::Vec,
@@ -59,15 +63,22 @@ impl ModexpPricer {
 
 	fn read_exp(input: &[u8], base_len: U256, exp_len: U256) -> U256 {
 		let input_len = input.len();
-		let base_len =
-			if base_len > U256::from(u32::MAX) { return U256::zero() } else { base_len.low_u64() };
+		let base_len = if base_len > U256::from(u32::MAX) {
+			return U256::zero()
+		} else {
+			UniqueSaturatedInto::<u64>::unique_saturated_into(base_len)
+		};
 		if base_len + 96 >= input_len as u64 {
 			U256::zero()
 		} else {
 			let exp_start = 96 + base_len as usize;
 			let remaining_len = input_len - exp_start;
 			let mut reader = Vec::from(&input[exp_start..exp_start + remaining_len]);
-			let len = if exp_len < U256::from(32) { exp_len.low_u32() as usize } else { 32 };
+			let len = if exp_len < U256::from(32) {
+				UniqueSaturatedInto::<usize>::unique_saturated_into(exp_len)
+			} else {
+				32
+			};
 
 			if reader.len() < len {
 				reader.resize_with(len, Default::default);
@@ -97,8 +108,11 @@ impl ModexpPricer {
 		// read fist 32-byte word of the exponent.
 		let exp_low = Self::read_exp(input, base_len, exp_len);
 
-		let (base_len, exp_len, mod_len) =
-			(base_len.low_u64(), exp_len.low_u64(), mod_len.low_u64());
+		let (base_len, exp_len, mod_len) = (
+			base_len.unique_saturated_into(),
+			exp_len.unique_saturated_into(),
+			mod_len.unique_saturated_into(),
+		);
 
 		let m = max(mod_len, base_len);
 

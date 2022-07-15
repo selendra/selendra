@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg(any(test, feature = "bench"))]
 
@@ -27,25 +30,30 @@ use frame_support::{
 	PalletId, RuntimeDebug,
 };
 use frame_system::{offchain::SendTransactionTypes, EnsureRoot, EnsureSignedBy};
+use module_cdp_engine::CollateralCurrencyIds;
 use module_evm::{EvmChainId, EvmTask};
 use module_evm_accounts::EvmAddressMapping;
 use module_support::{
-	AddressMapping as AddressMappingT, DEXIncentives, DispatchableTask, EmergencyShutdown,
-	PriceProvider,
+	mocks::MockStableAsset, AddressMapping as AddressMappingT, AuctionManager, DEXIncentives,
+	DispatchableTask, EmergencyShutdown, ExchangeRate, ExchangeRateProvider, PoolId, PriceProvider,
+	Rate, SpecificJointsSwap,
 };
 use orml_traits::{parameter_type_with_key, MultiReservableCurrency};
 pub use primitives::{
 	define_combined_task,
 	evm::{convert_decimals_to_evm, EvmAddress},
 	task::TaskResult,
-	Address, Amount, BlockNumber, CurrencyId, DexShare, Header, Moment, Nonce, ReserveIdentifier,
-	Signature, TokenSymbol, TradingPair,
+	Address, Amount, AuctionId, BlockNumber, CurrencyId, DexShare, Header, Moment, Nonce,
+	ReserveIdentifier, Signature, TokenSymbol, TradingPair,
 };
 use scale_info::TypeInfo;
 use sp_core::{H160, H256};
 use sp_runtime::{
-	traits::{AccountIdConversion, BlakeTwo256, Convert, IdentityLookup, One as OneT},
-	AccountId32, DispatchResult, FixedPointNumber, FixedU128, Perbill, Percent,
+	traits::{
+		AccountIdConversion, BlakeTwo256, BlockNumberProvider, Convert, IdentityLookup,
+		One as OneT, Zero,
+	},
+	AccountId32, DispatchResult, FixedPointNumber, FixedU128, Perbill, Percent, Permill,
 };
 use sp_std::prelude::*;
 
@@ -153,10 +161,11 @@ impl pallet_balances::Config for Test {
 
 pub const SEL: CurrencyId = CurrencyId::Token(TokenSymbol::SEL);
 pub const RENBTC: CurrencyId = CurrencyId::Token(TokenSymbol::RENBTC);
-pub const SUSD: CurrencyId = CurrencyId::Token(TokenSymbol::SUSD);
+pub const KUSD: CurrencyId = CurrencyId::Token(TokenSymbol::KUSD);
 pub const DOT: CurrencyId = CurrencyId::Token(TokenSymbol::DOT);
-pub const LP_SEL_SUSD: CurrencyId =
-	CurrencyId::DexShare(DexShare::Token(TokenSymbol::SEL), DexShare::Token(TokenSymbol::SUSD));
+pub const LSEL: CurrencyId = CurrencyId::Token(TokenSymbol::LSEL);
+pub const LP_SEL_KUSD: CurrencyId =
+	CurrencyId::DexShare(DexShare::Token(TokenSymbol::SEL), DexShare::Token(TokenSymbol::KUSD));
 
 parameter_types! {
 	pub const GetNativeCurrencyId: CurrencyId = SEL;
@@ -196,6 +205,16 @@ define_combined_task! {
 	}
 }
 
+pub struct MockBlockNumberProvider;
+
+impl BlockNumberProvider for MockBlockNumberProvider {
+	type BlockNumber = u32;
+
+	fn current_block_number() -> Self::BlockNumber {
+		Zero::zero()
+	}
+}
+
 impl module_idle_scheduler::Config for Test {
 	type Event = Event;
 	type WeightInfo = ();
@@ -227,14 +246,14 @@ impl orml_nft::Config for Test {
 }
 
 parameter_types! {
-	pub const GetStableCurrencyId: CurrencyId = SUSD;
+	pub const GetStableCurrencyId: CurrencyId = KUSD;
 	pub MaxSwapSlippageCompareToOracle: Ratio = Ratio::one();
 	pub const TreasuryPalletId: PalletId = PalletId(*b"sel/trsy");
 	pub const TransactionPaymentPalletId: PalletId = PalletId(*b"sel/fees");
 	pub SelendraTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 	pub const CustomFeeSurplus: Percent = Percent::from_percent(50);
 	pub const AlternativeFeeSurplus: Percent = Percent::from_percent(25);
-	pub DefaultFeeTokens: Vec<CurrencyId> = vec![SUSD];
+	pub DefaultFeeTokens: Vec<CurrencyId> = vec![KUSD];
 }
 
 impl module_transaction_payment::Config for Test {
@@ -379,9 +398,23 @@ impl module_dex::Config for Test {
 	type PalletId = DEXPalletId;
 	type Erc20InfoMapping = EvmErc20InfoMapping;
 	type WeightInfo = ();
+	type DEXIncentives = MockDEXIncentives;
 	type ListingOrigin = EnsureSignedBy<ListingOrigin, AccountId>;
 	type ExtendedProvisioningBlocks = ConstU32<0>;
 	type OnLiquidityPoolUpdated = ();
+}
+
+parameter_types! {
+	pub const LoansPalletId: PalletId = PalletId(*b"sel/loan");
+}
+
+impl module_loans::Config for Test {
+	type Event = Event;
+	type Currency = Tokens;
+	type RiskManager = CDPEngine;
+	type CDPTreasury = CDPTreasury;
+	type PalletId = LoansPalletId;
+	type OnUpdateLoan = ();
 }
 
 pub struct MockPriceSource;
@@ -395,11 +428,131 @@ impl PriceProvider<CurrencyId> for MockPriceSource {
 	}
 }
 
+parameter_type_with_key! {
+	pub MinimumCollateralAmount: |_currency_id: CurrencyId| -> Balance {
+		10
+	};
+}
+
+parameter_types! {
+	pub DefaultLiquidationRatio: Ratio = Ratio::saturating_from_rational(3, 2);
+	pub DefaultDebitExchangeRate: ExchangeRate = ExchangeRate::one();
+	pub DefaultLiquidationPenalty: Rate = Rate::saturating_from_rational(10, 100);
+}
+
+impl module_cdp_engine::Config for Test {
+	type Event = Event;
+	type PriceSource = MockPriceSource;
+	type DefaultLiquidationRatio = DefaultLiquidationRatio;
+	type DefaultDebitExchangeRate = DefaultDebitExchangeRate;
+	type DefaultLiquidationPenalty = DefaultLiquidationPenalty;
+	type MinimumDebitValue = ConstU128<2>;
+	type MinimumCollateralAmount = MinimumCollateralAmount;
+	type GetStableCurrencyId = GetStableCurrencyId;
+	type CDPTreasury = CDPTreasury;
+	type UpdateOrigin = EnsureSignedBy<One, AccountId>;
+	type MaxSwapSlippageCompareToOracle = MaxSwapSlippageCompareToOracle;
+	type UnsignedPriority = ConstU64<1048576>; // 1 << 20
+	type EmergencyShutdown = MockEmergencyShutdown;
+	type UnixTime = Timestamp;
+	type Currency = Currencies;
+	type DEX = DexModule;
+	type Swap = SpecificJointsSwap<DexModule, AlternativeSwapPathJointList>;
+	type WeightInfo = ();
+}
+
+pub struct MockAuctionManager;
+impl AuctionManager<AccountId> for MockAuctionManager {
+	type Balance = Balance;
+	type CurrencyId = CurrencyId;
+	type AuctionId = AuctionId;
+
+	fn new_collateral_auction(
+		_refund_recipient: &AccountId,
+		_currency_id: Self::CurrencyId,
+		_amount: Self::Balance,
+		_target: Self::Balance,
+	) -> DispatchResult {
+		Ok(())
+	}
+
+	fn cancel_auction(_id: Self::AuctionId) -> DispatchResult {
+		Ok(())
+	}
+
+	fn get_total_target_in_auction() -> Self::Balance {
+		Default::default()
+	}
+
+	fn get_total_collateral_in_auction(_id: Self::CurrencyId) -> Self::Balance {
+		Default::default()
+	}
+}
+
 pub struct MockEmergencyShutdown;
 impl EmergencyShutdown for MockEmergencyShutdown {
 	fn is_shutdown() -> bool {
 		false
 	}
+}
+
+parameter_types! {
+	pub const CDPTreasuryPalletId: PalletId = PalletId(*b"sel/cdpt");
+	pub CDPTreasuryAccount: AccountId = PalletId(*b"sel/hztr").into_account_truncating();
+	pub AlternativeSwapPathJointList: Vec<Vec<CurrencyId>> = vec![
+		vec![KUSD],
+	];
+}
+
+impl module_cdp_treasury::Config for Test {
+	type Event = Event;
+	type Currency = Currencies;
+	type GetStableCurrencyId = GetStableCurrencyId;
+	type AuctionManagerHandler = MockAuctionManager;
+	type UpdateOrigin = EnsureSignedBy<One, AccountId>;
+	type DEX = DexModule;
+	type MaxAuctionsCount = ConstU32<10_000>;
+	type PalletId = CDPTreasuryPalletId;
+	type TreasuryAccount = CDPTreasuryAccount;
+	type WeightInfo = ();
+	type StableAsset = MockStableAsset<CurrencyId, Balance, AccountId, BlockNumber>;
+	type Swap = SpecificJointsSwap<DexModule, AlternativeSwapPathJointList>;
+}
+
+impl module_funan::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type DepositPerAuthorization = ConstU128<100>;
+	type CollateralCurrencyIds = CollateralCurrencyIds<Test>;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const StableAssetPalletId: PalletId = PalletId(*b"nuts/sta");
+}
+
+pub struct EnsurePoolAssetId;
+impl module_stable_asset::traits::ValidateAssetId<CurrencyId> for EnsurePoolAssetId {
+	fn validate(_currency_id: CurrencyId) -> bool {
+		true
+	}
+}
+
+impl module_stable_asset::Config for Test {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type Assets = Tokens;
+	type PalletId = StableAssetPalletId;
+
+	type AtLeast64BitUnsigned = u128;
+	type FeePrecision = ConstU128<10_000_000_000>; // 10 decimals
+	type APrecision = ConstU128<100>; // 2 decimals
+	type PoolAssetLimit = ConstU32<5>;
+	type SwapExactOverAmount = ConstU128<100>;
+	type WeightInfo = ();
+	type ListingOrigin = EnsureSignedBy<ListingOrigin, AccountId>;
+	type EnsurePoolAssetId = EnsurePoolAssetId;
 }
 
 pub type AdaptedBasicCurrency =
@@ -460,8 +613,22 @@ impl module_evm_accounts::Config for Test {
 	type WeightInfo = ();
 }
 
+pub struct MockLiquidNativeExchangeProvider;
+impl ExchangeRateProvider for MockLiquidNativeExchangeProvider {
+	fn get_exchange_rate() -> ExchangeRate {
+		ExchangeRate::saturating_from_rational(1, 2)
+	}
+}
+
+parameter_type_with_key! {
+	pub PricingPegged: |_currency_id: CurrencyId| -> Option<CurrencyId> {
+		None
+	};
+}
+
 parameter_types! {
 	pub StableCurrencyFixedPrice: Price = Price::saturating_from_rational(1, 1);
+	pub const GetLiquidCurrencyId: CurrencyId = LSEL;
 }
 
 ord_parameter_types! {
@@ -473,10 +640,56 @@ impl module_prices::Config for Test {
 	type Source = Oracle;
 	type GetStableCurrencyId = GetStableCurrencyId;
 	type StableCurrencyFixedPrice = StableCurrencyFixedPrice;
+	type GetNativeCurrencyId = GetNativeCurrencyId;
+	type GetLiquidCurrencyId = GetLiquidCurrencyId;
 	type LockOrigin = EnsureSignedBy<One, AccountId>;
+	type LiquidNativeExchangeRateProvider = MockLiquidNativeExchangeProvider;
 	type DEX = DexModule;
 	type Currency = Currencies;
 	type Erc20InfoMapping = EvmErc20InfoMapping;
+	type PricingPegged = PricingPegged;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const StakingCurrencyId: CurrencyId = DOT;
+	pub const LiquidCurrencyId: CurrencyId = LSEL;
+	pub DefaultExchangeRate: ExchangeRate = ExchangeRate::saturating_from_rational(1, 10);
+	pub ActiveSubAccountsIndexList: Vec<u16> = vec![0, 1, 2];
+	pub const MintThreshold: Balance = 0;
+	pub const RedeemThreshold: Balance = 0;
+}
+
+impl orml_rewards::Config for Test {
+	type Share = Balance;
+	type Balance = Balance;
+	type PoolId = PoolId;
+	type CurrencyId = CurrencyId;
+	type Handler = Incentives;
+}
+
+parameter_types! {
+	pub const IncentivesPalletId: PalletId = PalletId(*b"sel/inct");
+}
+
+ord_parameter_types! {
+	pub const EarnShareBooster: Permill = Permill::from_percent(50);
+	pub const RewardsSource: AccountId = REWARDS_SOURCE;
+}
+
+impl module_incentives::Config for Test {
+	type Event = Event;
+	type RewardsSource = RewardsSource;
+	type AccumulatePeriod = ConstU32<10>;
+	type StableCurrencyId = GetStableCurrencyId;
+	type NativeCurrencyId = GetNativeCurrencyId;
+	type EarnShareBooster = EarnShareBooster;
+	type UpdateOrigin = EnsureSignedBy<One, AccountId>;
+	type CDPTreasury = CDPTreasury;
+	type Currency = Tokens;
+	type DEX = DexModule;
+	type EmergencyShutdown = MockEmergencyShutdown;
+	type PalletId = IncentivesPalletId;
 	type WeightInfo = ();
 }
 
@@ -484,7 +697,6 @@ pub const ALICE: AccountId = AccountId::new([1u8; 32]);
 pub const BOB: AccountId = AccountId::new([2u8; 32]);
 pub const EVA: AccountId = AccountId::new([5u8; 32]);
 pub const REWARDS_SOURCE: AccountId = AccountId::new([3u8; 32]);
-pub const HOMA_TREASURY: AccountId = AccountId::new([255u8; 32]);
 
 pub fn alice() -> AccountId {
 	<Test as module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr())
@@ -506,12 +718,12 @@ pub fn sel_evm_address() -> EvmAddress {
 	EvmAddress::try_from(SEL).unwrap()
 }
 
-pub fn ausd_evm_address() -> EvmAddress {
-	EvmAddress::try_from(SUSD).unwrap()
+pub fn kusd_evm_address() -> EvmAddress {
+	EvmAddress::try_from(KUSD).unwrap()
 }
 
-pub fn lp_sel_ausd_evm_address() -> EvmAddress {
-	EvmAddress::try_from(LP_SEL_SUSD).unwrap()
+pub fn lp_sel_kusd_evm_address() -> EvmAddress {
+	EvmAddress::try_from(LP_SEL_KUSD).unwrap()
 }
 
 pub fn erc20_address_not_exists() -> EvmAddress {
@@ -537,6 +749,10 @@ frame_support::construct_runtime!(
 		Tokens: orml_tokens exclude_parts { Call },
 		Balances: pallet_balances,
 		Currencies: module_currencies,
+		CDPEngine: module_cdp_engine,
+		CDPTreasury: module_cdp_treasury,
+		Loans: module_loans,
+		Funan: module_funan,
 		EVMBridge: module_evm_bridge exclude_parts { Call },
 		AssetRegistry: module_asset_registry,
 		NFTModule: module_nft,
@@ -549,6 +765,9 @@ frame_support::construct_runtime!(
 		EVMModule: module_evm,
 		EvmAccounts: module_evm_accounts,
 		IdleScheduler: module_idle_scheduler,
+		Incentives: module_incentives,
+		Rewards: orml_rewards,
+		StableAsset: module_stable_asset,
 	}
 );
 
@@ -600,7 +819,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		Timestamp::set_timestamp(1);
 
 		assert_ok!(Currencies::update_balance(Origin::root(), ALICE, RENBTC, 1_000_000_000_000));
-		assert_ok!(Currencies::update_balance(Origin::root(), ALICE, SUSD, 1_000_000_000));
+		assert_ok!(Currencies::update_balance(Origin::root(), ALICE, KUSD, 1_000_000_000));
 
 		assert_ok!(Currencies::update_balance(
 			Origin::root(),
@@ -612,7 +831,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		assert_ok!(Currencies::update_balance(
 			Origin::root(),
 			EvmAddressMapping::<Test>::get_account_id(&alice_evm_addr()),
-			SUSD,
+			KUSD,
 			1_000_000_000
 		));
 	});

@@ -13,6 +13,9 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 //! Mocks for the prices module.
 
 #![cfg(test)]
@@ -32,18 +35,20 @@ use sp_runtime::{
 	DispatchError, FixedPointNumber,
 };
 use sp_std::cell::RefCell;
-use support::{mocks::MockErc20InfoMapping, SwapLimit};
+use support::{mocks::MockErc20InfoMapping, ExchangeRate, SwapLimit};
 
 pub type AccountId = u128;
 pub type BlockNumber = u64;
 
 pub const SEL: CurrencyId = CurrencyId::Token(TokenSymbol::SEL);
-pub const SUSD: CurrencyId = CurrencyId::Token(TokenSymbol::SUSD);
+pub const KUSD: CurrencyId = CurrencyId::Token(TokenSymbol::KUSD);
 pub const BTC: CurrencyId = CurrencyId::Token(TokenSymbol::RENBTC);
 pub const DOT: CurrencyId = CurrencyId::Token(TokenSymbol::DOT);
+pub const LSEL: CurrencyId = CurrencyId::Token(TokenSymbol::LSEL);
 pub const KSM: CurrencyId = CurrencyId::Token(TokenSymbol::KSM);
-pub const LP_SUSD_DOT: CurrencyId =
-	CurrencyId::DexShare(DexShare::Token(TokenSymbol::SUSD), DexShare::Token(TokenSymbol::DOT));
+pub const TAIKSM: CurrencyId = CurrencyId::StableAssetPoolToken(0);
+pub const LP_KUSD_DOT: CurrencyId =
+	CurrencyId::DexShare(DexShare::Token(TokenSymbol::KUSD), DexShare::Token(TokenSymbol::DOT));
 
 mod prices {
 	pub use super::super::*;
@@ -89,19 +94,19 @@ impl DataProvider<CurrencyId, Price> for MockDataProvider {
 	fn get(currency_id: &CurrencyId) -> Option<Price> {
 		if CHANGED.with(|v| *v.borrow_mut()) {
 			match *currency_id {
-				SUSD => None,
+				KUSD => None,
 				BTC => Some(Price::saturating_from_integer(40000)),
-				DOT => Some(Price::saturating_from_integer(10)),
-				SEL => Some(Price::saturating_from_integer(30)),
+				DOT => Some(Price::saturating_from_integer(30)),
+				SEL => Some(Price::saturating_from_integer(10)),
 				KSM => Some(Price::saturating_from_integer(200)),
 				_ => None,
 			}
 		} else {
 			match *currency_id {
-				SUSD => Some(Price::saturating_from_rational(99, 100)),
+				KUSD => Some(Price::saturating_from_rational(99, 100)),
 				BTC => Some(Price::saturating_from_integer(50000)),
-				DOT => Some(Price::saturating_from_integer(100)),
-				SEL => Some(Price::zero()),
+				SEL => Some(Price::saturating_from_integer(100)),
+				DOT => Some(Price::zero()),
 				KSM => None,
 				_ => None,
 			}
@@ -115,6 +120,17 @@ impl DataFeeder<CurrencyId, Price, AccountId> for MockDataProvider {
 	}
 }
 
+pub struct MockLiquidNativeExchangeProvider;
+impl ExchangeRateProvider for MockLiquidNativeExchangeProvider {
+	fn get_exchange_rate() -> ExchangeRate {
+		if CHANGED.with(|v| *v.borrow_mut()) {
+			ExchangeRate::saturating_from_rational(3, 5)
+		} else {
+			ExchangeRate::saturating_from_rational(1, 2)
+		}
+	}
+}
+
 pub struct MockDEX;
 impl DEXManager<AccountId, Balance, CurrencyId> for MockDEX {
 	fn get_liquidity_pool(
@@ -122,7 +138,7 @@ impl DEXManager<AccountId, Balance, CurrencyId> for MockDEX {
 		currency_id_b: CurrencyId,
 	) -> (Balance, Balance) {
 		match (currency_id_a, currency_id_b) {
-			(SUSD, DOT) => (10000, 200),
+			(KUSD, DOT) => (10000, 200),
 			_ => (0, 0),
 		}
 	}
@@ -162,6 +178,7 @@ impl DEXManager<AccountId, Balance, CurrencyId> for MockDEX {
 		_max_amount_a: Balance,
 		_max_amount_b: Balance,
 		_min_share_increment: Balance,
+		_stake_increment_share: bool,
 	) -> sp_std::result::Result<(Balance, Balance, Balance), DispatchError> {
 		unimplemented!()
 	}
@@ -173,6 +190,7 @@ impl DEXManager<AccountId, Balance, CurrencyId> for MockDEX {
 		_remove_share: Balance,
 		_min_withdrawn_a: Balance,
 		_min_withdrawn_b: Balance,
+		_by_unstake: bool,
 	) -> sp_std::result::Result<(Balance, Balance), DispatchError> {
 		unimplemented!()
 	}
@@ -200,15 +218,25 @@ impl orml_tokens::Config for Runtime {
 	type OnKilledTokenAccount = ();
 }
 
+parameter_type_with_key! {
+	pub PricingPegged: |currency_id: CurrencyId| -> Option<CurrencyId> {
+		#[allow(clippy::match_ref_pats)] // false positive
+		match currency_id {
+			&TAIKSM => Some(KSM),
+			_ => None,
+		}
+	};
+}
+
 ord_parameter_types! {
 	pub const One: AccountId = 1;
 }
 
 parameter_types! {
-	pub const GetStableCurrencyId: CurrencyId = SUSD;
-	pub const GetStakingCurrencyId: CurrencyId = DOT;
+	pub const GetStableCurrencyId: CurrencyId = KUSD;
+	pub const GetNativeCurrencyId: CurrencyId = SEL;
+	pub const GetLiquidCurrencyId: CurrencyId = LSEL;
 	pub StableCurrencyFixedPrice: Price = Price::one();
-	pub static MockRelayBlockNumberProvider: BlockNumber = 0;
 }
 
 impl Config for Runtime {
@@ -216,10 +244,14 @@ impl Config for Runtime {
 	type Source = MockDataProvider;
 	type GetStableCurrencyId = GetStableCurrencyId;
 	type StableCurrencyFixedPrice = StableCurrencyFixedPrice;
+	type GetNativeCurrencyId = GetNativeCurrencyId;
+	type GetLiquidCurrencyId = GetLiquidCurrencyId;
 	type LockOrigin = EnsureSignedBy<One, AccountId>;
+	type LiquidNativeExchangeRateProvider = MockLiquidNativeExchangeProvider;
 	type DEX = MockDEX;
 	type Currency = Tokens;
 	type Erc20InfoMapping = MockErc20InfoMapping;
+	type PricingPegged = PricingPegged;
 	type WeightInfo = ();
 }
 

@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use super::{
 	input::{Input, InputPricer, InputT, Output},
@@ -385,51 +388,52 @@ mod tests {
 	use super::*;
 	use crate::precompile::mock::{
 		alice, alice_evm_addr, bob, new_test_ext, Currencies, Incentives, Origin, Rewards, Test,
-		Tokens, ALICE, LP_SEL_SUSD, SEL, SUSD,
+		Tokens, ALICE, DOT, KUSD, LP_SEL_KUSD, SEL,
 	};
 	use frame_support::assert_ok;
 	use hex_literal::hex;
 	use module_support::Rate;
+	use orml_rewards::PoolInfo;
 	use orml_traits::MultiCurrency;
 	use sp_runtime::FixedU128;
 
 	type IncentivesPrecompile = super::IncentivesPrecompile<Test>;
 
-	// #[test]
-	// fn get_incentive_reward_amount_works() {
-	// 	new_test_ext().execute_with(|| {
-	// 		let context = Context {
-	// 			address: Default::default(),
-	// 			caller: alice_evm_addr(),
-	// 			apparent_value: Default::default(),
-	// 		};
+	#[test]
+	fn get_incentive_reward_amount_works() {
+		new_test_ext().execute_with(|| {
+			let context = Context {
+				address: Default::default(),
+				caller: alice_evm_addr(),
+				apparent_value: Default::default(),
+			};
 
-	// 		assert_ok!(Incentives::update_incentive_rewards(
-	// 			Origin::signed(ALICE),
-	// 			vec![(PoolId::Loans(DOT), vec![(DOT, 100)])]
-	// 		));
+			assert_ok!(Incentives::update_incentive_rewards(
+				Origin::signed(ALICE),
+				vec![(PoolId::Loans(DOT), vec![(DOT, 100)])]
+			));
 
-	// 		// getIncetiveRewardAmount(PoolId,address,addres) => 0x7469000d
-	// 		// pool
-	// 		// pool_currency_id
-	// 		// reward_currency_id
-	// 		let input = hex! {"
-	// 			7469000d
-	// 			00000000000000000000000000000000 00000000000000000000000000000000
-	// 			000000000000000000000000 0000000000000000000100000000000000000002
-	// 			000000000000000000000000 0000000000000000000100000000000000000002
-	// 		"};
+			// getIncetiveRewardAmount(PoolId,address,addres) => 0x7469000d
+			// pool
+			// pool_currency_id
+			// reward_currency_id
+			let input = hex! {"
+				7469000d
+				00000000000000000000000000000000 00000000000000000000000000000000
+				000000000000000000000000 0000000000000000000100000000000000000083
+				000000000000000000000000 0000000000000000000100000000000000000083
+			"};
 
-	// 		// value of 100
-	// 		let expected_output = hex! {"
-	// 			00000000000000000000000000000000 00000000000000000000000000000064
-	// 		"};
+			// value of 100
+			let expected_output = hex! {"
+				00000000000000000000000000000000 00000000000000000000000000000064
+			"};
 
-	// 		let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
-	// 		assert_eq!(res.exit_status, ExitSucceed::Returned);
-	// 		assert_eq!(res.output, expected_output.to_vec());
-	// 	});
-	// }
+			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(res.exit_status, ExitSucceed::Returned);
+			assert_eq!(res.output, expected_output.to_vec());
+		});
+	}
 
 	#[test]
 	fn get_dex_reward_rate_works() {
@@ -442,7 +446,7 @@ mod tests {
 
 			assert_ok!(Incentives::update_dex_saving_rewards(
 				Origin::signed(ALICE),
-				vec![(PoolId::Dex(LP_SEL_SUSD), FixedU128::saturating_from_rational(1, 10))]
+				vec![(PoolId::Dex(LP_SEL_KUSD), FixedU128::saturating_from_rational(1, 10))]
 			));
 
 			// getDexRewardRate(address) => 0x7ec93136
@@ -472,7 +476,7 @@ mod tests {
 				apparent_value: Default::default(),
 			};
 
-			assert_ok!(Currencies::deposit(LP_SEL_SUSD, &alice(), 1_000_000_000));
+			assert_ok!(Currencies::deposit(LP_SEL_KUSD, &alice(), 1_000_000_000));
 
 			// depositDexShare(address,address,uint256) => 0xc17ca2a6
 			// who
@@ -489,7 +493,11 @@ mod tests {
 			assert_eq!(res.exit_status, ExitSucceed::Returned);
 
 			assert_eq!(
-				Rewards::shares_and_withdrawn_rewards(PoolId::Dex(LP_SEL_SUSD), alice()),
+				Rewards::pool_infos(PoolId::Dex(LP_SEL_KUSD)),
+				PoolInfo { total_shares: 1048576, ..Default::default() }
+			);
+			assert_eq!(
+				Rewards::shares_and_withdrawn_rewards(PoolId::Dex(LP_SEL_KUSD), alice()),
 				(1048576, Default::default())
 			);
 		});
@@ -504,10 +512,10 @@ mod tests {
 				apparent_value: Default::default(),
 			};
 
-			assert_ok!(Currencies::deposit(LP_SEL_SUSD, &alice(), 1_000_000_000));
+			assert_ok!(Currencies::deposit(LP_SEL_KUSD, &alice(), 1_000_000_000));
 			assert_ok!(Incentives::deposit_dex_share(
 				Origin::signed(alice()),
-				LP_SEL_SUSD,
+				LP_SEL_KUSD,
 				100_000
 			));
 
@@ -526,7 +534,11 @@ mod tests {
 			assert_eq!(res.exit_status, ExitSucceed::Returned);
 
 			assert_eq!(
-				Rewards::shares_and_withdrawn_rewards(PoolId::Dex(LP_SEL_SUSD), alice()),
+				Rewards::pool_infos(PoolId::Dex(LP_SEL_KUSD)),
+				PoolInfo { total_shares: 99744, ..Default::default() }
+			);
+			assert_eq!(
+				Rewards::shares_and_withdrawn_rewards(PoolId::Dex(LP_SEL_KUSD), alice()),
 				(99744, Default::default())
 			);
 		});
@@ -544,7 +556,7 @@ mod tests {
 			assert_ok!(Tokens::deposit(SEL, &alice(), 1_000));
 			assert_ok!(Tokens::deposit(SEL, &bob(), 1_000));
 			assert_ok!(Tokens::deposit(SEL, &Incentives::account_id(), 1_000_000));
-			assert_ok!(Tokens::deposit(SUSD, &Incentives::account_id(), 1_000_000));
+			assert_ok!(Tokens::deposit(KUSD, &Incentives::account_id(), 1_000_000));
 
 			assert_ok!(Incentives::update_claim_reward_deduction_rates(
 				Origin::signed(ALICE),
@@ -554,6 +566,14 @@ mod tests {
 			assert_ok!(Rewards::accumulate_reward(&PoolId::Loans(SEL), SEL, 1_000));
 			Rewards::add_share(&bob(), &PoolId::Loans(SEL), 100);
 			assert_ok!(Rewards::accumulate_reward(&PoolId::Loans(SEL), SEL, 1_000));
+
+			assert_eq!(
+				Rewards::pool_infos(PoolId::Loans(SEL)),
+				PoolInfo {
+					total_shares: 200,
+					rewards: vec![(SEL, (3_000, 1_000))].into_iter().collect(),
+				}
+			);
 
 			// claimRewards(address,PoolId,address) => 0xe12eab9b
 			// who
@@ -569,6 +589,13 @@ mod tests {
 			let res = IncentivesPrecompile::execute(&input, None, &context, false).unwrap();
 			assert_eq!(res.exit_status, ExitSucceed::Returned);
 
+			assert_eq!(
+				Rewards::pool_infos(PoolId::Loans(SEL)),
+				PoolInfo {
+					total_shares: 200,
+					rewards: vec![(SEL, (3_750, 2_500))].into_iter().collect(),
+				}
+			);
 			assert_eq!(
 				Rewards::shares_and_withdrawn_rewards(PoolId::Loans(SEL), alice()),
 				(100, vec![(SEL, 1_500)].into_iter().collect())
@@ -587,7 +614,7 @@ mod tests {
 
 			assert_ok!(Incentives::update_claim_reward_deduction_rates(
 				Origin::signed(ALICE),
-				vec![(PoolId::Dex(LP_SEL_SUSD), FixedU128::saturating_from_rational(1, 10))]
+				vec![(PoolId::Dex(LP_SEL_KUSD), FixedU128::saturating_from_rational(1, 10))]
 			));
 
 			// getClaimRewardDeductionRate(PoolId,address) => 0xa2e2fc8e
@@ -622,7 +649,7 @@ mod tests {
 			assert_ok!(Tokens::deposit(SEL, &alice(), 1_000));
 			assert_ok!(Tokens::deposit(SEL, &bob(), 1_000));
 			assert_ok!(Tokens::deposit(SEL, &Incentives::account_id(), 1_000_000));
-			assert_ok!(Tokens::deposit(SUSD, &Incentives::account_id(), 1_000_000));
+			assert_ok!(Tokens::deposit(KUSD, &Incentives::account_id(), 1_000_000));
 
 			assert_ok!(Incentives::update_claim_reward_deduction_rates(
 				Origin::signed(ALICE),
@@ -631,11 +658,11 @@ mod tests {
 			Rewards::add_share(&alice(), &PoolId::Loans(SEL), 100);
 			assert_ok!(Rewards::accumulate_reward(&PoolId::Loans(SEL), SEL, 1_000));
 			Rewards::add_share(&bob(), &PoolId::Loans(SEL), 100);
-			assert_ok!(Rewards::accumulate_reward(&PoolId::Loans(SEL), SUSD, 1_000));
+			assert_ok!(Rewards::accumulate_reward(&PoolId::Loans(SEL), KUSD, 1_000));
 			Rewards::remove_share(&alice(), &PoolId::Loans(SEL), 100);
 
 			assert_eq!(
-				Incentives::get_pending_rewards(PoolId::Loans(SEL), alice(), vec![SEL, SUSD]),
+				Incentives::get_pending_rewards(PoolId::Loans(SEL), alice(), vec![SEL, KUSD]),
 				vec![1000, 500]
 			);
 
@@ -646,7 +673,7 @@ mod tests {
 			// who
 			// currency_ids_len
 			// SEL
-			// SUSD
+			// KUSD
 			let input = hex! {"
 				0eb797b1
 				00000000000000000000000000000000 00000000000000000000000000000000

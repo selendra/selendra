@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! The precompiles for EVM, includes standard Ethereum precompiles, and more:
 //! - MultiCurrency at address `H160::from_low_u64_be(1024)`.
@@ -39,20 +42,26 @@ use sp_std::{collections::btree_set::BTreeSet, marker::PhantomData};
 pub mod dex;
 pub mod evm;
 pub mod evm_accounts;
+pub mod funan;
+pub mod incentives;
 pub mod input;
 pub mod multicurrency;
 pub mod nft;
 pub mod oracle;
 pub mod schedule;
+pub mod stable_asset;
 
 use crate::SystemContractsFilter;
 pub use dex::DEXPrecompile;
 pub use evm::EVMPrecompile;
 pub use evm_accounts::EVMAccountsPrecompile;
+pub use funan::FunanPrecompile;
+pub use incentives::IncentivesPrecompile;
 pub use multicurrency::MultiCurrencyPrecompile;
 pub use nft::NFTPrecompile;
 pub use oracle::OraclePrecompile;
 pub use schedule::SchedulePrecompile;
+pub use stable_asset::StableAssetPrecompile;
 
 pub const ECRECOVER: H160 = H160(hex!("0000000000000000000000000000000000000001"));
 pub const SHA256: H160 = H160(hex!("0000000000000000000000000000000000000002"));
@@ -76,7 +85,10 @@ pub const EVM: H160 = H160(hex!("0000000000000000000000000000000000000402"));
 pub const ORACLE: H160 = H160(hex!("0000000000000000000000000000000000000403"));
 pub const SCHEDULER: H160 = H160(hex!("0000000000000000000000000000000000000404"));
 pub const DEX: H160 = H160(hex!("0000000000000000000000000000000000000405"));
+pub const STABLE_ASSET: H160 = H160(hex!("0000000000000000000000000000000000000406"));
 pub const EVM_ACCOUNTS: H160 = H160(hex!("0000000000000000000000000000000000000408"));
+pub const FUNAN: H160 = H160(hex!("0000000000000000000000000000000000000409"));
+pub const INCENTIVES: H160 = H160(hex!("000000000000000000000000000000000000040a"));
 
 pub fn target_gas_limit(target_gas: Option<u64>) -> Option<u64> {
 	target_gas.map(|x| x.saturating_div(10).saturating_mul(9)) // 90%
@@ -109,12 +121,15 @@ where
 				SHA3_512,
 				// Selendra precompile
 				MULTI_CURRENCY,
-				// NFT,
+				NFT,
 				EVM,
 				ORACLE,
-				// SCHEDULER,
+				SCHEDULER,
 				DEX,
+				STABLE_ASSET,
 				EVM_ACCOUNTS,
+				FUNAN,
+				INCENTIVES,
 			]),
 			_marker: Default::default(),
 		}
@@ -130,7 +145,10 @@ where
 	EVMAccountsPrecompile<R>: Precompile,
 	OraclePrecompile<R>: Precompile,
 	DEXPrecompile<R>: Precompile,
+	StableAssetPrecompile<R>: Precompile,
 	SchedulePrecompile<R>: Precompile,
+	FunanPrecompile<R>: Precompile,
+	IncentivesPrecompile<R>: Precompile,
 {
 	fn execute(
 		&self,
@@ -219,8 +237,14 @@ where
 				Some(SchedulePrecompile::<R>::execute(input, target_gas, context, is_static))
 			} else if address == DEX {
 				Some(DEXPrecompile::<R>::execute(input, target_gas, context, is_static))
+			} else if address == STABLE_ASSET {
+				Some(StableAssetPrecompile::<R>::execute(input, target_gas, context, is_static))
 			} else if address == EVM_ACCOUNTS {
 				Some(EVMAccountsPrecompile::<R>::execute(input, target_gas, context, is_static))
+			} else if address == FUNAN {
+				Some(FunanPrecompile::<R>::execute(input, target_gas, context, is_static))
+			} else if address == INCENTIVES {
+				Some(IncentivesPrecompile::<R>::execute(input, target_gas, context, is_static))
 			} else {
 				None
 			}

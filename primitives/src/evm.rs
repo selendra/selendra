@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
 	currency::{CurrencyId, CurrencyIdType, DexShareType},
@@ -137,18 +140,18 @@ pub const SYSTEM_CONTRACT_ADDRESS_PREFIX: [u8; 9] = [0u8; 9];
 ///    0 1 2 3 4 5 6 7 8 910111213141516171819 index
 ///   ^^^^^^^^^^^^^^^^^^                       System contract address prefix
 ///                     ^^                     CurrencyId Type: 1-Token 2-DexShare 3-StableAsset
-///                                                             5-ForeignAsset(ignore Erc20, without the prefix of system contracts)
+///                                                             4-ForeignAsset(ignore Erc20, without the prefix of system contracts)
 ///                                                             FF-Erc20 Holding Account
 ///                                         ^^ CurrencyId Type is 1-Token, Token
 ///                                   ^^^^^^^^ CurrencyId Type is 1-Token, NFT
 ///                       ^^                   CurrencyId Type is 2-DexShare, DexShare Left Type:
-///                                                             0-Token 1-Erc20  3-ForeignAsset 4-StableAsset
+///                                                             0-Token 1-Erc20 2-ForeignAsset 3-StableAsset
 ///                         ^^^^^^^^           CurrencyId Type is 2-DexShare, DexShare left field
 ///                                 ^^         CurrencyId Type is 2-DexShare, DexShare Right Type:
 ///                                                             the same as DexShare Left Type
 ///                                   ^^^^^^^^ CurrencyId Type is 2-DexShare, DexShare right field
 ///                                   ^^^^^^^^ CurrencyId Type is 3-StableAsset, StableAssetPoolId
-///                                       ^^^^ CurrencyId Type is 5-ForeignAsset, ForeignAssetId
+///                                       ^^^^ CurrencyId Type is 4-ForeignAsset, ForeignAssetId
 
 /// Check if the given `address` is a system contract.
 ///
@@ -195,6 +198,10 @@ impl TryFrom<CurrencyId> for EvmAddress {
 			CurrencyId::Erc20(erc20) => {
 				address[..].copy_from_slice(erc20.as_bytes());
 			},
+			CurrencyId::StableAssetPoolToken(stable_asset_id) => {
+				address[H160_POSITION_CURRENCY_ID_TYPE] = CurrencyIdType::StableAsset.into();
+				address[H160_POSITION_STABLE_ASSET].copy_from_slice(&stable_asset_id.to_be_bytes());
+			},
 			CurrencyId::ForeignAsset(foreign_asset_id) => {
 				address[H160_POSITION_CURRENCY_ID_TYPE] = CurrencyIdType::ForeignAsset.into();
 				address[H160_POSITION_FOREIGN_ASSET]
@@ -213,7 +220,7 @@ mod convert {
 	/// Convert decimal between native(12) and EVM(18) and therefore the 1_000_000 conversion.
 	const DECIMALS_VALUE: u32 = 1_000_000u32;
 
-	/// Convert decimal from native(CDM/SEL 12) to EVM(18).
+	/// Convert decimal from native(SEL 12) to EVM(18).
 	pub fn convert_decimals_to_evm<B: Zero + Saturating + From<u32>>(b: B) -> B {
 		if b.is_zero() {
 			return b
@@ -221,7 +228,7 @@ mod convert {
 		b.saturating_mul(DECIMALS_VALUE.into())
 	}
 
-	/// Convert decimal from EVM(18) to native(CDM/SEL 12).
+	/// Convert decimal from EVM(18) to native(SEL 12).
 	pub fn convert_decimals_from_evm<
 		B: Zero + Saturating + CheckedDiv + PartialEq + Copy + From<u32>,
 	>(
