@@ -399,7 +399,7 @@ impl pallet_preimage::Config for Runtime {
 	type MaxSize = PreimageMaxSize;
 	type BaseDeposit = PreimageBaseDeposit;
 	type ByteDeposit = PreimageByteDeposit;
-	type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_preimage::WeightInfo<Runtime>;
 }
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
@@ -776,6 +776,7 @@ mod benches {
 		[pallet_tips, Tips]
 		[pallet_treasury, Treasury]
 		[pallet_utility, Utility]
+		[pallet_nomination_pools, NominationPools]
 	);
 }
 

@@ -56,26 +56,20 @@ parameter_types! {
 impl pallet_babe::Config for Runtime {
 	type EpochDuration = EpochDuration;
 	type ExpectedBlockTime = ExpectedBlockTime;
-
 	// session module is the trigger
 	type EpochChangeTrigger = pallet_babe::ExternalTrigger;
 	type DisabledValidators = Session;
-
 	type KeyOwnerProofSystem = Historical;
-
 	type KeyOwnerProof = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
 		KeyTypeId,
 		pallet_babe::AuthorityId,
 	)>>::Proof;
-
 	type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
 		KeyTypeId,
 		pallet_babe::AuthorityId,
 	)>>::IdentificationTuple;
-
 	type HandleEquivocation =
 		pallet_babe::EquivocationHandler<Self::KeyOwnerIdentification, Offences, ReportLongevity>;
-
 	type WeightInfo = ();
 	type MaxAuthorities = MaxAuthorities;
 }
@@ -89,7 +83,7 @@ impl pallet_session::Config for Runtime {
 	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, Staking>;
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
-	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_session::WeightInfo<Runtime>;
 }
 
 impl pallet_session::historical::Config for Runtime {
@@ -154,7 +148,7 @@ impl pallet_staking::Config for Runtime {
 	type VoterList = VoterList;
 	type MaxUnlockingChunks = ConstU32<32>;
 	type OnStakerSlash = ();
-	type WeightInfo = pallet_staking::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_staking::WeightInfo<Runtime>;
 	type BenchmarkingConfig = StakingBenchmarkingConfig;
 }
 
@@ -175,7 +169,7 @@ impl pallet_im_online::Config for Runtime {
 	type NextSessionRotation = Babe;
 	type ReportUnresponsiveness = Offences;
 	type UnsignedPriority = ImOnlineUnsignedPriority;
-	type WeightInfo = pallet_im_online::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_im_online::WeightInfo<Runtime>;
 	type MaxKeys = MaxKeys;
 	type MaxPeerInHeartbeats = MaxPeerInHeartbeats;
 	type MaxPeerDataEncodingSize = MaxPeerDataEncodingSize;
@@ -288,7 +282,7 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
 	type MaxElectableTargets = MaxElectableTargets;
 	type MaxElectingVoters = MaxElectingVoters;
 	type BenchmarkingConfig = ElectionBenchmarkConfig;
-	type WeightInfo = pallet_election_provider_multi_phase::weights::SubstrateWeight<Self>;
+	type WeightInfo = weights::pallet_election_provider_multi_phase::WeightInfo<Self>;
 }
 
 impl pallet_offences::Config for Runtime {
@@ -304,23 +298,18 @@ impl pallet_authority_discovery::Config for Runtime {
 impl pallet_grandpa::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
-
 	type KeyOwnerProofSystem = Historical;
-
 	type KeyOwnerProof =
 		<Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
-
 	type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
 		KeyTypeId,
 		GrandpaId,
 	)>>::IdentificationTuple;
-
 	type HandleEquivocation = pallet_grandpa::EquivocationHandler<
 		Self::KeyOwnerIdentification,
 		Offences,
 		ReportLongevity,
 	>;
-
 	type WeightInfo = ();
 	type MaxAuthorities = MaxAuthorities;
 }
@@ -358,7 +347,7 @@ parameter_types! {
 }
 
 impl pallet_nomination_pools::Config for Runtime {
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_nomination_pools::WeightInfo<Self>;
 	type Event = Event;
 	type Currency = Balances;
 	type BalanceToU256 = BalanceToU256;
