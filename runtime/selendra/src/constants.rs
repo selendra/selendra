@@ -106,12 +106,12 @@ pub mod fee {
 		WeightToFeePolynomial,
 	};
 	use primitives::Balance;
-	use runtime_common::{cent, dollar, millicent, SEL};
+	use runtime_common::{dollar, millicent, SEL};
 	use smallvec::smallvec;
 	use sp_runtime::Perbill;
 
 	pub fn base_tx_in_sel() -> Balance {
-		cent(SEL) / 10
+		millicent(SEL) / 5
 	}
 
 	/// Handles converting a weight scalar to a fee value, based on the scale
@@ -130,7 +130,7 @@ pub mod fee {
 		type Balance = Balance;
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
-			let p = base_tx_in_sel(); // 1_000_000_000;
+			let p = base_tx_in_sel(); // 10_000_000;
 			let q = Balance::from(ExtrinsicBaseWeight::get()); // 125_000_000
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,
@@ -142,7 +142,7 @@ pub mod fee {
 	}
 
 	pub fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 2 * dollar(SEL) + (bytes as Balance) * 10 * millicent(SEL)
+		items as Balance * 5 * dollar(SEL) + (bytes as Balance) * 100 * millicent(SEL)
 	}
 }
 

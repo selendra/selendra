@@ -107,7 +107,7 @@ pub use runtime_common::{
 	EnsureRootOrOneCouncil, EnsureRootOrThreeFourthsCouncil, ExchangeRate,
 	ExistentialDepositsTimesOneHundred, GasToWeight, MaxTipsOfPriority, OperationalFeeMultiplier,
 	Price, ProxyType, Rate, Ratio, RuntimeBlockLength, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
-	TimeStampedPrice, TipPerWeightStep, DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL,
+	TimeStampedPrice, TipPerWeightStep, DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL, microcent
 };
 
 use crate::config::{
@@ -273,7 +273,7 @@ impl module_currencies::Config for Runtime {
 }
 
 parameter_types! {
-	pub TransactionByteFee: Balance = 10 * millicent(SEL);
+	pub TransactionByteFee: Balance = 2 * microcent(SEL);
 	pub DefaultFeeTokens: Vec<CurrencyId> = vec![KUSD, LSEL];
 	pub const CustomFeeSurplus: Percent = Percent::from_percent(50);
 	pub const AlternativeFeeSurplus: Percent = Percent::from_percent(25);
