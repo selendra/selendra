@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! # Transaction Payment Module
 //!
@@ -1169,12 +1172,7 @@ where
 		info: &DispatchInfoOf<CallOf<T>>,
 		len: usize,
 	) -> Result<
-		(
-			PalletBalanceOf<T>,
-			Option<NegativeImbalanceOf<T>>,
-			PalletBalanceOf<T>,
-			T::AccountId,
-		),
+		(PalletBalanceOf<T>, Option<NegativeImbalanceOf<T>>, PalletBalanceOf<T>, T::AccountId),
 		TransactionValidityError,
 	> {
 		let tip = self.0;
@@ -1182,7 +1180,7 @@ where
 
 		// Only mess with balances if fee is not zero.
 		if fee.is_zero() {
-			return Ok((fee, None, 0, who.clone()));
+			return Ok((fee, None, 0, who.clone()))
 		}
 
 		let reason = if tip.is_zero() {
@@ -1246,7 +1244,7 @@ where
 		// tipPerWeight = tipPerWight / TipPerWeightStep * TipPerWeightStep
 		//              = tip / bounded_{weight|length} / TipPerWeightStep * TipPerWeightStep
 		// priority = tipPerWeight * max_block_{weight|length}
-		// MaxTipsOfPriority = 10_000 CDM/SEL = 10^16.
+		// MaxTipsOfPriority = 10_000 SEL = 10^16.
 		// `MaxTipsOfPriority * max_block_{weight|length}` will overflow, so div `TipPerWeightStep`
 		// here.
 		let max_reward = |val: PalletBalanceOf<T>| {
@@ -1381,7 +1379,9 @@ where
 			let (tip, fee) = actual_payment.split(actual_tip);
 
 			// distribute fee
-			<T as Config>::OnTransactionPayment::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
+			<T as Config>::OnTransactionPayment::on_unbalanceds(
+				Some(fee).into_iter().chain(Some(tip)),
+			);
 
 			Pallet::<T>::deposit_event(Event::<T>::TransactionFeePaid {
 				who,
@@ -1509,6 +1509,8 @@ impl<T: Config, AnyCall: GetDispatchInfo + Encode> EstimateCallFee<AnyCall, Pall
 	for Pallet<T>
 where
 	PalletBalanceOf<T>: FixedPointOperand,
+	<T as frame_system::Config>::Call:
+		Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo>,
 {
 	fn estimate_call_fee(call: &AnyCall, post_info: PostDispatchInfo) -> PalletBalanceOf<T> {
 		let len = call.encoded_size() as u32;

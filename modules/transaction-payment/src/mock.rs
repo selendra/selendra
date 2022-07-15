@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! Mocks for the transaction payment module.
 
@@ -46,7 +49,7 @@ pub const BOB: AccountId = AccountId::new([2u8; 32]);
 pub const CHARLIE: AccountId = AccountId::new([3u8; 32]);
 pub const DAVE: AccountId = AccountId::new([4u8; 32]);
 pub const SEL: CurrencyId = CurrencyId::Token(TokenSymbol::SEL);
-pub const SUSD: CurrencyId = CurrencyId::Token(TokenSymbol::SUSD);
+pub const KUSD: CurrencyId = CurrencyId::Token(TokenSymbol::KUSD);
 pub const DOT: CurrencyId = CurrencyId::Token(TokenSymbol::DOT);
 
 parameter_types! {
@@ -98,7 +101,7 @@ impl frame_system::Config for Runtime {
 parameter_type_with_key! {
 	pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
 		match *currency_id {
-			SUSD => 100,
+			KUSD => 100,
 			DOT => 1,
 			_ => Default::default(),
 		}
@@ -167,8 +170,8 @@ parameter_types! {
 	pub const DEXPalletId: PalletId = PalletId(*b"sel/dexm");
 	pub const GetExchangeFee: (u32, u32) = (0, 100);
 	pub EnabledTradingPairs: Vec<TradingPair> = vec![
-		TradingPair::from_currency_ids(SUSD, SEL).unwrap(),
-		TradingPair::from_currency_ids(SUSD, DOT).unwrap(),
+		TradingPair::from_currency_ids(KUSD, SEL).unwrap(),
+		TradingPair::from_currency_ids(KUSD, DOT).unwrap(),
 	];
 	pub const TradingPathLimit: u32 = 4;
 }
@@ -180,6 +183,7 @@ impl module_dex::Config for Runtime {
 	type TradingPathLimit = TradingPathLimit;
 	type PalletId = DEXPalletId;
 	type Erc20InfoMapping = ();
+	type DEXIncentives = ();
 	type WeightInfo = ();
 	type ListingOrigin = frame_system::EnsureSignedBy<Zero, AccountId>;
 	type ExtendedProvisioningBlocks = ConstU64<0>;
@@ -190,9 +194,9 @@ parameter_types! {
 	pub MaxSwapSlippageCompareToOracle: Ratio = Ratio::saturating_from_rational(1, 2);
 	pub static TransactionByteFee: u128 = 1;
 	pub static TipPerWeightStep: u128 = 1;
-	pub DefaultFeeTokens: Vec<CurrencyId> = vec![SUSD];
-	pub AusdFeeSwapPath: Vec<CurrencyId> = vec![SUSD, SEL];
-	pub DotFeeSwapPath: Vec<CurrencyId> = vec![DOT, SUSD, SEL];
+	pub DefaultFeeTokens: Vec<CurrencyId> = vec![KUSD];
+	pub KUSDFeeSwapPath: Vec<CurrencyId> = vec![KUSD, SEL];
+	pub DotFeeSwapPath: Vec<CurrencyId> = vec![DOT, KUSD, SEL];
 }
 
 thread_local! {
@@ -325,7 +329,7 @@ pub struct ExtBuilder {
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
-			balances: vec![(ALICE, SUSD, 10000), (ALICE, DOT, 1000)],
+			balances: vec![(ALICE, KUSD, 10000), (ALICE, DOT, 1000)],
 			base_weight: 0,
 			byte_fee: 2,
 			weight_to_fee: 1,

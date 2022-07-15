@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use codec::{Decode, Encode};
 use frame_support::traits::Get;
@@ -64,6 +67,7 @@ pub trait DEXManager<AccountId, Balance, CurrencyId> {
 		max_amount_a: Balance,
 		max_amount_b: Balance,
 		min_share_increment: Balance,
+		stake_increment_share: bool,
 	) -> Result<(Balance, Balance, Balance), DispatchError>;
 
 	fn remove_liquidity(
@@ -73,6 +77,7 @@ pub trait DEXManager<AccountId, Balance, CurrencyId> {
 		remove_share: Balance,
 		min_withdrawn_a: Balance,
 		min_withdrawn_b: Balance,
+		by_unstake: bool,
 	) -> Result<(Balance, Balance), DispatchError>;
 }
 
@@ -196,6 +201,7 @@ where
 		_max_amount_a: Balance,
 		_max_amount_b: Balance,
 		_min_share_increment: Balance,
+		_stake_increment_share: bool,
 	) -> Result<(Balance, Balance, Balance), DispatchError> {
 		Ok(Default::default())
 	}
@@ -207,6 +213,7 @@ where
 		_remove_share: Balance,
 		_min_withdrawn_a: Balance,
 		_min_withdrawn_b: Balance,
+		_by_unstake: bool,
 	) -> Result<(Balance, Balance), DispatchError> {
 		Ok(Default::default())
 	}

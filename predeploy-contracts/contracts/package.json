@@ -1,7 +1,7 @@
 {
-  "name": "@selendra-network/contracts",
-  "version": "4.2.1",
-  "description": "SelendraNetwork Smart Contract library for Solidity",
+  "name": "@acala-network/contracts",
+  "version": "4.3.2",
+  "description": "AcalaNetwork Smart Contract library for Solidity",
   "files": [
     "**/*.js",
     "**/*.ts",
@@ -13,18 +13,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SelendraNetwork/predeploy-contracts.git"
+    "url": "git+https://github.com/AcalaNetwork/predeploy-contracts.git"
   },
   "keywords": [
     "smart",
     "solidity",
     "contracts",
-    "SelendraNetwork"
+    "AcalaNetwork"
   ],
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/SelendraNetwork/predeploy-contracts/issues"
+    "url": "https://github.com/AcalaNetwork/predeploy-contracts/issues"
   },
-  "homepage": "https://github.com/SelendraNetwork/predeploy-contracts"
+  "homepage": "https://github.com/AcalaNetwork/predeploy-contracts"
 }

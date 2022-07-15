@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use super::{
 	input::{Input, InputPricer, InputT, Output},
@@ -283,8 +286,9 @@ where
 
 	fn erc20_info(currency_id: CurrencyId) -> u64 {
 		match currency_id {
-			CurrencyId::Erc20(_) | CurrencyId::ForeignAsset(_) =>
-				WeightToGas::convert(Runtime::DbWeight::get().reads(1)),
+			CurrencyId::Erc20(_) |
+			CurrencyId::StableAssetPoolToken(_) |
+			CurrencyId::ForeignAsset(_) => WeightToGas::convert(Runtime::DbWeight::get().reads(1)),
 			CurrencyId::DexShare(symbol_0, symbol_1) => Self::dex_share_read_cost(symbol_0)
 				.saturating_add(Self::dex_share_read_cost(symbol_1)),
 			_ => Self::BASE_COST,
@@ -297,7 +301,7 @@ mod tests {
 	use super::*;
 
 	use crate::precompile::mock::{
-		alice, ausd_evm_address, bob, erc20_address_not_exists, lp_sel_ausd_evm_address,
+		alice, bob, erc20_address_not_exists, kusd_evm_address, lp_sel_kusd_evm_address,
 		new_test_ext, sel_evm_address, Balances, Test,
 	};
 	use frame_support::assert_noop;
@@ -358,18 +362,18 @@ mod tests {
 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
 			assert_eq!(resp.output, expected_output.to_vec());
 
-			// // DexShare
-			// context.caller = lp_sel_ausd_evm_address();
+			// DexShare
+			context.caller = lp_sel_kusd_evm_address();
 
-			// let expected_output = hex! {"
-			// 	0000000000000000000000000000000000000000000000000000000000000020
-			// 	0000000000000000000000000000000000000000000000000000000000000017
-			// 	4c50204163616c61202d204163616c6120446f6c6c6172000000000000000000
-			// "};
+			let expected_output = hex! {"
+				0000000000000000000000000000000000000000000000000000000000000020
+				000000000000000000000000000000000000000000000000000000000000001a
+				4c502053656c656e647261202d204b686d657220446f6C6C6172000000000000
+			"};
 
-			// let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
-			// assert_eq!(resp.exit_status, ExitSucceed::Returned);
-			// assert_eq!(resp.output, expected_output.to_vec());
+			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
+			assert_eq!(resp.exit_status, ExitSucceed::Returned);
+			assert_eq!(resp.output, expected_output.to_vec());
 		});
 	}
 
@@ -401,12 +405,12 @@ mod tests {
 			assert_eq!(resp.output, expected_output.to_vec());
 
 			// DexShare
-			context.caller = lp_sel_ausd_evm_address();
+			context.caller = lp_sel_kusd_evm_address();
 
 			let expected_output = hex! {"
 				0000000000000000000000000000000000000000000000000000000000000020
 				000000000000000000000000000000000000000000000000000000000000000b
-				4c505f53454c5f53555344000000000000000000000000000000000000000000
+				4c505f53454c5f4b555344000000000000000000000000000000000000000000
 			"};
 
 			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
@@ -441,7 +445,7 @@ mod tests {
 			assert_eq!(resp.output, expected_output.to_vec());
 
 			// DexShare
-			context.caller = lp_sel_ausd_evm_address();
+			context.caller = lp_sel_kusd_evm_address();
 
 			let resp = MultiCurrencyPrecompile::execute(&input, None, &context, false).unwrap();
 			assert_eq!(resp.exit_status, ExitSucceed::Returned);
@@ -464,7 +468,7 @@ mod tests {
 			"};
 
 			// Token
-			context.caller = ausd_evm_address();
+			context.caller = kusd_evm_address();
 
 			// 2_000_000_000
 			let expected_output = hex! {"
@@ -476,7 +480,7 @@ mod tests {
 			assert_eq!(resp.output, expected_output.to_vec());
 
 			// DexShare
-			context.caller = lp_sel_ausd_evm_address();
+			context.caller = lp_sel_kusd_evm_address();
 
 			let expected_output = hex! {"
 				00000000000000000000000000000000 00000000000000000000000000000000
@@ -517,7 +521,7 @@ mod tests {
 			assert_eq!(resp.output, expected_output.to_vec());
 
 			// DexShare
-			context.caller = lp_sel_ausd_evm_address();
+			context.caller = lp_sel_kusd_evm_address();
 
 			let expected_output = hex! {"
 				00000000000000000000000000000000 00000000000000000000000000000000
@@ -563,7 +567,7 @@ mod tests {
 			assert_eq!(Balances::free_balance(bob()), to_balance + 1);
 
 			// DexShare
-			context.caller = lp_sel_ausd_evm_address();
+			context.caller = lp_sel_kusd_evm_address();
 			assert_noop!(
 				MultiCurrencyPrecompile::execute(&input, Some(100_000), &context, false),
 				PrecompileFailure::Revert {

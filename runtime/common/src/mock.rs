@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use codec::{Decode, Encode};
 use frame_support::{
@@ -33,7 +36,7 @@ use sp_core::{H160, H256};
 pub use sp_runtime::AccountId32;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, Convert, IdentityLookup},
+	traits::{BlakeTwo256, BlockNumberProvider, Convert, IdentityLookup, Zero},
 };
 use std::str::FromStr;
 
@@ -133,6 +136,16 @@ define_combined_task! {
 	}
 }
 
+pub struct MockBlockNumberProvider;
+
+impl BlockNumberProvider for MockBlockNumberProvider {
+	type BlockNumber = u32;
+
+	fn current_block_number() -> Self::BlockNumber {
+		Zero::zero()
+	}
+}
+
 impl module_idle_scheduler::Config for TestRuntime {
 	type Event = Event;
 	type WeightInfo = ();
@@ -221,3 +234,7 @@ frame_support::construct_runtime!(
 		IdleScheduler: module_idle_scheduler,
 	}
 );
+
+pub fn new_test_ext() -> sp_io::TestExternalities {
+	sp_io::TestExternalities::new_empty()
+}

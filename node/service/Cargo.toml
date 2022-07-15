@@ -74,10 +74,10 @@ pallet-im-online = { git = "https://github.com/paritytech/substrate", branch = "
 
 module-evm = { path = "../../modules/evm" }
 module-nft = { path = "../../modules/nft" }
-orml-oracle-rpc = { path = "../../orml/oracle/rpc" }
-orml-tokens-rpc = { path = "../../orml/tokens/rpc" }
+orml-oracle-rpc = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5" }
+orml-tokens-rpc = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5" }
 selendra-primitives = { path = "../../primitives" }
-selendra-rpc = { path = "../rpc" }
+selendra-rpc = { path = "../../rpc" }
 module-evm-rpc-runtime-api = { path = "../../modules/evm/rpc/runtime_api" }
 
 runtime-common = { path = "../../runtime/common" }
@@ -95,6 +95,6 @@ try-runtime = [
 	"selendra-runtime/try-runtime",
 ]
 
-fast-runtime = [
-	"selendra-runtime/fast-runtime",
-]
+# fast-runtime = [
+# 	"selendra-runtime/fast-runtime",
+# ]

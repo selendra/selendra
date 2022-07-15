@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! EVM stack-based runner.
 // Synchronize with https://github.com/paritytech/frontier/blob/bcae569524/frame/evm/src/runner/stack.rs
@@ -85,7 +88,14 @@ impl<T: Config> Runner<T> {
 		let state = SubstrateStackState::new(&vicinity, metadata);
 		let mut executor = StackExecutor::new_with_precompiles(state, config, precompiles);
 
-		ensure!(convert_decimals_from_evm(value.low_u128()).is_some(), Error::<T>::InvalidDecimals);
+		ensure!(
+			convert_decimals_from_evm(
+				TryInto::<BalanceOf<T>>::try_into(value)
+					.map_err(|_| Error::<T>::InvalidDecimals)?
+			)
+			.is_some(),
+			Error::<T>::InvalidDecimals
+		);
 
 		if !skip_storage_rent {
 			Pallet::<T>::reserve_storage(&origin, storage_limit).map_err(|e| {
@@ -832,9 +842,10 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 		}
 		let source = T::AddressMapping::get_account_id(&transfer.source);
 		let target = T::AddressMapping::get_account_id(&transfer.target);
-		let amount = convert_decimals_from_evm(transfer.value.low_u128())
-			.ok_or(ExitError::Other(Into::<&str>::into(Error::<T>::InvalidDecimals).into()))?
-			.unique_saturated_into();
+		let amount = convert_decimals_from_evm(
+			TryInto::<BalanceOf<T>>::try_into(transfer.value).map_err(|_| ExitError::OutOfFund)?,
+		)
+		.ok_or(ExitError::Other(Into::<&str>::into(Error::<T>::InvalidDecimals).into()))?;
 
 		log::debug!(
 			target: "evm",

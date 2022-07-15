@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,12 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-#![allow(clippy::unnecessary_cast)]
-#![allow(clippy::upper_case_acronyms)]
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-pub mod accounts;
+#![cfg_attr(not(feature = "std"), no_std)]
+
+// pub mod bonding;
 pub mod currency;
 pub mod evm;
 pub mod nft;
@@ -25,7 +26,6 @@ pub mod signature;
 pub mod task;
 pub mod testing;
 pub mod unchecked_extrinsic;
-
 pub use testing::*;
 
 use codec::{Decode, Encode, MaxEncodedLen};
@@ -85,8 +85,11 @@ pub type Balance = u128;
 /// Signed version of Balance
 pub type Amount = i128;
 
-// /// Share type
-// pub type Share = u128;
+/// Auction ID
+pub type AuctionId = u32;
+
+/// Share type
+pub type Share = u128;
 
 /// Header type.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
@@ -108,6 +111,7 @@ pub type Multiplier = FixedU128;
 pub enum AuthoritysOriginId {
 	Root,
 	Treasury,
+	FunanTreasury,
 	TreasuryReserve,
 }
 

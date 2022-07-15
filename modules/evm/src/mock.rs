@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg(test)]
 
@@ -31,7 +34,7 @@ use primitives::{
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, BlockNumberProvider, IdentityLookup},
 	AccountId32,
 };
 use std::{collections::BTreeMap, str::FromStr};
@@ -127,6 +130,16 @@ define_combined_task! {
 	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
 	pub enum ScheduledTasks {
 		EvmTask(EvmTask<Runtime>),
+	}
+}
+
+pub struct MockBlockNumberProvider;
+
+impl BlockNumberProvider for MockBlockNumberProvider {
+	type BlockNumber = u32;
+
+	fn current_block_number() -> Self::BlockNumber {
+		Zero::zero()
 	}
 }
 

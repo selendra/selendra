@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! Unit tests for the transaction pause module.
 
@@ -25,7 +28,7 @@ use sp_runtime::traits::BadOrigin;
 const BALANCE_TRANSFER: &<Runtime as frame_system::Config>::Call =
 	&mock::Call::Balances(pallet_balances::Call::transfer { dest: ALICE, value: 10 });
 const TOKENS_TRANSFER: &<Runtime as frame_system::Config>::Call =
-	&mock::Call::Tokens(orml_tokens::Call::transfer { dest: ALICE, currency_id: SUSD, amount: 10 });
+	&mock::Call::Tokens(orml_tokens::Call::transfer { dest: ALICE, currency_id: KUSD, amount: 10 });
 
 #[test]
 fn pause_transaction_work() {

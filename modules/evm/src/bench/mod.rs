@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2021 Selendra.
+// Copyright (C) 2021-2021 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -37,7 +37,7 @@ use sp_core::H160;
 use sp_std::{convert::TryInto, prelude::*, rc::Rc, str::FromStr};
 
 fn get_bench_info(name: &str) -> (Vec<u8>, H160, Vec<u8>, u64, Vec<u8>) {
-	let benches_str = include_str!("../../../../evm-bench/build/benches.json");
+	let benches_str = include_str!("./benches.json");
 	let evm_benches: Value = serde_json::from_str(benches_str).unwrap();
 	let info = evm_benches[name].clone();
 
@@ -104,7 +104,7 @@ fn whitelist_keys(b: &mut Bencher, from: H160, code: Vec<u8>) -> H160 {
 
 	// System::Number
 	b.whitelist(
-		hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519sel4983ac")
+		hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac")
 			.to_vec(),
 		true,
 		true,

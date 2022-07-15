@@ -1,41 +1,13 @@
-// This file is part of Selendra.
-
-// Copyright (C) 2020-2021 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
-
-use super::{dollar, PrecompileCallerFilter, SEL};
-
-#[cfg(feature = "std")]
-use sp_core::bytes::from_hex;
-#[cfg(feature = "std")]
-use std::str::FromStr;
-
-use sp_core::{Bytes, H160};
-use sp_runtime::traits::Convert;
-use sp_std::{collections::btree_map::BTreeMap, marker::PhantomData, prelude::*};
-
-use frame_support::{
-	traits::Get,
-	weights::{DispatchClass, Weight},
+use super::{
+	dollar, gas_to_weight_ratio, is_system_contract, BTreeMap, Balance, Bytes, Convert,
+	DispatchClass, GenesisAccount, Get, Nonce, PhantomData, PrecompileCallerFilter, Weight, H160,
+	SEL,
 };
 
-use module_evm::GenesisAccount;
-use primitives::{evm::is_system_contract, Balance, Nonce};
-
-pub const RATIO: u64 = 9000;
+#[cfg(feature = "std")]
+pub use sp_core::bytes::from_hex;
+#[cfg(feature = "std")]
+pub use std::str::FromStr;
 
 /// The call is allowed only if caller is a system contract.
 pub struct SystemContractsFilter;
@@ -49,7 +21,7 @@ impl PrecompileCallerFilter for SystemContractsFilter {
 pub struct GasToWeight;
 impl Convert<u64, Weight> for GasToWeight {
 	fn convert(gas: u64) -> Weight {
-		gas.saturating_mul(RATIO)
+		gas.saturating_mul(gas_to_weight_ratio::RATIO)
 	}
 }
 
@@ -57,7 +29,9 @@ impl Convert<u64, Weight> for GasToWeight {
 pub struct WeightToGas;
 impl Convert<Weight, u64> for WeightToGas {
 	fn convert(weight: Weight) -> u64 {
-		weight.checked_div(RATIO).expect("Compile-time constant is not zero; qed;")
+		weight
+			.checked_div(gas_to_weight_ratio::RATIO)
+			.expect("Compile-time constant is not zero; qed;")
 	}
 }
 

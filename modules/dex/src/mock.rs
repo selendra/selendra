@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -13,6 +13,9 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 //! Mocks for the dex module.
 
 #![cfg(test)]
@@ -23,7 +26,7 @@ use frame_support::{
 	traits::{ConstU32, ConstU64, Everything, Nothing},
 };
 use frame_system::EnsureSignedBy;
-use orml_traits::parameter_type_with_key;
+use orml_traits::{parameter_type_with_key, MultiReservableCurrency};
 use primitives::{Amount, TokenSymbol};
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup};
@@ -36,14 +39,14 @@ pub type AccountId = u128;
 pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
 pub const CAROL: AccountId = 3;
-pub const SUSD: CurrencyId = CurrencyId::Token(TokenSymbol::SUSD);
+pub const KUSD: CurrencyId = CurrencyId::Token(TokenSymbol::KUSD);
 pub const BTC: CurrencyId = CurrencyId::Token(TokenSymbol::RENBTC);
 pub const DOT: CurrencyId = CurrencyId::Token(TokenSymbol::DOT);
 pub const SEL: CurrencyId = CurrencyId::Token(TokenSymbol::SEL);
 
 parameter_types! {
-	pub static SUSDBTCPair: TradingPair = TradingPair::from_currency_ids(SUSD, BTC).unwrap();
-	pub static SUSDDOTPair: TradingPair = TradingPair::from_currency_ids(SUSD, DOT).unwrap();
+	pub static KUSDBTCPair: TradingPair = TradingPair::from_currency_ids(KUSD, BTC).unwrap();
+	pub static KUSDDOTPair: TradingPair = TradingPair::from_currency_ids(KUSD, DOT).unwrap();
 	pub static DOTBTCPair: TradingPair = TradingPair::from_currency_ids(DOT, BTC).unwrap();
 }
 
@@ -100,6 +103,26 @@ impl orml_tokens::Config for Runtime {
 	type OnKilledTokenAccount = ();
 }
 
+pub struct MockDEXIncentives;
+impl DEXIncentives<AccountId, CurrencyId, Balance> for MockDEXIncentives {
+	fn do_deposit_dex_share(
+		who: &AccountId,
+		lp_currency_id: CurrencyId,
+		amount: Balance,
+	) -> DispatchResult {
+		Tokens::reserve(lp_currency_id, who, amount)
+	}
+
+	fn do_withdraw_dex_share(
+		who: &AccountId,
+		lp_currency_id: CurrencyId,
+		amount: Balance,
+	) -> DispatchResult {
+		let _ = Tokens::unreserve(lp_currency_id, who, amount);
+		Ok(())
+	}
+}
+
 ord_parameter_types! {
 	pub const ListingOrigin: AccountId = 3;
 }
@@ -113,15 +136,15 @@ parameter_types! {
 }
 
 thread_local! {
-	pub static SUSD_DOT_POOL_RECORD: RefCell<(Balance, Balance)> = RefCell::new((0, 0));
+	pub static KUSD_DOT_POOL_RECORD: RefCell<(Balance, Balance)> = RefCell::new((0, 0));
 }
 
 pub struct MockOnLiquidityPoolUpdated;
 impl Happened<(TradingPair, Balance, Balance)> for MockOnLiquidityPoolUpdated {
 	fn happened(info: &(TradingPair, Balance, Balance)) {
 		let (trading_pair, new_pool_0, new_pool_1) = info;
-		if *trading_pair == SUSDDOTPair::get() {
-			SUSD_DOT_POOL_RECORD.with(|v| *v.borrow_mut() = (*new_pool_0, *new_pool_1));
+		if *trading_pair == KUSDDOTPair::get() {
+			KUSD_DOT_POOL_RECORD.with(|v| *v.borrow_mut() = (*new_pool_0, *new_pool_1));
 		}
 	}
 }
@@ -134,17 +157,18 @@ impl Config for Runtime {
 	type PalletId = DEXPalletId;
 	type Erc20InfoMapping = MockErc20InfoMapping;
 	type WeightInfo = ();
+	type DEXIncentives = MockDEXIncentives;
 	type ListingOrigin = EnsureSignedBy<ListingOrigin, AccountId>;
 	type ExtendedProvisioningBlocks = ConstU64<2000>;
 	type OnLiquidityPoolUpdated = MockOnLiquidityPoolUpdated;
 }
 
 parameter_types! {
-	pub SUSDJoint: Vec<Vec<CurrencyId>> = vec![vec![SUSD]];
+	pub KUSDJoint: Vec<Vec<CurrencyId>> = vec![vec![KUSD]];
 	pub SELJoint: Vec<Vec<CurrencyId>> = vec![vec![SEL]];
 }
 
-pub type SUSDJointSwap = SpecificJointsSwap<DexModule, SUSDJoint>;
+pub type KUSDJointSwap = SpecificJointsSwap<DexModule, KUSDJoint>;
 pub type SELJointSwap = SpecificJointsSwap<DexModule, SELJoint>;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
@@ -176,8 +200,8 @@ impl Default for ExtBuilder {
 			balances: vec![
 				(ALICE, SEL, 1_000_000_000_000_000_000u128),
 				(BOB, SEL, 1_000_000_000_000_000_000u128),
-				(ALICE, SUSD, 1_000_000_000_000_000_000u128),
-				(BOB, SUSD, 1_000_000_000_000_000_000u128),
+				(ALICE, KUSD, 1_000_000_000_000_000_000u128),
+				(BOB, KUSD, 1_000_000_000_000_000_000u128),
 				(ALICE, BTC, 1_000_000_000_000_000_000u128),
 				(BOB, BTC, 1_000_000_000_000_000_000u128),
 				(ALICE, DOT, 1_000_000_000_000_000_000u128),
@@ -193,7 +217,7 @@ impl Default for ExtBuilder {
 impl ExtBuilder {
 	pub fn initialize_enabled_trading_pairs(mut self) -> Self {
 		self.initial_enabled_trading_pairs =
-			vec![SUSDDOTPair::get(), SUSDBTCPair::get(), DOTBTCPair::get()];
+			vec![KUSDDOTPair::get(), KUSDBTCPair::get(), DOTBTCPair::get()];
 		self
 	}
 
@@ -201,8 +225,8 @@ impl ExtBuilder {
 		self.initial_added_liquidity_pools = vec![(
 			who,
 			vec![
-				(SUSDDOTPair::get(), (1_000_000u128, 2_000_000u128)),
-				(SUSDBTCPair::get(), (1_000_000u128, 2_000_000u128)),
+				(KUSDDOTPair::get(), (1_000_000u128, 2_000_000u128)),
+				(KUSDBTCPair::get(), (1_000_000u128, 2_000_000u128)),
 				(DOTBTCPair::get(), (1_000_000u128, 2_000_000u128)),
 			],
 		)];

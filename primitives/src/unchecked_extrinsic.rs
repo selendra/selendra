@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
 	evm::EthereumTransactionMessage, signature::SelendraMultiSignature, to_bytes, Address, Balance,
@@ -462,11 +465,9 @@ mod tests {
 	// 	// access_list = vec![]
 	// 	let msg = EthereumTransactionMessage {
 	// 		chain_id: 595,
-	// 		genesis: H256::from_str(
-	// 			"0xafb55f3937d1377c23b8f351315b2792f5d2753bb95420c191d2dc70ad7196e8",
-	// 		)
-	// 		.unwrap(),
-	// 		nonce: 0,
+	// 		genesis:
+	// H256::from_str("0xafb55f3937d1377c23b8f351315b2792f5d2753bb95420c191d2dc70ad7196e8").
+	// unwrap(), 		nonce: 0,
 	// 		tip: 2,
 	// 		gas_limit: 2100000,
 	// 		storage_limit: 20000,
@@ -483,11 +484,9 @@ mod tests {
 	// 	// access_list.storage_keys = vec![]
 	// 	let msg = EthereumTransactionMessage {
 	// 		chain_id: 595,
-	// 		genesis: H256::from_str(
-	// 			"0xafb55f3937d1377c23b8f351315b2792f5d2753bb95420c191d2dc70ad7196e8",
-	// 		)
-	// 		.unwrap(),
-	// 		nonce: 0,
+	// 		genesis:
+	// H256::from_str("0xafb55f3937d1377c23b8f351315b2792f5d2753bb95420c191d2dc70ad7196e8").
+	// unwrap(), 		nonce: 0,
 	// 		tip: 2,
 	// 		gas_limit: 2100000,
 	// 		storage_limit: 20000,
@@ -506,11 +505,9 @@ mod tests {
 
 	// 	let msg = EthereumTransactionMessage {
 	// 		chain_id: 595,
-	// 		genesis: H256::from_str(
-	// 			"0xafb55f3937d1377c23b8f351315b2792f5d2753bb95420c191d2dc70ad7196e8",
-	// 		)
-	// 		.unwrap(),
-	// 		nonce: 0,
+	// 		genesis:
+	// H256::from_str("0xafb55f3937d1377c23b8f351315b2792f5d2753bb95420c191d2dc70ad7196e8").
+	// unwrap(), 		nonce: 0,
 	// 		tip: 2,
 	// 		gas_limit: 2100000,
 	// 		storage_limit: 20000,
@@ -521,19 +518,10 @@ mod tests {
 	// 		access_list: vec![AccessListItem {
 	// 			address: hex!("0000000000000000000000000000000000000000").into(),
 	// 			storage_keys: vec![
-	// 				H256::from_str(
-	// 					"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-	// 				)
-	// 				.unwrap(),
-	// 				H256::from_str(
-	// 					"0x0000000000111111111122222222223333333333444444444455555555556666",
-	// 				)
-	// 				.unwrap(),
-	// 				H256::from_str(
-	// 					"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-	// 				)
-	// 				.unwrap(),
-	// 			],
+	// 				H256::from_str("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef").
+	// unwrap(), 				H256::from_str("0x0000000000111111111122222222223333333333444444444455555555556666"
+	// ).unwrap(), 				H256::from_str("
+	// 0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef").unwrap(), 			],
 	// 		}],
 	// 	};
 	// 	let sign =
@@ -557,10 +545,9 @@ mod tests {
 	// 	assert_ne!(verify_eip712_signature(new_msg, sign), sender);
 
 	// 	let mut new_msg = msg.clone();
-	// 	new_msg.action = TransactionAction::Call(
-	// 		H160::from_str("0x1111111111222222222233333333334444444444").unwrap(),
-	// 	);
-	// 	assert_ne!(verify_eip712_signature(new_msg, sign), sender);
+	// 	new_msg.action =
+	// TransactionAction::Call(H160::from_str("0x1111111111222222222233333333334444444444").
+	// unwrap()); 	assert_ne!(verify_eip712_signature(new_msg, sign), sender);
 
 	// 	let mut new_msg = msg.clone();
 	// 	new_msg.value += 1;

@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
+// Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -12,6 +12,9 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments)]
@@ -383,7 +386,7 @@ pub mod module {
 		fn build(&self) {
 			use sp_std::rc::Rc;
 
-			// NOTE: Only applicable for mandala testnet, unit test and integration test.
+			// NOTE: Only applicable for selendra testnet, unit test and integration test.
 			// Use create_predeploy_contract to deploy predeploy contracts on the mainnet.
 			let source = T::NetworkContractSource::get();
 
@@ -936,7 +939,7 @@ pub mod module {
 			let address = MIRRORED_TOKENS_ADDRESS_START |
 				EvmAddress::from_low_u64_be(Self::network_contract_index());
 
-			// ensure source have more than 10 CDM/SEL to deploy the contract.
+			// ensure source have more than 10 SEL to deploy the contract.
 			let amount = T::Currency::minimum_balance().saturating_mul(100u32.into());
 			if T::Currency::free_balance(&source_account) < amount {
 				T::Currency::transfer(
@@ -1028,7 +1031,7 @@ pub mod module {
 
 			let source = T::NetworkContractSource::get();
 			let source_account = T::AddressMapping::get_account_id(&source);
-			// ensure source have more than 10 CDM/SEL to deploy the contract.
+			// ensure source have more than 10 SEL to deploy the contract.
 			let amount = T::Currency::minimum_balance().saturating_mul(100u32.into());
 			if T::Currency::free_balance(&source_account) < amount {
 				T::Currency::transfer(
@@ -1222,7 +1225,7 @@ pub mod module {
 impl<T: Config> Pallet<T> {
 	/// Get StorageDepositPerByte of actual decimals
 	pub fn get_storage_deposit_per_byte() -> BalanceOf<T> {
-		// StorageDepositPerByte decimals is 18, CDM/SEL decimals is 12, convert to 12 here.
+		// StorageDepositPerByte decimals is 18, SEL decimals is 12, convert to 12 here.
 		convert_decimals_from_evm(T::StorageDepositPerByte::get())
 			.expect("checked in integrity_test; qed")
 	}
@@ -1333,7 +1336,6 @@ impl<T: Config> Pallet<T> {
 	/// - Update codes info.
 	/// - Update maintainer of the contract.
 	/// - Save `code` if not saved yet.
-	#[allow(unused_variables)]
 	pub fn create_contract(source: H160, address: H160, publish: bool, code: Vec<u8>) {
 		let bounded_code: BoundedVec<u8, MaxCodeSize> = code
 			.try_into()
@@ -1630,7 +1632,7 @@ impl<T: Config> Pallet<T> {
 			..
 		}) = Accounts::<T>::get(address)
 		{
-			// https://github.com/SelendraNetwork/Selendra/blob/af1c277/modules/evm/rpc/src/lib.rs#L176
+			// https://github.com/AcalaNetwork/selendra/blob/af1c277/modules/evm/rpc/src/lib.rs#L176
 			// when rpc is called, from is empty, allowing the call
 			published ||
 				maintainer == *caller ||
