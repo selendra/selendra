@@ -12,6 +12,8 @@ Selendra project is inspired by the excellent work of many growing projects in t
 
 This is a work in progress, we will update more information as we progress further. Please refer to the token economy working paper for more details. 
 
+# Branch Strategy 
+
 Below is how we work with Branches.  
 ```mermaid
     gitGraph
