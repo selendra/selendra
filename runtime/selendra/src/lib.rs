@@ -776,7 +776,7 @@ mod benches {
 		[pallet_tips, Tips]
 		[pallet_treasury, Treasury]
 		[pallet_utility, Utility]
-		[pallet_nomination_pools, NominationPools]
+		[pallet_nomination_pools, NominationPoolsBench::<Runtime>]
 	);
 }
 
