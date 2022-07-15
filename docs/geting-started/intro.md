@@ -1,0 +1,3 @@
+SEL is the currency used for many things on Selendra Blockchain. It is mainly used as form of payment for transaction fees, propose and validate block on the Mainnet. 
+
+Since it has power to propose and validate blogs that will have many assets live on top, it could also be used as collateral in future DeFi platform, as payment earned for performing services or selling of real world good and much more. 
