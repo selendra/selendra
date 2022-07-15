@@ -11,6 +11,7 @@ members = [
 	"node",
 	"modules/*",
 	"inspect",
+	"utils/generate-bags"
 ]
 
 resolver = "2"
