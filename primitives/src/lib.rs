@@ -18,7 +18,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod bonding;
+// pub mod bonding;
 pub mod currency;
 pub mod evm;
 pub mod nft;
