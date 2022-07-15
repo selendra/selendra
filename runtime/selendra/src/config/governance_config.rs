@@ -2,16 +2,16 @@ use crate::{
 	authority::AuthorityConfigImpl, deposit, dollar, parameter_types, weights, AccountId,
 	AuthoritysOriginId, Balance, Balances, BlockNumber, Call, Council, EnsureRoot, Event,
 	FinancialCouncil, Origin, OriginCaller, PhragmenElectionPalletId, PreimageByteDeposit, Runtime,
-	Scheduler, SelendraOracle, TechnicalCommittee, Treasury, U128CurrencyToVote, DAYS, HOURS,
-	MINUTES, SEL,
+	Scheduler, SelendraOracle, TechnicalCommittee, Treasury, DAYS, HOURS, MINUTES, SEL,
 };
 
 use runtime_common::{
-	prod_or_fast, CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
-	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrThreeFourthsCouncil,
-	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
-	FinancialCouncilInstance, FinancialCouncilMembershipInstance,
-	OperatorMembershipInstanceSelendra, TechnicalCommitteeInstance, TechnicalMembershipInstance,
+	prod_or_fast, CouncilInstance, CouncilMembershipInstance, CurrencyToVote,
+	EnsureRootOrAllCouncil, EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil,
+	EnsureRootOrThreeFourthsCouncil, EnsureRootOrTwoThirdsCouncil,
+	EnsureRootOrTwoThirdsTechnicalCommittee, FinancialCouncilInstance,
+	FinancialCouncilMembershipInstance, OperatorMembershipInstanceSelendra,
+	TechnicalCommitteeInstance, TechnicalMembershipInstance,
 };
 
 impl orml_authority::Config for Runtime {
@@ -95,7 +95,7 @@ impl pallet_elections_phragmen::Config for Runtime {
 	type Currency = Balances;
 	type ChangeMembers = Council;
 	type InitializeMembers = Council;
-	type CurrencyToVote = U128CurrencyToVote;
+	type CurrencyToVote = CurrencyToVote;
 	type CandidacyBond = CandidacyBond;
 	type VotingBondBase = VotingBondBase;
 	type VotingBondFactor = VotingBondFactor;

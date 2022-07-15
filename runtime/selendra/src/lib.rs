@@ -74,10 +74,7 @@ use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
 
 use frame_support::{
 	construct_runtime, log, parameter_types,
-	traits::{
-		Contains, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, PrivilegeCmp,
-		U128CurrencyToVote,
-	},
+	traits::{Contains, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, PrivilegeCmp},
 	weights::{constants::RocksDbWeight, Weight},
 	PalletId, RuntimeDebug,
 };
@@ -103,11 +100,11 @@ pub use primitives::{
 	DataProviderId, Hash, Moment, Nonce, ReserveIdentifier, Signature, TokenSymbol,
 };
 pub use runtime_common::{
-	cent, dollar, millicent, AllPrecompiles, BlockHashCount, EnsureRootOrHalfCouncil,
+	cent, dollar, microcent, millicent, AllPrecompiles, BlockHashCount, EnsureRootOrHalfCouncil,
 	EnsureRootOrOneCouncil, EnsureRootOrThreeFourthsCouncil, ExchangeRate,
 	ExistentialDepositsTimesOneHundred, GasToWeight, MaxTipsOfPriority, OperationalFeeMultiplier,
 	Price, ProxyType, Rate, Ratio, RuntimeBlockLength, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
-	TimeStampedPrice, TipPerWeightStep, DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL, microcent
+	TimeStampedPrice, TipPerWeightStep, DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL,
 };
 
 use crate::config::{
