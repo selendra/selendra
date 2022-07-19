@@ -5,6 +5,7 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 default-run = "selendra"
 
+
 [[bin]]
 name = "selendra"
 path = "src/main.rs"
