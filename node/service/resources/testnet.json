@@ -2,7 +2,12 @@
   "name": "Selendra Testnet",
   "id": "selendra_testnet",
   "chainType": "Live",
-  "bootNodes": [],
+  "bootNodes": [
+      "/ip4/194.195.118.180/tcp/30333/p2p/12D3KooWH5Uo8NYm31FET8L5VJ9SW2tgcA6nosNs7RbXQDVXzuh7",
+      "/ip4/172.104.46.84/tcp/30333/p2p/12D3KooWDVyiaf8ZWmpK54cnyo65sHxc6PMdkEWnsBFZcYnmSHmu",
+      "/ip4/172.104.33.123/tcp/30333/p2p/12D3KooWRszTU6WZmw2macxMYwUQNjp4hNvVv83oatcmQ37aqGV2",
+      "/ip4/139.162.112.145/tcp/30333/p2p/12D3KooWP4o1QRH6hqaQyeUurkUZ9sCnfP8xadUbYaRi8tCqDV6q"
+  ],
   "telemetryEndpoints": [
     [
       "/dns/telemetry.polkadot.io/tcp/443/x-parity-wss/%2Fsubmit%2F",
