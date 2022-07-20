@@ -104,7 +104,7 @@ pub use runtime_common::{
 	EnsureRootOrOneCouncil, EnsureRootOrThreeFourthsCouncil, ExchangeRate,
 	ExistentialDepositsTimesOneHundred, GasToWeight, MaxTipsOfPriority, OperationalFeeMultiplier,
 	Price, ProxyType, Rate, Ratio, RuntimeBlockLength, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
-	TimeStampedPrice, TipPerWeightStep, DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL,
+	TimeStampedPrice, TipPerWeightStep, DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL, impls::DealWithFees
 };
 
 use crate::config::{
@@ -290,7 +290,7 @@ impl module_transaction_payment::Config for Runtime {
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type TransactionByteFee = TransactionByteFee;
-	type OnTransactionPayment = ();
+	type OnTransactionPayment = DealWithFees<Runtime>;
 	type TipPerWeightStep = TipPerWeightStep;
 	type MaxTipsOfPriority = MaxTipsOfPriority;
 	type TreasuryAccount = TreasuryAccount;
