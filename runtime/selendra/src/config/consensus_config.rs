@@ -104,7 +104,7 @@ frame_election_provider_support::generate_solution_type!(
 pallet_staking_reward_curve::build! {
 	const REWARD_CURVE: PiecewiseLinear<'static> = curve!(
 		min_inflation: 0_002_500,
-		max_inflation: 0_015_000,
+		max_inflation: 0_025_000,
 		ideal_stake: 0_500_000,
 		falloff: 0_050_000,
 		max_piece_count: 40,
