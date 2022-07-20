@@ -270,7 +270,7 @@ impl module_currencies::Config for Runtime {
 }
 
 parameter_types! {
-	pub TransactionByteFee: Balance = 2 * microcent(SEL);
+	pub TransactionByteFee: Balance = 50 * microcent(SEL);
 	pub DefaultFeeTokens: Vec<CurrencyId> = vec![KUSD, LSEL];
 	pub const CustomFeeSurplus: Percent = Percent::from_percent(50);
 	pub const AlternativeFeeSurplus: Percent = Percent::from_percent(25);

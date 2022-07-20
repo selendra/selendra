@@ -106,12 +106,12 @@ pub mod fee {
 		WeightToFeePolynomial,
 	};
 	use primitives::Balance;
-	use runtime_common::{dollar, millicent, SEL};
+	use runtime_common::{dollar, millicent, cent, SEL};
 	use smallvec::smallvec;
 	use sp_runtime::Perbill;
 
 	pub fn base_tx_in_sel() -> Balance {
-		millicent(SEL) / 5
+		millicent(SEL)
 	}
 
 	/// Handles converting a weight scalar to a fee value, based on the scale
@@ -142,7 +142,7 @@ pub mod fee {
 	}
 
 	pub fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 5 * dollar(SEL) + (bytes as Balance) * 100 * millicent(SEL)
+		items as Balance * 5 * dollar(SEL) + (bytes as Balance) * 100 * cent(SEL)
 	}
 }
 
