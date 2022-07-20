@@ -1,11 +1,12 @@
 use crate::{
 	cent, config::evm_config::EvmTask, deposit, dollar, parameter_types, weights, AccountIndex,
 	Balance, Balances, BlakeTwo256, Call, DispatchableTask, Event, InstanceFilter, OriginCaller,
-	ProxyType, Runtime, RuntimeBlockWeights, RuntimeDebug, Weight, SEL,
+	ProxyType, Runtime, RuntimeBlockWeights, RuntimeDebug, Weight, SEL, Treasury
 };
 use codec::{Decode, Encode};
 use primitives::{define_combined_task, task::TaskResult};
 use scale_info::TypeInfo;
+use runtime_common::EnsureRootOrThreeFourthsCouncil;
 
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
@@ -82,6 +83,30 @@ impl pallet_indices::Config for Runtime {
 }
 
 parameter_types! {
+	pub BasicDeposit: Balance = deposit(1, 258);
+	pub FieldDeposit: Balance = deposit(0, 66);
+	pub SubAccountDeposit: Balance = deposit(1, 53);
+	pub MaxSubAccounts: u32 = 100;
+	pub MaxAdditionalFields: u32 = 100;
+	pub MaxRegistrars: u32 = 20;
+}
+
+impl pallet_identity::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type BasicDeposit = BasicDeposit;
+	type FieldDeposit = FieldDeposit;
+	type SubAccountDeposit = SubAccountDeposit;
+	type MaxSubAccounts = MaxSubAccounts;
+	type MaxAdditionalFields = MaxAdditionalFields;
+	type MaxRegistrars = MaxRegistrars;
+	type Slashed = Treasury;
+	type ForceOrigin = EnsureRootOrThreeFourthsCouncil;
+	type RegistrarOrigin = EnsureRootOrThreeFourthsCouncil;
+	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
 	// One storage item; key size 32, value size 8; .
 	pub ProxyDepositBase: Balance = deposit(1, 8);
 	// Additional storage item size of 33 bytes.
@@ -116,7 +141,10 @@ impl InstanceFilter<Call> for ProxyType {
 			ProxyType::Staking => {
 				matches!(c, Call::Staking(..) | Call::Session(..))
 			},
-			ProxyType::IdentityJudgement => todo!(),
+			ProxyType::IdentityJudgement => matches!(
+				c,
+				Call::Identity(pallet_identity::Call::provide_judgement { .. }) | Call::Utility(..)
+			),
 			ProxyType::Auction => {
 				matches!(c, Call::Auction(orml_auction::Call::bid { .. }))
 			},

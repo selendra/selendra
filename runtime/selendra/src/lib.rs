@@ -610,7 +610,8 @@ construct_runtime!(
 		Recovery: pallet_recovery = 32,
 		Proxy: pallet_proxy = 33,
 		IdleScheduler: module_idle_scheduler = 34,
-		Indices: pallet_indices = 39,
+		Indices: pallet_indices = 36,
+		Identity: pallet_identity = 27,
 
 		// Consensus
 		// Authorship must be before session in order to note author in the correct session and era
@@ -759,6 +760,7 @@ mod benches {
 		[pallet_election_provider_support_benchmarking, EPSBench::<Runtime>]
 		[pallet_elections_phragmen, PhragmenElection]
 		[pallet_grandpa, Grandpa]
+		[pallet_identity, Identity]
 		[pallet_im_online, ImOnline]
 		[pallet_multisig, Multisig]
 		[pallet_nomination_pools, NominationPoolsBench::<Runtime>]
