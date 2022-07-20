@@ -50,16 +50,17 @@ impl SubstrateCli for Cli {
 	}
 
 	fn copyright_start_year() -> i32 {
-		2021 - 2022
+		2021
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		let spec = match id {
+			"" | "selendra" => Box::new(chain_spec::selendra::selendra_config()?),
 			"dev" | "selendra-dev" => Box::new(chain_spec::selendra::development_config()),
 			"selendra-local" => Box::new(chain_spec::selendra::local_testnet_config()),
+			"selendra-mainnet" => Box::new(chain_spec::selendra::mainnet_staging_config()),
 			"selendra-staging" => Box::new(chain_spec::selendra::staging_config()),
-			"" | "selendra" => Box::new(chain_spec::selendra::selendra_config()?),
-			"testnet" => Box::new(chain_spec::selendra::testnet_config()?),
+			"selendra-testnet" | "testnet" => Box::new(chain_spec::selendra::testnet_config()?),
 			path =>
 				Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
 		};
@@ -145,8 +146,8 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 
-			let chain_spec = &runner.config().chain_spec;
-			set_default_ss58_version(chain_spec);
+			// let chain_spec = &runner.config().chain_spec;
+			// set_default_ss58_version(chain_spec);
 
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		},
