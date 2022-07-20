@@ -133,7 +133,7 @@ pub fn staging_config() -> ChainSpec {
 		"Selendra Staging",
 		"selendra_staging",
 		ChainType::Live,
-		staging_config_genesis,
+		testnet_config_genesis,
 		boot_nodes,
 		Some(
 			TelemetryEndpoints::new(vec![(TELEMETRY_URL.to_string(), 0)])
@@ -145,6 +145,27 @@ pub fn staging_config() -> ChainSpec {
 		Default::default(),
 	)
 }
+
+/// Staging testnet config.
+pub fn mainnet_staging_config() -> ChainSpec {
+	let boot_nodes = vec![];
+	ChainSpec::from_genesis(
+		"Selendra",
+		"selendra",
+		ChainType::Live,
+		selendra_config_genesis,
+		boot_nodes,
+		Some(
+			TelemetryEndpoints::new(vec![(TELEMETRY_URL.to_string(), 0)])
+				.expect("Staging telemetry url is valid; qed"),
+		),
+		Some(DEFAULT_PROTOCOL_ID),
+		None,
+		Some(selendra_properties()),
+		Default::default(),
+	)
+}
+
 
 fn development_config_genesis() -> GenesisConfig {
 	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
@@ -173,7 +194,7 @@ fn local_selendra_genesis() -> GenesisConfig {
 	)
 }
 
-fn staging_config_genesis() -> GenesisConfig {
+fn testnet_config_genesis() -> GenesisConfig {
 	#[rustfmt::skip]
 	let initial_authorities: Vec<(
 		AccountId,
@@ -260,6 +281,120 @@ fn staging_config_genesis() -> GenesisConfig {
 	let root_key: AccountId = hex![
 		// 5DiQQJEKjLf9ucHzitkVehzHtZmj8rvYBzGiqbfwcqVa6mpg
 		"48fccd18e5901ad0a484cfc4859f57c163219fa6911c3ba824c2d9743167795f"
+	]
+	.into();
+
+	let endowed_accounts: Vec<AccountId> = vec![root_key.clone()];
+	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
+
+	selendra_genesis(wasm_binary, initial_authorities, root_key, Some(endowed_accounts))
+}
+
+fn selendra_config_genesis() -> GenesisConfig {
+	#[rustfmt::skip]
+	let initial_authorities: Vec<(
+		AccountId,
+		AccountId,
+		GrandpaId,
+		BabeId,
+		ImOnlineId,
+		AuthorityDiscoveryId,
+	)> = vec![
+		(
+			// 5GN7hUZdJMU9tWiEDvVCgcif58vwDtVqQdCaruBZ652jhmCR
+			hex!["be385d0437ac1f0a0cfbdc656aa268e33a2734ef7f07167bc594b33bdd695e1f"].into(),
+			// 5D7o9uWzzxR99SixNMW8NrCBVFuKU2E2vnGSehF9uJJgYUbK
+			hex!["2e97cd376dd1f8c2d8b10669acf119cfa59f4d9a0be706b1c775c180a1d28875"].into(),
+			// 5EKocoqq3nYDAgoeHQMRJBSanZqgDpwnjgxZryDTA9jWiADK
+			hex!["63fc8a9432ae3074ec280a74dfe46be74308de401ea913925136852e06b639e1"]
+				.unchecked_into(),
+			// 5F4UfYBPSSYL8QfU6ZTUuf9UiU7nuPDvQtf9c4Wrakz7oCRf
+			hex!["84884ade5bc72827b2d66ab8e83763ec41ad55e98ad64b15739af97e2e3cc476"]
+				.unchecked_into(),
+			// 5F4UfYBPSSYL8QfU6ZTUuf9UiU7nuPDvQtf9c4Wrakz7oCRf
+			hex!["84884ade5bc72827b2d66ab8e83763ec41ad55e98ad64b15739af97e2e3cc476"]
+				.unchecked_into(),
+			// 5F4UfYBPSSYL8QfU6ZTUuf9UiU7nuPDvQtf9c4Wrakz7oCRf
+			hex!["84884ade5bc72827b2d66ab8e83763ec41ad55e98ad64b15739af97e2e3cc476"]
+				.unchecked_into(),
+		),
+		(
+			// 5CFktyx3ztxa8Ga1c2gdbVvkgXeWjATkRzgq9s2mDx19qThx
+			hex!["086deec2141596b8a5918a4218d74c23549e0082c3371718eef53fd4650f817c"].into(),
+			// 5C4s55jCYzvYkyMYvLG5tcE81bwQ4VrRy5GJT3UDAU2D4A3q
+			hex!["001f0465ed847407f2d987679caa00b9959c9d6abb29323927f4c02f9131a919"].into(),
+			// 5Dv3y5SqVrpuGpsLQ9bfiqaKfi8bL1aENxEfZzpvbiAXafNv
+			hex!["51def4cb548a5f6669cd302a19c865adb0a7744c250c1d0819910e6c8a10a52f"]
+				.unchecked_into(),
+			// 5GR7yG1sh48BfyTWrfrPHwM1FGRrTK9rvUofwHtqh58dTTRk
+			hex!["c0830400cc20b9b8ddc097990c40654be2b81751936ecdffc6f0fdeb3104f94d"]
+				.unchecked_into(),
+			// 5GR7yG1sh48BfyTWrfrPHwM1FGRrTK9rvUofwHtqh58dTTRk
+			hex!["c0830400cc20b9b8ddc097990c40654be2b81751936ecdffc6f0fdeb3104f94d"]
+				.unchecked_into(),
+			// 5GR7yG1sh48BfyTWrfrPHwM1FGRrTK9rvUofwHtqh58dTTRk
+			hex!["c0830400cc20b9b8ddc097990c40654be2b81751936ecdffc6f0fdeb3104f94d"]
+				.unchecked_into(),
+		),
+		(
+			// 5DhjiiK5cmHwEuUP4n6i2PcoeKkdmENsvEc9XxFW3qMkLobu
+			hex!["487a9592c0757c24f56584706a8cf570530d37a0e9ebb13d8ff8558978c31431"].into(),
+			// 5EjbQqcoTiCvzvpfDXxjdZnkPQgj4mzqp4GvLd7mj5qJB1ZN
+			hex!["76215739f8bc31a795783a04119f1dd57e9c2c2d6413a754f2647f30b5a47062"].into(),
+			// 5DQf6o1CCN9e2gFERXkRgjmbHybo5VWvHjL9LauSJQMJby1f
+			hex!["3b73dcca64144574e60e5c21446dcc3993d7b9d83b54e16580874f48cf049cb0"]
+				.unchecked_into(),
+			// 5HTGLMDJ7qaUQz8LzfVXfUBQPNk1Bj1x6E6vikUNWZoKFCGz
+			hex!["ee61e4f2fd572d1a17154382dad88d6f31669817272215268f3b2090c4f01b67"]
+				.unchecked_into(),
+			// 5HTGLMDJ7qaUQz8LzfVXfUBQPNk1Bj1x6E6vikUNWZoKFCGz
+			hex!["ee61e4f2fd572d1a17154382dad88d6f31669817272215268f3b2090c4f01b67"]
+				.unchecked_into(),
+			// 5HTGLMDJ7qaUQz8LzfVXfUBQPNk1Bj1x6E6vikUNWZoKFCGz
+			hex!["ee61e4f2fd572d1a17154382dad88d6f31669817272215268f3b2090c4f01b67"]
+				.unchecked_into(),
+		),
+		(
+			// 5FUg8njCL72Q59D2JsVvrRmyENdzT1RCfQzGTvpW8rpaQh4s
+			hex!["96fccb07f2a21dcc61d62cf1c5af3b3579eb7a8fccf1861ace49609ef63dd60f"].into(),
+			// 5FCAFnwZwdpF1VhENMaCGuPLu8JAJoCX1ijLRZ8UqmFJtfaY
+			hex!["8a6448bb5ec5ce679a22e517baf3d99b33a6a00507922436503caa747bb0a232"].into(),
+			// 5Dp6sGi38AdXEg8y91f3W4rTHeGxs62ADrkAPKSfKmtH5mYb
+			hex!["4d553ee86372a9e3e1ca2c8fa87e7c3c6a1eae231474252f134e60f5e46cbc9e"]
+				.unchecked_into(),
+			// 5D72pBUAv3rGWnXCVvDmdYHwWt3rjjxU2CfVEVVrCkKHye8R
+			hex!["2e028a22bfa0628996d8a3794b770e5505aee386c64ef8d02c1bc9b808d95f69"]
+				.unchecked_into(),
+			// 5D72pBUAv3rGWnXCVvDmdYHwWt3rjjxU2CfVEVVrCkKHye8R
+			hex!["2e028a22bfa0628996d8a3794b770e5505aee386c64ef8d02c1bc9b808d95f69"]
+				.unchecked_into(),
+			// 5D72pBUAv3rGWnXCVvDmdYHwWt3rjjxU2CfVEVVrCkKHye8R
+			hex!["2e028a22bfa0628996d8a3794b770e5505aee386c64ef8d02c1bc9b808d95f69"]
+				.unchecked_into(),
+		),
+		(
+			// 5HQwTy6rFvKG1ffX6ujqWwxcLCucJxKXip9sVYW6E89WcN32
+			hex!["ec9be2d1c917426e923cfc686302140f28e44ebd67f4c46c9da37f8ef35d663e"].into(),
+			// 5D9kprYDUCLo8xA4PzUxgJxuLeYgML1wFRJfc683AhftPWV8
+			hex!["3016743ff73e7e981a3532d83cd85e495e8b029be89a4cb9779b43f664c08f27"].into(),
+			// 5GXDeatvoZ3pPSMupH2yxAG5MJtXQ5ayTk8ur5c9iT6iNqiY
+			hex!["c5299a1ce614ed930d3c60598ec11497e9d62f292e4b5055258e11b677a0ad45"]
+				.unchecked_into(),
+			// 5HHGwiKuAdcsfbVP656WYvjQ4na57TWiTWSCjxt62iRCVWkV
+			hex!["e6c37e287e779660cd7ea7b243a61963fd888c2252ebea6c8b2401015f795a67"]
+				.unchecked_into(),
+			// 5HHGwiKuAdcsfbVP656WYvjQ4na57TWiTWSCjxt62iRCVWkV
+			hex!["e6c37e287e779660cd7ea7b243a61963fd888c2252ebea6c8b2401015f795a67"]
+				.unchecked_into(),
+			// 5HHGwiKuAdcsfbVP656WYvjQ4na57TWiTWSCjxt62iRCVWkV
+			hex!["e6c37e287e779660cd7ea7b243a61963fd888c2252ebea6c8b2401015f795a67"]
+				.unchecked_into(),
+		),
+	];
+
+	let root_key: AccountId = hex![
+		// 5CkQtjERkXaTRr6Kioi8VfDZ52J72K6QAo2THNAfzg1ybUXH
+		"1e48b569d594871628099074a611bddc8177ca642ed6a2e64becdd025c975e41"
 	]
 	.into();
 
@@ -375,8 +510,8 @@ pub fn selendra_genesis(
 	root_key: AccountId,
 	endowed_accounts: Option<Vec<AccountId>>,
 ) -> GenesisConfig {
-	let endowment: Balance = 1_000_000_000 * dollar(SEL);
-	let stash: Balance = endowment / 1_000_000;
+	let endowment: Balance = 527_626_784 * dollar(SEL);
+	let stash: Balance = 100 * dollar(SEL);
 	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
 	GenesisConfig {

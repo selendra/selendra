@@ -6780,6 +6780,7 @@ dependencies = [
  "orml-rewards",
  "orml-tokens",
  "orml-traits",
+ "pallet-authorship",
  "pallet-balances",
  "pallet-collective",
  "pallet-membership",
