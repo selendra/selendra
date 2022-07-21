@@ -247,7 +247,7 @@ mod tests {
 		let p = base_tx_in_sel();
 		let q = Balance::from(ExtrinsicBaseWeight::get());
 
-		assert_eq!(p, 1_000_000_000);
+		assert_eq!(p, 10_000_000);
 		assert_eq!(q, 85_795_000);
 	}
 }
