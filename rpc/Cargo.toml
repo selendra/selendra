@@ -5,7 +5,6 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
-futures = "0.3.21"
 jsonrpsee = { version = "0.13.0", features = ["server", "macros"] }
 
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
@@ -17,7 +16,6 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-keystore = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
 sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
-sc-consensus-manual-seal = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sc-chain-spec = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
 sc-consensus-babe = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
 sc-consensus-babe-rpc = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }

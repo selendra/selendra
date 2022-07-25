@@ -95,6 +95,6 @@ try-runtime = [
 	"selendra-runtime/try-runtime",
 ]
 
-# fast-runtime = [
-# 	"selendra-runtime/fast-runtime",
-# ]
+fast-runtime = [
+	"selendra-runtime/fast-runtime",
+]

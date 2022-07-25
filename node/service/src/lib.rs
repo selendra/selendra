@@ -1,6 +1,6 @@
 // This file is part of Selendra.
 
-// Copyright (C) 2021-2022 Selendra.
+// Copyright (C) 2020-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -214,7 +214,6 @@ pub fn new_partial(
 					subscription_executor,
 					finality_provider: finality_proof_provider.clone(),
 				},
-				command_sink: None,
 			};
 
 			selendra_rpc::create_full(deps, rpc_backend.clone()).map_err(Into::into)

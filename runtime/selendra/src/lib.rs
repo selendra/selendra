@@ -104,7 +104,7 @@ pub use runtime_common::{
 	EnsureRootOrOneCouncil, EnsureRootOrThreeFourthsCouncil, ExchangeRate,
 	ExistentialDepositsTimesOneHundred, GasToWeight, MaxTipsOfPriority, OperationalFeeMultiplier,
 	Price, ProxyType, Rate, Ratio, RuntimeBlockLength, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
-	TimeStampedPrice, TipPerWeightStep, DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL,
+	TimeStampedPrice, TipPerWeightStep, DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL, impls::DealWithFees
 };
 
 use crate::config::{
@@ -270,7 +270,7 @@ impl module_currencies::Config for Runtime {
 }
 
 parameter_types! {
-	pub TransactionByteFee: Balance = 2 * microcent(SEL);
+	pub TransactionByteFee: Balance = 50 * microcent(SEL);
 	pub DefaultFeeTokens: Vec<CurrencyId> = vec![KUSD, LSEL];
 	pub const CustomFeeSurplus: Percent = Percent::from_percent(50);
 	pub const AlternativeFeeSurplus: Percent = Percent::from_percent(25);
@@ -290,7 +290,7 @@ impl module_transaction_payment::Config for Runtime {
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type TransactionByteFee = TransactionByteFee;
-	type OnTransactionPayment = ();
+	type OnTransactionPayment = DealWithFees<Runtime>;
 	type TipPerWeightStep = TipPerWeightStep;
 	type MaxTipsOfPriority = MaxTipsOfPriority;
 	type TreasuryAccount = TreasuryAccount;
@@ -610,7 +610,8 @@ construct_runtime!(
 		Recovery: pallet_recovery = 32,
 		Proxy: pallet_proxy = 33,
 		IdleScheduler: module_idle_scheduler = 34,
-		Indices: pallet_indices = 39,
+		Indices: pallet_indices = 36,
+		Identity: pallet_identity = 27,
 
 		// Consensus
 		// Authorship must be before session in order to note author in the correct session and era
@@ -759,6 +760,7 @@ mod benches {
 		[pallet_election_provider_support_benchmarking, EPSBench::<Runtime>]
 		[pallet_elections_phragmen, PhragmenElection]
 		[pallet_grandpa, Grandpa]
+		[pallet_identity, Identity]
 		[pallet_im_online, ImOnline]
 		[pallet_multisig, Multisig]
 		[pallet_nomination_pools, NominationPoolsBench::<Runtime>]
