@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="128.53613mm"
+   height="193.45694mm"
+   viewBox="0 0 128.53613 193.45694"
+   version="1.1"
+   id="svg231"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview233"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false" />
+  <defs
+     id="defs228" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-11.251894,-26.203099)">
+    <g
+       id="g48"
+       transform="matrix(0.59342626,0,0,0.59342626,-308.60486,-197.5186)">
+      <g
+         id="g8">
+        <path
+           class="st0"
+           d="m 618.3,610.2 c -8.5,-8.5 -8.5,-22.4 0,-31 l 29,-29 v 0 L 704.8,492.7 647.3,377 611.9,448.1 v 66.4 L 589.8,492.4 539,594.7 609.2,664.9 641.1,633 Z"
+           id="path4"
+           style="fill:#00bcff" />
+        <path
+           class="st0"
+           d="m 755.6,594.7 -46.7,-93.7 -55.5,55.5 22.8,22.8 c 8.5,8.5 8.5,22.4 0,30.9 l -60.9,60.9 31.9,31.9 z"
+           id="path6"
+           style="fill:#00bcff" />
+      </g>
+      <polygon
+         class="st0"
+         points="704.8,492.7 647.3,377 611.9,448.1 "
+         id="polygon10"
+         style="fill:#00bcff" />
+      <polygon
+         class="st1"
+         points="657.3,540.2 704.8,492.7 611.9,448.1 "
+         id="polygon12"
+         style="fill:#00a9ff" />
+      <polygon
+         class="st2"
+         points="657.3,540.2 611.9,448.1 611.9,514.5 "
+         id="polygon14"
+         style="fill:#00a4e5" />
+      <polygon
+         class="st1"
+         points="539,594.7 589.9,492.5 611.9,514.5 "
+         id="polygon16"
+         style="fill:#00a9ff" />
+      <polygon
+         class="st0"
+         points="539,594.7 618.3,579.2 657.3,540.2 611.9,514.5 "
+         id="polygon18"
+         style="fill:#00bcff" />
+      <path
+         class="st1"
+         d="M 618.3,579.2 539,594.7 641.1,633 618.2,610.1 c -8.4,-8.4 -8.4,-22.3 0.1,-30.9 z"
+         id="path20"
+         style="fill:#00a9ff" />
+      <polygon
+         class="st1"
+         points="618.3,579.2 657.3,540.2 611.9,514.5 "
+         id="polygon22"
+         style="fill:#00a9ff" />
+      <polygon
+         class="st2"
+         points="590.1,613.9 641.2,633.1 609.3,665 "
+         id="polygon24"
+         style="fill:#00a4e5" />
+      <polygon
+         class="st0"
+         points="708.9,501 755.6,594.7 665.8,544.1 "
+         id="polygon26"
+         style="fill:#00bcff" />
+      <path
+         class="st2"
+         d="m 681.3,586.9 v 0 l -15.4,-42.9 -12.4,12.4 22.8,22.8 c 2.3,2.3 3.9,4.9 5,7.7 z"
+         id="path28"
+         style="fill:#00a4e5" />
+      <polygon
+         class="st1"
+         points="708.9,641.4 755.6,594.7 710.7,590 "
+         id="polygon30"
+         style="fill:#00a9ff" />
+      <polygon
+         class="st1"
+         points="708.9,568.4 755.6,594.7 708.9,501 "
+         id="polygon32"
+         style="fill:#00a9ff" />
+      <polygon
+         class="st0"
+         points="647.3,703 708.9,641.4 663.8,623 "
+         id="polygon34"
+         style="fill:#00bcff" />
+      <polygon
+         class="st1"
+         points="708.9,641.4 755.6,594.7 681.3,587 "
+         id="polygon36"
+         style="fill:#00a9ff" />
+      <polygon
+         class="st0"
+         points="708.9,641.4 755.6,594.7 717.8,590 "
+         id="polygon38"
+         style="fill:#00bcff" />
+      <polygon
+         class="st2"
+         points="681.3,587 755.6,594.7 665.8,544.1 "
+         id="polygon40"
+         style="fill:#00a4e5" />
+      <polygon
+         class="st1"
+         points="681.3,587 665.8,544.1 708.9,568.4 "
+         id="polygon42"
+         style="fill:#00a9ff" />
+      <polygon
+         class="st1"
+         points="678.1,672.2 708.9,641.4 663.8,623 "
+         id="polygon44"
+         style="fill:#00a9ff" />
+      <polygon
+         class="st2"
+         points="647.3,703 615.4,671.1 663.8,623 "
+         id="polygon46"
+         style="fill:#00a4e5" />
+    </g>
+  </g>
+</svg>
