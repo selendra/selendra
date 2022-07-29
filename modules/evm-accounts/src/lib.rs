@@ -235,7 +235,7 @@ impl<T: Config> Pallet<T> {
 		let domain_hash =
 			keccak256!("EIP712Domain(string name,string version,uint256 chainId,bytes32 salt)");
 		let mut domain_seperator_msg = domain_hash.to_vec();
-		domain_seperator_msg.extend_from_slice(keccak256!("Selendra EVM claim")); // name
+		domain_seperator_msg.extend_from_slice(keccak256!("Acala EVM claim")); // name
 		domain_seperator_msg.extend_from_slice(keccak256!("1")); // version
 		domain_seperator_msg.extend_from_slice(&to_bytes(T::ChainId::get())); // chain id
 		domain_seperator_msg.extend_from_slice(
