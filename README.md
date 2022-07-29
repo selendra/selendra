@@ -2,6 +2,8 @@
 
 An interoperable nominated Proof-of-Stake network for developing and running Substrate-based and EVM compatible blockchain applications.
 
+Read more at [selendra.org](https://selendra.org)
+
 ## Mission
 
 Our mission is to bring blockchain benefits a step closer to the ordinary people who had been overlooked and underserved, and to accelerate the advancement and strengthening the industry as a whole.
