@@ -142,7 +142,7 @@ pub mod fee {
 	}
 
 	pub fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 5 * dollar(SEL) + (bytes as Balance) * 100 * cent(SEL)
+		items as Balance * 10 * dollar(SEL) + (bytes as Balance) * cent(SEL)
 	}
 }
 
