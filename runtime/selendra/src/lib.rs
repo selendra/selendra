@@ -100,11 +100,11 @@ pub use primitives::{
 	DataProviderId, Hash, Moment, Nonce, ReserveIdentifier, Signature, TokenSymbol,
 };
 pub use runtime_common::{
-	cent, dollar, microcent, millicent, AllPrecompiles, BlockHashCount, EnsureRootOrHalfCouncil,
-	EnsureRootOrOneCouncil, EnsureRootOrThreeFourthsCouncil, ExchangeRate,
+	cent, dollar, impls::DealWithFees, microcent, millicent, AllPrecompiles, BlockHashCount,
+	EnsureRootOrHalfCouncil, EnsureRootOrOneCouncil, EnsureRootOrThreeFourthsCouncil, ExchangeRate,
 	ExistentialDepositsTimesOneHundred, GasToWeight, MaxTipsOfPriority, OperationalFeeMultiplier,
 	Price, ProxyType, Rate, Ratio, RuntimeBlockLength, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
-	TimeStampedPrice, TipPerWeightStep, DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL, impls::DealWithFees
+	TimeStampedPrice, TipPerWeightStep, DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL,
 };
 
 use crate::config::{

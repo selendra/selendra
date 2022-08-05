@@ -166,7 +166,6 @@ pub fn mainnet_staging_config() -> ChainSpec {
 	)
 }
 
-
 fn development_config_genesis() -> GenesisConfig {
 	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
 
@@ -510,7 +509,7 @@ pub fn selendra_genesis(
 	root_key: AccountId,
 	endowed_accounts: Option<Vec<AccountId>>,
 ) -> GenesisConfig {
-	let endowment: Balance = 527_922_923* dollar(SEL);
+	let endowment: Balance = 527_922_923 * dollar(SEL);
 	let stash: Balance = 100 * dollar(SEL);
 	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 

@@ -106,7 +106,7 @@ pub mod fee {
 		WeightToFeePolynomial,
 	};
 	use primitives::Balance;
-	use runtime_common::{dollar, millicent, cent, SEL};
+	use runtime_common::{cent, dollar, millicent, SEL};
 	use smallvec::smallvec;
 	use sp_runtime::Perbill;
 

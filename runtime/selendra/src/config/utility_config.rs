@@ -1,12 +1,12 @@
 use crate::{
 	cent, config::evm_config::EvmTask, deposit, dollar, parameter_types, weights, AccountIndex,
 	Balance, Balances, BlakeTwo256, Call, DispatchableTask, Event, InstanceFilter, OriginCaller,
-	ProxyType, Runtime, RuntimeBlockWeights, RuntimeDebug, Weight, SEL, Treasury
+	ProxyType, Runtime, RuntimeBlockWeights, RuntimeDebug, Treasury, Weight, SEL,
 };
 use codec::{Decode, Encode};
 use primitives::{define_combined_task, task::TaskResult};
-use scale_info::TypeInfo;
 use runtime_common::EnsureRootOrThreeFourthsCouncil;
+use scale_info::TypeInfo;
 
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
