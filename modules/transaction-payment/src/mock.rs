@@ -171,7 +171,7 @@ ord_parameter_types! {
 }
 
 parameter_types! {
-	pub const DEXPalletId: PalletId = PalletId(*b"aca/dexm");
+	pub const DEXPalletId: PalletId = PalletId(*b"sel/dexm");
 	pub const GetExchangeFee: (u32, u32) = (0, 100);
 	pub EnabledTradingPairs: Vec<TradingPair> = vec![
 		TradingPair::from_currency_ids(KUSD, SEL).unwrap(),
@@ -258,9 +258,9 @@ parameter_types! {
 	pub const LowerSwapThreshold: Balance = 20;
 	pub const MiddSwapThreshold: Balance = 5000;
 	pub const HigerSwapThreshold: Balance = 9500;
-	pub const TransactionPaymentPalletId: PalletId = PalletId(*b"aca/fees");
-	pub const TreasuryPalletId: PalletId = PalletId(*b"aca/trsy");
-	pub KaruraTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
+	pub const TransactionPaymentPalletId: PalletId = PalletId(*b"sel/fees");
+	pub const TreasuryPalletId: PalletId = PalletId(*b"sel/trsy");
+	pub SelendraTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 	pub AlternativeSwapPathJointList: Vec<Vec<CurrencyId>> = vec![
 		vec![KUSD],
 	];
@@ -291,7 +291,7 @@ impl Config for Runtime {
 	type PriceSource = MockPriceSource;
 	type WeightInfo = ();
 	type PalletId = TransactionPaymentPalletId;
-	type TreasuryAccount = KaruraTreasuryAccount;
+	type TreasuryAccount = SelendraTreasuryAccount;
 	type UpdateOrigin = EnsureSignedBy<ListingOrigin, AccountId>;
 	type CustomFeeSurplus = CustomFeeSurplus;
 	type AlternativeFeeSurplus = AlternativeFeeSurplus;

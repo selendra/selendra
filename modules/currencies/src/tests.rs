@@ -1157,7 +1157,7 @@ fn fungible_inspect_trait_should_work() {
 				DepositConsequence::Success
 			);
 
-			// TODO: update test code to assert_eq! for this: https://github.com/AcalaNetwork/selendra/issues/2038
+			// TODO: update test code to assert_eq! for this: https://github.com/AcalaNetwork/acala/issues/2038
 			// Test Inspect::can_withdraw
 			assert_eq!(
 				<Currencies as fungibles::Inspect<_>>::can_withdraw(
