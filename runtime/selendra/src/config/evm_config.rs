@@ -39,7 +39,7 @@ parameter_types! {
 parameter_types! {
 	pub const NewContractExtraBytes: u32 = 10_000;
 	pub DeveloperDeposit: Balance = 50 * dollar(SEL);
-	pub PublicationFee: Balance = 100 * dollar(SEL);
+	pub PublicationFee: Balance = 10 * dollar(SEL);
 }
 
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
