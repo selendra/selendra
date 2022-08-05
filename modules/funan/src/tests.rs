@@ -35,7 +35,7 @@ fn authorize_should_work() {
 		assert_ok!(FunanModule::authorize(Origin::signed(ALICE), BTC, BOB));
 		assert_eq!(
 			PalletBalances::reserved_balance(ALICE),
-			<Runtime as Config>::DepositPerAuthorization::get()
+			<<Runtime as Config>::DepositPerAuthorization as sp_runtime::traits::Get<u128>>::get()
 		);
 		System::assert_last_event(Event::FunanModule(crate::Event::Authorization {
 			authorizer: ALICE,
@@ -57,7 +57,7 @@ fn unauthorize_should_work() {
 		assert_ok!(FunanModule::authorize(Origin::signed(ALICE), BTC, BOB));
 		assert_eq!(
 			PalletBalances::reserved_balance(ALICE),
-			<Runtime as Config>::DepositPerAuthorization::get()
+			<<Runtime as Config>::DepositPerAuthorization as sp_runtime::traits::Get<u128>>::get()
 		);
 		assert_ok!(FunanModule::check_authorization(&ALICE, &BOB, BTC));
 

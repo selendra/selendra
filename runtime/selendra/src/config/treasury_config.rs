@@ -29,6 +29,7 @@ impl pallet_treasury::Config for Runtime {
 	type Burn = Burn;
 	type BurnDestination = ();
 	type SpendFunds = Bounties;
+	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 	type WeightInfo = weights::pallet_treasury::WeightInfo<Runtime>;
 }
 

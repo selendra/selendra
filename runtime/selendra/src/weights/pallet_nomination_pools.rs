@@ -234,4 +234,17 @@ impl<T: frame_system::Config> pallet_nomination_pools::WeightInfo for WeightInfo
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: NominationPools BondedPools (r:1 w:0)
+	// Storage: Staking Ledger (r:1 w:0)
+	// Storage: Staking Validators (r:1 w:0)
+	// Storage: Staking Nominators (r:1 w:1)
+	// Storage: Staking CounterForNominators (r:1 w:1)
+	// Storage: VoterList ListNodes (r:1 w:1)
+	// Storage: VoterList ListBags (r:1 w:1)
+	// Storage: VoterList CounterForListNodes (r:1 w:1)
+	fn chill() -> Weight {
+		(46_255_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(8 as Weight))
+			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+	}
 }

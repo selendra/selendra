@@ -428,21 +428,21 @@ pub fn selendra_development_genesis(
 		},
 		council: CouncilConfig::default(),
 		council_membership: CouncilMembershipConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		financial_council: Default::default(),
 		financial_council_membership: FinancialCouncilMembershipConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		technical_committee: Default::default(),
 		technical_membership: TechnicalMembershipConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		operator_membership_selendra: OperatorMembershipSelendraConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		session: SessionConfig {
@@ -524,21 +524,21 @@ pub fn selendra_genesis(
 		},
 		council: CouncilConfig::default(),
 		council_membership: CouncilMembershipConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		financial_council: Default::default(),
 		financial_council_membership: FinancialCouncilMembershipConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		technical_committee: Default::default(),
 		technical_membership: TechnicalMembershipConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		operator_membership_selendra: OperatorMembershipSelendraConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		session: SessionConfig {

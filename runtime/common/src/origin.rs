@@ -1,4 +1,4 @@
-use super::{AccountId, EnsureOneOf, EnsureRoot};
+use super::{AccountId, EitherOfDiverse, EnsureRoot};
 
 pub type CouncilInstance = pallet_collective::Instance1;
 pub type FinancialCouncilInstance = pallet_collective::Instance2;
@@ -12,107 +12,109 @@ pub type TechnicalMembershipInstance = pallet_membership::Instance4;
 pub type OperatorMembershipInstanceSelendra = pallet_membership::Instance5;
 
 // General Council
-pub type EnsureRootOrAllCouncil = EnsureOneOf<
+pub type EnsureRootOrAllCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 1>,
 >;
 
-pub type EnsureRootOrHalfCouncil = EnsureOneOf<
+pub type EnsureRootOrHalfCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 2>,
 >;
 
-pub type EnsureRootOrOneThirdsCouncil = EnsureOneOf<
+pub type EnsureRootOrOneThirdsCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 3>,
 >;
 
-pub type EnsureRootOrTwoThirdsCouncil = EnsureOneOf<
+pub type EnsureRootOrTwoThirdsCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 2, 3>,
 >;
 
-pub type EnsureRootOrThreeFourthsCouncil = EnsureOneOf<
+pub type EnsureRootOrThreeFourthsCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 3, 4>,
 >;
 
-pub type EnsureRootOrOneCouncil =
-	EnsureOneOf<EnsureRoot<AccountId>, pallet_collective::EnsureMember<AccountId, CouncilInstance>>;
+pub type EnsureRootOrOneCouncil = EitherOfDiverse<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureMember<AccountId, CouncilInstance>,
+>;
 
 // Financial Council
-pub type EnsureRootOrAllFinancialCouncil = EnsureOneOf<
+pub type EnsureRootOrAllFinancialCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 1, 1>,
 >;
 
-pub type EnsureRootOrHalfFinancialCouncil = EnsureOneOf<
+pub type EnsureRootOrHalfFinancialCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 1, 2>,
 >;
 
-pub type EnsureRootOrOneThirdsFinancialCouncil = EnsureOneOf<
+pub type EnsureRootOrOneThirdsFinancialCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 1, 3>,
 >;
 
-pub type EnsureRootOrTwoThirdsFinancialCouncil = EnsureOneOf<
+pub type EnsureRootOrTwoThirdsFinancialCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 2, 3>,
 >;
 
-pub type EnsureRootOrThreeFourthsFinancialCouncil = EnsureOneOf<
+pub type EnsureRootOrThreeFourthsFinancialCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 3, 4>,
 >;
 
-pub type EnsureRootOrAllHomaCouncil = EnsureOneOf<
+pub type EnsureRootOrAllHomaCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 1, 1>,
 >;
 
-pub type EnsureRootOrHalfHomaCouncil = EnsureOneOf<
+pub type EnsureRootOrHalfHomaCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 1, 2>,
 >;
 
-pub type EnsureRootOrOneThirdsHomaCouncil = EnsureOneOf<
+pub type EnsureRootOrOneThirdsHomaCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 1, 3>,
 >;
 
-pub type EnsureRootOrTwoThirdsHomaCouncil = EnsureOneOf<
+pub type EnsureRootOrTwoThirdsHomaCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 2, 3>,
 >;
 
-pub type EnsureRootOrThreeFourthsHomaCouncil = EnsureOneOf<
+pub type EnsureRootOrThreeFourthsHomaCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 3, 4>,
 >;
 
 // Technical Committee Council
-pub type EnsureRootOrAllTechnicalCommittee = EnsureOneOf<
+pub type EnsureRootOrAllTechnicalCommittee = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 1, 1>,
 >;
 
-pub type EnsureRootOrHalfTechnicalCommittee = EnsureOneOf<
+pub type EnsureRootOrHalfTechnicalCommittee = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 1, 2>,
 >;
 
-pub type EnsureRootOrOneThirdsTechnicalCommittee = EnsureOneOf<
+pub type EnsureRootOrOneThirdsTechnicalCommittee = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 1, 3>,
 >;
 
-pub type EnsureRootOrTwoThirdsTechnicalCommittee = EnsureOneOf<
+pub type EnsureRootOrTwoThirdsTechnicalCommittee = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 2, 3>,
 >;
 
-pub type EnsureRootOrThreeFourthsTechnicalCommittee = EnsureOneOf<
+pub type EnsureRootOrThreeFourthsTechnicalCommittee = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 3, 4>,
 >;
