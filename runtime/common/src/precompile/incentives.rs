@@ -395,7 +395,7 @@ mod tests {
 	use module_support::Rate;
 	use orml_rewards::PoolInfo;
 	use orml_traits::MultiCurrency;
-	use sp_runtime::{FixedU128, FixedPointNumber};
+	use sp_runtime::{FixedPointNumber, FixedU128};
 
 	type IncentivesPrecompile = super::IncentivesPrecompile<Test>;
 
