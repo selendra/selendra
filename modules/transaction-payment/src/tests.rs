@@ -497,7 +497,6 @@ fn pre_post_dispatch_and_refund_with_fee_path_call_use_dex() {
 fn pre_post_dispatch_and_refund_with_fee_call_use_dex(with_fee_call: <Runtime as Config>::Call) {
 	let (token, surplus_percent) = (LSEL, CustomFeeSurplus::get());
 	builder_with_dex_and_fee_pool(true).execute_with(|| {
-
 		let fee: Balance = 50 * 2 + 100; // len * byte + weight
 		let surplus = surplus_percent.mul_ceil(fee); // 200*50%=100
 		let fee_surplus = surplus + fee; // 300
@@ -584,9 +583,9 @@ fn pre_post_dispatch_and_refund_with_fee_call_use_dex(with_fee_call: <Runtime as
 fn charges_fee_when_pre_dispatch_and_native_currency_is_enough() {
 	builder_with_dex_and_fee_pool(false).execute_with(|| {
 		let fee = 23 * 2 + 1000; // len * byte + weight
-		assert!(ChargeTransactionPayment::<Runtime>::from(0)
-			.pre_dispatch(&ALICE, &CALL, &INFO, 23)
-			.is_ok());
+		assert_ok!(
+			ChargeTransactionPayment::<Runtime>::from(0).pre_dispatch(&ALICE, &CALL, &INFO, 23)
+		);
 		assert_eq!(Currencies::free_balance(SEL, &ALICE), 100000 - fee);
 	});
 }
@@ -601,14 +600,13 @@ fn refund_fee_according_to_actual_when_post_dispatch_and_native_currency_is_enou
 		assert_eq!(Currencies::free_balance(SEL, &ALICE), 100000 - fee);
 
 		let refund = 200; // 1000 - 800
-		assert!(ChargeTransactionPayment::<Runtime>::post_dispatch(
+		assert_ok!(ChargeTransactionPayment::<Runtime>::post_dispatch(
 			Some(pre),
 			&INFO,
 			&POST_INFO,
 			23,
 			&Ok(())
-		)
-		.is_ok());
+		));
 		assert_eq!(Currencies::free_balance(SEL, &ALICE), 100000 - fee + refund);
 
 		System::assert_has_event(crate::mock::Event::TransactionPayment(
@@ -633,14 +631,13 @@ fn refund_tip_according_to_actual_when_post_dispatch_and_native_currency_is_enou
 		assert_eq!(Currencies::free_balance(SEL, &ALICE), 100000 - fee);
 
 		let refund = 200; // 1000 - 800
-		assert!(ChargeTransactionPayment::<Runtime>::post_dispatch(
+		assert_ok!(ChargeTransactionPayment::<Runtime>::post_dispatch(
 			Some(pre),
 			&INFO,
 			&POST_INFO,
 			23,
 			&Ok(())
-		)
-		.is_ok());
+		));
 		assert_eq!(Currencies::free_balance(SEL, &ALICE), 100000 - fee + refund);
 
 		System::assert_has_event(crate::mock::Event::TransactionPayment(
@@ -662,14 +659,13 @@ fn refund_tip_according_to_actual_when_post_dispatch_and_native_currency_is_enou
 
 		let refund_fee = 200; // 1000 - 800
 		let refund_tip = 200; // 1000 - 800
-		assert!(ChargeTransactionPayment::<Runtime>::post_dispatch(
+		assert_ok!(ChargeTransactionPayment::<Runtime>::post_dispatch(
 			Some(pre),
 			&INFO,
 			&POST_INFO,
 			23,
 			&Ok(())
-		)
-		.is_ok());
+		));
 		assert_eq!(
 			Currencies::free_balance(SEL, &CHARLIE),
 			100000 - fee - tip + refund_fee + refund_tip
@@ -700,14 +696,13 @@ fn refund_should_not_works() {
 		const POST_INFO: PostDispatchInfo =
 			PostDispatchInfo { actual_weight: Some(INFO.weight + 1), pays_fee: Pays::Yes };
 
-		assert!(ChargeTransactionPayment::<Runtime>::post_dispatch(
+		assert_ok!(ChargeTransactionPayment::<Runtime>::post_dispatch(
 			Some(pre),
 			&INFO,
 			&POST_INFO,
 			23,
 			&Ok(())
-		)
-		.is_ok());
+		));
 		assert_eq!(Currencies::free_balance(SEL, &ALICE), 100000 - fee - tip);
 
 		System::assert_has_event(crate::mock::Event::TransactionPayment(
