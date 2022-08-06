@@ -19,8 +19,9 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 support = { package = "module-support", path = "../support", default-features = false }
 loans = { package = "module-loans", path = "../loans", default-features = false }
 primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
-rand_chacha = { version = "0.2", default-features = false }
+rand_chacha = { version = "0.2.2", default-features = false }
 module-stable-asset = { version = "0.1.0", default-features = false, path = "../stable-asset" }
+evm-accounts = { package = "module-evm-accounts", path = "../evm-accounts", default-features = false }
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
@@ -48,5 +49,6 @@ std = [
 	"loans/std",
 	"primitives/std",
 	"orml-utilities/std",
+	"evm-accounts/std"
 ]
 try-runtime = ["frame-support/try-runtime"]

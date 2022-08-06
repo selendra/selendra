@@ -1,13 +1,13 @@
 use crate::{
 	deposit, dollar, parameter_types, weights, AccountId, AccountIdConversion, Auction,
-	AuctionManager, Balance, Balances, BlockNumber, CDPTreasuryPalletId, CdpEngine, CdpTreasury,
-	CollateralCurrencyIds, Currencies, Dex, EmergencyShutdown, EnsureRootOrHalfCouncil, Event,
+	AuctionManager, Balance, Balances, BlockNumber, CDPEnginePalletId, CDPTreasuryPalletId,
+	CdpEngine, CdpTreasury, CollateralCurrencyIds, Currencies, Dex, EmergencyShutdown, Event,
 	ExchangeRate, ExistentialDeposits, ExistentialDepositsTimesOneHundred, FixedPointNumber,
 	FunanTreasuryPalletId, GetNativeCurrencyId, GetStableCurrencyId, LoansPalletId,
 	NativeTokenExistentialDeposit, Prices, Rate, Ratio, RebasedStableAsset, Runtime, Timestamp,
 	HOURS, KUSD, MINUTES,
 };
-use runtime_common::EnsureRootOrHalfFinancialCouncil;
+use runtime_common::{EnsureRootOrHalfCouncil, EnsureRootOrHalfFinancialCouncil};
 
 parameter_types! {
 	pub MinimumIncrementSize: Rate = Rate::saturating_from_rational(2, 100);
@@ -74,11 +74,14 @@ impl module_cdp_treasury::Config for Runtime {
 }
 
 parameter_types! {
+	pub const MaxLiquidationContracts: u32 = 10;
 	pub DefaultLiquidationRatio: Ratio = Ratio::saturating_from_rational(150, 100);
 	pub DefaultDebitExchangeRate: ExchangeRate = ExchangeRate::saturating_from_rational(1, 10);
 	pub DefaultLiquidationPenalty: Rate = Rate::saturating_from_rational(8, 100);
 	pub MinimumDebitValue: Balance = 25 * dollar(KUSD);
-	pub MaxSwapSlippageCompareToOracle: Ratio = Ratio::saturating_from_rational(15, 100);
+	pub MaxSwapSlippageCompareToOracle: Ratio = Ratio::saturating_from_rational(10, 100);
+	pub MaxLiquidationContractSlippage: Ratio = Ratio::saturating_from_rational(15, 100);
+
 }
 
 impl module_cdp_engine::Config for Runtime {
@@ -102,6 +105,12 @@ impl module_cdp_engine::Config for Runtime {
 	type UnixTime = Timestamp;
 	type Currency = Currencies;
 	type DEX = Dex;
+	type LiquidationContractsUpdateOrigin = EnsureRootOrHalfCouncil;
+	type MaxLiquidationContractSlippage = MaxLiquidationContractSlippage;
+	type MaxLiquidationContracts = MaxLiquidationContracts;
+	type LiquidationEvmBridge = module_evm_bridge::LiquidationEvmBridge<Runtime>;
+	type PalletId = CDPEnginePalletId;
+	type EvmAddressMapping = module_evm_accounts::EvmAddressMapping<Runtime>;
 	type Swap = SelendraSwap;
 	type WeightInfo = weights::module_cdp_engine::WeightInfo<Runtime>;
 }

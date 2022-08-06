@@ -26,6 +26,7 @@ orml-currencies = { git = "https://github.com/open-web3-stack/open-runtime-modul
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8" }
 cdp-treasury = { package = "module-cdp-treasury", path = "../cdp-treasury" }
+evm-accounts = { package = "module-evm-accounts", path = "../evm-accounts" }
 
 [features]
 default = ["std"]
