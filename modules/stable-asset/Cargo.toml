@@ -1,6 +1,6 @@
 [package]
 name = "module-stable-asset"
-version = "0.1.0"
+version = "0.1.2"
 authors = ["Selendra <info@selendra.orf>"]
 description = "Substrate-based runtime version of NUTS stable assets."
 edition = "2021"

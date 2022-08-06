@@ -1,6 +1,6 @@
 [package]
 name = "module-cdp-engine"
-version = "0.1.0"
+version = "0.1.2"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
@@ -20,7 +20,7 @@ support = { package = "module-support", path = "../support", default-features = 
 loans = { package = "module-loans", path = "../loans", default-features = false }
 primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
 rand_chacha = { version = "0.2.2", default-features = false }
-module-stable-asset = { version = "0.1.0", default-features = false, path = "../stable-asset" }
+module-stable-asset = { default-features = false, path = "../stable-asset" }
 evm-accounts = { package = "module-evm-accounts", path = "../evm-accounts", default-features = false }
 
 [dev-dependencies]

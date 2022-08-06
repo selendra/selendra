@@ -1,6 +1,6 @@
 [package]
 name = "selendra-primitives"
-version = "0.1.0"
+version = "0.1.2"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
@@ -26,7 +26,7 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 # Local Modules
 module-evm-utility = { path = "../modules/evm-utility", default-features = false }
 module-evm-utility-macro = { path = "../modules/evm-utility/macro" }
-module-stable-asset = { version = "0.1.0", default-features = false, path = "../modules/stable-asset" }
+module-stable-asset = { default-features = false, path = "../modules/stable-asset" }
 
 # Orml library
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8", default-features = false }

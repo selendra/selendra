@@ -1,6 +1,6 @@
 [package]
 name = "selendra-runtime"
-version = "0.1.0"
+version = "0.1.2"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 build = "build.rs"
@@ -111,7 +111,7 @@ module-incentives = { path = "../../modules/incentives", default-features = fals
 module-loans = { path = "../../modules/loans", default-features = false }
 module-nft = { path = "../../modules/nft", default-features = false }
 module-prices = { path = "../../modules/prices", default-features = false }
-module-stable-asset = { version = "0.1.0", default-features = false, path = "../../modules/stable-asset" }
+module-stable-asset = { default-features = false, path = "../../modules/stable-asset" }
 module-support = { path = "../../modules/support", default-features = false }
 module-transaction-pause = { path = "../../modules/transaction-pause", default-features = false }
 module-transaction-payment = { path = "../../modules/transaction-payment", default-features = false }

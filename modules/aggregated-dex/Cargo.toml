@@ -1,6 +1,6 @@
 [package]
 name = "module-aggregated-dex"
-version = "0.1.0"
+version = "0.1.2"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
@@ -16,7 +16,7 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8", default-features = false }
 support = { package = "module-support", path = "../support", default-features = false }
 primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
-module-stable-asset = { path = "../stable-asset", version = "0.1.0", default-features = false }
+module-stable-asset = { path = "../stable-asset", default-features = false }
 module-dex = { package = "module-dex", path = "../dex", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8" , default-features = false }
 

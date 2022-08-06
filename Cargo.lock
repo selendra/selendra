@@ -1716,7 +1716,7 @@ dependencies = [
 
 [[package]]
 name = "evm-rpc"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "jsonrpsee",
@@ -3949,7 +3949,7 @@ dependencies = [
 
 [[package]]
 name = "module-aggregated-dex"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3971,7 +3971,7 @@ dependencies = [
 
 [[package]]
 name = "module-asset-registry"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3996,7 +3996,7 @@ dependencies = [
 
 [[package]]
 name = "module-auction-manager"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4020,7 +4020,7 @@ dependencies = [
 
 [[package]]
 name = "module-cdp-engine"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4050,7 +4050,7 @@ dependencies = [
 
 [[package]]
 name = "module-cdp-treasury"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4074,7 +4074,7 @@ dependencies = [
 
 [[package]]
 name = "module-currencies"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4101,7 +4101,7 @@ dependencies = [
 
 [[package]]
 name = "module-dex"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4121,7 +4121,7 @@ dependencies = [
 
 [[package]]
 name = "module-dex-oracle"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4141,7 +4141,7 @@ dependencies = [
 
 [[package]]
 name = "module-emergency-shutdown"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4164,7 +4164,7 @@ dependencies = [
 
 [[package]]
 name = "module-evm"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "env_logger",
  "frame-support",
@@ -4202,7 +4202,7 @@ dependencies = [
 
 [[package]]
 name = "module-evm-accounts"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4225,7 +4225,7 @@ dependencies = [
 
 [[package]]
 name = "module-evm-bridge"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "ethereum-types",
  "frame-support",
@@ -4252,7 +4252,7 @@ dependencies = [
 
 [[package]]
 name = "module-evm-rpc-runtime-api"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "selendra-primitives",
  "sp-api",
@@ -4263,7 +4263,7 @@ dependencies = [
 
 [[package]]
 name = "module-evm-utility"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "ethereum",
  "evm",
@@ -4275,7 +4275,7 @@ dependencies = [
 
 [[package]]
 name = "module-evm-utility-macro"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "module-evm-utility",
  "proc-macro2",
@@ -4285,7 +4285,7 @@ dependencies = [
 
 [[package]]
 name = "module-example"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4299,7 +4299,7 @@ dependencies = [
 
 [[package]]
 name = "module-funan"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4325,7 +4325,7 @@ dependencies = [
 
 [[package]]
 name = "module-idle-scheduler"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4342,7 +4342,7 @@ dependencies = [
 
 [[package]]
 name = "module-incentives"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4363,7 +4363,7 @@ dependencies = [
 
 [[package]]
 name = "module-loans"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4385,7 +4385,7 @@ dependencies = [
 
 [[package]]
 name = "module-nft"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4410,7 +4410,7 @@ dependencies = [
 
 [[package]]
 name = "module-prices"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4429,7 +4429,7 @@ dependencies = [
 
 [[package]]
 name = "module-stable-asset"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4445,7 +4445,7 @@ dependencies = [
 
 [[package]]
 name = "module-support"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -4463,7 +4463,7 @@ dependencies = [
 
 [[package]]
 name = "module-transaction-pause"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4482,7 +4482,7 @@ dependencies = [
 
 [[package]]
 name = "module-transaction-payment"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6728,7 +6728,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-common"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "ethabi",
  "frame-support",
@@ -8093,7 +8093,7 @@ dependencies = [
 
 [[package]]
 name = "selendra"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "futures",
  "parity-util-mem",
@@ -8102,7 +8102,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-cli"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "clap",
  "frame-benchmarking-cli",
@@ -8126,7 +8126,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-inspect"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "clap",
  "derive_more",
@@ -8143,7 +8143,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-primitives"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "bstringify",
  "enumflags2 0.6.4",
@@ -8169,7 +8169,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-rpc"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "evm-rpc",
  "jsonrpsee",
@@ -8202,7 +8202,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -8314,7 +8314,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-service"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "coins-bip32",
@@ -8391,7 +8391,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-voter-bags"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "clap",
  "generate-bags",
