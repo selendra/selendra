@@ -28,10 +28,6 @@ These checks should be performed on the codebase prior to forking to a release-c
 The following checks can be performed after we have forked off to the release-
 candidate branch or started an additional release candidate branch (rc-2, rc-3, etc)
 
-- [ ] Verify [new migrations](https://github.com/selendra/selendra/blob/master/docs/release-checklist.md#new-migrations) successfully, and the
-    runtime state is correctly updated for any public (non-private/test) networks.
-- [ ] Check with the Signer's team to make sure metadata update QR are lined up
-=======
 - [ ] Verify [new migrations](https://github.com/selendra/selendra/blob/master/docs/release-checklist.md#new-migrations) complete successfully, and the runtime state is correctly updated for any public (non-private/test) networks development
 - [ ] Push runtime upgrade to Selendra testnet and verify network stability.
 
