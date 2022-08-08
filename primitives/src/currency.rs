@@ -155,7 +155,7 @@ macro_rules! create_currency_id {
 			];
 			selendra_tokens.append(&mut selendra_lp_tokens);
 
-			frame_support::assert_ok!(std::fs::write("../predeploy-contracts/resources/selendra_tokens.json", serde_json::to_string_pretty(&selendra_tokens).unwrap()));
+			frame_support::assert_ok!(std::fs::write("../../resources/selendra_tokens.json", serde_json::to_string_pretty(&selendra_tokens).unwrap()));
 		}
     }
 }
