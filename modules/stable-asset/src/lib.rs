@@ -79,6 +79,7 @@ pub struct StableAssetPoolInfo<AssetId, AtLeast64BitUnsigned, Balance, AccountId
 pub trait WeightInfo {
 	fn create_pool() -> Weight;
 	fn modify_a() -> Weight;
+	fn modify_fees() -> Weight;
 	fn mint(u: u32) -> Weight;
 	fn swap(u: u32) -> Weight;
 	fn redeem_proportion(u: u32) -> Weight;
@@ -476,6 +477,12 @@ pub mod pallet {
 			value: T::AtLeast64BitUnsigned,
 			time: T::BlockNumber,
 		},
+		FeeModified {
+			pool_id: StableAssetPoolId,
+			mint_fee: T::AtLeast64BitUnsigned,
+			swap_fee: T::AtLeast64BitUnsigned,
+			redeem_fee: T::AtLeast64BitUnsigned,
+		},
 	}
 
 	#[pallet::error]
@@ -660,8 +667,39 @@ pub mod pallet {
 			a: T::AtLeast64BitUnsigned,
 			future_a_block: T::BlockNumber,
 		) -> DispatchResult {
-			T::ListingOrigin::ensure_origin(origin.clone())?;
+			T::ListingOrigin::ensure_origin(origin)?;
 			<Self as StableAsset>::modify_a(pool_id, a, future_a_block)
+		}
+
+		#[pallet::weight(T::WeightInfo::modify_fees())]
+		#[transactional]
+		pub fn modify_fees(
+			origin: OriginFor<T>,
+			pool_id: StableAssetPoolId,
+			mint_fee: Option<T::AtLeast64BitUnsigned>,
+			swap_fee: Option<T::AtLeast64BitUnsigned>,
+			redeem_fee: Option<T::AtLeast64BitUnsigned>,
+		) -> DispatchResult {
+			T::ListingOrigin::ensure_origin(origin)?;
+			Pools::<T>::try_mutate_exists(pool_id, |maybe_pool_info| -> DispatchResult {
+				let pool_info = maybe_pool_info.as_mut().ok_or(Error::<T>::PoolNotFound)?;
+				if let Some(fee) = mint_fee {
+					pool_info.mint_fee = fee;
+				}
+				if let Some(fee) = swap_fee {
+					pool_info.swap_fee = fee;
+				}
+				if let Some(fee) = redeem_fee {
+					pool_info.redeem_fee = fee;
+				}
+				Self::deposit_event(Event::FeeModified {
+					pool_id,
+					mint_fee: pool_info.mint_fee,
+					swap_fee: pool_info.swap_fee,
+					redeem_fee: pool_info.redeem_fee,
+				});
+				Ok(())
+			})
 		}
 	}
 }
@@ -999,7 +1037,7 @@ impl<T: Config> Pallet<T> {
 		let dx: T::AtLeast64BitUnsigned = y
 			.checked_sub(&balances[input_index_usize])?
 			.checked_sub(&one)?
-			.checked_div(&pool_info.precisions[output_index_usize])?
+			.checked_div(&pool_info.precisions[input_index_usize])?
 			.checked_add(&swap_exact_over_amount)?;
 
 		Some(SwapResult {
