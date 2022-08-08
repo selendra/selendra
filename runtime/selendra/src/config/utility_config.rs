@@ -3,6 +3,7 @@ use crate::{
 	Balance, Balances, BlakeTwo256, Call, DispatchableTask, Event, InstanceFilter, OriginCaller,
 	ProxyType, Runtime, RuntimeBlockWeights, RuntimeDebug, Treasury, Weight, SEL,
 };
+use sp_runtime::traits::ConvertInto;
 use codec::{Decode, Encode};
 use primitives::{define_combined_task, task::TaskResult};
 use runtime_common::EnsureRootOrThreeFourthsCouncil;
@@ -80,6 +81,20 @@ impl pallet_indices::Config for Runtime {
 	type Currency = Balances;
 	type Deposit = IndexDeposit;
 	type WeightInfo = weights::pallet_indices::WeightInfo<Runtime>;
+}
+
+
+parameter_types! {
+	pub MinVestedTransfer: Balance = 10 * dollar(SEL);
+}
+
+impl pallet_vesting::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type BlockNumberToBalance = ConvertInto;
+	type MinVestedTransfer = MinVestedTransfer;
+	type WeightInfo = weights::pallet_vesting::WeightInfo<Runtime>;
+	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 
 parameter_types! {

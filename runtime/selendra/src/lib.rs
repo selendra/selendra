@@ -131,7 +131,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_version: 1002,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
+	transaction_version: 2,
 	state_version: 0,
 };
 
@@ -614,7 +614,8 @@ construct_runtime!(
 		Proxy: pallet_proxy = 33,
 		IdleScheduler: module_idle_scheduler = 34,
 		Indices: pallet_indices = 36,
-		Identity: pallet_identity = 27,
+		Identity: pallet_identity = 37,
+		Vesting: pallet_vesting = 38,
 
 		// Consensus
 		// Authorship must be before session in order to note author in the correct session and era
@@ -821,7 +822,7 @@ mod benches {
 		[pallet_tips, Tips]
 		[pallet_treasury, Treasury]
 		[pallet_utility, Utility]
-		[pallet_nomination_pools, NominationPoolsBench::<Runtime>]
+		[pallet_vesting, Vesting]
 	);
 }
 
