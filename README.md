@@ -6,7 +6,7 @@ Read more at [selendra.org](https://selendra.org)
 
 ## Mission
 
-Our mission is to bring blockchain benefits a step closer to the ordinary people who had been overlooked and underserved, and to accelerate the advancement and strengthening the industry as a whole.
+Our mission is to open Web3 opportunities by providing blockchain benefits and usefullness a step closer to the ordinary people and to help accelerate the advancement and strengthening the industry as a whole.
 
 ## Acknowledgement
 
