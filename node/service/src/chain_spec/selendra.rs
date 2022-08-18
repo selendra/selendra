@@ -39,7 +39,7 @@ use selendra_runtime::{
 	FinancialCouncilMembershipConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig, IndicesConfig,
 	OperatorMembershipSelendraConfig, OrmlNFTConfig, SS58Prefix, SessionConfig, SessionKeys,
 	StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalMembershipConfig, TokensConfig,
-	KUSD, SEL,
+	KUSD, SEL, VestingConfig
 };
 
 /// Node `ChainSpec` extensions.
@@ -165,7 +165,6 @@ pub fn mainnet_staging_config() -> ChainSpec {
 		Default::default(),
 	)
 }
-
 
 fn development_config_genesis() -> GenesisConfig {
 	let wasm_binary = selendra_runtime::WASM_BINARY.unwrap_or_default();
@@ -429,21 +428,21 @@ pub fn selendra_development_genesis(
 		},
 		council: CouncilConfig::default(),
 		council_membership: CouncilMembershipConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		financial_council: Default::default(),
 		financial_council_membership: FinancialCouncilMembershipConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		technical_committee: Default::default(),
 		technical_membership: TechnicalMembershipConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		operator_membership_selendra: OperatorMembershipSelendraConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		session: SessionConfig {
@@ -476,6 +475,7 @@ pub fn selendra_development_genesis(
 		},
 		im_online: ImOnlineConfig { keys: vec![] },
 		authority_discovery: AuthorityDiscoveryConfig { keys: vec![] },
+		vesting: VestingConfig { vesting: vec![] },
 		grandpa: GrandpaConfig { authorities: vec![] },
 		nomination_pools: Default::default(),
 		indices: IndicesConfig { indices: vec![] },
@@ -510,7 +510,7 @@ pub fn selendra_genesis(
 	root_key: AccountId,
 	endowed_accounts: Option<Vec<AccountId>>,
 ) -> GenesisConfig {
-	let endowment: Balance = 527_922_923* dollar(SEL);
+	let endowment: Balance = 527_922_923 * dollar(SEL);
 	let stash: Balance = 100 * dollar(SEL);
 	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
@@ -525,21 +525,21 @@ pub fn selendra_genesis(
 		},
 		council: CouncilConfig::default(),
 		council_membership: CouncilMembershipConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		financial_council: Default::default(),
 		financial_council_membership: FinancialCouncilMembershipConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		technical_committee: Default::default(),
 		technical_membership: TechnicalMembershipConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		operator_membership_selendra: OperatorMembershipSelendraConfig {
-			members: vec![],
+			members: vec![].try_into().unwrap(),
 			phantom: Default::default(),
 		},
 		session: SessionConfig {
@@ -572,6 +572,7 @@ pub fn selendra_genesis(
 		},
 		im_online: ImOnlineConfig { keys: vec![] },
 		authority_discovery: AuthorityDiscoveryConfig { keys: vec![] },
+		vesting: VestingConfig { vesting: vec![] },
 		grandpa: GrandpaConfig { authorities: vec![] },
 		indices: IndicesConfig { indices: vec![] },
 		nomination_pools: Default::default(),

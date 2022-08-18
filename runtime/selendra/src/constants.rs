@@ -106,7 +106,7 @@ pub mod fee {
 		WeightToFeePolynomial,
 	};
 	use primitives::Balance;
-	use runtime_common::{dollar, millicent, cent, SEL};
+	use runtime_common::{cent, dollar, millicent, SEL};
 	use smallvec::smallvec;
 	use sp_runtime::Perbill;
 
@@ -205,6 +205,7 @@ pub mod accounts {
 		pub const LoansPalletId: PalletId = PalletId(*b"sel/loan");
 		pub const DEXPalletId: PalletId = PalletId(*b"sel/dexm");
 		pub const CDPTreasuryPalletId: PalletId = PalletId(*b"sel/cdpt");
+		pub const CDPEnginePalletId: PalletId = PalletId(*b"sel/cdpe");
 		pub const FunanTreasuryPalletId: PalletId = PalletId(*b"sel/hztr");
 		pub const IncentivesPalletId: PalletId = PalletId(*b"sel/inct");
 		pub const CollatorPotId: PalletId = PalletId(*b"sel/cpot");
@@ -227,6 +228,7 @@ pub mod accounts {
 			LoansPalletId::get().into_account_truncating(),
 			DEXPalletId::get().into_account_truncating(),
 			CDPTreasuryPalletId::get().into_account_truncating(),
+			CDPEnginePalletId::get().into_account_truncating(),
 			FunanTreasuryPalletId::get().into_account_truncating(),
 			IncentivesPalletId::get().into_account_truncating(),
 			TreasuryReservePalletId::get().into_account_truncating(),
@@ -248,6 +250,6 @@ mod tests {
 		let q = Balance::from(ExtrinsicBaseWeight::get());
 
 		assert_eq!(p, 10_000_000);
-		assert_eq!(q, 85_795_000);
+		assert_eq!(q, 862_980_00);
 	}
 }

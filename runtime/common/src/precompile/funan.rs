@@ -31,7 +31,7 @@ use module_funan::WeightInfo;
 use module_support::FunanManager;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use primitives::{Amount, Balance, CurrencyId, Position};
-use sp_runtime::{traits::Convert, FixedPointNumber, RuntimeDebug};
+use sp_runtime::{traits::Convert, RuntimeDebug};
 use sp_std::{marker::PhantomData, prelude::*};
 
 /// The Funan precomnpile

@@ -22,11 +22,12 @@
 #![allow(clippy::type_complexity)]
 
 use frame_support::pallet_prelude::{DispatchClass, Pays, Weight};
-use primitives::{task::TaskResult, CurrencyId, Multiplier, ReserveIdentifier};
+use primitives::{task::TaskResult, Balance, CurrencyId, Multiplier, ReserveIdentifier};
 use sp_runtime::{
 	traits::CheckedDiv, transaction_validity::TransactionValidityError, DispatchError,
 	DispatchResult, FixedU128,
 };
+use sp_std::result::Result;
 
 pub mod dex;
 pub mod evm;
@@ -117,5 +118,34 @@ impl DispatchableTask for () {
 impl<Task> IdleScheduler<Task> for () {
 	fn schedule(_task: Task) -> DispatchResult {
 		unimplemented!()
+	}
+}
+
+pub trait LiquidateCollateral<AccountId> {
+	fn liquidate(
+		who: &AccountId,
+		currency_id: CurrencyId,
+		amount: Balance,
+		target_stable_amount: Balance,
+	) -> DispatchResult;
+}
+
+#[impl_trait_for_tuples::impl_for_tuples(30)]
+impl<AccountId> LiquidateCollateral<AccountId> for Tuple {
+	fn liquidate(
+		who: &AccountId,
+		currency_id: CurrencyId,
+		amount: Balance,
+		target_stable_amount: Balance,
+	) -> DispatchResult {
+		let mut last_error = None;
+		for_tuples!( #(
+			match Tuple::liquidate(who, currency_id, amount, target_stable_amount) {
+				Ok(_) => return Ok(()),
+				Err(e) => { last_error = Some(e) }
+			}
+		)* );
+		let last_error = last_error.unwrap_or(DispatchError::Other("No liquidation impl."));
+		Err(last_error)
 	}
 }

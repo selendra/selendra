@@ -7,7 +7,7 @@ use crate::{
 use codec::Decode;
 
 use frame_election_provider_support::{
-	onchain, ElectionDataProvider, ExtendedBalance, SequentialPhragmen, VoteWeight,
+	onchain, BalancingConfig, ElectionDataProvider, SequentialPhragmen, VoteWeight,
 };
 use frame_support::{
 	pallet_prelude::Get,
@@ -200,13 +200,14 @@ parameter_types! {
 
 /// Maximum number of iterations for balancing that will be executed in the embedded OCW
 /// miner of election provider multi phase.
-pub const MINER_MAX_ITERATIONS: u32 = 16;
+pub const MINER_MAX_ITERATIONS: u32 = 10;
+
 /// A source of random balance for NposSolver, which is meant to be run by the OCW election miner.
 pub struct OffchainRandomBalancing;
-impl Get<Option<(usize, ExtendedBalance)>> for OffchainRandomBalancing {
-	fn get() -> Option<(usize, ExtendedBalance)> {
+impl Get<Option<BalancingConfig>> for OffchainRandomBalancing {
+	fn get() -> Option<BalancingConfig> {
 		use sp_runtime::traits::TrailingZeroInput;
-		let iters = match MINER_MAX_ITERATIONS {
+		let iterations = match MINER_MAX_ITERATIONS {
 			0 => 0,
 			max => {
 				let seed = sp_io::offchain::random_seed();
@@ -217,7 +218,8 @@ impl Get<Option<(usize, ExtendedBalance)>> for OffchainRandomBalancing {
 			},
 		};
 
-		Some((iters, 0))
+		let config = BalancingConfig { iterations, tolerance: 0 };
+		Some(config)
 	}
 }
 

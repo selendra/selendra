@@ -155,7 +155,7 @@ macro_rules! create_currency_id {
 			];
 			selendra_tokens.append(&mut selendra_lp_tokens);
 
-			frame_support::assert_ok!(std::fs::write("../predeploy-contracts/resources/selendra_tokens.json", serde_json::to_string_pretty(&selendra_tokens).unwrap()));
+			frame_support::assert_ok!(std::fs::write("../../resources/selendra_tokens.json", serde_json::to_string_pretty(&selendra_tokens).unwrap()));
 		}
     }
 }
@@ -300,6 +300,14 @@ impl CurrencyId {
 			CurrencyId::DexShare(..) => return None,
 		};
 		Some(CurrencyId::DexShare(dex_share_0, dex_share_1))
+	}
+
+	pub fn erc20_address(&self) -> Option<EvmAddress> {
+		match self {
+			CurrencyId::Erc20(address) => Some(*address),
+			CurrencyId::Token(_) => EvmAddress::try_from(*self).ok(),
+			_ => None,
+		}
 	}
 }
 

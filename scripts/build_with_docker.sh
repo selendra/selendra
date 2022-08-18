@@ -2,4 +2,4 @@
 
 docker run --rm -it -w /shellhere/polkadot \
 -v $(pwd):/shellhere/polkadot \
-paritytech/ci-linux:production cargo build --release
+paritytech/ci-linux:production cargo build --profile production

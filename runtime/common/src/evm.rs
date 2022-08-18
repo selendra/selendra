@@ -55,8 +55,7 @@ where
 #[cfg(feature = "std")]
 /// Returns `evm_genesis_accounts`
 pub fn evm_genesis(evm_accounts: Vec<H160>) -> BTreeMap<H160, GenesisAccount<Balance, Nonce>> {
-	let contracts_json =
-		&include_bytes!("../../../predeploy-contracts/resources/bytecodes.json")[..];
+	let contracts_json = &include_bytes!("../../../resources/bytecodes.json")[..];
 	let contracts: Vec<(String, String, String)> = serde_json::from_slice(contracts_json).unwrap();
 	let mut accounts = BTreeMap::new();
 	for (_, address, code_string) in contracts {

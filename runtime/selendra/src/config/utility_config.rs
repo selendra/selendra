@@ -1,12 +1,13 @@
 use crate::{
 	cent, config::evm_config::EvmTask, deposit, dollar, parameter_types, weights, AccountIndex,
 	Balance, Balances, BlakeTwo256, Call, DispatchableTask, Event, InstanceFilter, OriginCaller,
-	ProxyType, Runtime, RuntimeBlockWeights, RuntimeDebug, Weight, SEL, Treasury
+	ProxyType, Runtime, RuntimeBlockWeights, RuntimeDebug, Treasury, Weight, SEL,
 };
+use sp_runtime::traits::ConvertInto;
 use codec::{Decode, Encode};
 use primitives::{define_combined_task, task::TaskResult};
-use scale_info::TypeInfo;
 use runtime_common::EnsureRootOrThreeFourthsCouncil;
+use scale_info::TypeInfo;
 
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
@@ -82,6 +83,20 @@ impl pallet_indices::Config for Runtime {
 	type WeightInfo = weights::pallet_indices::WeightInfo<Runtime>;
 }
 
+
+parameter_types! {
+	pub MinVestedTransfer: Balance = 10 * dollar(SEL);
+}
+
+impl pallet_vesting::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type BlockNumberToBalance = ConvertInto;
+	type MinVestedTransfer = MinVestedTransfer;
+	type WeightInfo = weights::pallet_vesting::WeightInfo<Runtime>;
+	const MAX_VESTING_SCHEDULES: u32 = 28;
+}
+
 parameter_types! {
 	pub BasicDeposit: Balance = deposit(1, 258);
 	pub FieldDeposit: Balance = deposit(0, 66);
@@ -103,7 +118,7 @@ impl pallet_identity::Config for Runtime {
 	type Slashed = Treasury;
 	type ForceOrigin = EnsureRootOrThreeFourthsCouncil;
 	type RegistrarOrigin = EnsureRootOrThreeFourthsCouncil;
-	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_identity::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -152,7 +167,12 @@ impl InstanceFilter<Call> for ProxyType {
 				matches!(
 					c,
 					Call::Dex(module_dex::Call::swap_with_exact_supply { .. }) |
-						Call::Dex(module_dex::Call::swap_with_exact_target { .. })
+						Call::Dex(module_dex::Call::swap_with_exact_target { .. }) |
+						Call::AggregatedDex(
+							module_aggregated_dex::Call::swap_with_exact_supply { .. }
+						) | Call::AggregatedDex(
+						module_aggregated_dex::Call::swap_with_exact_target { .. }
+					)
 				)
 			},
 			ProxyType::Loan => {

@@ -47,7 +47,7 @@ mod aggregated_dex {
 pub const ALICE: AccountId = AccountId32::new([1u8; 32]);
 pub const BOB: AccountId = AccountId32::new([2u8; 32]);
 pub const KUSD: CurrencyId = CurrencyId::Token(TokenSymbol::KUSD);
-pub const DOT: CurrencyId = CurrencyId::Token(TokenSymbol::DOT);
+pub const SEL: CurrencyId = CurrencyId::Token(TokenSymbol::SEL);
 pub const LSEL: CurrencyId = CurrencyId::Token(TokenSymbol::LSEL);
 pub const STABLE_ASSET: CurrencyId = CurrencyId::StableAssetPoolToken(0);
 
@@ -230,9 +230,9 @@ impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
 			balances: vec![
-				(ALICE, DOT, 100_000_000_000),
+				(ALICE, SEL, 100_000_000_000),
 				(BOB, KUSD, 1_000_000_000_000_000_000),
-				(BOB, DOT, 1_000_000_000_000_000_000),
+				(BOB, SEL, 1_000_000_000_000_000_000),
 				(BOB, LSEL, 1_000_000_000_000_000_000),
 			],
 		}

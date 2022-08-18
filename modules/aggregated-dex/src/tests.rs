@@ -54,10 +54,10 @@ fn inject_liquidity(
 	Ok(())
 }
 
-fn inital_taiga_dot_lsel_pool() -> DispatchResult {
+fn initial_taiga_sel_lsel_pool() -> DispatchResult {
 	StableAssetWrapper::create_pool(
 		STABLE_ASSET,
-		vec![DOT, LSEL],
+		vec![SEL, LSEL],
 		vec![1u128, 1u128],
 		0,
 		0,
@@ -68,7 +68,7 @@ fn inital_taiga_dot_lsel_pool() -> DispatchResult {
 		10_000_000_000u128,
 	)?;
 
-	Tokens::deposit(DOT, &BOB, 100_000_000_000u128)?;
+	Tokens::deposit(SEL, &BOB, 100_000_000_000u128)?;
 	Tokens::deposit(LSEL, &BOB, 1_000_000_000_000u128)?;
 
 	StableAssetWrapper::mint(&BOB, 0, vec![100_000_000_000u128, 1_000_000_000_000u128], 0)?;
@@ -83,14 +83,14 @@ fn inital_taiga_dot_lsel_pool() -> DispatchResult {
 #[test]
 fn rebase_stable_asset_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(inital_taiga_dot_lsel_pool());
+		assert_ok!(initial_taiga_sel_lsel_pool());
 
 		assert_eq!(
-			StableAssetWrapper::get_best_route(DOT, LSEL, 100_000_000u128),
+			StableAssetWrapper::get_best_route(SEL, LSEL, 100_000_000u128),
 			Some((0, 0, 1, 999_983_600u128))
 		);
 		assert_eq!(
-			StableAssetWrapper::get_best_route(LSEL, DOT, 1_000_000_000u128),
+			StableAssetWrapper::get_best_route(LSEL, SEL, 1_000_000_000u128),
 			Some((0, 1, 0, 99_998_360u128))
 		);
 
@@ -105,13 +105,13 @@ fn rebase_stable_asset_work() {
 			Some((100_000_000u128, 999_983_600u128))
 		);
 
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 100_000_000_000u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 100_000_000_000u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 0);
 		assert_eq!(
 			StableAssetWrapper::swap(&ALICE, 0, 0, 1, 100_000_000u128, 0, 2),
 			Ok((100_000_000u128, 999_983_600u128))
 		);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 99_900_000_000u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 99_900_000_000u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 999_983_600u128);
 	});
 }
@@ -121,7 +121,7 @@ fn dex_swap_get_swap_amount_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_eq!(
 			DexSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -129,19 +129,19 @@ fn dex_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			DexSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				KUSD,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
 			None
 		);
 
-		assert_ok!(inject_liquidity(DOT, KUSD, 100_000_000_000u128, 200_000_000_000_000u128));
+		assert_ok!(inject_liquidity(SEL, KUSD, 100_000_000_000u128, 200_000_000_000_000u128));
 		assert_ok!(inject_liquidity(LSEL, KUSD, 1_000_000_000_000u128, 200_000_000_000_000u128));
 
 		assert_eq!(
 			DexSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -149,7 +149,7 @@ fn dex_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			DexSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				KUSD,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -159,17 +159,17 @@ fn dex_swap_get_swap_amount_work() {
 		set_dex_swap_joint_list(vec![vec![KUSD]]);
 		assert_eq!(
 			DexSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
 			Some((1_000_000_000u128, 9_803_921_568u128))
 		);
 
-		assert_ok!(inject_liquidity(DOT, LSEL, 100_000_000_000u128, 1_000_000_000_000u128));
+		assert_ok!(inject_liquidity(SEL, LSEL, 100_000_000_000u128, 1_000_000_000_000u128));
 		assert_eq!(
 			DexSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -181,13 +181,13 @@ fn dex_swap_get_swap_amount_work() {
 #[test]
 fn dex_swap_swap_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(inject_liquidity(DOT, KUSD, 100_000_000_000u128, 200_000_000_000_000u128));
+		assert_ok!(inject_liquidity(SEL, KUSD, 100_000_000_000u128, 200_000_000_000_000u128));
 		assert_ok!(inject_liquidity(LSEL, KUSD, 1_000_000_000_000u128, 200_000_000_000_000u128));
 
 		assert_noop!(
 			DexSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -195,13 +195,13 @@ fn dex_swap_swap_work() {
 		);
 
 		set_dex_swap_joint_list(vec![vec![KUSD]]);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 100_000_000_000u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 100_000_000_000u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 0);
 
 		assert_noop!(
 			DexSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 10_000_000_000u128)
 			),
@@ -209,18 +209,18 @@ fn dex_swap_swap_work() {
 		);
 		assert_ok!(DexSwap::<Runtime>::swap(
 			&ALICE,
-			DOT,
+			SEL,
 			LSEL,
 			SwapLimit::ExactSupply(1_000_000_000u128, 5_000_000_000u128)
 		));
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 99_000_000_000u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 99_000_000_000u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 9_803_921_568u128);
 
 		assert_noop!(
 			DexSwap::<Runtime>::swap(
 				&ALICE,
 				LSEL,
-				DOT,
+				SEL,
 				SwapLimit::ExactTarget(9_803_921_568u128, 1_000_000_000u128)
 			),
 			Error::<Runtime>::CannotSwap
@@ -228,11 +228,38 @@ fn dex_swap_swap_work() {
 		assert_ok!(DexSwap::<Runtime>::swap(
 			&ALICE,
 			LSEL,
-			DOT,
+			SEL,
 			SwapLimit::ExactTarget(9_803_921_568u128, 500_000_000u128)
 		));
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 99_500_000_000u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 99_500_000_000u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 4_950_495_048u128);
+
+		assert_noop!(
+			DexSwap::<Runtime>::swap_by_path(
+				&ALICE,
+				&vec![SEL, LSEL],
+				SwapLimit::ExactSupply(1_000_000_000u128, 10_000_000_000u128)
+			),
+			module_dex::Error::<Runtime>::MustBeEnabled
+		);
+		assert_ok!(DexSwap::<Runtime>::swap_by_path(
+			&ALICE,
+			&vec![SEL, KUSD, LSEL],
+			SwapLimit::ExactSupply(1_000_000_000u128, 0)
+		));
+		assert_ok!(DexSwap::<Runtime>::swap_by_path(
+			&ALICE,
+			&vec![LSEL, KUSD, SEL],
+			SwapLimit::ExactSupply(1_000_000_000u128, 0)
+		));
+		assert_noop!(
+			DexSwap::<Runtime>::swap_by_aggregated_path(
+				&ALICE,
+				&vec![SwapPath::Dex(vec![SEL, KUSD, LSEL])],
+				SwapLimit::ExactSupply(1_000_000_000u128, 0)
+			),
+			Error::<Runtime>::CannotSwap
+		);
 	});
 }
 
@@ -241,7 +268,7 @@ fn taiga_swap_get_swap_amount_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -249,17 +276,17 @@ fn taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(u128::MAX, 10_000_000_000u128)
 			),
 			None
 		);
 
-		assert_ok!(inital_taiga_dot_lsel_pool());
+		assert_ok!(initial_taiga_sel_lsel_pool());
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				KUSD,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -267,7 +294,7 @@ fn taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -275,7 +302,7 @@ fn taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 9_998_360_751u128)
 			),
@@ -283,7 +310,7 @@ fn taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				KUSD,
 				SwapLimit::ExactTarget(10_000_000_000u128, 10_000_000_000u128)
 			),
@@ -291,7 +318,7 @@ fn taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(2_000_000_000u128, 9_998_360_750u128)
 			),
@@ -299,7 +326,7 @@ fn taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(1_000_000_097u128, 9_998_360_750u128)
 			),
@@ -308,7 +335,7 @@ fn taiga_swap_get_swap_amount_work() {
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
 				LSEL,
-				DOT,
+				SEL,
 				SwapLimit::ExactTarget(100_000_000_000u128, 1_000_000_000u128)
 			),
 			Some((10_001_640_760u128, 1_000_000_098u128))
@@ -322,7 +349,7 @@ fn taiga_swap_swap_work() {
 		assert_noop!(
 			TaigaSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -331,33 +358,33 @@ fn taiga_swap_swap_work() {
 		assert_noop!(
 			TaigaSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(10_000_000_000u128, 9_998_360_750u128)
 			),
 			Error::<Runtime>::CannotSwap
 		);
 
-		assert_ok!(inital_taiga_dot_lsel_pool());
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 100_000_000_000u128);
+		assert_ok!(initial_taiga_sel_lsel_pool());
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 100_000_000_000u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 0);
 
 		assert_eq!(
 			TaigaSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
 			Ok((1_000_000_000u128, 9_998_360_750u128))
 		);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 99_000_000_000u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 99_000_000_000u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 9_998_360_750u128);
 
 		assert_noop!(
 			TaigaSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 10_000_000_000u128)
 			),
@@ -367,21 +394,38 @@ fn taiga_swap_swap_work() {
 		assert_eq!(
 			TaigaSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(2_000_000_000u128, 10_000_000_000u128)
 			),
 			Ok((1_000_492_274u128, 10_000_000_980u128))
 		);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 97_999_507_726u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 97_999_507_726u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 19_998_361_730u128);
 
 		assert_noop!(
 			TaigaSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(1_000_000_000u128, 10_000_000_000u128)
+			),
+			Error::<Runtime>::CannotSwap
+		);
+
+		assert_noop!(
+			TaigaSwap::<Runtime>::swap_by_path(
+				&ALICE,
+				&vec![SEL, LSEL],
+				SwapLimit::ExactTarget(1_000_000_000u128, 0)
+			),
+			Error::<Runtime>::CannotSwap
+		);
+		assert_noop!(
+			TaigaSwap::<Runtime>::swap_by_aggregated_path(
+				&ALICE,
+				&vec![SwapPath::Dex(vec![SEL, LSEL])],
+				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
 			Error::<Runtime>::CannotSwap
 		);
@@ -393,7 +437,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_eq!(
 			DexSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -401,7 +445,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -409,7 +453,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			EitherDexOrTaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -417,7 +461,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			DexSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(2_000_000_000u128, 10_000_000_000u128)
 			),
@@ -425,7 +469,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(2_000_000_000u128, 10_000_000_000u128)
 			),
@@ -433,17 +477,17 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			EitherDexOrTaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(2_000_000_000u128, 10_000_000_000u128)
 			),
 			None
 		);
 
-		assert_ok!(inital_taiga_dot_lsel_pool());
+		assert_ok!(initial_taiga_sel_lsel_pool());
 		assert_eq!(
 			DexSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -451,7 +495,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -459,7 +503,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			EitherDexOrTaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -467,7 +511,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			DexSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(2_000_000_000u128, 10_000_000_000u128)
 			),
@@ -475,7 +519,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(2_000_000_000u128, 10_000_000_000u128)
 			),
@@ -483,17 +527,17 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			EitherDexOrTaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(2_000_000_000u128, 10_000_000_000u128)
 			),
 			Some((1_000_164_076u128, 10_000_000_980u128))
 		);
 
-		assert_ok!(inject_liquidity(DOT, LSEL, 1_000_000_000u128, 30_000_000_000u128));
+		assert_ok!(inject_liquidity(SEL, LSEL, 1_000_000_000u128, 30_000_000_000u128));
 		assert_eq!(
 			DexSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -501,7 +545,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -509,7 +553,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			EitherDexOrTaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -517,7 +561,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			DexSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(2_000_000_000u128, 10_000_000_000u128)
 			),
@@ -525,7 +569,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(2_000_000_000u128, 10_000_000_000u128)
 			),
@@ -533,7 +577,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			EitherDexOrTaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(2_000_000_000u128, 10_000_000_000u128)
 			),
@@ -542,7 +586,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 
 		assert_eq!(
 			DexSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(10_000_000_000u128, 0)
 			),
@@ -550,7 +594,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(10_000_000_000u128, 0)
 			),
@@ -558,7 +602,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			EitherDexOrTaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(10_000_000_000u128, 0)
 			),
@@ -566,7 +610,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			DexSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(10_000_000_000u128, 30_000_000_000u128)
 			),
@@ -574,7 +618,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			TaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(10_000_000_000u128, 30_000_000_000u128)
 			),
@@ -582,7 +626,7 @@ fn either_dex_or_taiga_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			EitherDexOrTaigaSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(10_000_000_000u128, 30_000_000_000u128)
 			),
@@ -597,7 +641,7 @@ fn either_dex_or_taiga_swap_swap_work() {
 		assert_noop!(
 			EitherDexOrTaigaSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -606,21 +650,21 @@ fn either_dex_or_taiga_swap_swap_work() {
 		assert_noop!(
 			EitherDexOrTaigaSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(2_000_000_000u128, 10_000_000_000u128)
 			),
 			Error::<Runtime>::CannotSwap
 		);
 
-		assert_ok!(inital_taiga_dot_lsel_pool());
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 100_000_000_000u128);
+		assert_ok!(initial_taiga_sel_lsel_pool());
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 100_000_000_000u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 0);
 
 		assert_noop!(
 			EitherDexOrTaigaSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 10_000_000_000u128)
 			),
@@ -629,19 +673,19 @@ fn either_dex_or_taiga_swap_swap_work() {
 		assert_eq!(
 			EitherDexOrTaigaSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 9_000_000_000u128)
 			),
 			Ok((1_000_000_000u128, 9_998_360_750u128))
 		);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 99_000_000_000u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 99_000_000_000u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 9_998_360_750u128);
 
 		assert_noop!(
 			EitherDexOrTaigaSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(1_000_000_000u128, 9_998_360_750u128)
 			),
@@ -650,27 +694,54 @@ fn either_dex_or_taiga_swap_swap_work() {
 		assert_eq!(
 			EitherDexOrTaigaSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactTarget(2_000_000_000u128, 10_000_000_000u128)
 			),
 			Ok((1_000_492_274u128, 10_000_000_980u128))
 		);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 97_999_507_726u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 97_999_507_726u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 19_998_361_730u128);
 
-		assert_ok!(inject_liquidity(DOT, LSEL, 100_000_000_000u128, 2_000_000_000_000u128));
+		assert_ok!(inject_liquidity(SEL, LSEL, 100_000_000_000u128, 2_000_000_000_000u128));
 		assert_eq!(
 			EitherDexOrTaigaSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 10_000_000_000u128)
 			),
 			Ok((1_000_000_000u128, 19_801_980_198u128))
 		);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 96_999_507_726u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 96_999_507_726u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 39_800_341_928u128);
+
+		assert_noop!(
+			EitherDexOrTaigaSwap::<Runtime>::swap_by_path(
+				&ALICE,
+				&vec![SEL, KUSD],
+				SwapLimit::ExactSupply(1_000_000_000u128, 10_000_000_000u128)
+			),
+			module_dex::Error::<Runtime>::MustBeEnabled
+		);
+		assert_ok!(EitherDexOrTaigaSwap::<Runtime>::swap_by_path(
+			&ALICE,
+			&vec![SEL, LSEL],
+			SwapLimit::ExactSupply(1_000_000_000u128, 0)
+		));
+		assert_ok!(EitherDexOrTaigaSwap::<Runtime>::swap_by_path(
+			&ALICE,
+			&vec![LSEL, SEL],
+			SwapLimit::ExactSupply(1_000_000_000u128, 0)
+		));
+		assert_noop!(
+			EitherDexOrTaigaSwap::<Runtime>::swap_by_aggregated_path(
+				&ALICE,
+				&vec![SwapPath::Dex(vec![SEL, LSEL])],
+				SwapLimit::ExactSupply(1_000_000_000u128, 0)
+			),
+			Error::<Runtime>::CannotSwap
+		);
 	});
 }
 
@@ -701,7 +772,7 @@ fn check_swap_paths_work() {
 			Error::<Runtime>::InvalidSwapPath
 		);
 
-		assert_ok!(inital_taiga_dot_lsel_pool());
+		assert_ok!(initial_taiga_sel_lsel_pool());
 		assert_ok!(AggregatedDex::check_swap_paths(&vec![SwapPath::Taiga(0, 0, 1)]));
 		assert_noop!(
 			AggregatedDex::check_swap_paths(&vec![SwapPath::Taiga(0, 2, 0)]),
@@ -789,7 +860,7 @@ fn get_aggregated_swap_amount_work() {
 			None
 		);
 
-		assert_ok!(inital_taiga_dot_lsel_pool());
+		assert_ok!(initial_taiga_sel_lsel_pool());
 		assert_eq!(
 			AggregatedDex::get_aggregated_swap_amount(
 				&vec![SwapPath::Taiga(0, 0, 1)],
@@ -900,7 +971,7 @@ fn do_aggregated_swap_work() {
 			Error::<Runtime>::InvalidPoolId
 		);
 
-		assert_ok!(inital_taiga_dot_lsel_pool());
+		assert_ok!(initial_taiga_sel_lsel_pool());
 		assert_noop!(
 			AggregatedDex::do_aggregated_swap(
 				&ALICE,
@@ -918,7 +989,7 @@ fn do_aggregated_swap_work() {
 			module_dex::Error::<Runtime>::MustBeEnabled
 		);
 
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 100_000_000_000u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 100_000_000_000u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 0);
 		assert_eq!(
 			AggregatedDex::do_aggregated_swap(
@@ -928,7 +999,7 @@ fn do_aggregated_swap_work() {
 			),
 			Ok((1_000_000_000u128, 9_998_360_750u128))
 		);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 99_000_000_000u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 99_000_000_000u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 9_998_360_750u128);
 		assert_eq!(Tokens::free_balance(KUSD, &ALICE), 0);
 
@@ -940,7 +1011,7 @@ fn do_aggregated_swap_work() {
 			),
 			Ok((1_000_492_274u128, 10_000_000_980u128))
 		);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 97_999_507_726u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 97_999_507_726u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 19_998_361_730u128);
 		assert_eq!(Tokens::free_balance(KUSD, &ALICE), 0);
 
@@ -962,7 +1033,7 @@ fn do_aggregated_swap_work() {
 			),
 			Ok((1_000_000_000u128, 198_019_801_980u128))
 		);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 97_999_507_726u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 97_999_507_726u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 18_998_361_730u128);
 		assert_eq!(Tokens::free_balance(KUSD, &ALICE), 198_019_801_980u128);
 
@@ -974,7 +1045,7 @@ fn do_aggregated_swap_work() {
 			),
 			Ok((51_030_771u128, 10_000_000_090u128))
 		);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 97_999_507_726u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 97_999_507_726u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 18_947_330_959u128);
 		// actually swap by ExactSupply, actual target amount may be slightly more than exact target
 		// amount of limit
@@ -988,7 +1059,7 @@ fn do_aggregated_swap_work() {
 			),
 			Ok((1_000_000_000u128, 1_780_911_406_971u128))
 		);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 96_999_507_726u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 96_999_507_726u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 18_947_330_959u128);
 		assert_eq!(Tokens::free_balance(KUSD, &ALICE), 1_988_931_209_041u128);
 
@@ -1000,7 +1071,7 @@ fn do_aggregated_swap_work() {
 			),
 			Ok((653_482_016u128, 1_000_000_140_971u128))
 		);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 96_346_025_710u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 96_346_025_710u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 18_947_330_959u128);
 		// actually swap by ExactSupply, actual target amount may be slightly more than exact target
 		// amount of limit
@@ -1021,11 +1092,11 @@ fn update_aggregated_swap_paths_work() {
 				Origin::signed(BOB),
 				vec![
 					(
-						(DOT, KUSD),
+						(SEL, KUSD),
 						Some(vec![SwapPath::Taiga(0, 0, 1), SwapPath::Dex(vec![LSEL, KUSD])])
 					),
 					(
-						(KUSD, DOT),
+						(KUSD, SEL),
 						Some(vec![SwapPath::Taiga(0, 0, 1), SwapPath::Dex(vec![LSEL, KUSD])])
 					)
 				]
@@ -1033,18 +1104,18 @@ fn update_aggregated_swap_paths_work() {
 			Error::<Runtime>::InvalidPoolId
 		);
 
-		assert_ok!(inital_taiga_dot_lsel_pool());
+		assert_ok!(initial_taiga_sel_lsel_pool());
 
 		assert_noop!(
 			AggregatedDex::update_aggregated_swap_paths(
 				Origin::signed(BOB),
 				vec![
 					(
-						(DOT, KUSD),
+						(SEL, KUSD),
 						Some(vec![SwapPath::Taiga(0, 0, 1), SwapPath::Dex(vec![LSEL, KUSD])])
 					),
 					(
-						(KUSD, DOT),
+						(KUSD, SEL),
 						Some(vec![SwapPath::Taiga(0, 0, 1), SwapPath::Dex(vec![LSEL, KUSD])])
 					)
 				]
@@ -1052,27 +1123,27 @@ fn update_aggregated_swap_paths_work() {
 			Error::<Runtime>::InvalidSwapPath
 		);
 
-		assert_eq!(AggregatedDex::aggregated_swap_paths((DOT, KUSD)), None);
-		assert_eq!(AggregatedDex::aggregated_swap_paths((KUSD, DOT)), None);
+		assert_eq!(AggregatedDex::aggregated_swap_paths((SEL, KUSD)), None);
+		assert_eq!(AggregatedDex::aggregated_swap_paths((KUSD, SEL)), None);
 		assert_ok!(AggregatedDex::update_aggregated_swap_paths(
 			Origin::signed(BOB),
 			vec![
 				(
-					(DOT, KUSD),
+					(SEL, KUSD),
 					Some(vec![SwapPath::Taiga(0, 0, 1), SwapPath::Dex(vec![LSEL, KUSD])])
 				),
 				(
-					(KUSD, DOT),
+					(KUSD, SEL),
 					Some(vec![SwapPath::Dex(vec![KUSD, LSEL]), SwapPath::Taiga(0, 1, 0)])
 				)
 			]
 		));
 		assert_eq!(
-			AggregatedDex::aggregated_swap_paths((DOT, KUSD)).unwrap(),
+			AggregatedDex::aggregated_swap_paths((SEL, KUSD)).unwrap(),
 			vec![SwapPath::Taiga(0, 0, 1), SwapPath::Dex(vec![LSEL, KUSD])]
 		);
 		assert_eq!(
-			AggregatedDex::aggregated_swap_paths((KUSD, DOT)).unwrap(),
+			AggregatedDex::aggregated_swap_paths((KUSD, SEL)).unwrap(),
 			vec![SwapPath::Dex(vec![KUSD, LSEL]), SwapPath::Taiga(0, 1, 0)]
 		);
 
@@ -1080,7 +1151,7 @@ fn update_aggregated_swap_paths_work() {
 			AggregatedDex::update_aggregated_swap_paths(
 				Origin::signed(BOB),
 				vec![(
-					(DOT, KUSD),
+					(SEL, KUSD),
 					Some(vec![
 						SwapPath::Taiga(0, 0, 1),
 						SwapPath::Taiga(0, 1, 0),
@@ -1094,10 +1165,10 @@ fn update_aggregated_swap_paths_work() {
 
 		assert_ok!(AggregatedDex::update_aggregated_swap_paths(
 			Origin::signed(BOB),
-			vec![((DOT, KUSD), None), ((KUSD, DOT), None)]
+			vec![((SEL, KUSD), None), ((KUSD, SEL), None)]
 		));
-		assert_eq!(AggregatedDex::aggregated_swap_paths((DOT, KUSD)), None);
-		assert_eq!(AggregatedDex::aggregated_swap_paths((KUSD, DOT)), None);
+		assert_eq!(AggregatedDex::aggregated_swap_paths((SEL, KUSD)), None);
+		assert_eq!(AggregatedDex::aggregated_swap_paths((KUSD, SEL)), None);
 	});
 }
 
@@ -1106,17 +1177,17 @@ fn aggregated_swap_get_swap_amount_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_eq!(
 			AggregatedSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
 			None
 		);
 
-		assert_ok!(inject_liquidity(DOT, LSEL, 1_000_000_000u128, 30_000_000_000u128));
+		assert_ok!(inject_liquidity(SEL, LSEL, 1_000_000_000u128, 30_000_000_000u128));
 		assert_eq!(
 			AggregatedSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -1124,17 +1195,17 @@ fn aggregated_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			AggregatedSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(3_000_000_000u128, 0)
 			),
 			Some((3_000_000_000u128, 22_500_000_000u128))
 		);
 
-		assert_ok!(inital_taiga_dot_lsel_pool());
+		assert_ok!(initial_taiga_sel_lsel_pool());
 		assert_eq!(
 			AggregatedSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
@@ -1142,7 +1213,7 @@ fn aggregated_swap_get_swap_amount_work() {
 		);
 		assert_eq!(
 			AggregatedSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(3_000_000_000u128, 0)
 			),
@@ -1153,7 +1224,7 @@ fn aggregated_swap_get_swap_amount_work() {
 
 		assert_eq!(
 			AggregatedSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				KUSD,
 				SwapLimit::ExactSupply(3_000_000_000u128, 0)
 			),
@@ -1163,13 +1234,13 @@ fn aggregated_swap_get_swap_amount_work() {
 		assert_ok!(AggregatedDex::update_aggregated_swap_paths(
 			Origin::signed(BOB),
 			vec![(
-				(DOT, KUSD),
+				(SEL, KUSD),
 				Some(vec![SwapPath::Taiga(0, 0, 1), SwapPath::Dex(vec![LSEL, KUSD])])
 			),]
 		));
 		assert_eq!(
 			AggregatedSwap::<Runtime>::get_swap_amount(
-				DOT,
+				SEL,
 				KUSD,
 				SwapLimit::ExactSupply(3_000_000_000u128, 0)
 			),
@@ -1178,7 +1249,7 @@ fn aggregated_swap_get_swap_amount_work() {
 		assert_eq!(
 			AggregatedSwap::<Runtime>::get_swap_amount(
 				KUSD,
-				DOT,
+				SEL,
 				SwapLimit::ExactSupply(30_000_000_000u128, 0)
 			),
 			None
@@ -1187,7 +1258,7 @@ fn aggregated_swap_get_swap_amount_work() {
 		assert_ok!(AggregatedDex::update_aggregated_swap_paths(
 			Origin::signed(BOB),
 			vec![(
-				(KUSD, DOT),
+				(KUSD, SEL),
 				Some(vec![SwapPath::Dex(vec![KUSD, LSEL]), SwapPath::Taiga(0, 1, 0)])
 			),]
 		));
@@ -1202,7 +1273,7 @@ fn aggregated_swap_get_swap_amount_work() {
 		assert_eq!(
 			AggregatedSwap::<Runtime>::get_swap_amount(
 				LSEL,
-				DOT,
+				SEL,
 				SwapLimit::ExactSupply(10_000_000_000u128, 0)
 			),
 			Some((10_000_000_000u128, 999_836_075u128))
@@ -1210,7 +1281,7 @@ fn aggregated_swap_get_swap_amount_work() {
 		assert_eq!(
 			AggregatedSwap::<Runtime>::get_swap_amount(
 				KUSD,
-				DOT,
+				SEL,
 				SwapLimit::ExactSupply(30_000_000_000u128, 0)
 			),
 			Some((30_000_000_000u128, 999_836_075u128))
@@ -1219,7 +1290,7 @@ fn aggregated_swap_get_swap_amount_work() {
 		assert_eq!(
 			AggregatedSwap::<Runtime>::get_swap_amount(
 				LSEL,
-				DOT,
+				SEL,
 				SwapLimit::ExactTarget(20_000_000_000u128, 1_000_000_000u128)
 			),
 			Some((10_001_640_760u128, 1_000_000_098u128))
@@ -1235,7 +1306,7 @@ fn aggregated_swap_get_swap_amount_work() {
 		assert_eq!(
 			AggregatedSwap::<Runtime>::get_swap_amount(
 				KUSD,
-				DOT,
+				SEL,
 				SwapLimit::ExactTarget(u128::MAX, 1_000_000_000u128)
 			),
 			Some((30_007_384_026u128, 1_000_000_098u128))
@@ -1249,21 +1320,21 @@ fn aggregated_swap_swap_work() {
 		assert_noop!(
 			AggregatedSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 0)
 			),
 			Error::<Runtime>::CannotSwap
 		);
 
-		assert_ok!(inject_liquidity(DOT, LSEL, 1_000_000_000u128, 30_000_000_000u128));
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 100_000_000_000u128);
+		assert_ok!(inject_liquidity(SEL, LSEL, 1_000_000_000u128, 30_000_000_000u128));
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 100_000_000_000u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 0);
 
 		assert_noop!(
 			AggregatedSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 15_000_000_001u128)
 			),
@@ -1271,24 +1342,24 @@ fn aggregated_swap_swap_work() {
 		);
 		assert_ok!(AggregatedSwap::<Runtime>::swap(
 			&ALICE,
-			DOT,
+			SEL,
 			LSEL,
 			SwapLimit::ExactSupply(1_000_000_000u128, 15_000_000_000u128)
 		));
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 99_000_000_000u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 99_000_000_000u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 15_000_000_000u128);
 
-		assert_ok!(inital_taiga_dot_lsel_pool());
+		assert_ok!(initial_taiga_sel_lsel_pool());
 		assert_eq!(
 			AggregatedSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				LSEL,
 				SwapLimit::ExactSupply(1_000_000_000u128, 9_000_000_000u128)
 			),
 			Ok((1_000_000_000u128, 9_998_360_750u128))
 		);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 98_000_000_000u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 98_000_000_000u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 24_998_360_750u128);
 
 		assert_ok!(inject_liquidity(LSEL, KUSD, 30_000_000_000u128, 60_000_000_000u128));
@@ -1296,7 +1367,7 @@ fn aggregated_swap_swap_work() {
 		assert_noop!(
 			AggregatedSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				KUSD,
 				SwapLimit::ExactSupply(3_000_000_000u128, 0)
 			),
@@ -1306,7 +1377,7 @@ fn aggregated_swap_swap_work() {
 		assert_ok!(AggregatedDex::update_aggregated_swap_paths(
 			Origin::signed(BOB),
 			vec![(
-				(DOT, KUSD),
+				(SEL, KUSD),
 				Some(vec![SwapPath::Taiga(0, 0, 1), SwapPath::Dex(vec![LSEL, KUSD])])
 			),]
 		));
@@ -1315,27 +1386,70 @@ fn aggregated_swap_swap_work() {
 		assert_eq!(
 			AggregatedSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				KUSD,
 				SwapLimit::ExactSupply(3_000_000_000u128, 0)
 			),
 			Ok((3_000_000_000u128, 29_987_688_109u128))
 		);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 95_000_000_000u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 95_000_000_000u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 24_998_360_750u128);
 		assert_eq!(Tokens::free_balance(KUSD, &ALICE), 29_987_688_109u128);
 
 		assert_eq!(
 			AggregatedSwap::<Runtime>::swap(
 				&ALICE,
-				DOT,
+				SEL,
 				KUSD,
 				SwapLimit::ExactTarget(u128::MAX, 10_000_000_000u128)
 			),
 			Ok((3_002_366_414u128, 10_000_000_216u128))
 		);
-		assert_eq!(Tokens::free_balance(DOT, &ALICE), 91_997_633_586u128);
+		assert_eq!(Tokens::free_balance(SEL, &ALICE), 91_997_633_586u128);
 		assert_eq!(Tokens::free_balance(LSEL, &ALICE), 24_998_360_750u128);
 		assert_eq!(Tokens::free_balance(KUSD, &ALICE), 39_987_688_325u128);
+
+		assert_noop!(
+			AggregatedSwap::<Runtime>::swap_by_path(
+				&ALICE,
+				&vec![SEL, KUSD],
+				SwapLimit::ExactSupply(1_000_000_000u128, 10_000_000_000u128)
+			),
+			module_dex::Error::<Runtime>::MustBeEnabled
+		);
+		assert_ok!(AggregatedSwap::<Runtime>::swap_by_path(
+			&ALICE,
+			&vec![SEL, LSEL],
+			SwapLimit::ExactSupply(1_000_000_000u128, 0)
+		));
+		assert_ok!(AggregatedSwap::<Runtime>::swap_by_path(
+			&ALICE,
+			&vec![LSEL, SEL],
+			SwapLimit::ExactSupply(1_000_000_000u128, 0)
+		));
+		assert_noop!(
+			AggregatedSwap::<Runtime>::swap_by_aggregated_path(
+				&ALICE,
+				&vec![SwapPath::Dex(vec![SEL, KUSD])],
+				SwapLimit::ExactSupply(1_000_000_000u128, 0)
+			),
+			module_dex::Error::<Runtime>::MustBeEnabled
+		);
+		assert_eq!(
+			AggregatedSwap::<Runtime>::swap_by_aggregated_path(
+				&ALICE,
+				&vec![SwapPath::Dex(vec![SEL, LSEL])],
+				SwapLimit::ExactSupply(1_000_000_000u128, 0)
+			),
+			Ok((1000000000, 2951219511))
+		);
+		assert_eq!(
+			AggregatedSwap::<Runtime>::swap_by_aggregated_path(
+				&ALICE,
+				&vec![SwapPath::Taiga(0, 0, 1), SwapPath::Dex(vec![LSEL, KUSD])],
+				SwapLimit::ExactSupply(1_000_000_000u128, 0)
+			),
+			Ok((1000000000, 1997865702))
+		);
 	});
 }

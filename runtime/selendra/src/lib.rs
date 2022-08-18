@@ -74,7 +74,10 @@ use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
 
 use frame_support::{
 	construct_runtime, log, parameter_types,
-	traits::{Contains, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, PrivilegeCmp},
+	traits::{
+		Contains, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, OnRuntimeUpgrade,
+		PrivilegeCmp,
+	},
 	weights::{constants::RocksDbWeight, Weight},
 	PalletId, RuntimeDebug,
 };
@@ -100,11 +103,11 @@ pub use primitives::{
 	DataProviderId, Hash, Moment, Nonce, ReserveIdentifier, Signature, TokenSymbol,
 };
 pub use runtime_common::{
-	cent, dollar, microcent, millicent, AllPrecompiles, BlockHashCount, EnsureRootOrHalfCouncil,
-	EnsureRootOrOneCouncil, EnsureRootOrThreeFourthsCouncil, ExchangeRate,
+	cent, dollar, impls::DealWithFees, microcent, millicent, AllPrecompiles, BlockHashCount,
+	EnsureRootOrHalfCouncil, EnsureRootOrOneCouncil, EnsureRootOrThreeFourthsCouncil, ExchangeRate,
 	ExistentialDepositsTimesOneHundred, GasToWeight, MaxTipsOfPriority, OperationalFeeMultiplier,
 	Price, ProxyType, Rate, Ratio, RuntimeBlockLength, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
-	TimeStampedPrice, TipPerWeightStep, DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL, impls::DealWithFees
+	TimeStampedPrice, TipPerWeightStep, DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL,
 };
 
 use crate::config::{
@@ -113,7 +116,7 @@ use crate::config::{
 	evm_config::{
 		ConvertEthereumTx, PayerSignatureVerification, StorageDepositPerByte, TxFeePerGas,
 	},
-	funan_config::MaxSwapSlippageCompareToOracle,
+	funan_config::{MaxSwapSlippageCompareToOracle, SelendraSwap},
 };
 #[cfg(test)]
 use config::evm_config::NewContractExtraBytes;
@@ -125,10 +128,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
 	impl_name: create_runtime_str!("selendra"),
 	authoring_version: 1,
-	spec_version: 1001,
+	spec_version: 1002,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
+	transaction_version: 2,
 	state_version: 0,
 };
 
@@ -294,7 +297,7 @@ impl module_transaction_payment::Config for Runtime {
 	type TipPerWeightStep = TipPerWeightStep;
 	type MaxTipsOfPriority = MaxTipsOfPriority;
 	type TreasuryAccount = TreasuryAccount;
-	type DEX = Dex;
+	type Swap = SelendraSwap;
 	type TradingPathLimit = TradingPathLimit;
 	type PriceSource = module_prices::RealTimePriceProvider<Runtime>;
 	type MaxSwapSlippageCompareToOracle = MaxSwapSlippageCompareToOracle;
@@ -611,7 +614,8 @@ construct_runtime!(
 		Proxy: pallet_proxy = 33,
 		IdleScheduler: module_idle_scheduler = 34,
 		Indices: pallet_indices = 36,
-		Identity: pallet_identity = 27,
+		Identity: pallet_identity = 37,
+		Vesting: pallet_vesting = 38,
 
 		// Consensus
 		// Authorship must be before session in order to note author in the correct session and era
@@ -724,8 +728,51 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(),
+	TransactionPaymentMigration,
 >;
+
+parameter_types! {
+	pub FeeTokens: Vec<CurrencyId> = vec![KUSD, LSEL];
+}
+
+pub struct TransactionPaymentMigration;
+impl OnRuntimeUpgrade for TransactionPaymentMigration {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		let pool_size = 5 * dollar(SEL);
+		let threshold = Ratio::saturating_from_rational(1, 2).saturating_mul_int(pool_size);
+		for token in FeeTokens::get() {
+			let _ = module_transaction_payment::Pallet::<Runtime>::disable_pool(token);
+			let _ = module_transaction_payment::Pallet::<Runtime>::initialize_pool(token, pool_size, threshold);
+		}
+		<Runtime as frame_system::Config>::BlockWeights::get().max_block
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		for token in FeeTokens::get() {
+			assert_eq!(
+				module_transaction_payment::TokenExchangeRate::<Runtime>::contains_key(&token),
+				true
+			);
+		}
+		Ok(())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		for token in FeeTokens::get() {
+			assert_eq!(
+				module_transaction_payment::TokenExchangeRate::<Runtime>::contains_key(&token),
+				true
+			);
+			assert_eq!(
+				module_transaction_payment::GlobalFeeSwapPath::<Runtime>::contains_key(&token),
+				false
+			);
+		}
+		Ok(())
+	}
+}
 
 create_median_value_data_provider!(
 	AggregatedDataProvider,
@@ -775,7 +822,7 @@ mod benches {
 		[pallet_tips, Tips]
 		[pallet_treasury, Treasury]
 		[pallet_utility, Utility]
-		[pallet_nomination_pools, NominationPoolsBench::<Runtime>]
+		[pallet_vesting, Vesting]
 	);
 }
 

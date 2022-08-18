@@ -270,7 +270,7 @@ impl module_transaction_payment::Config for Test {
 	type WeightToFee = IdentityFee<Balance>;
 	type TransactionByteFee = ConstU128<10>;
 	type FeeMultiplierUpdate = ();
-	type DEX = DexModule;
+	type Swap = SpecificJointsSwap<DexModule, AlternativeSwapPathJointList>;
 	type MaxSwapSlippageCompareToOracle = MaxSwapSlippageCompareToOracle;
 	type TradingPathLimit = TradingPathLimit;
 	type PriceSource = module_prices::RealTimePriceProvider<Test>;
@@ -438,6 +438,8 @@ parameter_types! {
 	pub DefaultLiquidationRatio: Ratio = Ratio::saturating_from_rational(3, 2);
 	pub DefaultDebitExchangeRate: ExchangeRate = ExchangeRate::one();
 	pub DefaultLiquidationPenalty: Rate = Rate::saturating_from_rational(10, 100);
+	pub MaxLiquidationContractSlippage: Ratio = Ratio::saturating_from_rational(15, 100);
+	pub CDPEnginePalletId: PalletId = PalletId(*b"sel/cdpe");
 }
 
 impl module_cdp_engine::Config for Test {
@@ -457,6 +459,12 @@ impl module_cdp_engine::Config for Test {
 	type UnixTime = Timestamp;
 	type Currency = Currencies;
 	type DEX = DexModule;
+	type LiquidationContractsUpdateOrigin = EnsureSignedBy<One, AccountId>;
+	type MaxLiquidationContractSlippage = MaxLiquidationContractSlippage;
+	type MaxLiquidationContracts = ConstU32<10>;
+	type LiquidationEvmBridge = module_evm_bridge::LiquidationEvmBridge<Test>;
+	type PalletId = CDPEnginePalletId;
+	type EvmAddressMapping = module_evm_accounts::EvmAddressMapping<Test>;
 	type Swap = SpecificJointsSwap<DexModule, AlternativeSwapPathJointList>;
 	type WeightInfo = ();
 }
