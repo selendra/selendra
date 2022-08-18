@@ -6,7 +6,7 @@ Read more at [selendra.org](https://selendra.org)
 
 ## Mission
 
-Our mission is to open Web3 opportunities by providing blockchain benefits and usefullness a step closer to the ordinary people and to help accelerate the advancement and strengthening the industry as a whole.
+Open opportunities for individuals, businesses, and communities by making access to emerging blockchain products and services a reality, for all members of society. We bring the blockchain evolution a step closer to the masses, the ordinary people, and help accelerate the advancement and strengthen the industry as a whole.
 
 ## Acknowledgement
 
