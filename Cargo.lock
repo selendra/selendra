@@ -4019,6 +4019,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "module-bridge"
+version = "0.1.3"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "substrate-wasm-builder-runner",
+]
+
+[[package]]
 name = "module-cdp-engine"
 version = "0.1.2"
 dependencies = [
@@ -8233,6 +8251,7 @@ dependencies = [
  "module-aggregated-dex",
  "module-asset-registry",
  "module-auction-manager",
+ "module-bridge",
  "module-cdp-engine",
  "module-cdp-treasury",
  "module-currencies",
@@ -9574,6 +9593,12 @@ dependencies = [
  "walkdir",
  "wasm-gc-api",
 ]
+
+[[package]]
+name = "substrate-wasm-builder-runner"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "316626afcac0219c95116e6a2518e622484c2814182bd225fbf4da4f67e27e8f"
 
 [[package]]
 name = "subtle"
