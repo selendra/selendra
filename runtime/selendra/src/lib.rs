@@ -435,27 +435,6 @@ pub type RebasedStableAsset = module_support::RebasedStableAsset<
 	module_aggregated_dex::RebasedStableAssetErrorConvertor<Runtime>,
 >;
 
-parameter_types! {
-	pub const AccumulatePeriod: BlockNumber = MINUTES;
-	pub const EarnShareBooster: Permill = Permill::from_percent(30);
-}
-
-impl module_incentives::Config for Runtime {
-	type Event = Event;
-	type RewardsSource = UnreleasedNativeVaultAccountId;
-	type StableCurrencyId = GetStableCurrencyId;
-	type NativeCurrencyId = GetNativeCurrencyId;
-	type EarnShareBooster = EarnShareBooster;
-	type AccumulatePeriod = AccumulatePeriod;
-	type UpdateOrigin = EnsureRootOrThreeFourthsCouncil;
-	type CDPTreasury = CdpTreasury;
-	type Currency = Currencies;
-	type DEX = Dex;
-	type EmergencyShutdown = EmergencyShutdown;
-	type PalletId = IncentivesPalletId;
-	type WeightInfo = weights::module_incentives::WeightInfo<Runtime>;
-}
-
 impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 	type Call = Call;

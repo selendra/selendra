@@ -2,6 +2,7 @@ pub mod asset;
 pub mod bridge;
 pub mod consensus;
 pub mod dex;
+pub mod earn;
 pub mod evm;
 pub mod funan;
 pub mod governance;
