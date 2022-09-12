@@ -85,7 +85,6 @@ use frame_system::EnsureRoot;
 
 use module_asset_registry::AssetIdMaps;
 use module_cdp_engine::CollateralCurrencyIds;
-use module_currencies::BasicCurrencyAdapter;
 use module_evm::{runner::RunnerExtended, CallInfo, CreateInfo};
 use module_evm_accounts::EvmAddressMapping;
 use module_support::{AssetIdMapping, DispatchableTask};
@@ -230,24 +229,6 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
-	pub Erc20HoldingAccount: H160 = primitives::evm::ERC20_HOLDING_ACCOUNT;
-}
-
-impl module_currencies::Config for Runtime {
-	type Event = Event;
-	type MultiCurrency = Tokens;
-	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
-	type GetNativeCurrencyId = GetNativeCurrencyId;
-	type Erc20HoldingAccount = Erc20HoldingAccount;
-	type AddressMapping = EvmAddressMapping<Runtime>;
-	type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
-	type GasToWeight = GasToWeight;
-	type SweepOrigin = EnsureRootOrOneCouncil;
-	type OnDust = module_currencies::TransferDust<Runtime, TreasuryAccount>;
-	type WeightInfo = weights::module_currencies::WeightInfo<Runtime>;
-}
-
-parameter_types! {
 	pub TransactionByteFee: Balance = 50 * microcent(SEL);
 	pub DefaultFeeTokens: Vec<CurrencyId> = vec![KUSD, LSEL];
 	pub const CustomFeeSurplus: Percent = Percent::from_percent(50);
@@ -285,14 +266,6 @@ impl module_transaction_pause::Config for Runtime {
 	type Event = Event;
 	type UpdateOrigin = EnsureRootOrThreeFourthsCouncil;
 	type WeightInfo = weights::module_transaction_pause::WeightInfo<Runtime>;
-}
-
-impl module_asset_registry::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
-	type RegisterOrigin = EnsureRootOrHalfCouncil;
-	type WeightInfo = weights::module_asset_registry::WeightInfo<Runtime>;
 }
 
 /// Used the compare the privilege of an origin inside the scheduler.
@@ -413,13 +386,6 @@ where
 	type Extrinsic = UncheckedExtrinsic;
 }
 
-pub struct EnsurePoolAssetId;
-impl module_stable_asset::traits::ValidateAssetId<CurrencyId> for EnsurePoolAssetId {
-	fn validate(currency_id: CurrencyId) -> bool {
-		matches!(currency_id, CurrencyId::StableAssetPoolToken(_))
-	}
-}
-
 pub struct ConvertBalanceSelendra;
 impl orml_tokens::ConvertBalance<Balance, Balance> for ConvertBalanceSelendra {
 	type AssetId = CurrencyId;
@@ -470,29 +436,6 @@ pub type RebasedStableAsset = module_support::RebasedStableAsset<
 >;
 
 parameter_types! {
-	pub const FeePrecision: u128 = 10_000_000_000; // 10 decimals
-	pub const APrecision: u128 = 100; // 2 decimals
-	pub const SwapExactOverAmount: u128 = 100;
-	pub const PoolAssetLimit: u32 = 5;
-}
-
-impl module_stable_asset::Config for Runtime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type Assets = RebaseTokens;
-	type PalletId = StableAssetPalletId;
-	type AtLeast64BitUnsigned = u128;
-	type FeePrecision = FeePrecision;
-	type APrecision = APrecision; // 2 decimals
-	type PoolAssetLimit = PoolAssetLimit;
-	type SwapExactOverAmount = SwapExactOverAmount;
-	type WeightInfo = weights::module_stable_asset::WeightInfo<Runtime>;
-	type ListingOrigin = EnsureRootOrHalfCouncil;
-	type EnsurePoolAssetId = EnsurePoolAssetId;
-}
-
-parameter_types! {
 	pub const AccumulatePeriod: BlockNumber = MINUTES;
 	pub const EarnShareBooster: Permill = Permill::from_percent(30);
 }
@@ -513,27 +456,13 @@ impl module_incentives::Config for Runtime {
 	type WeightInfo = weights::module_incentives::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	pub DataDepositPerByte: Balance = 10 * cent(SEL);
-	pub CreateClassDeposit: Balance = 50 * dollar(SEL);
-	pub CreateTokenDeposit: Balance = 10 * dollar(SEL);
-	pub const MaxAttributesBytes: u32 = 2048;
-}
-
-impl module_nft::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type CreateClassDeposit = CreateClassDeposit;
-	type CreateTokenDeposit = CreateTokenDeposit;
-	type DataDepositPerByte = DataDepositPerByte;
-	type PalletId = NftPalletId;
-	type MaxAttributesBytes = MaxAttributesBytes;
-	type WeightInfo = weights::module_nft::WeightInfo<Runtime>;
-}
-
 impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
+}
+
+parameter_types! {
+	pub DataDepositPerByte: Balance = 10 * cent(SEL);
 }
 
 construct_runtime!(

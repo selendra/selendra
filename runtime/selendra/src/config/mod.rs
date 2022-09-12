@@ -1,3 +1,4 @@
+pub mod asset;
 pub mod bridge;
 pub mod consensus;
 pub mod dex;
