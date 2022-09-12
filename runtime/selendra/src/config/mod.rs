@@ -7,6 +7,7 @@ pub mod evm;
 pub mod funan;
 pub mod governance;
 pub mod orml;
+pub mod sudo;
+pub mod transaction;
 pub mod treasury;
 pub mod utility;
-pub mod sudo;

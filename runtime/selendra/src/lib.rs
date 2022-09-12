@@ -99,11 +99,10 @@ pub use primitives::{
 	DataProviderId, Hash, Moment, Nonce, ReserveIdentifier, Signature, TokenSymbol,
 };
 pub use runtime_common::{
-	cent, dollar, impls::DealWithFees, microcent, millicent, AllPrecompiles, BlockHashCount,
-	EnsureRootOrHalfCouncil, EnsureRootOrOneCouncil, EnsureRootOrThreeFourthsCouncil, ExchangeRate,
-	ExistentialDepositsTimesOneHundred, GasToWeight, MaxTipsOfPriority, OperationalFeeMultiplier,
-	Price, ProxyType, Rate, Ratio, RuntimeBlockLength, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
-	TimeStampedPrice, TipPerWeightStep, DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL,
+	cent, dollar, microcent, millicent, AllPrecompiles, BlockHashCount, ExchangeRate,
+	ExistentialDepositsTimesOneHundred, GasToWeight, Price, ProxyType, Rate, Ratio,
+	RuntimeBlockLength, RuntimeBlockWeights, TimeStampedPrice, DAI, DOT, KSM, KUSD, LSEL, RENBTC,
+	SEL,
 };
 
 use crate::config::{
@@ -224,46 +223,6 @@ impl pallet_balances::Config for Runtime {
 	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = ReserveIdentifier;
 	type WeightInfo = weights::pallet_balances::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-	pub TransactionByteFee: Balance = 50 * microcent(SEL);
-	pub DefaultFeeTokens: Vec<CurrencyId> = vec![KUSD, LSEL];
-	pub const CustomFeeSurplus: Percent = Percent::from_percent(50);
-	pub const AlternativeFeeSurplus: Percent = Percent::from_percent(25);
-}
-
-impl module_transaction_payment::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
-	type Currency = Balances;
-	type MultiCurrency = Currencies;
-	type NativeCurrencyId = GetNativeCurrencyId;
-	type WeightToFee = WeightToFee;
-	type DefaultFeeTokens = DefaultFeeTokens;
-	type CustomFeeSurplus = CustomFeeSurplus;
-	type AlternativeFeeSurplus = AlternativeFeeSurplus;
-	type AlternativeFeeSwapDeposit = NativeTokenExistentialDeposit;
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
-	type TransactionByteFee = TransactionByteFee;
-	type OnTransactionPayment = DealWithFees<Runtime>;
-	type TipPerWeightStep = TipPerWeightStep;
-	type MaxTipsOfPriority = MaxTipsOfPriority;
-	type TreasuryAccount = TreasuryAccount;
-	type Swap = SelendraSwap;
-	type TradingPathLimit = TradingPathLimit;
-	type PriceSource = module_prices::RealTimePriceProvider<Runtime>;
-	type MaxSwapSlippageCompareToOracle = MaxSwapSlippageCompareToOracle;
-	type PalletId = TransactionPaymentPalletId;
-	type UpdateOrigin = EnsureRootOrHalfCouncil;
-	type WeightInfo = weights::module_transaction_payment::WeightInfo<Runtime>;
-}
-
-impl module_transaction_pause::Config for Runtime {
-	type Event = Event;
-	type UpdateOrigin = EnsureRootOrThreeFourthsCouncil;
-	type WeightInfo = weights::module_transaction_pause::WeightInfo<Runtime>;
 }
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
