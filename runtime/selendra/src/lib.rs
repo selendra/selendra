@@ -58,7 +58,7 @@ use sp_runtime::{
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, DispatchResult, FixedPointNumber, Perbill, Percent, Permill,
 };
-use sp_std::{cmp::Ordering, prelude::*};
+use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
@@ -74,10 +74,7 @@ use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
 
 use frame_support::{
 	construct_runtime, log, parameter_types,
-	traits::{
-		Contains, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, OnRuntimeUpgrade,
-		PrivilegeCmp,
-	},
+	traits::{Contains, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, OnRuntimeUpgrade},
 	weights::{constants::RocksDbWeight, Weight},
 	PalletId, RuntimeDebug,
 };
@@ -114,6 +111,7 @@ use crate::config::{
 	dex::TradingPathLimit,
 	evm::{ConvertEthereumTx, PayerSignatureVerification, StorageDepositPerByte, TxFeePerGas},
 	funan::{MaxSwapSlippageCompareToOracle, SelendraSwap},
+	utility::PreimageByteDeposit,
 };
 #[cfg(test)]
 use config::evm::NewContractExtraBytes;
@@ -268,66 +266,6 @@ impl module_transaction_pause::Config for Runtime {
 	type WeightInfo = weights::module_transaction_pause::WeightInfo<Runtime>;
 }
 
-/// Used the compare the privilege of an origin inside the scheduler.
-pub struct OriginPrivilegeCmp;
-
-impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
-	fn cmp_privilege(left: &OriginCaller, right: &OriginCaller) -> Option<Ordering> {
-		if left == right {
-			return Some(Ordering::Equal)
-		}
-
-		match (left, right) {
-			// Root is greater than anything.
-			(OriginCaller::system(frame_system::RawOrigin::Root), _) => Some(Ordering::Greater),
-			// Check which one has more yes votes.
-			(
-				OriginCaller::Council(pallet_collective::RawOrigin::Members(l_yes_votes, l_count)),
-				OriginCaller::Council(pallet_collective::RawOrigin::Members(r_yes_votes, r_count)),
-			) => Some((l_yes_votes * r_count).cmp(&(r_yes_votes * l_count))),
-			// For every other origin we don't care, as they are not used for `ScheduleOrigin`.
-			_ => None,
-		}
-	}
-}
-
-parameter_types! {
-	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * RuntimeBlockWeights::get().max_block;
-	pub const MaxScheduledPerBlock: u32 = 50;
-	// Retry a scheduled item every 50 blocks (5 minute) until the preimage exists.
-	pub const NoPreimagePostponement: Option<u32> = Some(5 * MINUTES);
-}
-
-impl pallet_scheduler::Config for Runtime {
-	type Event = Event;
-	type Origin = Origin;
-	type PalletsOrigin = OriginCaller;
-	type Call = Call;
-	type MaximumWeight = MaximumSchedulerWeight;
-	type ScheduleOrigin = EnsureRoot<AccountId>;
-	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type OriginPrivilegeCmp = OriginPrivilegeCmp;
-	type PreimageProvider = Preimage;
-	type NoPreimagePostponement = NoPreimagePostponement;
-	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-	pub const PreimageMaxSize: u32 = 4096 * 1024;
-	pub PreimageBaseDeposit: Balance = deposit(2, 64);
-	pub PreimageByteDeposit: Balance = deposit(0, 1);
-}
-
-impl pallet_preimage::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type ManagerOrigin = EnsureRoot<AccountId>;
-	type MaxSize = PreimageMaxSize;
-	type BaseDeposit = PreimageBaseDeposit;
-	type ByteDeposit = PreimageByteDeposit;
-	type WeightInfo = weights::pallet_preimage::WeightInfo<Runtime>;
-}
-
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where
 	Call: From<LocalCall>,
@@ -434,11 +372,6 @@ pub type RebasedStableAsset = module_support::RebasedStableAsset<
 	ConvertBalanceSelendra,
 	module_aggregated_dex::RebasedStableAssetErrorConvertor<Runtime>,
 >;
-
-impl pallet_sudo::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
-}
 
 parameter_types! {
 	pub DataDepositPerByte: Balance = 10 * cent(SEL);
