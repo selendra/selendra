@@ -231,29 +231,6 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = weights::pallet_balances::WeightInfo<Runtime>;
 }
 
-pub struct DustRemovalWhitelist;
-impl Contains<AccountId> for DustRemovalWhitelist {
-	fn contains(a: &AccountId) -> bool {
-		get_all_module_accounts().contains(a)
-	}
-}
-
-impl orml_tokens::Config for Runtime {
-	type Event = Event;
-	type Balance = Balance;
-	type Amount = Amount;
-	type CurrencyId = CurrencyId;
-	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
-	type MaxLocks = MaxLocks;
-	type MaxReserves = MaxReserves;
-	type ReserveIdentifier = ReserveIdentifier;
-	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
-	type WeightInfo = weights::orml_tokens::WeightInfo<Runtime>;
-}
-
 parameter_types! {
 	pub Erc20HoldingAccount: H160 = primitives::evm::ERC20_HOLDING_ACCOUNT;
 }
@@ -318,28 +295,6 @@ impl module_asset_registry::Config for Runtime {
 	type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
 	type RegisterOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::module_asset_registry::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-	pub const MinimumCount: u32 = 5;
-	pub const ExpiresIn: Moment = 1000 * 60 * 60; // 1 hours4-
-	pub const MaxHasDispatchedSize: u32 = 40;
-	pub RootOperatorAccountId: AccountId = AccountId::from([0xffu8; 32]);
-}
-
-type SelendraDataProvider = orml_oracle::Instance1;
-impl orml_oracle::Config<SelendraDataProvider> for Runtime {
-	type Event = Event;
-	type OnNewData = ();
-	type CombineData =
-		orml_oracle::DefaultCombineData<Runtime, MinimumCount, ExpiresIn, SelendraDataProvider>;
-	type Time = Timestamp;
-	type OracleKey = CurrencyId;
-	type OracleValue = Price;
-	type RootOperatorAccountId = RootOperatorAccountId;
-	type Members = OperatorMembershipSelendra;
-	type MaxHasDispatchedSize = MaxHasDispatchedSize;
-	type WeightInfo = weights::orml_oracle::WeightInfo<Runtime>;
 }
 
 /// Used the compare the privilege of an origin inside the scheduler.
