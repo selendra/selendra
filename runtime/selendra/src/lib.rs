@@ -255,8 +255,8 @@ where
 			)),
 			runtime_common::CheckNonce::<Runtime>::from(nonce),
 			frame_system::CheckWeight::<Runtime>::new(),
-			module_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
 			module_evm::SetEvmOrigin::<Runtime>::new(),
+			module_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|e| {
@@ -462,8 +462,8 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	runtime_common::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	module_transaction_payment::ChargeTransactionPayment<Runtime>,
 	module_evm::SetEvmOrigin<Runtime>,
+	module_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = SelendraUncheckedExtrinsic<
@@ -1049,8 +1049,8 @@ mod tests {
 				frame_system::CheckEra::<Runtime>::from(generic::Era::Immortal),
 				runtime_common::CheckNonce::<Runtime>::from(3),
 				frame_system::CheckWeight::<Runtime>::new(),
-				module_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 				module_evm::SetEvmOrigin::<Runtime>::new(),
+				module_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 			);
 
 			let mut expected_extra = extra.clone();
@@ -1135,8 +1135,8 @@ mod tests {
 			frame_system::CheckEra::<Runtime>::from(generic::Era::Immortal),
 			runtime_common::CheckNonce::<Runtime>::from(0),
 			frame_system::CheckWeight::<Runtime>::new(),
-			module_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 			module_evm::SetEvmOrigin::<Runtime>::new(),
+			module_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 		);
 
 		// correct payer signature
