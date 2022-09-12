@@ -111,15 +111,15 @@ pub use runtime_common::{
 };
 
 use crate::config::{
-	consensus_config::EpochDuration,
-	dex_config::TradingPathLimit,
-	evm_config::{
+	consensus::EpochDuration,
+	dex::TradingPathLimit,
+	evm::{
 		ConvertEthereumTx, PayerSignatureVerification, StorageDepositPerByte, TxFeePerGas,
 	},
-	funan_config::{MaxSwapSlippageCompareToOracle, SelendraSwap},
+	funan::{MaxSwapSlippageCompareToOracle, SelendraSwap},
 };
 #[cfg(test)]
-use config::evm_config::NewContractExtraBytes;
+use config::evm::NewContractExtraBytes;
 pub use constants::{accounts::*, currency::*, fee::*, time::*};
 
 /// This runtime version.

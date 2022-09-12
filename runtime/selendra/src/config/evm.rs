@@ -1,5 +1,5 @@
 use crate::{
-	config::utility_config::ScheduledTasks, dollar, parameter_types, weights, AllPrecompiles, Babe,
+	config::utility::ScheduledTasks, dollar, parameter_types, weights, AllPrecompiles, Babe,
 	Balance, Balances, Call, Convert, Currencies, Event, GasToWeight, IdleScheduler, Runtime,
 	RuntimeDebug, SignedExtra, SignedPayload, System, TreasuryAccount, Verify, EVM, H160, SEL,
 };

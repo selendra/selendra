@@ -1,5 +1,5 @@
 use crate::{
-	cent, config::evm_config::EvmTask, deposit, dollar, parameter_types, weights, AccountIndex,
+	cent, config::evm::EvmTask, deposit, dollar, parameter_types, weights, AccountIndex,
 	Balance, Balances, BlakeTwo256, Call, DispatchableTask, Event, InstanceFilter, OriginCaller,
 	ProxyType, Runtime, RuntimeBlockWeights, RuntimeDebug, Treasury, Weight, SEL,
 };
