@@ -26,21 +26,21 @@ use frame_support::weights::Weight;
 /// Weights are calculated using runtime benchmarking features.
 /// See [`benchmarking`] module for more information.
 pub trait WeightInfo {
-    fn set_threshold() -> Weight;
+	fn set_threshold() -> Weight;
 
-    fn set_resource() -> Weight;
+	fn set_resource() -> Weight;
 
-    fn remove_resource() -> Weight;
+	fn remove_resource() -> Weight;
 
-    fn whitelist_chain() -> Weight;
+	fn whitelist_chain() -> Weight;
 
-    fn add_relayer() -> Weight;
+	fn add_relayer() -> Weight;
 
-    fn remove_relayer() -> Weight;
+	fn remove_relayer() -> Weight;
 
-    fn acknowledge_proposal(dispatch_weight: Weight) -> Weight;
+	fn acknowledge_proposal(dispatch_weight: Weight) -> Weight;
 
-    fn reject_proposal() -> Weight;
+	fn reject_proposal() -> Weight;
 
-    fn eval_vote_state(dispatch_weight: Weight) -> Weight;
+	fn eval_vote_state(dispatch_weight: Weight) -> Weight;
 }

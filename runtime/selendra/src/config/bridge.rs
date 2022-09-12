@@ -1,6 +1,4 @@
-use crate::{
-    ChainBridgePalletId, parameter_types, Event, Call, Runtime
-};
+use crate::{parameter_types, Call, ChainBridgePalletId, Event, Runtime};
 use runtime_common::EnsureRootOrThreeFourthsFinancialCouncil;
 
 parameter_types! {

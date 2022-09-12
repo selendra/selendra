@@ -1,13 +1,13 @@
 use crate::{
-	cent, config::evm::EvmTask, deposit, dollar, parameter_types, weights, AccountIndex,
-	Balance, Balances, BlakeTwo256, Call, DispatchableTask, Event, InstanceFilter, OriginCaller,
-	ProxyType, Runtime, RuntimeBlockWeights, RuntimeDebug, Treasury, Weight, SEL,
+	cent, config::evm::EvmTask, deposit, dollar, parameter_types, weights, AccountIndex, Balance,
+	Balances, BlakeTwo256, Call, DispatchableTask, Event, InstanceFilter, OriginCaller, ProxyType,
+	Runtime, RuntimeBlockWeights, RuntimeDebug, Treasury, Weight, SEL,
 };
-use sp_runtime::traits::ConvertInto;
 use codec::{Decode, Encode};
 use primitives::{define_combined_task, task::TaskResult};
 use runtime_common::EnsureRootOrThreeFourthsCouncil;
 use scale_info::TypeInfo;
+use sp_runtime::traits::ConvertInto;
 
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
@@ -82,7 +82,6 @@ impl pallet_indices::Config for Runtime {
 	type Deposit = IndexDeposit;
 	type WeightInfo = weights::pallet_indices::WeightInfo<Runtime>;
 }
-
 
 parameter_types! {
 	pub MinVestedTransfer: Balance = 10 * dollar(SEL);

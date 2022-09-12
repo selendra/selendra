@@ -21,39 +21,39 @@ use crate::traits::WeightInfo;
 use frame_support::weights::Weight;
 
 impl WeightInfo for () {
-    fn set_threshold() -> Weight {
-        195_000_000 as Weight
-    }
+	fn set_threshold() -> Weight {
+		195_000_000 as Weight
+	}
 
-    fn set_resource() -> Weight {
-        195_000_000 as Weight
-    }
+	fn set_resource() -> Weight {
+		195_000_000 as Weight
+	}
 
-    fn remove_resource() -> Weight {
-        195_000_000 as Weight
-    }
+	fn remove_resource() -> Weight {
+		195_000_000 as Weight
+	}
 
-    fn whitelist_chain() -> Weight {
-        195_000_000 as Weight
-    }
+	fn whitelist_chain() -> Weight {
+		195_000_000 as Weight
+	}
 
-    fn add_relayer() -> Weight {
-        195_000_000 as Weight
-    }
+	fn add_relayer() -> Weight {
+		195_000_000 as Weight
+	}
 
-    fn remove_relayer() -> Weight {
-        195_000_000 as Weight
-    }
+	fn remove_relayer() -> Weight {
+		195_000_000 as Weight
+	}
 
-    fn acknowledge_proposal(dispatch_weight: Weight) -> Weight {
-        (195_000_000 as Weight).saturating_add(dispatch_weight)
-    }
+	fn acknowledge_proposal(dispatch_weight: Weight) -> Weight {
+		(195_000_000 as Weight).saturating_add(dispatch_weight)
+	}
 
-    fn reject_proposal() -> Weight {
-        195_000_000 as Weight
-    }
+	fn reject_proposal() -> Weight {
+		195_000_000 as Weight
+	}
 
-    fn eval_vote_state(dispatch_weight: Weight) -> Weight {
-        (195_000_000 as Weight).saturating_add(dispatch_weight)
-    }
+	fn eval_vote_state(dispatch_weight: Weight) -> Weight {
+		(195_000_000 as Weight).saturating_add(dispatch_weight)
+	}
 }

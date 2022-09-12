@@ -1,3 +1,4 @@
+pub mod bridge;
 pub mod consensus;
 pub mod dex;
 pub mod evm;
@@ -6,4 +7,3 @@ pub mod governance;
 pub mod orml;
 pub mod treasury;
 pub mod utility;
-pub mod bridge;

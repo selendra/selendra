@@ -1,11 +1,11 @@
 use crate::{
-	parameter_types, weights, AuctionManager, Balance, CurrencyId, Event, Incentives, Runtime, Amount, ExistentialDeposits,
-	AccountId, MaxReserves, get_all_module_accounts, TreasuryAccount, MaxLocks, ReserveIdentifier, Moment, Timestamp,
-	Price, OperatorMembershipSelendra
+	get_all_module_accounts, parameter_types, weights, AccountId, Amount, AuctionManager, Balance,
+	CurrencyId, Event, ExistentialDeposits, Incentives, MaxLocks, MaxReserves, Moment,
+	OperatorMembershipSelendra, Price, ReserveIdentifier, Runtime, Timestamp, TreasuryAccount,
 };
+use frame_support::traits::Contains;
 use module_support::PoolId;
 use primitives::AuctionId;
-use frame_support::traits::Contains;
 
 impl orml_auction::Config for Runtime {
 	type Event = Event;

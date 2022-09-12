@@ -113,9 +113,7 @@ pub use runtime_common::{
 use crate::config::{
 	consensus::EpochDuration,
 	dex::TradingPathLimit,
-	evm::{
-		ConvertEthereumTx, PayerSignatureVerification, StorageDepositPerByte, TxFeePerGas,
-	},
+	evm::{ConvertEthereumTx, PayerSignatureVerification, StorageDepositPerByte, TxFeePerGas},
 	funan::{MaxSwapSlippageCompareToOracle, SelendraSwap},
 };
 #[cfg(test)]
@@ -700,7 +698,9 @@ impl OnRuntimeUpgrade for TransactionPaymentMigration {
 		let threshold = Ratio::saturating_from_rational(1, 2).saturating_mul_int(pool_size);
 		for token in FeeTokens::get() {
 			let _ = module_transaction_payment::Pallet::<Runtime>::disable_pool(token);
-			let _ = module_transaction_payment::Pallet::<Runtime>::initialize_pool(token, pool_size, threshold);
+			let _ = module_transaction_payment::Pallet::<Runtime>::initialize_pool(
+				token, pool_size, threshold,
+			);
 		}
 		<Runtime as frame_system::Config>::BlockWeights::get().max_block
 	}

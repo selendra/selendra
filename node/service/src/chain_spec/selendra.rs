@@ -39,7 +39,7 @@ use selendra_runtime::{
 	FinancialCouncilMembershipConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig, IndicesConfig,
 	OperatorMembershipSelendraConfig, OrmlNFTConfig, SS58Prefix, SessionConfig, SessionKeys,
 	StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalMembershipConfig, TokensConfig,
-	KUSD, SEL, VestingConfig
+	VestingConfig, KUSD, SEL,
 };
 
 /// Node `ChainSpec` extensions.
