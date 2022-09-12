@@ -334,6 +334,7 @@ pub type RebasedStableAsset = module_support::RebasedStableAsset<
 
 parameter_types! {
 	pub DataDepositPerByte: Balance = 10 * cent(SEL);
+	pub FeeTokens: Vec<CurrencyId> = vec![KUSD, LSEL];
 }
 
 construct_runtime!(
@@ -486,10 +487,6 @@ pub type Executive = frame_executive::Executive<
 	AllPalletsWithSystem,
 	TransactionPaymentMigration,
 >;
-
-parameter_types! {
-	pub FeeTokens: Vec<CurrencyId> = vec![KUSD, LSEL];
-}
 
 pub struct TransactionPaymentMigration;
 impl OnRuntimeUpgrade for TransactionPaymentMigration {
