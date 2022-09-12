@@ -67,6 +67,11 @@ impl<T: frame_system::Config> module_stable_asset::WeightInfo for WeightInfo<T> 
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	fn modify_recipients() -> Weight {
+		(24_780_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(2 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
 	// Storage: StableAsset Pools (r:1 w:1)
 	// Storage: Tokens Accounts (r:6 w:6)
 	// Storage: System Account (r:2 w:2)
