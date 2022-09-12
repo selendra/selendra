@@ -1,13 +1,16 @@
 use crate::{
-	cent, config::evm::EvmTask, deposit, dollar, parameter_types, weights, AccountIndex, Balance,
-	Balances, BlakeTwo256, Call, DispatchableTask, Event, InstanceFilter, OriginCaller, ProxyType,
-	Runtime, RuntimeBlockWeights, RuntimeDebug, Treasury, Weight, SEL,
+	cent, config::evm::EvmTask, deposit, dollar, parameter_types, weights, AccountId, AccountIndex,
+	Balance, Balances, BlakeTwo256, Call, DispatchableTask, EnsureRoot, Event, InstanceFilter,
+	Origin, OriginCaller, Perbill, Preimage, ProxyType, Runtime, RuntimeBlockWeights, RuntimeDebug,
+	Treasury, Weight, MINUTES, SEL,
 };
 use codec::{Decode, Encode};
+use frame_support::traits::PrivilegeCmp;
 use primitives::{define_combined_task, task::TaskResult};
 use runtime_common::EnsureRootOrThreeFourthsCouncil;
 use scale_info::TypeInfo;
 use sp_runtime::traits::ConvertInto;
+use sp_std::cmp::Ordering;
 
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
@@ -118,6 +121,66 @@ impl pallet_identity::Config for Runtime {
 	type ForceOrigin = EnsureRootOrThreeFourthsCouncil;
 	type RegistrarOrigin = EnsureRootOrThreeFourthsCouncil;
 	type WeightInfo = weights::pallet_identity::WeightInfo<Runtime>;
+}
+
+/// Used the compare the privilege of an origin inside the scheduler.
+pub struct OriginPrivilegeCmp;
+
+impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
+	fn cmp_privilege(left: &OriginCaller, right: &OriginCaller) -> Option<Ordering> {
+		if left == right {
+			return Some(Ordering::Equal)
+		}
+
+		match (left, right) {
+			// Root is greater than anything.
+			(OriginCaller::system(frame_system::RawOrigin::Root), _) => Some(Ordering::Greater),
+			// Check which one has more yes votes.
+			(
+				OriginCaller::Council(pallet_collective::RawOrigin::Members(l_yes_votes, l_count)),
+				OriginCaller::Council(pallet_collective::RawOrigin::Members(r_yes_votes, r_count)),
+			) => Some((l_yes_votes * r_count).cmp(&(r_yes_votes * l_count))),
+			// For every other origin we don't care, as they are not used for `ScheduleOrigin`.
+			_ => None,
+		}
+	}
+}
+
+parameter_types! {
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * RuntimeBlockWeights::get().max_block;
+	pub const MaxScheduledPerBlock: u32 = 50;
+	// Retry a scheduled item every 50 blocks (5 minute) until the preimage exists.
+	pub const NoPreimagePostponement: Option<u32> = Some(5 * MINUTES);
+}
+
+impl pallet_scheduler::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type PalletsOrigin = OriginCaller;
+	type Call = Call;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type OriginPrivilegeCmp = OriginPrivilegeCmp;
+	type PreimageProvider = Preimage;
+	type NoPreimagePostponement = NoPreimagePostponement;
+	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	pub const PreimageMaxSize: u32 = 4096 * 1024;
+	pub PreimageBaseDeposit: Balance = deposit(2, 64);
+	pub PreimageByteDeposit: Balance = deposit(0, 1);
+}
+
+impl pallet_preimage::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type ManagerOrigin = EnsureRoot<AccountId>;
+	type MaxSize = PreimageMaxSize;
+	type BaseDeposit = PreimageBaseDeposit;
+	type ByteDeposit = PreimageByteDeposit;
+	type WeightInfo = weights::pallet_preimage::WeightInfo<Runtime>;
 }
 
 parameter_types! {
