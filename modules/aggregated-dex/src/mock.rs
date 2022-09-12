@@ -131,8 +131,8 @@ impl module_stable_asset::traits::ValidateAssetId<CurrencyId> for EnsurePoolAsse
 	}
 }
 
-pub struct ConvertBalanceHoma;
-impl ConvertBalance<Balance, Balance> for ConvertBalanceHoma {
+pub struct LocalConvertBalance;
+impl ConvertBalance<Balance, Balance> for LocalConvertBalance {
 	type AssetId = CurrencyId;
 
 	fn convert_balance(balance: Balance, asset_id: CurrencyId) -> Balance {
@@ -163,7 +163,7 @@ match_types! {
 type RebaseTokens = orml_tokens::Combiner<
 	AccountId,
 	IsLiquidToken,
-	orml_tokens::Mapper<AccountId, Tokens, ConvertBalanceHoma, Balance, GetLiquidCurrencyId>,
+	orml_tokens::Mapper<AccountId, Tokens, LocalConvertBalance, Balance, GetLiquidCurrencyId>,
 	Tokens,
 >;
 
@@ -203,7 +203,7 @@ impl Config for Runtime {
 }
 
 pub type StableAssetWrapper =
-	RebasedStableAsset<StableAsset, ConvertBalanceHoma, RebasedStableAssetErrorConvertor<Runtime>>;
+	RebasedStableAsset<StableAsset, LocalConvertBalance, RebasedStableAssetErrorConvertor<Runtime>>;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 type Block = frame_system::mocking::MockBlock<Runtime>;

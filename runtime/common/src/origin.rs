@@ -2,12 +2,10 @@ use super::{AccountId, EitherOfDiverse, EnsureRoot};
 
 pub type CouncilInstance = pallet_collective::Instance1;
 pub type FinancialCouncilInstance = pallet_collective::Instance2;
-pub type HomaCouncilInstance = pallet_collective::Instance3;
 pub type TechnicalCommitteeInstance = pallet_collective::Instance4;
 
 pub type CouncilMembershipInstance = pallet_membership::Instance1;
 pub type FinancialCouncilMembershipInstance = pallet_membership::Instance2;
-pub type HomaCouncilMembershipInstance = pallet_membership::Instance3;
 pub type TechnicalMembershipInstance = pallet_membership::Instance4;
 pub type OperatorMembershipInstanceSelendra = pallet_membership::Instance5;
 
@@ -66,32 +64,6 @@ pub type EnsureRootOrTwoThirdsFinancialCouncil = EitherOfDiverse<
 pub type EnsureRootOrThreeFourthsFinancialCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 3, 4>,
->;
-
-// to delete
-pub type EnsureRootOrAllHomaCouncil = EitherOfDiverse<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 1, 1>,
->;
-
-pub type EnsureRootOrHalfHomaCouncil = EitherOfDiverse<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 1, 2>,
->;
-
-pub type EnsureRootOrOneThirdsHomaCouncil = EitherOfDiverse<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 1, 3>,
->;
-
-pub type EnsureRootOrTwoThirdsHomaCouncil = EitherOfDiverse<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 2, 3>,
->;
-
-pub type EnsureRootOrThreeFourthsHomaCouncil = EitherOfDiverse<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 3, 4>,
 >;
 
 // Technical Committee Council
