@@ -68,6 +68,7 @@ pub type EnsureRootOrThreeFourthsFinancialCouncil = EitherOfDiverse<
 	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCouncilInstance, 3, 4>,
 >;
 
+// to delete
 pub type EnsureRootOrAllHomaCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, HomaCouncilInstance, 1, 1>,

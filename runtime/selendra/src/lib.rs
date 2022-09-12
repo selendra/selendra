@@ -670,6 +670,9 @@ construct_runtime!(
 		CdpEngine: module_cdp_engine = 124,
 		EmergencyShutdown: module_emergency_shutdown = 125,
 
+		// Bridge
+		ChainBridge: module_bridge = 130,
+
 		// Selendra Other
 		Incentives: module_incentives = 140,
 		NFT: module_nft = 141,

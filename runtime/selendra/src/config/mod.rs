@@ -6,3 +6,4 @@ pub mod governance_config;
 pub mod orml_config;
 pub mod treasury_config;
 pub mod utility_config;
+pub mod bridge_config;
