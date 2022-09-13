@@ -47,7 +47,7 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> module_funan::WeightInfo for WeightInfo<T> {
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
-	// Storage: Honzon Authorization (r:1 w:1)
+	// Storage: Funan Authorization (r:1 w:1)
 	// Storage: Balances Reserves (r:1 w:1)
 	fn authorize() -> Weight {
 		(54_018_000 as Weight)
@@ -55,7 +55,7 @@ impl<T: frame_system::Config> module_funan::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
-	// Storage: Honzon Authorization (r:1 w:1)
+	// Storage: Funan Authorization (r:1 w:1)
 	// Storage: Balances Reserves (r:1 w:1)
 	fn unauthorize() -> Weight {
 		(75_662_000 as Weight)
@@ -64,7 +64,7 @@ impl<T: frame_system::Config> module_funan::WeightInfo for WeightInfo<T> {
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Balances Reserves (r:1 w:0)
-	// Storage: Honzon Authorization (r:0 w:1)
+	// Storage: Funan Authorization (r:0 w:1)
 	fn unauthorize_all(c: u32, ) -> Weight {
 		(34_867_000 as Weight)
 			// Standard Error: 1_600_000
@@ -94,7 +94,7 @@ impl<T: frame_system::Config> module_funan::WeightInfo for WeightInfo<T> {
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: EmergencyShutdown IsShutdown (r:1 w:0)
-	// Storage: Honzon Authorization (r:1 w:0)
+	// Storage: Funan Authorization (r:1 w:0)
 	// Storage: Loans Positions (r:2 w:2)
 	// Storage: CdpEngine DebitExchangeRate (r:1 w:0)
 	// Storage: Prices LockedPrice (r:2 w:0)
