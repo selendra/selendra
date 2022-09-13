@@ -41,7 +41,7 @@ use std::{collections::BTreeMap, str::FromStr};
 
 type Balance = u128;
 
-mod evm_mod {
+pub mod evm_mod {
 	pub use super::super::*;
 }
 
@@ -88,6 +88,13 @@ impl pallet_timestamp::Config for Runtime {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = ConstU64<1000>;
+	type WeightInfo = ();
+}
+
+impl pallet_utility::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type PalletsOrigin = OriginCaller;
 	type WeightInfo = ();
 }
 
@@ -228,6 +235,7 @@ construct_runtime!(
 		Balances: pallet_balances,
 		Currencies: orml_currencies,
 		IdleScheduler: module_idle_scheduler,
+		Utility: pallet_utility,
 	}
 );
 

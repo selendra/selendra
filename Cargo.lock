@@ -4201,6 +4201,7 @@ dependencies = [
  "orml-traits",
  "pallet-balances",
  "pallet-timestamp",
+ "pallet-utility",
  "parity-scale-codec",
  "primitive-types",
  "ripemd160",
