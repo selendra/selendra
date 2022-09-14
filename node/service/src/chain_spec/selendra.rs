@@ -485,6 +485,7 @@ pub fn selendra_development_genesis(
 		cdp_treasury: CdpTreasuryConfig { expected_collateral_auction_size: vec![] },
 		cdp_engine: CdpEngineConfig { collaterals_params: vec![] },
 		asset_registry: Default::default(),
+		bridge_transfer: Default::default(),
 		evm: EVMConfig { chain_id: 200u64, accounts: Default::default() },
 		dex: DexConfig {
 			initial_listing_trading_pairs: vec![],
@@ -578,6 +579,7 @@ pub fn selendra_genesis(
 		nomination_pools: Default::default(),
 		democracy: Default::default(),
 		treasury: Default::default(),
+		bridge_transfer: Default::default(),
 		tokens: TokensConfig { balances: vec![] },
 		cdp_treasury: CdpTreasuryConfig { expected_collateral_auction_size: vec![] },
 		cdp_engine: CdpEngineConfig { collaterals_params: vec![] },

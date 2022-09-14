@@ -95,7 +95,8 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 module-aggregated-dex = { path = "../../modules/aggregated-dex", default-features = false }
 module-asset-registry = { path = "../../modules/asset-registry", default-features = false }
 module-auction-manager = { path = "../../modules/auction-manager", default-features = false }
-module-bridge = { path = "../../modules/bridge", default-features = false  }
+module-bridge = { path = "../../modules/bridge", default-features = false }
+module-bridge-transfer = { path = "../../modules/bridge-transfer", default-features = false  }
 module-cdp-engine = { path = "../../modules/cdp-engine", default-features = false }
 module-cdp-treasury = { path = "../../modules/cdp-treasury", default-features = false }
 module-currencies = { path = "../../modules/currencies", default-features = false }
@@ -207,6 +208,7 @@ std = [
 	"module-asset-registry/std",
 	"module-auction-manager/std",
 	"module-bridge/std",
+	"module-bridge-transfer/std",
 	"module-cdp-engine/std",
 	"module-cdp-treasury/std",
 	"module-currencies/std",
@@ -276,6 +278,7 @@ runtime-benchmarks = [
 	"orml-tokens/runtime-benchmarks",
 
 	"module-bridge/runtime-benchmarks",
+	"module-bridge-transfer/runtime-benchmarks",
 	"module-nft/runtime-benchmarks",
 ]
 

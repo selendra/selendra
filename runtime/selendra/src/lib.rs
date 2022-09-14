@@ -425,6 +425,7 @@ construct_runtime!(
 
 		// Bridge
 		ChainBridge: module_bridge = 130,
+		BridgeTransfer: module_bridge_transfer = 131,
 
 		// Selendra Other
 		Incentives: module_incentives = 140,

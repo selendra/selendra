@@ -220,6 +220,7 @@ pub mod accounts {
 
 		// Bridge
 		pub const ChainBridgePalletId: PalletId = PalletId(*b"sel/brge");
+		pub const BridgePalletId: PalletId = PalletId(*b"s/bridge");
 
 		pub UnreleasedNativeVaultAccountId: AccountId = PalletId(*b"sel/urls").into_account_truncating();
 		pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();

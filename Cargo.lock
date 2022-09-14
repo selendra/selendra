@@ -8272,6 +8272,7 @@ dependencies = [
  "module-asset-registry",
  "module-auction-manager",
  "module-bridge",
+ "module-bridge-transfer",
  "module-cdp-engine",
  "module-cdp-treasury",
  "module-currencies",
