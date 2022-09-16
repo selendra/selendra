@@ -55,14 +55,12 @@ pub trait WeightInfo {
 /// Weights for module_idle_scheduler using the Selendra node and recommended hardware.
 pub struct SelendraWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SelendraWeight<T> {
-	// Storage: ParachainSystem ValidationData (r:1 w:0)
 	// Storage: IdleScheduler PreviousRelayBlockNumber (r:0 w:1)
 	fn on_initialize() -> Weight {
 		(2_545_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
-	// Storage: ParachainSystem ValidationData (r:1 w:0)
 	// Storage: IdleScheduler PreviousRelayBlockNumber (r:1 w:0)
 	fn on_idle_base() -> Weight {
 		(3_627_000 as Weight)
