@@ -11,123 +11,38 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-//! Mocking runtime for testing the Substrate/Evm chains bridging pallet.
-//!
-//! The main components implemented in this mock module is a mock runtime
-//! and some helper functions.
+#![cfg(test)]
 
-// Import crate types, traits and constants
-use crate::{
-	self as pallet_chainbridge, constants::DEFAULT_RELAYER_VOTE_THRESHOLD, ChainId,
-	Config as ChainBridgePalletConfig, ResourceId, WeightInfo,
-};
-use sp_std::convert::{TryFrom, TryInto};
+use super::*;
 
-// Import Substrate primitives and components
-use frame_support::{
-	assert_ok, parameter_types,
-	traits::{Everything, SortedMembers},
-	weights::Weight,
-	PalletId,
-};
-
-use frame_system::mocking::{MockBlock, MockUncheckedExtrinsic};
-
+use frame_support::{assert_ok, ord_parameter_types, parameter_types, weights::Weight};
+use frame_system::{self as system};
 use sp_core::H256;
-
-use sp_io::TestExternalities;
-
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 	Perbill,
 };
 
-// Types and constants declaration
-//
-type Balance = u64;
+use crate::{self as bridge, Config};
+pub use pallet_balances as balances;
 
-// Runtime mocking types definition
-type UncheckedExtrinsic = MockUncheckedExtrinsic<MockRuntime>;
-type Block = MockBlock<MockRuntime>;
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+type Block = frame_system::mocking::MockBlock<Test>;
 
-pub type SystemCall = frame_system::Call<MockRuntime>;
-
-// Implement testing extrinsic weights for the pallet
-pub struct MockWeightInfo;
-impl WeightInfo for MockWeightInfo {
-	fn set_threshold() -> Weight {
-		0 as Weight
-	}
-
-	fn set_resource() -> Weight {
-		0 as Weight
-	}
-
-	fn remove_resource() -> Weight {
-		0 as Weight
-	}
-
-	fn whitelist_chain() -> Weight {
-		0 as Weight
-	}
-
-	fn add_relayer() -> Weight {
-		0 as Weight
-	}
-
-	fn remove_relayer() -> Weight {
-		0 as Weight
-	}
-
-	fn acknowledge_proposal(_: Weight) -> Weight {
-		0 as Weight
-	}
-
-	fn reject_proposal() -> Weight {
-		0 as Weight
-	}
-
-	fn eval_vote_state(_: Weight) -> Weight {
-		0 as Weight
-	}
-}
-
-// Constants definition
-pub(crate) const RELAYER_A: u64 = 0x2;
-pub(crate) const RELAYER_B: u64 = 0x3;
-pub(crate) const RELAYER_C: u64 = 0x4;
-pub(crate) const ENDOWED_BALANCE: u64 = 100_000_000;
-pub(crate) const TEST_RELAYER_VOTE_THRESHOLD: u32 = 2;
-
-// Mock runtime configuration
-//
-// Build mock runtime
+// Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-
-	pub enum MockRuntime where
+	pub enum Test where
 		Block = Block,
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		ChainBridge: pallet_chainbridge::{Pallet, Call, Storage, Event<T>},
+		Bridge: bridge::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
-// Parameterize default test user identifier (with id 1)
-parameter_types! {
-	pub const TestUserId: u64 = 1;
-}
-
-impl SortedMembers<u64> for TestUserId {
-	fn sorted_members() -> Vec<u64> {
-		vec![1]
-	}
-}
-
-// Parameterize FRAME system pallet
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const MaximumBlockWeight: Weight = 1024;
@@ -136,9 +51,8 @@ parameter_types! {
 	pub const MaxLocks: u32 = 100;
 }
 
-// Implement FRAME system pallet configuration trait for the mock runtime
-impl frame_system::Config for MockRuntime {
-	type BaseCallFilter = Everything;
+impl frame_system::Config for Test {
+	type BaseCallFilter = frame_support::traits::Everything;
 	type Origin = Origin;
 	type Call = Call;
 	type Index = u64;
@@ -161,127 +75,93 @@ impl frame_system::Config for MockRuntime {
 	type BlockLength = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<2>;
 }
 
-// Parameterize FRAME balances pallet
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
 
-// Implement FRAME balances pallet configuration trait for the mock runtime
-impl pallet_balances::Config for MockRuntime {
-	type Balance = Balance;
+ord_parameter_types! {
+	pub const One: u64 = 1;
+}
+
+impl pallet_balances::Config for Test {
+	type Balance = u64;
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
+	type WeightInfo = ();
 	type MaxLocks = ();
 	type MaxReserves = ();
-	type ReserveIdentifier = ();
-	type WeightInfo = ();
+	type ReserveIdentifier = [u8; 8];
 }
 
-// Parameterize chainbridge pallet
 parameter_types! {
-	pub const MockChainId: ChainId = 5;
-	pub const ChainBridgePalletId: PalletId = PalletId(*b"cb/bridg");
-	pub const ProposalLifetime: u64 = 10;
-	pub const RelayerVoteThreshold: u32 = DEFAULT_RELAYER_VOTE_THRESHOLD;
+	pub const TestChainId: u8 = 5;
+	pub const ProposalLifetime: u64 = 50;
 }
 
-// Implement chainbridge pallet configuration trait for the mock runtime
-impl ChainBridgePalletConfig for MockRuntime {
+impl Config for Test {
 	type Event = Event;
+	type BridgeCommitteeOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type Proposal = Call;
-	type ChainId = MockChainId;
-	type PalletId = ChainBridgePalletId;
-	type AdminOrigin = frame_system::EnsureRoot<Self::AccountId>;
+	type ChainId = TestChainId;
 	type ProposalLifetime = ProposalLifetime;
-	type RelayerVoteThreshold = RelayerVoteThreshold;
-	type WeightInfo = MockWeightInfo;
 }
 
-// Test externalities
-//
-// Test externalities builder type declaraction.
-//
-// This type is mainly used for mocking storage in tests. It is the type alias
-// for an in-memory, hashmap-based externalities implementation.
-pub struct TestExternalitiesBuilder {}
+// pub const BRIDGE_ID: u64 =
+pub const RELAYER_A: u64 = 0x2;
+pub const RELAYER_B: u64 = 0x3;
+pub const RELAYER_C: u64 = 0x4;
+pub const ENDOWED_BALANCE: u64 = 100_000_000;
+pub const TEST_THRESHOLD: u32 = 2;
 
-// Default trait implementation for test externalities builder
-impl Default for TestExternalitiesBuilder {
-	fn default() -> Self {
-		Self {}
-	}
-}
-
-impl TestExternalitiesBuilder {
-	// Build a genesis storage key/value store
-	pub(crate) fn build(self) -> TestExternalities {
-		let bridge_id = ChainBridge::account_id();
-
-		let mut storage =
-			frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
-
-		// pre-fill balances
-		pallet_balances::GenesisConfig::<MockRuntime> {
-			balances: vec![(bridge_id, ENDOWED_BALANCE)],
-		}
-		.assimilate_storage(&mut storage)
+pub fn new_test_ext() -> sp_io::TestExternalities {
+	let bridge_id = PalletId(*b"phala/bg").into_account_truncating();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	pallet_balances::GenesisConfig::<Test> { balances: vec![(bridge_id, ENDOWED_BALANCE)] }
+		.assimilate_storage(&mut t)
 		.unwrap();
-
-		let mut externalities = TestExternalities::new(storage);
-		externalities.execute_with(|| System::set_block_number(1));
-		externalities
-	}
-
-	// Build a genesis storage with a pre-configured chainbridge
-	pub(crate) fn build_with(
-		self,
-		src_id: ChainId,
-		r_id: ResourceId,
-		resource: Vec<u8>,
-	) -> TestExternalities {
-		let mut externalities = Self::build(self);
-
-		externalities.execute_with(|| {
-			// Set and check threshold
-			assert_ok!(ChainBridge::set_threshold(Origin::root(), TEST_RELAYER_VOTE_THRESHOLD));
-			assert_eq!(ChainBridge::get_threshold(), TEST_RELAYER_VOTE_THRESHOLD);
-			// Add relayers
-			assert_ok!(ChainBridge::add_relayer(Origin::root(), RELAYER_A));
-			assert_ok!(ChainBridge::add_relayer(Origin::root(), RELAYER_B));
-			assert_ok!(ChainBridge::add_relayer(Origin::root(), RELAYER_C));
-			// Whitelist chain
-			assert_ok!(ChainBridge::whitelist_chain(Origin::root(), src_id));
-			// Set and check resource ID mapped to some junk data
-			assert_ok!(ChainBridge::set_resource(Origin::root(), r_id, resource));
-			assert_eq!(ChainBridge::resource_exists(r_id), true);
-		});
-
-		externalities
-	}
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| System::set_block_number(1));
+	ext
 }
 
-pub mod helpers {
+pub fn new_test_ext_initialized(
+	src_id: ChainId,
+	r_id: ResourceId,
+	resource: Vec<u8>,
+) -> sp_io::TestExternalities {
+	let mut t = new_test_ext();
+	t.execute_with(|| {
+		// Set and check threshold
+		assert_ok!(Bridge::set_threshold(Origin::root(), TEST_THRESHOLD));
+		assert_eq!(Bridge::relayer_threshold(), TEST_THRESHOLD);
+		// Add relayers
+		assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_A));
+		assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_B));
+		assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_C));
+		// Whitelist chain
+		assert_ok!(Bridge::whitelist_chain(Origin::root(), src_id));
+		// Set and check resource ID mapped to some junk data
+		assert_ok!(Bridge::set_resource(Origin::root(), r_id, resource));
+		assert_eq!(Bridge::resource_exists(r_id), true);
+	});
+	t
+}
 
-	use super::{Event, MockRuntime};
+// Checks events against the latest. A contiguous set of events must be provided. They must
+// include the most recent event, but do not have to include every past event.
+pub fn assert_events(mut expected: Vec<Event>) {
+	let mut actual: Vec<Event> =
+		system::Pallet::<Test>::events().iter().map(|e| e.event.clone()).collect();
 
-	// Checks events against the latest. A contiguous set of events must be provided. They must
-	// include the most recent event, but do not have to include every past event.
-	pub fn assert_events(mut expected: Vec<Event>) {
-		let mut actual: Vec<Event> = frame_system::Pallet::<MockRuntime>::events()
-			.iter()
-			.map(|e| e.event.clone())
-			.collect();
+	expected.reverse();
 
-		expected.reverse();
-
-		for evt in expected {
-			let next = actual.pop().expect("event expected");
-			assert_eq!(next, evt.into(), "Events don't match (actual,expected)");
-		}
+	for evt in expected {
+		let next = actual.pop().expect("event expected");
+		assert_eq!(next, evt.into(), "Events don't match (actual,expected)");
 	}
 }

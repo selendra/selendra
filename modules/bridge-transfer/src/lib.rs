@@ -1,25 +1,4 @@
-// This file is part of Selendra.
-
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
-
-//! ## Overview
-//! This pallet is used for bridging chains.
-
-// Ensure we're `no_std` when compiling for WebAssembly.
+// Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(test)]
@@ -27,331 +6,389 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub mod traits;
-mod weights;
-
-use crate::traits::WeightInfo;
-use module_bridge::types::{ChainId, ResourceId};
-
 pub use pallet::*;
-
-use frame_support::{
-	dispatch::DispatchResult,
-	ensure,
-	traits::{
-		Currency, EnsureOrigin, ExistenceRequirement, ExistenceRequirement::AllowDeath, Get,
-		OnUnbalanced, WithdrawReasons,
-	},
-	transactional, PalletId,
-};
-
-use frame_system::{ensure_root, pallet_prelude::OriginFor};
-use sp_core::U256;
-use sp_std::vec::Vec;
-
-use sp_runtime::traits::{AccountIdConversion, CheckedAdd, CheckedSub, SaturatedConversion};
-
-type BalanceOf<T> =
-	<<T as pallet::Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-
-type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
-	<T as frame_system::Config>::AccountId,
->>::NegativeImbalance;
-
-// The name of the pallet is provided by `construct_runtime` and is used as
-// the unique identifier for the pallet's storage. It is not defined in the
-// pallet itself.
 #[frame_support::pallet]
 pub mod pallet {
-
-	use super::*;
-	use frame_support::pallet_prelude::*;
+	use codec::{Decode, Encode};
+	use frame_support::{
+		fail,
+		pallet_prelude::*,
+		traits::{Currency, ExistenceRequirement, OnUnbalanced, StorageVersion, WithdrawReasons},
+		transactional,
+	};
 	use frame_system::pallet_prelude::*;
+	pub use module_bridge as bridge;
+	use scale_info::TypeInfo;
+	use sp_arithmetic::traits::SaturatedConversion;
+	use sp_core::U256;
+	use sp_runtime::traits::{CheckedAdd, CheckedSub};
+	use sp_std::prelude::*;
 
-	// Bridge pallet type declaration.
-	//
-	// This structure is a placeholder for traits and functions implementation
-	// for the pallet.
+	type ResourceId = bridge::ResourceId;
+
+	type BalanceOf<T> =
+		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
+	type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
+		<T as frame_system::Config>::AccountId,
+	>>::NegativeImbalance;
+
+	#[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, RuntimeDebug)]
+	pub struct AssetInfo {
+		pub dest_id: bridge::ChainId,
+		pub asset_identity: Vec<u8>,
+	}
+
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
-	/// Bridge pallet's configuration trait.
-	///
-	/// Associated types and constants are declared in this trait. If the pallet
-	/// depends on other super-traits, the latter must be added to this trait,
-	/// Note that [`frame_system::Config`] must always be included.
 	#[pallet::config]
-	pub trait Config:
-		frame_system::Config + module_bridge::Config + pallet_balances::Config
-	{
-		/// Pallet identifier.
-		///
-		/// The module identifier may be of the form ```PalletId(*b"c/bridge")``` (a string of eight
-		/// characters) and set using the [`parameter_types`](https://substrate.dev/docs/en/knowledgebase/runtime/macros#parameter_types)
-		/// macro in one of the runtimes (see runtime folder).
-		#[pallet::constant]
-		type BridgePalletId: Get<PalletId>;
-
-		/// Specifies the origin check provided by the module_bridge for calls
-		/// that can only be called by the module_bridge pallet.
-		type BridgeOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
-
-		/// Admin user is able to modify transfer fees (see [NativeTokenTransferFee]).
-		type AdminOrigin: EnsureOrigin<Self::Origin>;
-
-		/// Currency as viewed from this pallet
-		type Currency: Currency<Self::AccountId>;
-
-		/// Associated type for Event enum
+	pub trait Config: frame_system::Config + bridge::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-		// Type for native token ID.
-		#[pallet::constant]
-		type NativeTokenId: Get<ResourceId>;
+		/// Specifies the origin check provided by the bridge for calls that can only be called by
+		/// the bridge pallet
+		type BridgeOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
 
-		/// Type for setting fee that are charged when transferring native tokens to target chains
-		/// (in SELs).
+		/// The currency mechanism.
+		type Currency: Currency<Self::AccountId>;
+
 		#[pallet::constant]
-		type NativeTokenTransferFee: Get<u128>;
+		type NativeTokenResourceId: Get<ResourceId>;
 
 		/// The handler to absorb the fee.
-		type OnTransactionFee: OnUnbalanced<NegativeImbalanceOf<Self>>;
-
-		/// Weight information for extrinsics in this pallet
-		type WeightInfo: WeightInfo;
+		type OnFeePay: OnUnbalanced<NegativeImbalanceOf<Self>>;
 	}
 
-	// The macro generates event metadata and derive Clone, Debug, Eq, PartialEq and Codec
 	#[pallet::event]
-	// The macro generates a function on Pallet to deposit an event
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Remark(T::Hash, ResourceId),
-	}
-
-	// Pallet storage items
-	//
-	// Additional fee charged when transferring native tokens to target chains (in SELs).
-	#[pallet::storage]
-	#[pallet::getter(fn get_native_token_transfer_fee)]
-	pub type NativeTokenTransferFee<T> =
-		StorageValue<_, u128, ValueQuery, <T as Config>::NativeTokenTransferFee>;
-
-	// Pallet genesis configuration
-	//
-	// The genesis configuration type.
-	#[pallet::genesis_config]
-	pub struct GenesisConfig<T: Config> {
-		pub chains: Vec<u8>,
-		pub relayers: Vec<T::AccountId>,
-		pub resources: Vec<(ResourceId, Vec<u8>)>,
-		pub threshold: u32,
-	}
-
-	// The default value for the genesis config type.
-	#[cfg(feature = "std")]
-	impl<T: Config> Default for GenesisConfig<T> {
-		fn default() -> Self {
-			Self {
-				chains: Default::default(),
-				relayers: Default::default(),
-				resources: Default::default(),
-				threshold: Default::default(),
-			}
-		}
-	}
-
-	// The build of genesis for the pallet.
-	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
-		fn build(&self) {
-			<Pallet<T>>::initialize(&self.chains, &self.relayers, &self.resources, &self.threshold);
-		}
+		/// [chainId, min_fee, fee_scale]
+		FeeUpdated(bridge::ChainId, BalanceOf<T>, u32),
+		/// [chainId, asset_identity, resource_id]
+		AssetRegistered(bridge::ChainId, Vec<u8>, bridge::ResourceId),
+		/// [resource_id, amount]
+		AssetMinted(bridge::ResourceId, BalanceOf<T>),
+		/// [resource_id, amount]
+		AssetBurned(bridge::ResourceId, BalanceOf<T>),
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Invalid transfer
 		InvalidTransfer,
-
-		/// Not enough means for performing a transfer
+		InvalidCommand,
+		InvalidPayload,
+		InvalidFeeOption,
+		FeeOptionsMissing,
 		InsufficientBalance,
-
-		/// Total amount to be transferred overflows balance type size
-		TotalAmountOverflow,
+		ResourceIdInUse,
+		AssetNotRegistered,
+		AccountNotExist,
+		BalanceOverflow,
 	}
 
-	// Declare Call struct and implement dispatchable (or callable) functions.
-	//
-	// Dispatchable functions are transactions modifying the state of the chain. They
-	// are also called extrinsics are constitute the pallet's public interface.
-	// Note that each parameter used in functions must implement `Clone`, `Debug`,
-	// `Eq`, `PartialEq` and `Codec` traits.
+	#[pallet::storage]
+	#[pallet::getter(fn bridge_fee)]
+	pub type BridgeFee<T: Config> =
+		StorageMap<_, Twox64Concat, bridge::ChainId, (BalanceOf<T>, u32), ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn bridge_assets)]
+	pub type BridgeAssets<T: Config> = StorageMap<_, Twox64Concat, bridge::ResourceId, AssetInfo>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn bridge_balances)]
+	pub type BridgeBalances<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		bridge::ResourceId,
+		Twox64Concat,
+		T::AccountId,
+		BalanceOf<T>,
+	>;
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Change extra bridge transfer fee that user should pay
+		#[pallet::weight(195_000_000)]
+		pub fn change_fee(
+			origin: OriginFor<T>,
+			min_fee: BalanceOf<T>,
+			fee_scale: u32,
+			dest_id: bridge::ChainId,
+		) -> DispatchResult {
+			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
+			ensure!(fee_scale <= 1000u32, Error::<T>::InvalidFeeOption);
+			BridgeFee::<T>::insert(dest_id, (min_fee, fee_scale));
+			Self::deposit_event(Event::FeeUpdated(dest_id, min_fee, fee_scale));
+			Ok(())
+		}
+
+		/// Register an asset.
+		#[pallet::weight(195_000_000)]
+		pub fn register_asset(
+			origin: OriginFor<T>,
+			asset_identity: Vec<u8>,
+			dest_id: bridge::ChainId,
+		) -> DispatchResult {
+			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
+			let resource_id = bridge::derive_resource_id(
+				dest_id,
+				&bridge::hashing::blake2_128(&asset_identity.to_vec()),
+			);
+			ensure!(!BridgeAssets::<T>::contains_key(resource_id), Error::<T>::ResourceIdInUse);
+			BridgeAssets::<T>::insert(
+				resource_id,
+				AssetInfo { dest_id, asset_identity: asset_identity.clone() },
+			);
+			Self::deposit_event(Event::AssetRegistered(dest_id, asset_identity, resource_id));
+			Ok(())
+		}
+
+		/// Do mint operation on specific asset
+		#[pallet::weight(195_000_000)]
+		pub fn mint_asset(
+			origin: OriginFor<T>,
+			asset: bridge::ResourceId,
+			amount: BalanceOf<T>,
+		) -> DispatchResult {
+			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
+
+			ensure!(BridgeAssets::<T>::contains_key(&asset), Error::<T>::AssetNotRegistered);
+			let bridge_id = <bridge::Pallet<T>>::account_id();
+			let holding_balance = BridgeBalances::<T>::get(&asset, &bridge_id).unwrap_or_default();
+			BridgeBalances::<T>::insert(
+				asset,
+				&bridge_id,
+				holding_balance.checked_add(&amount).ok_or(Error::<T>::BalanceOverflow)?,
+			);
+			Self::deposit_event(Event::AssetMinted(asset, amount));
+
+			Ok(())
+		}
+
+		/// Do burn operation on specific asset
+		#[pallet::weight(195_000_000)]
+		pub fn burn_asset(
+			origin: OriginFor<T>,
+			asset: bridge::ResourceId,
+			amount: BalanceOf<T>,
+		) -> DispatchResult {
+			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
+
+			ensure!(BridgeAssets::<T>::contains_key(&asset), Error::<T>::AssetNotRegistered);
+			let bridge_id = <bridge::Pallet<T>>::account_id();
+			let holding_balance = BridgeBalances::<T>::get(&asset, &bridge_id).unwrap_or_default();
+			// check holding account balance to cover burn amount
+			ensure!(
+				Self::asset_balance(&asset, &bridge_id) >= amount,
+				Error::<T>::InsufficientBalance
+			);
+			BridgeBalances::<T>::insert(
+				asset,
+				&bridge_id,
+				holding_balance.checked_sub(&amount).ok_or(Error::<T>::BalanceOverflow)?,
+			);
+			Self::deposit_event(Event::AssetBurned(asset, amount));
+
+			Ok(())
+		}
+
+		/// Transfer some amount of specific asset to some recipient on a (whitelisted) distination
+		/// chain.
+		#[pallet::weight(195_000_000)]
+		#[transactional]
+		pub fn transfer_assets(
+			origin: OriginFor<T>,
+			asset: bridge::ResourceId,
+			amount: BalanceOf<T>,
+			recipient: Vec<u8>,
+			dest_id: bridge::ChainId,
+		) -> DispatchResult {
+			let source = ensure_signed(origin)?;
+			ensure!(<bridge::Pallet<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
+			ensure!(BridgeFee::<T>::contains_key(&dest_id), Error::<T>::FeeOptionsMissing);
+			ensure!(BridgeAssets::<T>::contains_key(&asset), Error::<T>::AssetNotRegistered);
+			// check account existence
+			ensure!(
+				BridgeBalances::<T>::contains_key(&asset, &source),
+				Error::<T>::AccountNotExist
+			);
+
+			// check asset balance to cover transfer amount
+			ensure!(
+				Self::asset_balance(&asset, &source) >= amount,
+				Error::<T>::InsufficientBalance
+			);
+
+			let fee = Self::calculate_fee(dest_id, amount);
+			// check native balance to cover fee
+			let native_free_balance = <T as Config>::Currency::free_balance(&source);
+			ensure!(native_free_balance >= fee, Error::<T>::InsufficientBalance);
+
+			// pay fee to treasury
+			let imbalance = <T as Config>::Currency::withdraw(
+				&source,
+				fee,
+				WithdrawReasons::FEE,
+				ExistenceRequirement::AllowDeath,
+			)?;
+			T::OnFeePay::on_unbalanced(imbalance);
+
+			// withdraw asset
+			Self::do_asset_withdraw(&asset, &source, amount).ok_or(Error::<T>::BalanceOverflow)?;
+
+			<bridge::Pallet<T>>::transfer_fungible(
+				dest_id,
+				asset,
+				recipient,
+				U256::from(amount.saturated_into::<u128>()),
+			)
+		}
+
 		/// Transfers some amount of the native token to some recipient on a (whitelisted)
 		/// destination chain.
-		#[pallet::weight(<T as Config>::WeightInfo::transfer_native())]
+		#[pallet::weight(195_000_000)]
 		#[transactional]
 		pub fn transfer_native(
 			origin: OriginFor<T>,
 			amount: BalanceOf<T>,
 			recipient: Vec<u8>,
-			dest_id: ChainId,
-		) -> DispatchResultWithPostInfo {
+			dest_id: bridge::ChainId,
+		) -> DispatchResult {
 			let source = ensure_signed(origin)?;
+			ensure!(<bridge::Pallet<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
+			let bridge_id = <bridge::Pallet<T>>::account_id();
+			ensure!(BridgeFee::<T>::contains_key(&dest_id), Error::<T>::FeeOptionsMissing);
+			let fee = Self::calculate_fee(dest_id, amount);
+			let free_balance = <T as Config>::Currency::free_balance(&source);
+			ensure!(free_balance >= (amount + fee), Error::<T>::InsufficientBalance);
 
-			let token_transfer_fee: BalanceOf<T> =
-				Self::get_native_token_transfer_fee().saturated_into();
-
-			// Add fees to initial amount (so that to be sure account has sufficient funds)
-			let total_transfer_amount =
-				amount.checked_add(&token_transfer_fee).ok_or(Error::<T>::TotalAmountOverflow)?;
-
-			// Ensure account has enough balance for both fee and transfer
-			// Check to avoid balance errors down the line that leave balance storage in an
-			// inconsistent state
-			let remaining_balance = <T as pallet::Config>::Currency::free_balance(&source)
-				.checked_sub(&total_transfer_amount)
-				.ok_or(Error::<T>::InsufficientBalance)?;
-
-			<T as pallet::Config>::Currency::ensure_can_withdraw(
-				&source,
-				total_transfer_amount,
-				WithdrawReasons::all(),
-				remaining_balance,
-			)
-			.map_err(|_| Error::<T>::InsufficientBalance)?;
-
-			ensure!(
-				<module_bridge::Pallet<T>>::chain_whitelisted(dest_id),
-				Error::<T>::InvalidTransfer
-			);
-
-			// handle fee
 			let imbalance = <T as Config>::Currency::withdraw(
 				&source,
-				NativeTokenTransferFee::<T>::get().saturated_into(),
+				fee,
 				WithdrawReasons::FEE,
 				ExistenceRequirement::AllowDeath,
 			)?;
-
-			T::OnTransactionFee::on_unbalanced(imbalance);
-
-			let bridge_id = <module_bridge::Pallet<T>>::account_id();
-			<T as pallet::Config>::Currency::transfer(
+			T::OnFeePay::on_unbalanced(imbalance);
+			<T as Config>::Currency::transfer(
 				&source,
 				&bridge_id,
-				amount.into(),
-				AllowDeath,
+				amount,
+				ExistenceRequirement::AllowDeath,
 			)?;
 
-			let resource_id = T::NativeTokenId::get();
-			<module_bridge::Pallet<T>>::transfer_fungible(
+			<bridge::Pallet<T>>::transfer_fungible(
 				dest_id,
-				resource_id.into(),
+				T::NativeTokenResourceId::get(),
 				recipient,
-				// Note: use u128 to restrict balance greater than 128bits
 				U256::from(amount.saturated_into::<u128>()),
-			)?;
-
-			Ok(().into())
+			)
 		}
 
-		/// Executes a simple currency transfer using the module_bridge account as the source
-		#[pallet::weight(<T as Config>::WeightInfo::transfer())]
-		#[transactional]
+		//
+		// Executable calls. These can be triggered by a bridge transfer initiated on another chain
+		//
+
+		/// Executes a simple currency transfer using the bridge account as the source
+		#[pallet::weight(195_000_000)]
 		pub fn transfer(
 			origin: OriginFor<T>,
 			to: T::AccountId,
 			amount: BalanceOf<T>,
-			_r_id: ResourceId,
-		) -> DispatchResultWithPostInfo {
+			rid: ResourceId,
+		) -> DispatchResult {
 			let source = T::BridgeOrigin::ensure_origin(origin)?;
-			<T as pallet::Config>::Currency::transfer(&source, &to, amount.into(), AllowDeath)?;
+			// transfer to bridge account from external accounts is not allowed.
+			if source == to {
+				fail!(Error::<T>::InvalidCommand);
+			}
 
-			Ok(().into())
-		}
+			if rid == T::NativeTokenResourceId::get() {
+				// ERC20 PHA transfer
+				<T as Config>::Currency::transfer(
+					&source,
+					&to,
+					amount,
+					ExistenceRequirement::AllowDeath,
+				)?;
+			} else {
+				// Other ERC20 token transfer
+				ensure!(
+					Self::asset_balance(&rid, &source) >= amount,
+					Error::<T>::InsufficientBalance
+				);
+				Self::do_asset_deposit(&rid, &to, amount).ok_or(Error::<T>::BalanceOverflow)?;
+			}
 
-		/// This can be called by the module_bridge to demonstrate an arbitrary call from a
-		/// proposal.
-		#[pallet::weight(<T as Config>::WeightInfo::remark())]
-		pub fn remark(
-			origin: OriginFor<T>,
-			hash: T::Hash,
-			r_id: ResourceId,
-		) -> DispatchResultWithPostInfo {
-			T::BridgeOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::Remark(hash, r_id));
-
-			Ok(().into())
-		}
-
-		/// Modify native token transfer fee value
-		#[pallet::weight(<T as Config>::WeightInfo::set_token_transfer_fee())]
-		pub fn set_native_token_transfer_fee(
-			origin: OriginFor<T>,
-			new_fee: BalanceOf<T>,
-		) -> DispatchResultWithPostInfo {
-			Self::ensure_admin(origin)?;
-			NativeTokenTransferFee::<T>::mutate(|fee_value| *fee_value = new_fee.saturated_into());
-
-			Ok(().into())
+			Ok(())
 		}
 	}
-}
 
-// Pallet implementation block.
-//
-// This main implementation block contains two categories of functions, namely:
-// - Public functions: These are functions that are `pub` and generally fall into inspector
-//   functions that do not write to storage and operation functions that do.
-// - Private functions: These are private helpers or utilities that cannot be called from other
-//   pallets.
-impl<T: Config> Pallet<T> {
-	// *** Utility methods ***
+	impl<T: Config> Pallet<T> {
+		pub fn asset_balance(asset: &bridge::ResourceId, who: &T::AccountId) -> BalanceOf<T> {
+			BridgeBalances::<T>::get(asset, who).unwrap_or_default()
+		}
 
-	/// Return the account identifier of the RAD claims pallet.
-	///
-	/// This actually does computation. If you need to keep using it, then make
-	/// sure you cache the value and only call this once.
-	pub fn account_id() -> T::AccountId {
-		<T as pallet::Config>::BridgePalletId::get().into_account_truncating()
-	}
+		// TODO.wf: A more proper way to estimate fee
+		pub fn calculate_fee(dest_id: bridge::ChainId, amount: BalanceOf<T>) -> BalanceOf<T> {
+			let (min_fee, fee_scale) = Self::bridge_fee(dest_id);
+			let fee_estimated = amount * fee_scale.into() / 1000u32.into();
+			if fee_estimated > min_fee {
+				fee_estimated
+			} else {
+				min_fee
+			}
+		}
 
-	/// Initialize pallet's genesis configuration.
-	///
-	/// This private helper function is used for setting up pallet genesis
-	/// configuration.
-	fn initialize(
-		chains: &[u8],
-		relayers: &[T::AccountId],
-		resources: &Vec<(ResourceId, Vec<u8>)>,
-		threshold: &u32,
-	) {
-		chains.into_iter().for_each(|c| {
-			<module_bridge::Pallet<T>>::whitelist(*c).unwrap_or_default();
-		});
-		relayers.into_iter().for_each(|rs| {
-			<module_bridge::Pallet<T>>::register_relayer(rs.clone()).unwrap_or_default();
-		});
+		/// Deposit specific amount assets into recipient account.
+		///
+		/// Assets would be withdrawn from bridge account and then deposit to
+		/// recipient.
+		/// Bridge account is treat as holding account of all assets.
+		///
+		/// DO NOT guarantee asset was registered
+		/// DO NOT guarantee bridge account(e.g. hodling account) has enough balance
+		pub fn do_asset_deposit(
+			asset: &bridge::ResourceId,
+			recipient: &T::AccountId,
+			amount: BalanceOf<T>,
+		) -> Option<BalanceOf<T>> {
+			let bridge_id = <bridge::Pallet<T>>::account_id();
+			let holding_balance = BridgeBalances::<T>::get(asset, &bridge_id).unwrap_or_default();
+			let recipient_balance = BridgeBalances::<T>::get(asset, recipient).unwrap_or_default();
 
-		<module_bridge::Pallet<T>>::set_relayer_threshold(*threshold).unwrap_or_default();
+			BridgeBalances::<T>::insert(asset, &bridge_id, holding_balance.checked_sub(&amount)?);
+			BridgeBalances::<T>::insert(asset, recipient, recipient_balance.checked_add(&amount)?);
 
-		resources.iter().for_each(|i| {
-			let (rid, m) = (i.0.clone(), i.1.clone());
-			<module_bridge::Pallet<T>>::register_resource(rid.into(), m.clone())
-				.unwrap_or_default();
-		});
-	}
+			Some(amount)
+		}
 
-	// Ensure that the caller has admin rights
-	fn ensure_admin(origin: OriginFor<T>) -> DispatchResult {
-		<T as Config>::AdminOrigin::try_origin(origin)
-			.map(|_| ())
-			.or_else(ensure_root)?;
-		Ok(())
+		/// Withdraw specific amount assets from sender.
+		///
+		/// Assets would be withdrawn from the sender and then deposit to bridge account.
+		/// Bridge account is treat as holding account of all assets.
+		///
+		/// DO NOT guarantee asset was registered
+		/// DO NOT grarantee sender account has enough balance
+		pub fn do_asset_withdraw(
+			asset: &bridge::ResourceId,
+			sender: &T::AccountId,
+			amount: BalanceOf<T>,
+		) -> Option<BalanceOf<T>> {
+			let bridge_id = <bridge::Pallet<T>>::account_id();
+			let holding_balance = BridgeBalances::<T>::get(asset, &bridge_id).unwrap_or_default();
+			let recipient_balance = BridgeBalances::<T>::get(asset, sender).unwrap_or_default();
+
+			BridgeBalances::<T>::insert(asset, sender, recipient_balance.checked_sub(&amount)?);
+			BridgeBalances::<T>::insert(asset, &bridge_id, holding_balance.checked_add(&amount)?);
+
+			Some(amount)
+		}
 	}
 }

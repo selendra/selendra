@@ -11,349 +11,441 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-//! Bridge pallet's unit test cases
+#![cfg(test)]
 
-// ----------------------------------------------------------------------------
-// Module imports
-// ----------------------------------------------------------------------------
-
-#![allow(unused_imports)]
-use crate::{
-	self as pallet_bridge,
+use super::{
+	bridge,
 	mock::{
-		helpers::*, Balances, Bridge, ChainBridge, Event, MockRuntime,
-		NativeTokenId, Origin, ProposalLifetime, TestExternalitiesBuilder, ENDOWED_BALANCE,
-		RELAYER_A, RELAYER_B, RELAYER_B_INITIAL_BALANCE, RELAYER_C, TEST_RELAYER_VOTE_THRESHOLD,
-        SEL, NATIVE_TOKEN_TRANSFER_FEE
+		assert_events, balances, expect_event, new_test_ext, Balances, Bridge, BridgeTransfer,
+		Call, Event, NativeTokenResourceId, Origin, ProposalLifetime, Test, ENDOWED_BALANCE,
+		RELAYER_A, RELAYER_B, RELAYER_C,
 	},
-	Error,
+	*,
 };
+use frame_support::{assert_noop, assert_ok};
 
-use codec::Encode;
+use hex_literal::hex;
 
-use frame_support::{
-	assert_err, assert_noop, assert_ok,
-	traits::{LockableCurrency, WithdrawReasons},
-};
+const TEST_THRESHOLD: u32 = 2;
 
+fn make_transfer_proposal(to: u64, amount: u64) -> Call {
+	let resource_id = NativeTokenResourceId::get();
+	Call::BridgeTransfer(crate::Call::transfer { to, amount: amount.into(), rid: resource_id })
+}
 
-use sp_core::{blake2_256, H256};
+#[test]
+fn constant_equality() {
+	let r_id = bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"PHA"));
+	let encoded: [u8; 32] =
+		hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
+	assert_eq!(r_id, encoded);
+}
 
-use sp_runtime::DispatchError;
+#[test]
+fn do_asset_deposit() {
+	new_test_ext().execute_with(|| {
+		let asset = bridge::derive_resource_id(2, &bridge::hashing::blake2_128(b"an asset"));
+		let amount: u64 = 100;
+
+		// set some balance for holding account and more than amount here
+		BridgeBalances::<Test>::insert(asset, Bridge::account_id(), amount * 2);
+
+		BridgeTransfer::do_asset_deposit(&asset, &RELAYER_A, amount);
+
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &RELAYER_A), amount);
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &Bridge::account_id()), amount);
+	})
+}
+
+#[test]
+fn do_asset_withdraw() {
+	new_test_ext().execute_with(|| {
+		let asset = bridge::derive_resource_id(2, &bridge::hashing::blake2_128(b"an asset"));
+		let amount: u64 = 100;
+
+		// set some balance for sender account and more than amount here
+		BridgeBalances::<Test>::insert(asset, &RELAYER_A, amount * 2);
+
+		BridgeTransfer::do_asset_withdraw(&asset, &RELAYER_A, amount);
+
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &RELAYER_A), amount);
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &Bridge::account_id()), amount);
+	})
+}
+
+#[test]
+fn register_asset() {
+	new_test_ext().execute_with(|| {
+		let r_id = bridge::derive_resource_id(2, &bridge::hashing::blake2_128(b"an asset"));
+
+		assert_ok!(BridgeTransfer::register_asset(Origin::root(), b"an asset".to_vec(), 2));
+
+		assert_eq!(BridgeAssets::<Test>::contains_key(r_id), true);
+
+		assert_noop!(
+			BridgeTransfer::register_asset(Origin::root(), b"an asset".to_vec(), 2),
+			Error::<Test>::ResourceIdInUse
+		);
+	})
+}
+
+#[test]
+fn mint_asset() {
+	new_test_ext().execute_with(|| {
+		let asset = bridge::derive_resource_id(2, &bridge::hashing::blake2_128(b"an asset"));
+		let bridge_id: u64 = Bridge::account_id();
+
+		assert_noop!(
+			BridgeTransfer::mint_asset(Origin::root(), asset, 100),
+			Error::<Test>::AssetNotRegistered
+		);
+		assert_ok!(BridgeTransfer::register_asset(Origin::root(), b"an asset".to_vec(), 2));
+		assert_ok!(BridgeTransfer::mint_asset(Origin::root(), asset, 100));
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &bridge_id), 100);
+	})
+}
+
+#[test]
+fn burn_asset() {
+	new_test_ext().execute_with(|| {
+		let asset = bridge::derive_resource_id(2, &bridge::hashing::blake2_128(b"an asset"));
+
+		assert_noop!(
+			BridgeTransfer::burn_asset(Origin::root(), asset, 100),
+			Error::<Test>::AssetNotRegistered
+		);
+		assert_ok!(BridgeTransfer::register_asset(Origin::root(), b"an asset".to_vec(), 2));
+		assert_noop!(
+			BridgeTransfer::burn_asset(Origin::root(), asset, 100),
+			Error::<Test>::InsufficientBalance
+		);
+		assert_ok!(BridgeTransfer::mint_asset(Origin::root(), asset, 100));
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &Bridge::account_id()), 100);
+		assert_ok!(BridgeTransfer::burn_asset(Origin::root(), asset, 100));
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &Bridge::account_id()), 0);
+	})
+}
+
+#[test]
+fn transfer_assets_not_registered() {
+	new_test_ext().execute_with(|| {
+		let dest_chain = 2;
+		let asset =
+			bridge::derive_resource_id(dest_chain, &bridge::hashing::blake2_128(b"an asset"));
+		let amount: u64 = 100;
+		let recipient = vec![99];
+
+		assert_ok!(Bridge::whitelist_chain(Origin::root(), dest_chain.clone()));
+		assert_ok!(BridgeTransfer::change_fee(Origin::root(), 2, 2, dest_chain.clone()));
+
+		assert_noop!(
+			BridgeTransfer::transfer_assets(
+				Origin::signed(RELAYER_A),
+				asset,
+				amount,
+				recipient.clone(),
+				dest_chain,
+			),
+			Error::<Test>::AssetNotRegistered
+		);
+	})
+}
+
+#[test]
+fn transfer_assets_account_not_exist() {
+	new_test_ext().execute_with(|| {
+		let dest_chain = 2;
+		let asset =
+			bridge::derive_resource_id(dest_chain, &bridge::hashing::blake2_128(b"an asset"));
+		let amount: u64 = 100;
+		let recipient = vec![99];
+
+		assert_ok!(Bridge::whitelist_chain(Origin::root(), dest_chain.clone()));
+		assert_ok!(BridgeTransfer::change_fee(Origin::root(), 2, 2, dest_chain.clone()));
+
+		assert_ok!(BridgeTransfer::register_asset(Origin::root(), b"an asset".to_vec(), 2));
+
+		assert_noop!(
+			BridgeTransfer::transfer_assets(
+				Origin::signed(RELAYER_A),
+				asset,
+				amount,
+				recipient.clone(),
+				dest_chain,
+			),
+			Error::<Test>::AccountNotExist
+		);
+	})
+}
+
+#[test]
+fn transfer_assets_insufficient_balance() {
+	new_test_ext().execute_with(|| {
+		let dest_chain = 2;
+		let asset =
+			bridge::derive_resource_id(dest_chain, &bridge::hashing::blake2_128(b"an asset"));
+		let amount: u64 = 100;
+		let recipient = vec![99];
+
+		assert_ok!(Bridge::whitelist_chain(Origin::root(), dest_chain.clone()));
+		assert_ok!(BridgeTransfer::change_fee(Origin::root(), 2, 2, dest_chain.clone()));
+
+		assert_ok!(BridgeTransfer::register_asset(Origin::root(), b"an asset".to_vec(), 2));
+
+		// set some balance for account and less than amount here
+		BridgeBalances::<Test>::insert(asset, RELAYER_A, amount / 2);
+
+		assert_noop!(
+			BridgeTransfer::transfer_assets(
+				Origin::signed(RELAYER_A),
+				asset,
+				amount,
+				recipient.clone(),
+				dest_chain,
+			),
+			Error::<Test>::InsufficientBalance
+		);
+	})
+}
+
+#[test]
+fn transfer_assets() {
+	new_test_ext().execute_with(|| {
+		let dest_chain = 2;
+		let asset =
+			bridge::derive_resource_id(dest_chain, &bridge::hashing::blake2_128(b"an asset"));
+		let amount: u64 = 100;
+		let recipient = vec![99];
+
+		assert_ok!(Bridge::whitelist_chain(Origin::root(), dest_chain.clone()));
+		assert_ok!(BridgeTransfer::change_fee(Origin::root(), 2, 2, dest_chain.clone()));
+
+		assert_ok!(BridgeTransfer::register_asset(Origin::root(), b"an asset".to_vec(), 2));
+
+		// set some balance for account and more than amount here
+		BridgeBalances::<Test>::insert(asset, RELAYER_A, amount * 2);
+
+		assert_ok!(BridgeTransfer::transfer_assets(
+			Origin::signed(RELAYER_A),
+			asset,
+			amount,
+			recipient.clone(),
+			dest_chain,
+		));
+
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &RELAYER_A), amount);
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &Bridge::account_id()), amount);
+	})
+}
 
 #[test]
 fn transfer_native() {
-	TestExternalitiesBuilder::default()
-		.build()
-		.execute_with(|| {
-			let dest_chain = 0;
-			let resource_id = NativeTokenId::get();
-			let amount: u128 = 20 * SEL;
-			let recipient = vec![99];
+	new_test_ext().execute_with(|| {
+		let dest_chain = 0;
+		let resource_id = NativeTokenResourceId::get();
+		let amount: u64 = 100;
+		let recipient = vec![99];
 
-			assert_ok!(ChainBridge::whitelist_chain(
-				Origin::root(),
-				dest_chain.clone()
-			));
+		assert_ok!(Bridge::whitelist_chain(Origin::root(), dest_chain.clone()));
+		assert_ok!(BridgeTransfer::change_fee(Origin::root(), 2, 2, dest_chain.clone()));
 
-			// Using account with not enough balance for fee should fail when requesting transfer
-			assert_err!(
-				Bridge::transfer_native(
-					Origin::signed(RELAYER_C),
-					amount.clone(),
-					recipient.clone(),
-					dest_chain,
-				),
-				Error::<MockRuntime>::InsufficientBalance
-			);
-
-			// Using account with enough balance for fee but not for transfer amount
-			let mut account_current_balance = Balances::free_balance(RELAYER_B);
-			assert_eq!(account_current_balance, RELAYER_B_INITIAL_BALANCE);
-
-			assert_err!(
-				Bridge::transfer_native(
-					Origin::signed(RELAYER_B),
-					amount.clone(),
-					recipient.clone(),
-					dest_chain,
-				),
-				Error::<MockRuntime>::InsufficientBalance
-			);
-
-			// Account balance of relayer B should be reverted to original balance
-			account_current_balance = Balances::free_balance(RELAYER_B);
-			assert_eq!(account_current_balance, RELAYER_B_INITIAL_BALANCE);
-
-			// Using account with enough balance for fee, but transfer blocked by a lock
-			let lock_amount = 7990 * SEL;
-			Balances::set_lock(
-				*b"testlock",
-				&RELAYER_A,
-				lock_amount,
-				WithdrawReasons::all(),
-			);
-			assert_err!(
-				Bridge::transfer_native(
-					Origin::signed(RELAYER_A),
-					amount.clone(),
-					recipient.clone(),
-					dest_chain,
-				),
-				Error::<MockRuntime>::InsufficientBalance
-			);
-
-			Balances::remove_lock(*b"testlock", &RELAYER_A);
-			account_current_balance = Balances::free_balance(RELAYER_A);
-			assert_eq!(account_current_balance, ENDOWED_BALANCE);
-
-			// Account balance of relayer A should be tantamount to the initial endowed value
-			account_current_balance = Balances::free_balance(RELAYER_A);
-			assert_eq!(account_current_balance, ENDOWED_BALANCE);
-
-			// Successful transfer with relayer A account, which has enough funds
-			// for the requested amount plus transfer fees
-			assert_ok!(Bridge::transfer_native(
+		assert_noop!(
+			BridgeTransfer::transfer_native(
 				Origin::signed(RELAYER_A),
-				amount.clone(),
+				Balances::free_balance(RELAYER_A),
 				recipient.clone(),
 				dest_chain,
-			));
+			),
+			Error::<Test>::InsufficientBalance
+		);
 
-			expect_event(module_bridge::Event::FungibleTransfer(
-				dest_chain,
-				1,
-				resource_id,
-				amount.into(),
-				recipient,
-			));
+		assert_ok!(BridgeTransfer::transfer_native(
+			Origin::signed(RELAYER_A),
+			amount.clone(),
+			recipient.clone(),
+			dest_chain,
+		));
 
-			// assert_eq!(ENDOWED_BALANCE - amount, Balances::free_balance(RELAYER_A));
-		})
-}
-
-#[test]
-fn create_successful_remark_proposal() {
-	TestExternalitiesBuilder::default()
-		.build()
-		.execute_with(|| {
-			let hash: H256 = "ABC".using_encoded(blake2_256).into();
-			let prop_id = 1;
-			let src_id = 1;
-			let r_id = module_bridge::derive_resource_id(src_id, b"cent_nft_hash");
-			let proposal = mock_remark_proposal(hash.clone(), r_id);
-			let resource = b"Bridge.remark".to_vec();
-
-			assert_ok!(ChainBridge::set_threshold(
-				Origin::root(),
-				TEST_RELAYER_VOTE_THRESHOLD
-			));
-			assert_ok!(ChainBridge::add_relayer(Origin::root(), RELAYER_A));
-			assert_ok!(ChainBridge::add_relayer(Origin::root(), RELAYER_B));
-			assert_eq!(ChainBridge::get_relayer_count(), 2);
-			assert_ok!(ChainBridge::whitelist_chain(Origin::root(), src_id));
-			assert_ok!(ChainBridge::set_resource(Origin::root(), r_id, resource));
-
-			assert_ok!(ChainBridge::acknowledge_proposal(
-				Origin::signed(RELAYER_A),
-				prop_id,
-				src_id,
-				r_id,
-				Box::new(proposal.clone())
-			));
-
-			assert_ok!(ChainBridge::acknowledge_proposal(
-				Origin::signed(RELAYER_B),
-				prop_id,
-				src_id,
-				r_id,
-				Box::new(proposal.clone())
-			));
-
-			event_exists(pallet_bridge::Event::<MockRuntime>::Remark(hash, r_id));
-		})
-}
-
-#[test]
-fn create_invalid_remark_proposal_with_bad_origin() {
-	TestExternalitiesBuilder::default()
-		.build()
-		.execute_with(|| {
-			let hash: H256 = "ABC".using_encoded(blake2_256).into();
-			let r_id = module_bridge::derive_resource_id(1, b"cent_nft_hash");
-
-			// Add a new relayer account to the module_bridge
-			assert_ok!(ChainBridge::add_relayer(Origin::root(), RELAYER_A));
-
-			// Chain bridge account is a valid origin for a remark proposal
-			assert_ok!(Bridge::remark(
-				Origin::signed(ChainBridge::account_id()),
-				hash,
-				r_id
-			));
-
-			// Don't allow any signed origin except from module_bridge addr,
-			// even if the relayer is listed on the chain bridge
-			assert_noop!(
-				Bridge::remark(Origin::signed(RELAYER_A), hash, r_id),
-				DispatchError::BadOrigin
-			);
-
-			// Don't allow root calls
-			assert_noop!(
-				Bridge::remark(Origin::root(), hash, r_id),
-				DispatchError::BadOrigin
-			);
-		})
+		expect_event(bridge::Event::FungibleTransfer(
+			dest_chain,
+			1,
+			resource_id,
+			amount.into(),
+			recipient,
+		));
+	})
 }
 
 #[test]
 fn transfer() {
-	TestExternalitiesBuilder::default()
-		.build()
-		.execute_with(|| {
-			// Check inital state
-			let bridge_id: u64 = ChainBridge::account_id();
-			let resource_id = NativeTokenId::get();
-			let current_balance = Balances::free_balance(&bridge_id);
+	new_test_ext().execute_with(|| {
+		// Check inital state
+		let bridge_id: u64 = Bridge::account_id();
+		let resource_id = NativeTokenResourceId::get();
+		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE);
+		// Transfer and check result
+		assert_ok!(BridgeTransfer::transfer(
+			Origin::signed(Bridge::account_id()),
+			RELAYER_A,
+			10,
+			resource_id,
+		));
+		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE - 10);
+		assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
 
-			assert_eq!(current_balance, ENDOWED_BALANCE);
-
-			// Transfer and check result
-			assert_ok!(Bridge::transfer(
-				Origin::signed(ChainBridge::account_id()),
-				RELAYER_A,
-				10,
-				resource_id
-			));
-			assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE - 10);
-			assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
-
-			assert_events(vec![Event::Balances(pallet_balances::Event::Transfer {
-				from: ChainBridge::account_id(),
-				to: RELAYER_A,
-				amount: 10,
-			})]);
-		})
+		assert_events(vec![Event::Balances(balances::Event::Transfer {
+			from: Bridge::account_id(),
+			to: RELAYER_A,
+			amount: 10,
+		})]);
+	})
 }
 
-// #[test]
-// fn create_successful_transfer_proposal() {
-// 	TestExternalitiesBuilder::default()
-// 		.build()
-// 		.execute_with(|| {
-// 			let prop_id = 1;
-// 			let src_id = 1;
-// 			let r_id = module_bridge::derive_resource_id(src_id, b"transfer");
-// 			let resource = b"Bridge.transfer".to_vec();
+#[test]
+fn transfer_to_holdingaccount() {
+	new_test_ext().execute_with(|| {
+		let dest_chain = 0;
+		let bridge_id: u64 = Bridge::account_id();
+		let asset =
+			bridge::derive_resource_id(dest_chain, &bridge::hashing::blake2_128(b"an asset"));
+		let amount: u64 = 100;
 
-// 			// Create dummy transfer proposal for an amount of 10 transfered to RELAYER A
-// 			let transfer_proposal = mock_transfer_proposal(RELAYER_A, 10, r_id);
-
-// 			assert_ok!(ChainBridge::set_threshold(
-// 				Origin::root(),
-// 				TEST_RELAYER_VOTE_THRESHOLD
-// 			));
-// 			assert_ok!(ChainBridge::add_relayer(Origin::root(), RELAYER_A));
-// 			assert_ok!(ChainBridge::add_relayer(Origin::root(), RELAYER_B));
-// 			assert_ok!(ChainBridge::add_relayer(Origin::root(), RELAYER_C));
-// 			assert_ok!(ChainBridge::whitelist_chain(Origin::root(), src_id));
-// 			assert_ok!(ChainBridge::set_resource(Origin::root(), r_id, resource));
-
-// 			// First relayer (i.e. RELAYER_A) creates a new transfer proposal (so that an amount of 10 is transfered to his account)
-// 			assert_ok!(ChainBridge::acknowledge_proposal(
-// 				Origin::signed(RELAYER_A),
-// 				prop_id,
-// 				src_id,
-// 				r_id,
-// 				Box::new(transfer_proposal.clone())
-// 			));
-// 			let actual_votes =
-// 				ChainBridge::get_votes(src_id, (prop_id.clone(), transfer_proposal.clone()))
-// 					.unwrap();
-
-// 			let expected_votes = module_bridge::types::ProposalVotes {
-// 				votes_for: vec![RELAYER_A],
-// 				votes_against: vec![],
-// 				status: module_bridge::types::ProposalStatus::Initiated,
-// 				expiry: ProposalLifetime::get() + 1,
-// 			};
-// 			assert_eq!(actual_votes, expected_votes);
-
-// 			// Second relayer (i.e. RELAYER_B) votes against
-// 			assert_ok!(ChainBridge::reject_proposal(
-// 				Origin::signed(RELAYER_B),
-// 				prop_id,
-// 				src_id,
-// 				r_id,
-// 				Box::new(transfer_proposal.clone())
-// 			));
-// 			let actual_votes =
-// 				ChainBridge::get_votes(src_id, (prop_id.clone(), transfer_proposal.clone()))
-// 					.unwrap();
-// 			let expected_votes = module_bridge::types::ProposalVotes {
-// 				votes_for: vec![RELAYER_A],
-// 				votes_against: vec![RELAYER_B],
-// 				status: module_bridge::types::ProposalStatus::Initiated,
-// 				expiry: ProposalLifetime::get() + 1,
-// 			};
-// 			assert_eq!(actual_votes, expected_votes);
-
-// 			// Third relayer (i.e. RELAYER_C) votes in favour
-// 			assert_ok!(ChainBridge::acknowledge_proposal(
-// 				Origin::signed(RELAYER_C),
-// 				prop_id,
-// 				src_id,
-// 				r_id,
-// 				Box::new(transfer_proposal.clone())
-// 			));
-// 			let actual_votes =
-// 				ChainBridge::get_votes(src_id, (prop_id.clone(), transfer_proposal.clone()))
-// 					.unwrap();
-// 			let expected_votes = module_bridge::types::ProposalVotes {
-// 				votes_for: vec![RELAYER_A, RELAYER_C],
-// 				votes_against: vec![RELAYER_B],
-// 				status: module_bridge::types::ProposalStatus::Approved,
-// 				expiry: ProposalLifetime::get() + 1,
-// 			};
-// 			assert_eq!(actual_votes, expected_votes);
-
-// 			// First relayer's (i.e. RELAYER_A) account balance is increased of 10 as there were 2 votes for (i.e. RELAYER_A and RELAYER_B)
-// 			assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
-
-// 			//The module_bridge pallet's account balance must now be decreased by 10 after the transfer proposal was accepted
-// 			assert_eq!(
-// 				Balances::free_balance(ChainBridge::account_id()),
-// 				ENDOWED_BALANCE - 10
-// 			);
-
-// 			assert_events(vec![
-// 				Event::ChainBridge(module_bridge::Event::VoteFor(src_id, prop_id, RELAYER_A)),
-// 				Event::ChainBridge(module_bridge::Event::VoteAgainst(src_id, prop_id, RELAYER_B)),
-// 				Event::ChainBridge(module_bridge::Event::VoteFor(src_id, prop_id, RELAYER_C)),
-// 				Event::ChainBridge(module_bridge::Event::ProposalApproved(src_id, prop_id)),
-// 				Event::Balances(pallet_balances::Event::Transfer {
-// 					from: ChainBridge::account_id(),
-// 					to: RELAYER_A,
-// 					amount: 10,
-// 				}),
-// 				Event::ChainBridge(module_bridge::Event::ProposalSucceeded(src_id, prop_id)),
-// 			]);
-// 		})
-// }
+		// transfer to bridge account is not allowed
+		assert_noop!(
+			BridgeTransfer::transfer(
+				Origin::signed(Bridge::account_id()),
+				bridge_id,
+				amount,
+				asset,
+			),
+			Error::<Test>::InvalidCommand
+		);
+	})
+}
 
 #[test]
-fn modify_native_token_transfer_fees() {
-	TestExternalitiesBuilder::default()
-		.build()
-		.execute_with(|| {
-			let current_fee = Bridge::get_native_token_transfer_fee();
-			assert_eq!(current_fee, NATIVE_TOKEN_TRANSFER_FEE);
-			let new_fee = 3000 * SEL;
-			assert_ok!(Bridge::set_native_token_transfer_fee(
-				Origin::signed(1),
-				new_fee
-			));
-			assert_eq!(new_fee, Bridge::get_native_token_transfer_fee());
-		})
+fn transfer_to_regular_account() {
+	new_test_ext().execute_with(|| {
+		let dest_chain = 0;
+		let bridge_id: u64 = Bridge::account_id();
+		let asset =
+			bridge::derive_resource_id(dest_chain, &bridge::hashing::blake2_128(b"an asset"));
+		let amount: u64 = 100;
+
+		assert_ok!(BridgeTransfer::register_asset(
+			Origin::root(),
+			b"an asset".to_vec(),
+			dest_chain
+		));
+
+		assert_noop!(
+			BridgeTransfer::transfer(
+				Origin::signed(Bridge::account_id()),
+				RELAYER_A,
+				amount,
+				asset,
+			),
+			Error::<Test>::InsufficientBalance
+		);
+
+		// mint some asset to holding account first
+		assert_ok!(BridgeTransfer::mint_asset(Origin::root(), asset, amount * 2));
+
+		// transfer to regular account, would withdraw from holding account then deposit to
+		// the regular account
+		assert_ok!(BridgeTransfer::transfer(
+			Origin::signed(Bridge::account_id()),
+			RELAYER_A,
+			amount,
+			asset,
+		));
+
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &bridge_id), amount);
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &RELAYER_A), amount);
+	})
+}
+
+#[test]
+fn create_successful_transfer_proposal() {
+	new_test_ext().execute_with(|| {
+		let prop_id = 1;
+		let src_id = 1;
+		let r_id = bridge::derive_resource_id(src_id, b"transfer");
+		let resource = b"BridgeTransfer.transfer".to_vec();
+		let proposal = make_transfer_proposal(RELAYER_A, 10);
+
+		assert_ok!(Bridge::set_threshold(Origin::root(), TEST_THRESHOLD,));
+		assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_A));
+		assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_B));
+		assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_C));
+		assert_ok!(Bridge::whitelist_chain(Origin::root(), src_id));
+		assert_ok!(Bridge::set_resource(Origin::root(), r_id, resource));
+
+		// Create proposal (& vote)
+		assert_ok!(Bridge::acknowledge_proposal(
+			Origin::signed(RELAYER_A),
+			prop_id,
+			src_id,
+			r_id,
+			Box::new(proposal.clone())
+		));
+		let prop = Bridge::votes(src_id, (prop_id.clone(), proposal.clone())).unwrap();
+		let expected = bridge::ProposalVotes {
+			votes_for: vec![RELAYER_A],
+			votes_against: vec![],
+			status: bridge::ProposalStatus::Initiated,
+			expiry: ProposalLifetime::get() + 1,
+		};
+		assert_eq!(prop, expected);
+
+		// Second relayer votes against
+		assert_ok!(Bridge::reject_proposal(
+			Origin::signed(RELAYER_B),
+			prop_id,
+			src_id,
+			r_id,
+			Box::new(proposal.clone())
+		));
+		let prop = Bridge::votes(src_id, (prop_id.clone(), proposal.clone())).unwrap();
+		let expected = bridge::ProposalVotes {
+			votes_for: vec![RELAYER_A],
+			votes_against: vec![RELAYER_B],
+			status: bridge::ProposalStatus::Initiated,
+			expiry: ProposalLifetime::get() + 1,
+		};
+		assert_eq!(prop, expected);
+
+		// Third relayer votes in favour
+		assert_ok!(Bridge::acknowledge_proposal(
+			Origin::signed(RELAYER_C),
+			prop_id,
+			src_id,
+			r_id,
+			Box::new(proposal.clone())
+		));
+		let prop = Bridge::votes(src_id, (prop_id.clone(), proposal.clone())).unwrap();
+		let expected = bridge::ProposalVotes {
+			votes_for: vec![RELAYER_A, RELAYER_C],
+			votes_against: vec![RELAYER_B],
+			status: bridge::ProposalStatus::Approved,
+			expiry: ProposalLifetime::get() + 1,
+		};
+		assert_eq!(prop, expected);
+
+		assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
+		assert_eq!(Balances::free_balance(Bridge::account_id()), ENDOWED_BALANCE - 10);
+
+		assert_events(vec![
+			Event::Bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_A)),
+			Event::Bridge(bridge::Event::VoteAgainst(src_id, prop_id, RELAYER_B)),
+			Event::Bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_C)),
+			Event::Bridge(bridge::Event::ProposalApproved(src_id, prop_id)),
+			Event::Balances(balances::Event::Transfer {
+				from: Bridge::account_id(),
+				to: RELAYER_A,
+				amount: 10,
+			}),
+			Event::Bridge(bridge::Event::ProposalSucceeded(src_id, prop_id)),
+		]);
+	})
 }
