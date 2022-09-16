@@ -1,10 +1,5 @@
-use crate::{
-	parameter_types, Balances, Call, Event, Runtime, Treasury,
-	SEL,
-};
-use runtime_common::{
-	dollar, EnsureRootOrThreeFourthsFinancialCouncil,
-};
+use crate::{parameter_types, Balances, Call, Event, Runtime, Treasury, SEL};
+use runtime_common::{dollar, EnsureRootOrThreeFourthsFinancialCouncil};
 
 parameter_types! {
 	pub const ChainId: u8 = 1;
