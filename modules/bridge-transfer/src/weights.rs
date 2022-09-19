@@ -33,7 +33,7 @@
 // --execution=wasm
 // --wasm-execution=compiled
 // --heap-pages=4096
-// --output=./modules/asset-registry/src/weights.rs
+// --output=./modules/bridge_transfer/src/weights.rs
 // --template=./templates/module-weight-template.hbs
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
@@ -44,114 +44,48 @@
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
-/// Weight functions needed for module_asset_registry.
+/// Weight functions needed for module_bridge_transfer.
 pub trait WeightInfo {
-	fn set_threshold() -> Weight;
-	fn set_resource() -> Weight;
-	fn remove_resource() -> Weight;
-	fn whitelist_chain() -> Weight;
-	fn add_relayer() -> Weight;
-	fn remove_relayer() -> Weight;
-	fn acknowledge_proposal() -> Weight;
-	fn reject_proposal() -> Weight;
-	fn eval_vote_state() -> Weight;
+	fn change_fee() -> Weight;
+	fn transfer_native() -> Weight;
+	fn transfer() -> Weight;
 }
 
 /// Weights for module_bridge using the Selendra node and recommended hardware.
 pub struct SelendraWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SelendraWeight<T> {
-	fn set_threshold() -> Weight {
+	fn change_fee() -> Weight {
 		(195_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
-	fn set_resource() -> Weight {
+	fn transfer_native() -> Weight {
 		(195_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
-	fn remove_resource() -> Weight {
+	fn transfer() -> Weight {
 		(195_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(10 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
-	}
-	fn whitelist_chain() -> Weight {
-		(195_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	fn add_relayer() -> Weight {
-		(195_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	fn remove_relayer() -> Weight {
-		(195_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	fn acknowledge_proposal() -> Weight {
-		(195_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	fn reject_proposal() -> Weight {
-		(195_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	fn eval_vote_state() -> Weight {
-		(195_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	fn set_threshold() -> Weight {
+	fn change_fee() -> Weight {
 		(195_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
-	fn set_resource() -> Weight {
+	fn transfer_native() -> Weight {
 		(195_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
-	fn remove_resource() -> Weight {
+	fn transfer() -> Weight {
 		(195_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(10 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
-	}
-	fn whitelist_chain() -> Weight {
-		(195_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-	}
-	fn add_relayer() -> Weight {
-		(195_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-	}
-	fn remove_relayer() -> Weight {
-		(195_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-	}
-	fn acknowledge_proposal() -> Weight {
-		(195_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-	}
-	fn reject_proposal() -> Weight {
-		(195_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-	}
-	fn eval_vote_state() -> Weight {
-		(195_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }

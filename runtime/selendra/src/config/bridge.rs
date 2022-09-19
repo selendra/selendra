@@ -1,5 +1,5 @@
 use crate::{parameter_types, Balances, Call, Event, Runtime, Treasury};
-use runtime_common::{EnsureRootOrThreeFourthsFinancialCouncil};
+use runtime_common::EnsureRootOrThreeFourthsFinancialCouncil;
 
 parameter_types! {
 	pub const ChainId: u8 = 1;
@@ -26,4 +26,5 @@ impl module_bridge_transfer::Config for Runtime {
 	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type OnFeeHandler = Treasury;
+	type WeightInfo = ();
 }

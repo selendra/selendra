@@ -7,8 +7,13 @@ mod mock;
 mod tests;
 
 pub use pallet::*;
+pub mod weights;
+
+pub use weights::WeightInfo;
+
 #[frame_support::pallet]
 pub mod pallet {
+	use super::*;
 	use frame_support::{
 		fail,
 		pallet_prelude::*,
@@ -54,6 +59,9 @@ pub mod pallet {
 
 		/// The handler to absorb the fee.
 		type OnFeeHandler: OnUnbalanced<NegativeImbalanceOf<Self>>;
+
+		/// Weight information for the extrinsics in this module.
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::event]
@@ -95,7 +103,8 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Change extra bridge transfer fee that user should pay
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::change_fee())]
+		// #[pallet::weight(195_000_000)]
 		pub fn change_fee(
 			origin: OriginFor<T>,
 			transfer_fee: BalanceOf<T>,
@@ -109,7 +118,7 @@ pub mod pallet {
 
 		/// Transfers some amount of the native token to some recipient on a (whitelisted)
 		/// destination chain.
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::transfer_native())]
 		#[transactional]
 		pub fn transfer_native(
 			origin: OriginFor<T>,
@@ -152,7 +161,7 @@ pub mod pallet {
 		//
 
 		/// Executes a simple currency transfer using the bridge account as the source
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::transfer())]
 		pub fn transfer(
 			origin: OriginFor<T>,
 			to: T::AccountId,
@@ -167,10 +176,10 @@ pub mod pallet {
 
 			// ERC20 SEL transfer
 			<T as Config>::Currency::transfer(
-					&source,
-					&to,
-					amount,
-					ExistenceRequirement::AllowDeath,
+				&source,
+				&to,
+				amount,
+				ExistenceRequirement::AllowDeath,
 			)?;
 
 			Ok(())

@@ -132,6 +132,7 @@ impl Config for Test {
 	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type OnFeeHandler = ();
+	type WeightInfo = ();
 }
 
 impl pallet_timestamp::Config for Test {
