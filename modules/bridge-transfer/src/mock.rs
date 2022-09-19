@@ -118,6 +118,7 @@ impl bridge::Config for Test {
 	type Proposal = Call;
 	type ChainId = TestChainId;
 	type ProposalLifetime = ProposalLifetime;
+	type WeightInfo = ();
 }
 
 parameter_types! {

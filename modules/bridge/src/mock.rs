@@ -109,6 +109,7 @@ impl Config for Test {
 	type Proposal = Call;
 	type ChainId = TestChainId;
 	type ProposalLifetime = ProposalLifetime;
+	type WeightInfo = ();
 }
 
 // pub const BRIDGE_ID: u64 =

@@ -12,6 +12,7 @@ impl module_bridge::Config for Runtime {
 	type Proposal = Call;
 	type ChainId = ChainId;
 	type ProposalLifetime = ProposalLifetime;
+	type WeightInfo = ();
 }
 
 parameter_types! {
