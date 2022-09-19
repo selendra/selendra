@@ -29,14 +29,15 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub mod weights;
 pub mod hashing;
+pub mod weights;
 
-pub use weights::WeightInfo;
 pub use pallet::*;
+pub use weights::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use super::*;
 	use codec::{Decode, Encode, EncodeLike};
 	pub use frame_support::{
 		pallet_prelude::*, traits::StorageVersion, weights::GetDispatchInfo, PalletId, Parameter,
@@ -49,7 +50,6 @@ pub mod pallet {
 		RuntimeDebug,
 	};
 	use sp_std::prelude::*;
-	use super::*;
 
 	const DEFAULT_RELAYER_THRESHOLD: u32 = 1;
 	const MODULE_ID: PalletId = PalletId(*b"phala/bg");
@@ -280,7 +280,6 @@ pub mod pallet {
 		///
 		/// This threshold is used to determine how many votes are required
 		/// before a proposal is executed.
-		///
 		#[pallet::weight(T::WeightInfo::set_threshold())]
 		pub fn set_threshold(origin: OriginFor<T>, threshold: u32) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
@@ -288,7 +287,6 @@ pub mod pallet {
 		}
 
 		/// Stores a method name on chain under an associated resource ID.
-		///
 		#[pallet::weight(T::WeightInfo::set_resource())]
 		pub fn set_resource(
 			origin: OriginFor<T>,
@@ -303,7 +301,6 @@ pub mod pallet {
 		///
 		/// After this call, bridge transfers with the associated resource ID will
 		/// be rejected.
-		///
 		#[pallet::weight(T::WeightInfo::remove_resource())]
 		pub fn remove_resource(origin: OriginFor<T>, id: ResourceId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
@@ -311,7 +308,6 @@ pub mod pallet {
 		}
 
 		/// Enables a chain ID as a source or destination for a bridge transfer.
-		///
 		#[pallet::weight(T::WeightInfo::whitelist_chain())]
 		pub fn whitelist_chain(origin: OriginFor<T>, id: ChainId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
@@ -319,7 +315,6 @@ pub mod pallet {
 		}
 
 		/// Adds a new relayer to the relayer set.
-		///
 		#[pallet::weight(T::WeightInfo::add_relayer())]
 		pub fn add_relayer(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
@@ -327,7 +322,6 @@ pub mod pallet {
 		}
 
 		/// Removes an existing relayer from the set.
-		///
 		#[pallet::weight(T::WeightInfo::remove_relayer())]
 		pub fn remove_relayer(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
@@ -338,7 +332,6 @@ pub mod pallet {
 		///
 		/// If a proposal with the given nonce and source chain ID does not already exist, it will
 		/// be created with an initial vote in favour from the caller.
-		///
 		#[pallet::weight(T::WeightInfo::acknowledge_proposal())]
 		pub fn acknowledge_proposal(
 			origin: OriginFor<T>,
@@ -356,7 +349,6 @@ pub mod pallet {
 		}
 
 		/// Commits a vote against a provided proposal.
-		///
 		#[pallet::weight(T::WeightInfo::reject_proposal())]
 		pub fn reject_proposal(
 			origin: OriginFor<T>,
@@ -377,7 +369,6 @@ pub mod pallet {
 		///
 		/// A proposal with enough votes will be either executed or cancelled, and the status
 		/// will be updated accordingly.
-		///
 		#[pallet::weight(T::WeightInfo::eval_vote_state())]
 		pub fn eval_vote_state(
 			origin: OriginFor<T>,

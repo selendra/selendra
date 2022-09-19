@@ -33,7 +33,7 @@
 // --execution=wasm
 // --wasm-execution=compiled
 // --heap-pages=4096
-// --output=./modules/asset-registry/src/weights.rs
+// --output=./modules/bridge/src/weights.rs
 // --template=./templates/module-weight-template.hbs
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
@@ -44,7 +44,7 @@
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
-/// Weight functions needed for module_asset_registry.
+/// Weight functions needed for module_bridge.
 pub trait WeightInfo {
 	fn set_threshold() -> Weight;
 	fn set_resource() -> Weight;
