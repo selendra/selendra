@@ -50,7 +50,7 @@ fn transfer_native() {
 		let recipient = vec![99];
 
 		assert_ok!(Bridge::whitelist_chain(Origin::root(), dest_chain.clone()));
-		assert_ok!(BridgeTransfer::change_fee(Origin::root(), 2, 2, dest_chain.clone()));
+		assert_ok!(BridgeTransfer::change_fee(Origin::root(), 2, dest_chain.clone()));
 
 		assert_noop!(
 			BridgeTransfer::transfer_native(

@@ -131,7 +131,7 @@ impl Config for Test {
 	type BridgeOrigin = bridge::EnsureBridge<Test>;
 	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
-	type OnFeePay = ();
+	type OnFeeHandler = ();
 }
 
 impl pallet_timestamp::Config for Test {
