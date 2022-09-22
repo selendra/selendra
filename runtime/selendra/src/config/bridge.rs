@@ -16,8 +16,7 @@ impl module_bridge::Config for Runtime {
 }
 
 parameter_types! {
-	// pub NativeTokenId: module_bridge::ResourceId = module_bridge::derive_resource_id(1, &sp_io::hashing::blake2_128(b"xSEL"));
-	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("00000000000000000000001BA648d8F62fD2eEd57CECE710f4ba2d6351f38E04");
+	pub NativeTokenResourceId: module_bridge::ResourceId = module_bridge::derive_resource_id(1, &sp_io::hashing::blake2_128(b"bSEL"));
 }
 
 impl module_bridge_transfer::Config for Runtime {
