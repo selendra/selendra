@@ -5,44 +5,10 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
-paste = "1.0"
-hex-literal = "0.3.1"
-bstringify = "0.1.2"
-enumflags2 = "0.6.3"
-serde = { version = "1.0.136", optional = true }
-num_enum = { version = "0.5.1", default-features = false }
-scale-info = { version = "2.1", default-features = false, features = ["derive"] }
-parity-util-mem = { version = "0.11", default-features = false, features = ["primitive-types"] }
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["max-encoded-len"] }
-
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
-
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
-
-[dev-dependencies]
-serde_json = { version = "1.0.68" }
+selendra-core-primitives = { path = "core", default-features = false }
 
 [features]
 default = ["std"]
 std = [
-	"serde",
-	"codec/std",
-	"num_enum/std",
-	"scale-info/std",
-	"enumflags2/serde",
-	"parity-util-mem/std",
-
-	"frame-support/std",
-
-	"sp-api/std",
-	"sp-core/std",
-	"sp-io/std",
-	"sp-runtime/std",
-	"sp-std/std",
+    "selendra-core-primitives/std",
 ]
-
-evm-tests = []
