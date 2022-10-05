@@ -44,8 +44,3 @@ impl module_transaction_payment::Config for Runtime {
 	type WeightInfo = weights::module_transaction_payment::WeightInfo<Runtime>;
 }
 
-impl module_transaction_pause::Config for Runtime {
-	type Event = Event;
-	type UpdateOrigin = EnsureRootOrThreeFourthsCouncil;
-	type WeightInfo = weights::module_transaction_pause::WeightInfo<Runtime>;
-}

@@ -1,5 +1,5 @@
 use crate::{
-	cent, config::evm::EvmTask, deposit, dollar, parameter_types, weights, AccountId, AccountIndex,
+	cent, deposit, dollar, parameter_types, weights, AccountId, AccountIndex,
 	Balance, Balances, BlakeTwo256, Call, DispatchableTask, EnsureRoot, Event, InstanceFilter,
 	Origin, OriginCaller, Perbill, Preimage, ProxyType, Runtime, RuntimeBlockWeights, RuntimeDebug,
 	Treasury, Weight, MINUTES, SEL,
@@ -55,25 +55,6 @@ impl pallet_recovery::Config for Runtime {
 	type WeightInfo = ();
 }
 
-define_combined_task! {
-	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
-	pub enum ScheduledTasks {
-		EvmTask(EvmTask<Runtime>),
-	}
-}
-
-parameter_types!(
-	// At least 2% of max block weight should remain before idle tasks are dispatched.
-	pub MinimumWeightRemainInBlock: Weight = RuntimeBlockWeights::get().max_block / 50;
-);
-
-impl module_idle_scheduler::Config for Runtime {
-	type Event = Event;
-	type WeightInfo = ();
-	type Task = ScheduledTasks;
-	type MinimumWeightRemainInBlock = MinimumWeightRemainInBlock;
-}
-
 parameter_types! {
 	pub IndexDeposit: Balance = 10 * dollar(SEL);
 }
@@ -121,29 +102,6 @@ impl pallet_identity::Config for Runtime {
 	type ForceOrigin = EnsureRootOrThreeFourthsCouncil;
 	type RegistrarOrigin = EnsureRootOrThreeFourthsCouncil;
 	type WeightInfo = weights::pallet_identity::WeightInfo<Runtime>;
-}
-
-/// Used the compare the privilege of an origin inside the scheduler.
-pub struct OriginPrivilegeCmp;
-
-impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
-	fn cmp_privilege(left: &OriginCaller, right: &OriginCaller) -> Option<Ordering> {
-		if left == right {
-			return Some(Ordering::Equal)
-		}
-
-		match (left, right) {
-			// Root is greater than anything.
-			(OriginCaller::system(frame_system::RawOrigin::Root), _) => Some(Ordering::Greater),
-			// Check which one has more yes votes.
-			(
-				OriginCaller::Council(pallet_collective::RawOrigin::Members(l_yes_votes, l_count)),
-				OriginCaller::Council(pallet_collective::RawOrigin::Members(r_yes_votes, r_count)),
-			) => Some((l_yes_votes * r_count).cmp(&(r_yes_votes * l_count))),
-			// For every other origin we don't care, as they are not used for `ScheduleOrigin`.
-			_ => None,
-		}
-	}
 }
 
 parameter_types! {
@@ -222,49 +180,6 @@ impl InstanceFilter<Call> for ProxyType {
 				c,
 				Call::Identity(pallet_identity::Call::provide_judgement { .. }) | Call::Utility(..)
 			),
-			ProxyType::Auction => {
-				matches!(c, Call::Auction(orml_auction::Call::bid { .. }))
-			},
-			ProxyType::Swap => {
-				matches!(
-					c,
-					Call::Dex(module_dex::Call::swap_with_exact_supply { .. }) |
-						Call::Dex(module_dex::Call::swap_with_exact_target { .. }) |
-						Call::AggregatedDex(
-							module_aggregated_dex::Call::swap_with_exact_supply { .. }
-						) | Call::AggregatedDex(
-						module_aggregated_dex::Call::swap_with_exact_target { .. }
-					)
-				)
-			},
-			ProxyType::Loan => {
-				matches!(
-					c,
-					Call::Funan(module_funan::Call::adjust_loan { .. }) |
-						Call::Funan(module_funan::Call::close_loan_has_debit_by_dex { .. }) |
-						Call::Funan(module_funan::Call::adjust_loan_by_debit_value { .. }) |
-						Call::Funan(module_funan::Call::transfer_debit { .. })
-				)
-			},
-			ProxyType::DexLiquidity => {
-				matches!(
-					c,
-					Call::Dex(module_dex::Call::add_liquidity { .. }) |
-						Call::Dex(module_dex::Call::remove_liquidity { .. })
-				)
-			},
-			ProxyType::StableAssetSwap => {
-				matches!(c, Call::StableAsset(module_stable_asset::Call::swap { .. }))
-			},
-			ProxyType::StableAssetLiquidity => {
-				matches!(
-					c,
-					Call::StableAsset(module_stable_asset::Call::mint { .. }) |
-						Call::StableAsset(module_stable_asset::Call::redeem_proportion { .. }) |
-						Call::StableAsset(module_stable_asset::Call::redeem_single { .. }) |
-						Call::StableAsset(module_stable_asset::Call::redeem_multi { .. })
-				)
-			},
 		}
 	}
 	fn is_superset(&self, o: &Self) -> bool {

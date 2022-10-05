@@ -9,8 +9,8 @@ pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for ToAuthor<R>
 where
 	R: pallet_balances::Config + pallet_authorship::Config,
-	<R as frame_system::Config>::AccountId: From<primitives::AccountId>,
-	<R as frame_system::Config>::AccountId: Into<primitives::AccountId>,
+	<R as frame_system::Config>::AccountId: From<primitives::v1::AccountId>,
+	<R as frame_system::Config>::AccountId: Into<primitives::v1::AccountId>,
 	<R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
 {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
@@ -24,8 +24,8 @@ pub struct DealWithFees<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
 where
 	R: pallet_balances::Config + pallet_authorship::Config,
-	<R as frame_system::Config>::AccountId: From<primitives::AccountId>,
-	<R as frame_system::Config>::AccountId: Into<primitives::AccountId>,
+	<R as frame_system::Config>::AccountId: From<primitives::v1::AccountId>,
+	<R as frame_system::Config>::AccountId: Into<primitives::v1::AccountId>,
 	<R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
 {
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {

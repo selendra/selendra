@@ -3,7 +3,7 @@ cargo-features = ["resolver"]
 [workspace]
 members = [
 	"primitives",
-	# "runtime/common",
+	"runtime/common",
 	# "runtime/selendra",
 	# "rpc",
 	# "node/service",
