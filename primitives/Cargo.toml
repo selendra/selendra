@@ -23,14 +23,6 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 
-# Local Modules
-module-evm-utility = { path = "../modules/evm-utility", default-features = false }
-module-evm-utility-macro = { path = "../modules/evm-utility/macro" }
-module-stable-asset = { default-features = false, path = "../modules/stable-asset" }
-
-# Orml library
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8", default-features = false }
-
 [dev-dependencies]
 serde_json = { version = "1.0.68" }
 
@@ -51,11 +43,6 @@ std = [
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
-
-	"module-evm-utility/std",
-	"module-stable-asset/std",
-
-	"orml-traits/std",
 ]
 
 evm-tests = []

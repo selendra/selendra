@@ -18,41 +18,17 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// pub mod bonding;
-pub mod currency;
-pub mod evm;
-pub mod nft;
-pub mod signature;
-pub mod task;
-pub mod testing;
-pub mod unchecked_extrinsic;
-pub use testing::*;
-
-use codec::{Decode, Encode, MaxEncodedLen};
-use scale_info::TypeInfo;
-use sp_core::U256;
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentifyAccount, Verify},
-	FixedU128, RuntimeDebug,
 };
-use sp_std::prelude::*;
-
-pub use currency::{CurrencyId, DexShare, TokenSymbol};
-pub use evm::{convert_decimals_from_evm, convert_decimals_to_evm};
-
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
-
-#[cfg(test)]
-mod tests;
 
 /// An index to a block.
 pub type BlockNumber = u32;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on
 /// the chain.
-pub type Signature = signature::SelendraMultiSignature;
+pub type Signature = sp_runtime::MultiSignature;
 
 /// Alias to the public key used for this chain, actually a `MultiSigner`. Like
 /// the signature, this also isn't a fixed size when encoded, as different
@@ -82,15 +58,6 @@ pub type Moment = u64;
 /// Balance of an account.
 pub type Balance = u128;
 
-/// Signed version of Balance
-pub type Amount = i128;
-
-/// Auction ID
-pub type AuctionId = u32;
-
-/// Share type
-pub type Share = u128;
-
 /// Header type.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 
@@ -102,110 +69,3 @@ pub type BlockId = generic::BlockId<Block>;
 
 /// Opaque, encoded, unchecked extrinsic.
 pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-
-/// Fee multiplier.
-pub type Multiplier = FixedU128;
-
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum AuthoritysOriginId {
-	Root,
-	Treasury,
-	FunanTreasury,
-	TreasuryReserve,
-}
-
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum DataProviderId {
-	Aggregated = 0,
-	Selendra = 1,
-}
-
-#[derive(
-	Encode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo, MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct TradingPair(CurrencyId, CurrencyId);
-
-impl TradingPair {
-	pub fn from_currency_ids(currency_id_a: CurrencyId, currency_id_b: CurrencyId) -> Option<Self> {
-		if currency_id_a.is_trading_pair_currency_id() &&
-			currency_id_b.is_trading_pair_currency_id() &&
-			currency_id_a != currency_id_b
-		{
-			if currency_id_a > currency_id_b {
-				Some(TradingPair(currency_id_b, currency_id_a))
-			} else {
-				Some(TradingPair(currency_id_a, currency_id_b))
-			}
-		} else {
-			None
-		}
-	}
-
-	pub fn first(&self) -> CurrencyId {
-		self.0
-	}
-
-	pub fn second(&self) -> CurrencyId {
-		self.1
-	}
-
-	pub fn dex_share_currency_id(&self) -> CurrencyId {
-		CurrencyId::join_dex_share_currency_id(self.first(), self.second())
-			.expect("shouldn't be invalid! guaranteed by construction")
-	}
-}
-
-impl Decode for TradingPair {
-	fn decode<I: codec::Input>(input: &mut I) -> sp_std::result::Result<Self, codec::Error> {
-		let (first, second): (CurrencyId, CurrencyId) = Decode::decode(input)?;
-		TradingPair::from_currency_ids(first, second)
-			.ok_or_else(|| codec::Error::from("invalid currency id"))
-	}
-}
-
-#[derive(
-	Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, MaxEncodedLen, TypeInfo,
-)]
-pub struct Position {
-	/// The amount of collateral.
-	pub collateral: Balance,
-	/// The amount of debit.
-	pub debit: Balance,
-}
-
-#[derive(
-	Encode,
-	Decode,
-	Eq,
-	PartialEq,
-	Copy,
-	Clone,
-	RuntimeDebug,
-	PartialOrd,
-	Ord,
-	MaxEncodedLen,
-	TypeInfo,
-)]
-#[repr(u8)]
-pub enum ReserveIdentifier {
-	CollatorSelection,
-	EvmStorageDeposit,
-	EvmDeveloperDeposit,
-	Funan,
-	Nft,
-	TransactionPayment,
-	TransactionPaymentDeposit,
-
-	// always the last, indicate number of variants
-	Count,
-}
-
-pub type CashYieldIndex = u128;
-
-/// Convert any type that implements Into<U256> into byte representation ([u8, 32])
-pub fn to_bytes<T: Into<U256>>(value: T) -> [u8; 32] {
-	Into::<[u8; 32]>::into(value.into())
-}
