@@ -6,12 +6,11 @@ members = [
 	"runtime/common",
 	"runtime/selendra",
 	"runtime/selendra/constants",
-	# "rpc",
-	# "node/service",
-	# "node/cli",
-	# "node",
-	# "modules/*",
-	# "inspect",
+	"rpc",
+	"node/service",
+	"node/cli",
+	"node",
+	"inspect",
 	# "utils/generate-bags"
 ]
 

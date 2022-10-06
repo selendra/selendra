@@ -79,7 +79,7 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 
 /// Constant values used within the runtime.
-use selendra_runtime_constants::{currency::*, fee::*, time::*};
+pub use selendra_runtime_constants::{currency::*, fee::*, time::*};
 
 // Weights used in the runtime.
 mod voter_bags;
@@ -154,6 +154,7 @@ impl Contains<Call> for BaseFilter {
 			Call::ElectionProviderMultiPhase(_) |
 			Call::Recovery(_) |
 			Call::CouncilMembership(_) |
+			Call::Sudo(_) |
 			Call::VoterList(_) => true,
 		}
 	}
@@ -1140,7 +1141,8 @@ impl InstanceFilter<Call> for ProxyType {
 					Call::Council(..) | Call::TechnicalCommittee(..) |
 					Call::PhragmenElection(..) |
 					Call::Treasury(..) | Call::Bounties(..) |
-					Call::Tips(..) | Call::Utility(..)
+					Call::Tips(..) | Call::Utility(..) |
+					Call::Sudo(..)
 			),
 			ProxyType::Staking => {
 				matches!(c, Call::Staking(..) | Call::Session(..) | Call::Utility(..))
@@ -1198,6 +1200,11 @@ impl pallet_recovery::Config for Runtime {
 	type WeightInfo = ();
 }
 
+impl pallet_sudo::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -1246,6 +1253,8 @@ construct_runtime! {
 		TechnicalMembership: pallet_membership::<Instance4>::{Pallet, Call, Storage, Event<T>, Config<T>} = 66,
 		PhragmenElection: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 67,
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 68,
+
+		Sudo: pallet_sudo::{Pallet, Call, Storage, Event<T>, Config<T>} = 200,
 	}
 }
 
