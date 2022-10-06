@@ -6,6 +6,7 @@ use runtime_common::EnsureRootOrHalfCouncil;
 use sp_runtime::{Percent, Permill};
 
 parameter_types! {
+	pub DataDepositPerByte: Balance = 10 * cent(SEL);
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub ProposalBondMinimum: Balance = 500 * dollar(SEL);
 	pub ProposalBondMaximum: Balance = 1000 * dollar(SEL);
