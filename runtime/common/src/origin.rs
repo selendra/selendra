@@ -3,8 +3,8 @@ use super::{AccountId, EitherOfDiverse, EnsureRoot};
 pub type CouncilInstance = pallet_collective::Instance1;
 pub type CouncilMembershipInstance = pallet_membership::Instance1;
 
-pub type TechnicalCommitteeInstance = pallet_collective::Instance2;
-pub type TechnicalMembershipInstance = pallet_membership::Instance2;
+pub type TechnicalCommitteeInstance = pallet_collective::Instance4;
+pub type TechnicalMembershipInstance = pallet_membership::Instance4;
 
 // General Council
 pub type EnsureRootOrAllCouncil = EitherOfDiverse<

@@ -4,6 +4,7 @@ cargo-features = ["resolver"]
 members = [
 	"primitives",
 	"runtime/common",
+	"runtime/selendra",
 	"runtime/selendra/constants",
 	# "rpc",
 	# "node/service",

@@ -6,9 +6,11 @@ edition = "2021"
 build = "build.rs"
 
 [dependencies]
+static_assertions = "1.1.0"
 smallvec = "1.4.0"
 hex-literal = { version = "0.3.1" }
 hex = { version = "0.4", default-features = false }
+log = { version = "0.4.17", default-features = false }
 serde = { version = "1.0.136", optional = true, default-features = false }
 libsecp256k1 = { version = "0.7", default-features = false, optional = true }
 scale-info = { version = "2.1", default-features = false, features = ["derive"] }
@@ -65,7 +67,7 @@ pallet-vesting = { git = "https://github.com/paritytech/substrate.git", branch =
 
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
-sp-authority-discovery = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.26" }
+sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false  }
 sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
@@ -78,8 +80,10 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
+sp-npos-elections = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 
 primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
+selendra-runtime-constants = { path = "constants", default-features = false }
 runtime-common = { path = "../common", default-features = false }
 
 [build-dependencies]
@@ -94,6 +98,7 @@ sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkad
 default = ["std"]
 no_std = []
 std = [
+	"log/std",
 	"codec/std",
 	"serde",
 	"hex/std",
@@ -152,8 +157,10 @@ std = [
 	"sp-std/std",
 	"sp-transaction-pool/std",
 	"sp-version/std",
+	"sp-npos-elections/std",
 
 	"primitives/std",
+	"selendra-runtime-constants/std",
 	"runtime-common/std",
 
 ]
@@ -239,10 +246,6 @@ try-runtime = [
 # to make it smaller like logging for example.
 on-chain-release-build = [
 	"sp-api/disable-logging",
-]
-with-ethereum-compatibility = [
-	"module-evm/with-ethereum-compatibility",
-	"runtime-common/with-ethereum-compatibility",
 ]
 
 # By default some types have documentation, `no-metadata-docs` allows to reduce the documentation

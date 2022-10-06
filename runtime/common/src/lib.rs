@@ -18,9 +18,9 @@
 
 //! Common runtime code for Selendra.
 
-use static_assertions::const_assert;
+#![cfg_attr(not(feature = "std"), no_std)]
 
-use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
+use static_assertions::const_assert;
 
 use frame_support::{
 	parameter_types,
@@ -28,13 +28,16 @@ use frame_support::{
 	weights::{constants::WEIGHT_PER_SECOND, Weight},
 };
 use frame_system::{limits, EnsureRoot};
-
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
+use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
 
 use primitives::v1::{AccountId, BlockNumber};
 
+pub mod elections;
 pub mod impls;
 pub mod origin;
+
+pub use origin::*;
 
 /// We assume that an on-initialize consumes 1% of the weight on average, hence a single extrinsic
 /// will not be allowed to consume more than `AvailableBlockRatio - 1%`.
