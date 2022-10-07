@@ -1,18 +1,20 @@
-// Copyright 2017-2020 Parity Technologies (UK) Ltd.
 // This file is part of Selendra.
 
-// Selendra is free software: you can redistribute it and/or modify
+// Copyright (C) 2021-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Selendra is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! The Selendra runtime. This can be compiled with `#[no_std]`, ready for Wasm.
 
@@ -20,37 +22,13 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-use pallet_transaction_payment::CurrencyAdapter;
-use runtime_common::{
-	impl_runtime_weights, impls::DealWithFees, prod_or_fast, BlockHashCount, BlockLength,
-	CouncilInstance, CouncilMembershipInstance, CurrencyToVote, EnsureRootOrAllCouncil,
-	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrThreeFourthsCouncil,
-	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, SlowAdjustingFeeUpdate,
-	TechnicalCommitteeInstance, TechnicalMembershipInstance,
-};
+use codec::{Decode, Encode};
+use static_assertions::const_assert;
 
-use codec::{Decode, Encode, MaxEncodedLen};
-use frame_election_provider_support::{
-	generate_solution_type, onchain, BalancingConfig, ElectionDataProvider, SequentialPhragmen,
-};
-use frame_support::{
-	construct_runtime,
-	pallet_prelude::{ConstU32, Get},
-	parameter_types,
-	traits::{Contains, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, PrivilegeCmp},
-	weights::ConstantMultiplier,
-	PalletId, RuntimeDebug,
-};
-use frame_system::EnsureRoot;
-use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId};
-use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
-use pallet_session::historical as session_historical;
-use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
-use primitives::v1::{
-	AccountId, AccountIndex, Balance, BlockNumber, Hash, Moment, Nonce, Signature,
-};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::OpaqueMetadata;
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str,
 	curve::PiecewiseLinear,
@@ -67,23 +45,51 @@ use sp_std::{cmp::Ordering, prelude::*};
 #[cfg(any(feature = "std", test))]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use static_assertions::const_assert;
 
+use frame_election_provider_support::{
+	generate_solution_type, onchain, BalancingConfig, ElectionDataProvider, SequentialPhragmen,
+};
+use frame_support::{
+	construct_runtime,
+	pallet_prelude::{ConstU32, Get},
+	parameter_types,
+	traits::{KeyOwnerProofSystem, LockIdentifier, PrivilegeCmp},
+	weights::ConstantMultiplier,
+	PalletId, RuntimeDebug,
+};
 pub use frame_system::Call as SystemCall;
+use frame_system::EnsureRoot;
+
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_election_provider_multi_phase::Call as EPMCall;
+use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId};
+use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
+use pallet_session::historical as session_historical;
 #[cfg(feature = "std")]
 pub use pallet_staking::StakerStatus;
 pub use pallet_timestamp::Call as TimestampCall;
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
+use pallet_transaction_payment::{CurrencyAdapter, FeeDetails, RuntimeDispatchInfo};
 
+use runtime_common::{
+	impl_runtime_weights, impls::DealWithFees, prod_or_fast, BlockHashCount, BlockLength,
+	CouncilInstance, CouncilMembershipInstance, CurrencyToVote, EnsureRootOrAllCouncil,
+	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrThreeFourthsCouncil,
+	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, SlowAdjustingFeeUpdate,
+	TechnicalCommitteeInstance, TechnicalMembershipInstance,
+};
+
+use primitives::v1::{
+	AccountId, AccountIndex, Balance, BlockNumber, Hash, Moment, Nonce, Signature,
+};
 /// Constant values used within the runtime.
 pub use selendra_runtime_constants::{currency::*, fee::*, time::*};
 
 // Weights used in the runtime.
+mod filters;
 mod voter_bags;
 mod weights;
+
+use filters::{BaseFilter, ProxyType};
 
 impl_runtime_weights!(selendra_runtime_constants);
 
@@ -119,45 +125,6 @@ pub const BABE_GENESIS_EPOCH_CONFIG: sp_consensus_babe::BabeEpochConfiguration =
 #[cfg(any(feature = "std", test))]
 pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
-}
-
-pub struct BaseFilter;
-impl Contains<Call> for BaseFilter {
-	fn contains(call: &Call) -> bool {
-		match call {
-			Call::Democracy(_) |
-			Call::NominationPools(_) |
-			Call::Council(_) |
-			Call::TechnicalCommittee(_) |
-			Call::TechnicalMembership(_) |
-			Call::Treasury(_) |
-			Call::PhragmenElection(_) |
-			Call::System(_) |
-			Call::Scheduler(_) |
-			Call::Preimage(_) |
-			Call::Indices(_) |
-			Call::Babe(_) |
-			Call::Timestamp(_) |
-			Call::Balances(_) |
-			Call::Authorship(_) |
-			Call::Staking(_) |
-			Call::Session(_) |
-			Call::Grandpa(_) |
-			Call::ImOnline(_) |
-			Call::Utility(_) |
-			Call::Vesting(_) |
-			Call::Identity(_) |
-			Call::Proxy(_) |
-			Call::Multisig(_) |
-			Call::Bounties(_) |
-			Call::Tips(_) |
-			Call::ElectionProviderMultiPhase(_) |
-			Call::Recovery(_) |
-			Call::CouncilMembership(_) |
-			Call::Sudo(_) |
-			Call::VoterList(_) => true,
-		}
-	}
 }
 
 parameter_types! {
@@ -1031,142 +998,6 @@ parameter_types! {
 	pub const MaxPending: u16 = 32;
 }
 
-/// The type used to represent the kinds of proxying allowed.
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Ord,
-	PartialOrd,
-	Encode,
-	Decode,
-	RuntimeDebug,
-	MaxEncodedLen,
-	scale_info::TypeInfo,
-)]
-pub enum ProxyType {
-	Any = 0,
-	NonTransfer = 1,
-	Governance = 2,
-	Staking = 3,
-	// Skip 4 as it is now removed (was SudoBalances)
-	IdentityJudgement = 5,
-	CancelProxy = 6,
-}
-
-#[cfg(test)]
-mod proxy_type_tests {
-	use super::*;
-
-	#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug)]
-	pub enum OldProxyType {
-		Any,
-		NonTransfer,
-		Governance,
-		Staking,
-		SudoBalances,
-		IdentityJudgement,
-	}
-
-	#[test]
-	fn proxy_type_decodes_correctly() {
-		for (i, j) in vec![
-			(OldProxyType::Any, ProxyType::Any),
-			(OldProxyType::NonTransfer, ProxyType::NonTransfer),
-			(OldProxyType::Governance, ProxyType::Governance),
-			(OldProxyType::Staking, ProxyType::Staking),
-			(OldProxyType::IdentityJudgement, ProxyType::IdentityJudgement),
-		]
-		.into_iter()
-		{
-			assert_eq!(i.encode(), j.encode());
-		}
-		assert!(ProxyType::decode(&mut &OldProxyType::SudoBalances.encode()[..]).is_err());
-	}
-}
-
-impl Default for ProxyType {
-	fn default() -> Self {
-		Self::Any
-	}
-}
-impl InstanceFilter<Call> for ProxyType {
-	fn filter(&self, c: &Call) -> bool {
-		match self {
-			ProxyType::Any => true,
-			ProxyType::NonTransfer => matches!(
-				c,
-				Call::System(..) |
-				Call::Scheduler(..) |
-				Call::Babe(..) |
-				Call::Timestamp(..) |
-				Call::Indices(pallet_indices::Call::claim{..}) |
-				Call::Indices(pallet_indices::Call::free{..}) |
-				Call::Indices(pallet_indices::Call::freeze{..}) |
-				// Specifically omitting Indices `transfer`, `force_transfer`
-				// Specifically omitting the entire Balances pallet
-				Call::Authorship(..) |
-				Call::Staking(..) |
-				Call::Session(..) |
-				Call::Grandpa(..) |
-				Call::ImOnline(..) |
-				Call::Democracy(..) |
-				Call::Council(..) |
-				Call::TechnicalCommittee(..) |
-				Call::PhragmenElection(..) |
-				Call::TechnicalMembership(..) |
-				Call::Treasury(..) |
-				Call::Bounties(..) |
-				Call::Tips(..) |
-				Call::Vesting(pallet_vesting::Call::vest{..}) |
-				Call::Vesting(pallet_vesting::Call::vest_other{..}) |
-				Call::Recovery(pallet_recovery::Call::as_recovered {..}) |
-				Call::Recovery(pallet_recovery::Call::vouch_recovery {..}) |
-				Call::Recovery(pallet_recovery::Call::claim_recovery {..}) |
-				Call::Recovery(pallet_recovery::Call::close_recovery {..}) |
-				Call::Recovery(pallet_recovery::Call::remove_recovery {..}) |
-				Call::Recovery(pallet_recovery::Call::cancel_recovered {..}) |
-				// Specifically omitting Vesting `vested_transfer`, and `force_vested_transfer`
-				Call::Utility(..) |
-				Call::Identity(..) |
-				Call::Proxy(..) |
-				Call::Multisig(..) |
-				Call::VoterList(..) |
-				Call::CouncilMembership(_)
-			),
-			ProxyType::Governance => matches!(
-				c,
-				Call::Democracy(..) |
-					Call::Council(..) | Call::TechnicalCommittee(..) |
-					Call::PhragmenElection(..) |
-					Call::Treasury(..) | Call::Bounties(..) |
-					Call::Tips(..) | Call::Utility(..) |
-					Call::Sudo(..)
-			),
-			ProxyType::Staking => {
-				matches!(c, Call::Staking(..) | Call::Session(..) | Call::Utility(..))
-			},
-			ProxyType::IdentityJudgement => matches!(
-				c,
-				Call::Identity(pallet_identity::Call::provide_judgement { .. }) | Call::Utility(..)
-			),
-			ProxyType::CancelProxy => {
-				matches!(c, Call::Proxy(pallet_proxy::Call::reject_announcement { .. }))
-			},
-		}
-	}
-	fn is_superset(&self, o: &Self) -> bool {
-		match (self, o) {
-			(x, y) if x == y => true,
-			(ProxyType::Any, _) => true,
-			(_, ProxyType::Any) => false,
-			(ProxyType::NonTransfer, _) => true,
-			_ => false,
-		}
-	}
-}
-
 impl pallet_proxy::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
@@ -1249,8 +1080,8 @@ construct_runtime! {
 		// Governance stuff.
 		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 61,
 		CouncilMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 62,
-		TechnicalCommittee: pallet_collective::<Instance4>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 65,
-		TechnicalMembership: pallet_membership::<Instance4>::{Pallet, Call, Storage, Event<T>, Config<T>} = 66,
+		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 65,
+		TechnicalMembership: pallet_membership::<Instance2>::{Pallet, Call, Storage, Event<T>, Config<T>} = 66,
 		PhragmenElection: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 67,
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 68,
 
