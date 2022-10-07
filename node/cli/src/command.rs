@@ -20,7 +20,7 @@ use crate::{Cli, Subcommand};
 use frame_benchmarking_cli::*;
 use sc_cli::{ChainSpec, Result, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
-use selendra_primitives::Block;
+use selendra_primitives::v1::Block;
 use service::{chain_spec, new_partial, ExecutorDispatch, FullClient};
 use sp_core::crypto::Ss58AddressFormat;
 

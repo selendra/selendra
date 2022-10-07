@@ -19,96 +19,51 @@
 //! Common runtime code for Selendra.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![recursion_limit = "256"]
 
-use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::{
-	parameter_types,
-	traits::{EitherOfDiverse, Get},
-	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_MILLIS},
-		DispatchClass, Weight,
-	},
-	RuntimeDebug,
-};
-use frame_system::{limits, EnsureRoot};
-use module_evm::GenesisAccount;
-use orml_traits::GetByKey;
-use primitives::{evm::is_system_contract, Balance, CurrencyId, Nonce};
-use scale_info::TypeInfo;
-use sp_core::{Bytes, H160};
-use sp_runtime::{
-	traits::Convert, transaction_validity::TransactionPriority, FixedPointNumber, Perbill,
-	Perquintill,
-};
-use sp_std::{collections::btree_map::BTreeMap, marker::PhantomData, prelude::*};
 use static_assertions::const_assert;
 
-pub use check_nonce::CheckNonce;
-pub use module_support::{ExchangeRate, PrecompileCallerFilter, Price, Rate, Ratio};
-pub use precompile::{
-	AllPrecompiles, DEXPrecompile, EVMPrecompile, MultiCurrencyPrecompile, NFTPrecompile,
-	OraclePrecompile, SchedulePrecompile, StableAssetPrecompile,
+use frame_support::{
+	parameter_types,
+	traits::{ConstU32, EitherOfDiverse},
+	weights::{constants::WEIGHT_PER_SECOND, Weight},
 };
-pub use primitives::{
-	currency::{TokenInfo, DAI, DOT, KSM, KUSD, LSEL, RENBTC, SEL},
-	AccountId, BlockNumber, Multiplier,
-};
+use frame_system::{limits, EnsureRoot};
+use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
+use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
 
-use module_transaction_payment::TargetedFeeAdjustment;
+use primitives::v1::{AccountId, BlockNumber};
 
-pub mod bench;
-pub mod check_nonce;
-pub mod currency;
-pub mod evm;
+pub mod elections;
 pub mod impls;
 pub mod origin;
-pub mod precompile;
 
-pub use currency::*;
-pub use evm::*;
 pub use origin::*;
 
-mod gas_to_weight_ratio;
-#[cfg(test)]
-mod mock;
-
-pub type TimeStampedPrice = orml_oracle::TimestampedValue<Price, primitives::Moment>;
-
-// TODO: somehow estimate this value. Start from a conservative value.
-pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
-/// The ratio that `Normal` extrinsics should occupy. Start from a conservative value.
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(70);
-/// Parachain only have 0.5 second of computation time.
-pub const MAXIMUM_BLOCK_WEIGHT: Weight = 500 * WEIGHT_PER_MILLIS;
+/// We assume that an on-initialize consumes 1% of the weight on average, hence a single extrinsic
+/// will not be allowed to consume more than `AvailableBlockRatio - 1%`.
+pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(1);
+/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
+/// by  Operational  extrinsics.
+pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+/// We allow for 2 seconds of compute with a 6 second average block time.
+pub const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
 
 const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct());
 
+/// Parameterized slow adjusting fee updated based on
+/// https://research.web3.foundation/en/latest/polkadot/overview/2-token-economics.html#-2.-slow-adjusting-mechanism
+pub type SlowAdjustingFeeUpdate<R> =
+	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+
+/// The type used for currency conversion.
+///
+/// This must only be used as long as the balance type is `u128`.
+pub type CurrencyToVote = frame_support::traits::U128CurrencyToVote;
+static_assertions::assert_eq_size!(primitives::v1::Balance, u128);
+
+// Common constants used in all runtimes.
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
-	/// Maximum length of block. Up to 5MB.
-	pub RuntimeBlockLength: limits::BlockLength =
-		limits::BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
-	/// Block weights base values and limits.
-	pub RuntimeBlockWeights: limits::BlockWeights = limits::BlockWeights::builder()
-		.base_block(BlockExecutionWeight::get())
-		.for_class(DispatchClass::all(), |weights| {
-			weights.base_extrinsic = ExtrinsicBaseWeight::get();
-		})
-		.for_class(DispatchClass::Normal, |weights| {
-			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
-		})
-		.for_class(DispatchClass::Operational, |weights| {
-			weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
-			// Operational transactions have an extra reserved space, so that they
-			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
-			weights.reserved = Some(
-				MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT,
-			);
-		})
-		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
-		.build_or_panic();
-
 	/// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
 	/// than this will decrease the weight and more will increase.
 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
@@ -118,72 +73,57 @@ parameter_types! {
 	/// Minimum amount of the multiplier. This value cannot be too low. A test case should ensure
 	/// that combined with `AdjustmentVariable`, we can recover from the minimum.
 	/// See `multiplier_can_grow_from_zero`.
-	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
-
-	// Priority of unsigned transactions
-	// Operational = final_fee * OperationalFeeMultiplier / TipPerWeightStep * max_tx_per_block + (tip + 1) / TipPerWeightStep * max_tx_per_block
-	// final_fee_min = base_fee + len_fee + adjusted_weight_fee + tip
-	// priority_min = final_fee * OperationalFeeMultiplier / TipPerWeightStep * max_tx_per_block + (tip + 1) / TipPerWeightStep * max_tx_per_block
-	//              = final_fee_min * OperationalFeeMultiplier / TipPerWeightStep
-	// Ensure Inherent -> Operational tx -> Unsigned tx -> Signed normal tx
-	// Ensure `max_normal_priority < MinOperationalPriority / 2`
-	pub TipPerWeightStep: Balance = cent(SEL); // 0.01 SEL
-	pub MaxTipsOfPriority: Balance = 10_000 * dollar(SEL); // 10_000 SEL
-	pub const OperationalFeeMultiplier: u64 = 100_000_000_000_000u64;
-	// MinOperationalPriority = final_fee_min * OperationalFeeMultiplier / TipPerWeightStep
-	MinOperationalPriority: TransactionPriority = (1_500_000_000u128 * OperationalFeeMultiplier::get() as u128 / TipPerWeightStep::get())
-		.try_into()
-		.expect("Check that there is no overflow here");
-	pub CdpEngineUnsignedPriority: TransactionPriority = MinOperationalPriority::get() - 1000;
-	pub AuctionManagerUnsignedPriority: TransactionPriority = MinOperationalPriority::get() - 2000;
-	pub RenvmBridgeUnsignedPriority: TransactionPriority = MinOperationalPriority::get() - 3000;
-
-	/// A limit for off-chain phragmen unsigned solution submission.
-	///
-	/// We want to keep it as high as possible, but can't risk having it reject,
-	/// so we always subtract the base block execution weight.
-	pub OffchainSolutionWeightLimit: Weight = RuntimeBlockWeights::get()
-		.get(DispatchClass::Normal)
-		.max_extrinsic
-		.expect("Normal extrinsics have weight limit configured by default; qed")
-		.saturating_sub(BlockExecutionWeight::get());
+	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 10u128);
+	/// Maximum length of block. Up to 5MB.
+	pub BlockLength: limits::BlockLength = limits::BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 }
 
-pub type SlowAdjustingFeeUpdate<R> =
-	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+/// Implements the weight types for a runtime.
+/// It expects the passed runtime constants to contain a `weights` module.
+/// The generated weight types were formerly part of the common
+/// runtime but are now runtime dependant.
+#[macro_export]
+macro_rules! impl_runtime_weights {
+	($runtime:ident) => {
+		use frame_support::weights::{DispatchClass, Weight};
+		use frame_system::limits;
+		use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
+		pub use runtime_common::{
+			impl_elections_weights, AVERAGE_ON_INITIALIZE_RATIO, MAXIMUM_BLOCK_WEIGHT,
+			NORMAL_DISPATCH_RATIO,
+		};
+		use sp_runtime::{FixedPointNumber, Perquintill};
 
-/// The type used to represent the kinds of proxying allowed.
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Ord,
-	PartialOrd,
-	Encode,
-	Decode,
-	RuntimeDebug,
-	MaxEncodedLen,
-	TypeInfo,
-)]
-pub enum ProxyType {
-	Any,
-	CancelProxy,
-	Governance,
-	Staking,
-	IdentityJudgement,
-	Auction,
-	Swap,
-	Loan,
-	DexLiquidity,
-	StableAssetSwap,
-	StableAssetLiquidity,
-}
+		// Implement the weight types of the elections module.
+		impl_elections_weights!($runtime);
 
-impl Default for ProxyType {
-	fn default() -> Self {
-		Self::Any
-	}
+		// Expose the weight from the runtime constants module.
+		pub use $runtime::weights::{
+			BlockExecutionWeight, ExtrinsicBaseWeight, ParityDbWeight, RocksDbWeight,
+		};
+
+		parameter_types! {
+			/// Block weights base values and limits.
+			pub BlockWeights: limits::BlockWeights = limits::BlockWeights::builder()
+				.base_block($runtime::weights::BlockExecutionWeight::get())
+				.for_class(DispatchClass::all(), |weights| {
+					weights.base_extrinsic = $runtime::weights::ExtrinsicBaseWeight::get();
+				})
+				.for_class(DispatchClass::Normal, |weights| {
+					weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
+				})
+				.for_class(DispatchClass::Operational, |weights| {
+					weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
+					// Operational transactions have an extra reserved space, so that they
+					// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
+					weights.reserved = Some(
+						MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT,
+					);
+				})
+				.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
+				.build_or_panic();
+		}
+	};
 }
 
 /// Macro to set a value (e.g. when using the `parameter_types` macro) to either a production value
@@ -197,6 +137,7 @@ impl Default for ProxyType {
 /// 	pub LaunchPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1, "KSM_LAUNCH_PERIOD");
 /// 	pub const VotingPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1 * MINUTES);
 /// }
+/// ```
 #[macro_export]
 macro_rules! prod_or_fast {
 	($prod:expr, $test:expr) => {
@@ -215,25 +156,9 @@ macro_rules! prod_or_fast {
 	};
 }
 
+/// A reasonable benchmarking config for staking pallet.
 pub struct StakingBenchmarkingConfig;
 impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
-	type MaxNominators = frame_support::traits::ConstU32<1000>;
-	type MaxValidators = frame_support::traits::ConstU32<1000>;
-}
-
-#[cfg(test)]
-mod tests {
-	use super::*;
-
-	#[test]
-	fn check_max_normal_priority() {
-		let max_normal_priority: TransactionPriority = (MaxTipsOfPriority::get() /
-			TipPerWeightStep::get() *
-			RuntimeBlockWeights::get()
-				.max_block
-				.min(*RuntimeBlockLength::get().max.get(DispatchClass::Normal) as u64) as u128)
-			.try_into()
-			.expect("Check that there is no overflow here");
-		assert!(max_normal_priority < MinOperationalPriority::get() / 2); // 50%
-	}
+	type MaxValidators = ConstU32<1000>;
+	type MaxNominators = ConstU32<1000>;
 }

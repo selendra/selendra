@@ -23,7 +23,7 @@
 
 use std::sync::Arc;
 
-use primitives::{AccountId, Balance, Block, BlockNumber, CurrencyId, DataProviderId, Hash, Nonce};
+use primitives::v1::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
 use sc_client_api::AuxStore;
 use sc_consensus_babe::{Config, Epoch};
 use sc_consensus_epochs::SharedEpochChanges;
@@ -47,13 +47,6 @@ use sc_rpc::dev::{Dev, DevApiServer};
 use sc_sync_state_rpc::{SyncState, SyncStateApiServer};
 use substrate_frame_rpc_system::{System, SystemApiServer};
 use substrate_state_trie_migration_rpc::{StateMigration, StateMigrationApiServer};
-
-/// orml rpc
-use orml_oracle_rpc::{Oracle, OracleApiServer};
-use orml_tokens_rpc::{Tokens, TokensApiServer};
-
-/// module rpc
-pub use evm_rpc::{EVMApiServer, EVMRuntimeRPCApi, EVM};
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpsee::RpcModule<()>;
@@ -117,14 +110,6 @@ where
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: BabeApi<Block>,
-	C::Api: orml_oracle_rpc::OracleRuntimeApi<
-		Block,
-		DataProviderId,
-		CurrencyId,
-		runtime_common::TimeStampedPrice,
-	>,
-	C::Api: orml_tokens_rpc::TokensRuntimeApi<Block, CurrencyId, Balance>,
-	C::Api: EVMRuntimeRPCApi<Block, Balance>,
 	C::Api: BlockBuilder<Block>,
 	P: TransactionPool + Sync + Send + 'static,
 	SC: SelectChain<Block> + 'static,
@@ -145,13 +130,6 @@ where
 
 	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
 	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
-
-	// Making synchronous calls in light client freezes the browser currently,
-	// more context: https://github.com/paritytech/substrate/pull/3480
-	// These RPCs should use an asynchronous caller instead.
-	module.merge(Oracle::new(client.clone()).into_rpc())?;
-	module.merge(Tokens::new(client.clone()).into_rpc())?;
-	module.merge(EVM::new(client.clone(), deny_unsafe).into_rpc())?;
 
 	module.merge(
 		Babe::new(

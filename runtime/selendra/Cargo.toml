@@ -1,14 +1,16 @@
 [package]
 name = "selendra-runtime"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 build = "build.rs"
 
 [dependencies]
+static_assertions = "1.1.0"
 smallvec = "1.4.0"
 hex-literal = { version = "0.3.1" }
 hex = { version = "0.4", default-features = false }
+log = { version = "0.4.17", default-features = false }
 serde = { version = "1.0.136", optional = true, default-features = false }
 libsecp256k1 = { version = "0.7", default-features = false, optional = true }
 scale-info = { version = "2.1", default-features = false, features = ["derive"] }
@@ -28,7 +30,7 @@ frame-try-runtime = { git = "https://github.com/paritytech/substrate", branch = 
 pallet-authority-discovery = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26", default-features = false }
 pallet-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false}
 pallet-babe = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26", default-features = false }
-pallet-bags-list = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.26" }
+pallet-bags-list = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 pallet-bounties = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
@@ -37,20 +39,20 @@ pallet-elections-phragmen = { git = "https://github.com/paritytech/substrate", b
 pallet-election-provider-multi-phase = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26", default-features = false }
 pallet-election-provider-support-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26", default-features = false, optional = true }
 pallet-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26", default-features = false }
-pallet-identity = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.26" }
+pallet-identity = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
 pallet-im-online = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26", default-features = false }
 pallet-indices = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 pallet-membership = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 pallet-multisig = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
-pallet-nomination-pools = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.26" }
-pallet-nomination-pools-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, optional = true , branch = "polkadot-v0.9.26" }
+pallet-nomination-pools = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+pallet-nomination-pools-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, optional = true, branch = "polkadot-v0.9.26" }
 pallet-offences = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 pallet-offences-benchmarking  = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false, optional = true }
 pallet-preimage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 pallet-proxy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 pallet-recovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 pallet-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false, features = ["historical"] }
-pallet-session-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, optional = true , branch = "polkadot-v0.9.26" }
+pallet-session-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, optional = true, branch = "polkadot-v0.9.26" }
 pallet-scheduler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 pallet-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 pallet-staking-reward-curve = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
@@ -65,7 +67,7 @@ pallet-vesting = { git = "https://github.com/paritytech/substrate.git", branch =
 
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
-sp-authority-discovery = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.26" }
+sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false  }
 sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
@@ -78,46 +80,10 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
-
-# orml
-orml-auction = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8" , default-features = false }
-orml-authority = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8", default-features = false }
-orml-benchmarking = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8", default-features = false, optional = true }
-orml-nft = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8", default-features = false }
-orml-oracle = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8", default-features = false }
-orml-oracle-rpc-runtime-api = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8", default-features = false }
-orml-rewards = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8", default-features = false }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8", default-features = false }
-orml-tokens-rpc-runtime-api = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8", default-features = false }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "8c625a5ab43c1c56cdeed5f8d814a891566d4cf8", default-features = false }
-
-# modules
-module-aggregated-dex = { path = "../../modules/aggregated-dex", default-features = false }
-module-asset-registry = { path = "../../modules/asset-registry", default-features = false }
-module-auction-manager = { path = "../../modules/auction-manager", default-features = false }
-module-cdp-engine = { path = "../../modules/cdp-engine", default-features = false }
-module-cdp-treasury = { path = "../../modules/cdp-treasury", default-features = false }
-module-currencies = { path = "../../modules/currencies", default-features = false }
-module-dex = { path = "../../modules/dex", default-features = false }
-module-dex-oracle = { path = "../../modules/dex-oracle", default-features = false }
-module-emergency-shutdown = { path = "../../modules/emergency-shutdown", default-features = false }
-module-evm = { path = "../../modules/evm", default-features = false }
-module-evm-accounts = { path = "../../modules/evm-accounts", default-features = false }
-module-evm-bridge = { path = "../../modules/evm-bridge", default-features = false }
-module-evm-rpc-runtime-api = { path = "../../modules/evm/rpc/runtime_api",  default-features = false }
-module-evm-utility = { path = "../../modules/evm-utility", default-features = false }
-module-funan = { path = "../../modules/funan", default-features = false }
-module-idle-scheduler = { path = "../../modules/idle-scheduler", default-features = false }
-module-incentives = { path = "../../modules/incentives", default-features = false }
-module-loans = { path = "../../modules/loans", default-features = false }
-module-nft = { path = "../../modules/nft", default-features = false }
-module-prices = { path = "../../modules/prices", default-features = false }
-module-stable-asset = { default-features = false, path = "../../modules/stable-asset" }
-module-support = { path = "../../modules/support", default-features = false }
-module-transaction-pause = { path = "../../modules/transaction-pause", default-features = false }
-module-transaction-payment = { path = "../../modules/transaction-payment", default-features = false }
+sp-npos-elections = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 
 primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
+selendra-runtime-constants = { path = "constants", default-features = false }
 runtime-common = { path = "../common", default-features = false }
 
 [build-dependencies]
@@ -132,6 +98,7 @@ sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkad
 default = ["std"]
 no_std = []
 std = [
+	"log/std",
 	"codec/std",
 	"serde",
 	"hex/std",
@@ -190,43 +157,10 @@ std = [
 	"sp-std/std",
 	"sp-transaction-pool/std",
 	"sp-version/std",
-
-	"orml-auction/std",
-	"orml-authority/std",
-	"orml-benchmarking/std",
-	"orml-nft/std",
-	"orml-oracle-rpc-runtime-api/std",
-	"orml-oracle/std",
-	"orml-rewards/std",
-	"orml-tokens-rpc-runtime-api/std",
-	"orml-tokens/std",
-	"orml-traits/std",
-
-	"module-aggregated-dex/std",
-	"module-asset-registry/std",
-	"module-auction-manager/std",
-	"module-cdp-engine/std",
-	"module-cdp-treasury/std",
-	"module-currencies/std",
-	"module-dex/std",
-	"module-dex-oracle/std",
-	"module-emergency-shutdown/std",
-	"module-evm/std",
-	"module-evm-accounts/std",
-	"module-evm-bridge/std",
-	"module-evm-rpc-runtime-api/std",
-	"module-evm-utility/std",
-	"module-funan/std",
-	"module-idle-scheduler/std",
-	"module-incentives/std",
-	"module-loans/std",
-	"module-nft/std",
-	"module-prices/std",
-	"module-support/std",
-	"module-transaction-pause/std",
-	"module-transaction-payment/std",
+	"sp-npos-elections/std",
 
 	"primitives/std",
+	"selendra-runtime-constants/std",
 	"runtime-common/std",
 
 ]
@@ -237,7 +171,6 @@ runtime-benchmarks = [
 	"frame-system-benchmarking",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
-
 
 	"pallet-babe/runtime-benchmarks",
 	"pallet-bags-list/runtime-benchmarks",
@@ -269,13 +202,6 @@ runtime-benchmarks = [
 
 	"sp-api/disable-logging",
 	"sp-runtime/runtime-benchmarks",
-
-	"orml-authority/runtime-benchmarks",
-	"orml-benchmarking",
-	"orml-tokens/runtime-benchmarks",
-
-	"module-evm-accounts/runtime-benchmarks",
-	"module-nft/runtime-benchmarks",
 ]
 
 try-runtime = [
@@ -313,32 +239,6 @@ try-runtime = [
 	"pallet-treasury/try-runtime",
 	"pallet-utility/try-runtime",
 	"pallet-vesting/try-runtime",
-
-	"orml-auction/try-runtime",
-	"orml-authority/try-runtime",
-	"orml-oracle/try-runtime",
-	"orml-tokens/try-runtime",
-	"orml-rewards/try-runtime",
-	"orml-nft/try-runtime",
-
-	"module-transaction-pause/try-runtime",
-	"module-transaction-payment/try-runtime",
-	"module-asset-registry/try-runtime",
-	"module-auction-manager/try-runtime",
-	"module-cdp-engine/try-runtime",
-	"module-cdp-treasury/try-runtime",
-	"module-currencies/try-runtime",
-	"module-dex/try-runtime",
-	"module-dex-oracle/try-runtime",
-	"module-emergency-shutdown/try-runtime",
-	"module-evm/try-runtime",
-	"module-evm-accounts/try-runtime",
-	"module-evm-bridge/try-runtime",
-	"module-funan/try-runtime",
-	"module-loans/try-runtime",
-	"module-nft/try-runtime",
-	"module-prices/try-runtime",
-	"module-incentives/try-runtime",
 ]
 
 # A feature that should be enabled when the runtime should be build for on-chain
@@ -347,14 +247,11 @@ try-runtime = [
 on-chain-release-build = [
 	"sp-api/disable-logging",
 ]
-with-ethereum-compatibility = [
-	"module-evm/with-ethereum-compatibility",
-	"runtime-common/with-ethereum-compatibility",
-]
 
 # By default some types have documentation, `no-metadata-docs` allows to reduce the documentation
 # in the metadata.
 no-metadata-docs = ["frame-support/no-metadata-docs"]
+
 # By default some types have documentation, `full-metadata-docs` allows to add documentation to
 # more types in the metadata.
 full-metadata-docs = ["frame-support/full-metadata-docs"]

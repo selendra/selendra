@@ -18,30 +18,6 @@
 
 //! A list of the different weight modules for our runtime.
 #![allow(clippy::unnecessary_cast)]
-
-pub mod module_asset_registry;
-pub mod module_auction_manager;
-pub mod module_cdp_engine;
-pub mod module_cdp_treasury;
-pub mod module_currencies;
-pub mod module_dex;
-pub mod module_dex_oracle;
-pub mod module_emergency_shutdown;
-pub mod module_evm;
-pub mod module_evm_accounts;
-pub mod module_funan;
-pub mod module_incentives;
-pub mod module_nft;
-pub mod module_prices;
-pub mod module_stable_asset;
-pub mod module_transaction_pause;
-pub mod module_transaction_payment;
-
-pub mod orml_auction;
-pub mod orml_authority;
-pub mod orml_oracle;
-pub mod orml_tokens;
-
 pub mod frame_system;
 
 pub mod pallet_bags_list;
@@ -67,4 +43,3 @@ pub mod pallet_tips;
 pub mod pallet_treasury;
 pub mod pallet_utility;
 pub mod pallet_vesting;
-
