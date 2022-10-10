@@ -78,7 +78,7 @@ use runtime_common::{
 	TechnicalCommitteeInstance, TechnicalMembershipInstance,
 };
 
-use primitives::v1::{
+use primitives::v2::{
 	AccountId, AccountIndex, Balance, BlockNumber, Hash, Moment, Nonce, Signature,
 };
 /// Constant values used within the runtime.
@@ -103,7 +103,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
 	impl_name: create_runtime_str!("selendra"),
-	authoring_version: 2,
+	authoring_version: 1,
 	spec_version: 2000,
 	impl_version: 0,
 	#[cfg(not(feature = "disable-runtime-api"))]
@@ -1034,7 +1034,7 @@ impl pallet_sudo::Config for Runtime {
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
-		NodeBlock = primitives::v1::Block,
+		NodeBlock = primitives::v2::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		// Basic stuff; balances is uncallable initially.
