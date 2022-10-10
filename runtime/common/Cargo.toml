@@ -1,6 +1,6 @@
 [package]
 name = "runtime-common"
-version = "0.1.3"
+version = "0.2.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
@@ -23,6 +23,12 @@ pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", 
 
 # primitives
 primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
+
+[dev-dependencies]
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+parity-scale-codec = { version = "3.0.0" }
+scale-info = { version = "2.1" }
 
 [features]
 default = ["std"]
