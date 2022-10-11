@@ -31,7 +31,7 @@ use sc_executor::NativeElseWasmExecutor;
 use sc_network::{Event, NetworkService};
 use sc_service::{config::Configuration, error::Error as ServiceError, RpcHandlers, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryWorker};
-use selendra_primitives::v1::Block;
+use selendra_primitives::v2::Block;
 use selendra_runtime::RuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_core::crypto::Pair;

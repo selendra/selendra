@@ -28,7 +28,7 @@ use sc_chain_spec::ChainSpecExtension;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::IdentifyAccount;
 
-use selendra_primitives::v1::{AccountId, AccountPublic, Balance};
+use selendra_primitives::v2::{AccountId, AccountPublic, Balance};
 
 const TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 const DEFAULT_PROTOCOL_ID: &str = "sel";

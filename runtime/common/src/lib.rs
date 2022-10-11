@@ -31,7 +31,7 @@ use frame_system::{limits, EnsureRoot};
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
 
-use primitives::v1::{AccountId, BlockNumber};
+use primitives::v2::{AccountId, BlockNumber};
 
 pub mod elections;
 pub mod impls;
@@ -59,7 +59,7 @@ pub type SlowAdjustingFeeUpdate<R> =
 ///
 /// This must only be used as long as the balance type is `u128`.
 pub type CurrencyToVote = frame_support::traits::U128CurrencyToVote;
-static_assertions::assert_eq_size!(primitives::v1::Balance, u128);
+static_assertions::assert_eq_size!(primitives::v2::Balance, u128);
 
 // Common constants used in all runtimes.
 parameter_types! {

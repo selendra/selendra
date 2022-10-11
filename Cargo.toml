@@ -3,6 +3,7 @@ cargo-features = ["resolver"]
 [workspace]
 members = [
 	"primitives",
+	"xchain/core",
 	"runtime/common",
 	"runtime/selendra",
 	"runtime/selendra/constants",

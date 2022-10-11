@@ -23,7 +23,7 @@
 
 use std::sync::Arc;
 
-use primitives::v1::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
+use primitives::v2::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
 use sc_client_api::AuxStore;
 use sc_consensus_babe::{Config, Epoch};
 use sc_consensus_epochs::SharedEpochChanges;

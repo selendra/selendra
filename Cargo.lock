@@ -6993,7 +6993,29 @@ dependencies = [
 name = "selendra-primitives"
 version = "0.2.0"
 dependencies = [
+ "bitvec 1.0.0",
+ "frame-system",
+ "hex-literal",
+ "parity-scale-codec",
+ "parity-util-mem",
+ "scale-info",
  "selendra-core-primitives",
+ "selendra-xchain",
+ "serde",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-authority-discovery",
+ "sp-consensus-slots",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+ "sp-trie",
+ "sp-version",
 ]
 
 [[package]]
@@ -7188,6 +7210,22 @@ dependencies = [
  "sp-trie",
  "substrate-prometheus-endpoint",
  "tiny-keccak",
+]
+
+[[package]]
+name = "selendra-xchain"
+version = "0.2.0"
+dependencies = [
+ "derive_more",
+ "frame-support",
+ "parity-scale-codec",
+ "parity-util-mem",
+ "scale-info",
+ "selendra-core-primitives",
+ "serde",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
