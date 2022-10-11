@@ -1503,6 +1503,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "enumn"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "038b1afa59052df211f9efd58f8b1d84c242935ede1c3dbaed26b018a9e06ae2"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "env_logger"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7142,6 +7153,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-runtime-metrics"
+version = "0.2.0"
+dependencies = [
+ "bs58",
+ "parity-scale-codec",
+ "selendra-primitives",
+ "sp-std",
+ "sp-tracing",
+]
+
+[[package]]
 name = "selendra-service"
 version = "0.2.0"
 dependencies = [
@@ -7441,6 +7463,17 @@ name = "slice-group-by"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03b634d87b960ab1a38c4fe143b508576f075e7c978bfad18217645ebfdfa2ec"
+
+[[package]]
+name = "slot-range-helper"
+version = "0.2.0"
+dependencies = [
+ "enumn",
+ "parity-scale-codec",
+ "paste",
+ "sp-runtime",
+ "sp-std",
+]
 
 [[package]]
 name = "smallvec"
