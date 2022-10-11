@@ -41,7 +41,6 @@
 //! The wasm-api (enabled only when `std` feature is not enabled and `wasm-api` feature is enabled)
 //! provides utilities for setting up a xchain WASM module in Rust.
 
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod primitives;

@@ -146,8 +146,7 @@ pub mod metric_definitions {
 	pub const XCHAIN_INHERENT_DATA_CANDIDATES_PROCESSED: CounterVecDefinition =
 		CounterVecDefinition {
 			name: "selendra_xchain_inherent_data_candidates_processed",
-			description:
-				"Counts the number of xchain block candidates processed in `enter_inner`.",
+			description: "Counts the number of xchain block candidates processed in `enter_inner`.",
 			labels: &["category"],
 		};
 
@@ -162,12 +161,11 @@ pub mod metric_definitions {
 		};
 
 	/// Counts the number of dispute statements sets included in a block in `enter_inner`.
-	pub const XCHAIN_INHERENT_DATA_DISPUTE_SETS_INCLUDED: CounterDefinition =
-		CounterDefinition {
-			name: "selendra_xchain_inherent_data_dispute_sets_included",
-			description:
-				"Counts the number of dispute statements sets included in a block in `enter_inner`.",
-		};
+	pub const XCHAIN_INHERENT_DATA_DISPUTE_SETS_INCLUDED: CounterDefinition = CounterDefinition {
+		name: "selendra_xchain_inherent_data_dispute_sets_included",
+		description:
+			"Counts the number of dispute statements sets included in a block in `enter_inner`.",
+	};
 
 	/// Counts the number of `valid` and `invalid` bitfields signature checked in `enter_inner`.
 	pub const XCHAIN_CREATE_INHERENT_BITFIELDS_SIGNATURE_CHECKS: CounterVecDefinition =

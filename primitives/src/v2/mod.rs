@@ -22,10 +22,10 @@ use scale_info::TypeInfo;
 use sp_std::prelude::*;
 
 use sp_application_crypto::KeyTypeId;
-use sp_inherents::InherentIdentifier;
-use sp_core::RuntimeDebug;
-use sp_runtime::traits::{AppVerify, Header as HeaderT};
 use sp_arithmetic::traits::{BaseArithmetic, Saturating};
+use sp_core::RuntimeDebug;
+use sp_inherents::InherentIdentifier;
+use sp_runtime::traits::{AppVerify, Header as HeaderT};
 
 pub use sp_runtime::traits::{BlakeTwo256, Hash as HashT};
 
