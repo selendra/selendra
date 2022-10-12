@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-//! Utilities for writing xchain WASM.
+//! Utilities for writing indracore WASM.
 
-/// Load the validation params from memory when implementing a Rust xchain.
+/// Load the validation params from memory when implementing a Rust indracore.
 ///
 /// Offset and length must have been provided by the validation
 /// function's entry point.

@@ -127,50 +127,52 @@ pub mod metric_definitions {
 		pub labels: &'a [&'static str],
 	}
 
-	/// Counts xchain inherent data weights. Use `before` and `after` labels to differentiate
+	/// Counts indracore inherent data weights. Use `before` and `after` labels to differentiate
 	/// between the weight before and after filtering.
-	pub const XCHAIN_INHERENT_DATA_WEIGHT: CounterVecDefinition = CounterVecDefinition {
-		name: "selendra_xchain_inherent_data_weight",
+	pub const INDRACORE_INHERENT_DATA_WEIGHT: CounterVecDefinition = CounterVecDefinition {
+		name: "selendra_indracore_inherent_data_weight",
 		description: "Inherent data weight before and after filtering",
 		labels: &["when"],
 	};
 
 	/// Counts the number of bitfields processed in `enter_inner`.
-	pub const XCHAIN_INHERENT_DATA_BITFIELDS_PROCESSED: CounterDefinition = CounterDefinition {
-		name: "selendra_xchain_inherent_data_bitfields_processed",
+	pub const INDRACORE_INHERENT_DATA_BITFIELDS_PROCESSED: CounterDefinition = CounterDefinition {
+		name: "selendra_indracore_inherent_data_bitfields_processed",
 		description: "Counts the number of bitfields processed in `enter_inner`.",
 	};
 
-	/// Counts the `total`, `sanitized` and `included` number of xchain block candidates
+	/// Counts the `total`, `sanitized` and `included` number of indracore block candidates
 	/// in `enter_inner`.
-	pub const XCHAIN_INHERENT_DATA_CANDIDATES_PROCESSED: CounterVecDefinition =
+	pub const INDRACORE_INHERENT_DATA_CANDIDATES_PROCESSED: CounterVecDefinition =
 		CounterVecDefinition {
-			name: "selendra_xchain_inherent_data_candidates_processed",
-			description: "Counts the number of xchain block candidates processed in `enter_inner`.",
+			name: "selendra_indracore_inherent_data_candidates_processed",
+			description:
+				"Counts the number of indracore block candidates processed in `enter_inner`.",
 			labels: &["category"],
 		};
 
 	/// Counts the number of `imported`, `current` and `concluded_invalid` dispute statements sets
 	/// processed in `enter_inner`. The `current` label refers to the disputes statement sets of
 	/// the current session.
-	pub const XCHAIN_INHERENT_DATA_DISPUTE_SETS_PROCESSED: CounterVecDefinition =
+	pub const INDRACORE_INHERENT_DATA_DISPUTE_SETS_PROCESSED: CounterVecDefinition =
 		CounterVecDefinition {
-			name: "selendra_xchain_inherent_data_dispute_sets_processed",
+			name: "selendra_indracore_inherent_data_dispute_sets_processed",
 			description: "Counts the number of dispute statements sets processed in `enter_inner`.",
 			labels: &["category"],
 		};
 
 	/// Counts the number of dispute statements sets included in a block in `enter_inner`.
-	pub const XCHAIN_INHERENT_DATA_DISPUTE_SETS_INCLUDED: CounterDefinition = CounterDefinition {
-		name: "selendra_xchain_inherent_data_dispute_sets_included",
-		description:
-			"Counts the number of dispute statements sets included in a block in `enter_inner`.",
-	};
+	pub const INDRACORE_INHERENT_DATA_DISPUTE_SETS_INCLUDED: CounterDefinition =
+		CounterDefinition {
+			name: "selendra_indracore_inherent_data_dispute_sets_included",
+			description:
+				"Counts the number of dispute statements sets included in a block in `enter_inner`.",
+		};
 
 	/// Counts the number of `valid` and `invalid` bitfields signature checked in `enter_inner`.
-	pub const XCHAIN_CREATE_INHERENT_BITFIELDS_SIGNATURE_CHECKS: CounterVecDefinition =
+	pub const INDRACORE_CREATE_INHERENT_BITFIELDS_SIGNATURE_CHECKS: CounterVecDefinition =
 		CounterVecDefinition {
-			name: "selendra_xchain_create_inherent_bitfields_signature_checks",
+			name: "selendra_indracore_create_inherent_bitfields_signature_checks",
 			description: "Counts the number of bitfields signature checked in `enter_inner`.",
 			labels: &["validity"],
 		};

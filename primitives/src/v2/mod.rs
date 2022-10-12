@@ -36,8 +36,8 @@ pub use selendra_core_primitives::v2::{
 	Nonce, OutboundHrmpMessage, Remark, Signature, UncheckedExtrinsic,
 };
 
-// Export some selendra-xchain primitives
-pub use selendra_xchain::primitives::{
+// Export some selendra-indracore primitives
+pub use selendra_indracore::primitives::{
 	HeadData, HrmpChannelId, Id, UpwardMessage, ValidationCode, ValidationCodeHash,
 	LOWEST_PUBLIC_ID, LOWEST_USER_ID,
 };
@@ -82,7 +82,7 @@ impl MallocSizeOf for CollatorId {
 	}
 }
 
-/// A Xchain collator keypair.
+/// A Indracore collator keypair.
 #[cfg(feature = "std")]
 pub type CollatorPair = collator_app::Pair;
 
@@ -99,17 +99,17 @@ impl MallocSizeOf for CollatorSignature {
 	}
 }
 
-/// The key type ID for a xchain validator key.
-pub const XCHAIN_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"para");
+/// The key type ID for a indracore validator key.
+pub const INDRACORE_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"indr");
 
 mod validator_app {
 	use sp_application_crypto::{app_crypto, sr25519};
-	app_crypto!(sr25519, super::XCHAIN_KEY_TYPE_ID);
+	app_crypto!(sr25519, super::INDRACORE_KEY_TYPE_ID);
 }
 
-/// Identity that xchain validators use when signing validation messages.
+/// Identity that indracore validators use when signing validation messages.
 ///
-/// For now we assert that xchain validator set is exactly equivalent to the authority set, and
+/// For now we assert that indracore validator set is exactly equivalent to the authority set, and
 /// so we define it to be the same type as `SessionKey`. In the future it may have different crypto.
 pub type ValidatorId = validator_app::Public;
 
@@ -128,7 +128,6 @@ impl MallocSizeOf for ValidatorId {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize, Hash, MallocSizeOf))]
 pub struct ValidatorIndex(pub u32);
 
-// We should really get https://github.com/paritytech/selendra/issues/2403 going ..
 impl From<u32> for ValidatorIndex {
 	fn from(n: u32) -> Self {
 		ValidatorIndex(n)
@@ -136,13 +135,13 @@ impl From<u32> for ValidatorIndex {
 }
 
 sp_application_crypto::with_pair! {
-	/// A Xchain validator keypair.
+	/// A Indracore validator keypair.
 	pub type ValidatorPair = validator_app::Pair;
 }
 
-/// Signature with which xchain validators sign blocks.
+/// Signature with which indracore validators sign blocks.
 ///
-/// For now we assert that xchain validator set is exactly equivalent to the authority set, and
+/// For now we assert that indracore validator set is exactly equivalent to the authority set, and
 /// so we define it to be the same type as `SessionKey`. In the future it may have different crypto.
 pub type ValidatorSignature = validator_app::Signature;
 
@@ -212,21 +211,21 @@ pub mod well_known_keys {
 	pub const ACTIVE_CONFIG: &[u8] =
 		&hex!["06de3d8a54d27e44a9d5ce189618f22db4b49d95320d9021994c850f25b8e385"];
 
-	/// The upward message dispatch queue for the given para id.
+	/// The upward message dispatch queue for the given indra id.
 	///
 	/// The storage entry stores a tuple of two values:
 	///
-	/// - `count: u32`, the number of messages currently in the queue for given para,
+	/// - `count: u32`, the number of messages currently in the queue for given indra,
 	/// - `total_size: u32`, the total size of all messages in the queue.
-	pub fn relay_dispatch_queue_size(xchain_id: Id) -> Vec<u8> {
+	pub fn relay_dispatch_queue_size(indra_id: Id) -> Vec<u8> {
 		let prefix = hex!["f5207f03cfdce586301014700e2c2593fad157e461d71fd4c1f936839a5f1f3e"];
 
-		xchain_id.using_encoded(|xchain_id: &[u8]| {
+		indra_id.using_encoded(|indra_id: &[u8]| {
 			prefix
 				.as_ref()
 				.iter()
-				.chain(twox_64(xchain_id).iter())
-				.chain(xchain_id.iter())
+				.chain(twox_64(indra_id).iter())
+				.chain(indra_id.iter())
 				.cloned()
 				.collect()
 		})
@@ -249,99 +248,99 @@ pub mod well_known_keys {
 		})
 	}
 
-	/// The list of inbound channels for the given para.
+	/// The list of inbound channels for the given indra.
 	///
-	/// The storage entry stores a `Vec<ParaId>`
-	pub fn hrmp_ingress_channel_index(xchain_id: Id) -> Vec<u8> {
+	/// The storage entry stores a `Vec<IndraId>`
+	pub fn hrmp_ingress_channel_index(indra_id: Id) -> Vec<u8> {
 		let prefix = hex!["6a0da05ca59913bc38a8630590f2627c1d3719f5b0b12c7105c073c507445948"];
 
-		xchain_id.using_encoded(|xchain_id: &[u8]| {
+		indra_id.using_encoded(|indra_id: &[u8]| {
 			prefix
 				.as_ref()
 				.iter()
-				.chain(twox_64(xchain_id).iter())
-				.chain(xchain_id.iter())
+				.chain(twox_64(indra_id).iter())
+				.chain(indra_id.iter())
 				.cloned()
 				.collect()
 		})
 	}
 
-	/// The list of outbound channels for the given para.
+	/// The list of outbound channels for the given indra.
 	///
-	/// The storage entry stores a `Vec<ParaId>`
-	pub fn hrmp_egress_channel_index(xchain_id: Id) -> Vec<u8> {
+	/// The storage entry stores a `Vec<IndraId>`
+	pub fn hrmp_egress_channel_index(indra_id: Id) -> Vec<u8> {
 		let prefix = hex!["6a0da05ca59913bc38a8630590f2627cf12b746dcf32e843354583c9702cc020"];
 
-		xchain_id.using_encoded(|xchain_id: &[u8]| {
+		indra_id.using_encoded(|indra_id: &[u8]| {
 			prefix
 				.as_ref()
 				.iter()
-				.chain(twox_64(xchain_id).iter())
-				.chain(xchain_id.iter())
+				.chain(twox_64(indra_id).iter())
+				.chain(indra_id.iter())
 				.cloned()
 				.collect()
 		})
 	}
 
-	/// The MQC head for the downward message queue of the given para. See more in the `Dmp` module.
+	/// The MQC head for the downward message queue of the given indra. See more in the `Dmp` module.
 	///
 	/// The storage entry stores a `Hash`. This is selendra hash which is at the moment
 	/// `blake2b-256`.
-	pub fn dmq_mqc_head(xchain_id: Id) -> Vec<u8> {
+	pub fn dmq_mqc_head(indra_id: Id) -> Vec<u8> {
 		let prefix = hex!["63f78c98723ddc9073523ef3beefda0c4d7fefc408aac59dbfe80a72ac8e3ce5"];
 
-		xchain_id.using_encoded(|xchain_id: &[u8]| {
+		indra_id.using_encoded(|indra_id: &[u8]| {
 			prefix
 				.as_ref()
 				.iter()
-				.chain(twox_64(xchain_id).iter())
-				.chain(xchain_id.iter())
+				.chain(twox_64(indra_id).iter())
+				.chain(indra_id.iter())
 				.cloned()
 				.collect()
 		})
 	}
 
-	/// The signal that indicates whether the xchain should go-ahead with the proposed validation
+	/// The signal that indicates whether the indracore should go-ahead with the proposed validation
 	/// code upgrade.
 	///
 	/// The storage entry stores a value of `UpgradeGoAhead` type.
-	pub fn upgrade_go_ahead_signal(xchain_id: Id) -> Vec<u8> {
+	pub fn upgrade_go_ahead_signal(indra_id: Id) -> Vec<u8> {
 		let prefix = hex!["cd710b30bd2eab0352ddcc26417aa1949e94c040f5e73d9b7addd6cb603d15d3"];
 
-		xchain_id.using_encoded(|xchain_id: &[u8]| {
+		indra_id.using_encoded(|indra_id: &[u8]| {
 			prefix
 				.as_ref()
 				.iter()
-				.chain(twox_64(xchain_id).iter())
-				.chain(xchain_id.iter())
+				.chain(twox_64(indra_id).iter())
+				.chain(indra_id.iter())
 				.cloned()
 				.collect()
 		})
 	}
 
-	/// The signal that indicates whether the xchain is disallowed to signal an upgrade at this
+	/// The signal that indicates whether the indracore is disallowed to signal an upgrade at this
 	/// relay-parent.
 	///
 	/// The storage entry stores a value of `UpgradeRestriction` type.
-	pub fn upgrade_restriction_signal(xchain_id: Id) -> Vec<u8> {
+	pub fn upgrade_restriction_signal(indra_id: Id) -> Vec<u8> {
 		let prefix = hex!["cd710b30bd2eab0352ddcc26417aa194f27bbb460270642b5bcaf032ea04d56a"];
 
-		xchain_id.using_encoded(|xchain_id: &[u8]| {
+		indra_id.using_encoded(|indra_id: &[u8]| {
 			prefix
 				.as_ref()
 				.iter()
-				.chain(twox_64(xchain_id).iter())
-				.chain(xchain_id.iter())
+				.chain(twox_64(indra_id).iter())
+				.chain(indra_id.iter())
 				.cloned()
 				.collect()
 		})
 	}
 }
 
-/// Unique identifier for the Xchains Inherent
-pub const XCHAINS_INHERENT_IDENTIFIER: InherentIdentifier = *b"parachn0";
+/// Unique identifier for the Indracores Inherent
+pub const INDRACORES_INHERENT_IDENTIFIER: InherentIdentifier = *b"indracr0";
 
-/// The key type ID for xchain assignment key.
+/// The key type ID for indracore assignment key.
 pub const ASSIGNMENT_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"asgn");
 
 /// Maximum compressed code size we support right now.
@@ -349,7 +348,7 @@ pub const ASSIGNMENT_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"asgn");
 /// to have bigger values, we should fix that first.
 ///
 /// Used for:
-/// * initial genesis for the Xchains configuration
+/// * initial genesis for the Indracores configuration
 /// * checking updates to this stored runtime configuration do not exceed this limit
 /// * when detecting a code decompression bomb in the client
 // NOTE: This value is used in the runtime so be careful when changing it.
@@ -358,7 +357,7 @@ pub const MAX_CODE_SIZE: u32 = 3 * 1024 * 1024;
 /// Maximum head data size we support right now.
 ///
 /// Used for:
-/// * initial genesis for the Xchains configuration
+/// * initial genesis for the Indracores configuration
 /// * checking updates to this stored runtime configuration do not exceed this limit
 // NOTE: This value is used in the runtime so be careful when changing it.
 pub const MAX_HEAD_DATA_SIZE: u32 = 1 * 1024 * 1024;
@@ -366,26 +365,26 @@ pub const MAX_HEAD_DATA_SIZE: u32 = 1 * 1024 * 1024;
 /// Maximum PoV size we support right now.
 ///
 /// Used for:
-/// * initial genesis for the Xchains configuration
+/// * initial genesis for the Indracores configuration
 /// * checking updates to this stored runtime configuration do not exceed this limit
 /// * when detecting a PoV decompression bomb in the client
 // NOTE: This value is used in the runtime so be careful when changing it.
 pub const MAX_POV_SIZE: u32 = 5 * 1024 * 1024;
 
 // The public key of a keypair used by a validator for determining assignments
-/// to approve included xchain candidates.
+/// to approve included indracore candidates.
 mod assignment_app {
 	use sp_application_crypto::{app_crypto, sr25519};
 	app_crypto!(sr25519, super::ASSIGNMENT_KEY_TYPE_ID);
 }
 
 /// The public key of a keypair used by a validator for determining assignments
-/// to approve included xchain candidates.
+/// to approve included indracore candidates.
 pub type AssignmentId = assignment_app::Public;
 
 sp_application_crypto::with_pair! {
 	/// The full keypair used by a validator for determining assignments to approve included
-	/// xchain candidates.
+	/// indracore candidates.
 	pub type AssignmentPair = assignment_app::Pair;
 }
 
@@ -405,7 +404,7 @@ pub type CandidateIndex = u32;
 /// Get a collator signature payload on a relay-parent, block-data combo.
 pub fn collator_signature_payload<H: AsRef<[u8]>>(
 	relay_parent: &H,
-	xchain_id: &Id,
+	indra_id: &Id,
 	persisted_validation_data_hash: &Hash,
 	pov_hash: &Hash,
 	validation_code_hash: &ValidationCodeHash,
@@ -414,7 +413,7 @@ pub fn collator_signature_payload<H: AsRef<[u8]>>(
 	let mut payload = [0u8; 132];
 
 	payload[0..32].copy_from_slice(relay_parent.as_ref());
-	u32::from(*xchain_id).using_encoded(|s| payload[32..32 + s.len()].copy_from_slice(s));
+	u32::from(*indra_id).using_encoded(|s| payload[32..32 + s.len()].copy_from_slice(s));
 	payload[36..68].copy_from_slice(persisted_validation_data_hash.as_ref());
 	payload[68..100].copy_from_slice(pov_hash.as_ref());
 	payload[100..132].copy_from_slice(validation_code_hash.as_ref());
@@ -424,7 +423,7 @@ pub fn collator_signature_payload<H: AsRef<[u8]>>(
 
 fn check_collator_signature<H: AsRef<[u8]>>(
 	relay_parent: &H,
-	xchain_id: &Id,
+	indra_id: &Id,
 	persisted_validation_data_hash: &Hash,
 	pov_hash: &Hash,
 	validation_code_hash: &ValidationCodeHash,
@@ -433,7 +432,7 @@ fn check_collator_signature<H: AsRef<[u8]>>(
 ) -> Result<(), ()> {
 	let payload = collator_signature_payload(
 		relay_parent,
-		xchain_id,
+		indra_id,
 		persisted_validation_data_hash,
 		pov_hash,
 		validation_code_hash,
@@ -450,8 +449,8 @@ fn check_collator_signature<H: AsRef<[u8]>>(
 #[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, RuntimeDebug)]
 #[cfg_attr(feature = "std", derive(Hash, MallocSizeOf))]
 pub struct CandidateDescriptor<H = Hash> {
-	/// The ID of the para this is a candidate for.
-	pub xchain_id: Id,
+	/// The ID of the indra this is a candidate for.
+	pub indra_id: Id,
 	/// The hash of the relay-chain block this is executed in the context of.
 	pub relay_parent: H,
 	/// The collator's sr25519 public key.
@@ -465,10 +464,10 @@ pub struct CandidateDescriptor<H = Hash> {
 	/// The root of a block's erasure encoding Merkle tree.
 	pub erasure_root: Hash,
 	/// Signature on blake2-256 of components of this receipt:
-	/// The xchain index, the relay parent, the validation data hash, and the `pov_hash`.
+	/// The indracore index, the relay parent, the validation data hash, and the `pov_hash`.
 	pub signature: CollatorSignature,
-	/// Hash of the para header that is being generated by this candidate.
-	pub xchain_head: Hash,
+	/// Hash of the indra header that is being generated by this candidate.
+	pub indra_head: Hash,
 	/// The blake2-256 hash of the validation code bytes.
 	pub validation_code_hash: ValidationCodeHash,
 }
@@ -478,7 +477,7 @@ impl<H: AsRef<[u8]>> CandidateDescriptor<H> {
 	pub fn check_collator_signature(&self) -> Result<(), ()> {
 		check_collator_signature(
 			&self.relay_parent,
-			&self.xchain_id,
+			&self.indra_id,
 			&self.persisted_validation_data_hash,
 			&self.pov_hash,
 			&self.validation_code_hash,
@@ -513,7 +512,7 @@ impl<H> CandidateReceipt<H> {
 	}
 }
 
-/// All data pertaining to the execution of a para candidate.
+/// All data pertaining to the execution of a indra candidate.
 #[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, RuntimeDebug)]
 pub struct FullCandidateReceipt<H = Hash, N = BlockNumber> {
 	/// The inner candidate receipt.
@@ -580,17 +579,16 @@ impl PartialOrd for CommittedCandidateReceipt {
 impl Ord for CommittedCandidateReceipt {
 	fn cmp(&self, other: &Self) -> sp_std::cmp::Ordering {
 		// TODO: compare signatures or something more sane
-		// https://github.com/paritytech/selendra/issues/222
 		self.descriptor()
-			.xchain_id
-			.cmp(&other.descriptor().xchain_id)
+			.indra_id
+			.cmp(&other.descriptor().indra_id)
 			.then_with(|| self.commitments.head_data.cmp(&other.commitments.head_data))
 	}
 }
 
 /// The validation data provides information about how to create the inputs for validation of a candidate.
-/// This information is derived from the chain state and will vary from para to para, although some
-/// fields may be the same for every para.
+/// This information is derived from the chain state and will vary from indra to indra, although some
+/// fields may be the same for every indra.
 ///
 /// Since this data is used to form inputs to the validation function, it needs to be persisted by the
 /// availability system to avoid dependence on availability of the relay-chain state.
@@ -601,7 +599,7 @@ impl Ord for CommittedCandidateReceipt {
 /// using so called MQC heads.
 ///
 /// Since the commitments of the validation function are checked by the relay-chain, secondary checkers
-/// can rely on the invariant that the relay-chain only includes para-blocks for which these checks have
+/// can rely on the invariant that the relay-chain only includes indra-blocks for which these checks have
 /// already been done. As such, there is no need for the validation data used to inform validators and
 /// collators about the checks the relay-chain will perform to be persisted by the availability system.
 ///
@@ -633,7 +631,7 @@ impl<H: Encode, N: Encode> PersistedValidationData<H, N> {
 pub struct CandidateCommitments<N = BlockNumber> {
 	/// Messages destined to be interpreted by the Relay chain itself.
 	pub upward_messages: Vec<UpwardMessage>,
-	/// Horizontal messages sent by the xchain.
+	/// Horizontal messages sent by the indracore.
 	pub horizontal_messages: Vec<OutboundHrmpMessage<Id>>,
 	/// New validation code.
 	pub new_validation_code: Option<ValidationCode>,
@@ -691,7 +689,7 @@ pub struct BackedCandidate<H = Hash> {
 }
 
 impl<H> BackedCandidate<H> {
-	/// Get a reference to the descriptor of the para.
+	/// Get a reference to the descriptor of the indra.
 	pub fn descriptor(&self) -> &CandidateDescriptor<H> {
 		&self.candidate.descriptor
 	}
@@ -715,7 +713,7 @@ impl<H> BackedCandidate<H> {
 
 /// Verify the backing of the given candidate.
 ///
-/// Provide a lookup from the index of a validator within the group assigned to this para,
+/// Provide a lookup from the index of a validator within the group assigned to this indra,
 /// as opposed to the index of the validator within the overall validator set, as well as
 /// the number of validators in the group.
 ///
@@ -790,17 +788,17 @@ impl From<u32> for GroupIndex {
 	}
 }
 
-/// A claim on authoring the next block for a given parathread.
+/// A claim on authoring the next block for a given indrabase.
 #[derive(Clone, Encode, Decode, TypeInfo, RuntimeDebug)]
 #[cfg_attr(feature = "std", derive(PartialEq))]
-pub struct ParathreadClaim(pub Id, pub CollatorId);
+pub struct IndrabaseClaim(pub Id, pub CollatorId);
 
 /// An entry tracking a claim to ensure it does not pass the maximum number of retries.
 #[derive(Clone, Encode, Decode, TypeInfo, RuntimeDebug)]
 #[cfg_attr(feature = "std", derive(PartialEq))]
-pub struct ParathreadEntry {
+pub struct IndrabaseEntry {
 	/// The claim.
-	pub claim: ParathreadClaim,
+	pub claim: IndrabaseClaim,
 	/// Number of retries.
 	pub retries: u32,
 }
@@ -809,10 +807,10 @@ pub struct ParathreadEntry {
 #[derive(Clone, Encode, Decode, TypeInfo, RuntimeDebug)]
 #[cfg_attr(feature = "std", derive(PartialEq))]
 pub enum CoreOccupied {
-	/// A parathread.
-	Parathread(ParathreadEntry),
-	/// A xchain.
-	Xchain,
+	/// A indrabase.
+	Indrabase(IndrabaseEntry),
+	/// A indracore.
+	Indracore,
 }
 
 /// A helper data-type for tracking validator-group rotations.
@@ -907,7 +905,7 @@ impl<N: Saturating + BaseArithmetic + Copy> GroupRotationInfo<N> {
 #[derive(Clone, Encode, Decode, TypeInfo, RuntimeDebug)]
 #[cfg_attr(feature = "std", derive(PartialEq, MallocSizeOf))]
 pub struct OccupiedCore<H = Hash, N = BlockNumber> {
-	// NOTE: this has no ParaId as it can be deduced from the candidate descriptor.
+	// NOTE: this has no IndraId as it can be deduced from the candidate descriptor.
 	/// If this core is freed by availability, this is the assignment that is next up on this
 	/// core, if any. None if there is nothing queued for this core.
 	pub next_up_on_available: Option<ScheduledCore>,
@@ -933,9 +931,9 @@ pub struct OccupiedCore<H = Hash, N = BlockNumber> {
 }
 
 impl<H, N> OccupiedCore<H, N> {
-	/// Get the Para currently occupying this core.
-	pub fn xchain_id(&self) -> Id {
-		self.candidate_descriptor.xchain_id
+	/// Get the Indra currently occupying this core.
+	pub fn indra_id(&self) -> Id {
+		self.candidate_descriptor.indra_id
 	}
 }
 
@@ -943,8 +941,8 @@ impl<H, N> OccupiedCore<H, N> {
 #[derive(Clone, Encode, Decode, TypeInfo, RuntimeDebug)]
 #[cfg_attr(feature = "std", derive(PartialEq, MallocSizeOf))]
 pub struct ScheduledCore {
-	/// The ID of a para scheduled.
-	pub xchain_id: Id,
+	/// The ID of a indra scheduled.
+	pub indra_id: Id,
 	/// The collator required to author the block, if any.
 	pub collator: Option<CollatorId>,
 }
@@ -956,25 +954,25 @@ pub enum CoreState<H = Hash, N = BlockNumber> {
 	/// The core is currently occupied.
 	#[codec(index = 0)]
 	Occupied(OccupiedCore<H, N>),
-	/// The core is currently free, with a para scheduled and given the opportunity
+	/// The core is currently free, with a indra scheduled and given the opportunity
 	/// to occupy.
 	///
 	/// If a particular Collator is required to author this block, that is also present in this
 	/// variant.
 	#[codec(index = 1)]
 	Scheduled(ScheduledCore),
-	/// The core is currently free and there is nothing scheduled. This can be the case for parathread
-	/// cores when there are no parathread blocks queued. Xchain cores will never be left idle.
+	/// The core is currently free and there is nothing scheduled. This can be the case for indrabase
+	/// cores when there are no indrabase blocks queued. Indracore cores will never be left idle.
 	#[codec(index = 2)]
 	Free,
 }
 
 impl<N> CoreState<N> {
-	/// If this core state has a `xchain_id`, return it.
-	pub fn xchain_id(&self) -> Option<Id> {
+	/// If this core state has a `indra_id`, return it.
+	pub fn indra_id(&self) -> Option<Id> {
 		match self {
-			Self::Occupied(ref core) => Some(core.xchain_id()),
-			Self::Scheduled(ScheduledCore { xchain_id, .. }) => Some(*xchain_id),
+			Self::Occupied(ref core) => Some(core.indra_id()),
+			Self::Scheduled(ScheduledCore { indra_id, .. }) => Some(*indra_id),
 			Self::Free => None,
 		}
 	}
@@ -992,7 +990,7 @@ pub enum OccupiedCoreAssumption {
 	/// The candidate occupying the core was made available and included to free the core.
 	#[codec(index = 0)]
 	Included,
-	/// The candidate occupying the core timed out and freed the core without advancing the para.
+	/// The candidate occupying the core timed out and freed the core without advancing the indra.
 	#[codec(index = 1)]
 	TimedOut,
 	/// The core was not occupied to begin with.
@@ -1008,7 +1006,7 @@ pub enum CandidateEvent<H = Hash> {
 	/// This includes the core index the candidate is now occupying.
 	#[codec(index = 0)]
 	CandidateBacked(CandidateReceipt<H>, HeadData, CoreIndex, GroupIndex),
-	/// This candidate receipt was included and became a parablock at the most recent block.
+	/// This candidate receipt was included and became a indrablock at the most recent block.
 	/// This includes the core index the candidate was occupying as well as the group responsible
 	/// for backing the candidate.
 	#[codec(index = 1)]
@@ -1067,8 +1065,8 @@ impl From<ValidityError> for u8 {
 	}
 }
 
-/// Abridged version of `HostConfiguration` (from the `Configuration` xchains host runtime module)
-/// meant to be used by a xchain or PDK such as cumulus.
+/// Abridged version of `HostConfiguration` (from the `Configuration` indracores host runtime module)
+/// meant to be used by a indracore or PDK such as cumulus.
 #[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(PartialEq))]
 pub struct AbridgedHostConfiguration {
@@ -1076,9 +1074,9 @@ pub struct AbridgedHostConfiguration {
 	pub max_code_size: u32,
 	/// The maximum head-data size, in bytes.
 	pub max_head_data_size: u32,
-	/// Total number of individual messages allowed in the xchain -> relay-chain message queue.
+	/// Total number of individual messages allowed in the indracore -> relay-chain message queue.
 	pub max_upward_queue_count: u32,
-	/// Total size of messages allowed in the xchain -> relay-chain message queue before which
+	/// Total size of messages allowed in the indracore -> relay-chain message queue before which
 	/// no further messages may be added to it. If it exceeds this then the queue may contain only
 	/// a single message.
 	pub max_upward_queue_size: u32,
@@ -1094,14 +1092,14 @@ pub struct AbridgedHostConfiguration {
 	///
 	/// This parameter affects the upper bound of size of `CandidateCommitments`.
 	pub hrmp_max_message_num_per_candidate: u32,
-	/// The minimum period, in blocks, between which xchains can update their validation code.
+	/// The minimum period, in blocks, between which indracores can update their validation code.
 	pub validation_upgrade_cooldown: BlockNumber,
 	/// The delay, in blocks, before a validation upgrade is applied.
 	pub validation_upgrade_delay: BlockNumber,
 }
 
-/// Abridged version of `HrmpChannel` (from the `Hrmp` xchains host runtime module) meant to be
-/// used by a xchain or PDK such as cumulus.
+/// Abridged version of `HrmpChannel` (from the `Hrmp` indracores host runtime module) meant to be
+/// used by a indracore or PDK such as cumulus.
 #[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(PartialEq))]
 pub struct AbridgedHrmpChannel {
@@ -1127,7 +1125,7 @@ pub struct AbridgedHrmpChannel {
 	pub mqc_head: Option<Hash>,
 }
 
-/// A possible upgrade restriction that prevents a xchain from performing an upgrade.
+/// A possible upgrade restriction that prevents a indracore from performing an upgrade.
 #[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
 pub enum UpgradeRestriction {
 	/// There is an upgrade restriction and there are no details about its specifics nor how long
@@ -1136,24 +1134,24 @@ pub enum UpgradeRestriction {
 	Present,
 }
 
-/// A struct that the relay-chain communicates to a xchain indicating what course of action the
-/// xchain should take in the coordinated xchain validation code upgrade process.
+/// A struct that the relay-chain communicates to a indracore indicating what course of action the
+/// indracore should take in the coordinated indracore validation code upgrade process.
 ///
-/// This data type appears in the last step of the upgrade process. After the xchain observes it
+/// This data type appears in the last step of the upgrade process. After the indracore observes it
 /// and reacts to it the upgrade process concludes.
 #[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
 pub enum UpgradeGoAhead {
 	/// Abort the upgrade process. There is something wrong with the validation code previously
-	/// submitted by the xchain. This variant can also be used to prevent upgrades by the governance
+	/// submitted by the indracore. This variant can also be used to prevent upgrades by the governance
 	/// should an emergency emerge.
 	///
-	/// The expected reaction on this variant is that the xchain will admit this message and
+	/// The expected reaction on this variant is that the indracore will admit this message and
 	/// remove all the data about the pending upgrade. Depending on the nature of the problem (to
 	/// be examined offchain for now), it can try to send another validation code or just retry later.
 	#[codec(index = 0)]
 	Abort,
-	/// Apply the pending code change. The parablock that is built on a relay-parent that is descendant
-	/// of the relay-parent where the xchain observed this signal must use the upgraded validation
+	/// Apply the pending code change. The indrablock that is built on a relay-parent that is descendant
+	/// of the relay-parent where the indracore observed this signal must use the upgraded validation
 	/// code.
 	#[codec(index = 1)]
 	GoAhead,
@@ -1165,12 +1163,12 @@ pub const SELENDRA_ENGINE_ID: sp_runtime::ConsensusEngineId = *b"POL1";
 /// A consensus log item for selendra validation. To be used with [`SELENDRA_ENGINE_ID`].
 #[derive(Decode, Encode, Clone, PartialEq, Eq)]
 pub enum ConsensusLog {
-	/// A xchain or parathread upgraded its code.
+	/// A indracore or indrabase upgraded its code.
 	#[codec(index = 1)]
-	ParaUpgradeCode(Id, ValidationCodeHash),
-	/// A xchain or parathread scheduled a code upgrade.
+	IndraUpgradeCode(Id, ValidationCodeHash),
+	/// A indracore or indrabase scheduled a code upgrade.
 	#[codec(index = 2)]
-	ParaScheduleUpgradeCode(Id, ValidationCodeHash, BlockNumber),
+	IndraScheduleUpgradeCode(Id, ValidationCodeHash, BlockNumber),
 	/// Governance requests to auto-approve every candidate included up to the given block
 	/// number in the current chain, inclusive.
 	#[codec(index = 3)]
@@ -1182,7 +1180,7 @@ pub enum ConsensusLog {
 	/// its own number or a higher number.
 	///
 	/// In practice, these are issued when on-chain logic has detected an
-	/// invalid xchain block within its own chain, due to a dispute.
+	/// invalid indracore block within its own chain, due to a dispute.
 	#[codec(index = 4)]
 	Revert(BlockNumber),
 }
@@ -1419,7 +1417,7 @@ impl MallocSizeOf for DisputeState {
 	}
 }
 
-/// Xchains inherent-data passed into the runtime by a block author
+/// Indracores inherent-data passed into the runtime by a block author
 #[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug, TypeInfo)]
 pub struct InherentData<HDR: HeaderT = Header> {
 	/// Signed bitfields by validators about availability.
@@ -1432,7 +1430,7 @@ pub struct InherentData<HDR: HeaderT = Header> {
 	pub parent_header: HDR,
 }
 
-/// An either implicit or explicit attestation to the validity of a xchain
+/// An either implicit or explicit attestation to the validity of a indracore
 /// candidate.
 #[derive(Clone, Eq, PartialEq, Decode, Encode, RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(MallocSizeOf))]
@@ -1495,14 +1493,14 @@ pub struct SigningContext<H = Hash> {
 
 const BACKING_STATEMENT_MAGIC: [u8; 4] = *b"BKNG";
 
-/// Statements that can be made about xchain candidates. These are the
+/// Statements that can be made about indracore candidates. These are the
 /// actual values that are signed.
 #[derive(Clone, PartialEq, Eq, RuntimeDebug)]
 #[cfg_attr(feature = "std", derive(Hash))]
 pub enum CompactStatement {
-	/// Proposal of a xchain candidate.
+	/// Proposal of a indracore candidate.
 	Seconded(CandidateHash),
-	/// State that a xchain candidate is valid.
+	/// State that a indracore candidate is valid.
 	Valid(CandidateHash),
 }
 
@@ -1587,7 +1585,7 @@ pub fn supermajority_threshold(n: usize) -> usize {
 #[cfg_attr(feature = "std", derive(PartialEq, MallocSizeOf))]
 pub struct SessionInfo {
 	/****** New in v2 *******/
-	/// All the validators actively participating in xchain consensus.
+	/// All the validators actively participating in indracore consensus.
 	/// Indices are into the broader validator set.
 	pub active_validator_indices: Vec<ValidatorIndex>,
 	/// A secure random seed for the session, gathered from BABE.
@@ -1599,8 +1597,8 @@ pub struct SessionInfo {
 	/// Validators in canonical ordering.
 	///
 	/// NOTE: There might be more authorities in the current session, than `validators` participating
-	/// in xchain consensus. See
-	/// [`max_validators`](https://github.com/paritytech/selendra/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/xchains/src/configuration.rs#L148).
+	/// in indracore consensus. See
+	/// [`max_validators`](https://github.com/paritytech/selendra/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/indracores/src/configuration.rs#L148).
 	///
 	/// `SessionInfo::validators` will be limited to to `max_validators` when set.
 	pub validators: Vec<ValidatorId>,
@@ -1608,15 +1606,15 @@ pub struct SessionInfo {
 	///
 	/// NOTE: The first `validators.len()` entries will match the corresponding validators in
 	/// `validators`, afterwards any remaining authorities can be found. This is any authorities not
-	/// participating in xchain consensus - see
-	/// [`max_validators`](https://github.com/paritytech/selendra/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/xchains/src/configuration.rs#L148)
+	/// participating in indracore consensus - see
+	/// [`max_validators`](https://github.com/paritytech/selendra/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/indracores/src/configuration.rs#L148)
 	#[cfg_attr(feature = "std", ignore_malloc_size_of = "outside type")]
 	pub discovery_keys: Vec<AuthorityDiscoveryId>,
 	/// The assignment keys for validators.
 	///
 	/// NOTE: There might be more authorities in the current session, than validators participating
-	/// in xchain consensus. See
-	/// [`max_validators`](https://github.com/paritytech/selendra/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/xchains/src/configuration.rs#L148).
+	/// in indracore consensus. See
+	/// [`max_validators`](https://github.com/paritytech/selendra/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/indracores/src/configuration.rs#L148).
 	///
 	/// Therefore:
 	/// ```ignore
@@ -1675,8 +1673,8 @@ pub struct OldV1SessionInfo {
 	/// Validators in canonical ordering.
 	///
 	/// NOTE: There might be more authorities in the current session, than `validators` participating
-	/// in xchain consensus. See
-	/// [`max_validators`](https://github.com/paritytech/selendra/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/xchains/src/configuration.rs#L148).
+	/// in indracore consensus. See
+	/// [`max_validators`](https://github.com/paritytech/selendra/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/indracores/src/configuration.rs#L148).
 	///
 	/// `SessionInfo::validators` will be limited to to `max_validators` when set.
 	pub validators: Vec<ValidatorId>,
@@ -1684,15 +1682,15 @@ pub struct OldV1SessionInfo {
 	///
 	/// NOTE: The first `validators.len()` entries will match the corresponding validators in
 	/// `validators`, afterwards any remaining authorities can be found. This is any authorities not
-	/// participating in xchain consensus - see
-	/// [`max_validators`](https://github.com/paritytech/selendra/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/xchains/src/configuration.rs#L148)
+	/// participating in indracore consensus - see
+	/// [`max_validators`](https://github.com/paritytech/selendra/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/indracores/src/configuration.rs#L148)
 	#[cfg_attr(feature = "std", ignore_malloc_size_of = "outside type")]
 	pub discovery_keys: Vec<AuthorityDiscoveryId>,
 	/// The assignment keys for validators.
 	///
 	/// NOTE: There might be more authorities in the current session, than validators participating
-	/// in xchain consensus. See
-	/// [`max_validators`](https://github.com/paritytech/selendra/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/xchains/src/configuration.rs#L148).
+	/// in indracore consensus. See
+	/// [`max_validators`](https://github.com/paritytech/selendra/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/indracores/src/configuration.rs#L148).
 	///
 	/// Therefore:
 	/// ```ignore

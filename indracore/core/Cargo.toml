@@ -1,8 +1,8 @@
 [package]
-name = "selendra-xchain"
+name = "selendra-indracore"
 version = "0.2.0"
 authors = ["Selendra <info@selendra.org>"]
-description = "Core types and utilities for creating and working with xchain"
+description = "Core types and utilities for creating and working with indracore"
 edition = "2021"
 
 [dependencies]

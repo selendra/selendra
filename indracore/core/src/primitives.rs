@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-//! Primitive types which are strictly necessary from a xchain-execution point
+//! Primitive types which are strictly necessary from a indracore-execution point
 //! of view.
 
 use sp_std::vec::Vec;
@@ -39,7 +39,7 @@ use selendra_core_primitives::{Hash, OutboundHrmpMessage};
 /// Block number type used by the relay chain.
 pub use selendra_core_primitives::BlockNumber as RelayChainBlockNumber;
 
-/// Xchain head data included in the chain.
+/// Indracore head data included in the chain.
 #[derive(
 	PartialEq, Eq, Clone, PartialOrd, Ord, Encode, Decode, RuntimeDebug, derive_more::From, TypeInfo,
 )]
@@ -53,7 +53,7 @@ impl HeadData {
 	}
 }
 
-/// Xchain validation code.
+/// Indracore validation code.
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, derive_more::From, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize, Hash, MallocSizeOf))]
 pub struct ValidationCode(#[cfg_attr(feature = "std", serde(with = "bytes"))] pub Vec<u8>);
@@ -110,14 +110,14 @@ impl sp_std::fmt::LowerHex for ValidationCodeHash {
 	}
 }
 
-/// Xchain block data.
+/// Indracore block data.
 ///
-/// Contains everything required to validate para-block, may contain block and witness data.
+/// Contains everything required to validate indra-block, may contain block and witness data.
 #[derive(PartialEq, Eq, Clone, Encode, Decode, derive_more::From, TypeInfo, RuntimeDebug)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize, MallocSizeOf))]
 pub struct BlockData(#[cfg_attr(feature = "std", serde(with = "bytes"))] pub Vec<u8>);
 
-/// Unique identifier of a xchain.
+/// Unique identifier of a indracore.
 #[derive(
 	Clone,
 	CompactAs,
@@ -141,7 +141,7 @@ pub struct BlockData(#[cfg_attr(feature = "std", serde(with = "bytes"))] pub Vec
 pub struct Id(u32);
 
 impl TypeId for Id {
-	const TYPE_ID: [u8; 4] = *b"para";
+	const TYPE_ID: [u8; 4] = *b"indr";
 }
 
 impl From<Id> for u32 {
@@ -175,10 +175,10 @@ impl From<usize> for Id {
 // this one.
 //
 // Instead, let's take advantage of the observation that what really matters for a
-// ParaId within a test context is that it is unique and constant. I believe that
+// IndraId within a test context is that it is unique and constant. I believe that
 // there is no case where someone does `(-1).into()` anyway, but if they do, it
 // never matters whether the actual contained ID is `-1` or `4294967295`. Nobody
-// does arithmetic on a `ParaId`; doing so would be a bug.
+// does arithmetic on a `IndraId`; doing so would be a bug.
 impl From<i32> for Id {
 	fn from(x: i32) -> Self {
 		Id(x as u32)
@@ -188,10 +188,10 @@ impl From<i32> for Id {
 const USER_INDEX_START: u32 = 1000;
 const PUBLIC_INDEX_START: u32 = 2000;
 
-/// The ID of the first user (non-system) xchain.
+/// The ID of the first user (non-system) indracore.
 pub const LOWEST_USER_ID: Id = Id(USER_INDEX_START);
 
-/// The ID of the first publicly registerable xchain.
+/// The ID of the first publicly registerable indracore.
 pub const LOWEST_PUBLIC_ID: Id = Id(PUBLIC_INDEX_START);
 
 impl Id {
@@ -201,9 +201,9 @@ impl Id {
 	}
 }
 
-/// Determine if a xchain is a system xchain or not.
+/// Determine if a indracore is a system indracore or not.
 pub trait IsSystem {
-	/// Returns `true` if a xchain is a system xchain, `false` otherwise.
+	/// Returns `true` if a indracore is a system indracore, `false` otherwise.
 	fn is_system(&self) -> bool;
 }
 
@@ -274,19 +274,19 @@ impl IsSystem for Sibling {
 	}
 }
 
-/// A type that uniquely identifies an HRMP channel. An HRMP channel is established between two paras.
+/// A type that uniquely identifies an HRMP channel. An HRMP channel is established between two indras.
 /// In text, we use the notation `(A, B)` to specify a channel between A and B. The channels are
 /// unidirectional, meaning that `(A, B)` and `(B, A)` refer to different channels. The convention is
 /// that we use the first item tuple for the sender and the second for the recipient. Only one channel
 /// is allowed between two participants in one direction, i.e. there cannot be 2 different channels
-/// identified by `(A, B)`. A channel with the same para id in sender and recipient is invalid. That
+/// identified by `(A, B)`. A channel with the same indra id in sender and recipient is invalid. That
 /// is, however, not enforced.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Hash))]
 pub struct HrmpChannelId {
-	/// The para that acts as the sender in this channel.
+	/// The indra that acts as the sender in this channel.
 	pub sender: Id,
-	/// The para that acts as the recipient in this channel.
+	/// The indra that acts as the recipient in this channel.
 	pub recipient: Id,
 }
 
@@ -297,7 +297,7 @@ impl HrmpChannelId {
 	}
 }
 
-/// A message from a xchain to its Relay Chain.
+/// A message from a indracore to its Relay Chain.
 pub type UpwardMessage = Vec<u8>;
 
 /// Something that should be called when a downward message is received.
@@ -353,7 +353,8 @@ impl XcmpMessageHandler for () {
 	}
 }
 
-/// Validation parameters for evaluating the xchain validity function.
+/// Validation parameters for evaluating the indracore validity function.
+// TODO: balance downloads.
 #[derive(PartialEq, Eq, Decode, Clone)]
 #[cfg_attr(feature = "std", derive(Debug, Encode))]
 pub struct ValidationParams {
@@ -367,7 +368,8 @@ pub struct ValidationParams {
 	pub relay_parent_storage_root: Hash,
 }
 
-/// The result of xchain validation.
+/// The result of indracore validation.
+// TODO: balance uploads.
 #[derive(PartialEq, Eq, Clone, Encode)]
 #[cfg_attr(feature = "std", derive(Debug, Decode))]
 pub struct ValidationResult {
@@ -375,13 +377,13 @@ pub struct ValidationResult {
 	pub head_data: HeadData,
 	/// An update to the validation code that should be scheduled in the relay chain.
 	pub new_validation_code: Option<ValidationCode>,
-	/// Upward messages send by the Xchain.
+	/// Upward messages send by the Indracore.
 	pub upward_messages: Vec<UpwardMessage>,
-	/// Outbound horizontal messages sent by the xchain.
+	/// Outbound horizontal messages sent by the indracore.
 	pub horizontal_messages: Vec<OutboundHrmpMessage<Id>>,
-	/// Number of downward messages that were processed by the Xchain.
+	/// Number of downward messages that were processed by the Indracore.
 	///
-	/// It is expected that the Xchain processes them from first to last.
+	/// It is expected that the Indracore processes them from first to last.
 	pub processed_downward_messages: u32,
 	/// The mark which specifies the block number up to which all inbound HRMP messages are processed.
 	pub hrmp_watermark: RelayChainBlockNumber,

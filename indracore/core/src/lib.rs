@@ -14,14 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-//! Defines primitive types for creating or validating a xchain.
+//! Defines primitive types for creating or validating a indracore.
 //!
 //! When compiled with standard library support, this crate exports a `wasm`
-//! module that can be used to validate xchain WASM.
+//! module that can be used to validate indracore WASM.
 //!
-//! ## Xchain WASM
+//! ## Indracore WASM
 //!
-//! Selendra xchain WASM is in the form of a module which imports a memory
+//! Selendra indracore WASM is in the form of a module which imports a memory
 //! instance and exports a function `validate_block`.
 //!
 //! `validate` accepts as input two `i32` values, representing a pointer/length pair
@@ -39,8 +39,9 @@
 //! ```
 //!
 //! The wasm-api (enabled only when `std` feature is not enabled and `wasm-api` feature is enabled)
-//! provides utilities for setting up a xchain WASM module in Rust.
+//! provides utilities for setting up a indracore WASM module in Rust.
 
+#![warn(unused_crate_dependencies)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod primitives;

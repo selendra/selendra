@@ -16,7 +16,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-//! These primivetive core types are used by the relay chain and the Xchains.
+//! Core Primitive types.
+//!
+//! These core Selendra types are used by the relay chain and the Indracore.
 
 use parity_scale_codec::{Decode, Encode};
 #[cfg(feature = "std")]
@@ -30,7 +32,7 @@ use sp_runtime::{
 
 pub use sp_runtime::traits::{BlakeTwo256, Hash as HashT};
 
-/// The block number type used by Polkadot.
+/// The block number type used by Selendra.
 /// 32-bits will allow for 136 years of blocks assuming 1 block per second.
 pub type BlockNumber = u32;
 
@@ -110,14 +112,14 @@ pub type BlockId = generic::BlockId<Block>;
 /// Opaque, encoded, unchecked extrinsic.
 pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 
-/// The information that goes alongside a `transfer_into_xchain` operation. Entirely opaque, it
+/// The information that goes alongside a `transfer_into_indracore` operation. Entirely opaque, it
 /// will generally be used for identifying the reason for the transfer. Typically it will hold the
 /// destination account to which the transfer should be credited. If still more information is
 /// needed, then this should be a hash with the pre-image presented via an off-chain mechanism on
-/// the xchain.
+/// the indracore.
 pub type Remark = [u8; 32];
 
-/// A message sent from the relay-chain down to a xchain.
+/// A message sent from the relay-chain down to a indracore.
 ///
 /// The size of the message is limited by the `config.max_downward_message_size` parameter.
 pub type DownwardMessage = sp_std::vec::Vec<u8>;
@@ -149,7 +151,7 @@ pub struct InboundHrmpMessage<BlockNumber = crate::BlockNumber> {
 #[derive(Encode, Decode, Clone, sp_runtime::RuntimeDebug, PartialEq, Eq, Hash, TypeInfo)]
 #[cfg_attr(feature = "std", derive(MallocSizeOf))]
 pub struct OutboundHrmpMessage<Id> {
-	/// The para that will get this message in its downward message queue.
+	/// The indra that will get this message in its downward message queue.
 	pub recipient: Id,
 	/// The message payload.
 	pub data: sp_std::vec::Vec<u8>,

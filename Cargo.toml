@@ -3,8 +3,8 @@ cargo-features = ["resolver"]
 [workspace]
 members = [
 	"primitives",
-	"xchain/core",
-	"xchain/metrics",
+	"indracore/core",
+	"indracore/metrics",
 	"runtime/common",
 	"runtime/common/slot_range_helper",
 	"runtime/selendra",

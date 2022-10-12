@@ -6984,6 +6984,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-indracore"
+version = "0.2.0"
+dependencies = [
+ "derive_more",
+ "frame-support",
+ "parity-scale-codec",
+ "parity-util-mem",
+ "scale-info",
+ "selendra-core-primitives",
+ "serde",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "selendra-inspect"
 version = "0.2.0"
 dependencies = [
@@ -7011,7 +7027,7 @@ dependencies = [
  "parity-util-mem",
  "scale-info",
  "selendra-core-primitives",
- "selendra-xchain",
+ "selendra-indracore",
  "serde",
  "sp-api",
  "sp-application-crypto",
@@ -7232,22 +7248,6 @@ dependencies = [
  "sp-trie",
  "substrate-prometheus-endpoint",
  "tiny-keccak",
-]
-
-[[package]]
-name = "selendra-xchain"
-version = "0.2.0"
-dependencies = [
- "derive_more",
- "frame-support",
- "parity-scale-codec",
- "parity-util-mem",
- "scale-info",
- "selendra-core-primitives",
- "serde",
- "sp-core",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
