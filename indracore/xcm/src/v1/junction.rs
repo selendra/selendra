@@ -29,7 +29,7 @@ use sp_runtime::{traits::ConstU32, WeakBoundedVec};
 pub enum Junction {
 	/// An indexed indracore belonging to and operated by the context.
 	///
-	/// Generally used when the context is a Polkadot Relay-chain.
+	/// Generally used when the context is a Selendra Relay-chain.
 	Indracore(#[codec(compact)] u32),
 	/// A 32-byte identifier for an account of a specific network that is respected as a sovereign endpoint within
 	/// the context.
