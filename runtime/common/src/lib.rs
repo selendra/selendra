@@ -1,5 +1,3 @@
-// This file is part of Selendra.
-
 // Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
@@ -20,6 +18,23 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod assigned_slots;
+pub mod indras_registrar;
+pub mod indras_sudo_wrapper;
+pub mod slot_range;
+pub mod slots;
+pub mod traits;
+pub mod xcm_sender;
+
+pub mod elections;
+pub mod impls;
+pub mod origin;
+
+pub use origin::*;
+
+#[cfg(test)]
+mod mock;
+
 use static_assertions::const_assert;
 
 use frame_support::{
@@ -32,12 +47,6 @@ use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
 
 use primitives::v2::{AccountId, BlockNumber};
-
-pub mod elections;
-pub mod impls;
-pub mod origin;
-
-pub use origin::*;
 
 /// We assume that an on-initialize consumes 1% of the weight on average, hence a single extrinsic
 /// will not be allowed to consume more than `AvailableBlockRatio - 1%`.
