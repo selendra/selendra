@@ -23,7 +23,8 @@ use crate::{
 	configuration::HostConfiguration,
 	initializer::SessionChangeNotification,
 	mock::{
-		new_test_ext, Configuration, MockGenesisConfig, Paras, IndrasShared, Scheduler, System, Test,
+		new_test_ext, Configuration, IndrasShared, MockGenesisConfig, Paras, Scheduler, System,
+		Test,
 	},
 	paras::IndraGenesisArgs,
 };

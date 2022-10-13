@@ -19,7 +19,7 @@ use crate::{
 	configuration::HostConfiguration,
 	initializer::SessionChangeNotification,
 	mock::{
-		new_test_ext, Configuration, MockGenesisConfig, ParaInclusion, Paras, IndrasShared, System,
+		new_test_ext, Configuration, IndrasShared, MockGenesisConfig, ParaInclusion, Paras, System,
 		Test,
 	},
 	paras::IndraGenesisArgs,

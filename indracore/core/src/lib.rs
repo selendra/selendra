@@ -42,7 +42,6 @@
 //! provides utilities for setting up a indracore WASM module in Rust.
 
 #![warn(unused_crate_dependencies)]
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod primitives;

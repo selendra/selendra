@@ -21,12 +21,12 @@
 //!
 //! Note that `dummy_` prefixed values are meant to be fillers, that should not matter, and will
 //! contain randomness based data.
+pub use rand;
 use selendra_primitives::v2::{
 	CandidateCommitments, CandidateDescriptor, CandidateReceipt, CollatorId, CollatorSignature,
 	CommittedCandidateReceipt, Hash, HeadData, Id as IndraId, ValidationCode, ValidationCodeHash,
 	ValidatorId,
 };
-pub use rand;
 use sp_application_crypto::sr25519;
 use sp_keyring::Sr25519Keyring;
 use sp_runtime::generic::Digest;

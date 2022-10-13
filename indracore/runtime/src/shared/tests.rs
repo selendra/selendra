@@ -16,7 +16,7 @@
 use super::*;
 use crate::{
 	configuration::HostConfiguration,
-	mock::{new_test_ext, MockGenesisConfig, IndrasShared},
+	mock::{new_test_ext, IndrasShared, MockGenesisConfig},
 };
 use keyring::Sr25519Keyring;
 

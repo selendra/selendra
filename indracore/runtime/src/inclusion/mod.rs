@@ -1059,7 +1059,11 @@ impl<T: Config> CandidateCheckContext<T> {
 		// check if the candidate passes the messaging acceptance criteria
 		<dmp::Pallet<T>>::check_processed_downward_messages(indra_id, processed_downward_messages)?;
 		<ump::Pallet<T>>::check_upward_messages(&self.config, indra_id, upward_messages)?;
-		<hrmp::Pallet<T>>::check_hrmp_watermark(indra_id, self.relay_parent_number, hrmp_watermark)?;
+		<hrmp::Pallet<T>>::check_hrmp_watermark(
+			indra_id,
+			self.relay_parent_number,
+			hrmp_watermark,
+		)?;
 		<hrmp::Pallet<T>>::check_outbound_hrmp(&self.config, indra_id, horizontal_messages)?;
 
 		Ok(())

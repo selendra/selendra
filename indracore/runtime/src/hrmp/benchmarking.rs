@@ -17,7 +17,7 @@
 use crate::{
 	configuration::Pallet as Configuration,
 	hrmp::{Pallet as Hrmp, *},
-	paras::{Pallet as Paras, IndracoresCache},
+	paras::{IndracoresCache, Pallet as Paras},
 	shared::Pallet as Shared,
 };
 use frame_support::{assert_ok, traits::Currency};

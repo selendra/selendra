@@ -626,7 +626,7 @@ impl<T: Config> Pallet<T> {
 			outgoing_indras.len() as u32
 		))
 		.saturating_add(<T as Config>::WeightInfo::force_process_hrmp_close(
-			outgoing_indras.len() as u32
+			outgoing_indras.len() as u32,
 		))
 	}
 
@@ -642,8 +642,9 @@ impl<T: Config> Pallet<T> {
 
 			// we need a few extra bits of data to weigh this -- all of this is read internally
 			// anyways, so no overhead.
-			let ingress_count = <Self as Store>::HrmpIngressChannelsIndex::decode_len(outgoing_indra)
-				.unwrap_or_default() as u32;
+			let ingress_count =
+				<Self as Store>::HrmpIngressChannelsIndex::decode_len(outgoing_indra)
+					.unwrap_or_default() as u32;
 			let egress_count = <Self as Store>::HrmpEgressChannelsIndex::decode_len(outgoing_indra)
 				.unwrap_or_default() as u32;
 			w = w.saturating_add(<T as Config>::WeightInfo::force_clean_hrmp(

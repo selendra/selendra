@@ -26,7 +26,7 @@ use test_helpers::{dummy_head_data, dummy_validation_code};
 use crate::{
 	configuration::HostConfiguration,
 	mock::{
-		new_test_ext, Configuration, MockGenesisConfig, Origin, Paras, IndrasShared, System, Test,
+		new_test_ext, Configuration, IndrasShared, MockGenesisConfig, Origin, Paras, System, Test,
 	},
 };
 
@@ -1487,7 +1487,12 @@ fn poke_unused_validation_code_doesnt_remove_code_with_users() {
 
 		// Then we add a user to the code, say by upgrading.
 		run_to_block(2, None);
-		Paras::schedule_code_upgrade(indra_id, validation_code.clone(), 1, &Configuration::config());
+		Paras::schedule_code_upgrade(
+			indra_id,
+			validation_code.clone(),
+			1,
+			&Configuration::config(),
+		);
 		Paras::note_new_head(indra_id, HeadData::default(), 1);
 
 		// Finally we poke the code, which should not remove it from the storage.
@@ -1547,7 +1552,12 @@ fn add_trusted_validation_code_insta_approval() {
 
 		// Then some indracore upgrades it's code with the relay-parent 1.
 		run_to_block(2, None);
-		Paras::schedule_code_upgrade(indra_id, validation_code.clone(), 1, &Configuration::config());
+		Paras::schedule_code_upgrade(
+			indra_id,
+			validation_code.clone(),
+			1,
+			&Configuration::config(),
+		);
 		Paras::note_new_head(indra_id, HeadData::default(), 1);
 
 		// Verify that the code upgrade has `expected_at` set to `26`. This is the behavior
@@ -1589,7 +1599,12 @@ fn add_trusted_validation_code_enacts_existing_pvf_vote() {
 	new_test_ext(genesis_config).execute_with(|| {
 		// First, some indracore upgrades it's code with the relay-parent 1.
 		run_to_block(2, None);
-		Paras::schedule_code_upgrade(indra_id, validation_code.clone(), 1, &Configuration::config());
+		Paras::schedule_code_upgrade(
+			indra_id,
+			validation_code.clone(),
+			1,
+			&Configuration::config(),
+		);
 		Paras::note_new_head(indra_id, HeadData::default(), 1);
 
 		// No upgrade should be scheduled at this point. PVF pre-checking vote should run for

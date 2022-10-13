@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 use super::*;
-use crate::mock::{new_test_ext, Configuration, Origin, IndrasShared, Test};
+use crate::mock::{new_test_ext, Configuration, IndrasShared, Origin, Test};
 use frame_support::{assert_err, assert_ok};
 
 fn on_new_session(session_index: SessionIndex) -> (HostConfiguration<u32>, HostConfiguration<u32>) {
@@ -354,8 +354,7 @@ fn setting_pending_config_members() {
 		Configuration::set_max_head_data_size(Origin::root(), new_config.max_head_data_size)
 			.unwrap();
 		Configuration::set_indrabase_cores(Origin::root(), new_config.indrabase_cores).unwrap();
-		Configuration::set_indrabase_retries(Origin::root(), new_config.indrabase_retries)
-			.unwrap();
+		Configuration::set_indrabase_retries(Origin::root(), new_config.indrabase_retries).unwrap();
 		Configuration::set_group_rotation_frequency(
 			Origin::root(),
 			new_config.group_rotation_frequency,

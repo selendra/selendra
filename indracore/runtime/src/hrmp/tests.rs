@@ -15,7 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 use super::*;
 use crate::mock::{
-	new_test_ext, Configuration, Event as MockEvent, Hrmp, MockGenesisConfig, Paras, IndrasShared,
+	new_test_ext, Configuration, Event as MockEvent, Hrmp, IndrasShared, MockGenesisConfig, Paras,
 	System, Test,
 };
 use frame_support::{assert_noop, assert_ok, traits::Currency as _};
@@ -246,8 +246,10 @@ fn send_recv_messages() {
 		// A sends a message to B
 		run_to_block(6, Some(vec![6]));
 		assert!(channel_exists(indra_a, indra_b));
-		let msgs =
-			vec![OutboundHrmpMessage { recipient: indra_b, data: b"this is an emergency".to_vec() }];
+		let msgs = vec![OutboundHrmpMessage {
+			recipient: indra_b,
+			data: b"this is an emergency".to_vec(),
+		}];
 		let config = Configuration::config();
 		assert!(Hrmp::check_outbound_hrmp(&config, indra_a, &msgs).is_ok());
 		let _ = Hrmp::queue_outbound_hrmp(indra_a, msgs);
@@ -489,12 +491,19 @@ fn refund_deposit_on_normal_closure() {
 		run_to_block(5, Some(vec![4, 5]));
 		Hrmp::init_open_channel(indra_a, indra_b, 2, 8).unwrap();
 		Hrmp::accept_open_channel(indra_b, indra_a).unwrap();
-		assert_eq!(<Test as Config>::Currency::free_balance(&indra_a.into_account_truncating()), 80);
-		assert_eq!(<Test as Config>::Currency::free_balance(&indra_b.into_account_truncating()), 95);
+		assert_eq!(
+			<Test as Config>::Currency::free_balance(&indra_a.into_account_truncating()),
+			80
+		);
+		assert_eq!(
+			<Test as Config>::Currency::free_balance(&indra_b.into_account_truncating()),
+			95
+		);
 		run_to_block(8, Some(vec![8]));
 
 		// Now, we close the channel and wait until the next session.
-		Hrmp::close_channel(indra_b, HrmpChannelId { sender: indra_a, recipient: indra_b }).unwrap();
+		Hrmp::close_channel(indra_b, HrmpChannelId { sender: indra_a, recipient: indra_b })
+			.unwrap();
 		run_to_block(10, Some(vec![10]));
 		assert_eq!(
 			<Test as Config>::Currency::free_balance(&indra_a.into_account_truncating()),
@@ -522,8 +531,14 @@ fn refund_deposit_on_offboarding() {
 		run_to_block(5, Some(vec![4, 5]));
 		Hrmp::init_open_channel(indra_a, indra_b, 2, 8).unwrap();
 		Hrmp::accept_open_channel(indra_b, indra_a).unwrap();
-		assert_eq!(<Test as Config>::Currency::free_balance(&indra_a.into_account_truncating()), 80);
-		assert_eq!(<Test as Config>::Currency::free_balance(&indra_b.into_account_truncating()), 95);
+		assert_eq!(
+			<Test as Config>::Currency::free_balance(&indra_a.into_account_truncating()),
+			80
+		);
+		assert_eq!(
+			<Test as Config>::Currency::free_balance(&indra_b.into_account_truncating()),
+			95
+		);
 		run_to_block(8, Some(vec![8]));
 		assert!(channel_exists(indra_a, indra_b));
 
@@ -563,7 +578,10 @@ fn no_dangling_open_requests() {
 
 		// Start opening a channel a->b
 		Hrmp::init_open_channel(indra_a, indra_b, 2, 8).unwrap();
-		assert_eq!(<Test as Config>::Currency::free_balance(&indra_a.into_account_truncating()), 80);
+		assert_eq!(
+			<Test as Config>::Currency::free_balance(&indra_a.into_account_truncating()),
+			80
+		);
 
 		// Then deregister one indracore, but don't wait two sessions until it takes effect.
 		// Instead, `indra_b` will confirm the request, which will take place the same time
@@ -571,7 +589,10 @@ fn no_dangling_open_requests() {
 		deregister_indracore(indra_a);
 		run_to_block(9, Some(vec![9]));
 		Hrmp::accept_open_channel(indra_b, indra_a).unwrap();
-		assert_eq!(<Test as Config>::Currency::free_balance(&indra_b.into_account_truncating()), 95);
+		assert_eq!(
+			<Test as Config>::Currency::free_balance(&indra_b.into_account_truncating()),
+			95
+		);
 		assert!(!channel_exists(indra_a, indra_b));
 		run_to_block(10, Some(vec![10]));
 
@@ -601,7 +622,10 @@ fn cancel_pending_open_channel_request() {
 
 		// Start opening a channel a->b
 		Hrmp::init_open_channel(indra_a, indra_b, 2, 8).unwrap();
-		assert_eq!(<Test as Config>::Currency::free_balance(&indra_a.into_account_truncating()), 80);
+		assert_eq!(
+			<Test as Config>::Currency::free_balance(&indra_a.into_account_truncating()),
+			80
+		);
 
 		// Cancel opening the channel
 		Hrmp::cancel_open_request(indra_a, HrmpChannelId { sender: indra_a, recipient: indra_b })

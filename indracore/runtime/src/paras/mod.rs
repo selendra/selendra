@@ -563,7 +563,8 @@ pub mod pallet {
 
 	/// The current lifecycle of a all known Indra IDs.
 	#[pallet::storage]
-	pub(super) type IndraLifecycles<T: Config> = StorageMap<_, Twox64Concat, IndraId, IndraLifecycle>;
+	pub(super) type IndraLifecycles<T: Config> =
+		StorageMap<_, Twox64Concat, IndraId, IndraLifecycle>;
 
 	/// The head-data of every registered indra.
 	#[pallet::storage]
@@ -1111,7 +1112,8 @@ impl<T: Config> Pallet<T> {
 				None | Some(IndraLifecycle::Indrabase) | Some(IndraLifecycle::Indracore) => { /* Nothing to do... */
 				},
 				Some(IndraLifecycle::Onboarding) => {
-					if let Some(genesis_data) = <Self as Store>::UpcomingParasGenesis::take(&indra) {
+					if let Some(genesis_data) = <Self as Store>::UpcomingParasGenesis::take(&indra)
+					{
 						Self::initialize_indra_now(&mut indracores, indra, &genesis_data);
 					}
 				},
@@ -1229,24 +1231,27 @@ impl<T: Config> Pallet<T> {
 				};
 
 				for (indra_id, _) in pruning_tasks_to_do {
-					let full_deactivate = <Self as Store>::PastCodeMeta::mutate(&indra_id, |meta| {
-						for pruned_repl_at in meta.prune_up_to(pruning_height) {
-							let removed_code_hash =
-								<Self as Store>::PastCodeHash::take(&(indra_id, pruned_repl_at));
+					let full_deactivate =
+						<Self as Store>::PastCodeMeta::mutate(&indra_id, |meta| {
+							for pruned_repl_at in meta.prune_up_to(pruning_height) {
+								let removed_code_hash = <Self as Store>::PastCodeHash::take(&(
+									indra_id,
+									pruned_repl_at,
+								));
 
-							if let Some(removed_code_hash) = removed_code_hash {
-								Self::decrease_code_ref(&removed_code_hash);
-							} else {
-								log::warn!(
-									target: LOG_TARGET,
-									"Missing code for removed hash {:?}",
-									removed_code_hash,
-								);
+								if let Some(removed_code_hash) = removed_code_hash {
+									Self::decrease_code_ref(&removed_code_hash);
+								} else {
+									log::warn!(
+										target: LOG_TARGET,
+										"Missing code for removed hash {:?}",
+										removed_code_hash,
+									);
+								}
 							}
-						}
 
-						meta.is_empty() && Self::indra_head(&indra_id).is_none()
-					});
+							meta.is_empty() && Self::indra_head(&indra_id).is_none()
+						});
 
 					// This indracore has been removed and now the vestigial code
 					// has been removed from the state. clean up meta as well.
