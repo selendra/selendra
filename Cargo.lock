@@ -4773,6 +4773,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-xcm"
+version = "0.2.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "selendra-indracore",
+ "selendra-runtime-indracores",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
+]
+
+[[package]]
 name = "parity-db"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9775,6 +9797,29 @@ dependencies = [
  "scale-info",
  "sp-runtime",
  "xcm-procedural",
+]
+
+[[package]]
+name = "xcm-builder"
+version = "0.2.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-balances",
+ "pallet-transaction-payment",
+ "pallet-xcm",
+ "parity-scale-codec",
+ "scale-info",
+ "selendra-indracore",
+ "selendra-runtime-indracores",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
 ]
 
 [[package]]
