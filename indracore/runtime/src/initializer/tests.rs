@@ -15,7 +15,8 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 use super::*;
 use crate::mock::{
-	new_test_ext, Configuration, Dmp, Initializer, MockGenesisConfig, Paras, SessionInfo, System,
+	new_test_ext, Configuration, Dmp, Initializer, MockGenesisConfig, Paras as Indras, SessionInfo,
+	System,
 };
 use primitives::v2::{HeadData, Id as IndraId};
 use test_helpers::dummy_validation_code;
@@ -88,7 +89,7 @@ fn scheduled_cleanup_performed() {
 	let b = IndraId::from(228);
 	let c = IndraId::from(123);
 
-	let mock_genesis = crate::paras::IndraGenesisArgs {
+	let mock_genesis = crate::indras::IndraGenesisArgs {
 		indracore: true,
 		genesis_head: HeadData(vec![4, 5, 6]),
 		validation_code: dummy_validation_code(),
@@ -101,8 +102,8 @@ fn scheduled_cleanup_performed() {
 				..Default::default()
 			},
 		},
-		paras: crate::paras::GenesisConfig {
-			paras: vec![
+		indras: crate::indras::GenesisConfig {
+			indras: vec![
 				(a, mock_genesis.clone()),
 				(b, mock_genesis.clone()),
 				(c, mock_genesis.clone()),
@@ -117,8 +118,8 @@ fn scheduled_cleanup_performed() {
 		assert_ok!(Dmp::queue_downward_message(&Configuration::config(), b, vec![4, 5, 6]));
 		assert_ok!(Dmp::queue_downward_message(&Configuration::config(), c, vec![7, 8, 9]));
 
-		assert_ok!(Paras::schedule_indra_cleanup(a));
-		assert_ok!(Paras::schedule_indra_cleanup(b));
+		assert_ok!(Indras::schedule_indra_cleanup(a));
+		assert_ok!(Indras::schedule_indra_cleanup(b));
 
 		// Apply session 2 in the future
 		Initializer::apply_new_session(2, vec![], vec![]);

@@ -26,7 +26,8 @@ use test_helpers::{dummy_head_data, dummy_validation_code};
 use crate::{
 	configuration::HostConfiguration,
 	mock::{
-		new_test_ext, Configuration, IndrasShared, MockGenesisConfig, Origin, Paras, System, Test,
+		new_test_ext, Configuration, IndrasShared, MockGenesisConfig, Origin, Paras as Indras,
+		System, Test,
 	},
 };
 
@@ -51,7 +52,7 @@ fn sign_and_include_pvf_check_statement(stmt: PvfCheckStatement) {
 		Sr25519Keyring::Ferdie,
 	];
 	let signature = validators[stmt.validator_index.0 as usize].sign(&stmt.signing_payload());
-	Paras::include_pvf_check_statement(None.into(), stmt, signature.into()).unwrap();
+	Indras::include_pvf_check_statement(None.into(), stmt, signature.into()).unwrap();
 }
 
 fn run_to_block(to: BlockNumber, new_session: Option<Vec<BlockNumber>>) {
@@ -68,7 +69,7 @@ fn run_to_block(to: BlockNumber, new_session: Option<Vec<BlockNumber>>) {
 
 	while System::block_number() < to {
 		let b = System::block_number();
-		Paras::initializer_finalize(b);
+		Indras::initializer_finalize(b);
 		IndrasShared::initializer_finalize();
 		if new_session.as_ref().map_or(false, |v| v.contains(&(b + 1))) {
 			let mut session_change_notification = SessionChangeNotification::default();
@@ -81,7 +82,7 @@ fn run_to_block(to: BlockNumber, new_session: Option<Vec<BlockNumber>>) {
 				session_change_notification.validators.clone(),
 			);
 			IndrasShared::set_active_validators_ascending(validator_pubkeys.clone());
-			Paras::initializer_on_new_session(&session_change_notification);
+			Indras::initializer_on_new_session(&session_change_notification);
 		}
 		System::on_finalize(b);
 
@@ -89,7 +90,7 @@ fn run_to_block(to: BlockNumber, new_session: Option<Vec<BlockNumber>>) {
 		System::set_block_number(b + 1);
 
 		IndrasShared::initializer_initialize(b + 1);
-		Paras::initializer_initialize(b + 1);
+		Indras::initializer_initialize(b + 1);
 	}
 }
 
@@ -101,13 +102,13 @@ fn upgrade_at(
 }
 
 fn check_code_is_stored(validation_code: &ValidationCode) {
-	assert!(<Paras as Store>::CodeByHashRefs::get(validation_code.hash()) != 0);
-	assert!(<Paras as Store>::CodeByHash::contains_key(validation_code.hash()));
+	assert!(<Indras as Store>::CodeByHashRefs::get(validation_code.hash()) != 0);
+	assert!(<Indras as Store>::CodeByHash::contains_key(validation_code.hash()));
 }
 
 fn check_code_is_not_stored(validation_code: &ValidationCode) {
-	assert!(!<Paras as Store>::CodeByHashRefs::contains_key(validation_code.hash()));
-	assert!(!<Paras as Store>::CodeByHash::contains_key(validation_code.hash()));
+	assert!(!<Indras as Store>::CodeByHashRefs::contains_key(validation_code.hash()));
+	assert!(!<Indras as Store>::CodeByHash::contains_key(validation_code.hash()));
 }
 
 /// An utility for checking that certain events were deposited.
@@ -155,7 +156,7 @@ impl EventValidator {
 
 #[test]
 fn indra_past_code_pruning_works_correctly() {
-	let mut past_code = ParaPastCodeMeta::default();
+	let mut past_code = IndraPastCodeMeta::default();
 	past_code.note_replacement(10u32, 10);
 	past_code.note_replacement(20, 25);
 	past_code.note_replacement(30, 35);
@@ -167,7 +168,7 @@ fn indra_past_code_pruning_works_correctly() {
 	assert_eq!(past_code.prune_up_to(10).collect::<Vec<_>>(), vec![10]);
 	assert_eq!(
 		past_code,
-		ParaPastCodeMeta {
+		IndraPastCodeMeta {
 			upgrade_times: vec![upgrade_at(20, 25), upgrade_at(30, 35)],
 			last_pruned: Some(10),
 		}
@@ -178,7 +179,7 @@ fn indra_past_code_pruning_works_correctly() {
 	assert_eq!(past_code.prune_up_to(26).collect::<Vec<_>>(), vec![20]);
 	assert_eq!(
 		past_code,
-		ParaPastCodeMeta { upgrade_times: vec![upgrade_at(30, 35)], last_pruned: Some(25) }
+		IndraPastCodeMeta { upgrade_times: vec![upgrade_at(30, 35)], last_pruned: Some(25) }
 	);
 
 	past_code.note_replacement(40, 42);
@@ -187,7 +188,7 @@ fn indra_past_code_pruning_works_correctly() {
 
 	assert_eq!(
 		past_code,
-		ParaPastCodeMeta {
+		IndraPastCodeMeta {
 			upgrade_times: vec![
 				upgrade_at(30, 35),
 				upgrade_at(40, 42),
@@ -201,20 +202,20 @@ fn indra_past_code_pruning_works_correctly() {
 	assert_eq!(past_code.prune_up_to(60).collect::<Vec<_>>(), vec![30, 40, 50]);
 	assert_eq!(
 		past_code,
-		ParaPastCodeMeta { upgrade_times: vec![upgrade_at(60, 66)], last_pruned: Some(53) }
+		IndraPastCodeMeta { upgrade_times: vec![upgrade_at(60, 66)], last_pruned: Some(53) }
 	);
 
 	assert_eq!(past_code.most_recent_change(), Some(60));
 	assert_eq!(past_code.prune_up_to(66).collect::<Vec<_>>(), vec![60]);
 
-	assert_eq!(past_code, ParaPastCodeMeta { upgrade_times: Vec::new(), last_pruned: Some(66) });
+	assert_eq!(past_code, IndraPastCodeMeta { upgrade_times: Vec::new(), last_pruned: Some(66) });
 }
 
 #[test]
 fn schedule_indra_init_rejects_empty_code() {
 	new_test_ext(MockGenesisConfig::default()).execute_with(|| {
 		assert_err!(
-			Paras::schedule_indra_initialize(
+			Indras::schedule_indra_initialize(
 				1000.into(),
 				IndraGenesisArgs {
 					indracore: false,
@@ -225,7 +226,7 @@ fn schedule_indra_init_rejects_empty_code() {
 			Error::<Test>::CannotOnboard,
 		);
 
-		assert_ok!(Paras::schedule_indra_initialize(
+		assert_ok!(Indras::schedule_indra_initialize(
 			1000.into(),
 			IndraGenesisArgs {
 				indracore: false,
@@ -239,7 +240,7 @@ fn schedule_indra_init_rejects_empty_code() {
 #[test]
 fn indra_past_code_pruning_in_initialize() {
 	let code_retention_period = 10;
-	let paras = vec![
+	let indras = vec![
 		(
 			0u32.into(),
 			IndraGenesisArgs {
@@ -259,7 +260,7 @@ fn indra_past_code_pruning_in_initialize() {
 	];
 
 	let genesis_config = MockGenesisConfig {
-		paras: GenesisConfig { paras, ..Default::default() },
+		indras: GenesisConfig { indras, ..Default::default() },
 		configuration: crate::configuration::GenesisConfig {
 			config: HostConfiguration { code_retention_period, ..Default::default() },
 			..Default::default()
@@ -273,34 +274,34 @@ fn indra_past_code_pruning_in_initialize() {
 		let included_block: BlockNumber = 12;
 		let validation_code = ValidationCode(vec![4, 5, 6]);
 
-		Paras::increase_code_ref(&validation_code.hash(), &validation_code);
-		<Paras as Store>::PastCodeHash::insert(&(id, at_block), &validation_code.hash());
-		<Paras as Store>::PastCodePruning::put(&vec![(id, included_block)]);
+		Indras::increase_code_ref(&validation_code.hash(), &validation_code);
+		<Indras as Store>::PastCodeHash::insert(&(id, at_block), &validation_code.hash());
+		<Indras as Store>::PastCodePruning::put(&vec![(id, included_block)]);
 
 		{
-			let mut code_meta = Paras::past_code_meta(&id);
+			let mut code_meta = Indras::past_code_meta(&id);
 			code_meta.note_replacement(at_block, included_block);
-			<Paras as Store>::PastCodeMeta::insert(&id, &code_meta);
+			<Indras as Store>::PastCodeMeta::insert(&id, &code_meta);
 		}
 
 		let pruned_at: BlockNumber = included_block + code_retention_period + 1;
 		assert_eq!(
-			<Paras as Store>::PastCodeHash::get(&(id, at_block)),
+			<Indras as Store>::PastCodeHash::get(&(id, at_block)),
 			Some(validation_code.hash())
 		);
 		check_code_is_stored(&validation_code);
 
 		run_to_block(pruned_at - 1, None);
 		assert_eq!(
-			<Paras as Store>::PastCodeHash::get(&(id, at_block)),
+			<Indras as Store>::PastCodeHash::get(&(id, at_block)),
 			Some(validation_code.hash())
 		);
-		assert_eq!(Paras::past_code_meta(&id).most_recent_change(), Some(at_block));
+		assert_eq!(Indras::past_code_meta(&id).most_recent_change(), Some(at_block));
 		check_code_is_stored(&validation_code);
 
 		run_to_block(pruned_at, None);
-		assert!(<Paras as Store>::PastCodeHash::get(&(id, at_block)).is_none());
-		assert!(Paras::past_code_meta(&id).most_recent_change().is_none());
+		assert!(<Indras as Store>::PastCodeHash::get(&(id, at_block)).is_none());
+		assert!(Indras::past_code_meta(&id).most_recent_change().is_none());
 		check_code_is_not_stored(&validation_code);
 	});
 }
@@ -308,7 +309,7 @@ fn indra_past_code_pruning_in_initialize() {
 #[test]
 fn note_new_head_sets_head() {
 	let code_retention_period = 10;
-	let paras = vec![(
+	let indras = vec![(
 		0u32.into(),
 		IndraGenesisArgs {
 			indracore: true,
@@ -318,7 +319,7 @@ fn note_new_head_sets_head() {
 	)];
 
 	let genesis_config = MockGenesisConfig {
-		paras: GenesisConfig { paras, ..Default::default() },
+		indras: GenesisConfig { indras, ..Default::default() },
 		configuration: crate::configuration::GenesisConfig {
 			config: HostConfiguration { code_retention_period, ..Default::default() },
 			..Default::default()
@@ -329,18 +330,18 @@ fn note_new_head_sets_head() {
 	new_test_ext(genesis_config).execute_with(|| {
 		let id_a = IndraId::from(0u32);
 
-		assert_eq!(Paras::indra_head(&id_a), Some(dummy_head_data()));
+		assert_eq!(Indras::indra_head(&id_a), Some(dummy_head_data()));
 
-		Paras::note_new_head(id_a, vec![1, 2, 3].into(), 0);
+		Indras::note_new_head(id_a, vec![1, 2, 3].into(), 0);
 
-		assert_eq!(Paras::indra_head(&id_a), Some(vec![1, 2, 3].into()));
+		assert_eq!(Indras::indra_head(&id_a), Some(vec![1, 2, 3].into()));
 	});
 }
 
 #[test]
 fn note_past_code_sets_up_pruning_correctly() {
 	let code_retention_period = 10;
-	let paras = vec![
+	let indras = vec![
 		(
 			0u32.into(),
 			IndraGenesisArgs {
@@ -360,7 +361,7 @@ fn note_past_code_sets_up_pruning_correctly() {
 	];
 
 	let genesis_config = MockGenesisConfig {
-		paras: GenesisConfig { paras, ..Default::default() },
+		indras: GenesisConfig { indras, ..Default::default() },
 		configuration: crate::configuration::GenesisConfig {
 			config: HostConfiguration { code_retention_period, ..Default::default() },
 			..Default::default()
@@ -372,17 +373,17 @@ fn note_past_code_sets_up_pruning_correctly() {
 		let id_a = IndraId::from(0u32);
 		let id_b = IndraId::from(1u32);
 
-		Paras::note_past_code(id_a, 10, 12, ValidationCode(vec![1, 2, 3]).hash());
-		Paras::note_past_code(id_b, 20, 23, ValidationCode(vec![4, 5, 6]).hash());
+		Indras::note_past_code(id_a, 10, 12, ValidationCode(vec![1, 2, 3]).hash());
+		Indras::note_past_code(id_b, 20, 23, ValidationCode(vec![4, 5, 6]).hash());
 
-		assert_eq!(<Paras as Store>::PastCodePruning::get(), vec![(id_a, 12), (id_b, 23)]);
+		assert_eq!(<Indras as Store>::PastCodePruning::get(), vec![(id_a, 12), (id_b, 23)]);
 		assert_eq!(
-			Paras::past_code_meta(&id_a),
-			ParaPastCodeMeta { upgrade_times: vec![upgrade_at(10, 12)], last_pruned: None }
+			Indras::past_code_meta(&id_a),
+			IndraPastCodeMeta { upgrade_times: vec![upgrade_at(10, 12)], last_pruned: None }
 		);
 		assert_eq!(
-			Paras::past_code_meta(&id_b),
-			ParaPastCodeMeta { upgrade_times: vec![upgrade_at(20, 23)], last_pruned: None }
+			Indras::past_code_meta(&id_b),
+			IndraPastCodeMeta { upgrade_times: vec![upgrade_at(20, 23)], last_pruned: None }
 		);
 	});
 }
@@ -394,7 +395,7 @@ fn code_upgrade_applied_after_delay() {
 	let validation_upgrade_cooldown = 10;
 
 	let original_code = ValidationCode(vec![1, 2, 3]);
-	let paras = vec![(
+	let indras = vec![(
 		0u32.into(),
 		IndraGenesisArgs {
 			indracore: true,
@@ -404,7 +405,7 @@ fn code_upgrade_applied_after_delay() {
 	)];
 
 	let genesis_config = MockGenesisConfig {
-		paras: GenesisConfig { paras, ..Default::default() },
+		indras: GenesisConfig { indras, ..Default::default() },
 		configuration: crate::configuration::GenesisConfig {
 			config: HostConfiguration {
 				code_retention_period,
@@ -425,24 +426,24 @@ fn code_upgrade_applied_after_delay() {
 		let new_code = ValidationCode(vec![4, 5, 6]);
 
 		run_to_block(2, None);
-		assert_eq!(Paras::current_code(&indra_id), Some(original_code.clone()));
+		assert_eq!(Indras::current_code(&indra_id), Some(original_code.clone()));
 
 		let expected_at = {
 			// this indrablock is in the context of block 1.
 			let expected_at = 1 + validation_upgrade_delay;
 			let next_possible_upgrade_at = 1 + validation_upgrade_cooldown;
-			Paras::schedule_code_upgrade(indra_id, new_code.clone(), 1, &Configuration::config());
-			Paras::note_new_head(indra_id, Default::default(), 1);
+			Indras::schedule_code_upgrade(indra_id, new_code.clone(), 1, &Configuration::config());
+			Indras::note_new_head(indra_id, Default::default(), 1);
 
-			assert!(Paras::past_code_meta(&indra_id).most_recent_change().is_none());
-			assert_eq!(<Paras as Store>::FutureCodeUpgrades::get(&indra_id), Some(expected_at));
-			assert_eq!(<Paras as Store>::FutureCodeHash::get(&indra_id), Some(new_code.hash()));
-			assert_eq!(<Paras as Store>::UpcomingUpgrades::get(), vec![(indra_id, expected_at)]);
+			assert!(Indras::past_code_meta(&indra_id).most_recent_change().is_none());
+			assert_eq!(<Indras as Store>::FutureCodeUpgrades::get(&indra_id), Some(expected_at));
+			assert_eq!(<Indras as Store>::FutureCodeHash::get(&indra_id), Some(new_code.hash()));
+			assert_eq!(<Indras as Store>::UpcomingUpgrades::get(), vec![(indra_id, expected_at)]);
 			assert_eq!(
-				<Paras as Store>::UpgradeCooldowns::get(),
+				<Indras as Store>::UpgradeCooldowns::get(),
 				vec![(indra_id, next_possible_upgrade_at)]
 			);
-			assert_eq!(Paras::current_code(&indra_id), Some(original_code.clone()));
+			assert_eq!(Indras::current_code(&indra_id), Some(original_code.clone()));
 			check_code_is_stored(&original_code);
 			check_code_is_stored(&new_code);
 
@@ -454,16 +455,16 @@ fn code_upgrade_applied_after_delay() {
 		// the candidate is in the context of the parent of `expected_at`,
 		// thus does not trigger the code upgrade.
 		{
-			Paras::note_new_head(indra_id, Default::default(), expected_at - 1);
+			Indras::note_new_head(indra_id, Default::default(), expected_at - 1);
 
-			assert!(Paras::past_code_meta(&indra_id).most_recent_change().is_none());
-			assert_eq!(<Paras as Store>::FutureCodeUpgrades::get(&indra_id), Some(expected_at));
-			assert_eq!(<Paras as Store>::FutureCodeHash::get(&indra_id), Some(new_code.hash()));
+			assert!(Indras::past_code_meta(&indra_id).most_recent_change().is_none());
+			assert_eq!(<Indras as Store>::FutureCodeUpgrades::get(&indra_id), Some(expected_at));
+			assert_eq!(<Indras as Store>::FutureCodeHash::get(&indra_id), Some(new_code.hash()));
 			assert_eq!(
-				<Paras as Store>::UpgradeGoAheadSignal::get(&indra_id),
+				<Indras as Store>::UpgradeGoAheadSignal::get(&indra_id),
 				Some(UpgradeGoAhead::GoAhead)
 			);
-			assert_eq!(Paras::current_code(&indra_id), Some(original_code.clone()));
+			assert_eq!(Indras::current_code(&indra_id), Some(original_code.clone()));
 			check_code_is_stored(&original_code);
 			check_code_is_stored(&new_code);
 		}
@@ -473,17 +474,17 @@ fn code_upgrade_applied_after_delay() {
 		// the candidate is in the context of `expected_at`, and triggers
 		// the upgrade.
 		{
-			Paras::note_new_head(indra_id, Default::default(), expected_at);
+			Indras::note_new_head(indra_id, Default::default(), expected_at);
 
-			assert_eq!(Paras::past_code_meta(&indra_id).most_recent_change(), Some(expected_at));
+			assert_eq!(Indras::past_code_meta(&indra_id).most_recent_change(), Some(expected_at));
 			assert_eq!(
-				<Paras as Store>::PastCodeHash::get(&(indra_id, expected_at)),
+				<Indras as Store>::PastCodeHash::get(&(indra_id, expected_at)),
 				Some(original_code.hash()),
 			);
-			assert!(<Paras as Store>::FutureCodeUpgrades::get(&indra_id).is_none());
-			assert!(<Paras as Store>::FutureCodeHash::get(&indra_id).is_none());
-			assert!(<Paras as Store>::UpgradeGoAheadSignal::get(&indra_id).is_none());
-			assert_eq!(Paras::current_code(&indra_id), Some(new_code.clone()));
+			assert!(<Indras as Store>::FutureCodeUpgrades::get(&indra_id).is_none());
+			assert!(<Indras as Store>::FutureCodeHash::get(&indra_id).is_none());
+			assert!(<Indras as Store>::UpgradeGoAheadSignal::get(&indra_id).is_none());
+			assert_eq!(Indras::current_code(&indra_id), Some(new_code.clone()));
 			check_code_is_stored(&original_code);
 			check_code_is_stored(&new_code);
 		}
@@ -497,7 +498,7 @@ fn code_upgrade_applied_after_delay_even_when_late() {
 	let validation_upgrade_cooldown = 10;
 
 	let original_code = ValidationCode(vec![1, 2, 3]);
-	let paras = vec![(
+	let indras = vec![(
 		0u32.into(),
 		IndraGenesisArgs {
 			indracore: true,
@@ -507,7 +508,7 @@ fn code_upgrade_applied_after_delay_even_when_late() {
 	)];
 
 	let genesis_config = MockGenesisConfig {
-		paras: GenesisConfig { paras, ..Default::default() },
+		indras: GenesisConfig { indras, ..Default::default() },
 		configuration: crate::configuration::GenesisConfig {
 			config: HostConfiguration {
 				code_retention_period,
@@ -526,25 +527,25 @@ fn code_upgrade_applied_after_delay_even_when_late() {
 		let new_code = ValidationCode(vec![4, 5, 6]);
 
 		run_to_block(2, None);
-		assert_eq!(Paras::current_code(&indra_id), Some(original_code.clone()));
+		assert_eq!(Indras::current_code(&indra_id), Some(original_code.clone()));
 
 		let expected_at = {
 			// this indrablock is in the context of block 1.
 			let expected_at = 1 + validation_upgrade_delay;
 			let next_possible_upgrade_at = 1 + validation_upgrade_cooldown;
-			Paras::schedule_code_upgrade(indra_id, new_code.clone(), 1, &Configuration::config());
-			Paras::note_new_head(indra_id, Default::default(), 1);
+			Indras::schedule_code_upgrade(indra_id, new_code.clone(), 1, &Configuration::config());
+			Indras::note_new_head(indra_id, Default::default(), 1);
 
-			assert!(Paras::past_code_meta(&indra_id).most_recent_change().is_none());
-			assert_eq!(<Paras as Store>::FutureCodeUpgrades::get(&indra_id), Some(expected_at));
-			assert_eq!(<Paras as Store>::FutureCodeHash::get(&indra_id), Some(new_code.hash()));
-			assert_eq!(<Paras as Store>::UpcomingUpgrades::get(), vec![(indra_id, expected_at)]);
+			assert!(Indras::past_code_meta(&indra_id).most_recent_change().is_none());
+			assert_eq!(<Indras as Store>::FutureCodeUpgrades::get(&indra_id), Some(expected_at));
+			assert_eq!(<Indras as Store>::FutureCodeHash::get(&indra_id), Some(new_code.hash()));
+			assert_eq!(<Indras as Store>::UpcomingUpgrades::get(), vec![(indra_id, expected_at)]);
 			assert_eq!(
-				<Paras as Store>::UpgradeCooldowns::get(),
+				<Indras as Store>::UpgradeCooldowns::get(),
 				vec![(indra_id, next_possible_upgrade_at)]
 			);
-			assert!(<Paras as Store>::UpgradeGoAheadSignal::get(&indra_id).is_none());
-			assert_eq!(Paras::current_code(&indra_id), Some(original_code.clone()));
+			assert!(<Indras as Store>::UpgradeGoAheadSignal::get(&indra_id).is_none());
+			assert_eq!(Indras::current_code(&indra_id), Some(original_code.clone()));
 
 			expected_at
 		};
@@ -556,22 +557,22 @@ fn code_upgrade_applied_after_delay_even_when_late() {
 		{
 			// The signal should be set to go-ahead until the new head is actually processed.
 			assert_eq!(
-				<Paras as Store>::UpgradeGoAheadSignal::get(&indra_id),
+				<Indras as Store>::UpgradeGoAheadSignal::get(&indra_id),
 				Some(UpgradeGoAhead::GoAhead),
 			);
 
-			Paras::note_new_head(indra_id, Default::default(), expected_at + 4);
+			Indras::note_new_head(indra_id, Default::default(), expected_at + 4);
 
-			assert_eq!(Paras::past_code_meta(&indra_id).most_recent_change(), Some(expected_at));
+			assert_eq!(Indras::past_code_meta(&indra_id).most_recent_change(), Some(expected_at));
 
 			assert_eq!(
-				<Paras as Store>::PastCodeHash::get(&(indra_id, expected_at)),
+				<Indras as Store>::PastCodeHash::get(&(indra_id, expected_at)),
 				Some(original_code.hash()),
 			);
-			assert!(<Paras as Store>::FutureCodeUpgrades::get(&indra_id).is_none());
-			assert!(<Paras as Store>::FutureCodeHash::get(&indra_id).is_none());
-			assert!(<Paras as Store>::UpgradeGoAheadSignal::get(&indra_id).is_none());
-			assert_eq!(Paras::current_code(&indra_id), Some(new_code.clone()));
+			assert!(<Indras as Store>::FutureCodeUpgrades::get(&indra_id).is_none());
+			assert!(<Indras as Store>::FutureCodeHash::get(&indra_id).is_none());
+			assert!(<Indras as Store>::UpgradeGoAheadSignal::get(&indra_id).is_none());
+			assert_eq!(Indras::current_code(&indra_id), Some(new_code.clone()));
 		}
 	});
 }
@@ -582,7 +583,7 @@ fn submit_code_change_when_not_allowed_is_err() {
 	let validation_upgrade_delay = 7;
 	let validation_upgrade_cooldown = 100;
 
-	let paras = vec![(
+	let indras = vec![(
 		0u32.into(),
 		IndraGenesisArgs {
 			indracore: true,
@@ -592,7 +593,7 @@ fn submit_code_change_when_not_allowed_is_err() {
 	)];
 
 	let genesis_config = MockGenesisConfig {
-		paras: GenesisConfig { paras, ..Default::default() },
+		indras: GenesisConfig { indras, ..Default::default() },
 		configuration: crate::configuration::GenesisConfig {
 			config: HostConfiguration {
 				code_retention_period,
@@ -612,24 +613,24 @@ fn submit_code_change_when_not_allowed_is_err() {
 		let newer_code = ValidationCode(vec![4, 5, 6, 7]);
 
 		run_to_block(1, None);
-		Paras::schedule_code_upgrade(indra_id, new_code.clone(), 1, &Configuration::config());
+		Indras::schedule_code_upgrade(indra_id, new_code.clone(), 1, &Configuration::config());
 		assert_eq!(
-			<Paras as Store>::FutureCodeUpgrades::get(&indra_id),
+			<Indras as Store>::FutureCodeUpgrades::get(&indra_id),
 			Some(1 + validation_upgrade_delay)
 		);
-		assert_eq!(<Paras as Store>::FutureCodeHash::get(&indra_id), Some(new_code.hash()));
+		assert_eq!(<Indras as Store>::FutureCodeHash::get(&indra_id), Some(new_code.hash()));
 		check_code_is_stored(&new_code);
 
 		// We expect that if an upgrade is signalled while there is already one pending we just
 		// ignore it. Note that this is only true from perspective of this module.
 		run_to_block(2, None);
-		assert!(!Paras::can_upgrade_validation_code(indra_id));
-		Paras::schedule_code_upgrade(indra_id, newer_code.clone(), 2, &Configuration::config());
+		assert!(!Indras::can_upgrade_validation_code(indra_id));
+		Indras::schedule_code_upgrade(indra_id, newer_code.clone(), 2, &Configuration::config());
 		assert_eq!(
-			<Paras as Store>::FutureCodeUpgrades::get(&indra_id),
+			<Indras as Store>::FutureCodeUpgrades::get(&indra_id),
 			Some(1 + validation_upgrade_delay), // did not change since the same assertion from the last time.
 		);
-		assert_eq!(<Paras as Store>::FutureCodeHash::get(&indra_id), Some(new_code.hash()));
+		assert_eq!(<Indras as Store>::FutureCodeHash::get(&indra_id), Some(new_code.hash()));
 		check_code_is_not_stored(&newer_code);
 	});
 }
@@ -650,7 +651,7 @@ fn upgrade_restriction_elapsed_doesnt_mean_can_upgrade() {
 	let validation_upgrade_delay = 7;
 	let validation_upgrade_cooldown = 30;
 
-	let paras = vec![(
+	let indras = vec![(
 		0u32.into(),
 		IndraGenesisArgs {
 			indracore: true,
@@ -660,7 +661,7 @@ fn upgrade_restriction_elapsed_doesnt_mean_can_upgrade() {
 	)];
 
 	let genesis_config = MockGenesisConfig {
-		paras: GenesisConfig { paras, ..Default::default() },
+		indras: GenesisConfig { indras, ..Default::default() },
 		configuration: crate::configuration::GenesisConfig {
 			config: HostConfiguration {
 				code_retention_period,
@@ -680,28 +681,28 @@ fn upgrade_restriction_elapsed_doesnt_mean_can_upgrade() {
 		let newer_code = ValidationCode(vec![4, 5, 6, 7]);
 
 		run_to_block(1, None);
-		Paras::schedule_code_upgrade(indra_id, new_code.clone(), 0, &Configuration::config());
-		Paras::note_new_head(indra_id, dummy_head_data(), 0);
+		Indras::schedule_code_upgrade(indra_id, new_code.clone(), 0, &Configuration::config());
+		Indras::note_new_head(indra_id, dummy_head_data(), 0);
 		assert_eq!(
-			<Paras as Store>::UpgradeRestrictionSignal::get(&indra_id),
+			<Indras as Store>::UpgradeRestrictionSignal::get(&indra_id),
 			Some(UpgradeRestriction::Present),
 		);
 		assert_eq!(
-			<Paras as Store>::FutureCodeUpgrades::get(&indra_id),
+			<Indras as Store>::FutureCodeUpgrades::get(&indra_id),
 			Some(0 + validation_upgrade_delay)
 		);
-		assert!(!Paras::can_upgrade_validation_code(indra_id));
+		assert!(!Indras::can_upgrade_validation_code(indra_id));
 
 		run_to_block(31, None);
-		assert!(<Paras as Store>::UpgradeRestrictionSignal::get(&indra_id).is_none());
+		assert!(<Indras as Store>::UpgradeRestrictionSignal::get(&indra_id).is_none());
 
 		// Note the indra still cannot upgrade the validation code.
-		assert!(!Paras::can_upgrade_validation_code(indra_id));
+		assert!(!Indras::can_upgrade_validation_code(indra_id));
 
 		// And scheduling another upgrade does not do anything. `expected_at` is still the same.
-		Paras::schedule_code_upgrade(indra_id, newer_code.clone(), 30, &Configuration::config());
+		Indras::schedule_code_upgrade(indra_id, newer_code.clone(), 30, &Configuration::config());
 		assert_eq!(
-			<Paras as Store>::FutureCodeUpgrades::get(&indra_id),
+			<Indras as Store>::FutureCodeUpgrades::get(&indra_id),
 			Some(0 + validation_upgrade_delay)
 		);
 	});
@@ -713,7 +714,7 @@ fn full_indracore_cleanup_storage() {
 	let validation_upgrade_delay = 1 + 5;
 
 	let original_code = ValidationCode(vec![1, 2, 3]);
-	let paras = vec![(
+	let indras = vec![(
 		0u32.into(),
 		IndraGenesisArgs {
 			indracore: true,
@@ -723,7 +724,7 @@ fn full_indracore_cleanup_storage() {
 	)];
 
 	let genesis_config = MockGenesisConfig {
-		paras: GenesisConfig { paras, ..Default::default() },
+		indras: GenesisConfig { indras, ..Default::default() },
 		configuration: crate::configuration::GenesisConfig {
 			config: HostConfiguration {
 				code_retention_period,
@@ -748,19 +749,19 @@ fn full_indracore_cleanup_storage() {
 		let new_code = ValidationCode(vec![4, 5, 6]);
 
 		run_to_block(2, None);
-		assert_eq!(Paras::current_code(&indra_id), Some(original_code.clone()));
+		assert_eq!(Indras::current_code(&indra_id), Some(original_code.clone()));
 		check_code_is_stored(&original_code);
 
 		let expected_at = {
 			// this indrablock is in the context of block 1.
 			let expected_at = 1 + validation_upgrade_delay;
-			Paras::schedule_code_upgrade(indra_id, new_code.clone(), 1, &Configuration::config());
-			Paras::note_new_head(indra_id, Default::default(), 1);
+			Indras::schedule_code_upgrade(indra_id, new_code.clone(), 1, &Configuration::config());
+			Indras::note_new_head(indra_id, Default::default(), 1);
 
-			assert!(Paras::past_code_meta(&indra_id).most_recent_change().is_none());
-			assert_eq!(<Paras as Store>::FutureCodeUpgrades::get(&indra_id), Some(expected_at));
-			assert_eq!(<Paras as Store>::FutureCodeHash::get(&indra_id), Some(new_code.hash()));
-			assert_eq!(Paras::current_code(&indra_id), Some(original_code.clone()));
+			assert!(Indras::past_code_meta(&indra_id).most_recent_change().is_none());
+			assert_eq!(<Indras as Store>::FutureCodeUpgrades::get(&indra_id), Some(expected_at));
+			assert_eq!(<Indras as Store>::FutureCodeHash::get(&indra_id), Some(new_code.hash()));
+			assert_eq!(Indras::current_code(&indra_id), Some(original_code.clone()));
 			check_code_is_stored(&original_code);
 			check_code_is_stored(&new_code);
 
@@ -768,7 +769,7 @@ fn full_indracore_cleanup_storage() {
 		};
 
 		// Cannot offboard while an upgrade is pending.
-		assert_err!(Paras::schedule_indra_cleanup(indra_id), Error::<Test>::CannotOffboard);
+		assert_err!(Indras::schedule_indra_cleanup(indra_id), Error::<Test>::CannotOffboard);
 
 		// Enact the upgrade.
 		//
@@ -776,9 +777,9 @@ fn full_indracore_cleanup_storage() {
 		assert_eq!(expected_at, 7);
 		run_to_block(7, None);
 		assert_eq!(<frame_system::Pallet<Test>>::block_number(), 7);
-		Paras::note_new_head(indra_id, Default::default(), expected_at);
+		Indras::note_new_head(indra_id, Default::default(), expected_at);
 
-		assert_ok!(Paras::schedule_indra_cleanup(indra_id));
+		assert_ok!(Indras::schedule_indra_cleanup(indra_id));
 
 		// run to block #10, with a 2 session changes at the end of the block 7 & 8 (so 8 and 9
 		// observe the new sessions).
@@ -789,27 +790,27 @@ fn full_indracore_cleanup_storage() {
 		//
 		// Why 7 and 8? See above, the clean up scheduled above was processed at the block 8.
 		// The initial upgrade was enacted at the block 7.
-		assert_eq!(Paras::past_code_meta(&indra_id).most_recent_change(), Some(8));
-		assert_eq!(<Paras as Store>::PastCodeHash::get(&(indra_id, 8)), Some(new_code.hash()));
-		assert_eq!(<Paras as Store>::PastCodePruning::get(), vec![(indra_id, 7), (indra_id, 8)]);
+		assert_eq!(Indras::past_code_meta(&indra_id).most_recent_change(), Some(8));
+		assert_eq!(<Indras as Store>::PastCodeHash::get(&(indra_id, 8)), Some(new_code.hash()));
+		assert_eq!(<Indras as Store>::PastCodePruning::get(), vec![(indra_id, 7), (indra_id, 8)]);
 		check_code_is_stored(&original_code);
 		check_code_is_stored(&new_code);
 
 		// any future upgrades haven't been used to validate yet, so those
 		// are cleaned up immediately.
-		assert!(<Paras as Store>::FutureCodeUpgrades::get(&indra_id).is_none());
-		assert!(<Paras as Store>::FutureCodeHash::get(&indra_id).is_none());
-		assert!(Paras::current_code(&indra_id).is_none());
+		assert!(<Indras as Store>::FutureCodeUpgrades::get(&indra_id).is_none());
+		assert!(<Indras as Store>::FutureCodeHash::get(&indra_id).is_none());
+		assert!(Indras::current_code(&indra_id).is_none());
 
 		// run to do the final cleanup
 		let cleaned_up_at = 8 + code_retention_period + 1;
 		run_to_block(cleaned_up_at, None);
 
 		// now the final cleanup: last past code cleaned up, and this triggers meta cleanup.
-		assert_eq!(Paras::past_code_meta(&indra_id), Default::default());
-		assert!(<Paras as Store>::PastCodeHash::get(&(indra_id, 7)).is_none());
-		assert!(<Paras as Store>::PastCodeHash::get(&(indra_id, 8)).is_none());
-		assert!(<Paras as Store>::PastCodePruning::get().is_empty());
+		assert_eq!(Indras::past_code_meta(&indra_id), Default::default());
+		assert!(<Indras as Store>::PastCodeHash::get(&(indra_id, 7)).is_none());
+		assert!(<Indras as Store>::PastCodeHash::get(&(indra_id, 8)).is_none());
+		assert!(<Indras as Store>::PastCodePruning::get().is_empty());
 		check_code_is_not_stored(&original_code);
 		check_code_is_not_stored(&new_code);
 	});
@@ -836,7 +837,7 @@ fn indra_incoming_at_session() {
 		let a = IndraId::from(999);
 		let c = IndraId::from(333);
 
-		assert_ok!(Paras::schedule_indra_initialize(
+		assert_ok!(Indras::schedule_indra_initialize(
 			b,
 			IndraGenesisArgs {
 				indracore: true,
@@ -845,7 +846,7 @@ fn indra_incoming_at_session() {
 			},
 		));
 
-		assert_ok!(Paras::schedule_indra_initialize(
+		assert_ok!(Indras::schedule_indra_initialize(
 			a,
 			IndraGenesisArgs {
 				indracore: false,
@@ -854,7 +855,7 @@ fn indra_incoming_at_session() {
 			},
 		));
 
-		assert_ok!(Paras::schedule_indra_initialize(
+		assert_ok!(Indras::schedule_indra_initialize(
 			c,
 			IndraGenesisArgs {
 				indracore: true,
@@ -890,38 +891,44 @@ fn indra_incoming_at_session() {
 			})
 			.for_each(sign_and_include_pvf_check_statement);
 
-		assert_eq!(<Paras as Store>::ActionsQueue::get(Paras::scheduled_session()), vec![c, b, a],);
+		assert_eq!(
+			<Indras as Store>::ActionsQueue::get(Indras::scheduled_session()),
+			vec![c, b, a],
+		);
 
 		// Lifecycle is tracked correctly
-		assert_eq!(<Paras as Store>::IndraLifecycles::get(&a), Some(IndraLifecycle::Onboarding));
-		assert_eq!(<Paras as Store>::IndraLifecycles::get(&b), Some(IndraLifecycle::Onboarding));
-		assert_eq!(<Paras as Store>::IndraLifecycles::get(&c), Some(IndraLifecycle::Onboarding));
+		assert_eq!(<Indras as Store>::IndraLifecycles::get(&a), Some(IndraLifecycle::Onboarding));
+		assert_eq!(<Indras as Store>::IndraLifecycles::get(&b), Some(IndraLifecycle::Onboarding));
+		assert_eq!(<Indras as Store>::IndraLifecycles::get(&c), Some(IndraLifecycle::Onboarding));
 
 		// run to block without session change.
 		run_to_block(2, None);
 
-		assert_eq!(Paras::indracores(), Vec::new());
-		assert_eq!(<Paras as Store>::ActionsQueue::get(Paras::scheduled_session()), vec![c, b, a],);
+		assert_eq!(Indras::indracores(), Vec::new());
+		assert_eq!(
+			<Indras as Store>::ActionsQueue::get(Indras::scheduled_session()),
+			vec![c, b, a],
+		);
 
 		// Lifecycle is tracked correctly
-		assert_eq!(<Paras as Store>::IndraLifecycles::get(&a), Some(IndraLifecycle::Onboarding));
-		assert_eq!(<Paras as Store>::IndraLifecycles::get(&b), Some(IndraLifecycle::Onboarding));
-		assert_eq!(<Paras as Store>::IndraLifecycles::get(&c), Some(IndraLifecycle::Onboarding));
+		assert_eq!(<Indras as Store>::IndraLifecycles::get(&a), Some(IndraLifecycle::Onboarding));
+		assert_eq!(<Indras as Store>::IndraLifecycles::get(&b), Some(IndraLifecycle::Onboarding));
+		assert_eq!(<Indras as Store>::IndraLifecycles::get(&c), Some(IndraLifecycle::Onboarding));
 
 		// Two sessions pass, so action queue is triggered
 		run_to_block(4, Some(vec![3, 4]));
 
-		assert_eq!(Paras::indracores(), vec![c, b]);
-		assert_eq!(<Paras as Store>::ActionsQueue::get(Paras::scheduled_session()), Vec::new());
+		assert_eq!(Indras::indracores(), vec![c, b]);
+		assert_eq!(<Indras as Store>::ActionsQueue::get(Indras::scheduled_session()), Vec::new());
 
 		// Lifecycle is tracked correctly
-		assert_eq!(<Paras as Store>::IndraLifecycles::get(&a), Some(IndraLifecycle::Indrabase));
-		assert_eq!(<Paras as Store>::IndraLifecycles::get(&b), Some(IndraLifecycle::Indracore));
-		assert_eq!(<Paras as Store>::IndraLifecycles::get(&c), Some(IndraLifecycle::Indracore));
+		assert_eq!(<Indras as Store>::IndraLifecycles::get(&a), Some(IndraLifecycle::Indrabase));
+		assert_eq!(<Indras as Store>::IndraLifecycles::get(&b), Some(IndraLifecycle::Indracore));
+		assert_eq!(<Indras as Store>::IndraLifecycles::get(&c), Some(IndraLifecycle::Indracore));
 
-		assert_eq!(Paras::current_code(&a), Some(vec![2].into()));
-		assert_eq!(Paras::current_code(&b), Some(vec![1].into()));
-		assert_eq!(Paras::current_code(&c), Some(vec![3].into()));
+		assert_eq!(Indras::current_code(&a), Some(vec![2].into()));
+		assert_eq!(Indras::current_code(&b), Some(vec![1].into()));
+		assert_eq!(Indras::current_code(&c), Some(vec![3].into()));
 	})
 }
 
@@ -930,7 +937,7 @@ fn code_hash_at_returns_up_to_end_of_code_retention_period() {
 	let code_retention_period = 10;
 	let validation_upgrade_delay = 2;
 
-	let paras = vec![(
+	let indras = vec![(
 		0u32.into(),
 		IndraGenesisArgs {
 			indracore: true,
@@ -940,7 +947,7 @@ fn code_hash_at_returns_up_to_end_of_code_retention_period() {
 	)];
 
 	let genesis_config = MockGenesisConfig {
-		paras: GenesisConfig { paras, ..Default::default() },
+		indras: GenesisConfig { indras, ..Default::default() },
 		configuration: crate::configuration::GenesisConfig {
 			config: HostConfiguration {
 				code_retention_period,
@@ -957,35 +964,35 @@ fn code_hash_at_returns_up_to_end_of_code_retention_period() {
 		let indra_id = IndraId::from(0);
 		let old_code: ValidationCode = vec![1, 2, 3].into();
 		let new_code: ValidationCode = vec![4, 5, 6].into();
-		Paras::schedule_code_upgrade(indra_id, new_code.clone(), 0, &Configuration::config());
+		Indras::schedule_code_upgrade(indra_id, new_code.clone(), 0, &Configuration::config());
 
 		// The new validation code can be applied but a new indrablock hasn't gotten in yet,
 		// so the old code should still be current.
 		run_to_block(3, None);
-		assert_eq!(Paras::current_code(&indra_id), Some(old_code.clone()));
+		assert_eq!(Indras::current_code(&indra_id), Some(old_code.clone()));
 
 		run_to_block(10, None);
-		Paras::note_new_head(indra_id, Default::default(), 7);
+		Indras::note_new_head(indra_id, Default::default(), 7);
 
-		assert_eq!(Paras::past_code_meta(&indra_id).upgrade_times, vec![upgrade_at(2, 10)]);
-		assert_eq!(Paras::current_code(&indra_id), Some(new_code.clone()));
+		assert_eq!(Indras::past_code_meta(&indra_id).upgrade_times, vec![upgrade_at(2, 10)]);
+		assert_eq!(Indras::current_code(&indra_id), Some(new_code.clone()));
 
 		// Make sure that the old code is available **before** the code retion period passes.
 		run_to_block(10 + code_retention_period, None);
-		assert_eq!(Paras::code_by_hash(&old_code.hash()), Some(old_code.clone()));
-		assert_eq!(Paras::code_by_hash(&new_code.hash()), Some(new_code.clone()));
+		assert_eq!(Indras::code_by_hash(&old_code.hash()), Some(old_code.clone()));
+		assert_eq!(Indras::code_by_hash(&new_code.hash()), Some(new_code.clone()));
 
 		run_to_block(10 + code_retention_period + 1, None);
 
 		// code entry should be pruned now.
 
 		assert_eq!(
-			Paras::past_code_meta(&indra_id),
-			ParaPastCodeMeta { upgrade_times: Vec::new(), last_pruned: Some(10) },
+			Indras::past_code_meta(&indra_id),
+			IndraPastCodeMeta { upgrade_times: Vec::new(), last_pruned: Some(10) },
 		);
 
-		assert_eq!(Paras::code_by_hash(&old_code.hash()), None); // pruned :(
-		assert_eq!(Paras::code_by_hash(&new_code.hash()), Some(new_code.clone()));
+		assert_eq!(Indras::code_by_hash(&old_code.hash()), None); // pruned :(
+		assert_eq!(Indras::code_by_hash(&new_code.hash()), Some(new_code.clone()));
 	});
 }
 
@@ -993,21 +1000,21 @@ fn code_hash_at_returns_up_to_end_of_code_retention_period() {
 fn code_ref_is_cleaned_correctly() {
 	new_test_ext(Default::default()).execute_with(|| {
 		let code: ValidationCode = vec![1, 2, 3].into();
-		Paras::increase_code_ref(&code.hash(), &code);
-		Paras::increase_code_ref(&code.hash(), &code);
+		Indras::increase_code_ref(&code.hash(), &code);
+		Indras::increase_code_ref(&code.hash(), &code);
 
-		assert!(<Paras as Store>::CodeByHash::contains_key(code.hash()));
-		assert_eq!(<Paras as Store>::CodeByHashRefs::get(code.hash()), 2);
+		assert!(<Indras as Store>::CodeByHash::contains_key(code.hash()));
+		assert_eq!(<Indras as Store>::CodeByHashRefs::get(code.hash()), 2);
 
-		Paras::decrease_code_ref(&code.hash());
+		Indras::decrease_code_ref(&code.hash());
 
-		assert!(<Paras as Store>::CodeByHash::contains_key(code.hash()));
-		assert_eq!(<Paras as Store>::CodeByHashRefs::get(code.hash()), 1);
+		assert!(<Indras as Store>::CodeByHash::contains_key(code.hash()));
+		assert_eq!(<Indras as Store>::CodeByHashRefs::get(code.hash()), 1);
 
-		Paras::decrease_code_ref(&code.hash());
+		Indras::decrease_code_ref(&code.hash());
 
-		assert!(!<Paras as Store>::CodeByHash::contains_key(code.hash()));
-		assert!(!<Paras as Store>::CodeByHashRefs::contains_key(code.hash()));
+		assert!(!<Indras as Store>::CodeByHash::contains_key(code.hash()));
+		assert!(!<Indras as Store>::CodeByHashRefs::contains_key(code.hash()));
 	});
 }
 
@@ -1020,7 +1027,7 @@ fn pvf_check_coalescing_onboarding_and_upgrade() {
 	let existing_code: ValidationCode = vec![1, 2, 3].into();
 	let validation_code: ValidationCode = vec![3, 2, 1].into();
 
-	let paras = vec![(
+	let indras = vec![(
 		a,
 		IndraGenesisArgs {
 			indracore: true,
@@ -1030,7 +1037,7 @@ fn pvf_check_coalescing_onboarding_and_upgrade() {
 	)];
 
 	let genesis_config = MockGenesisConfig {
-		paras: GenesisConfig { paras, ..Default::default() },
+		indras: GenesisConfig { indras, ..Default::default() },
 		configuration: crate::configuration::GenesisConfig {
 			config: HostConfiguration {
 				pvf_checking_enabled: true,
@@ -1053,7 +1060,7 @@ fn pvf_check_coalescing_onboarding_and_upgrade() {
 		const RELAY_PARENT: BlockNumber = 1;
 
 		// Now we register `b` with `validation_code`
-		assert_ok!(Paras::schedule_indra_initialize(
+		assert_ok!(Indras::schedule_indra_initialize(
 			b,
 			IndraGenesisArgs {
 				indracore: true,
@@ -1063,13 +1070,13 @@ fn pvf_check_coalescing_onboarding_and_upgrade() {
 		));
 
 		// And now at the same time upgrade `a` to `validation_code`
-		Paras::schedule_code_upgrade(
+		Indras::schedule_code_upgrade(
 			a,
 			validation_code.clone(),
 			RELAY_PARENT,
 			&Configuration::config(),
 		);
-		assert!(!Paras::pvfs_require_precheck().is_empty());
+		assert!(!Indras::pvfs_require_precheck().is_empty());
 
 		// Supermajority of validators vote for `validation_code`. It should be approved.
 		IntoIterator::into_iter([0, 1, 2, 3])
@@ -1082,11 +1089,11 @@ fn pvf_check_coalescing_onboarding_and_upgrade() {
 			.for_each(sign_and_include_pvf_check_statement);
 
 		// Check that `b` actually onboards.
-		assert_eq!(<Paras as Store>::ActionsQueue::get(EXPECTED_SESSION + 2), vec![b]);
+		assert_eq!(<Indras as Store>::ActionsQueue::get(EXPECTED_SESSION + 2), vec![b]);
 
 		// Check that the upgrade got scheduled.
 		assert_eq!(
-			<Paras as Store>::FutureCodeUpgrades::get(&a),
+			<Indras as Store>::FutureCodeUpgrades::get(&a),
 			Some(RELAY_PARENT + validation_upgrade_delay),
 		);
 
@@ -1121,7 +1128,7 @@ fn pvf_check_onboarding_reject_on_expiry() {
 	new_test_ext(genesis_config).execute_with(|| {
 		run_to_block(1, Some(vec![1]));
 
-		assert_ok!(Paras::schedule_indra_initialize(
+		assert_ok!(Indras::schedule_indra_initialize(
 			a,
 			IndraGenesisArgs {
 				indracore: false,
@@ -1132,7 +1139,7 @@ fn pvf_check_onboarding_reject_on_expiry() {
 
 		// Make sure that we kicked off the PVF vote for this validation code and that the
 		// validation code is stored.
-		assert!(<Paras as Store>::PvfActiveVoteMap::get(&validation_code.hash()).is_some());
+		assert!(<Indras as Store>::PvfActiveVoteMap::get(&validation_code.hash()).is_some());
 		check_code_is_stored(&validation_code);
 
 		// Skip 2 sessions (i.e. `pvf_voting_ttl`) verifying that the code is still stored in
@@ -1146,11 +1153,11 @@ fn pvf_check_onboarding_reject_on_expiry() {
 
 		// Verify that the PVF is no longer stored and there is no active PVF vote.
 		check_code_is_not_stored(&validation_code);
-		assert!(<Paras as Store>::PvfActiveVoteMap::get(&validation_code.hash()).is_none());
-		assert!(Paras::pvfs_require_precheck().is_empty());
+		assert!(<Indras as Store>::PvfActiveVoteMap::get(&validation_code.hash()).is_none());
+		assert!(Indras::pvfs_require_precheck().is_empty());
 
 		// Verify that at this point we can again try to initialize the same indra.
-		assert!(Paras::can_schedule_indra_initialize(&a));
+		assert!(Indras::can_schedule_indra_initialize(&a));
 	});
 }
 
@@ -1160,7 +1167,7 @@ fn pvf_check_upgrade_reject() {
 	let old_code: ValidationCode = vec![1, 2, 3].into();
 	let new_code: ValidationCode = vec![3, 2, 1].into();
 
-	let paras = vec![(
+	let indras = vec![(
 		a,
 		IndraGenesisArgs {
 			indracore: false,
@@ -1170,7 +1177,7 @@ fn pvf_check_upgrade_reject() {
 	)];
 
 	let genesis_config = MockGenesisConfig {
-		paras: GenesisConfig { paras, ..Default::default() },
+		indras: GenesisConfig { indras, ..Default::default() },
 		configuration: crate::configuration::GenesisConfig {
 			config: HostConfiguration { pvf_checking_enabled: true, ..Default::default() },
 			..Default::default()
@@ -1188,7 +1195,7 @@ fn pvf_check_upgrade_reject() {
 		// Expected current session index.
 		const EXPECTED_SESSION: SessionIndex = 1;
 
-		Paras::schedule_code_upgrade(a, new_code.clone(), RELAY_PARENT, &Configuration::config());
+		Indras::schedule_code_upgrade(a, new_code.clone(), RELAY_PARENT, &Configuration::config());
 		check_code_is_stored(&new_code);
 
 		// Supermajority of validators vote against `new_code`. PVF should be rejected.
@@ -1204,9 +1211,9 @@ fn pvf_check_upgrade_reject() {
 		// Verify that the new code is discarded.
 		check_code_is_not_stored(&new_code);
 
-		assert!(<Paras as Store>::PvfActiveVoteMap::get(&new_code.hash()).is_none());
-		assert!(Paras::pvfs_require_precheck().is_empty());
-		assert!(<Paras as Store>::FutureCodeHash::get(&a).is_none());
+		assert!(<Indras as Store>::PvfActiveVoteMap::get(&new_code.hash()).is_none());
+		assert!(Indras::pvfs_require_precheck().is_empty());
+		assert!(<Indras as Store>::FutureCodeHash::get(&a).is_none());
 
 		// Verify that the required events were emitted.
 		EventValidator::new().started(&new_code, a).rejected(&new_code, a).check();
@@ -1241,14 +1248,14 @@ fn pvf_check_submit_vote_while_disabled() {
 			Call::include_pvf_check_statement { stmt: stmt.clone(), signature: signature.clone() };
 
 		let validate_unsigned =
-			<Paras as ValidateUnsigned>::validate_unsigned(TransactionSource::InBlock, &call);
+			<Indras as ValidateUnsigned>::validate_unsigned(TransactionSource::InBlock, &call);
 		assert_eq!(
 			validate_unsigned,
 			InvalidTransaction::Custom(INVALID_TX_PVF_CHECK_DISABLED).into()
 		);
 
 		assert_err!(
-			Paras::include_pvf_check_statement(None.into(), stmt.clone(), signature.clone()),
+			Indras::include_pvf_check_statement(None.into(), stmt.clone(), signature.clone()),
 			Error::<Test>::PvfCheckDisabled
 		);
 	});
@@ -1274,10 +1281,10 @@ fn pvf_check_submit_vote() {
 		let call =
 			Call::include_pvf_check_statement { stmt: stmt.clone(), signature: signature.clone() };
 		let validate_unsigned =
-			<Paras as ValidateUnsigned>::validate_unsigned(TransactionSource::InBlock, &call)
+			<Indras as ValidateUnsigned>::validate_unsigned(TransactionSource::InBlock, &call)
 				.map(|_| ());
 		let dispatch_result =
-			Paras::include_pvf_check_statement(None.into(), stmt.clone(), signature.clone())
+			Indras::include_pvf_check_statement(None.into(), stmt.clone(), signature.clone())
 				.map(|_| ());
 
 		(validate_unsigned, dispatch_result)
@@ -1295,7 +1302,7 @@ fn pvf_check_submit_vote() {
 		// Important to run this to seed the validators.
 		run_to_block(1, Some(vec![1]));
 
-		assert_ok!(Paras::schedule_indra_initialize(
+		assert_ok!(Indras::schedule_indra_initialize(
 			1000.into(),
 			IndraGenesisArgs {
 				indracore: false,
@@ -1382,7 +1389,7 @@ fn include_pvf_check_statement_refunds_weight() {
 	let old_code: ValidationCode = vec![1, 2, 3].into();
 	let new_code: ValidationCode = vec![3, 2, 1].into();
 
-	let paras = vec![(
+	let indras = vec![(
 		a,
 		IndraGenesisArgs {
 			indracore: false,
@@ -1392,7 +1399,7 @@ fn include_pvf_check_statement_refunds_weight() {
 	)];
 
 	let genesis_config = MockGenesisConfig {
-		paras: GenesisConfig { paras, ..Default::default() },
+		indras: GenesisConfig { indras, ..Default::default() },
 		configuration: crate::configuration::GenesisConfig {
 			config: HostConfiguration { pvf_checking_enabled: true, ..Default::default() },
 			..Default::default()
@@ -1410,7 +1417,7 @@ fn include_pvf_check_statement_refunds_weight() {
 		// Expected current session index.
 		const EXPECTED_SESSION: SessionIndex = 1;
 
-		Paras::schedule_code_upgrade(a, new_code.clone(), RELAY_PARENT, &Configuration::config());
+		Indras::schedule_code_upgrade(a, new_code.clone(), RELAY_PARENT, &Configuration::config());
 
 		let mut stmts = IntoIterator::into_iter([0, 1, 2, 3])
 			.map(|i| {
@@ -1428,13 +1435,13 @@ fn include_pvf_check_statement_refunds_weight() {
 
 		// Verify that just vote submission is priced accordingly.
 		for (stmt, sig) in stmts {
-			let r = Paras::include_pvf_check_statement(None.into(), stmt, sig.into()).unwrap();
+			let r = Indras::include_pvf_check_statement(None.into(), stmt, sig.into()).unwrap();
 			assert_eq!(r.actual_weight, Some(TestWeightInfo::include_pvf_check_statement()));
 		}
 
 		// Verify that the last statement is priced maximally.
 		let (stmt, sig) = last_one;
-		let r = Paras::include_pvf_check_statement(None.into(), stmt, sig.into()).unwrap();
+		let r = Indras::include_pvf_check_statement(None.into(), stmt, sig.into()).unwrap();
 		assert_eq!(r.actual_weight, None);
 	});
 }
@@ -1445,20 +1452,23 @@ fn add_trusted_validation_code_inserts_with_no_users() {
 	// with the reference count equal to 0.
 	let validation_code = ValidationCode(vec![1, 2, 3]);
 	new_test_ext(Default::default()).execute_with(|| {
-		assert_ok!(Paras::add_trusted_validation_code(Origin::root(), validation_code.clone()));
-		assert_eq!(<Paras as Store>::CodeByHashRefs::get(&validation_code.hash()), 0,);
+		assert_ok!(Indras::add_trusted_validation_code(Origin::root(), validation_code.clone()));
+		assert_eq!(<Indras as Store>::CodeByHashRefs::get(&validation_code.hash()), 0,);
 	});
 }
 
 #[test]
 fn add_trusted_validation_code_idempotent() {
 	// This test makes sure that calling add_trusted_validation_code twice with the same
-	// parameters is a no-op.
+	// indrameters is a no-op.
 	let validation_code = ValidationCode(vec![1, 2, 3]);
 	new_test_ext(Default::default()).execute_with(|| {
-		assert_ok!(Paras::add_trusted_validation_code(Origin::root(), validation_code.clone()));
+		assert_ok!(Indras::add_trusted_validation_code(Origin::root(), validation_code.clone()));
 		assert_storage_noop!({
-			assert_ok!(Paras::add_trusted_validation_code(Origin::root(), validation_code.clone()));
+			assert_ok!(Indras::add_trusted_validation_code(
+				Origin::root(),
+				validation_code.clone()
+			));
 		});
 	});
 }
@@ -1469,11 +1479,11 @@ fn poke_unused_validation_code_removes_code_cleanly() {
 	// in the storage but has no users will remove it cleanly from the storage.
 	let validation_code = ValidationCode(vec![1, 2, 3]);
 	new_test_ext(Default::default()).execute_with(|| {
-		assert_ok!(Paras::add_trusted_validation_code(Origin::root(), validation_code.clone()));
-		assert_ok!(Paras::poke_unused_validation_code(Origin::root(), validation_code.hash()));
+		assert_ok!(Indras::add_trusted_validation_code(Origin::root(), validation_code.clone()));
+		assert_ok!(Indras::poke_unused_validation_code(Origin::root(), validation_code.hash()));
 
-		assert_eq!(<Paras as Store>::CodeByHashRefs::get(&validation_code.hash()), 0);
-		assert!(!<Paras as Store>::CodeByHash::contains_key(&validation_code.hash()));
+		assert_eq!(<Indras as Store>::CodeByHashRefs::get(&validation_code.hash()), 0);
+		assert!(!<Indras as Store>::CodeByHash::contains_key(&validation_code.hash()));
 	});
 }
 
@@ -1483,21 +1493,21 @@ fn poke_unused_validation_code_doesnt_remove_code_with_users() {
 	let validation_code = ValidationCode(vec![1, 2, 3]);
 	new_test_ext(Default::default()).execute_with(|| {
 		// First we add the code to the storage.
-		assert_ok!(Paras::add_trusted_validation_code(Origin::root(), validation_code.clone()));
+		assert_ok!(Indras::add_trusted_validation_code(Origin::root(), validation_code.clone()));
 
 		// Then we add a user to the code, say by upgrading.
 		run_to_block(2, None);
-		Paras::schedule_code_upgrade(
+		Indras::schedule_code_upgrade(
 			indra_id,
 			validation_code.clone(),
 			1,
 			&Configuration::config(),
 		);
-		Paras::note_new_head(indra_id, HeadData::default(), 1);
+		Indras::note_new_head(indra_id, HeadData::default(), 1);
 
 		// Finally we poke the code, which should not remove it from the storage.
 		assert_storage_noop!({
-			assert_ok!(Paras::poke_unused_validation_code(Origin::root(), validation_code.hash()));
+			assert_ok!(Indras::poke_unused_validation_code(Origin::root(), validation_code.hash()));
 		});
 		check_code_is_stored(&validation_code);
 	});
@@ -1507,23 +1517,23 @@ fn poke_unused_validation_code_doesnt_remove_code_with_users() {
 fn increase_code_ref_doesnt_have_allergy_on_add_trusted_validation_code() {
 	// Verify that accidential calling of increase_code_ref or decrease_code_ref does not lead
 	// to a disaster.
-	// NOTE that this test is extra paranoid, as it is not really possible to hit
+	// NOTE that this test is extra indranoid, as it is not really possible to hit
 	// `decrease_code_ref` without calling `increase_code_ref` first.
 	let code = ValidationCode(vec![1, 2, 3]);
 
 	new_test_ext(Default::default()).execute_with(|| {
-		assert_ok!(Paras::add_trusted_validation_code(Origin::root(), code.clone()));
-		Paras::increase_code_ref(&code.hash(), &code);
-		Paras::increase_code_ref(&code.hash(), &code);
-		assert!(<Paras as Store>::CodeByHash::contains_key(code.hash()));
-		assert_eq!(<Paras as Store>::CodeByHashRefs::get(code.hash()), 2);
+		assert_ok!(Indras::add_trusted_validation_code(Origin::root(), code.clone()));
+		Indras::increase_code_ref(&code.hash(), &code);
+		Indras::increase_code_ref(&code.hash(), &code);
+		assert!(<Indras as Store>::CodeByHash::contains_key(code.hash()));
+		assert_eq!(<Indras as Store>::CodeByHashRefs::get(code.hash()), 2);
 	});
 
 	new_test_ext(Default::default()).execute_with(|| {
-		assert_ok!(Paras::add_trusted_validation_code(Origin::root(), code.clone()));
-		Paras::decrease_code_ref(&code.hash());
-		assert!(<Paras as Store>::CodeByHash::contains_key(code.hash()));
-		assert_eq!(<Paras as Store>::CodeByHashRefs::get(code.hash()), 0);
+		assert_ok!(Indras::add_trusted_validation_code(Origin::root(), code.clone()));
+		Indras::decrease_code_ref(&code.hash());
+		assert!(<Indras as Store>::CodeByHash::contains_key(code.hash()));
+		assert_eq!(<Indras as Store>::CodeByHashRefs::get(code.hash()), 0);
 	});
 }
 
@@ -1548,22 +1558,22 @@ fn add_trusted_validation_code_insta_approval() {
 		..Default::default()
 	};
 	new_test_ext(genesis_config).execute_with(|| {
-		assert_ok!(Paras::add_trusted_validation_code(Origin::root(), validation_code.clone()));
+		assert_ok!(Indras::add_trusted_validation_code(Origin::root(), validation_code.clone()));
 
 		// Then some indracore upgrades it's code with the relay-parent 1.
 		run_to_block(2, None);
-		Paras::schedule_code_upgrade(
+		Indras::schedule_code_upgrade(
 			indra_id,
 			validation_code.clone(),
 			1,
 			&Configuration::config(),
 		);
-		Paras::note_new_head(indra_id, HeadData::default(), 1);
+		Indras::note_new_head(indra_id, HeadData::default(), 1);
 
 		// Verify that the code upgrade has `expected_at` set to `26`. This is the behavior
 		// equal to that of `pvf_checking_enabled: false`.
 		assert_eq!(
-			<Paras as Store>::FutureCodeUpgrades::get(&indra_id),
+			<Indras as Store>::FutureCodeUpgrades::get(&indra_id),
 			Some(1 + validation_upgrade_delay)
 		);
 
@@ -1599,23 +1609,23 @@ fn add_trusted_validation_code_enacts_existing_pvf_vote() {
 	new_test_ext(genesis_config).execute_with(|| {
 		// First, some indracore upgrades it's code with the relay-parent 1.
 		run_to_block(2, None);
-		Paras::schedule_code_upgrade(
+		Indras::schedule_code_upgrade(
 			indra_id,
 			validation_code.clone(),
 			1,
 			&Configuration::config(),
 		);
-		Paras::note_new_head(indra_id, HeadData::default(), 1);
+		Indras::note_new_head(indra_id, HeadData::default(), 1);
 
 		// No upgrade should be scheduled at this point. PVF pre-checking vote should run for
 		// that PVF.
-		assert!(<Paras as Store>::FutureCodeUpgrades::get(&indra_id).is_none());
-		assert!(<Paras as Store>::PvfActiveVoteMap::contains_key(&validation_code.hash()));
+		assert!(<Indras as Store>::FutureCodeUpgrades::get(&indra_id).is_none());
+		assert!(<Indras as Store>::PvfActiveVoteMap::contains_key(&validation_code.hash()));
 
 		// Then we add a trusted validation code. That should conclude the vote.
-		assert_ok!(Paras::add_trusted_validation_code(Origin::root(), validation_code.clone()));
-		assert!(<Paras as Store>::FutureCodeUpgrades::get(&indra_id).is_some());
-		assert!(!<Paras as Store>::PvfActiveVoteMap::contains_key(&validation_code.hash()));
+		assert_ok!(Indras::add_trusted_validation_code(Origin::root(), validation_code.clone()));
+		assert!(<Indras as Store>::FutureCodeUpgrades::get(&indra_id).is_some());
+		assert!(!<Indras as Store>::PvfActiveVoteMap::contains_key(&validation_code.hash()));
 	});
 }
 
@@ -1623,11 +1633,11 @@ fn add_trusted_validation_code_enacts_existing_pvf_vote() {
 fn verify_upgrade_go_ahead_signal_is_externally_accessible() {
 	use primitives::v2::well_known_keys;
 
-	let a = IndraId::from(2020);
+	let a = IndraId::from(2000);
 
 	new_test_ext(Default::default()).execute_with(|| {
 		assert!(sp_io::storage::get(&well_known_keys::upgrade_go_ahead_signal(a)).is_none());
-		<Paras as Store>::UpgradeGoAheadSignal::insert(&a, UpgradeGoAhead::GoAhead);
+		<Indras as Store>::UpgradeGoAheadSignal::insert(&a, UpgradeGoAhead::GoAhead);
 		assert_eq!(
 			sp_io::storage::get(&well_known_keys::upgrade_go_ahead_signal(a)).unwrap(),
 			vec![1u8],
@@ -1639,11 +1649,11 @@ fn verify_upgrade_go_ahead_signal_is_externally_accessible() {
 fn verify_upgrade_restriction_signal_is_externally_accessible() {
 	use primitives::v2::well_known_keys;
 
-	let a = IndraId::from(2020);
+	let a = IndraId::from(2000);
 
 	new_test_ext(Default::default()).execute_with(|| {
 		assert!(sp_io::storage::get(&well_known_keys::upgrade_restriction_signal(a)).is_none());
-		<Paras as Store>::UpgradeRestrictionSignal::insert(&a, UpgradeRestriction::Present);
+		<Indras as Store>::UpgradeRestrictionSignal::insert(&a, UpgradeRestriction::Present);
 		assert_eq!(
 			sp_io::storage::get(&well_known_keys::upgrade_restriction_signal(a)).unwrap(),
 			vec![0],

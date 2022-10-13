@@ -15,9 +15,9 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	configuration, inclusion, initializer, paras,
-	paras_inherent::{self},
-	scheduler, session_info, shared,
+	configuration, inclusion, indras,
+	indras_inherent::{self},
+	initializer, scheduler, session_info, shared,
 };
 use bitvec::{order::Lsb0 as BitOrderLsb0, vec::BitVec};
 use frame_support::pallet_prelude::*;
@@ -63,7 +63,7 @@ fn byte32_slice_from(n: u32) -> [u8; 32] {
 }
 
 /// indras inherent `enter` benchmark scenario builder.
-pub(crate) struct BenchBuilder<T: paras_inherent::Config> {
+pub(crate) struct BenchBuilder<T: indras_inherent::Config> {
 	/// Active validators. Validators should be declared prior to all other setup.
 	validators: Option<Vec<ValidatorId>>,
 	/// Starting block number; we expect it to get incremented on session setup.
@@ -94,13 +94,13 @@ pub(crate) struct BenchBuilder<T: paras_inherent::Config> {
 
 /// indras inherent `enter` benchmark scenario.
 #[cfg(any(feature = "runtime-benchmarks", test))]
-pub(crate) struct Bench<T: paras_inherent::Config> {
+pub(crate) struct Bench<T: indras_inherent::Config> {
 	pub(crate) data: IndracoresInherentData<T::Header>,
 	pub(crate) _session: u32,
 	pub(crate) _block_number: T::BlockNumber,
 }
 
-impl<T: paras_inherent::Config> BenchBuilder<T> {
+impl<T: indras_inherent::Config> BenchBuilder<T> {
 	/// Create a new `BenchBuilder` with some opinionated values that should work with the rest
 	/// of the functions in this implementation.
 	pub(crate) fn new() -> Self {
@@ -339,9 +339,9 @@ impl<T: paras_inherent::Config> BenchBuilder<T> {
 		for i in 0..cores {
 			let indra_id = IndraId::from(i as u32);
 
-			paras::Pallet::<T>::schedule_indra_initialize(
+			indras::Pallet::<T>::schedule_indra_initialize(
 				indra_id,
-				paras::IndraGenesisArgs {
+				indras::IndraGenesisArgs {
 					genesis_head: Self::mock_head_data(),
 					validation_code: mock_validation_code(),
 					indracore: true,
@@ -418,7 +418,7 @@ impl<T: paras_inherent::Config> BenchBuilder<T> {
 		self.validators = Some(validators_shuffled);
 		self.block_number = block_number;
 		self.session = target_session;
-		assert_eq!(paras::Pallet::<T>::indracores().len(), total_cores as usize);
+		assert_eq!(indras::Pallet::<T>::indracores().len(), total_cores as usize);
 
 		self
 	}
@@ -513,9 +513,9 @@ impl<T: paras_inherent::Config> BenchBuilder<T> {
 
 				// Set the head data so it can be used while validating the signatures on the
 				// candidate receipt.
-				paras::Pallet::<T>::heads_insert(&indra_id, head_data.clone());
+				indras::Pallet::<T>::heads_insert(&indra_id, head_data.clone());
 
-				let mut past_code_meta = paras::ParaPastCodeMeta::<T::BlockNumber>::default();
+				let mut past_code_meta = indras::IndraPastCodeMeta::<T::BlockNumber>::default();
 				past_code_meta.note_replacement(0u32.into(), 0u32.into());
 
 				let group_validators = scheduler::Pallet::<T>::group_validators(group_idx).unwrap();

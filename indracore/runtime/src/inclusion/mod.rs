@@ -20,7 +20,7 @@
 //! to included.
 
 use crate::{
-	configuration, disputes, dmp, hrmp, paras, paras_inherent::DisputedBitfield,
+	configuration, disputes, dmp, hrmp, indras, indras_inherent::DisputedBitfield,
 	scheduler::CoreAssignment, shared, ump,
 };
 use bitvec::{order::Lsb0 as BitOrderLsb0, vec::BitVec};
@@ -187,7 +187,7 @@ pub mod pallet {
 	pub trait Config:
 		frame_system::Config
 		+ shared::Config
-		+ paras::Config
+		+ indras::Config
 		+ dmp::Config
 		+ ump::Config
 		+ hrmp::Config
@@ -232,7 +232,7 @@ pub mod pallet {
 		/// Candidate submitted but indra not scheduled.
 		UnscheduledCandidate,
 		/// Candidate scheduled despite pending candidate already existing for the indra.
-		CandidateScheduledBeforeParaFree,
+		CandidateScheduledBeforeIndraFree,
 		/// Candidate included with the wrong collator.
 		WrongCollator,
 		/// Scheduled cores out of order.
@@ -267,7 +267,7 @@ pub mod pallet {
 		InvalidValidationCodeHash,
 		/// The `indra_head` hash in the candidate descriptor doesn't match the hash of the actual indra head in the
 		/// commitments.
-		ParaHeadMismatch,
+		IndraHeadMismatch,
 		/// A bitfield that references a freed core,
 		/// either intentionally or as part of a concluded
 		/// invalid dispute.
@@ -434,7 +434,7 @@ impl<T: Config> Pallet<T> {
 		let session_index = shared::Pallet::<T>::session_index();
 		let parent_hash = frame_system::Pallet::<T>::parent_hash();
 
-		let checked_bitfields = crate::paras_inherent::assure_sanity_bitfields::<T>(
+		let checked_bitfields = crate::indras_inherent::assure_sanity_bitfields::<T>(
 			signed_bitfields,
 			disputed_bitfield,
 			expected_bits,
@@ -558,7 +558,7 @@ impl<T: Config> Pallet<T> {
 						ensure!(
 							<PendingAvailability<T>>::get(&indra_id).is_none() &&
 								<PendingAvailabilityCommitments<T>>::get(&indra_id).is_none(),
-							Error::<T>::CandidateScheduledBeforeParaFree,
+							Error::<T>::CandidateScheduledBeforeIndraFree,
 						);
 
 						// account for already skipped, and then skip this one.
@@ -747,7 +747,7 @@ impl<T: Config> Pallet<T> {
 		// initial weight is config read.
 		let mut weight = T::DbWeight::get().reads_writes(1, 0);
 		if let Some(new_code) = commitments.new_validation_code {
-			weight += <paras::Pallet<T>>::schedule_code_upgrade(
+			weight += <indras::Pallet<T>>::schedule_code_upgrade(
 				receipt.descriptor.indra_id,
 				new_code,
 				relay_parent_number,
@@ -781,7 +781,7 @@ impl<T: Config> Pallet<T> {
 		));
 
 		weight +
-			<paras::Pallet<T>>::note_new_head(
+			<indras::Pallet<T>>::note_new_head(
 				receipt.descriptor.indra_id,
 				commitments.head_data,
 				relay_parent_number,
@@ -992,7 +992,7 @@ impl<T: Config> CandidateCheckContext<T> {
 			Error::<T>::NotCollatorSigned,
 		);
 
-		let validation_code_hash = <paras::Pallet<T>>::current_code_hash(indra_id)
+		let validation_code_hash = <indras::Pallet<T>>::current_code_hash(indra_id)
 			// A candidate for a indracore without current validation code is not scheduled.
 			.ok_or_else(|| Error::<T>::UnscheduledCandidate)?;
 		ensure!(
@@ -1003,7 +1003,7 @@ impl<T: Config> CandidateCheckContext<T> {
 		ensure!(
 			backed_candidate.descriptor().indra_head ==
 				backed_candidate.candidate.commitments.head_data.hash(),
-			Error::<T>::ParaHeadMismatch,
+			Error::<T>::IndraHeadMismatch,
 		);
 
 		if let Err(err) = self.check_validation_outputs(
@@ -1047,7 +1047,7 @@ impl<T: Config> CandidateCheckContext<T> {
 		// if any, the code upgrade attempt is allowed.
 		if let Some(new_validation_code) = new_validation_code {
 			ensure!(
-				<paras::Pallet<T>>::can_upgrade_validation_code(indra_id),
+				<indras::Pallet<T>>::can_upgrade_validation_code(indra_id),
 				AcceptanceCheckErr::PrematureCodeUpgrade,
 			);
 			ensure!(

@@ -19,7 +19,7 @@
 //! See <https://w3f.github.io/indracore-implementers-guide/runtime/session_info.html>.
 
 use crate::{
-	configuration, paras, scheduler, shared,
+	configuration, indras, scheduler, shared,
 	util::{take_active_subset, take_active_subset_and_inactive},
 };
 use frame_support::{
@@ -65,7 +65,7 @@ pub mod pallet {
 		frame_system::Config
 		+ configuration::Config
 		+ shared::Config
-		+ paras::Config
+		+ indras::Config
 		+ scheduler::Config
 		+ AuthorityDiscoveryConfig
 	{

@@ -17,7 +17,7 @@
 use crate::{
 	configuration::Pallet as Configuration,
 	hrmp::{Pallet as Hrmp, *},
-	paras::{IndracoresCache, Pallet as Paras},
+	indras::{IndracoresCache, Pallet as Indras},
 	shared::Pallet as Shared,
 };
 use frame_support::{assert_ok, traits::Currency};
@@ -27,10 +27,10 @@ type BalanceOf<T> =
 
 fn register_indracore_with_balance<T: Config>(id: IndraId, balance: BalanceOf<T>) {
 	let mut indracores = IndracoresCache::new();
-	Paras::<T>::initialize_indra_now(
+	Indras::<T>::initialize_indra_now(
 		&mut indracores,
 		id,
-		&crate::paras::IndraGenesisArgs {
+		&crate::indras::IndraGenesisArgs {
 			indracore: true,
 			genesis_head: vec![1].into(),
 			validation_code: vec![1].into(),
@@ -82,10 +82,10 @@ where
 	let output = [(sender, sender_origin.clone()), (recipient, recipient_origin.clone())];
 
 	// Make both a indracore if they are already not.
-	if !Paras::<T>::is_indracore(sender) {
+	if !Indras::<T>::is_indracore(sender) {
 		register_indracore_with_balance::<T>(sender, deposit);
 	}
-	if !Paras::<T>::is_indracore(recipient) {
+	if !Indras::<T>::is_indracore(recipient) {
 		register_indracore_with_balance::<T>(recipient, deposit);
 	}
 

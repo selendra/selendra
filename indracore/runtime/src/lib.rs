@@ -27,18 +27,17 @@ pub mod disputes;
 pub mod dmp;
 pub mod hrmp;
 pub mod inclusion;
+pub mod indras;
+pub mod indras_inherent;
 pub mod initializer;
 pub mod metrics;
 pub mod origin;
-pub mod paras;
-pub mod paras_inherent;
 pub mod reward_points;
+pub mod runtime_api_impl;
 pub mod scheduler;
 pub mod session_info;
 pub mod shared;
 pub mod ump;
-
-pub mod runtime_api_impl;
 
 mod util;
 
@@ -47,33 +46,33 @@ mod builder;
 #[cfg(test)]
 mod mock;
 
+pub use indras::IndraLifecycle;
 pub use origin::{ensure_indracore, Origin};
-pub use paras::IndraLifecycle;
 use primitives::v2::Id as IndraId;
 
 /// Schedule a indra to be initialized at the start of the next session with the given genesis data.
 ///
-/// See [`paras::Pallet::schedule_indra_initialize`] for more details.
-pub fn schedule_indra_initialize<T: paras::Config>(
+/// See [`indras::Pallet::schedule_indra_initialize`] for more details.
+pub fn schedule_indra_initialize<T: indras::Config>(
 	id: IndraId,
-	genesis: paras::IndraGenesisArgs,
+	genesis: indras::IndraGenesisArgs,
 ) -> Result<(), ()> {
-	<paras::Pallet<T>>::schedule_indra_initialize(id, genesis).map_err(|_| ())
+	<indras::Pallet<T>>::schedule_indra_initialize(id, genesis).map_err(|_| ())
 }
 
 /// Schedule a indra to be cleaned up at the start of the next session.
 ///
-/// See [`paras::Pallet::schedule_indra_cleanup`] for more details.
-pub fn schedule_indra_cleanup<T: paras::Config>(id: primitives::v2::Id) -> Result<(), ()> {
-	<paras::Pallet<T>>::schedule_indra_cleanup(id).map_err(|_| ())
+/// See [`indras::Pallet::schedule_indra_cleanup`] for more details.
+pub fn schedule_indra_cleanup<T: indras::Config>(id: primitives::v2::Id) -> Result<(), ()> {
+	<indras::Pallet<T>>::schedule_indra_cleanup(id).map_err(|_| ())
 }
 
 /// Schedule a indrabase to be upgraded to a indracore.
-pub fn schedule_indrabase_upgrade<T: paras::Config>(id: IndraId) -> Result<(), ()> {
-	paras::Pallet::<T>::schedule_indrabase_upgrade(id).map_err(|_| ())
+pub fn schedule_indrabase_upgrade<T: indras::Config>(id: IndraId) -> Result<(), ()> {
+	indras::Pallet::<T>::schedule_indrabase_upgrade(id).map_err(|_| ())
 }
 
 /// Schedule a indracore to be downgraded to a indrabase.
-pub fn schedule_indracore_downgrade<T: paras::Config>(id: IndraId) -> Result<(), ()> {
-	paras::Pallet::<T>::schedule_indracore_downgrade(id).map_err(|_| ())
+pub fn schedule_indracore_downgrade<T: indras::Config>(id: IndraId) -> Result<(), ()> {
+	indras::Pallet::<T>::schedule_indracore_downgrade(id).map_err(|_| ())
 }

@@ -21,7 +21,7 @@
 //! functions.
 
 use crate::{
-	configuration, dmp, hrmp, inclusion, initializer, paras, paras_inherent, scheduler,
+	configuration, dmp, hrmp, inclusion, indras, indras_inherent, initializer, scheduler,
 	session_info, shared,
 };
 use primitives::v2::{
@@ -53,7 +53,7 @@ pub fn validator_groups<T: initializer::Config>(
 /// Implementation for the `availability_cores` function of the runtime API.
 pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::Hash, T::BlockNumber>> {
 	let cores = <scheduler::Pallet<T>>::availability_cores();
-	let indracores = <paras::Pallet<T>>::indracores();
+	let indracores = <indras::Pallet<T>>::indracores();
 	let config = <configuration::Pallet<T>>::config();
 
 	let now = <frame_system::Pallet<T>>::block_number() + One::one();
@@ -253,7 +253,7 @@ pub fn assumed_validation_data<T: initializer::Config>(
 		})
 	});
 	// If we were successful, also query current validation code hash.
-	persisted_validation_data.zip(<paras::Pallet<T>>::current_code_hash(&indra_id))
+	persisted_validation_data.zip(<indras::Pallet<T>>::current_code_hash(&indra_id))
 }
 
 /// Implementation for the `check_validation_outputs` function of the runtime API.
@@ -310,7 +310,9 @@ pub fn validation_code<T: initializer::Config>(
 	indra_id: IndraId,
 	assumption: OccupiedCoreAssumption,
 ) -> Option<ValidationCode> {
-	with_assumption::<T, _, _>(indra_id, assumption, || <paras::Pallet<T>>::current_code(&indra_id))
+	with_assumption::<T, _, _>(indra_id, assumption, || {
+		<indras::Pallet<T>>::current_code(&indra_id)
+	})
 }
 
 /// Implementation for the `candidate_pending_availability` function of the runtime API.
@@ -365,29 +367,29 @@ pub fn inbound_hrmp_channels_contents<T: hrmp::Config>(
 }
 
 /// Implementation for the `validation_code_by_hash` function of the runtime API.
-pub fn validation_code_by_hash<T: paras::Config>(
+pub fn validation_code_by_hash<T: indras::Config>(
 	hash: ValidationCodeHash,
 ) -> Option<ValidationCode> {
-	<paras::Pallet<T>>::code_by_hash(hash)
+	<indras::Pallet<T>>::code_by_hash(hash)
 }
 
 /// Disputes imported via means of on-chain imports.
-pub fn on_chain_votes<T: paras_inherent::Config>() -> Option<ScrapedOnChainVotes<T::Hash>> {
-	<paras_inherent::Pallet<T>>::on_chain_votes()
+pub fn on_chain_votes<T: indras_inherent::Config>() -> Option<ScrapedOnChainVotes<T::Hash>> {
+	<indras_inherent::Pallet<T>>::on_chain_votes()
 }
 
-/// Submits an PVF pre-checking vote. See [`paras::Pallet::submit_pvf_check_statement`].
-pub fn submit_pvf_check_statement<T: paras::Config>(
+/// Submits an PVF pre-checking vote. See [`indras::Pallet::submit_pvf_check_statement`].
+pub fn submit_pvf_check_statement<T: indras::Config>(
 	stmt: PvfCheckStatement,
 	signature: ValidatorSignature,
 ) {
-	<paras::Pallet<T>>::submit_pvf_check_statement(stmt, signature)
+	<indras::Pallet<T>>::submit_pvf_check_statement(stmt, signature)
 }
 
 /// Returns the list of all PVF code hashes that require pre-checking. See
-/// [`paras::Pallet::pvfs_require_precheck`].
-pub fn pvfs_require_precheck<T: paras::Config>() -> Vec<ValidationCodeHash> {
-	<paras::Pallet<T>>::pvfs_require_precheck()
+/// [`indras::Pallet::pvfs_require_precheck`].
+pub fn pvfs_require_precheck<T: indras::Config>() -> Vec<ValidationCodeHash> {
+	<indras::Pallet<T>>::pvfs_require_precheck()
 }
 
 /// Returns the validation code hash for the given indracore making the given `OccupiedCoreAssumption`.
@@ -399,6 +401,6 @@ where
 	T: inclusion::Config,
 {
 	with_assumption::<T, _, _>(indra_id, assumption, || {
-		<paras::Pallet<T>>::current_code_hash(&indra_id)
+		<indras::Pallet<T>>::current_code_hash(&indra_id)
 	})
 }

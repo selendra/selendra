@@ -152,7 +152,7 @@ where
 	}
 }
 
-use super::paras_inherent::IsSortedBy;
+use super::indras_inherent::IsSortedBy;
 
 /// Returns `true` if duplicate items were found, otherwise `false`.
 ///

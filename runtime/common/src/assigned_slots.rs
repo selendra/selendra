@@ -33,7 +33,7 @@ use frame_system::pallet_prelude::*;
 pub use pallet::*;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use primitives::v2::Id as IndraId;
-use runtime_indracores::{configuration, paras as indras};
+use runtime_indracores::{configuration, indras};
 use scale_info::TypeInfo;
 use sp_runtime::traits::{One, Saturating, Zero};
 use sp_std::prelude::*;
@@ -545,7 +545,7 @@ mod tests {
 	use pallet_balances;
 	use primitives::v2::{BlockNumber, Header};
 	use runtime_indracores::{
-		configuration as indracores_configuration, paras as indracores_indras,
+		configuration as indracores_configuration, indras as indracores_indras,
 		shared as indracores_shared,
 	};
 	use sp_core::H256;

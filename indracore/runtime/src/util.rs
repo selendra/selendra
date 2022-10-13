@@ -20,13 +20,13 @@
 use primitives::v2::{Id as IndraId, PersistedValidationData, ValidatorIndex};
 use sp_std::{collections::btree_set::BTreeSet, vec::Vec};
 
-use crate::{configuration, hrmp, paras};
+use crate::{configuration, hrmp, indras};
 
 /// Make the persisted validation data for a particular indracore, a specified relay-parent and it's
 /// storage root.
 ///
 /// This ties together the storage of several modules.
-pub fn make_persisted_validation_data<T: paras::Config + hrmp::Config>(
+pub fn make_persisted_validation_data<T: indras::Config + hrmp::Config>(
 	indra_id: IndraId,
 	relay_parent_number: T::BlockNumber,
 	relay_parent_storage_root: T::Hash,
@@ -34,7 +34,7 @@ pub fn make_persisted_validation_data<T: paras::Config + hrmp::Config>(
 	let config = <configuration::Pallet<T>>::config();
 
 	Some(PersistedValidationData {
-		parent_head: <paras::Pallet<T>>::indra_head(&indra_id)?,
+		parent_head: <indras::Pallet<T>>::indra_head(&indra_id)?,
 		relay_parent_number,
 		relay_parent_storage_root,
 		max_pov_size: config.max_pov_size,

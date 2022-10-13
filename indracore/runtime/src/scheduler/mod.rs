@@ -43,7 +43,7 @@ use scale_info::TypeInfo;
 use sp_runtime::traits::{One, Saturating};
 use sp_std::prelude::*;
 
-use crate::{configuration, initializer::SessionChangeNotification, paras};
+use crate::{configuration, indras, initializer::SessionChangeNotification};
 
 pub use pallet::*;
 
@@ -162,7 +162,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + configuration::Config + paras::Config {}
+	pub trait Config: frame_system::Config + configuration::Config + indras::Config {}
 
 	/// All the validator groups. One for each core. Indices are into `ActiveValidators` - not the
 	/// broader set of Selendra validators, but instead just the subset used for indracores during
@@ -239,7 +239,7 @@ impl<T: Config> Pallet<T> {
 		let config = new_config;
 
 		let mut thread_queue = IndrabaseQueue::<T>::get();
-		let n_indracores = <paras::Pallet<T>>::indracores().len() as u32;
+		let n_indracores = <indras::Pallet<T>>::indracores().len() as u32;
 		let n_cores = core::cmp::max(
 			n_indracores + config.indrabase_cores,
 			match config.max_validators_per_core {
@@ -311,7 +311,7 @@ impl<T: Config> Pallet<T> {
 			// prune out all entries beyond retry or that no longer correspond to live indrabase.
 			thread_queue.queue.retain(|queued| {
 				let will_keep = queued.claim.retries <= config.indrabase_retries &&
-					<paras::Pallet<T>>::is_indrabase(queued.claim.claim.0);
+					<indras::Pallet<T>>::is_indrabase(queued.claim.claim.0);
 
 				if !will_keep {
 					let claim_indra = queued.claim.claim.0;
@@ -347,7 +347,7 @@ impl<T: Config> Pallet<T> {
 	/// Fails if the claim does not correspond to any live indrabase.
 	#[allow(unused)]
 	pub fn add_indrabase_claim(claim: IndrabaseClaim) {
-		if !<paras::Pallet<T>>::is_indrabase(claim.0) {
+		if !<indras::Pallet<T>>::is_indrabase(claim.0) {
 			return
 		}
 
@@ -426,7 +426,7 @@ impl<T: Config> Pallet<T> {
 		Self::free_cores(just_freed_cores);
 
 		let cores = AvailabilityCores::<T>::get();
-		let indracores = <paras::Pallet<T>>::indracores();
+		let indracores = <indras::Pallet<T>>::indracores();
 		let mut scheduled = Scheduled::<T>::get();
 		let mut indrabase_queue = IndrabaseQueue::<T>::get();
 
@@ -574,7 +574,7 @@ impl<T: Config> Pallet<T> {
 		match cores.get(core_index.0 as usize).and_then(|c| c.as_ref()) {
 			None => None,
 			Some(CoreOccupied::Indracore) => {
-				let indracores = <paras::Pallet<T>>::indracores();
+				let indracores = <indras::Pallet<T>>::indracores();
 				Some(indracores[core_index.0 as usize])
 			},
 			Some(CoreOccupied::Indrabase(ref entry)) => Some(entry.claim.0),
@@ -687,7 +687,7 @@ impl<T: Config> Pallet<T> {
 	/// For indrabases, this is based on the next item in the `IndrabaseQueue` assigned to that
 	/// core, and is None if there isn't one.
 	pub(crate) fn next_up_on_available(core: CoreIndex) -> Option<ScheduledCore> {
-		let indracores = <paras::Pallet<T>>::indracores();
+		let indracores = <indras::Pallet<T>>::indracores();
 		if (core.0 as usize) < indracores.len() {
 			Some(ScheduledCore { indra_id: indracores[core.0 as usize], collator: None })
 		} else {
@@ -708,7 +708,7 @@ impl<T: Config> Pallet<T> {
 	/// core, or if there isn't one, the claim that is currently occupying the core, as long
 	/// as the claim's retries would not exceed the limit. Otherwise None.
 	pub(crate) fn next_up_on_time_out(core: CoreIndex) -> Option<ScheduledCore> {
-		let indracores = <paras::Pallet<T>>::indracores();
+		let indracores = <indras::Pallet<T>>::indracores();
 		if (core.0 as usize) < indracores.len() {
 			Some(ScheduledCore { indra_id: indracores[core.0 as usize], collator: None })
 		} else {
@@ -745,7 +745,7 @@ impl<T: Config> Pallet<T> {
 		IndrabaseQueue::<T>::mutate(|queue| {
 			for core_assignment in Scheduled::<T>::take() {
 				if let AssignmentKind::Indrabase(collator, retries) = core_assignment.kind {
-					if !<paras::Pallet<T>>::is_indrabase(core_assignment.indra_id) {
+					if !<indras::Pallet<T>>::is_indrabase(core_assignment.indra_id) {
 						continue
 					}
 

@@ -13,9 +13,10 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
-//! The indras pallet acts as the main registry of paras.
+
+//! The indras pallet acts as the main registry of indras.
 //!
-//! # Tracking State of Paras
+//! # Tracking State of Indras
 //!
 //! The most important responsibility of this module is to track which indracores and indrabases
 //! are active and what their current state is. The current state of a indra consists of the current
@@ -52,7 +53,7 @@
 //!
 //! # Validation Code Management
 //!
-//! Potentially, one validation code can be used by several different paras. For example, during
+//! Potentially, one validation code can be used by several different indras. For example, during
 //! initial stages of deployment several indras can use the same "shell" validation code, or
 //! there can be shards of the same indra that use the same validation code.
 //!
@@ -135,7 +136,7 @@ pub(crate) mod tests;
 
 pub use pallet::*;
 
-const LOG_TARGET: &str = "runtime::paras";
+const LOG_TARGET: &str = "runtime::indras";
 
 // the two key times necessary to track for every code replacement.
 #[derive(Default, Encode, Decode, TypeInfo)]
@@ -155,7 +156,7 @@ pub struct ReplacementTimes<N> {
 /// the state.
 #[derive(Default, Encode, Decode, TypeInfo)]
 #[cfg_attr(test, derive(Debug, Clone, PartialEq))]
-pub struct ParaPastCodeMeta<N> {
+pub struct IndraPastCodeMeta<N> {
 	/// Block numbers where the code was expected to be replaced and where the code
 	/// was actually replaced, respectively. The first is used to do accurate lookups
 	/// of historic code in historic contexts, whereas the second is used to do
@@ -239,7 +240,7 @@ impl IndraLifecycle {
 	}
 }
 
-impl<N: Ord + Copy + PartialEq> ParaPastCodeMeta<N> {
+impl<N: Ord + Copy + PartialEq> IndraPastCodeMeta<N> {
 	// note a replacement has occurred at a given block number.
 	pub(crate) fn note_replacement(&mut self, expected_at: N, activated_at: N) {
 		self.upgrade_times.push(ReplacementTimes { expected_at, activated_at })
@@ -486,13 +487,13 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event {
-		/// Current code has been updated for a Para. `indra_id`
+		/// Current code has been updated for a Indra. `indra_id`
 		CurrentCodeUpdated(IndraId),
-		/// Current head has been updated for a Para. `indra_id`
+		/// Current head has been updated for a Indra. `indra_id`
 		CurrentHeadUpdated(IndraId),
-		/// A code upgrade has been scheduled for a Para. `indra_id`
+		/// A code upgrade has been scheduled for a Indra. `indra_id`
 		CodeUpgradeScheduled(IndraId),
-		/// A new head has been noted for a Para. `indra_id`
+		/// A new head has been noted for a Indra. `indra_id`
 		NewHeadNoted(IndraId),
 		/// A indra has been queued to execute pending actions. `indra_id`
 		ActionQueued(IndraId, SessionIndex),
@@ -593,7 +594,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn past_code_meta)]
 	pub(super) type PastCodeMeta<T: Config> =
-		StorageMap<_, Twox64Concat, IndraId, ParaPastCodeMeta<T::BlockNumber>, ValueQuery>;
+		StorageMap<_, Twox64Concat, IndraId, IndraPastCodeMeta<T::BlockNumber>, ValueQuery>;
 
 	/// Which indras have past code that needs pruning and the relay-chain block at which the code was replaced.
 	/// Note that this is the actual height of the included block, not the expected height at which the
@@ -672,7 +673,7 @@ pub mod pallet {
 	/// NOTE that after PVF pre-checking is enabled the indra genesis arg will have it's code set
 	/// to empty. Instead, the code will be saved into the storage right away via `CodeByHash`.
 	#[pallet::storage]
-	pub(super) type UpcomingParasGenesis<T: Config> =
+	pub(super) type UpcomingIndrasGenesis<T: Config> =
 		StorageMap<_, Twox64Concat, IndraId, IndraGenesisArgs>;
 
 	/// The number of reference on the validation code in [`CodeByHash`] storage.
@@ -691,13 +692,13 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
-		pub paras: Vec<(IndraId, IndraGenesisArgs)>,
+		pub indras: Vec<(IndraId, IndraGenesisArgs)>,
 	}
 
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			GenesisConfig { paras: Default::default() }
+			GenesisConfig { indras: Default::default() }
 		}
 	}
 
@@ -705,7 +706,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			let mut indracores = IndracoresCache::new();
-			for (id, genesis_args) in &self.paras {
+			for (id, genesis_args) in &self.indras {
 				if genesis_args.validation_code.0.is_empty() {
 					panic!("empty validation code is not allowed in genesis");
 				}
@@ -1094,7 +1095,7 @@ impl<T: Config> Pallet<T> {
 
 	// Apply all indra actions queued for the given session index.
 	//
-	// The actions to take are based on the lifecycle of of the paras.
+	// The actions to take are based on the lifecycle of of the indras.
 	//
 	// The final state of any indra after the actions queue should be as a
 	// indracore, indrabase, or not registered. (stable states)
@@ -1112,7 +1113,7 @@ impl<T: Config> Pallet<T> {
 				None | Some(IndraLifecycle::Indrabase) | Some(IndraLifecycle::Indracore) => { /* Nothing to do... */
 				},
 				Some(IndraLifecycle::Onboarding) => {
-					if let Some(genesis_data) = <Self as Store>::UpcomingParasGenesis::take(&indra)
+					if let Some(genesis_data) = <Self as Store>::UpcomingIndrasGenesis::take(&indra)
 					{
 						Self::initialize_indra_now(&mut indracores, indra, &genesis_data);
 					}
@@ -1478,7 +1479,7 @@ impl<T: Config> Pallet<T> {
 					// actual onboarding the indracore did not have a chance to reach to upgrades.
 					// Therefore we can skip all the upgrade related storage items here.
 					weight += T::DbWeight::get().writes(3);
-					UpcomingParasGenesis::<T>::remove(&id);
+					UpcomingIndrasGenesis::<T>::remove(&id);
 					CurrentCodeHash::<T>::remove(&id);
 					IndraLifecycles::<T>::remove(&id);
 				},
@@ -1554,7 +1555,7 @@ impl<T: Config> Pallet<T> {
 		//8
 		let validation_code =
 			mem::replace(&mut genesis_data.validation_code, ValidationCode(Vec::new()));
-		UpcomingParasGenesis::<T>::insert(&id, genesis_data);
+		UpcomingIndrasGenesis::<T>::insert(&id, genesis_data);
 		let validation_code_hash = validation_code.hash();
 		<Self as Store>::CurrentCodeHash::insert(&id, validation_code_hash);
 

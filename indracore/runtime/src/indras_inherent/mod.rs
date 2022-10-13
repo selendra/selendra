@@ -64,7 +64,7 @@ pub use self::{
 	misc::{IndexedRetain, IsSortedBy},
 	weights::{
 		backed_candidate_weight, backed_candidates_weight, dispute_statement_set_weight,
-		multi_dispute_statement_sets_weight, paras_inherent_total_weight, signed_bitfields_weight,
+		indras_inherent_total_weight, multi_dispute_statement_sets_weight, signed_bitfields_weight,
 		TestWeightInfo, WeightInfo,
 	},
 };
@@ -152,7 +152,7 @@ pub mod pallet {
 		session: SessionIndex,
 		checked_disputes: CheckedMultiDisputeStatementSet,
 	) {
-		crate::paras_inherent::OnChainVotes::<T>::mutate(move |value| {
+		crate::indras_inherent::OnChainVotes::<T>::mutate(move |value| {
 			let disputes =
 				checked_disputes.into_iter().map(DisputeStatementSet::from).collect::<Vec<_>>();
 			let backing_validators_per_candidate = match value.take() {
@@ -175,7 +175,7 @@ pub mod pallet {
 			Vec<(ValidatorIndex, ValidityAttestation)>,
 		)>,
 	) {
-		crate::paras_inherent::OnChainVotes::<T>::mutate(move |value| {
+		crate::indras_inherent::OnChainVotes::<T>::mutate(move |value| {
 			let disputes = match value.take() {
 				Some(v) => v.disputes,
 				None => MultiDisputeStatementSet::default(),
@@ -276,7 +276,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Enter the indras inherent. This will process bitfields and backed candidates.
 		#[pallet::weight((
-			paras_inherent_total_weight::<T>(
+			indras_inherent_total_weight::<T>(
 				data.backed_candidates.as_slice(),
 				data.bitfields.as_slice(),
 				data.disputes.as_slice(),

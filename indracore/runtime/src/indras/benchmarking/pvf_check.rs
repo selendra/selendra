@@ -16,7 +16,7 @@
 
 //! This module focuses on the benchmarking of the `include_pvf_check_statement` dispatchable.
 
-use crate::{configuration, paras::*, shared::Pallet as IndrasShared};
+use crate::{configuration, indras::*, shared::Pallet as IndrasShared};
 use frame_system::RawOrigin;
 use primitives::v2::{HeadData, Id as IndraId, ValidationCode, ValidatorId, ValidatorIndex};
 use sp_application_crypto::RuntimeAppPublic;

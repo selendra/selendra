@@ -17,13 +17,13 @@
 use super::*;
 use crate::{
 	configuration::HostConfiguration,
+	indras::IndraGenesisArgs,
+	indras_inherent::DisputedBitfield,
 	initializer::SessionChangeNotification,
 	mock::{
-		new_test_ext, Configuration, IndrasShared, MockGenesisConfig, ParaInclusion, Paras, System,
-		Test,
+		new_test_ext, Configuration, IndraInclusion, IndrasShared, MockGenesisConfig,
+		Paras as Indras, System, Test,
 	},
-	paras::IndraGenesisArgs,
-	paras_inherent::DisputedBitfield,
 	scheduler::AssignmentKind,
 };
 use assert_matches::assert_matches;
@@ -51,10 +51,10 @@ fn default_config() -> HostConfiguration<BlockNumber> {
 	config
 }
 
-pub(crate) fn genesis_config(paras: Vec<(IndraId, bool)>) -> MockGenesisConfig {
+pub(crate) fn genesis_config(indras: Vec<(IndraId, bool)>) -> MockGenesisConfig {
 	MockGenesisConfig {
-		paras: paras::GenesisConfig {
-			paras: paras
+		indras: indras::GenesisConfig {
+			indras: indras
 				.into_iter()
 				.map(|(id, is_chain)| {
 					(
@@ -168,8 +168,8 @@ pub(crate) fn run_to_block(
 	while System::block_number() < to {
 		let b = System::block_number();
 
-		ParaInclusion::initializer_finalize();
-		Paras::initializer_finalize(b);
+		IndraInclusion::initializer_finalize();
+		Indras::initializer_finalize(b);
 		IndrasShared::initializer_finalize();
 
 		if let Some(notification) = new_session(b + 1) {
@@ -179,8 +179,8 @@ pub(crate) fn run_to_block(
 				&notification.new_config,
 				notification.validators.clone(),
 			);
-			Paras::initializer_on_new_session(&notification);
-			ParaInclusion::initializer_on_new_session(&notification);
+			Indras::initializer_on_new_session(&notification);
+			IndraInclusion::initializer_on_new_session(&notification);
 		}
 
 		System::on_finalize(b);
@@ -189,13 +189,13 @@ pub(crate) fn run_to_block(
 		System::set_block_number(b + 1);
 
 		IndrasShared::initializer_initialize(b + 1);
-		Paras::initializer_initialize(b + 1);
-		ParaInclusion::initializer_initialize(b + 1);
+		Indras::initializer_initialize(b + 1);
+		IndraInclusion::initializer_initialize(b + 1);
 	}
 }
 
 pub(crate) fn expected_bits() -> usize {
-	Paras::indracores().len() + Configuration::config().indrabase_cores as usize
+	Indras::indracores().len() + Configuration::config().indrabase_cores as usize
 }
 
 fn default_bitfield() -> AvailabilityBitfield {
@@ -310,8 +310,8 @@ fn collect_pending_cleans_up_pending() {
 	let chain_b = IndraId::from(2_u32);
 	let thread_a = IndraId::from(3_u32);
 
-	let paras = vec![(chain_a, true), (chain_b, true), (thread_a, false)];
-	new_test_ext(genesis_config(paras)).execute_with(|| {
+	let indras = vec![(chain_a, true), (chain_b, true), (thread_a, false)];
+	new_test_ext(genesis_config(indras)).execute_with(|| {
 		let default_candidate = TestCandidateBuilder::default().build();
 		<PendingAvailability<Test>>::insert(
 			chain_a,
@@ -353,7 +353,7 @@ fn collect_pending_cleans_up_pending() {
 		assert!(<PendingAvailabilityCommitments<Test>>::get(&chain_a).is_some());
 		assert!(<PendingAvailabilityCommitments<Test>>::get(&chain_b).is_some());
 
-		ParaInclusion::collect_pending(|core, _since| core == CoreIndex::from(0));
+		IndraInclusion::collect_pending(|core, _since| core == CoreIndex::from(0));
 
 		assert!(<PendingAvailability<Test>>::get(&chain_a).is_none());
 		assert!(<PendingAvailability<Test>>::get(&chain_b).is_some());
@@ -368,7 +368,7 @@ fn bitfield_checks() {
 	let chain_b = IndraId::from(2_u32);
 	let thread_a = IndraId::from(3_u32);
 
-	let paras = vec![(chain_a, true), (chain_b, true), (thread_a, false)];
+	let indras = vec![(chain_a, true), (chain_b, true), (thread_a, false)];
 	let validators = vec![
 		Sr25519Keyring::Alice,
 		Sr25519Keyring::Bob,
@@ -387,7 +387,7 @@ fn bitfield_checks() {
 	}
 	let validator_public = validator_pubkeys(&validators);
 
-	new_test_ext(genesis_config(paras.clone())).execute_with(|| {
+	new_test_ext(genesis_config(indras.clone())).execute_with(|| {
 		shared::Pallet::<Test>::set_active_validators_ascending(validator_public.clone());
 		shared::Pallet::<Test>::set_session_index(5);
 
@@ -404,7 +404,7 @@ fn bitfield_checks() {
 
 		// mark all candidates as pending availability
 		let set_pending_av = || {
-			for (p_id, _) in paras {
+			for (p_id, _) in indras {
 				let receipt = dummy_candidate_receipt(dummy_hash());
 				PendingAvailability::<Test>::insert(
 					p_id,
@@ -435,7 +435,7 @@ fn bitfield_checks() {
 			));
 
 			assert_matches!(
-				ParaInclusion::process_bitfields(
+				IndraInclusion::process_bitfields(
 					expected_bits(),
 					vec![signed.into()],
 					DisputedBitfield::zeros(expected_bits()),
@@ -458,7 +458,7 @@ fn bitfield_checks() {
 			));
 
 			assert_matches!(
-				ParaInclusion::process_bitfields(
+				IndraInclusion::process_bitfields(
 					expected_bits() + 1,
 					vec![signed.into()],
 					DisputedBitfield::zeros(expected_bits()),
@@ -497,7 +497,7 @@ fn bitfield_checks() {
 			// the threshold to free a core is 4 availability votes, but we only expect 1 valid
 			// valid bitfield.
 			assert_matches!(
-				ParaInclusion::process_bitfields(
+				IndraInclusion::process_bitfields(
 					expected_bits(),
 					vec![signed.clone(), signed],
 					DisputedBitfield::zeros(expected_bits()),
@@ -557,7 +557,7 @@ fn bitfield_checks() {
 			// the threshold to free a core is 4 availability votes, but we only expect 1 valid
 			// valid bitfield because `signed_0` will get skipped for being out of order.
 			assert_matches!(
-				ParaInclusion::process_bitfields(
+				IndraInclusion::process_bitfields(
 					expected_bits(),
 					vec![signed_1, signed_0],
 					DisputedBitfield::zeros(expected_bits()),
@@ -591,7 +591,7 @@ fn bitfield_checks() {
 				&signing_context,
 			));
 
-			assert_matches!(ParaInclusion::process_bitfields(
+			assert_matches!(IndraInclusion::process_bitfields(
 				expected_bits(),
 				vec![signed.into()],
 				DisputedBitfield::zeros(expected_bits()),
@@ -611,7 +611,7 @@ fn bitfield_checks() {
 				&signing_context,
 			));
 
-			assert_matches!(ParaInclusion::process_bitfields(
+			assert_matches!(IndraInclusion::process_bitfields(
 				expected_bits(),
 				vec![signed.into()],
 				DisputedBitfield::zeros(expected_bits()),
@@ -651,7 +651,7 @@ fn bitfield_checks() {
 				&signing_context,
 			));
 
-			assert_matches!(ParaInclusion::process_bitfields(
+			assert_matches!(IndraInclusion::process_bitfields(
 				expected_bits(),
 				vec![signed.into()],
 				DisputedBitfield::zeros(expected_bits()),
@@ -694,7 +694,7 @@ fn bitfield_checks() {
 			));
 
 			// no core is freed
-			assert_matches!(ParaInclusion::process_bitfields(
+			assert_matches!(IndraInclusion::process_bitfields(
 				expected_bits(),
 				vec![signed.into()],
 				DisputedBitfield::zeros(expected_bits()),
@@ -711,7 +711,7 @@ fn supermajority_bitfields_trigger_availability() {
 	let chain_b = IndraId::from(2_u32);
 	let thread_a = IndraId::from(3_u32);
 
-	let paras = vec![(chain_a, true), (chain_b, true), (thread_a, false)];
+	let indras = vec![(chain_a, true), (chain_b, true), (thread_a, false)];
 	let validators = vec![
 		Sr25519Keyring::Alice,
 		Sr25519Keyring::Bob,
@@ -730,7 +730,7 @@ fn supermajority_bitfields_trigger_availability() {
 	}
 	let validator_public = validator_pubkeys(&validators);
 
-	new_test_ext(genesis_config(paras)).execute_with(|| {
+	new_test_ext(genesis_config(indras)).execute_with(|| {
 		shared::Pallet::<Test>::set_active_validators_ascending(validator_public.clone());
 		shared::Pallet::<Test>::set_session_index(5);
 
@@ -838,7 +838,7 @@ fn supermajority_bitfields_trigger_availability() {
 
 		// only chain A's core is freed.
 		assert_matches!(
-			ParaInclusion::process_bitfields(
+			IndraInclusion::process_bitfields(
 				expected_bits(),
 				signed_bitfields,
 				DisputedBitfield::zeros(expected_bits()),
@@ -867,7 +867,7 @@ fn supermajority_bitfields_trigger_availability() {
 		});
 
 		// and check that chain head was enacted.
-		assert_eq!(Paras::indra_head(&chain_a), Some(vec![1, 2, 3, 4].into()));
+		assert_eq!(Indras::indra_head(&chain_a), Some(vec![1, 2, 3, 4].into()));
 
 		// Check that rewards are applied.
 		{
@@ -899,7 +899,7 @@ fn candidate_checks() {
 	// The block number of the relay-parent for testing.
 	const RELAY_PARENT_NUM: BlockNumber = 4;
 
-	let paras = vec![(chain_a, true), (chain_b, true), (thread_a, false)];
+	let indras = vec![(chain_a, true), (chain_b, true), (thread_a, false)];
 	let validators = vec![
 		Sr25519Keyring::Alice,
 		Sr25519Keyring::Bob,
@@ -918,7 +918,7 @@ fn candidate_checks() {
 	}
 	let validator_public = validator_pubkeys(&validators);
 
-	new_test_ext(genesis_config(paras)).execute_with(|| {
+	new_test_ext(genesis_config(indras)).execute_with(|| {
 		shared::Pallet::<Test>::set_active_validators_ascending(validator_public.clone());
 		shared::Pallet::<Test>::set_session_index(5);
 
@@ -983,7 +983,7 @@ fn candidate_checks() {
 			));
 
 			assert_noop!(
-				ParaInclusion::process_candidates(
+				IndraInclusion::process_candidates(
 					Default::default(),
 					vec![backed],
 					vec![chain_b_assignment.clone()],
@@ -1038,7 +1038,7 @@ fn candidate_checks() {
 
 			// out-of-order manifests as unscheduled.
 			assert_noop!(
-				ParaInclusion::process_candidates(
+				IndraInclusion::process_candidates(
 					Default::default(),
 					vec![backed_b, backed_a],
 					vec![chain_a_assignment.clone(), chain_b_assignment.clone()],
@@ -1071,7 +1071,7 @@ fn candidate_checks() {
 			));
 
 			assert_noop!(
-				ParaInclusion::process_candidates(
+				IndraInclusion::process_candidates(
 					Default::default(),
 					vec![backed],
 					vec![chain_a_assignment.clone()],
@@ -1106,7 +1106,7 @@ fn candidate_checks() {
 			));
 
 			assert_noop!(
-				ParaInclusion::process_candidates(
+				IndraInclusion::process_candidates(
 					Default::default(),
 					vec![backed],
 					vec![chain_a_assignment.clone()],
@@ -1141,7 +1141,7 @@ fn candidate_checks() {
 			));
 
 			assert_noop!(
-				ParaInclusion::process_candidates(
+				IndraInclusion::process_candidates(
 					Default::default(),
 					vec![backed],
 					vec![
@@ -1183,7 +1183,7 @@ fn candidate_checks() {
 			));
 
 			assert_noop!(
-				ParaInclusion::process_candidates(
+				IndraInclusion::process_candidates(
 					Default::default(),
 					vec![backed],
 					vec![thread_a_assignment.clone()],
@@ -1233,13 +1233,13 @@ fn candidate_checks() {
 			<PendingAvailabilityCommitments<Test>>::insert(&chain_a, candidate.commitments);
 
 			assert_noop!(
-				ParaInclusion::process_candidates(
+				IndraInclusion::process_candidates(
 					Default::default(),
 					vec![backed],
 					vec![chain_a_assignment.clone()],
 					&group_validators,
 				),
-				Error::<Test>::CandidateScheduledBeforeParaFree
+				Error::<Test>::CandidateScheduledBeforeIndraFree
 			);
 
 			<PendingAvailability<Test>>::remove(&chain_a);
@@ -1273,13 +1273,13 @@ fn candidate_checks() {
 			));
 
 			assert_noop!(
-				ParaInclusion::process_candidates(
+				IndraInclusion::process_candidates(
 					Default::default(),
 					vec![backed],
 					vec![chain_a_assignment.clone()],
 					&group_validators,
 				),
-				Error::<Test>::CandidateScheduledBeforeParaFree
+				Error::<Test>::CandidateScheduledBeforeIndraFree
 			);
 
 			<PendingAvailabilityCommitments<Test>>::remove(&chain_a);
@@ -1313,11 +1313,11 @@ fn candidate_checks() {
 				let cfg = Configuration::config();
 				let expected_at = 10 + cfg.validation_upgrade_delay;
 				assert_eq!(expected_at, 12);
-				Paras::schedule_code_upgrade(chain_a, vec![1, 2, 3, 4].into(), expected_at, &cfg);
+				Indras::schedule_code_upgrade(chain_a, vec![1, 2, 3, 4].into(), expected_at, &cfg);
 			}
 
 			assert_noop!(
-				ParaInclusion::process_candidates(
+				IndraInclusion::process_candidates(
 					Default::default(),
 					vec![backed],
 					vec![chain_a_assignment.clone()],
@@ -1351,7 +1351,7 @@ fn candidate_checks() {
 			));
 
 			assert_eq!(
-				ParaInclusion::process_candidates(
+				IndraInclusion::process_candidates(
 					Default::default(),
 					vec![backed],
 					vec![chain_a_assignment.clone()],
@@ -1386,7 +1386,7 @@ fn candidate_checks() {
 			));
 
 			assert_noop!(
-				ParaInclusion::process_candidates(
+				IndraInclusion::process_candidates(
 					Default::default(),
 					vec![backed],
 					vec![chain_a_assignment.clone()],
@@ -1421,13 +1421,13 @@ fn candidate_checks() {
 			));
 
 			assert_noop!(
-				ParaInclusion::process_candidates(
+				IndraInclusion::process_candidates(
 					Default::default(),
 					vec![backed],
 					vec![chain_a_assignment.clone()],
 					&group_validators,
 				),
-				Error::<Test>::ParaHeadMismatch
+				Error::<Test>::IndraHeadMismatch
 			);
 		}
 	});
@@ -1442,7 +1442,7 @@ fn backing_works() {
 	// The block number of the relay-parent for testing.
 	const RELAY_PARENT_NUM: BlockNumber = 4;
 
-	let paras = vec![(chain_a, true), (chain_b, true), (thread_a, false)];
+	let indras = vec![(chain_a, true), (chain_b, true), (thread_a, false)];
 	let validators = vec![
 		Sr25519Keyring::Alice,
 		Sr25519Keyring::Bob,
@@ -1461,7 +1461,7 @@ fn backing_works() {
 	}
 	let validator_public = validator_pubkeys(&validators);
 
-	new_test_ext(genesis_config(paras)).execute_with(|| {
+	new_test_ext(genesis_config(indras)).execute_with(|| {
 		shared::Pallet::<Test>::set_active_validators_ascending(validator_public.clone());
 		shared::Pallet::<Test>::set_session_index(5);
 
@@ -1586,7 +1586,7 @@ fn backing_works() {
 		let ProcessedCandidates {
 			core_indices: occupied_cores,
 			candidate_receipt_with_backing_validator_indices,
-		} = ParaInclusion::process_candidates(
+		} = IndraInclusion::process_candidates(
 			Default::default(),
 			backed_candidates.clone(),
 			vec![
@@ -1722,7 +1722,7 @@ fn can_include_candidate_with_ok_code_upgrade() {
 	// The block number of the relay-parent for testing.
 	const RELAY_PARENT_NUM: BlockNumber = 4;
 
-	let paras = vec![(chain_a, true)];
+	let indras = vec![(chain_a, true)];
 	let validators = vec![
 		Sr25519Keyring::Alice,
 		Sr25519Keyring::Bob,
@@ -1741,7 +1741,7 @@ fn can_include_candidate_with_ok_code_upgrade() {
 	}
 	let validator_public = validator_pubkeys(&validators);
 
-	new_test_ext(genesis_config(paras)).execute_with(|| {
+	new_test_ext(genesis_config(indras)).execute_with(|| {
 		shared::Pallet::<Test>::set_active_validators_ascending(validator_public.clone());
 		shared::Pallet::<Test>::set_session_index(5);
 
@@ -1787,7 +1787,7 @@ fn can_include_candidate_with_ok_code_upgrade() {
 		));
 
 		let ProcessedCandidates { core_indices: occupied_cores, .. } =
-			ParaInclusion::process_candidates(
+			IndraInclusion::process_candidates(
 				Default::default(),
 				vec![backed_a],
 				vec![chain_a_assignment.clone()],
@@ -1827,7 +1827,7 @@ fn session_change_wipes() {
 	let chain_b = IndraId::from(2_u32);
 	let thread_a = IndraId::from(3_u32);
 
-	let paras = vec![(chain_a, true), (chain_b, true), (thread_a, false)];
+	let indras = vec![(chain_a, true), (chain_b, true), (thread_a, false)];
 	let validators = vec![
 		Sr25519Keyring::Alice,
 		Sr25519Keyring::Bob,
@@ -1846,7 +1846,7 @@ fn session_change_wipes() {
 	}
 	let validator_public = validator_pubkeys(&validators);
 
-	new_test_ext(genesis_config(paras)).execute_with(|| {
+	new_test_ext(genesis_config(indras)).execute_with(|| {
 		shared::Pallet::<Test>::set_active_validators_ascending(validator_public.clone());
 		shared::Pallet::<Test>::set_session_index(5);
 

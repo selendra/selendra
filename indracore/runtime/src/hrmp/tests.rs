@@ -15,8 +15,8 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 use super::*;
 use crate::mock::{
-	new_test_ext, Configuration, Event as MockEvent, Hrmp, IndrasShared, MockGenesisConfig, Paras,
-	System, Test,
+	new_test_ext, Configuration, Event as MockEvent, Hrmp, IndrasShared, MockGenesisConfig,
+	Paras as Indras, System, Test,
 };
 use frame_support::{assert_noop, assert_ok, traits::Currency as _};
 use primitives::v2::BlockNumber;
@@ -29,7 +29,7 @@ fn run_to_block(to: BlockNumber, new_session: Option<Vec<BlockNumber>>) {
 
 		// NOTE: this is in reverse initialization order.
 		Hrmp::initializer_finalize();
-		Paras::initializer_finalize(b);
+		Indras::initializer_finalize(b);
 		IndrasShared::initializer_finalize();
 
 		if new_session.as_ref().map_or(false, |v| v.contains(&(b + 1))) {
@@ -47,7 +47,7 @@ fn run_to_block(to: BlockNumber, new_session: Option<Vec<BlockNumber>>) {
 				&notification.new_config,
 				notification.validators.clone(),
 			);
-			let outgoing_indras = Paras::initializer_on_new_session(&notification);
+			let outgoing_indras = Indras::initializer_on_new_session(&notification);
 			Hrmp::initializer_on_new_session(&notification, &outgoing_indras);
 		}
 
@@ -58,7 +58,7 @@ fn run_to_block(to: BlockNumber, new_session: Option<Vec<BlockNumber>>) {
 
 		// NOTE: this is in initialization order.
 		IndrasShared::initializer_initialize(b + 1);
-		Paras::initializer_initialize(b + 1);
+		Indras::initializer_initialize(b + 1);
 		Hrmp::initializer_initialize(b + 1);
 	}
 }
@@ -126,9 +126,9 @@ fn default_genesis_config() -> MockGenesisConfig {
 }
 
 fn register_indracore_with_balance(id: IndraId, balance: Balance) {
-	assert_ok!(Paras::schedule_indra_initialize(
+	assert_ok!(Indras::schedule_indra_initialize(
 		id,
-		crate::paras::IndraGenesisArgs {
+		crate::indras::IndraGenesisArgs {
 			indracore: true,
 			genesis_head: vec![1].into(),
 			validation_code: vec![1].into(),
@@ -142,7 +142,7 @@ fn register_indracore(id: IndraId) {
 }
 
 fn deregister_indracore(id: IndraId) {
-	assert_ok!(Paras::schedule_indra_cleanup(id));
+	assert_ok!(Indras::schedule_indra_cleanup(id));
 }
 
 fn channel_exists(sender: IndraId, recipient: IndraId) -> bool {
@@ -321,7 +321,7 @@ fn accept_incoming_request_and_offboard() {
 
 		// On Block 7: 2x session change. The channel should not be created.
 		run_to_block(7, Some(vec![6, 7]));
-		assert!(!Paras::is_valid_indra(indra_a));
+		assert!(!Indras::is_valid_indra(indra_a));
 		assert!(!channel_exists(indra_a, indra_b));
 		Hrmp::assert_storage_consistency_exhaustive();
 	});
@@ -349,7 +349,7 @@ fn check_sent_messages() {
 
 		// On Block 6: session change.
 		run_to_block(6, Some(vec![6]));
-		assert!(Paras::is_valid_indra(indra_a));
+		assert!(Indras::is_valid_indra(indra_a));
 
 		let msgs = vec![OutboundHrmpMessage { recipient: indra_b, data: b"knock".to_vec() }];
 		let config = Configuration::config();
@@ -547,7 +547,7 @@ fn refund_deposit_on_offboarding() {
 		run_to_block(10, Some(vec![9, 10]));
 
 		// The channel should be removed.
-		assert!(!Paras::is_valid_indra(indra_a));
+		assert!(!Indras::is_valid_indra(indra_a));
 		assert!(!channel_exists(indra_a, indra_b));
 		Hrmp::assert_storage_consistency_exhaustive();
 

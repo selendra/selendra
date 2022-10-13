@@ -176,7 +176,7 @@ benchmarks! {
 
 		benchmark.bitfields.clear();
 		benchmark.disputes.clear();
-		crate::paras::benchmarking::generate_disordered_upgrades::<T>();
+		crate::indras::benchmarking::generate_disordered_upgrades::<T>();
 	}: enter(RawOrigin::None, benchmark)
 	verify {
 		let max_validators_per_core = BenchBuilder::<T>::fallback_max_validators_per_core();

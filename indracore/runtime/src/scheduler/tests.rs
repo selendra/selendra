@@ -21,16 +21,16 @@ use primitives::v2::{BlockNumber, CollatorId, SessionIndex, ValidatorId};
 
 use crate::{
 	configuration::HostConfiguration,
+	indras::IndraGenesisArgs,
 	initializer::SessionChangeNotification,
 	mock::{
-		new_test_ext, Configuration, IndrasShared, MockGenesisConfig, Paras, Scheduler, System,
-		Test,
+		new_test_ext, Configuration, IndrasShared, MockGenesisConfig, Paras as Indras, Scheduler,
+		System, Test,
 	},
-	paras::IndraGenesisArgs,
 };
 
 fn schedule_blank_indra(id: IndraId, is_chain: bool) {
-	assert_ok!(Paras::schedule_indra_initialize(
+	assert_ok!(Indras::schedule_indra_initialize(
 		id,
 		IndraGenesisArgs {
 			genesis_head: Vec::new().into(),
@@ -48,7 +48,7 @@ fn run_to_block(
 		let b = System::block_number();
 
 		Scheduler::initializer_finalize();
-		Paras::initializer_finalize(b);
+		Indras::initializer_finalize(b);
 
 		if let Some(notification) = new_session(b + 1) {
 			let mut notification_with_session_index = notification;
@@ -56,7 +56,7 @@ fn run_to_block(
 			if notification_with_session_index.session_index == SessionIndex::default() {
 				notification_with_session_index.session_index = IndrasShared::scheduled_session();
 			}
-			Paras::initializer_on_new_session(&notification_with_session_index);
+			Indras::initializer_on_new_session(&notification_with_session_index);
 			Scheduler::initializer_on_new_session(&notification_with_session_index);
 		}
 
@@ -65,7 +65,7 @@ fn run_to_block(
 		System::on_initialize(b + 1);
 		System::set_block_number(b + 1);
 
-		Paras::initializer_initialize(b + 1);
+		Indras::initializer_initialize(b + 1);
 		Scheduler::initializer_initialize(b + 1);
 
 		// In the real runtime this is expected to be called by the `InclusionInherent` pallet.
@@ -81,10 +81,10 @@ fn run_to_end_of_block(
 	run_to_block(to, &new_session);
 
 	Scheduler::initializer_finalize();
-	Paras::initializer_finalize(to);
+	Indras::initializer_finalize(to);
 
 	if let Some(notification) = new_session(to + 1) {
-		Paras::initializer_on_new_session(&notification);
+		Indras::initializer_on_new_session(&notification);
 		Scheduler::initializer_on_new_session(&notification);
 	}
 
@@ -124,11 +124,11 @@ fn add_indrabase_claim_works() {
 	new_test_ext(genesis_config).execute_with(|| {
 		schedule_blank_indra(thread_id, false);
 
-		assert!(!Paras::is_indrabase(thread_id));
+		assert!(!Indras::is_indrabase(thread_id));
 
 		run_to_block(10, |n| if n == 10 { Some(Default::default()) } else { None });
 
-		assert!(Paras::is_indrabase(thread_id));
+		assert!(Indras::is_indrabase(thread_id));
 
 		{
 			Scheduler::add_indrabase_claim(IndrabaseClaim(thread_id, collator.clone()));
@@ -205,11 +205,11 @@ fn cannot_add_claim_when_no_indrabase_cores() {
 	new_test_ext(genesis_config).execute_with(|| {
 		schedule_blank_indra(thread_id, false);
 
-		assert!(!Paras::is_indrabase(thread_id));
+		assert!(!Indras::is_indrabase(thread_id));
 
 		run_to_block(10, |n| if n == 10 { Some(Default::default()) } else { None });
 
-		assert!(Paras::is_indrabase(thread_id));
+		assert!(Indras::is_indrabase(thread_id));
 
 		Scheduler::add_indrabase_claim(IndrabaseClaim(thread_id, collator.clone()));
 		assert_eq!(IndrabaseQueue::<Test>::get(), Default::default());
@@ -1356,7 +1356,7 @@ fn session_change_requires_reschedule_dropping_removed_indras() {
 		let groups = ValidatorGroups::<Test>::get();
 		assert_eq!(groups.len(), 5);
 
-		assert_ok!(Paras::schedule_indra_cleanup(chain_b));
+		assert_ok!(Indras::schedule_indra_cleanup(chain_b));
 
 		run_to_end_of_block(2, |number| match number {
 			2 => Some(SessionChangeNotification {
@@ -1431,7 +1431,7 @@ fn indrabase_claims_are_pruned_after_deregistration() {
 		run_to_block(2, |_| None);
 		assert_eq!(Scheduler::scheduled().len(), 2);
 
-		assert_ok!(Paras::schedule_indra_cleanup(thread_a));
+		assert_ok!(Indras::schedule_indra_cleanup(thread_a));
 
 		// start a new session to activate, 5 validators for 5 cores.
 		run_to_block(3, |number| match number {

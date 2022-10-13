@@ -16,7 +16,7 @@
 //! Mocks for all the traits.
 
 use crate::{
-	configuration, disputes, dmp, hrmp, inclusion, initializer, origin, paras, paras_inherent,
+	configuration, disputes, dmp, hrmp, inclusion, indras, indras_inherent, initializer, origin,
 	scheduler, session_info, shared,
 	ump::{self, MessageId, UmpSink},
 	IndraId,
@@ -53,11 +53,11 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system,
 		Balances: pallet_balances,
-		Paras: paras,
+		Paras: indras,
 		Configuration: configuration,
 		IndrasShared: shared,
-		ParaInclusion: inclusion,
-		ParaInherent: paras_inherent,
+		IndraInclusion: inclusion,
+		IndraInherent: indras_inherent,
 		Scheduler: scheduler,
 		Initializer: initializer,
 		Dmp: dmp,
@@ -211,9 +211,9 @@ impl frame_support::traits::EstimateNextSessionRotation<u32> for TestNextSession
 	}
 }
 
-impl crate::paras::Config for Test {
+impl crate::indras::Config for Test {
 	type Event = Event;
-	type WeightInfo = crate::paras::TestWeightInfo;
+	type WeightInfo = crate::indras::TestWeightInfo;
 	type UnsignedPriority = IndrasUnsignedPriority;
 	type NextSessionRotation = TestNextSessionRotation;
 }
@@ -296,8 +296,8 @@ impl crate::inclusion::Config for Test {
 	type RewardValidators = TestRewardValidators;
 }
 
-impl crate::paras_inherent::Config for Test {
-	type WeightInfo = crate::paras_inherent::TestWeightInfo;
+impl crate::indras_inherent::Config for Test {
+	type WeightInfo = crate::indras_inherent::TestWeightInfo;
 }
 
 pub struct MockValidatorSet;
@@ -439,7 +439,7 @@ pub fn new_test_ext(state: MockGenesisConfig) -> TestExternalities {
 
 	let mut t = state.system.build_storage::<Test>().unwrap();
 	state.configuration.assimilate_storage(&mut t).unwrap();
-	GenesisBuild::<Test>::assimilate_storage(&state.paras, &mut t).unwrap();
+	GenesisBuild::<Test>::assimilate_storage(&state.indras, &mut t).unwrap();
 
 	let mut ext: TestExternalities = t.into();
 	ext.register_extension(KeystoreExt(Arc::new(KeyStore::new()) as SyncCryptoStorePtr));
@@ -451,7 +451,7 @@ pub fn new_test_ext(state: MockGenesisConfig) -> TestExternalities {
 pub struct MockGenesisConfig {
 	pub system: frame_system::GenesisConfig,
 	pub configuration: crate::configuration::GenesisConfig<Test>,
-	pub paras: crate::paras::GenesisConfig,
+	pub indras: crate::indras::GenesisConfig,
 }
 
 pub fn assert_last_event(generic_event: Event) {

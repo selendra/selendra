@@ -15,7 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 use crate::{
 	configuration::{self, HostConfiguration},
-	dmp, ensure_indracore, initializer, paras,
+	dmp, ensure_indracore, indras, initializer,
 };
 use frame_support::{pallet_prelude::*, traits::ReservableCurrency};
 use frame_system::pallet_prelude::*;
@@ -235,7 +235,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + configuration::Config + paras::Config + dmp::Config
+		frame_system::Config + configuration::Config + indras::Config + dmp::Config
 	{
 		/// The outer event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -359,13 +359,13 @@ pub mod pallet {
 
 	/// The HRMP watermark associated with each indra.
 	/// Invariant:
-	/// - each indra `P` used here as a key should satisfy `Paras::is_valid_indra(P)` within a session.
+	/// - each indra `P` used here as a key should satisfy `Indras::is_valid_indra(P)` within a session.
 	#[pallet::storage]
 	pub type HrmpWatermarks<T: Config> = StorageMap<_, Twox64Concat, IndraId, T::BlockNumber>;
 
 	/// HRMP channel data associated with each indra.
 	/// Invariant:
-	/// - each participant in the channel should satisfy `Paras::is_valid_indra(P)` within a session.
+	/// - each participant in the channel should satisfy `Indras::is_valid_indra(P)` within a session.
 	#[pallet::storage]
 	pub type HrmpChannels<T: Config> = StorageMap<_, Twox64Concat, HrmpChannelId, HrmpChannel>;
 
@@ -425,7 +425,7 @@ pub mod pallet {
 	///
 	/// 1. `max_capacity` and `max_message_size` should be within the limits set by the
 	///    configuration pallet.
-	/// 2. `sender` and `recipient` must be valid paras.
+	/// 2. `sender` and `recipient` must be valid indras.
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
 		preopen_hrmp_channels: Vec<(IndraId, IndraId, u32, u32)>,
@@ -757,8 +757,8 @@ impl<T: Config> Pallet<T> {
 			);
 
 			if request.confirmed {
-				if <paras::Pallet<T>>::is_valid_indra(channel_id.sender) &&
-					<paras::Pallet<T>>::is_valid_indra(channel_id.recipient)
+				if <indras::Pallet<T>>::is_valid_indra(channel_id.sender) &&
+					<indras::Pallet<T>>::is_valid_indra(channel_id.recipient)
 				{
 					<Self as Store>::HrmpChannels::insert(
 						&channel_id,
@@ -960,11 +960,11 @@ impl<T: Config> Pallet<T> {
 		let senders = <Self as Store>::HrmpChannelDigests::mutate(&recipient, |digest| {
 			let mut senders = BTreeSet::new();
 			let mut leftover = Vec::with_capacity(digest.len());
-			for (block_no, paras_sent_msg) in mem::replace(digest, Vec::new()) {
+			for (block_no, indras_sent_msg) in mem::replace(digest, Vec::new()) {
 				if block_no <= new_hrmp_watermark {
-					senders.extend(paras_sent_msg);
+					senders.extend(indras_sent_msg);
 				} else {
-					leftover.push((block_no, paras_sent_msg));
+					leftover.push((block_no, indras_sent_msg));
 				}
 			}
 			*digest = leftover;
@@ -1097,7 +1097,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		ensure!(origin != recipient, Error::<T>::OpenHrmpChannelToSelf);
 		ensure!(
-			<paras::Pallet<T>>::is_valid_indra(recipient),
+			<indras::Pallet<T>>::is_valid_indra(recipient),
 			Error::<T>::OpenHrmpChannelInvalidRecipient,
 		);
 
@@ -1126,7 +1126,7 @@ impl<T: Config> Pallet<T> {
 		let egress_cnt =
 			<Self as Store>::HrmpEgressChannelsIndex::decode_len(&origin).unwrap_or(0) as u32;
 		let open_req_cnt = <Self as Store>::HrmpOpenChannelRequestCount::get(&origin);
-		let channel_num_limit = if <paras::Pallet<T>>::is_indrabase(origin) {
+		let channel_num_limit = if <indras::Pallet<T>>::is_indrabase(origin) {
 			config.hrmp_max_indrabase_outbound_channels
 		} else {
 			config.hrmp_max_indracore_outbound_channels
@@ -1196,7 +1196,7 @@ impl<T: Config> Pallet<T> {
 		// check if by accepting this open channel request, this indracore would exceed the
 		// number of inbound channels.
 		let config = <configuration::Pallet<T>>::config();
-		let channel_num_limit = if <paras::Pallet<T>>::is_indrabase(origin) {
+		let channel_num_limit = if <indras::Pallet<T>>::is_indrabase(origin) {
 			config.hrmp_max_indrabase_inbound_channels
 		} else {
 			config.hrmp_max_indracore_inbound_channels
@@ -1387,10 +1387,10 @@ impl<T: Config> Pallet<T> {
 			assert!(slice.windows(2).all(|xs| xs[0] <= xs[1]), "{} supposed to be sorted", id);
 		}
 
-		let assert_contains_only_onboarded = |paras: Vec<IndraId>, cause: &str| {
-			for indra in paras {
+		let assert_contains_only_onboarded = |indras: Vec<IndraId>, cause: &str| {
+			for indra in indras {
 				assert!(
-					crate::paras::Pallet::<T>::is_valid_indra(indra),
+					crate::indras::Pallet::<T>::is_valid_indra(indra),
 					"{}: {:?} indra is offboarded",
 					cause,
 					indra
@@ -1461,7 +1461,7 @@ impl<T: Config> Pallet<T> {
 		// cannot have an HRMP watermark: it should've been cleanup.
 		assert_contains_only_onboarded(
 			<Self as Store>::HrmpWatermarks::iter().map(|(k, _)| k).collect::<Vec<_>>(),
-			"HRMP watermarks should contain only onboarded paras",
+			"HRMP watermarks should contain only onboarded indras",
 		);
 
 		// An entry in `HrmpChannels` indicates that the channel is open. Only open channels can
@@ -1523,7 +1523,7 @@ impl<T: Config> Pallet<T> {
 
 		assert_contains_only_onboarded(
 			<Self as Store>::HrmpChannelDigests::iter().map(|(k, _)| k).collect::<Vec<_>>(),
-			"HRMP channel digests should contain only onboarded paras",
+			"HRMP channel digests should contain only onboarded indras",
 		);
 		for (_digest_for_indra, digest) in <Self as Store>::HrmpChannelDigests::iter() {
 			// Assert that items are in **strictly** ascending order. The strictness also implies

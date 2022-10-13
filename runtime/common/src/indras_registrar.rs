@@ -26,8 +26,7 @@ use frame_support::{
 use frame_system::{self, ensure_root, ensure_signed};
 use primitives::v2::{HeadData, Id as IndraId, ValidationCode, LOWEST_PUBLIC_ID};
 use runtime_indracores::{
-	configuration, ensure_indracore, paras as indras, paras::IndraGenesisArgs, IndraLifecycle,
-	Origin,
+	configuration, ensure_indracore, indras, indras::IndraGenesisArgs, IndraLifecycle, Origin,
 };
 use sp_std::{prelude::*, result};
 

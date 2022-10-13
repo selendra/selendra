@@ -21,7 +21,7 @@
 use crate::{
 	configuration::{self, HostConfiguration},
 	disputes::DisputesHandler,
-	dmp, hrmp, inclusion, paras, scheduler, session_info, shared, ump,
+	dmp, hrmp, inclusion, indras, scheduler, session_info, shared, ump,
 };
 use frame_support::{
 	traits::{OneSessionHandler, Randomness},
@@ -104,7 +104,7 @@ pub mod pallet {
 		frame_system::Config
 		+ configuration::Config
 		+ shared::Config
-		+ paras::Config
+		+ indras::Config
 		+ scheduler::Config
 		+ inclusion::Config
 		+ session_info::Config
@@ -147,7 +147,7 @@ pub mod pallet {
 		fn on_initialize(now: T::BlockNumber) -> Weight {
 			// The other modules are initialized in this order:
 			// - Configuration
-			// - Paras
+			// - Indras
 			// - Scheduler
 			// - Inclusion
 			// - `SessionInfo`
@@ -157,7 +157,7 @@ pub mod pallet {
 			// - HRMP
 			let total_weight = configuration::Pallet::<T>::initializer_initialize(now) +
 				shared::Pallet::<T>::initializer_initialize(now) +
-				paras::Pallet::<T>::initializer_initialize(now) +
+				indras::Pallet::<T>::initializer_initialize(now) +
 				scheduler::Pallet::<T>::initializer_initialize(now) +
 				inclusion::Pallet::<T>::initializer_initialize(now) +
 				session_info::Pallet::<T>::initializer_initialize(now) +
@@ -180,7 +180,7 @@ pub mod pallet {
 			session_info::Pallet::<T>::initializer_finalize();
 			inclusion::Pallet::<T>::initializer_finalize();
 			scheduler::Pallet::<T>::initializer_finalize();
-			paras::Pallet::<T>::initializer_finalize(now);
+			indras::Pallet::<T>::initializer_finalize(now);
 			shared::Pallet::<T>::initializer_finalize();
 			configuration::Pallet::<T>::initializer_finalize();
 
@@ -253,7 +253,7 @@ impl<T: Config> Pallet<T> {
 			session_index,
 		};
 
-		let outgoing_indras = paras::Pallet::<T>::initializer_on_new_session(&notification);
+		let outgoing_indras = indras::Pallet::<T>::initializer_on_new_session(&notification);
 		scheduler::Pallet::<T>::initializer_on_new_session(&notification);
 		inclusion::Pallet::<T>::initializer_on_new_session(&notification);
 		session_info::Pallet::<T>::initializer_on_new_session(&notification);

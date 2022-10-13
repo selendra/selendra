@@ -22,7 +22,7 @@ pub use pallet::*;
 use parity_scale_codec::Encode;
 use primitives::v2::Id as IndraId;
 use runtime_indracores::{
-	configuration, dmp, hrmp, paras as indras, paras::IndraGenesisArgs, ump, IndraLifecycle,
+	configuration, dmp, hrmp, indras, indras::IndraGenesisArgs, ump, IndraLifecycle,
 };
 use sp_std::boxed::Box;
 

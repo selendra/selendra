@@ -70,7 +70,7 @@ pub(crate) fn run_to_block<'a>(
 		let b = System::block_number();
 		if b != 0 {
 			// circumvent requirement to have bitfields and headers in block for testing purposes
-			crate::paras_inherent::Included::<Test>::set(Some(()));
+			crate::indras_inherent::Included::<Test>::set(Some(()));
 
 			AllPalletsWithSystem::on_finalize(b);
 			System::finalize();

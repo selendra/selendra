@@ -71,7 +71,7 @@ impl WeightInfo for TestWeightInfo {
 	}
 }
 
-pub fn paras_inherent_total_weight<T: Config>(
+pub fn indras_inherent_total_weight<T: Config>(
 	backed_candidates: &[BackedCandidate<<T as frame_system::Config>::Hash>],
 	bitfields: &[UncheckedSignedAvailabilityBitfield],
 	disputes: &[DisputeStatementSet],
