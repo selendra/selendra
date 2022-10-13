@@ -5,6 +5,7 @@ members = [
 	"primitives",
 	"indracore/core",
 	"indracore/metrics",
+	"indracore/runtime",
 	"runtime/common",
 	"runtime/common/slot_range_helper",
 	"runtime/selendra",

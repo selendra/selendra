@@ -1280,6 +1280,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "derivative"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fcc3dd5e9e9c0b295d6e1e4d811fb6f157d5ffd784b8d202fc62eac8035a770b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "derive_more"
 version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1291,6 +1302,12 @@ dependencies = [
  "rustc_version",
  "syn",
 ]
+
+[[package]]
+name = "diff"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56254986775e3233ffa9c4d7d3faaf6d36a2c09d30b20687e9f88bc8bafc16c8"
 
 [[package]]
 name = "digest"
@@ -1361,6 +1378,12 @@ dependencies = [
  "redox_users",
  "winapi",
 ]
+
+[[package]]
+name = "dissimilar"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c97b9233581d84b8e1e689cdd3a47b6f69770084fc246e86a7f78b0d9c1d4a5"
 
 [[package]]
 name = "dns-parser"
@@ -1888,6 +1911,40 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "frame-support-test"
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.26#1cca061ede75a4c693a3b71bd1b61d7275fe29e4"
+dependencies = [
+ "frame-support",
+ "frame-support-test-pallet",
+ "frame-system",
+ "parity-scale-codec",
+ "pretty_assertions",
+ "rustversion",
+ "scale-info",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-version",
+ "trybuild",
+]
+
+[[package]]
+name = "frame-support-test-pallet"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.26#1cca061ede75a4c693a3b71bd1b61d7275fe29e4"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
 ]
 
 [[package]]
@@ -4047,6 +4104,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ff7415e9ae3fff1225851df9e0d9e4e5479f947619774677a63572e55e80eff"
 
 [[package]]
+name = "output_vt100"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "628223faebab4e3e40667ee0b2336d34a5b960ff60ea743ddfdbcf7770bcfb66"
+dependencies = [
+ "winapi",
+]
+
+[[package]]
 name = "owning_ref"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5065,6 +5131,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eb9f9e6e233e5c4a35559a617bf40a4ec447db2e84c20b55a6f83167b7e57872"
 
 [[package]]
+name = "pretty_assertions"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a25e9bcb20aa780fd0bb16b72403a9064d6b3f22f026946029acb941a50af755"
+dependencies = [
+ "ctor",
+ "diff",
+ "output_vt100",
+ "yansi",
+]
+
+[[package]]
 name = "primitive-types"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5075,6 +5153,17 @@ dependencies = [
  "impl-serde",
  "scale-info",
  "uint",
+]
+
+[[package]]
+name = "primitives-test-helpers"
+version = "0.2.0"
+dependencies = [
+ "rand 0.8.5",
+ "selendra-primitives",
+ "sp-application-crypto",
+ "sp-keyring",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -7169,6 +7258,57 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-runtime-indracores"
+version = "0.2.0"
+dependencies = [
+ "assert_matches",
+ "bitflags",
+ "bitvec 1.0.0",
+ "derive_more",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-support-test",
+ "frame-system",
+ "futures",
+ "hex-literal",
+ "log",
+ "pallet-authority-discovery",
+ "pallet-authorship",
+ "pallet-babe",
+ "pallet-balances",
+ "pallet-session",
+ "pallet-staking",
+ "pallet-timestamp",
+ "pallet-vesting",
+ "parity-scale-codec",
+ "primitives-test-helpers",
+ "rand 0.8.5",
+ "rand_chacha 0.3.1",
+ "rustc-hex",
+ "sc-keystore",
+ "scale-info",
+ "selendra-primitives",
+ "selendra-runtime-metrics",
+ "serde",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-keyring",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-session",
+ "sp-staking",
+ "sp-std",
+ "sp-tracing",
+ "static_assertions",
+ "thousands",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
 name = "selendra-runtime-metrics"
 version = "0.2.0"
 dependencies = [
@@ -8897,6 +9037,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "trybuild"
+version = "1.0.64"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7f408301c7480f9e6294eb779cfc907f54bd901a9660ef24d7f233ed5376485"
+dependencies = [
+ "dissimilar",
+ "glob",
+ "once_cell",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "termcolor",
+ "toml",
+]
+
+[[package]]
 name = "tt-call"
 version = "1.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9609,6 +9765,46 @@ dependencies = [
 ]
 
 [[package]]
+name = "xcm"
+version = "0.9.26"
+dependencies = [
+ "derivative",
+ "impl-trait-for-tuples",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-runtime",
+ "xcm-procedural",
+]
+
+[[package]]
+name = "xcm-executor"
+version = "0.2.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "impl-trait-for-tuples",
+ "log",
+ "parity-scale-codec",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
+name = "xcm-procedural"
+version = "0.1.0"
+dependencies = [
+ "Inflector",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "yamux"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9621,6 +9817,12 @@ dependencies = [
  "rand 0.8.5",
  "static_assertions",
 ]
+
+[[package]]
+name = "yansi"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09041cd90cf85f7f8b2df60c646f853b7f535ce68f85244eb6731cf89fa498ec"
 
 [[package]]
 name = "zeroize"

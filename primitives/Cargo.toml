@@ -59,3 +59,5 @@ std = [
     "selendra-core-primitives/std",
 	"selendra-indracore/std"
 ]
+
+runtime-benchmarks = []
