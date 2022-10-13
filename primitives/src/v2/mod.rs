@@ -338,7 +338,7 @@ pub mod well_known_keys {
 }
 
 /// Unique identifier for the Indracores Inherent
-pub const INDRACORES_INHERENT_IDENTIFIER: InherentIdentifier = *b"indracr0";
+pub const INDRACORES_INHERENT_IDENTIFIER: InherentIdentifier = *b"parachn0";
 
 /// The key type ID for indracore assignment key.
 pub const ASSIGNMENT_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"asgn");

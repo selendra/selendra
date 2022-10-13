@@ -141,7 +141,7 @@ pub struct BlockData(#[cfg_attr(feature = "std", serde(with = "bytes"))] pub Vec
 pub struct Id(u32);
 
 impl TypeId for Id {
-	const TYPE_ID: [u8; 4] = *b"indr";
+	const TYPE_ID: [u8; 4] = *b"para";
 }
 
 impl From<Id> for u32 {
