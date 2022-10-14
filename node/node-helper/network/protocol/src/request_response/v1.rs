@@ -22,7 +22,7 @@ use selendra_node_primitives::{
 	AvailableData, DisputeMessage, ErasureChunk, PoV, Proof, UncheckedDisputeMessage,
 };
 use selendra_primitives::v2::{
-	CandidateHash, CandidateReceipt, CommittedCandidateReceipt, Hash, Id as ParaId, ValidatorIndex,
+	CandidateHash, CandidateReceipt, CommittedCandidateReceipt, Hash, Id as IndraId, ValidatorIndex,
 };
 
 use super::{IsRequest, Protocol};
@@ -93,8 +93,8 @@ impl IsRequest for ChunkFetchingRequest {
 pub struct CollationFetchingRequest {
 	/// Relay parent we want a collation for.
 	pub relay_parent: Hash,
-	/// The `ParaId` of the collation.
-	pub para_id: ParaId,
+	/// The `IndraId` of the collation.
+	pub indra_id: IndraId,
 }
 
 /// Responses as sent by collators.

@@ -1,5 +1,3 @@
-// This file is part of Substrate.
-
 // Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -15,14 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Expose the auto generated weight files.
+mod kw {
+	syn::custom_keyword!(event);
+	syn::custom_keyword!(signal);
+	syn::custom_keyword!(error);
+	syn::custom_keyword!(outgoing);
+	syn::custom_keyword!(gen);
+	syn::custom_keyword!(signal_capacity);
+	syn::custom_keyword!(message_capacity);
+	syn::custom_keyword!(subsystem);
+	syn::custom_keyword!(prefix);
+}
 
-pub mod block_weights;
-pub mod extrinsic_weights;
-pub mod paritydb_weights;
-pub mod rocksdb_weights;
+mod parse_orchestra_attr;
+mod parse_orchestra_struct;
 
-pub use block_weights::BlockExecutionWeight;
-pub use extrinsic_weights::ExtrinsicBaseWeight;
-pub use paritydb_weights::constants::ParityDbWeight;
-pub use rocksdb_weights::constants::RocksDbWeight;
+mod parse_subsystem_attr;
+
+#[cfg(test)]
+mod tests;
+
+pub(crate) use self::{parse_orchestra_attr::*, parse_orchestra_struct::*};
+
+pub(crate) use self::parse_subsystem_attr::*;

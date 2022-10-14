@@ -1,5 +1,3 @@
-// This file is part of Substrate.
-
 // Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -15,14 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Expose the auto generated weight files.
-
-pub mod block_weights;
-pub mod extrinsic_weights;
-pub mod paritydb_weights;
-pub mod rocksdb_weights;
-
-pub use block_weights::BlockExecutionWeight;
-pub use extrinsic_weights::ExtrinsicBaseWeight;
-pub use paritydb_weights::constants::ParityDbWeight;
-pub use rocksdb_weights::constants::RocksDbWeight;
+fn main() {
+	// populate OUT_DIR
+}

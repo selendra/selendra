@@ -1,5 +1,3 @@
-// This file is part of Substrate.
-
 // Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -15,14 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Expose the auto generated weight files.
+#[test]
+#[rustversion::attr(not(stable), ignore)]
+fn ui_compile_fail() {
+	// Only run the ui tests when `RUN_UI_TESTS` is set.
+	if std::env::var("RUN_UI_TESTS").is_err() {
+		return
+	}
 
-pub mod block_weights;
-pub mod extrinsic_weights;
-pub mod paritydb_weights;
-pub mod rocksdb_weights;
+	let t = trybuild::TestCases::new();
+	t.compile_fail("tests/ui/err-*.rs");
+}
 
-pub use block_weights::BlockExecutionWeight;
-pub use extrinsic_weights::ExtrinsicBaseWeight;
-pub use paritydb_weights::constants::ParityDbWeight;
-pub use rocksdb_weights::constants::RocksDbWeight;
+#[test]
+#[rustversion::attr(not(stable), ignore)]
+fn ui_pass() {
+	// Only run the ui tests when `RUN_UI_TESTS` is set.
+	if std::env::var("RUN_UI_TESTS").is_err() {
+		return
+	}
+
+	let t = trybuild::TestCases::new();
+	t.pass("tests/ui/ok-*.rs");
+}
