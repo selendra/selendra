@@ -84,7 +84,7 @@ sp-npos-elections = { git = "https://github.com/paritytech/substrate", branch = 
 
 primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
 selendra-runtime-constants = { path = "constants", default-features = false }
-runtime-common = { path = "../common", default-features = false }
+runtime-common = { package = "selendra-runtime-common", path = "../common", default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }

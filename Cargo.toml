@@ -8,6 +8,7 @@ members = [
 	"indracore/runtime",
 	"indracore/xcm",
 	"indracore/xcm/pallet-xcm",
+	"indracore/xcm/pallet-xcm/benchmarks",
 	"indracore/xcm/xcm-builder",
 	"indracore/xcm/xcm-executor",
 	"runtime/common",

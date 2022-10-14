@@ -481,7 +481,7 @@ impl<T: Config> Pallet<T> {
 		Slots::<T>::clear_all_leases(origin, id)
 	}
 
-	/// Create a indracore slot lease based on given indrams.
+	/// Create a indracore slot lease based on given params.
 	/// The function merely calls out to `Leaser::lease_out`.
 	fn configure_slot_lease(
 		indra: IndraId,

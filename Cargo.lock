@@ -4122,6 +4122,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-assets"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.26#1cca061ede75a4c693a3b71bd1b61d7275fe29e4"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-authority-discovery"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.26#1cca061ede75a4c693a3b71bd1b61d7275fe29e4"
@@ -4789,6 +4803,31 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
+]
+
+[[package]]
+name = "pallet-xcm-benchmarks"
+version = "0.2.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-xcm",
+ "parity-scale-codec",
+ "scale-info",
+ "selendra-primitives",
+ "selendra-runtime-common",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-tracing",
  "xcm",
  "xcm-builder",
  "xcm-executor",
@@ -5715,46 +5754,6 @@ dependencies = [
  "netlink-proto",
  "nix",
  "thiserror",
-]
-
-[[package]]
-name = "runtime-common"
-version = "0.2.0"
-dependencies = [
- "bitvec 1.0.0",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "impl-trait-for-tuples",
- "libsecp256k1",
- "log",
- "pallet-authorship",
- "pallet-babe",
- "pallet-balances",
- "pallet-collective",
- "pallet-election-provider-multi-phase",
- "pallet-membership",
- "pallet-session",
- "pallet-staking",
- "pallet-timestamp",
- "pallet-transaction-payment",
- "pallet-treasury",
- "pallet-vesting",
- "parity-scale-codec",
- "primitives-test-helpers",
- "rustc-hex",
- "scale-info",
- "selendra-primitives",
- "selendra-runtime-indracores",
- "serde",
- "serde_derive",
- "slot-range-helper",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "static_assertions",
- "xcm",
 ]
 
 [[package]]
@@ -7256,9 +7255,9 @@ dependencies = [
  "pallet-utility",
  "pallet-vesting",
  "parity-scale-codec",
- "runtime-common",
  "scale-info",
  "selendra-primitives",
+ "selendra-runtime-common",
  "selendra-runtime-constants",
  "serde",
  "serde_json",
@@ -7286,12 +7285,52 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-runtime-common"
+version = "0.2.0"
+dependencies = [
+ "bitvec 1.0.0",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "libsecp256k1",
+ "log",
+ "pallet-authorship",
+ "pallet-babe",
+ "pallet-balances",
+ "pallet-collective",
+ "pallet-election-provider-multi-phase",
+ "pallet-membership",
+ "pallet-session",
+ "pallet-staking",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "pallet-treasury",
+ "pallet-vesting",
+ "parity-scale-codec",
+ "primitives-test-helpers",
+ "rustc-hex",
+ "scale-info",
+ "selendra-primitives",
+ "selendra-runtime-indracores",
+ "serde",
+ "serde_derive",
+ "slot-range-helper",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "static_assertions",
+ "xcm",
+]
+
+[[package]]
 name = "selendra-runtime-constants"
 version = "0.2.0"
 dependencies = [
  "frame-support",
- "runtime-common",
  "selendra-primitives",
+ "selendra-runtime-common",
  "smallvec",
  "sp-runtime",
 ]

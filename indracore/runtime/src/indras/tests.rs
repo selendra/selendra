@@ -1460,7 +1460,7 @@ fn add_trusted_validation_code_inserts_with_no_users() {
 #[test]
 fn add_trusted_validation_code_idempotent() {
 	// This test makes sure that calling add_trusted_validation_code twice with the same
-	// indrameters is a no-op.
+	// parameters is a no-op.
 	let validation_code = ValidationCode(vec![1, 2, 3]);
 	new_test_ext(Default::default()).execute_with(|| {
 		assert_ok!(Indras::add_trusted_validation_code(Origin::root(), validation_code.clone()));
