@@ -7538,6 +7538,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-statement-table"
+version = "0.2.0"
+dependencies = [
+ "parity-scale-codec",
+ "selendra-primitives",
+ "sp-core",
+]
+
+[[package]]
 name = "semver"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

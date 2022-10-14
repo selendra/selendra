@@ -16,6 +16,8 @@ members = [
 	"runtime/selendra",
 	"runtime/selendra/constants",
 	"node/node-helper/primitives",
+	"node/node-helper/statement-table",
+	"node/node-helper/erasure-coding",
 	"rpc",
 	"node/service",
 	"node/cli",
