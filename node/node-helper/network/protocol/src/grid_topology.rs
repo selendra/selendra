@@ -30,8 +30,8 @@
 //!
 
 use crate::PeerId;
-use selendra_primitives::v2::{SessionIndex, ValidatorIndex};
 use rand::{CryptoRng, Rng};
+use selendra_primitives::v2::{SessionIndex, ValidatorIndex};
 use std::{
 	collections::{hash_map, HashMap, HashSet},
 	fmt::Debug,

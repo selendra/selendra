@@ -22,8 +22,8 @@ use async_trait::async_trait;
 
 use sc_authority_discovery::Service as AuthorityDiscoveryService;
 
-use selendra_primitives::v2::AuthorityDiscoveryId;
 use sc_network::{Multiaddr, PeerId};
+use selendra_primitives::v2::AuthorityDiscoveryId;
 
 /// An abstraction over the authority discovery service.
 ///

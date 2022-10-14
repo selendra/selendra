@@ -28,11 +28,11 @@ use parity_scale_codec::{Decode, Encode};
 use selendra_node_primitives::{AvailableData, Proof};
 use selendra_primitives::v2::{BlakeTwo256, Hash as H256, HashT};
 use sp_core::Blake2Hasher;
-use thiserror::Error;
 use sp_trie::{
 	trie_types::{TrieDB, TrieDBMutV0 as TrieDBMut},
 	MemoryDB, Trie, TrieMut, EMPTY_PREFIX,
 };
+use thiserror::Error;
 
 use novelpoly::{CodeParams, WrappedShard};
 

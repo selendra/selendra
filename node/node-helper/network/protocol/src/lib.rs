@@ -23,9 +23,9 @@ use parity_scale_codec::{Decode, Encode};
 use selendra_primitives::v2::{BlockNumber, Hash};
 use std::{collections::HashMap, fmt};
 
+pub use sc_network::{IfDisconnected, PeerId};
 #[doc(hidden)]
 pub use selendra_node_jaeger as jaeger;
-pub use sc_network::{IfDisconnected, PeerId};
 #[doc(hidden)]
 pub use std::sync::Arc;
 
