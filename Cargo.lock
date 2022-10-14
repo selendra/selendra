@@ -1607,6 +1607,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "expander"
+version = "0.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3774182a5df13c3d1690311ad32fbe913feef26baba609fa2dd5f72042bd2ab6"
+dependencies = [
+ "blake2 0.10.4",
+ "fs-err",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "fake-simd"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9129,6 +9142,28 @@ checksum = "97d095ae15e245a057c8e8451bab9b3ee1e1f68e9ba2b4fbc18d0ac5237835f2"
 dependencies = [
  "pin-project",
  "tracing",
+]
+
+[[package]]
+name = "tracing-gum"
+version = "0.2.0"
+dependencies = [
+ "selendra-node-jaeger",
+ "selendra-primitives",
+ "tracing",
+ "tracing-gum-proc-macro",
+]
+
+[[package]]
+name = "tracing-gum-proc-macro"
+version = "0.2.0"
+dependencies = [
+ "assert_matches",
+ "expander",
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
