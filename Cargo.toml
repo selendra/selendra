@@ -20,6 +20,8 @@ members = [
 	"node/node-helper/erasure-coding",
 	"node/node-helper/jaeger",
 	"node/node-helper/gum",
+	"node/node-helper/metered-channel",
+	"node/node-helper/network/protocol",
 	"rpc",
 	"node/service",
 	"node/cli",

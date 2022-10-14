@@ -1,0 +1,23 @@
+[package]
+name = "prioritized-metered-channel"
+version = "0.2.0"
+authors = ["Selendra <info@selendra.org>"]
+description = "Channels with built-in observability and message priorizitazion (coming soon™)"
+edition = "2021"
+
+[dependencies]
+futures = "0.3.21"
+futures-timer = "3.0.2"
+derive_more = "0.99"
+tracing = "0.1.34"
+thiserror = "1.0.31"
+crossbeam-queue = "0.3.5"
+coarsetime = "^0.1.22"
+nanorand = { version = "0.7.0", default-features = false, features = ["wyrand"] }
+
+[dev-dependencies]
+futures = { version = "0.3.21", features = ["thread-pool"] }
+assert_matches = "1.5"
+env_logger = "0.9"
+log = "0.4"
+tracing = { version = "0.1.34", features = ["log"] }
