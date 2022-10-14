@@ -15,6 +15,7 @@ members = [
 	"runtime/common/slot_range_helper",
 	"runtime/selendra",
 	"runtime/selendra/constants",
+	"node/node-helper/primitives",
 	"rpc",
 	"node/service",
 	"node/cli",
