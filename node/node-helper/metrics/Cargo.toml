@@ -1,0 +1,28 @@
+[package]
+name = "selendra-node-metrics"
+version = "0.2.0"
+authors = ["Selendra <info@selendra.org>"]
+description = "Subsystem metric helpers"
+edition = "2021"
+
+
+[dependencies]
+futures = "0.3.21"
+futures-timer = "3.0.2"
+log = "0.4.17"
+bs58 = { version = "0.4.0", features = ["alloc"] }
+gum = { package = "tracing-gum", path = "../gum" }
+codec = { package = "parity-scale-codec", version = "3.0.0" }
+
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+
+primitives = { package = "selendra-primitives", path = "../../../primitives/" }
+metered = { package = "prioritized-metered-channel", path = "../metered-channel" }
+
+[features]
+default = []
+runtime-metrics = []
+runtime-benchmarks = []

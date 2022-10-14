@@ -7330,6 +7330,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-node-metrics"
+version = "0.2.0"
+dependencies = [
+ "bs58",
+ "futures",
+ "futures-timer",
+ "log",
+ "parity-scale-codec",
+ "prioritized-metered-channel",
+ "sc-cli",
+ "sc-service",
+ "sc-tracing",
+ "selendra-primitives",
+ "substrate-prometheus-endpoint",
+ "tracing-gum",
+]
+
+[[package]]
 name = "selendra-node-network-protocol"
 version = "0.2.0"
 dependencies = [
