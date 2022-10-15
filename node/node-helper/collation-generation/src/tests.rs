@@ -29,7 +29,7 @@ mod handle_new_activations {
 		errors::RuntimeApiError,
 		messages::{AllMessages, RuntimeApiMessage, RuntimeApiRequest},
 	};
-	use selendra_node_subsystem_test_helpers::{
+	use node_subsystem_test_helpers::{
 		subsystem_test_harness, TestSubsystemContextHandle,
 	};
 	use selendra_primitives::v2::{

@@ -20,5 +20,5 @@ selendra-primitives = { path = "../../../primitives" }
 gum = { package = "tracing-gum", path = "../gum" }
 
 [dev-dependencies]
-node-subsystem-test-helpers = { path = "../subsystem-test-helpers" }
-test-helpers = { package = "primitives-test-helpers", path = "../../primitives/test-helpers" }
+node-subsystem-test-helpers = { path = "../../../test-helper/subsystem" }
+test-helpers = { package = "primitives-test-helpers", path = "../../../test-helper/primitive" }
