@@ -24,6 +24,7 @@ members = [
 	"node/node-helper/metrics",
 	"node/node-helper/orchestra",
 	"node/node-helper/subsystem-types",
+	"node/node-helper/overseer",
 	"node/node-helper/network/protocol",
 	"rpc",
 	"node/service",
