@@ -7425,6 +7425,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-node-subsystem-types"
+version = "0.2.0"
+dependencies = [
+ "derive_more",
+ "futures",
+ "orchestra",
+ "sc-network",
+ "selendra-node-jaeger",
+ "selendra-node-network-protocol",
+ "selendra-node-primitives",
+ "selendra-primitives",
+ "selendra-statement-table",
+ "smallvec",
+ "substrate-prometheus-endpoint",
+ "thiserror",
+]
+
+[[package]]
 name = "selendra-primitives"
 version = "0.2.0"
 dependencies = [
