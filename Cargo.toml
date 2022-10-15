@@ -24,6 +24,7 @@ members = [
 	"node/node-helper/subsystem",
 	"node/node-helper/subsystem-util",
 	"node/node-helper/collation-generation",
+	"node/node-helper/network/approval-distribution",
 	"node/node-helper/network/protocol",
 	"runtime/common/slot_range_helper",
 	"runtime/common",

@@ -5687,6 +5687,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-approval-distribution"
+version = "0.2.0"
+dependencies = [
+ "assert_matches",
+ "env_logger",
+ "futures",
+ "log",
+ "node-subsystem-test-helpers",
+ "rand 0.8.5",
+ "rand_chacha 0.3.1",
+ "rand_core 0.5.1",
+ "schnorrkel",
+ "selendra-node-network-protocol",
+ "selendra-node-primitives",
+ "selendra-node-subsystem",
+ "selendra-node-subsystem-util",
+ "selendra-primitives",
+ "sp-authority-discovery",
+ "sp-core",
+ "tracing-gum",
+]
+
+[[package]]
 name = "selendra-core-primitives"
 version = "0.2.0"
 dependencies = [
