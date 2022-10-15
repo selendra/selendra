@@ -7451,6 +7451,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-node-subsystem"
+version = "0.2.0"
+dependencies = [
+ "selendra-node-jaeger",
+ "selendra-node-subsystem-types",
+ "selendra-overseer",
+]
+
+[[package]]
 name = "selendra-node-subsystem-types"
 version = "0.2.0"
 dependencies = [
