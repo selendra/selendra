@@ -83,6 +83,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "always-assert"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fbf688625d06217d5b1bb0ea9d9c44a1635fd0ee3534466388d18203174f4d11"
+
+[[package]]
 name = "ansi_term"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3149,6 +3155,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "maplit"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
+
+[[package]]
 name = "match_cfg"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5710,6 +5722,116 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-availability-bitfield-distribution"
+version = "0.2.0"
+dependencies = [
+ "assert_matches",
+ "bitvec",
+ "env_logger",
+ "futures",
+ "log",
+ "maplit",
+ "node-subsystem-test-helpers",
+ "rand 0.8.5",
+ "rand_chacha 0.3.1",
+ "selendra-node-network-protocol",
+ "selendra-node-subsystem",
+ "selendra-node-subsystem-util",
+ "selendra-primitives",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-keyring",
+ "sp-keystore",
+ "tracing-gum",
+]
+
+[[package]]
+name = "selendra-availability-distribution"
+version = "0.2.0"
+dependencies = [
+ "assert_matches",
+ "derive_more",
+ "fatality",
+ "futures",
+ "futures-timer",
+ "lru",
+ "node-subsystem-test-helpers",
+ "parity-scale-codec",
+ "primitives-test-helpers",
+ "rand 0.8.5",
+ "sc-network",
+ "selendra-erasure-coding",
+ "selendra-node-network-protocol",
+ "selendra-node-primitives",
+ "selendra-node-subsystem",
+ "selendra-node-subsystem-util",
+ "selendra-primitives",
+ "sp-core",
+ "sp-keyring",
+ "sp-keystore",
+ "sp-tracing",
+ "thiserror",
+ "tracing-gum",
+]
+
+[[package]]
+name = "selendra-availability-recovery"
+version = "0.2.0"
+dependencies = [
+ "assert_matches",
+ "env_logger",
+ "fatality",
+ "futures",
+ "futures-timer",
+ "log",
+ "lru",
+ "node-subsystem-test-helpers",
+ "parity-scale-codec",
+ "primitives-test-helpers",
+ "rand 0.8.5",
+ "sc-network",
+ "selendra-erasure-coding",
+ "selendra-node-network-protocol",
+ "selendra-node-primitives",
+ "selendra-node-subsystem",
+ "selendra-node-subsystem-util",
+ "selendra-primitives",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-keyring",
+ "thiserror",
+ "tracing-gum",
+]
+
+[[package]]
+name = "selendra-collator-protocol"
+version = "0.2.0"
+dependencies = [
+ "always-assert",
+ "assert_matches",
+ "env_logger",
+ "fatality",
+ "futures",
+ "futures-timer",
+ "log",
+ "node-subsystem-test-helpers",
+ "parity-scale-codec",
+ "primitives-test-helpers",
+ "sc-network",
+ "selendra-node-network-protocol",
+ "selendra-node-primitives",
+ "selendra-node-subsystem",
+ "selendra-node-subsystem-util",
+ "selendra-primitives",
+ "sp-core",
+ "sp-keyring",
+ "sp-keystore",
+ "sp-runtime",
+ "thiserror",
+ "tracing-gum",
+]
+
+[[package]]
 name = "selendra-core-primitives"
 version = "0.2.0"
 dependencies = [
@@ -5719,6 +5841,37 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "selendra-dispute-distribution"
+version = "0.2.0"
+dependencies = [
+ "assert_matches",
+ "async-trait",
+ "derive_more",
+ "fatality",
+ "futures",
+ "futures-timer",
+ "lazy_static",
+ "lru",
+ "node-subsystem-test-helpers",
+ "parity-scale-codec",
+ "primitives-test-helpers",
+ "sc-keystore",
+ "sc-network",
+ "selendra-erasure-coding",
+ "selendra-node-network-protocol",
+ "selendra-node-primitives",
+ "selendra-node-subsystem",
+ "selendra-node-subsystem-util",
+ "selendra-primitives",
+ "sp-application-crypto",
+ "sp-keyring",
+ "sp-keystore",
+ "sp-tracing",
+ "thiserror",
+ "tracing-gum",
 ]
 
 [[package]]
@@ -5735,6 +5888,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-gossip-support"
+version = "0.2.0"
+dependencies = [
+ "assert_matches",
+ "async-trait",
+ "futures",
+ "futures-timer",
+ "lazy_static",
+ "node-subsystem-test-helpers",
+ "rand 0.8.5",
+ "rand_chacha 0.3.1",
+ "sc-network",
+ "selendra-node-network-protocol",
+ "selendra-node-subsystem",
+ "selendra-node-subsystem-util",
+ "selendra-primitives",
+ "sp-application-crypto",
+ "sp-authority-discovery",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-keyring",
+ "sp-keystore",
+ "sp-tracing",
+ "tracing-gum",
+]
+
+[[package]]
 name = "selendra-indracore"
 version = "0.2.0"
 dependencies = [
@@ -5748,6 +5928,32 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "selendra-network-bridge"
+version = "0.2.0"
+dependencies = [
+ "always-assert",
+ "assert_matches",
+ "async-trait",
+ "bytes",
+ "futures",
+ "futures-timer",
+ "node-subsystem-test-helpers",
+ "parity-scale-codec",
+ "parking_lot 0.12.0",
+ "primitives-test-helpers",
+ "sc-network",
+ "selendra-node-network-protocol",
+ "selendra-node-subsystem",
+ "selendra-node-subsystem-util",
+ "selendra-overseer",
+ "selendra-primitives",
+ "sp-consensus",
+ "sp-core",
+ "sp-keyring",
+ "tracing-gum",
 ]
 
 [[package]]
@@ -6068,6 +6274,37 @@ dependencies = [
  "selendra-primitives",
  "sp-std",
  "sp-tracing",
+]
+
+[[package]]
+name = "selendra-statement-distribution"
+version = "0.2.0"
+dependencies = [
+ "arrayvec 0.5.2",
+ "assert_matches",
+ "fatality",
+ "futures",
+ "futures-timer",
+ "indexmap",
+ "node-subsystem-test-helpers",
+ "parity-scale-codec",
+ "primitives-test-helpers",
+ "sc-keystore",
+ "sc-network",
+ "selendra-node-network-protocol",
+ "selendra-node-primitives",
+ "selendra-node-subsystem",
+ "selendra-node-subsystem-util",
+ "selendra-primitives",
+ "sp-application-crypto",
+ "sp-authority-discovery",
+ "sp-core",
+ "sp-keyring",
+ "sp-keystore",
+ "sp-staking",
+ "sp-tracing",
+ "thiserror",
+ "tracing-gum",
 ]
 
 [[package]]
