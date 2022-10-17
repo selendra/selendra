@@ -1,0 +1,30 @@
+[package]
+name = "selendra-node-core-candidate-validation"
+version = "0.2.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+async-trait = "0.1.53"
+futures = "0.3.21"
+parity-scale-codec = { version = "3.1.5", default-features = false, features = ["bit-vec", "derive"] }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+
+selendra-primitives = { path = "../../../../primitives" }
+selendra-indracore = { path = "../../../../indracore/core" }
+selendra-node-primitives = { path = "../../primitives" }
+selendra-node-subsystem = {path = "../../subsystem" }
+selendra-node-subsystem-util = { path = "../../subsystem-util" }
+gum = { package = "tracing-gum", path = "../../gum" }
+
+[target.'cfg(not(any(target_os = "android", target_os = "unknown")))'.dependencies]
+selendra-node-core-pvf = { path = "../pvf" }
+
+[dev-dependencies]
+futures = { version = "0.3.21", features = ["thread-pool"] }
+assert_matches = "1.4.0"
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+
+node-subsystem-test-helpers = { path = "../../../../test-helper/subsystem" }
+test-helpers = { package = "primitives-test-helpers", path = "../../../../test-helper/primitive" }
