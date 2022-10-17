@@ -6,7 +6,6 @@ authors = ["Selendra <info@selendra.org>"]
 description = "Primitives types for the Node-side"
 edition = "2021"
 
-
 [dependencies]
 async-trait = "0.1.53"
 futures = "0.3.21"
