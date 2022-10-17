@@ -130,11 +130,11 @@ mod tests {
 	use parity_scale_codec::Encode;
 	use sp_core::testing::TaskExecutor;
 
+	use node_subsystem_test_helpers as test_helpers;
 	use selendra_node_primitives::BlockData;
 	use selendra_node_subsystem::messages::{
 		AllMessages, AvailabilityDistributionMessage, RuntimeApiMessage, RuntimeApiRequest,
 	};
-	use node_subsystem_test_helpers as test_helpers;
 	use selendra_primitives::v2::{CandidateHash, Hash, ValidatorIndex};
 	use test_helpers::mock::make_ferdie_keystore;
 

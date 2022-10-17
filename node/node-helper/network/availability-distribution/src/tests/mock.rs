@@ -20,15 +20,15 @@ use std::sync::Arc;
 
 use sp_keyring::Sr25519Keyring;
 
+use primitives_test_helpers::{
+	dummy_collator, dummy_collator_signature, dummy_hash, dummy_validation_code,
+};
 use selendra_erasure_coding::{branches, obtain_chunks_v1 as obtain_chunks};
 use selendra_node_primitives::{AvailableData, BlockData, ErasureChunk, PoV, Proof};
 use selendra_primitives::v2::{
 	CandidateCommitments, CandidateDescriptor, CandidateHash, CommittedCandidateReceipt,
 	GroupIndex, Hash, HeadData, Id as IndraId, OccupiedCore, PersistedValidationData, SessionInfo,
 	ValidatorIndex,
-};
-use primitives_test_helpers::{
-	dummy_collator, dummy_collator_signature, dummy_hash, dummy_validation_code,
 };
 
 /// Create dummy session info with two validator groups.

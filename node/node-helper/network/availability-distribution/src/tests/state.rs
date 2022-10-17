@@ -34,6 +34,7 @@ use sc_network::{config as netconfig, config::RequestResponseConfig, IfDisconnec
 use sp_core::{testing::TaskExecutor, traits::SpawnNamed};
 use sp_keystore::SyncCryptoStorePtr;
 
+use node_subsystem_test_helpers as test_helpers;
 use selendra_node_network_protocol::{
 	jaeger,
 	request_response::{v1, IncomingRequest, OutgoingRequest, Requests},
@@ -46,7 +47,6 @@ use selendra_node_subsystem::{
 	},
 	ActivatedLeaf, ActiveLeavesUpdate, FromOrchestra, LeafStatus, OverseerSignal,
 };
-use node_subsystem_test_helpers as test_helpers;
 use selendra_primitives::v2::{
 	CandidateHash, CoreState, GroupIndex, Hash, Id as IndraId, ScheduledCore, SessionInfo,
 	ValidatorIndex,

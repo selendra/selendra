@@ -28,6 +28,9 @@ use std::{
 
 use sc_network::{Event as NetworkEvent, IfDisconnected};
 
+use node_subsystem_test_helpers::{SingleItemSink, SingleItemStream, TestSubsystemContextHandle};
+use primitives_test_helpers::dummy_collator_signature;
+use sc_network::Multiaddr;
 use selendra_node_network_protocol::{
 	request_response::outgoing::Requests, view, ObservedRole, Versioned,
 };
@@ -39,13 +42,8 @@ use selendra_node_subsystem::{
 	},
 	ActiveLeavesUpdate, FromOrchestra, LeafStatus, OverseerSignal,
 };
-use node_subsystem_test_helpers::{
-	SingleItemSink, SingleItemStream, TestSubsystemContextHandle,
-};
 use selendra_node_subsystem_util::metered;
 use selendra_primitives::v2::AuthorityDiscoveryId;
-use primitives_test_helpers::dummy_collator_signature;
-use sc_network::Multiaddr;
 use sp_keyring::Sr25519Keyring;
 
 use crate::{network::Network, validator_discovery::AuthorityDiscovery, Rep};
@@ -280,8 +278,7 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
 ) {
 	let pool = sp_core::testing::TaskExecutor::new();
 	let (mut network, network_handle, discovery) = new_test_network();
-	let (context, virtual_overseer) =
-		node_subsystem_test_helpers::make_subsystem_context(pool);
+	let (context, virtual_overseer) = node_subsystem_test_helpers::make_subsystem_context(pool);
 	let network_stream = network.event_stream();
 
 	let bridge = NetworkBridge {

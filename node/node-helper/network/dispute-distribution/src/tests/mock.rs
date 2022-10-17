@@ -25,18 +25,18 @@ use std::{
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 
-use selendra_node_network_protocol::{authority_discovery::AuthorityDiscovery, PeerId};
 use sc_keystore::LocalKeystore;
+use selendra_node_network_protocol::{authority_discovery::AuthorityDiscovery, PeerId};
 use sp_application_crypto::AppKey;
 use sp_keyring::Sr25519Keyring;
 use sp_keystore::{SyncCryptoStore, SyncCryptoStorePtr};
 
+use primitives_test_helpers::dummy_candidate_descriptor;
 use selendra_node_primitives::{DisputeMessage, SignedDisputeStatement};
 use selendra_primitives::v2::{
 	AuthorityDiscoveryId, CandidateHash, CandidateReceipt, Hash, SessionIndex, SessionInfo,
 	ValidatorId, ValidatorIndex,
 };
-use primitives_test_helpers::dummy_candidate_descriptor;
 
 pub const MOCK_SESSION_INDEX: SessionIndex = 1;
 pub const MOCK_NEXT_SESSION_INDEX: SessionIndex = 2;

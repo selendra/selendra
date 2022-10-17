@@ -29,12 +29,12 @@ use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration, Epoch as BabeEpoch
 use sp_core::crypto::Pair as PairT;
 use sp_keyring::Sr25519Keyring;
 
+use node_subsystem_test_helpers as test_helpers;
 use selendra_node_subsystem::{
 	jaeger,
 	messages::{AllMessages, RuntimeApiMessage, RuntimeApiRequest},
 	ActivatedLeaf, LeafStatus,
 };
-use node_subsystem_test_helpers as test_helpers;
 use selendra_node_subsystem_util::TimeoutExt as _;
 use test_helpers::mock::make_ferdie_keystore;
 

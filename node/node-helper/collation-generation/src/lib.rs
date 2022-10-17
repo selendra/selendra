@@ -419,7 +419,10 @@ async fn obtain_current_validation_code_hash(
 		Ok(Some(v)) => Ok(Some(v)),
 		Ok(None) => Ok(None),
 		Err(RuntimeApiError::NotSupported { .. }) => {
-			match request_validation_code(relay_parent, indra_id, assumption, sender).await.await? {
+			match request_validation_code(relay_parent, indra_id, assumption, sender)
+				.await
+				.await?
+			{
 				Ok(Some(v)) => Ok(Some(v.hash())),
 				Ok(None) => Ok(None),
 				Err(e) => {

@@ -40,6 +40,7 @@ pub use selendra_node_metrics::{metrics, Metronome};
 use futures::channel::{mpsc, oneshot};
 use parity_scale_codec::Encode;
 
+pub use rand;
 use selendra_primitives::v2::{
 	AuthorityDiscoveryId, CandidateEvent, CommittedCandidateReceipt, CoreState, EncodeAs,
 	GroupIndex, GroupRotationInfo, Hash, Id as IndraId, OccupiedCoreAssumption,
@@ -47,7 +48,6 @@ use selendra_primitives::v2::{
 	SigningContext, ValidationCode, ValidationCodeHash, ValidatorId, ValidatorIndex,
 	ValidatorSignature,
 };
-pub use rand;
 use sp_application_crypto::AppKey;
 use sp_core::ByteArray;
 use sp_keystore::{CryptoStore, Error as KeystoreError, SyncCryptoStorePtr};

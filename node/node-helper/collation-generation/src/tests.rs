@@ -22,15 +22,13 @@ mod handle_new_activations {
 		task::{Context as FuturesContext, Poll},
 		Future,
 	};
+	use node_subsystem_test_helpers::{subsystem_test_harness, TestSubsystemContextHandle};
 	use selendra_node_primitives::{
 		BlockData, Collation, CollationResult, MaybeCompressedPoV, PoV,
 	};
 	use selendra_node_subsystem::{
 		errors::RuntimeApiError,
 		messages::{AllMessages, RuntimeApiMessage, RuntimeApiRequest},
-	};
-	use node_subsystem_test_helpers::{
-		subsystem_test_harness, TestSubsystemContextHandle,
 	};
 	use selendra_primitives::v2::{
 		CollatorPair, Id as IndraId, PersistedValidationData, ScheduledCore, ValidationCode,
