@@ -175,22 +175,22 @@ impl<'a> ConnectionGraph<'a> {
 		sccs
 	}
 
-	/// Render a graphviz (aka dot graph) to a file.
+	/// Render a graphviz (aka sel graph) to a file.
 	///
 	/// Cycles are annotated with the lower
 	#[cfg(feature = "graph")]
 	pub(crate) fn graphviz(self, dest: &mut impl std::io::Write) -> std::io::Result<()> {
 		use self::graph_helpers::*;
 		use petgraph::{
-			dot::{self, Dot},
+			sel::{self, Sel},
 			visit::{EdgeRef, IntoEdgeReferences, IntoNodeReferences},
 		};
 
 		// only write the grap content, we want a custom color scheme
 		let config = &[
-			dot::Config::GraphContentOnly,
-			dot::Config::EdgeNoLabel,
-			dot::Config::NodeNoLabel,
+			sel::Config::GraphContentOnly,
+			sel::Config::EdgeNoLabel,
+			sel::Config::NodeNoLabel,
 		][..];
 
 		let Self { mut graph, unsent_messages, unconsumed_messages, sccs } = self;
@@ -308,7 +308,7 @@ impl<'a> ConnectionGraph<'a> {
 					format!(r#"label="{subsystem_name}""#)
 				}
 			};
-		let dot = Dot::with_attr_getters(
+		let sel = Sel::with_attr_getters(
 			&graph, config, &edge_attr, // with state, the reference is a trouble maker
 			&node_attr,
 		);
@@ -319,7 +319,7 @@ impl<'a> ConnectionGraph<'a> {
 	{:?}
 }}"#,
 				color_scheme(),
-				&dot
+				&sel
 			)
 			.as_bytes(),
 		)?;

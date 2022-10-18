@@ -79,7 +79,7 @@ pub(crate) fn impl_subsystem_types_all(info: &OrchestraInfo) -> Result<TokenStre
 	#[cfg(feature = "graph")]
 	{
 		let path = std::path::PathBuf::from(env!("OUT_DIR"))
-			.join(orchestra_name.to_string().to_lowercase() + "-subsystem-messaging.dot");
+			.join(orchestra_name.to_string().to_lowercase() + "-subsystem-messaging.sel");
 		if let Err(e) = std::fs::OpenOptions::new()
 			.truncate(true)
 			.create(true)
@@ -87,9 +87,9 @@ pub(crate) fn impl_subsystem_types_all(info: &OrchestraInfo) -> Result<TokenStre
 			.open(&path)
 			.and_then(|mut f| cg.graphviz(&mut f))
 		{
-			eprintln!("Failed to write dot graph to {}: {:?}", path.display(), e);
+			eprintln!("Failed to write sel graph to {}: {:?}", path.display(), e);
 		} else {
-			println!("Wrote dot graph to {}", path.display());
+			println!("Wrote sel graph to {}", path.display());
 		}
 	}
 

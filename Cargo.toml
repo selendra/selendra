@@ -1,5 +1,3 @@
-cargo-features = ["resolver"]
-
 [workspace]
 members = [
 	"primitives",
@@ -47,10 +45,11 @@ members = [
 	"node/node-helper/core/pvf",
 	"node/node-helper/core/pvf-checker",
 	"node/node-helper/core/runtime-api",
+	"node/client",
 	"runtime/common/slot_range_helper",
 	"runtime/common",
-	# "runtime/selendra",
-	# "runtime/selendra/constants",
+	"runtime/selendra",
+	"runtime/selendra/constants",
 	# "rpc",
 	# "node/service",
 	# "node/cli",
@@ -58,8 +57,6 @@ members = [
 	# "inspect",
 	# "utils/generate-bags"
 ]
-
-resolver = "2"
 
 [profile.dev.package]
 blake2b_simd = { opt-level = 3 }
