@@ -43,3 +43,12 @@ pub mod pallet_tips;
 pub mod pallet_treasury;
 pub mod pallet_utility;
 pub mod pallet_vesting;
+
+pub mod runtime_common_indras_registrar;
+pub mod runtime_common_slots;
+pub mod runtime_indracores_configuration;
+pub mod runtime_indracores_disputes;
+pub mod runtime_indracores_hrmp;
+pub mod runtime_indracores_indras;
+pub mod runtime_indracores_indras_inherent;
+pub mod runtime_indracores_initializer;

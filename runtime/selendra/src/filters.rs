@@ -1,4 +1,21 @@
-use crate::{Call, RuntimeDebug};
+// Copyright 2021-2022 Selendra.
+// This file is part of Selendra.
+
+// Selendra is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Selendra is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>
+
+/// Filers
+use super::{indras_registrar, Call, RuntimeDebug};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::traits::{Contains, InstanceFilter};
 
@@ -36,6 +53,19 @@ impl Contains<Call> for BaseFilter {
 			Call::Recovery(_) |
 			Call::CouncilMembership(_) |
 			Call::Sudo(_) |
+			Call::Configuration(_) |
+			Call::IndrasShared(_) |
+			Call::IndraInclusion(_) |
+			Call::Indras(_) |
+			Call::Initializer(_) |
+			Call::IndraInherent(_) |
+			Call::IndrasDisputes(_) |
+			Call::Dmp(_) |
+			Call::Ump(_) |
+			Call::Hrmp(_) |
+			Call::Slots(_) |
+			Call::Registrar(_) |
+			Call::XcmPallet(_) |
 			Call::VoterList(_) => true,
 		}
 	}
@@ -137,6 +167,11 @@ impl InstanceFilter<Call> for ProxyType {
 				Call::Recovery(pallet_recovery::Call::close_recovery {..}) |
 				Call::Recovery(pallet_recovery::Call::remove_recovery {..}) |
 				Call::Recovery(pallet_recovery::Call::cancel_recovered {..}) |
+				Call::Registrar(indras_registrar::Call::register {..}) |
+				Call::Registrar(indras_registrar::Call::deregister {..}) |
+				// Specifically omitting Registrar `swap`
+				Call::Registrar(indras_registrar::Call::reserve {..}) |
+				Call::Slots(..) |
 				// Specifically omitting Vesting `vested_transfer`, and `force_vested_transfer`
 				Call::Utility(..) |
 				Call::Identity(..) |

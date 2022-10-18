@@ -1,5 +1,3 @@
-// This file is part of Selendra.
-
 // Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
@@ -25,8 +23,10 @@
 use codec::{Decode, Encode};
 use static_assertions::const_assert;
 
+use beefy_primitives::crypto::AuthorityId as BeefyId;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::OpaqueMetadata;
+use sp_mmr_primitives as mmr;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 use sp_runtime::{
@@ -41,7 +41,7 @@ use sp_runtime::{
 	ApplyExtrinsicResult, KeyTypeId, Perbill, Percent, Permill,
 };
 use sp_staking::SessionIndex;
-use sp_std::{cmp::Ordering, prelude::*};
+use sp_std::{cmp::Ordering, collections::btree_map::BTreeMap, prelude::*};
 #[cfg(any(feature = "std", test))]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
@@ -71,20 +71,37 @@ pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::{CurrencyAdapter, FeeDetails, RuntimeDispatchInfo};
 
 use runtime_common::{
-	impl_runtime_weights, impls::DealWithFees, prod_or_fast, BlockHashCount, BlockLength,
-	CouncilInstance, CouncilMembershipInstance, CurrencyToVote, EnsureRootOrAllCouncil,
-	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrThreeFourthsCouncil,
-	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, SlowAdjustingFeeUpdate,
-	TechnicalCommitteeInstance, TechnicalMembershipInstance,
+	impl_runtime_weights, impls::DealWithFees, indras_registrar, prod_or_fast, slots,
+	BlockHashCount, BlockLength, CouncilInstance, CouncilMembershipInstance, CurrencyToVote,
+	EnsureRootOrAllCouncil, EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil,
+	EnsureRootOrThreeFourthsCouncil, EnsureRootOrTwoThirdsCouncil,
+	EnsureRootOrTwoThirdsTechnicalCommittee, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
+	TechnicalMembershipInstance,
+};
+
+use runtime_indracores::{
+	configuration as indracores_configuration, disputes as indracores_disputes,
+	dmp as indracores_dmp, hrmp as indracores_hrmp, inclusion as indracores_inclusion,
+	indras as indracores_indras, indras_inherent as indracores_indras_inherent,
+	initializer as indracores_initializer, origin as indracores_origin,
+	runtime_api_impl::v2 as indracores_runtime_api_impl, scheduler as indracores_scheduler,
+	session_info as indracores_session_info, shared as indracores_shared, ump as indracores_ump,
 };
 
 use primitives::v2::{
-	AccountId, AccountIndex, Balance, BlockNumber, Hash, Moment, Nonce, Signature,
+	AccountId, AccountIndex, Balance, BlockNumber, CandidateEvent, CandidateHash,
+	CommittedCandidateReceipt, CoreState, DisputeState, GroupRotationInfo, Hash, Id as IndraId,
+	InboundDownwardMessage, InboundHrmpMessage, Moment, Nonce, OccupiedCoreAssumption,
+	PersistedValidationData, ScrapedOnChainVotes, SessionInfo, Signature, ValidationCode,
+	ValidationCodeHash, ValidatorId, ValidatorIndex,
 };
+
 /// Constant values used within the runtime.
 pub use selendra_runtime_constants::{currency::*, fee::*, time::*};
 
-// Weights used in the runtime.
+pub mod indracore_config;
+pub mod xcm_config;
+
 mod filters;
 mod voter_bags;
 mod weights;
@@ -98,7 +115,6 @@ impl_runtime_weights!(selendra_runtime_constants);
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 // Selendra version identifier;
-/// Runtime version (Selendra).
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
@@ -325,6 +341,8 @@ impl_opaque_keys! {
 		pub babe: Babe,
 		pub grandpa: Grandpa,
 		pub im_online: ImOnline,
+		pub indra_validator: Initializer,
+		pub indra_assignment: IndrasessionInfo,
 		pub authority_discovery: AuthorityDiscovery,
 	}
 }
@@ -355,11 +373,8 @@ parameter_types! {
 	// signed config
 	pub const SignedMaxSubmissions: u32 = 16;
 	pub const SignedMaxRefunds: u32 = 16 / 4;
-	// 40 SELs fixed deposit..
 	pub const SignedDepositBase: Balance = deposit(2, 0);
-	// 0.01 SEL per KB of solution data.
 	pub const SignedDepositByte: Balance = deposit(0, 10) / 1024;
-	// Each good submission will get 1 SEL as reward
 	pub SignedRewardBase: Balance = 1 * DOLLARS;
 	pub BetterUnsignedThreshold: Perbill = Perbill::from_rational(5u32, 10_000);
 
@@ -431,8 +446,7 @@ impl pallet_election_provider_multi_phase::MinerConfig for Runtime {
 	type Solution = NposCompactSolution16;
 	type MaxVotesPerVoter = <
 		<Self as pallet_election_provider_multi_phase::Config>::DataProvider
-		as
-		ElectionDataProvider
+		as ElectionDataProvider
 	>::MaxVotesPerVoter;
 
 	// The unsigned submissions have to respect the weight of the submit_unsigned call, thus their
@@ -1080,6 +1094,28 @@ construct_runtime! {
 		PhragmenElection: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 67,
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 68,
 
+		// Indracores pallets. Start indices at 70 to leave room.
+		IndracoresOrigin: indracores_origin::{Pallet, Origin} = 70,
+		Configuration: indracores_configuration::{Pallet, Call, Storage, Config<T>} = 71,
+		IndrasShared: indracores_shared::{Pallet, Call, Storage} = 72,
+		IndraInclusion: indracores_inclusion::{Pallet, Call, Storage, Event<T>} = 73,
+		IndraInherent: indracores_indras_inherent::{Pallet, Call, Storage, Inherent} = 74,
+		Indrascheduler: indracores_scheduler::{Pallet, Storage} = 75,
+		Indras: indracores_indras::{Pallet, Call, Storage, Event, Config} = 76,
+		Initializer: indracores_initializer::{Pallet, Call, Storage} = 77,
+		Dmp: indracores_dmp::{Pallet, Call, Storage} = 78,
+		Ump: indracores_ump::{Pallet, Call, Storage, Event} = 79,
+		Hrmp: indracores_hrmp::{Pallet, Call, Storage, Event<T>, Config} = 80,
+		IndrasessionInfo: indracores_session_info::{Pallet, Storage} = 81,
+		IndrasDisputes: indracores_disputes::{Pallet, Call, Storage, Event<T>} = 82,
+
+		// Indracore Onboarding Pallets. Start indices at 90 to leave room.
+		Registrar: indras_registrar::{Pallet, Call, Storage, Event<T>} = 90,
+		Slots: slots::{Pallet, Call, Storage, Event<T>} = 91,
+
+		// Pallet for sending XCM.
+		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin, Config} = 99,
+
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Event<T>, Config<T>} = 200,
 	}
 }
@@ -1126,6 +1162,17 @@ extern crate frame_benchmarking;
 #[cfg(feature = "runtime-benchmarks")]
 mod benches {
 	define_benchmarks!(
+		// Selendra
+		// NOTE: Make sure to prefix these with `runtime_common::` so
+		// the that path resolves correctly in the generated file.
+		[runtime_common::slots, Slots]
+		[runtime_common::indras_registrar, Registrar]
+		[runtime_indracores::configuration, Configuration]
+		[runtime_indracores::disputes, IndrasDisputes]
+		[runtime_indracores::initializer, Initializer]
+		[runtime_indracores::indras, Indras]
+		[runtime_indracores::indras_inherent, IndraInherent]
+		[runtime_indracores::ump, Ump]
 		// Substrate
 		[pallet_bags_list, VoterList]
 		[pallet_balances, Balances]
@@ -1217,6 +1264,162 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl primitives::runtime_api::IndracoreHost<Block, Hash, BlockNumber> for Runtime {
+		fn validators() -> Vec<ValidatorId> {
+			indracores_runtime_api_impl::validators::<Runtime>()
+		}
+
+		fn validator_groups() -> (Vec<Vec<ValidatorIndex>>, GroupRotationInfo<BlockNumber>) {
+			indracores_runtime_api_impl::validator_groups::<Runtime>()
+		}
+
+		fn availability_cores() -> Vec<CoreState<Hash, BlockNumber>> {
+			indracores_runtime_api_impl::availability_cores::<Runtime>()
+		}
+
+		fn persisted_validation_data(indra_id: IndraId, assumption: OccupiedCoreAssumption)
+			-> Option<PersistedValidationData<Hash, BlockNumber>> {
+			indracores_runtime_api_impl::persisted_validation_data::<Runtime>(indra_id, assumption)
+		}
+
+		fn assumed_validation_data(
+			indra_id: IndraId,
+			expected_persisted_validation_data_hash: Hash,
+		) -> Option<(PersistedValidationData<Hash, BlockNumber>, ValidationCodeHash)> {
+			indracores_runtime_api_impl::assumed_validation_data::<Runtime>(
+				indra_id,
+				expected_persisted_validation_data_hash,
+			)
+		}
+
+		fn check_validation_outputs(
+			indra_id: IndraId,
+			outputs: primitives::v2::CandidateCommitments,
+		) -> bool {
+			indracores_runtime_api_impl::check_validation_outputs::<Runtime>(indra_id, outputs)
+		}
+
+		fn session_index_for_child() -> SessionIndex {
+			indracores_runtime_api_impl::session_index_for_child::<Runtime>()
+		}
+
+		fn validation_code(indra_id: IndraId, assumption: OccupiedCoreAssumption)
+			-> Option<ValidationCode> {
+			indracores_runtime_api_impl::validation_code::<Runtime>(indra_id, assumption)
+		}
+
+		fn candidate_pending_availability(indra_id: IndraId) -> Option<CommittedCandidateReceipt<Hash>> {
+			indracores_runtime_api_impl::candidate_pending_availability::<Runtime>(indra_id)
+		}
+
+		fn candidate_events() -> Vec<CandidateEvent<Hash>> {
+			indracores_runtime_api_impl::candidate_events::<Runtime, _>(|ev| {
+				match ev {
+					Event::IndraInclusion(ev) => {
+						Some(ev)
+					}
+					_ => None,
+				}
+			})
+		}
+
+		fn session_info(index: SessionIndex) -> Option<SessionInfo> {
+			indracores_runtime_api_impl::session_info::<Runtime>(index)
+		}
+
+		fn dmq_contents(recipient: IndraId) -> Vec<InboundDownwardMessage<BlockNumber>> {
+			indracores_runtime_api_impl::dmq_contents::<Runtime>(recipient)
+		}
+
+		fn inbound_hrmp_channels_contents(
+			recipient: IndraId
+		) -> BTreeMap<IndraId, Vec<InboundHrmpMessage<BlockNumber>>> {
+			indracores_runtime_api_impl::inbound_hrmp_channels_contents::<Runtime>(recipient)
+		}
+
+		fn validation_code_by_hash(hash: ValidationCodeHash) -> Option<ValidationCode> {
+			indracores_runtime_api_impl::validation_code_by_hash::<Runtime>(hash)
+		}
+
+		fn on_chain_votes() -> Option<ScrapedOnChainVotes<Hash>> {
+			indracores_runtime_api_impl::on_chain_votes::<Runtime>()
+		}
+
+		fn submit_pvf_check_statement(
+			stmt: primitives::v2::PvfCheckStatement,
+			signature: primitives::v2::ValidatorSignature,
+		) {
+			indracores_runtime_api_impl::submit_pvf_check_statement::<Runtime>(stmt, signature)
+		}
+
+		fn pvfs_require_precheck() -> Vec<ValidationCodeHash> {
+			indracores_runtime_api_impl::pvfs_require_precheck::<Runtime>()
+		}
+
+		fn validation_code_hash(indra_id: IndraId, assumption: OccupiedCoreAssumption)
+			-> Option<ValidationCodeHash>
+		{
+			indracores_runtime_api_impl::validation_code_hash::<Runtime>(indra_id, assumption)
+		}
+
+		fn staging_get_disputes() -> Vec<(SessionIndex, CandidateHash, DisputeState<BlockNumber>)> {
+			unimplemented!()
+		}
+	}
+
+	impl beefy_primitives::BeefyApi<Block> for Runtime {
+		fn validator_set() -> Option<beefy_primitives::ValidatorSet<BeefyId>> {
+			// dummy implementation due to lack of BEEFY pallet.
+			None
+		}
+	}
+
+	impl mmr::MmrApi<Block, Hash> for Runtime {
+		fn generate_proof(_leaf_index: u64)
+			-> Result<(mmr::EncodableOpaqueLeaf, mmr::Proof<Hash>), mmr::Error>
+		{
+			Err(mmr::Error::PalletNotIncluded)
+		}
+
+		fn verify_proof(_leaf: mmr::EncodableOpaqueLeaf, _proof: mmr::Proof<Hash>)
+			-> Result<(), mmr::Error>
+		{
+			Err(mmr::Error::PalletNotIncluded)
+		}
+
+		fn verify_proof_stateless(
+			_root: Hash,
+			_leaf: mmr::EncodableOpaqueLeaf,
+			_proof: mmr::Proof<Hash>
+		) -> Result<(), mmr::Error> {
+			Err(mmr::Error::PalletNotIncluded)
+		}
+
+		fn mmr_root() -> Result<Hash, mmr::Error> {
+			Err(mmr::Error::PalletNotIncluded)
+		}
+
+		fn generate_batch_proof(_leaf_indices: Vec<u64>)
+			-> Result<(Vec<mmr::EncodableOpaqueLeaf>, mmr::BatchProof<Hash>), mmr::Error>
+		{
+			Err(mmr::Error::PalletNotIncluded)
+		}
+
+		fn verify_batch_proof(_leaves: Vec<mmr::EncodableOpaqueLeaf>, _proof: mmr::BatchProof<Hash>)
+			-> Result<(), mmr::Error>
+		{
+			Err(mmr::Error::PalletNotIncluded)
+		}
+
+		fn verify_batch_proof_stateless(
+			_root: Hash,
+			_leaves: Vec<mmr::EncodableOpaqueLeaf>,
+			_proof: mmr::BatchProof<Hash>
+		) -> Result<(), mmr::Error> {
+			Err(mmr::Error::PalletNotIncluded)
+		}
+	}
+
 	impl fg_primitives::GrandpaApi<Block> for Runtime {
 		fn grandpa_authorities() -> Vec<(GrandpaId, u64)> {
 			Grandpa::grandpa_authorities()
@@ -1259,7 +1462,7 @@ sp_api::impl_runtime_apis! {
 			// probability of a slot being empty), is done in accordance to the
 			// slot duration and expected target block time, for safely
 			// resisting network delays of maximum two seconds.
-			// <https://research.web3.foundation/en/latest/selendra/BABE/Babe/#6-practical-results>
+			// <https://research.web3.foundation/en/latest/polkadot/BABE/Babe/#6-practical-results>
 			sp_consensus_babe::BabeGenesisConfiguration {
 				slot_duration: Babe::slot_duration(),
 				epoch_length: EpochDuration::get(),
@@ -1286,7 +1489,6 @@ sp_api::impl_runtime_apis! {
 			_slot: sp_consensus_babe::Slot,
 			authority_id: sp_consensus_babe::AuthorityId,
 		) -> Option<sp_consensus_babe::OpaqueKeyOwnershipProof> {
-			use codec::Encode;
 
 			Historical::prove((sp_consensus_babe::KEY_TYPE, authority_id))
 				.map(|p| p.encode())
@@ -1308,7 +1510,7 @@ sp_api::impl_runtime_apis! {
 
 	impl sp_authority_discovery::AuthorityDiscoveryApi<Block> for Runtime {
 		fn authorities() -> Vec<AuthorityDiscoveryId> {
-			AuthorityDiscovery::authorities()
+			indracores_runtime_api_impl::relevant_authority_ids::<Runtime>()
 		}
 	}
 
