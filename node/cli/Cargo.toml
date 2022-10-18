@@ -20,7 +20,7 @@ sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polk
 frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", optional = true }
 try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", optional = true }
 
-inspect = { package = "selendra-inspect", path = "../../inspect" }
+inspect = { package = "selendra-inspect", path = "../inspect" }
 service = { package = "selendra-service", path = "../service", default-features = false, optional = true }
 selendra-runtime = { path = "../../runtime/selendra" }
 selendra-primitives = { path = "../../primitives" }
