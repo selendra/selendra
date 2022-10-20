@@ -51,7 +51,7 @@ members = [
 	"runtime/selendra",
 	"runtime/selendra/constants",
 	"node/rpc",
-	# "node/service",
+	"node/service",
 	# "node/cli",
 	# "node",
 	# "inspect",

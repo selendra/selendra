@@ -6093,6 +6093,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "sc-basic-authorship"
+version = "0.10.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.26#1cca061ede75a4c693a3b71bd1b61d7275fe29e4"
+dependencies = [
+ "futures",
+ "futures-timer",
+ "log",
+ "parity-scale-codec",
+ "sc-block-builder",
+ "sc-client-api",
+ "sc-proposer-metrics",
+ "sc-telemetry",
+ "sc-transaction-pool-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "substrate-prometheus-endpoint",
+]
+
+[[package]]
 name = "sc-block-builder"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.26#1cca061ede75a4c693a3b71bd1b61d7275fe29e4"
@@ -6352,6 +6375,17 @@ dependencies = [
  "sp-runtime",
  "sp-state-machine",
  "sp-timestamp",
+ "thiserror",
+]
+
+[[package]]
+name = "sc-consensus-uncles"
+version = "0.10.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.26#1cca061ede75a4c693a3b71bd1b61d7275fe29e4"
+dependencies = [
+ "sc-client-api",
+ "sp-authorship",
+ "sp-runtime",
  "thiserror",
 ]
 
@@ -6696,6 +6730,15 @@ dependencies = [
  "sc-utils",
  "serde_json",
  "wasm-timer",
+]
+
+[[package]]
+name = "sc-proposer-metrics"
+version = "0.10.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.26#1cca061ede75a4c693a3b71bd1b61d7275fe29e4"
+dependencies = [
+ "log",
+ "substrate-prometheus-endpoint",
 ]
 
 [[package]]
@@ -8184,6 +8227,105 @@ dependencies = [
  "selendra-primitives",
  "sp-std",
  "sp-tracing",
+]
+
+[[package]]
+name = "selendra-service"
+version = "0.2.0"
+dependencies = [
+ "async-trait",
+ "beefy-gadget",
+ "beefy-primitives",
+ "frame-system-rpc-runtime-api",
+ "futures",
+ "hex-literal",
+ "kvdb",
+ "kvdb-rocksdb",
+ "lru 0.7.8",
+ "pallet-babe",
+ "pallet-im-online",
+ "pallet-staking",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "parity-db",
+ "sc-authority-discovery",
+ "sc-basic-authorship",
+ "sc-block-builder",
+ "sc-chain-spec",
+ "sc-client-api",
+ "sc-client-db",
+ "sc-consensus",
+ "sc-consensus-babe",
+ "sc-consensus-slots",
+ "sc-consensus-uncles",
+ "sc-executor",
+ "sc-finality-grandpa",
+ "sc-keystore",
+ "sc-network",
+ "sc-offchain",
+ "sc-service",
+ "sc-sync-state-rpc",
+ "sc-sysinfo",
+ "sc-telemetry",
+ "sc-transaction-pool",
+ "selendra-approval-distribution",
+ "selendra-availability-bitfield-distribution",
+ "selendra-availability-distribution",
+ "selendra-availability-recovery",
+ "selendra-client",
+ "selendra-collator-protocol",
+ "selendra-dispute-distribution",
+ "selendra-gossip-support",
+ "selendra-indracore",
+ "selendra-network-bridge",
+ "selendra-node-collation-generation",
+ "selendra-node-core-approval-voting",
+ "selendra-node-core-av-store",
+ "selendra-node-core-backing",
+ "selendra-node-core-bitfield-signing",
+ "selendra-node-core-candidate-validation",
+ "selendra-node-core-chain-api",
+ "selendra-node-core-chain-selection",
+ "selendra-node-core-dispute-coordinator",
+ "selendra-node-core-indracores-inherent",
+ "selendra-node-core-provisioner",
+ "selendra-node-core-pvf-checker",
+ "selendra-node-core-runtime-api",
+ "selendra-node-network-protocol",
+ "selendra-node-primitives",
+ "selendra-node-subsystem",
+ "selendra-node-subsystem-types",
+ "selendra-node-subsystem-util",
+ "selendra-overseer",
+ "selendra-primitives",
+ "selendra-rpc",
+ "selendra-runtime",
+ "selendra-runtime-constants",
+ "selendra-runtime-indracores",
+ "selendra-statement-distribution",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-authority-discovery",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-finality-grandpa",
+ "sp-inherents",
+ "sp-io",
+ "sp-keystore",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-state-machine",
+ "sp-storage",
+ "sp-timestamp",
+ "sp-transaction-pool",
+ "sp-trie",
+ "substrate-prometheus-endpoint",
+ "thiserror",
+ "tracing-gum",
 ]
 
 [[package]]
