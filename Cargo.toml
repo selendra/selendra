@@ -50,7 +50,7 @@ members = [
 	"runtime/common",
 	"runtime/selendra",
 	"runtime/selendra/constants",
-	# "rpc",
+	"node/rpc",
 	# "node/service",
 	# "node/cli",
 	# "node",
