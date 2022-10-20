@@ -1214,24 +1214,6 @@ pub fn new_chain_ops(
 
 	let telemetry_worker_handle = None;
 
-	#[cfg(feature = "rococo-native")]
-	if config.chain_spec.is_rococo() ||
-		config.chain_spec.is_wococo() ||
-		config.chain_spec.is_versi()
-	{
-		return chain_ops!(config, jaeger_agent, telemetry_worker_handle; rococo_runtime, RococoExecutorDispatch, Rococo)
-	}
-
-	#[cfg(feature = "kusama-native")]
-	if config.chain_spec.is_kusama() {
-		return chain_ops!(config, jaeger_agent, telemetry_worker_handle; kusama_runtime, KusamaExecutorDispatch, Kusama)
-	}
-
-	#[cfg(feature = "westend-native")]
-	if config.chain_spec.is_westend() {
-		return chain_ops!(config, jaeger_agent, telemetry_worker_handle; westend_runtime, WestendExecutorDispatch, Westend)
-	}
-
 	#[cfg(feature = "selendra-native")]
 	{
 		return chain_ops!(config, jaeger_agent, telemetry_worker_handle; selendra_runtime, SelendraExecutorDispatch, Selendra)
@@ -1242,7 +1224,7 @@ pub fn new_chain_ops(
 
 /// Build a full node.
 ///
-/// The actual "flavor", aka if it will use `Selendra`, `Rococo` or `Kusama` is determined based on
+/// The actual "flavor", aka if it will use `Selendra`, is determined based on
 /// [`IdentifyVariant`] using the chain spec.
 ///
 /// `overseer_enable_anyways` always enables the overseer, based on the provided `OverseerGenerator`,

@@ -1,17 +1,20 @@
-// Copyright 2021 Parity Technologies (UK) Ltd.
-// This file is part of Polkadot.
+// Copyright (C) 2021-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-// Polkadot is free software: you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Polkadot is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-//! Migration code for the parachain's DB.
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+//! Migration code for the indracore's DB.
 
 #![cfg(feature = "full-node")]
 
@@ -24,7 +27,7 @@ use std::{
 type Version = u32;
 
 /// Version file name.
-const VERSION_FILE_NAME: &'static str = "parachain_db_version";
+const VERSION_FILE_NAME: &'static str = "indracore_db_version";
 
 /// Current db version.
 const CURRENT_VERSION: Version = 1;
@@ -48,7 +51,7 @@ impl From<Error> for io::Error {
 	}
 }
 
-/// Try upgrading parachain's database to the current version.
+/// Try upgrading indracore's database to the current version.
 pub fn try_upgrade_db(db_path: &Path) -> Result<(), Error> {
 	let is_empty = db_path.read_dir().map_or(true, |mut d| d.next().is_none());
 	if !is_empty {

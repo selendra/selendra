@@ -114,7 +114,7 @@ impl configuration::Config for Runtime {
 
 // aims to closely emulate the Selendra XcmConfig
 parameter_types! {
-	pub const KsmLocation: MultiLocation = MultiLocation::here();
+	pub const SelLocation: MultiLocation = MultiLocation::here();
 	pub const SelendraNetwork: NetworkId = NetworkId::Selendra;
 	pub Ancestry: MultiLocation = Here.into();
 	pub CheckAccount: AccountId = XcmPallet::check_account();
@@ -125,7 +125,7 @@ pub type SovereignAccountOf =
 
 pub type LocalCurrencyAdapter = XcmCurrencyAdapter<
 	Balances,
-	IsConcrete<KsmLocation>,
+	IsConcrete<SelLocation>,
 	SovereignAccountOf,
 	AccountId,
 	CheckAccount,
@@ -142,7 +142,7 @@ type LocalOriginConverter = (
 
 parameter_types! {
 	pub const BaseXcmWeight: Weight = 1_000_000_000;
-	pub KsmPerSecond: (AssetId, u128) = (KsmLocation::get().into(), 1);
+	pub SelPerSecond: (AssetId, u128) = (SelLocation::get().into(), 1);
 }
 
 pub type Barrier = (
@@ -170,7 +170,7 @@ impl xcm_executor::Config for XcmConfig {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<BaseXcmWeight, Call, MaxInstructions>;
-	type Trader = FixedRateOfFungible<KsmPerSecond, ()>;
+	type Trader = FixedRateOfFungible<SelPerSecond, ()>;
 	type ResponseHandler = XcmPallet;
 	type AssetTrap = XcmPallet;
 	type AssetClaims = XcmPallet;

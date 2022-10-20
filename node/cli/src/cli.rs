@@ -1,5 +1,3 @@
-// This file is part of Selendra.
-
 // Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
@@ -16,64 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-/// An overarching CLI command definition.
-#[derive(Debug, clap::Parser)]
-pub struct Cli {
-	/// Possible subcommand with parameters.
-	#[clap(subcommand)]
-	pub subcommand: Option<Subcommand>,
+use clap::Parser;
 
-	#[allow(missing_docs)]
-	#[clap(flatten)]
-	pub run: sc_cli::RunCmd,
-
-	/// Disable automatic hardware benchmarks.
-	///
-	/// By default these benchmarks are automatically ran at startup and measure
-	/// the CPU speed, the memory bandwidth and the disk speed.
-	///
-	/// The results are then printed out in the logs, and also sent as part of
-	/// telemetry, if telemetry is enabled.
-	#[clap(long)]
-	pub no_hardware_benchmarks: bool,
-}
-
-/// Possible subcommands of the main binary.
-#[derive(Debug, clap::Subcommand)]
+#[allow(missing_docs)]
+#[derive(Debug, Parser)]
 pub enum Subcommand {
-	/// The custom inspect subcommmand for decoding blocks and extrinsics.
-	#[clap(
-		name = "inspect",
-		about = "Decode given block or extrinsic using current native runtime."
-	)]
-	Inspect(inspect::cli::InspectCmd),
-
-	/// Sub-commands concerned with benchmarking.
-	/// The pallet benchmarking moved to the `pallet` sub-command.
-	#[clap(subcommand)]
-	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
-
-	/// Try some command against runtime state.
-	#[cfg(feature = "try-runtime")]
-	TryRuntime(try_runtime_cli::TryRuntimeCmd),
-
-	/// Try some command against runtime state. Note: `try-runtime` feature must be enabled.
-	#[cfg(not(feature = "try-runtime"))]
-	TryRuntime,
-
-	/// Key management cli utilities
-	#[clap(subcommand)]
-	Key(sc_cli::KeySubcommand),
-
-	/// Verify a signature for a message, provided on STDIN, with a given (public or secret) key.
-	Verify(sc_cli::VerifyCmd),
-
-	/// Generate a seed that provides a vanity address.
-	Vanity(sc_cli::VanityCmd),
-
-	/// Sign a message, with a given (secret) key.
-	Sign(sc_cli::SignCmd),
-
 	/// Build a chain specification.
 	BuildSpec(sc_cli::BuildSpecCmd),
 
@@ -95,6 +40,103 @@ pub enum Subcommand {
 	/// Revert the chain to a previous state.
 	Revert(sc_cli::RevertCmd),
 
+	#[allow(missing_docs)]
+	#[clap(name = "prepare-worker", hide = true)]
+	PvfPrepareWorker(ValidationWorkerCommand),
+
+	#[allow(missing_docs)]
+	#[clap(name = "execute-worker", hide = true)]
+	PvfExecuteWorker(ValidationWorkerCommand),
+
+	/// Sub-commands concerned with benchmarking.
+	/// The pallet benchmarking moved to the `pallet` sub-command.
+	#[clap(subcommand)]
+	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
+
+	/// Runs performance checks such as PVF compilation in order to measure machine
+	/// capabilities of running a validator.
+	HostPerfCheck,
+
+	/// Try some command against runtime state.
+	#[cfg(feature = "try-runtime")]
+	TryRuntime(try_runtime_cli::TryRuntimeCmd),
+
+	/// Try some command against runtime state. Note: `try-runtime` feature must be enabled.
+	#[cfg(not(feature = "try-runtime"))]
+	TryRuntime,
+
+	/// Key management CLI utilities
+	#[clap(subcommand)]
+	Key(sc_cli::KeySubcommand),
+
 	/// Db meta columns information.
 	ChainInfo(sc_cli::ChainInfoCmd),
+}
+
+#[allow(missing_docs)]
+#[derive(Debug, Parser)]
+pub struct ValidationWorkerCommand {
+	/// The path to the validation host's socket.
+	pub socket_path: String,
+}
+
+#[allow(missing_docs)]
+#[derive(Debug, Parser)]
+#[cfg_attr(feature = "malus", derive(Clone))]
+pub struct RunCmd {
+	#[allow(missing_docs)]
+	#[clap(flatten)]
+	pub base: sc_cli::RunCmd,
+
+	/// Setup a GRANDPA scheduled voting pause.
+	///
+	/// This parameter takes two values, namely a block number and a delay (in
+	/// blocks). After the given block number is finalized the GRANDPA voter
+	/// will temporarily stop voting for new blocks until the given delay has
+	/// elapsed (i.e. until a block at height `pause_block + delay` is imported).
+	#[clap(long = "grandpa-pause", number_of_values(2))]
+	pub grandpa_pause: Vec<u32>,
+
+	/// Enable the BEEFY gadget (not work in Selendra for now).
+	#[clap(long)]
+	pub beefy: bool,
+
+	/// Add the destination address to the jaeger agent.
+	///
+	/// Must be valid socket address, of format `IP:Port`
+	/// commonly `127.0.0.1:6831`.
+	#[clap(long)]
+	pub jaeger_agent: Option<String>,
+
+	/// Add the destination address to the `pyroscope` agent.
+	///
+	/// Must be valid socket address, of format `IP:Port`
+	/// commonly `127.0.0.1:4040`.
+	#[clap(long)]
+	pub pyroscope_server: Option<String>,
+
+	/// Disable automatic hardware benchmarks.
+	///
+	/// By default these benchmarks are automatically ran at startup and measure
+	/// the CPU speed, the memory bandwidth and the disk speed.
+	///
+	/// The results are then printed out in the logs, and also sent as part of
+	/// telemetry, if telemetry is enabled.
+	#[clap(long)]
+	pub no_hardware_benchmarks: bool,
+
+	/// Overseer message capacity override.
+	///
+	/// **Dangerous!** Do not touch unless explicitly adviced to.
+	#[clap(long)]
+	pub overseer_channel_capacity_override: Option<usize>,
+}
+
+#[allow(missing_docs)]
+#[derive(Debug, Parser)]
+pub struct Cli {
+	#[clap(subcommand)]
+	pub subcommand: Option<Subcommand>,
+	#[clap(flatten)]
+	pub run: RunCmd,
 }

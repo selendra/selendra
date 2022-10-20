@@ -93,14 +93,8 @@ benchmarks! {
 		// candidate is not rejected. Also, we cannot have more validity votes than validators in
 		// the group.
 
-		// Do not use this range for Rococo because it only has 1 validator per backing group,
-		// which causes issues when trying to create slopes with the benchmarking analysis. Instead
-		// use v = 1 for running Rococo benchmarks
 		let v in (BenchBuilder::<T>::fallback_min_validity_votes())
 			..(BenchBuilder::<T>::fallback_max_validators());
-
-		// Comment in for running rococo benchmarks
-		// let v = 1;
 
 		let cores_with_backed: BTreeMap<_, _>
 			= vec![(0, v)] // The backed candidate will have `v` validity votes.

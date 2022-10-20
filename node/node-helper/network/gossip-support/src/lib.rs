@@ -70,7 +70,7 @@ const BACKOFF_DURATION: Duration = Duration::from_secs(5);
 /// Duration after which we consider low connectivity a problem.
 ///
 /// Especially at startup low connectivity is expected (authority discovery cache needs to be
-/// populated). Authority discovery on Kusama takes around 8 minutes, so warning after 10 minutes
+/// populated). Authority discovery on Selendra takes around 8 minutes, so warning after 10 minutes
 /// should be fine:
 ///
 /// https://github.com/paritytech/substrate/blob/fc49802f263529160635471c8a17888846035f5d/client/authority-discovery/src/lib.rs#L88

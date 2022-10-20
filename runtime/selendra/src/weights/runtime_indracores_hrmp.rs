@@ -2,12 +2,12 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2021-11-05, STEPS: `50`, REPEAT: 20, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("kusama-dev"), DB CACHE: 128
+//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("selendra-dev"), DB CACHE: 128
 
 // Executed Command:
 // target/release/selendra
 // benchmark
-// --chain=kusama-dev
+// --chain=selendra-dev
 // --steps=50
 // --repeat=20
 // --pallet=runtime_indracores::hrmp
@@ -16,7 +16,7 @@
 // --wasm-execution=compiled
 // --heap-pages=4096
 // --header=./file_header.txt
-// --output=./runtime/kusama/src/weights/runtime_indracores_hrmp.rs
+// --output=./runtime/selendra/src/weights/runtime_indracores_hrmp.rs
 
 
 #![cfg_attr(rustfmt, rustfmt_skip)]

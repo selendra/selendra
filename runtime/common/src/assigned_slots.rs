@@ -21,7 +21,6 @@
 //! The dispatchables must be called from the configured origin
 //! (typically `Sudo` or a governance origin).
 //! This pallet should not be used on a production relay chain,
-//! only on a test relay chain (e.g. Rococo).
 
 use crate::{
 	slots::{self, Pallet as Slots, WeightInfo},

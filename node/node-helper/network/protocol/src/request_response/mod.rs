@@ -168,7 +168,7 @@ impl Protocol {
 				max_response_size: STATEMENT_RESPONSE_SIZE,
 				// We need statement fetching to be fast and will try our best at the responding
 				// side to answer requests within that timeout, assuming a bandwidth of 500Mbit/s
-				// - which is the recommended minimum bandwidth for nodes on Kusama as of April
+				// - which is the recommended minimum bandwidth for nodes on Selendra as of April
 				// 2021.
 				// Responders will reject requests, if it is unlikely they can serve them within
 				// the timeout, so the requester can immediately try another node, instead of

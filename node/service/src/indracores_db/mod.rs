@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-//! A `RocksDB` instance for storing parachain data; availability data, and approvals.
+//! A `RocksDB` instance for storing indracore data; availability data, and approvals.
 
 #[cfg(feature = "full-node")]
 use {
@@ -56,7 +56,7 @@ pub struct ColumnsConfig {
 	pub col_dispute_coordinator_data: u32,
 }
 
-/// The real columns used by the parachains DB.
+/// The real columns used by the indracores DB.
 #[cfg(any(test, feature = "full-node"))]
 pub const REAL_COLUMNS: ColumnsConfig = ColumnsConfig {
 	col_availability_data: columns::COL_AVAILABILITY_DATA,
@@ -96,7 +96,7 @@ pub fn open_creating_rocksdb(
 ) -> io::Result<Arc<dyn Database>> {
 	use kvdb_rocksdb::{Database, DatabaseConfig};
 
-	let path = root.join("parachains").join("db");
+	let path = root.join("indracores").join("db");
 
 	let mut db_config = DatabaseConfig::with_columns(columns::NUM_COLUMNS);
 
@@ -129,7 +129,7 @@ pub fn open_creating_paritydb(
 	root: PathBuf,
 	_cache_sizes: CacheSizes,
 ) -> io::Result<Arc<dyn Database>> {
-	let path = root.join("parachains");
+	let path = root.join("indracores");
 	let path_str = path
 		.to_str()
 		.ok_or_else(|| other_io_error(format!("Bad database path: {:?}", path)))?;

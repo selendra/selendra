@@ -52,8 +52,8 @@ members = [
 	"runtime/selendra/constants",
 	"node/rpc",
 	"node/service",
-	# "node/cli",
-	# "node",
+	"node/cli",
+	"node",
 	# "inspect",
 	# "utils/generate-bags"
 ]
