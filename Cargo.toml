@@ -1,3 +1,28 @@
+
+[[bin]]
+name = "selendra"
+path = "src/main.rs"
+
+[package]
+name = "selendra"
+version = "0.2.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+readme = "README.md"
+
+[dependencies]
+selendra-cli = { path = "./node/cli", features = [ "selendra-native" ]  }
+color-eyre = { version = "0.6.1", default-features = false }
+parity-util-mem = { version = "0.11.0", default-features = false, features = ["jemalloc-global"] }
+
+[dev-dependencies]
+assert_cmd = "2.0.4"
+nix = "0.24.1"
+tempfile = "3.2.0"
+tokio = "1.18.2"
+remote-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+selendra-core-primitives = { path = "./primitives/core" }
+
 [workspace]
 members = [
 	"primitives",
@@ -53,9 +78,6 @@ members = [
 	"node/rpc",
 	"node/service",
 	"node/cli",
-	"node",
-	# "inspect",
-	# "utils/generate-bags"
 ]
 
 [profile.dev.package]

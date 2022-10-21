@@ -31,11 +31,11 @@ fn main() -> Result<(), PerfCheckError> {
 
 #[cfg(build_type = "release")]
 mod run {
-	use selendra_node_core_pvf::sp_maybe_compressed_blob;
-	use selendra_node_primitives::VALIDATION_CODE_BOMB_LIMIT;
 	use performance_test::{
 		measure_erasure_coding, measure_pvf_prepare, PerfCheckError, ERASURE_CODING_N_VALIDATORS,
 	};
+	use selendra_node_core_pvf::sp_maybe_compressed_blob;
+	use selendra_node_primitives::VALIDATION_CODE_BOMB_LIMIT;
 	use std::{
 		fs::OpenOptions,
 		io::{self, Write},

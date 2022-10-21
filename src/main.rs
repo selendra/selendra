@@ -18,6 +18,10 @@
 
 #![warn(missing_docs)]
 
-fn main() -> selendra_cli::Result<()> {
-	selendra_cli::run()
+use color_eyre::eyre;
+
+fn main() -> eyre::Result<()> {
+	color_eyre::install()?;
+	selendra_cli::run()?;
+	Ok(())
 }

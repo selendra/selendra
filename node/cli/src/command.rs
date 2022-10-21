@@ -178,8 +178,7 @@ where
 	let chain_spec = &runner.config().chain_spec;
 
 	// Disallow BEEFY on production networks.
-	if cli.run.beefy && chain_spec.is_selendra()
-	{
+	if cli.run.beefy && chain_spec.is_selendra() {
 		return Err(Error::Other("BEEFY disallowed on production networks".to_string()))
 	}
 
