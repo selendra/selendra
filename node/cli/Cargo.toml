@@ -36,7 +36,7 @@ selendra-client = { path = "../client", optional = true }
 selendra-node-core-pvf = { path = "../node-helper/core/pvf", optional = true }
 selendra-node-metrics = { path = "../node-helper/metrics" }
 
-performance-test = { path = "../../test-helper/performance", optional = true }
+performance-test = { path = "../../tests/test-helpers/performance", optional = true }
 
 [build-dependencies]
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }

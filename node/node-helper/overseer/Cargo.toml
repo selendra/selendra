@@ -29,7 +29,7 @@ assert_matches = "1.4.0"
 futures = { version = "0.3.21", features = ["thread-pool"] }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 metered = { package = "prioritized-metered-channel", path = "../metered-channel" }
-test-helpers = { package = "primitives-test-helpers", path = "../../../test-helper/primitive" }
+test-helpers = { package = "primitives-test-helpers", path = "../../../tests/test-helpers/primitive" }
 
 [features]
 default = []

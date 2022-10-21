@@ -27,4 +27,4 @@ sp-application-crypto = { git = "https://github.com/paritytech/substrate", branc
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 
-node-subsystem-test-helpers = { path = "../../../../test-helper/subsystem" }
+node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }

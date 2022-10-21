@@ -8,5 +8,5 @@ edition = "2021"
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 sp-application-crypto = {git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.26" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
-selendra-primitives = { path = "../../primitives" }
+selendra-primitives = { path = "../../../primitives" }
 rand = "0.8.5"

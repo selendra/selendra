@@ -32,5 +32,5 @@ sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 parity-scale-codec = { version = "3.1.5", features = ["std"] }
 
-node-subsystem-test-helpers = { path = "../../../../test-helper/subsystem" }
-primitives-test-helpers = { path = "../../../../test-helper/primitive" }
+node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
+primitives-test-helpers = { path = "../../../../tests/test-helpers/primitive" }

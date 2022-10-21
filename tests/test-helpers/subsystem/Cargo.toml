@@ -17,9 +17,9 @@ sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polka
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 
-selendra-node-subsystem = { path = "../../node/node-helper/subsystem" }
-selendra-node-subsystem-util = { path = "../../node/node-helper/subsystem-util" }
-selendra-primitives = { path = "../../primitives" }
+selendra-node-subsystem = { path = "../../../node/node-helper/subsystem" }
+selendra-node-subsystem-util = { path = "../../../node/node-helper/subsystem-util" }
+selendra-primitives = { path = "../../../primitives" }
 
 [dev-dependencies]
-selendra-overseer = { path = "../../node/node-helper/overseer" }
+selendra-overseer = { path = "../../../node/node-helper/overseer" }

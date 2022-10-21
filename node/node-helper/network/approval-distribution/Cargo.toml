@@ -27,6 +27,6 @@ sp-authority-discovery = { git = "https://github.com/paritytech/substrate", bran
 sp-core = { git = "https://github.com/paritytech/substrate", features = ["std"] , branch = "polkadot-v0.9.26" }
 
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
-node-subsystem-test-helpers = { path = "../../../../test-helper/subsystem" }
+node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
 
 

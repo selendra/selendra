@@ -40,6 +40,6 @@ gum = { package = "tracing-gum", path = "../../gum" }
 [dev-dependencies]
 hex-literal = "0.3.4"
 tempfile = "3.2.0"
-adder = { package = "test-indracore-adder", path = "../../../../test-helper/indracore/adder" }
-halt = { package = "test-indracore-halt", path = "../../../../test-helper/indracore/halt" }
+adder = { package = "test-indracore-adder", path = "../../../../tests/test-helpers/indracore/adder" }
+halt = { package = "test-indracore-halt", path = "../../../../tests/test-helpers/indracore/halt" }
 

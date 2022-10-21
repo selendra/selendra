@@ -31,5 +31,5 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
-node-subsystem-test-helpers = { path = "../../../../test-helper/subsystem" }
-primitives-test-helpers = { path = "../../../../test-helper/primitive" }
+node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
+primitives-test-helpers = { path = "../../../../tests/test-helpers/primitive" }

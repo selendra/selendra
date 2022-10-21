@@ -16,5 +16,5 @@ selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 
 [dev-dependencies]
-node-subsystem-test-helpers = { path = "../../../../test-helper/subsystem" }
-test-helpers = { package = "primitives-test-helpers", path = "../../../../test-helper/primitive" }
+node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
+test-helpers = { package = "primitives-test-helpers", path = "../../../../tests/test-helpers/primitive" }

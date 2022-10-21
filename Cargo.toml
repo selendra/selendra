@@ -80,6 +80,27 @@ members = [
 	"node/cli",
 ]
 
+[profile.release]
+# Selendra runtime requires unwinding.
+panic = "unwind"
+opt-level = 3
+
+[profile.production]
+inherits = "release"
+lto = true
+codegen-units = 1
+
+# make sure dev builds with backtrace do
+# not slow us down
+[profile.dev.package.backtrace]
+inherits = "release"
+
+[profile.testnet]
+inherits = "release"
+debug = 1 # debug symbols are useful for profilers
+debug-assertions = true
+overflow-checks = true
+
 [profile.dev.package]
 blake2b_simd = { opt-level = 3 }
 blake2 = { opt-level = 3 }
@@ -121,24 +142,3 @@ wasmi = { opt-level = 3 }
 x25519-dalek = { opt-level = 3 }
 yamux = { opt-level = 3 }
 zeroize = { opt-level = 3 }
-
-[profile.release]
-# Selendra runtime requires unwinding.
-panic = "unwind"
-opt-level = 3
-
-[profile.production]
-inherits = "release"
-lto = true
-codegen-units = 1
-
-# make sure dev builds with backtrace do
-# not slow us down
-[profile.dev.package.backtrace]
-inherits = "release"
-
-[profile.testnet]
-inherits = "release"
-debug = 1 # debug symbols are useful for profilers
-debug-assertions = true
-overflow-checks = true

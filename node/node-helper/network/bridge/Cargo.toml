@@ -28,5 +28,5 @@ futures-timer = "3"
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 
-node-subsystem-test-helpers = { path = "../../../../test-helper/subsystem" }
-primitives-test-helpers = { path = "../../../../test-helper/primitive" }
+node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
+primitives-test-helpers = { path = "../../../../tests/test-helpers/primitive" }

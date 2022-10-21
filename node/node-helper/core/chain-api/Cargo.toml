@@ -23,5 +23,5 @@ futures = { version = "0.3.21", features = ["thread-pool"] }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 
 selendra-node-primitives = { path = "../../primitives" }
-node-subsystem-test-helpers = { path = "../../../../test-helper/subsystem" }
+node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
 

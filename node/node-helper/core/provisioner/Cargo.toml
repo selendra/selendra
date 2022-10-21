@@ -21,8 +21,8 @@ gum = { package = "tracing-gum", path = "../../gum" }
 [dev-dependencies]
 sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
-node-subsystem-test-helpers = { path = "../../../../test-helper/subsystem" }
-test-helpers = { package = "primitives-test-helpers", path = "../../../../test-helper/primitive" }
+node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
+test-helpers = { package = "primitives-test-helpers", path = "../../../../tests/test-helpers/primitive" }
 
 [features]
 staging-client = []

@@ -829,9 +829,9 @@ async fn handle_network_messages<AD: validator_discovery::AuthorityDiscovery>(
 /// If this breaks, we need to find another way to protect ourselves.
 ///
 /// ```compile_fail
-/// #use parking_lot::MutexGuard;
-/// #fn is_send<T: Send>();
-/// #is_send::<parking_lot::MutexGuard<'static, ()>();
+/// #! use parking_lot::MutexGuard;
+/// #! fn is_send<T: Send>();
+/// #! is_send::<parking_lot::MutexGuard<'static, ()>();
 /// ```
 #[overseer::contextbounds(NetworkBridge, prefix = self::overseer)]
 async fn run_network<N, AD, Context>(
