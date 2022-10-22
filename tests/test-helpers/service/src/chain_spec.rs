@@ -19,22 +19,21 @@
 use babe_primitives::AuthorityId as BabeId;
 use grandpa::AuthorityId as GrandpaId;
 use pallet_staking::Forcing;
+use sc_chain_spec::{ChainSpec, ChainType};
 use selendra_primitives::v2::{AccountId, AssignmentId, ValidatorId, MAX_CODE_SIZE, MAX_POV_SIZE};
 use selendra_service::chain_spec::{
 	get_account_id_from_seed, get_from_seed, selendra_chain_spec_properties, Extensions,
 };
-use test_runtime::BABE_GENESIS_EPOCH_CONFIG;
-use sc_chain_spec::{ChainSpec, ChainType};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::sr25519;
 use sp_runtime::Perbill;
+use test_runtime::BABE_GENESIS_EPOCH_CONFIG;
 use test_runtime_constants::currency::DOTS;
 
 const DEFAULT_PROTOCOL_ID: &str = "dot";
 
 /// The `ChainSpec` parameterized for selendra test runtime.
-pub type SelendraChainSpec =
-	sc_service::GenericChainSpec<test_runtime::GenesisConfig, Extensions>;
+pub type SelendraChainSpec = sc_service::GenericChainSpec<test_runtime::GenesisConfig, Extensions>;
 
 /// Local testnet config (multivalidator Alice + Bob)
 pub fn selendra_local_testnet_config() -> SelendraChainSpec {

@@ -20,18 +20,18 @@
 
 mod block_builder;
 
-use selendra_primitives::v2::Block;
 use sc_service::client;
+use selendra_primitives::v2::Block;
 use sp_core::storage::Storage;
 use sp_runtime::BuildStorage;
 
 pub use block_builder::*;
+pub use substrate_test_client::*;
 pub use test_runtime as runtime;
 pub use test_service::{
 	construct_extrinsic, construct_transfer_extrinsic, Client, FullBackend,
 	SelendraTestExecutorDispatch,
 };
-pub use substrate_test_client::*;
 
 /// Test client executor.
 pub type Executor = client::LocalCallExecutor<

@@ -107,15 +107,15 @@ where
 
 #[cfg(test)]
 mod tests {
-	use sp_consensus::BlockOrigin;
 	use sc_finality_grandpa::VotingRule;
+	use sp_blockchain::HeaderBackend;
+	use sp_consensus::BlockOrigin;
+	use sp_runtime::{generic::BlockId, traits::Header};
+	use std::sync::Arc;
 	use test_client::{
 		ClientBlockImportExt, DefaultTestClientBuilderExt, InitSelendraBlockBuilder,
 		TestClientBuilder, TestClientBuilderExt,
 	};
-	use sp_blockchain::HeaderBackend;
-	use sp_runtime::{generic::BlockId, traits::Header};
-	use std::sync::Arc;
 
 	#[test]
 	fn grandpa_pause_voting_rule_works() {

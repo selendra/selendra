@@ -15,8 +15,8 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use futures::{future, pin_mut, select, FutureExt};
-use test_service::*;
 use sp_keyring::Sr25519Keyring;
+use test_service::*;
 
 #[substrate_test_utils::test(flavor = "multi_thread")]
 async fn ensure_test_service_build_blocks() {

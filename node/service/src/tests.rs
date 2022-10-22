@@ -17,11 +17,10 @@
 use super::{relay_chain_selection::*, *};
 
 use futures::channel::oneshot::Receiver;
+use node_subsystem_test_helpers as test_helpers;
 use selendra_node_primitives::approval::{VRFOutput, VRFProof};
 use selendra_node_subsystem::messages::{AllMessages, BlockDescription};
-use node_subsystem_test_helpers as test_helpers;
 use selendra_node_subsystem_util::TimeoutExt;
-use test_client::Sr25519Keyring;
 use sp_consensus_babe::{
 	digests::{CompatibleDigestItem, PreDigest, SecondaryVRFPreDigest},
 	Transcript,
@@ -31,6 +30,7 @@ use std::{
 	collections::{BTreeMap, HashMap, HashSet},
 	iter::IntoIterator,
 };
+use test_client::Sr25519Keyring;
 
 use assert_matches::assert_matches;
 use std::{sync::Arc, time::Duration};

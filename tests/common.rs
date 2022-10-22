@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use selendra_core_primitives::Block;
 use remote_externalities::rpc_api::get_finalized_head;
+use selendra_core_primitives::Block;
 use std::{
 	io::{BufRead, BufReader, Read},
 	process::{Child, ExitStatus},

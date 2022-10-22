@@ -16,9 +16,8 @@
 
 use crate::{Client, FullBackend};
 use parity_scale_codec::{Decode, Encode};
-use selendra_primitives::v2::{Block, InherentData as IndracoresInherentData};
-use test_runtime::{GetLastTimestamp, UncheckedExtrinsic};
 use sc_block_builder::{BlockBuilder, BlockBuilderProvider};
+use selendra_primitives::v2::{Block, InherentData as IndracoresInherentData};
 use sp_api::ProvideRuntimeApi;
 use sp_consensus_babe::{
 	digests::{PreDigest, SecondaryPlainPreDigest},
@@ -26,6 +25,7 @@ use sp_consensus_babe::{
 };
 use sp_runtime::{generic::BlockId, Digest, DigestItem};
 use sp_state_machine::BasicExternalities;
+use test_runtime::{GetLastTimestamp, UncheckedExtrinsic};
 
 /// An extension for the test client to initialize a Selendra specific block builder.
 pub trait InitSelendraBlockBuilder {
@@ -60,8 +60,8 @@ impl InitSelendraBlockBuilder for Client {
 			self.runtime_api().get_last_timestamp(&at).expect("Get last timestamp");
 
 		// `MinimumPeriod` is a storage parameter type that requires externalities to access the value.
-		let minimum_period = BasicExternalities::new_empty()
-			.execute_with(|| test_runtime::MinimumPeriod::get());
+		let minimum_period =
+			BasicExternalities::new_empty().execute_with(|| test_runtime::MinimumPeriod::get());
 
 		let timestamp = if last_timestamp == 0 {
 			std::time::SystemTime::now()
@@ -73,8 +73,8 @@ impl InitSelendraBlockBuilder for Client {
 		};
 
 		// `SlotDuration` is a storage parameter type that requires externalities to access the value.
-		let slot_duration = BasicExternalities::new_empty()
-			.execute_with(|| test_runtime::SlotDuration::get());
+		let slot_duration =
+			BasicExternalities::new_empty().execute_with(|| test_runtime::SlotDuration::get());
 
 		let slot = (timestamp / slot_duration).into();
 

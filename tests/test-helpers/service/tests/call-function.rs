@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use test_service::*;
 use sp_keyring::Sr25519Keyring::{Alice, Bob, Charlie};
+use test_service::*;
 
 #[substrate_test_utils::test(flavor = "multi_thread")]
 async fn call_function_actually_work() {
