@@ -114,6 +114,13 @@ selendra-node-core-provisioner = { path = "../node-helper/core/provisioner", opt
 selendra-node-core-pvf-checker = { path = "../node-helper/core/pvf-checker", optional = true }
 selendra-node-core-runtime-api = { path = "../node-helper/core/runtime-api", optional = true }
 
+[dev-dependencies]
+env_logger = "0.9.0"
+log = "0.4.17"
+assert_matches = "1.5.0"
+test-client = { path = "../../tests/test-helpers/client" }
+node-subsystem-test-helpers = { path = "../../tests/test-helpers/subsystem" }
+
 [features]
 default = ["db", "full-node", "selendra-native"]
 

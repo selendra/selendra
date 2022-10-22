@@ -23,6 +23,9 @@ mod grandpa_support;
 mod indracores_db;
 mod relay_chain_selection;
 
+#[cfg(test)]
+mod tests;
+
 #[cfg(feature = "full-node")]
 pub mod overseer;
 

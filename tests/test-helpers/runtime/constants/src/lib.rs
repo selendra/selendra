@@ -1,5 +1,3 @@
-// This file is part of Selendra.
-
 // Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
@@ -16,45 +14,33 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-//! A set of constant values used in dev runtime.
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod weights;
-
-pub use self::currency::DOLLARS;
 
 /// Money matters.
 pub mod currency {
 	use primitives::v2::Balance;
 
-	/// The existential deposit.
-	pub const EXISTENTIAL_DEPOSIT: Balance = 10 * CENTS;
-
-	pub const UNITS: Balance = 1_000_000_000_000;
-	pub const DOLLARS: Balance = UNITS; // 1_000_000_000_000
-	pub const CENTS: Balance = DOLLARS / 100; // 10_000_000_000
-	pub const MILLICENTS: Balance = CENTS / 1_000; // 10_000_000
-	pub const MICROCENT: Balance = MILLICENTS / 1_000; // 10_000
-
-	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 20 * DOLLARS + (bytes as Balance) * 100 * MILLICENTS
-	}
+	pub const DOTS: Balance = 1_000_000_000_000;
+	pub const DOLLARS: Balance = DOTS;
+	pub const CENTS: Balance = DOLLARS / 100;
+	pub const MILLICENTS: Balance = CENTS / 1_000;
 }
 
 /// Time and blocks.
 pub mod time {
 	use primitives::v2::{BlockNumber, Moment};
-	use runtime_common::prod_or_fast;
+	// Testnet
 	pub const MILLISECS_PER_BLOCK: Moment = 6000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-	pub const EPOCH_DURATION_IN_SLOTS: BlockNumber = prod_or_fast!(4 * HOURS, 1 * MINUTES);
+	// 30 seconds for now
+	pub const EPOCH_DURATION_IN_SLOTS: BlockNumber = MINUTES / 2;
 
 	// These time units are defined in number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 	pub const HOURS: BlockNumber = MINUTES * 60;
 	pub const DAYS: BlockNumber = HOURS * 24;
-	pub const WEEKS: BlockNumber = DAYS * 7;
 
 	// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
@@ -77,7 +63,7 @@ pub mod fee {
 	/// node's balance type.
 	///
 	/// This should typically create a mapping between the following ranges:
-	///   - [0, `MAXIMUM_BLOCK_WEIGHT`]
+	///   - [0, `frame_system::MaximumBlockWeight`]
 	///   - [Balance::min, Balance::max]
 	///
 	/// Yet, it can be used for any other sort of change to weight-fee. Some examples being:
@@ -87,8 +73,7 @@ pub mod fee {
 	impl WeightToFeePolynomial for WeightToFee {
 		type Balance = Balance;
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 MILLICENTS:
-			let p = super::currency::MILLICENTS;
+			let p = super::currency::CENTS;
 			let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,
@@ -97,36 +82,5 @@ pub mod fee {
 				coeff_integer: p / q,
 			}]
 		}
-	}
-}
-
-
-#[cfg(test)]
-mod tests {
-	use super::{
-		currency::{CENTS, MILLICENTS},
-		fee::WeightToFee,
-	};
-	use crate::weights::ExtrinsicBaseWeight;
-	use frame_support::weights::WeightToFee as WeightToFeeT;
-	use runtime_common::MAXIMUM_BLOCK_WEIGHT;
-
-	#[test]
-	// Test that the fee for `MAXIMUM_BLOCK_WEIGHT` of weight has sane bounds.
-	fn full_block_fee_is_correct() {
-		// A full block should cost between 1 and 10 CENTS.
-		let full_block = WeightToFee::weight_to_fee(&MAXIMUM_BLOCK_WEIGHT);
-		assert!(full_block >= 1 * CENTS);
-		assert!(full_block <= 100 * CENTS);
-	}
-
-	#[test]
-	// This function tests that the fee for `ExtrinsicBaseWeight` of weight is correct
-	fn extrinsic_base_fee_is_correct() {
-		// `ExtrinsicBaseWeight` should cost 1/10 of a MILLICENTS
-		println!("Base: {}", ExtrinsicBaseWeight::get());
-		let x = WeightToFee::weight_to_fee(&ExtrinsicBaseWeight::get());
-		let y = MILLICENTS / 10;
-		assert!(x.max(y) - x.min(y) < MILLICENTS);
 	}
 }

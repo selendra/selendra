@@ -1,0 +1,20 @@
+[package]
+name = "test-runtime-constants"
+version = "0.9.26"
+authors = ["Parity Technologies <admin@parity.io>"]
+edition = "2021"
+
+[dependencies]
+smallvec = "1.8.0"
+
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.26" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.26" }
+
+primitives = { package = "selendra-primitives", path = "../../../../primitives", default-features = false }
+runtime-common = { package = "selendra-runtime-common", path = "../../../../runtime/common", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+	"sp-runtime/std"
+]

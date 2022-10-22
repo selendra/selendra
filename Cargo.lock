@@ -4925,6 +4925,7 @@ dependencies = [
  "pallet-balances",
  "parity-scale-codec",
  "scale-info",
+ "serde",
  "sp-runtime",
  "sp-staking",
  "sp-std",
@@ -5797,6 +5798,18 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "prometheus-parse"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef7a8ed15bcffc55fe0328931ef20d393bb89ad704756a37bd20cffb4804f306"
+dependencies = [
+ "chrono",
+ "itertools",
+ "lazy_static",
+ "regex",
 ]
 
 [[package]]
@@ -8227,17 +8240,27 @@ dependencies = [
 name = "selendra-node-metrics"
 version = "0.2.0"
 dependencies = [
+ "assert_cmd",
  "bs58",
  "futures",
  "futures-timer",
+ "hyper",
  "log",
+ "nix 0.24.2",
  "parity-scale-codec",
  "prioritized-metered-channel",
+ "prometheus-parse",
  "sc-cli",
+ "sc-client-api",
  "sc-service",
  "sc-tracing",
  "selendra-primitives",
+ "sp-keyring",
  "substrate-prometheus-endpoint",
+ "substrate-test-utils",
+ "tempfile",
+ "test-service",
+ "tokio",
  "tracing-gum",
 ]
 
@@ -8497,6 +8520,7 @@ dependencies = [
  "selendra-runtime-common",
  "selendra-runtime-constants",
  "selendra-runtime-indracores",
+ "separator",
  "serde",
  "serde_json",
  "smallvec",
@@ -8521,6 +8545,7 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
+ "tiny-keccak",
  "xcm",
  "xcm-builder",
  "xcm-executor",
@@ -8643,15 +8668,19 @@ dependencies = [
 name = "selendra-service"
 version = "0.2.0"
 dependencies = [
+ "assert_matches",
  "async-trait",
  "beefy-gadget",
  "beefy-primitives",
+ "env_logger",
  "frame-system-rpc-runtime-api",
  "futures",
  "hex-literal",
  "kvdb",
  "kvdb-rocksdb",
+ "log",
  "lru 0.7.8",
+ "node-subsystem-test-helpers",
  "pallet-babe",
  "pallet-im-online",
  "pallet-staking",
@@ -8734,6 +8763,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-trie",
  "substrate-prometheus-endpoint",
+ "test-client",
  "thiserror",
  "tracing-gum",
 ]
@@ -8801,6 +8831,12 @@ name = "semver-parser"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
+
+[[package]]
+name = "separator"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f97841a747eef040fcd2e7b3b9a220a7205926e60488e673d9e4926d27772ce5"
 
 [[package]]
 name = "serde"
@@ -9971,6 +10007,53 @@ dependencies = [
 ]
 
 [[package]]
+name = "substrate-test-client"
+version = "2.0.1"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.26#1cca061ede75a4c693a3b71bd1b61d7275fe29e4"
+dependencies = [
+ "async-trait",
+ "futures",
+ "hex",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-client-db",
+ "sc-consensus",
+ "sc-executor",
+ "sc-offchain",
+ "sc-service",
+ "serde",
+ "serde_json",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-keyring",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-state-machine",
+]
+
+[[package]]
+name = "substrate-test-utils"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.26#1cca061ede75a4c693a3b71bd1b61d7275fe29e4"
+dependencies = [
+ "futures",
+ "substrate-test-utils-derive",
+ "tokio",
+]
+
+[[package]]
+name = "substrate-test-utils-derive"
+version = "0.10.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.26#1cca061ede75a4c693a3b71bd1b61d7275fe29e4"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "substrate-wasm-builder"
 version = "5.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.26#1cca061ede75a4c693a3b71bd1b61d7275fe29e4"
@@ -10111,6 +10194,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "507e9898683b6c43a9aa55b64259b721b52ba226e0f3779137e50ad114a4c90b"
 
 [[package]]
+name = "test-client"
+version = "0.2.0"
+dependencies = [
+ "futures",
+ "parity-scale-codec",
+ "sc-block-builder",
+ "sc-consensus",
+ "sc-service",
+ "selendra-node-subsystem",
+ "selendra-primitives",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-inherents",
+ "sp-keyring",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-timestamp",
+ "substrate-test-client",
+ "test-runtime",
+ "test-service",
+]
+
+[[package]]
 name = "test-indracore-adder"
 version = "0.2.0"
 dependencies = [
@@ -10128,6 +10237,136 @@ name = "test-indracore-halt"
 version = "0.2.0"
 dependencies = [
  "substrate-wasm-builder",
+]
+
+[[package]]
+name = "test-runtime"
+version = "0.2.0"
+dependencies = [
+ "beefy-primitives",
+ "bitvec",
+ "frame-election-provider-support",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "frame-system-rpc-runtime-api",
+ "hex-literal",
+ "log",
+ "pallet-authority-discovery",
+ "pallet-authorship",
+ "pallet-babe",
+ "pallet-balances",
+ "pallet-grandpa",
+ "pallet-indices",
+ "pallet-offences",
+ "pallet-session",
+ "pallet-staking",
+ "pallet-staking-reward-curve",
+ "pallet-sudo",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-vesting",
+ "pallet-xcm",
+ "parity-scale-codec",
+ "rustc-hex",
+ "scale-info",
+ "selendra-indracore",
+ "selendra-primitives",
+ "selendra-runtime-common",
+ "selendra-runtime-indracores",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "smallvec",
+ "sp-api",
+ "sp-authority-discovery",
+ "sp-block-builder",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-keyring",
+ "sp-mmr-primitives",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-staking",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-trie",
+ "sp-version",
+ "substrate-wasm-builder",
+ "test-runtime-constants",
+ "tiny-keccak",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
+]
+
+[[package]]
+name = "test-runtime-constants"
+version = "0.9.26"
+dependencies = [
+ "frame-support",
+ "selendra-primitives",
+ "selendra-runtime-common",
+ "smallvec",
+ "sp-runtime",
+]
+
+[[package]]
+name = "test-service"
+version = "0.2.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-system",
+ "futures",
+ "hex",
+ "pallet-balances",
+ "pallet-staking",
+ "pallet-transaction-payment",
+ "rand 0.8.5",
+ "sc-authority-discovery",
+ "sc-chain-spec",
+ "sc-cli",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-babe",
+ "sc-executor",
+ "sc-finality-grandpa",
+ "sc-network",
+ "sc-service",
+ "sc-tracing",
+ "sc-transaction-pool",
+ "selendra-indracore",
+ "selendra-node-primitives",
+ "selendra-node-subsystem",
+ "selendra-overseer",
+ "selendra-primitives",
+ "selendra-rpc",
+ "selendra-runtime-common",
+ "selendra-runtime-indracores",
+ "selendra-service",
+ "serde_json",
+ "sp-arithmetic",
+ "sp-authority-discovery",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-finality-grandpa",
+ "sp-inherents",
+ "sp-keyring",
+ "sp-runtime",
+ "sp-state-machine",
+ "substrate-test-client",
+ "substrate-test-utils",
+ "tempfile",
+ "test-runtime",
+ "test-runtime-constants",
+ "tokio",
+ "tracing-gum",
 ]
 
 [[package]]
