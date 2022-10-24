@@ -22,16 +22,16 @@ use frame_support::{
 	weights::Weight,
 };
 use parity_scale_codec::{Decode, Encode};
-use primitives::v2::{HeadData, Id as IndraId, ValidationCode};
+use primitives::v2::{HeadData, Id as ParaId, ValidationCode};
 use sp_runtime::{traits::SaturatedConversion, Permill};
 use std::{cell::RefCell, collections::HashMap};
 
 thread_local! {
-	static OPERATIONS: RefCell<Vec<(IndraId, u32, bool)>> = RefCell::new(Vec::new());
-	static INDRACORES: RefCell<Vec<IndraId>> = RefCell::new(Vec::new());
-	static INDRABASES: RefCell<Vec<IndraId>> = RefCell::new(Vec::new());
-	static LOCKS: RefCell<HashMap<IndraId, bool>> = RefCell::new(HashMap::new());
-	static MANAGERS: RefCell<HashMap<IndraId, Vec<u8>>> = RefCell::new(HashMap::new());
+	static OPERATIONS: RefCell<Vec<(ParaId, u32, bool)>> = RefCell::new(Vec::new());
+	static PARACHAINS: RefCell<Vec<ParaId>> = RefCell::new(Vec::new());
+	static PARATHREADS: RefCell<Vec<ParaId>> = RefCell::new(Vec::new());
+	static LOCKS: RefCell<HashMap<ParaId, bool>> = RefCell::new(HashMap::new());
+	static MANAGERS: RefCell<HashMap<ParaId, Vec<u8>>> = RefCell::new(HashMap::new());
 }
 
 pub struct TestRegistrar<T>(sp_std::marker::PhantomData<T>);
@@ -39,47 +39,47 @@ pub struct TestRegistrar<T>(sp_std::marker::PhantomData<T>);
 impl<T: frame_system::Config> Registrar for TestRegistrar<T> {
 	type AccountId = T::AccountId;
 
-	fn manager_of(id: IndraId) -> Option<Self::AccountId> {
+	fn manager_of(id: ParaId) -> Option<Self::AccountId> {
 		MANAGERS.with(|x| x.borrow().get(&id).and_then(|v| T::AccountId::decode(&mut &v[..]).ok()))
 	}
 
-	fn indracores() -> Vec<IndraId> {
-		INDRACORES.with(|x| x.borrow().clone())
+	fn parachains() -> Vec<ParaId> {
+		PARACHAINS.with(|x| x.borrow().clone())
 	}
 
-	fn is_indrabase(id: IndraId) -> bool {
-		INDRABASES.with(|x| x.borrow().binary_search(&id).is_ok())
+	fn is_parathread(id: ParaId) -> bool {
+		PARATHREADS.with(|x| x.borrow().binary_search(&id).is_ok())
 	}
 
-	fn apply_lock(id: IndraId) {
+	fn apply_lock(id: ParaId) {
 		LOCKS.with(|x| x.borrow_mut().insert(id, true));
 	}
 
-	fn remove_lock(id: IndraId) {
+	fn remove_lock(id: ParaId) {
 		LOCKS.with(|x| x.borrow_mut().insert(id, false));
 	}
 
 	fn register(
 		manager: Self::AccountId,
-		id: IndraId,
+		id: ParaId,
 		_genesis_head: HeadData,
 		_validation_code: ValidationCode,
 	) -> DispatchResult {
-		// Should not be indracore.
-		INDRACORES.with(|x| {
-			let indracores = x.borrow_mut();
-			match indracores.binary_search(&id) {
-				Ok(_) => Err(DispatchError::Other("Already Indracore")),
+		// Should not be parachain.
+		PARACHAINS.with(|x| {
+			let parachains = x.borrow_mut();
+			match parachains.binary_search(&id) {
+				Ok(_) => Err(DispatchError::Other("Already Parachain")),
 				Err(_) => Ok(()),
 			}
 		})?;
-		// Should not be indrabase, then make it.
-		INDRABASES.with(|x| {
-			let mut indrabases = x.borrow_mut();
-			match indrabases.binary_search(&id) {
-				Ok(_) => Err(DispatchError::Other("Already Indrabase")),
+		// Should not be parathread, then make it.
+		PARATHREADS.with(|x| {
+			let mut parathreads = x.borrow_mut();
+			match parathreads.binary_search(&id) {
+				Ok(_) => Err(DispatchError::Other("Already Parathread")),
 				Err(i) => {
-					indrabases.insert(i, id);
+					parathreads.insert(i, id);
 					Ok(())
 				},
 			}
@@ -88,47 +88,47 @@ impl<T: frame_system::Config> Registrar for TestRegistrar<T> {
 		Ok(())
 	}
 
-	fn deregister(id: IndraId) -> DispatchResult {
-		// Should not be indracore.
-		INDRACORES.with(|x| {
-			let indracores = x.borrow_mut();
-			match indracores.binary_search(&id) {
-				Ok(_) => Err(DispatchError::Other("cannot deregister indracore")),
+	fn deregister(id: ParaId) -> DispatchResult {
+		// Should not be parachain.
+		PARACHAINS.with(|x| {
+			let parachains = x.borrow_mut();
+			match parachains.binary_search(&id) {
+				Ok(_) => Err(DispatchError::Other("cannot deregister parachain")),
 				Err(_) => Ok(()),
 			}
 		})?;
-		// Remove from indrabase.
-		INDRABASES.with(|x| {
-			let mut indrabases = x.borrow_mut();
-			match indrabases.binary_search(&id) {
+		// Remove from parathread.
+		PARATHREADS.with(|x| {
+			let mut parathreads = x.borrow_mut();
+			match parathreads.binary_search(&id) {
 				Ok(i) => {
-					indrabases.remove(i);
+					parathreads.remove(i);
 					Ok(())
 				},
-				Err(_) => Err(DispatchError::Other("not indrabase, so cannot `deregister`")),
+				Err(_) => Err(DispatchError::Other("not parathread, so cannot `deregister`")),
 			}
 		})?;
 		MANAGERS.with(|x| x.borrow_mut().remove(&id));
 		Ok(())
 	}
 
-	fn make_indracore(id: IndraId) -> DispatchResult {
-		INDRABASES.with(|x| {
-			let mut indrabases = x.borrow_mut();
-			match indrabases.binary_search(&id) {
+	fn make_parachain(id: ParaId) -> DispatchResult {
+		PARATHREADS.with(|x| {
+			let mut parathreads = x.borrow_mut();
+			match parathreads.binary_search(&id) {
 				Ok(i) => {
-					indrabases.remove(i);
+					parathreads.remove(i);
 					Ok(())
 				},
-				Err(_) => Err(DispatchError::Other("not indrabase, so cannot `make_indracore`")),
+				Err(_) => Err(DispatchError::Other("not parathread, so cannot `make_parachain`")),
 			}
 		})?;
-		INDRACORES.with(|x| {
-			let mut indracores = x.borrow_mut();
-			match indracores.binary_search(&id) {
-				Ok(_) => Err(DispatchError::Other("already indracore, so cannot `make_indracore`")),
+		PARACHAINS.with(|x| {
+			let mut parachains = x.borrow_mut();
+			match parachains.binary_search(&id) {
+				Ok(_) => Err(DispatchError::Other("already parachain, so cannot `make_parachain`")),
 				Err(i) => {
-					indracores.insert(i, id);
+					parachains.insert(i, id);
 					Ok(())
 				},
 			}
@@ -142,23 +142,23 @@ impl<T: frame_system::Config> Registrar for TestRegistrar<T> {
 		});
 		Ok(())
 	}
-	fn make_indrabase(id: IndraId) -> DispatchResult {
-		INDRACORES.with(|x| {
-			let mut indracores = x.borrow_mut();
-			match indracores.binary_search(&id) {
+	fn make_parathread(id: ParaId) -> DispatchResult {
+		PARACHAINS.with(|x| {
+			let mut parachains = x.borrow_mut();
+			match parachains.binary_search(&id) {
 				Ok(i) => {
-					indracores.remove(i);
+					parachains.remove(i);
 					Ok(())
 				},
-				Err(_) => Err(DispatchError::Other("not indracore, so cannot `make_indrabase`")),
+				Err(_) => Err(DispatchError::Other("not parachain, so cannot `make_parathread`")),
 			}
 		})?;
-		INDRABASES.with(|x| {
-			let mut indrabases = x.borrow_mut();
-			match indrabases.binary_search(&id) {
-				Ok(_) => Err(DispatchError::Other("already indrabase, so cannot `make_indrabase`")),
+		PARATHREADS.with(|x| {
+			let mut parathreads = x.borrow_mut();
+			match parathreads.binary_search(&id) {
+				Ok(_) => Err(DispatchError::Other("already parathread, so cannot `make_parathread`")),
 				Err(i) => {
-					indrabases.insert(i, id);
+					parathreads.insert(i, id);
 					Ok(())
 				},
 			}
@@ -189,26 +189,26 @@ impl<T: frame_system::Config> Registrar for TestRegistrar<T> {
 }
 
 impl<T: frame_system::Config> TestRegistrar<T> {
-	pub fn operations() -> Vec<(IndraId, T::BlockNumber, bool)> {
+	pub fn operations() -> Vec<(ParaId, T::BlockNumber, bool)> {
 		OPERATIONS
 			.with(|x| x.borrow().iter().map(|(p, b, c)| (*p, (*b).into(), *c)).collect::<Vec<_>>())
 	}
 
 	#[allow(dead_code)]
-	pub fn indracores() -> Vec<IndraId> {
-		INDRACORES.with(|x| x.borrow().clone())
+	pub fn parachains() -> Vec<ParaId> {
+		PARACHAINS.with(|x| x.borrow().clone())
 	}
 
 	#[allow(dead_code)]
-	pub fn indrabases() -> Vec<IndraId> {
-		INDRABASES.with(|x| x.borrow().clone())
+	pub fn parathreads() -> Vec<ParaId> {
+		PARATHREADS.with(|x| x.borrow().clone())
 	}
 
 	#[allow(dead_code)]
 	pub fn clear_storage() {
 		OPERATIONS.with(|x| x.borrow_mut().clear());
-		INDRACORES.with(|x| x.borrow_mut().clear());
-		INDRABASES.with(|x| x.borrow_mut().clear());
+		PARACHAINS.with(|x| x.borrow_mut().clear());
+		PARATHREADS.with(|x| x.borrow_mut().clear());
 		MANAGERS.with(|x| x.borrow_mut().clear());
 	}
 }

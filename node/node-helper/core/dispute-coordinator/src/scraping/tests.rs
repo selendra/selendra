@@ -37,7 +37,7 @@ use selendra_node_subsystem::{
 use selendra_node_subsystem_util::{reexports::SubsystemContext, TimeoutExt};
 use selendra_primitives::v2::{
 	BlakeTwo256, BlockNumber, CandidateDescriptor, CandidateEvent, CandidateReceipt, CoreIndex,
-	GroupIndex, Hash, HashT, HeadData, Id as IndraId,
+	GroupIndex, Hash, HashT, HeadData, Id as ParaId,
 };
 
 use crate::LOG_TARGET;
@@ -115,14 +115,14 @@ async fn process_active_leaves_update(
 fn make_candidate_receipt(relay_parent: Hash) -> CandidateReceipt {
 	let zeros = dummy_hash();
 	let descriptor = CandidateDescriptor {
-		indra_id: IndraId::from(0_u32),
+		para_id: ParaId::from(0_u32),
 		relay_parent,
 		collator: dummy_collator(),
 		persisted_validation_data_hash: zeros,
 		pov_hash: zeros,
 		erasure_root: zeros,
 		signature: dummy_collator_signature(),
-		indra_head: zeros,
+		para_head: zeros,
 		validation_code_hash: zeros.into(),
 	};
 	let candidate = CandidateReceipt { descriptor, commitments_hash: zeros };

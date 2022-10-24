@@ -47,7 +47,7 @@ const CLEANED_VOTES_WATERMARK_KEY: &[u8; 23] = b"cleaned-votes-watermark";
 /// this should not be done at once, but rather in smaller batches so nodes won't get stalled by
 /// this.
 ///
-/// 300 is with session duration of 1 hour and 30 indracores around <3_000_000 key purges in the worst
+/// 300 is with session duration of 1 hour and 30 parachains around <3_000_000 key purges in the worst
 /// case. Which is already quite a lot, at the same time we have around 21_000 sessions on
 /// Selendra. This means at 300 purged sessions per session, cleaning everything up will take
 /// around 3 days. Depending on how severe disk usage becomes, we might want to bump the batch
@@ -352,7 +352,7 @@ mod tests {
 
 	use super::*;
 	use ::test_helpers::{dummy_candidate_receipt, dummy_hash};
-	use selendra_primitives::v2::{Hash, Id as IndraId};
+	use selendra_primitives::v2::{Hash, Id as ParaId};
 
 	fn make_db() -> DbBackend {
 		let db = kvdb_memorydb::create(1);
@@ -481,7 +481,7 @@ mod tests {
 			CandidateVotes {
 				candidate_receipt: {
 					let mut receipt = dummy_candidate_receipt(dummy_hash());
-					receipt.descriptor.indra_id = IndraId::from(5_u32);
+					receipt.descriptor.para_id = ParaId::from(5_u32);
 
 					receipt
 				},
@@ -507,8 +507,8 @@ mod tests {
 				.unwrap()
 				.candidate_receipt
 				.descriptor
-				.indra_id,
-			IndraId::from(5),
+				.para_id,
+			ParaId::from(5),
 		);
 
 		let write_ops = overlay_db.into_write_ops();
@@ -531,8 +531,8 @@ mod tests {
 				.unwrap()
 				.candidate_receipt
 				.descriptor
-				.indra_id,
-			IndraId::from(5),
+				.para_id,
+			ParaId::from(5),
 		);
 	}
 

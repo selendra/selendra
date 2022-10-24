@@ -43,7 +43,7 @@ const BEST_EFFORT_QUEUE_SIZE: usize = 3;
 /// the queue. Note that for each vote import the request will be re-added, if there is free
 /// capacity. This limit just serves as a safe guard, it is not expected to ever really be reached.
 ///
-/// For 100 indracores, this would allow for every single candidate in 100 blocks on
+/// For 100 parachains, this would allow for every single candidate in 100 blocks on
 /// two forks to get disputed, which should be plenty to deal with any realistic attack.
 #[cfg(not(test))]
 const PRIORITY_QUEUE_SIZE: usize = 20_000;

@@ -42,14 +42,14 @@ mod error;
 mod collator_side;
 mod validator_side;
 
-const LOG_TARGET: &'static str = "indracore::collator-protocol";
+const LOG_TARGET: &'static str = "parachain::collator-protocol";
 
 /// A collator eviction policy - how fast to evict collators which are inactive.
 #[derive(Debug, Clone, Copy)]
 pub struct CollatorEvictionPolicy {
 	/// How fast to evict collators who are inactive.
 	pub inactive_collator: Duration,
-	/// How fast to evict peers which don't declare their indra.
+	/// How fast to evict peers which don't declare their para.
 	pub undeclared: Duration,
 }
 
@@ -73,7 +73,7 @@ pub enum ProtocolSide {
 		/// Prometheus metrics for validators.
 		metrics: validator_side::Metrics,
 	},
-	/// Collators operate on a indracore.
+	/// Collators operate on a parachain.
 	Collator(
 		PeerId,
 		CollatorPair,

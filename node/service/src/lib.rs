@@ -20,7 +20,7 @@
 
 pub mod chain_spec;
 mod grandpa_support;
-mod indracores_db;
+mod parachains_db;
 mod relay_chain_selection;
 
 #[cfg(test)]
@@ -60,7 +60,7 @@ pub use {
 	relay_chain_selection::SelectRelayChain,
 	sc_client_api::AuxStore,
 	selendra_overseer::{Handle, Overseer, OverseerConnector, OverseerHandle},
-	selendra_primitives::runtime_api::IndracoreHost,
+	selendra_primitives::runtime_api::ParachainHost,
 	sp_authority_discovery::AuthorityDiscoveryApi,
 	sp_blockchain::{HeaderBackend, HeaderMetadata},
 	sp_consensus_babe::BabeApi,
@@ -247,32 +247,32 @@ impl IdentifyVariant for Box<dyn ChainSpec> {
 
 #[cfg(feature = "full-node")]
 fn open_database(db_source: &DatabaseSource) -> Result<Arc<dyn Database>, Error> {
-	let indracores_db = match db_source {
-		DatabaseSource::RocksDb { path, .. } => indracores_db::open_creating_rocksdb(
+	let parachains_db = match db_source {
+		DatabaseSource::RocksDb { path, .. } => parachains_db::open_creating_rocksdb(
 			path.clone(),
-			indracores_db::CacheSizes::default(),
+			parachains_db::CacheSizes::default(),
 		)?,
-		DatabaseSource::ParityDb { path, .. } => indracores_db::open_creating_paritydb(
+		DatabaseSource::ParityDb { path, .. } => parachains_db::open_creating_paritydb(
 			path.parent().ok_or(Error::DatabasePathRequired)?.into(),
-			indracores_db::CacheSizes::default(),
+			parachains_db::CacheSizes::default(),
 		)?,
 		DatabaseSource::Auto { paritydb_path, rocksdb_path, .. } =>
 			if paritydb_path.is_dir() && paritydb_path.exists() {
-				indracores_db::open_creating_paritydb(
+				parachains_db::open_creating_paritydb(
 					paritydb_path.parent().ok_or(Error::DatabasePathRequired)?.into(),
-					indracores_db::CacheSizes::default(),
+					parachains_db::CacheSizes::default(),
 				)?
 			} else {
-				indracores_db::open_creating_rocksdb(
+				parachains_db::open_creating_rocksdb(
 					rocksdb_path.clone(),
-					indracores_db::CacheSizes::default(),
+					parachains_db::CacheSizes::default(),
 				)?
 			},
 		DatabaseSource::Custom { .. } => {
 			unimplemented!("No selendra subsystem db for custom source.");
 		},
 	};
-	Ok(indracores_db)
+	Ok(parachains_db)
 }
 
 /// Initialize the `Jeager` collector. The destination must listen
@@ -836,15 +836,15 @@ where
 		);
 	}
 
-	let indracores_db = open_database(&config.database)?;
+	let parachains_db = open_database(&config.database)?;
 
 	let availability_config = AvailabilityConfig {
-		col_data: indracores_db::REAL_COLUMNS.col_availability_data,
-		col_meta: indracores_db::REAL_COLUMNS.col_availability_meta,
+		col_data: parachains_db::REAL_COLUMNS.col_availability_data,
+		col_meta: parachains_db::REAL_COLUMNS.col_availability_meta,
 	};
 
 	let approval_voting_config = ApprovalVotingConfig {
-		col_data: indracores_db::REAL_COLUMNS.col_approval_data,
+		col_data: parachains_db::REAL_COLUMNS.col_approval_data,
 		slot_duration_millis: slot_duration.as_millis() as u64,
 	};
 
@@ -861,12 +861,12 @@ where
 	};
 
 	let chain_selection_config = ChainSelectionConfig {
-		col_data: indracores_db::REAL_COLUMNS.col_chain_selection_data,
+		col_data: parachains_db::REAL_COLUMNS.col_chain_selection_data,
 		stagnant_check_interval: chain_selection_subsystem::StagnantCheckInterval::never(),
 	};
 
 	let dispute_coordinator_config = DisputeCoordinatorConfig {
-		col_data: indracores_db::REAL_COLUMNS.col_dispute_coordinator_data,
+		col_data: parachains_db::REAL_COLUMNS.col_dispute_coordinator_data,
 	};
 
 	let rpc_handlers = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
@@ -960,7 +960,7 @@ where
 					leaves: active_leaves,
 					keystore,
 					runtime_client: overseer_client.clone(),
-					indracores_db,
+					parachains_db,
 					network_service: network.clone(),
 					authority_discovery_service,
 					pov_req_receiver,
@@ -1049,7 +1049,7 @@ where
 				let overseer_handle = overseer_handle.clone();
 
 				async move {
-					let indracore = selendra_node_core_indracores_inherent::IndracoresInherentDataProvider::create(
+					let parachain = selendra_node_core_parachains_inherent::ParachainsInherentDataProvider::create(
 						&*client_clone,
 						overseer_handle,
 						parent,
@@ -1068,7 +1068,7 @@ where
 							slot_duration,
 						);
 
-					Ok((timestamp, slot, uncles, indracore))
+					Ok((timestamp, slot, uncles, parachain))
 				}
 			},
 			force_authoring,
@@ -1274,8 +1274,8 @@ pub fn build_full(
 /// Reverts the node state down to at most the last finalized block.
 ///
 /// In particular this reverts:
-/// - `ApprovalVotingSubsystem` data in the indracores-db;
-/// - `ChainSelectionSubsystem` data in the indracores-db;
+/// - `ApprovalVotingSubsystem` data in the parachains-db;
+/// - `ChainSelectionSubsystem` data in the parachains-db;
 /// - Low level Babe and Grandpa consensus data.
 #[cfg(feature = "full-node")]
 pub fn revert_backend(
@@ -1300,11 +1300,11 @@ pub fn revert_backend(
 		)),
 	)?;
 
-	let indracores_db = open_database(&config.database)
+	let parachains_db = open_database(&config.database)
 		.map_err(|err| sp_blockchain::Error::Backend(err.to_string()))?;
 
-	revert_approval_voting(indracores_db.clone(), hash)?;
-	revert_chain_selection(indracores_db, hash)?;
+	revert_approval_voting(parachains_db.clone(), hash)?;
+	revert_chain_selection(parachains_db, hash)?;
 	// Revert Substrate consensus related components
 	client.execute_with(RevertConsensus { blocks, backend })?;
 
@@ -1313,7 +1313,7 @@ pub fn revert_backend(
 
 fn revert_chain_selection(db: Arc<dyn Database>, hash: Hash) -> sp_blockchain::Result<()> {
 	let config = chain_selection_subsystem::Config {
-		col_data: indracores_db::REAL_COLUMNS.col_chain_selection_data,
+		col_data: parachains_db::REAL_COLUMNS.col_chain_selection_data,
 		stagnant_check_interval: chain_selection_subsystem::StagnantCheckInterval::never(),
 	};
 
@@ -1326,7 +1326,7 @@ fn revert_chain_selection(db: Arc<dyn Database>, hash: Hash) -> sp_blockchain::R
 
 fn revert_approval_voting(db: Arc<dyn Database>, hash: Hash) -> sp_blockchain::Result<()> {
 	let config = approval_voting_subsystem::Config {
-		col_data: indracores_db::REAL_COLUMNS.col_approval_data,
+		col_data: parachains_db::REAL_COLUMNS.col_approval_data,
 		slot_duration_millis: Default::default(),
 	};
 

@@ -21,7 +21,7 @@ sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = 
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 
-selendra-indracore = { path = "../../../indracore/core", default-features = false }
+selendra-parachain = { path = "../../../parachain/core", default-features = false }
 selendra-primitives = { path = "../../../primitives" }
 
 [target.'cfg(not(target_os = "unknown"))'.dependencies]

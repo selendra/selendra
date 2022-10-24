@@ -22,7 +22,7 @@ use crate::{
 	ops::{add_block_entry, canonicalize, force_approve, NewCandidateInfo},
 };
 use selendra_node_subsystem_util::database::Database;
-use selendra_primitives::v2::Id as IndraId;
+use selendra_primitives::v2::Id as ParaId;
 use std::{collections::HashMap, sync::Arc};
 
 use ::test_helpers::{dummy_candidate_receipt, dummy_candidate_receipt_bad_sig, dummy_hash};
@@ -62,10 +62,10 @@ fn make_block_entry(
 	}
 }
 
-fn make_candidate(indra_id: IndraId, relay_parent: Hash) -> CandidateReceipt {
+fn make_candidate(para_id: ParaId, relay_parent: Hash) -> CandidateReceipt {
 	let mut c = dummy_candidate_receipt(dummy_hash());
 
-	c.descriptor.indra_id = indra_id;
+	c.descriptor.para_id = para_id;
 	c.descriptor.relay_parent = relay_parent;
 
 	c
@@ -146,8 +146,8 @@ fn add_block_entry_works() {
 	let block_hash_a = Hash::repeat_byte(2);
 	let block_hash_b = Hash::repeat_byte(69);
 
-	let candidate_receipt_a = make_candidate(IndraId::from(1_u32), parent_hash);
-	let candidate_receipt_b = make_candidate(IndraId::from(2_u32), parent_hash);
+	let candidate_receipt_a = make_candidate(ParaId::from(1_u32), parent_hash);
+	let candidate_receipt_b = make_candidate(ParaId::from(2_u32), parent_hash);
 
 	let candidate_hash_a = candidate_receipt_a.hash();
 	let candidate_hash_b = candidate_receipt_b.hash();
@@ -284,11 +284,11 @@ fn canonicalize_works() {
 	let block_hash_d1 = Hash::repeat_byte(6);
 	let block_hash_d2 = Hash::repeat_byte(7);
 
-	let candidate_receipt_genesis = make_candidate(IndraId::from(1_u32), genesis);
-	let candidate_receipt_a = make_candidate(IndraId::from(2_u32), block_hash_a);
-	let candidate_receipt_b = make_candidate(IndraId::from(3_u32), block_hash_a);
-	let candidate_receipt_b1 = make_candidate(IndraId::from(4_u32), block_hash_b1);
-	let candidate_receipt_c1 = make_candidate(IndraId::from(5_u32), block_hash_c1);
+	let candidate_receipt_genesis = make_candidate(ParaId::from(1_u32), genesis);
+	let candidate_receipt_a = make_candidate(ParaId::from(2_u32), block_hash_a);
+	let candidate_receipt_b = make_candidate(ParaId::from(3_u32), block_hash_a);
+	let candidate_receipt_b1 = make_candidate(ParaId::from(4_u32), block_hash_b1);
+	let candidate_receipt_c1 = make_candidate(ParaId::from(5_u32), block_hash_c1);
 
 	let cand_hash_1 = candidate_receipt_genesis.hash();
 	let cand_hash_2 = candidate_receipt_a.hash();
@@ -467,7 +467,7 @@ fn force_approve_works() {
 		candidate_info.insert(
 			candidate_hash,
 			NewCandidateInfo::new(
-				make_candidate(IndraId::from(1_u32), Default::default()),
+				make_candidate(ParaId::from(1_u32), Default::default()),
 				GroupIndex(1),
 				None,
 			),

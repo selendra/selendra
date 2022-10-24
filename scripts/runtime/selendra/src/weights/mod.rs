@@ -44,11 +44,11 @@ pub mod pallet_treasury;
 pub mod pallet_utility;
 pub mod pallet_vesting;
 
-pub mod runtime_common_indras_registrar;
+pub mod runtime_common_paras_registrar;
 pub mod runtime_common_slots;
-pub mod runtime_indracores_configuration;
-pub mod runtime_indracores_disputes;
-pub mod runtime_indracores_hrmp;
-pub mod runtime_indracores_indras;
-pub mod runtime_indracores_indras_inherent;
-pub mod runtime_indracores_initializer;
+pub mod runtime_parachains_configuration;
+pub mod runtime_parachains_disputes;
+pub mod runtime_parachains_hrmp;
+pub mod runtime_parachains_paras;
+pub mod runtime_parachains_paras_inherent;
+pub mod runtime_parachains_initializer;

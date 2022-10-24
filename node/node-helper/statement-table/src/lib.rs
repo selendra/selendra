@@ -23,7 +23,7 @@
 //! Proposals are formed of sets of candidates which have the requisite number of
 //! validity and availability votes.
 //!
-//! Each indracore is associated with two sets of authorities: those which can
+//! Each parachain is associated with two sets of authorities: those which can
 //! propose and attest to validity of candidates, and those who can only attest
 //! to availability.
 

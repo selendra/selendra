@@ -379,13 +379,13 @@ mod tests {
 	use super::*;
 	use futures::executor::block_on;
 	use selendra_node_subsystem::messages::CollatorProtocolMessage;
-	use selendra_overseer::{dummy::dummy_overseer_builder, Handle, HeadSupportsIndracores};
+	use selendra_overseer::{dummy::dummy_overseer_builder, Handle, HeadSupportsParachains};
 	use selendra_primitives::v2::Hash;
 	use sp_core::traits::SpawnNamed;
 
-	struct AlwaysSupportsIndracores;
-	impl HeadSupportsIndracores for AlwaysSupportsIndracores {
-		fn head_supports_indracores(&self, _head: &Hash) -> bool {
+	struct AlwaysSupportsParachains;
+	impl HeadSupportsParachains for AlwaysSupportsParachains {
+		fn head_supports_parachains(&self, _head: &Hash) -> bool {
 			true
 		}
 	}
@@ -395,7 +395,7 @@ mod tests {
 		let spawner = sp_core::testing::TaskExecutor::new();
 		let (tx, rx) = mpsc::channel(2);
 		let (overseer, handle) =
-			dummy_overseer_builder(spawner.clone(), AlwaysSupportsIndracores, None)
+			dummy_overseer_builder(spawner.clone(), AlwaysSupportsParachains, None)
 				.unwrap()
 				.replace_collator_protocol(|_| ForwardSubsystem(tx))
 				.leaves(vec![])

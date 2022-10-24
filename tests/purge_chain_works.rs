@@ -56,7 +56,7 @@ async fn purge_chain_rocksdb_works() {
 	assert!(common::wait_for(&mut cmd, 30).map(|x| x.success()).unwrap_or_default());
 	assert!(tmpdir.path().join("chains/dev").exists());
 	assert!(tmpdir.path().join("chains/dev/db/full").exists());
-	assert!(tmpdir.path().join("chains/dev/db/full/indracores").exists());
+	assert!(tmpdir.path().join("chains/dev/db/full/parachains").exists());
 
 	// Purge chain
 	let status = Command::new(cargo_bin("selendra"))
@@ -106,7 +106,7 @@ async fn purge_chain_paritydb_works() {
 	assert!(common::wait_for(&mut cmd, 30).map(|x| x.success()).unwrap_or_default());
 	assert!(tmpdir.path().join("chains/dev").exists());
 	assert!(tmpdir.path().join("chains/dev/paritydb/full").exists());
-	assert!(tmpdir.path().join("chains/dev/paritydb/indracores").exists());
+	assert!(tmpdir.path().join("chains/dev/paritydb/parachains").exists());
 
 	// Purge chain
 	let status = Command::new(cargo_bin("selendra"))
@@ -122,6 +122,6 @@ async fn purge_chain_paritydb_works() {
 	// Make sure that the chain folder exists, but `db/full` is deleted.
 	assert!(tmpdir.path().join("chains/dev").exists());
 	assert!(!tmpdir.path().join("chains/dev/paritydb/full").exists());
-	// Indracores removal requires calling "purge-chain --indracores".
-	assert!(tmpdir.path().join("chains/dev/paritydb/indracores").exists());
+	// Parachains removal requires calling "purge-chain --parachains".
+	assert!(tmpdir.path().join("chains/dev/paritydb/parachains").exists());
 }

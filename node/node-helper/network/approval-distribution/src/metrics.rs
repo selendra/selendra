@@ -90,56 +90,56 @@ impl MetricsTrait for Metrics {
 		let metrics = MetricsInner {
 			assignments_imported_total: prometheus::register(
 				prometheus::Counter::new(
-					"selendra_indracore_assignments_imported_total",
+					"selendra_parachain_assignments_imported_total",
 					"Number of valid assignments imported locally or from other peers.",
 				)?,
 				registry,
 			)?,
 			approvals_imported_total: prometheus::register(
 				prometheus::Counter::new(
-					"selendra_indracore_approvals_imported_total",
+					"selendra_parachain_approvals_imported_total",
 					"Number of valid approvals imported locally or from other peers.",
 				)?,
 				registry,
 			)?,
 			unified_with_peer_total: prometheus::register(
 				prometheus::Counter::new(
-					"selendra_indracore_unified_with_peer_total",
+					"selendra_parachain_unified_with_peer_total",
 					"Number of times `unify_with_peer` is called.",
 				)?,
 				registry,
 			)?,
 			aggression_l1_messages_total: prometheus::register(
 				prometheus::Counter::new(
-					"selendra_indracore_approval_distribution_aggression_l1_messages_total",
+					"selendra_parachain_approval_distribution_aggression_l1_messages_total",
 					"Number of messages in approval distribution for which aggression L1 has been triggered",
 				)?,
 				registry,
 			)?,
 			aggression_l2_messages_total: prometheus::register(
 				prometheus::Counter::new(
-					"selendra_indracore_approval_distribution_aggression_l2_messages_total",
+					"selendra_parachain_approval_distribution_aggression_l2_messages_total",
 					"Number of messages in approval distribution for which aggression L2 has been triggered",
 				)?,
 				registry,
 			)?,
 			time_unify_with_peer: prometheus::register(
 				prometheus::Histogram::with_opts(prometheus::HistogramOpts::new(
-					"selendra_indracore_time_unify_with_peer",
+					"selendra_parachain_time_unify_with_peer",
 					"Time spent within fn `unify_with_peer`.",
 				))?,
 				registry,
 			)?,
 			time_import_pending_now_known: prometheus::register(
 				prometheus::Histogram::with_opts(prometheus::HistogramOpts::new(
-					"selendra_indracore_time_import_pending_now_known",
+					"selendra_parachain_time_import_pending_now_known",
 					"Time spent on importing pending assignments and approvals.",
 				))?,
 				registry,
 			)?,
 			time_awaiting_approval_voting: prometheus::register(
 				prometheus::Histogram::with_opts(prometheus::HistogramOpts::new(
-					"selendra_indracore_time_awaiting_approval_voting",
+					"selendra_parachain_time_awaiting_approval_voting",
 					"Time spent awaiting a reply from the Approval Voting Subsystem.",
 				))?,
 				registry,

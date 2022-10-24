@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-//! All peersets and protocols used for indracores.
+//! All peersets and protocols used for parachains.
 
 use super::ProtocolVersion;
 use sc_network::config::{NonDefaultSetConfig, SetConfig};

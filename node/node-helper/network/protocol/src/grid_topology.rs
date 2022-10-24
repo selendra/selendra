@@ -37,7 +37,7 @@ use std::{
 	fmt::Debug,
 };
 
-const LOG_TARGET: &str = "indracore::grid-topology";
+const LOG_TARGET: &str = "parachain::grid-topology";
 
 /// The sample rate for randomly propagating messages. This
 /// reduces the left tail of the binomial distribution but also

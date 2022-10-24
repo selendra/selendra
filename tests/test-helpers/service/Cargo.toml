@@ -50,8 +50,8 @@ selendra-node-primitives = { path = "../../../node/node-helper/primitives" }
 selendra-rpc = { path = "../../../node/rpc" }
 selendra-service = { path = "../../../node/service" }
 selendra-primitives = { path = "../../../primitives" }
-selendra-indracore = { path = "../../../indracore/core" }
-selendra-runtime-indracores = { path = "../../../indracore/runtime" }
+selendra-parachain = { path = "../../../parachain/core" }
+selendra-runtime-parachains = { path = "../../../parachain/runtime" }
 selendra-runtime-common = { path = "../../../runtime/common" }
 test-runtime = { path = "../runtime" }
 test-runtime-constants = { path = "../runtime/constants" }

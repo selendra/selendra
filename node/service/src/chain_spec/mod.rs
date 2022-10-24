@@ -74,15 +74,15 @@ pub fn selendra_config() -> Result<SelendraChainSpec, String> {
 	SelendraChainSpec::from_json_bytes(&include_bytes!("../../resources/selendra.json")[..])
 }
 
-/// The default indracores host configuration.
+/// The default parachains host configuration.
 #[cfg(any(feature = "selendra-native"))]
-fn default_indracores_host_configuration(
-) -> selendra_runtime_indracores::configuration::HostConfiguration<
+fn default_parachains_host_configuration(
+) -> selendra_runtime_parachains::configuration::HostConfiguration<
 	selendra_primitives::v2::BlockNumber,
 > {
 	use selendra_primitives::v2::{MAX_CODE_SIZE, MAX_POV_SIZE};
 
-	selendra_runtime_indracores::configuration::HostConfiguration {
+	selendra_runtime_parachains::configuration::HostConfiguration {
 		validation_upgrade_cooldown: 2u32,
 		validation_upgrade_delay: 2,
 		code_retention_period: 1200,
@@ -102,11 +102,11 @@ fn default_indracores_host_configuration(
 		hrmp_recipient_deposit: 0,
 		hrmp_channel_max_capacity: 8,
 		hrmp_channel_max_total_size: 8 * 1024,
-		hrmp_max_indracore_inbound_channels: 4,
-		hrmp_max_indrabase_inbound_channels: 4,
+		hrmp_max_parachain_inbound_channels: 4,
+		hrmp_max_parathread_inbound_channels: 4,
 		hrmp_channel_max_message_size: 1024 * 1024,
-		hrmp_max_indracore_outbound_channels: 4,
-		hrmp_max_indrabase_outbound_channels: 4,
+		hrmp_max_parachain_outbound_channels: 4,
+		hrmp_max_parathread_outbound_channels: 4,
 		hrmp_max_message_num_per_candidate: 5,
 		dispute_period: 6,
 		no_show_slots: 2,
@@ -121,8 +121,8 @@ fn default_indracores_host_configuration(
 
 #[cfg(any(feature = "selendra-native"))]
 #[test]
-fn default_indracores_host_configuration_is_consistent() {
-	default_indracores_host_configuration().panic_if_not_consistent();
+fn default_parachains_host_configuration_is_consistent() {
+	default_parachains_host_configuration().panic_if_not_consistent();
 }
 
 #[cfg(feature = "selendra-native")]
@@ -130,16 +130,16 @@ fn selendra_session_keys(
 	babe: BabeId,
 	grandpa: GrandpaId,
 	im_online: ImOnlineId,
-	indra_validator: ValidatorId,
-	indra_assignment: AssignmentId,
+	para_validator: ValidatorId,
+	para_assignment: AssignmentId,
 	authority_discovery: AuthorityDiscoveryId,
 ) -> selendra::SessionKeys {
 	selendra::SessionKeys {
 		babe,
 		grandpa,
 		im_online,
-		indra_validator,
-		indra_assignment,
+		para_validator,
+		para_assignment,
 		authority_discovery,
 	}
 }
@@ -230,10 +230,10 @@ fn selendra_staging_testnet_config_genesis(
 		treasury: Default::default(),
 		hrmp: Default::default(),
 		configuration: selendra::ConfigurationConfig {
-			config: default_indracores_host_configuration(),
+			config: default_parachains_host_configuration(),
 		},
 		nomination_pools: Default::default(),
-		indras: Default::default(),
+		paras: Default::default(),
 		xcm_pallet: Default::default(),
 		sudo: selendra::SudoConfig { key: Some(_root_key) },
 	}
@@ -435,9 +435,9 @@ pub fn selendra_testnet_genesis(
 		nomination_pools: Default::default(),
 		hrmp: Default::default(),
 		configuration: selendra::ConfigurationConfig {
-			config: default_indracores_host_configuration(),
+			config: default_parachains_host_configuration(),
 		},
-		indras: Default::default(),
+		paras: Default::default(),
 		xcm_pallet: Default::default(),
 		sudo: selendra::SudoConfig { key: Some(_root_key) },
 	}

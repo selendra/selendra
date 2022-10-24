@@ -49,7 +49,7 @@ mod tests;
 
 /// Delay between starting a bitfield signing job and its attempting to create a bitfield.
 const SPAWNED_TASK_DELAY: Duration = Duration::from_millis(1500);
-const LOG_TARGET: &str = "indracore::bitfield-signing";
+const LOG_TARGET: &str = "parachain::bitfield-signing";
 
 // TODO: use `fatality`.
 /// Errors we may encounter in the course of executing the `BitfieldSigningSubsystem`.
@@ -104,7 +104,7 @@ async fn get_core_availability(
 
 		gum::trace!(
 			target: LOG_TARGET,
-			indra_id = %core.indra_id(),
+			para_id = %core.para_id(),
 			availability = ?res,
 			?core.candidate_hash,
 			"Candidate availability",

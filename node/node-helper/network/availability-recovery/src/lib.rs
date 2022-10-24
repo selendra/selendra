@@ -71,7 +71,7 @@ use sc_network::{OutboundFailure, RequestFailure};
 #[cfg(test)]
 mod tests;
 
-const LOG_TARGET: &str = "indracore::availability-recovery";
+const LOG_TARGET: &str = "parachain::availability-recovery";
 
 // How many parallel recovery tasks should be running at once.
 const N_PARALLEL: usize = 50;
@@ -138,7 +138,7 @@ struct RecoveryParams {
 	/// A hash of the relevant candidate.
 	candidate_hash: CandidateHash,
 
-	/// The root of the erasure encoding of the indra block.
+	/// The root of the erasure encoding of the para block.
 	erasure_root: Hash,
 
 	/// Metrics to report

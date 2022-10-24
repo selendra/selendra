@@ -48,7 +48,7 @@ pub use metrics::Metrics;
 #[cfg(test)]
 mod tests;
 
-const LOG_TARGET: &'static str = "indracore::availability-distribution";
+const LOG_TARGET: &'static str = "parachain::availability-distribution";
 
 /// The availability distribution subsystem.
 pub struct AvailabilityDistributionSubsystem {

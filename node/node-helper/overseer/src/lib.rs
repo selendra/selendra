@@ -17,7 +17,7 @@
 //! # Overseer
 //!
 //! `overseer` implements the Overseer architecture described in the
-//! [implementers-guide](https://w3f.github.io/indracore-implementers-guide/node/index.html).
+//! [implementers-guide](https://w3f.github.io/parachain-implementers-guide/node/index.html).
 //! For the motivations behind implementing the overseer itself you should
 //! check out that guide, documentation in this crate will be mostly discussing
 //! technical stuff.
@@ -72,7 +72,7 @@ use lru::LruCache;
 
 use sc_client_api::{BlockImportNotification, BlockchainEvents, FinalityNotification};
 use selendra_primitives::{
-	runtime_api::IndracoreHost,
+	runtime_api::ParachainHost,
 	v2::{Block, BlockId, BlockNumber, Hash},
 };
 use sp_api::{ApiExt, ProvideRuntimeApi};
@@ -156,22 +156,22 @@ impl<S: SpawnNamed + Clone + Send + Sync> crate::gen::Spawner for SpawnGlue<S> {
 	}
 }
 
-/// Whether a header supports indracore consensus or not.
-pub trait HeadSupportsIndracores {
-	/// Return true if the given header supports indracore consensus. Otherwise, false.
-	fn head_supports_indracores(&self, head: &Hash) -> bool;
+/// Whether a header supports parachain consensus or not.
+pub trait HeadSupportsParachains {
+	/// Return true if the given header supports parachain consensus. Otherwise, false.
+	fn head_supports_parachains(&self, head: &Hash) -> bool;
 }
 
-impl<Client> HeadSupportsIndracores for Arc<Client>
+impl<Client> HeadSupportsParachains for Arc<Client>
 where
 	Client: ProvideRuntimeApi<Block>,
-	Client::Api: IndracoreHost<Block>,
+	Client::Api: ParachainHost<Block>,
 {
-	fn head_supports_indracores(&self, head: &Hash) -> bool {
+	fn head_supports_parachains(&self, head: &Hash) -> bool {
 		let id = BlockId::Hash(*head);
-		// Check that the `IndracoreHost` runtime api is at least with version 1 present on chain.
+		// Check that the `ParachainHost` runtime api is at least with version 1 present on chain.
 		self.runtime_api()
-			.api_version::<dyn IndracoreHost<Block>>(&id)
+			.api_version::<dyn ParachainHost<Block>>(&id)
 			.ok()
 			.flatten()
 			.unwrap_or(0) >=
@@ -378,7 +378,7 @@ pub async fn forward_events<P: BlockchainEvents<Block>>(client: Arc<P>, mut hand
 /// #   OverseerSignal,
 /// # 	SubsystemSender as _,
 /// # 	AllMessages,
-/// # 	HeadSupportsIndracores,
+/// # 	HeadSupportsParachains,
 /// # 	Overseer,
 /// # 	SubsystemError,
 /// # 	gen::{
@@ -420,12 +420,12 @@ pub async fn forward_events<P: BlockchainEvents<Block>>(client: Arc<P>, mut hand
 ///
 /// # fn main() { executor::block_on(async move {
 ///
-/// struct AlwaysSupportsIndracores;
-/// impl HeadSupportsIndracores for AlwaysSupportsIndracores {
-///      fn head_supports_indracores(&self, _head: &Hash) -> bool { true }
+/// struct AlwaysSupportsParachains;
+/// impl HeadSupportsParachains for AlwaysSupportsParachains {
+///      fn head_supports_parachains(&self, _head: &Hash) -> bool { true }
 /// }
 /// let spawner = sp_core::testing::TaskExecutor::new();
-/// let (overseer, _handle) = dummy_overseer_builder(spawner, AlwaysSupportsIndracores, None)
+/// let (overseer, _handle) = dummy_overseer_builder(spawner, AlwaysSupportsParachains, None)
 ///		.unwrap()
 ///		.replace_candidate_validation(|_| ValidationSubsystem)
 ///		.build()
@@ -452,7 +452,7 @@ pub async fn forward_events<P: BlockchainEvents<Block>>(client: Arc<P>, mut hand
 	error=SubsystemError,
 	message_capacity=2048,
 )]
-pub struct Overseer<SupportsIndracores> {
+pub struct Overseer<SupportsParachains> {
 	#[subsystem(CandidateValidationMessage, sends: [
 		RuntimeApiMessage,
 	])]
@@ -615,8 +615,8 @@ pub struct Overseer<SupportsIndracores> {
 	/// The set of the "active leaves".
 	pub active_leaves: HashMap<Hash, BlockNumber>,
 
-	/// An implementation for checking whether a header supports indracore consensus.
-	pub supports_indracores: SupportsIndracores,
+	/// An implementation for checking whether a header supports parachain consensus.
+	pub supports_parachains: SupportsParachains,
 
 	/// An LRU cache for keeping track of relay-chain heads that have already been seen.
 	pub known_leaves: LruCache<Hash, ()>,
@@ -626,13 +626,13 @@ pub struct Overseer<SupportsIndracores> {
 }
 
 /// Spawn the metrics metronome task.
-pub fn spawn_metronome_metrics<S, SupportsIndracores>(
-	overseer: &mut Overseer<S, SupportsIndracores>,
+pub fn spawn_metronome_metrics<S, SupportsParachains>(
+	overseer: &mut Overseer<S, SupportsParachains>,
 	metronome_metrics: OverseerMetrics,
 ) -> Result<(), SubsystemError>
 where
 	S: Spawner,
-	SupportsIndracores: HeadSupportsIndracores,
+	SupportsParachains: HeadSupportsParachains,
 {
 	struct ExtractNameAndMeters;
 
@@ -696,9 +696,9 @@ where
 	Ok(())
 }
 
-impl<S, SupportsIndracores> Overseer<S, SupportsIndracores>
+impl<S, SupportsParachains> Overseer<S, SupportsParachains>
 where
-	SupportsIndracores: HeadSupportsIndracores,
+	SupportsParachains: HeadSupportsParachains,
 	S: Spawner,
 {
 	/// Stop the `Overseer`.
@@ -831,14 +831,14 @@ where
 		Ok(())
 	}
 
-	/// Handles a header activation. If the header's state doesn't support the indracores API,
+	/// Handles a header activation. If the header's state doesn't support the parachains API,
 	/// this returns `None`.
 	fn on_head_activated(
 		&mut self,
 		hash: &Hash,
 		parent_hash: Option<Hash>,
 	) -> Option<(Arc<jaeger::Span>, LeafStatus)> {
-		if !self.supports_indracores.head_supports_indracores(hash) {
+		if !self.supports_parachains.head_supports_parachains(hash) {
 			return None
 		}
 

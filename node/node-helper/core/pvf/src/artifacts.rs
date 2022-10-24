@@ -17,7 +17,7 @@
 use crate::{error::PrepareError, host::PrepareResultSender};
 use always_assert::always;
 use async_std::path::{Path, PathBuf};
-use selendra_indracore::primitives::ValidationCodeHash;
+use selendra_parachain::primitives::ValidationCodeHash;
 use std::{
 	collections::HashMap,
 	time::{Duration, SystemTime},

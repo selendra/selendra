@@ -16,7 +16,7 @@
 
 //! Implements the Runtime API Subsystem
 //!
-//! This provides a clean, ownerless wrapper around the indracore-related runtime APIs. This crate
+//! This provides a clean, ownerless wrapper around the parachain-related runtime APIs. This crate
 //! can also be used to cache responses from heavy runtime APIs.
 
 #![deny(unused_crate_dependencies)]
@@ -28,7 +28,7 @@ use selendra_node_subsystem::{
 	overseer, FromOrchestra, OverseerSignal, SpawnedSubsystem, SubsystemError, SubsystemResult,
 };
 use selendra_primitives::{
-	runtime_api::IndracoreHost,
+	runtime_api::ParachainHost,
 	v2::{Block, BlockId, Hash},
 };
 
@@ -48,7 +48,7 @@ use self::metrics::Metrics;
 #[cfg(test)]
 mod tests;
 
-const LOG_TARGET: &str = "indracore::runtime-api";
+const LOG_TARGET: &str = "parachain::runtime-api";
 
 /// The number of maximum runtime API requests can be executed in parallel.
 /// Further requests will backpressure the bounded channel.
@@ -89,7 +89,7 @@ impl<Client> RuntimeApiSubsystem<Client> {
 impl<Client, Context> RuntimeApiSubsystem<Client>
 where
 	Client: ProvideRuntimeApi<Block> + Send + 'static + Sync,
-	Client::Api: IndracoreHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
+	Client::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
 {
 	fn start(self, ctx: Context) -> SpawnedSubsystem {
 		SpawnedSubsystem { future: run(ctx, self).boxed(), name: "runtime-api-subsystem" }
@@ -99,7 +99,7 @@ where
 impl<Client> RuntimeApiSubsystem<Client>
 where
 	Client: ProvideRuntimeApi<Block> + Send + 'static + Sync,
-	Client::Api: IndracoreHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
+	Client::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
 {
 	fn store_cache(&mut self, result: RequestResult) {
 		use RequestResult::*;
@@ -113,42 +113,42 @@ where
 				self.requests_cache.cache_validator_groups(relay_parent, groups),
 			AvailabilityCores(relay_parent, cores) =>
 				self.requests_cache.cache_availability_cores(relay_parent, cores),
-			PersistedValidationData(relay_parent, indra_id, assumption, data) => self
+			PersistedValidationData(relay_parent, para_id, assumption, data) => self
 				.requests_cache
-				.cache_persisted_validation_data((relay_parent, indra_id, assumption), data),
+				.cache_persisted_validation_data((relay_parent, para_id, assumption), data),
 			AssumedValidationData(
 				_relay_parent,
-				indra_id,
+				para_id,
 				expected_persisted_validation_data_hash,
 				data,
 			) => self.requests_cache.cache_assumed_validation_data(
-				(indra_id, expected_persisted_validation_data_hash),
+				(para_id, expected_persisted_validation_data_hash),
 				data,
 			),
-			CheckValidationOutputs(relay_parent, indra_id, commitments, b) => self
+			CheckValidationOutputs(relay_parent, para_id, commitments, b) => self
 				.requests_cache
-				.cache_check_validation_outputs((relay_parent, indra_id, commitments), b),
+				.cache_check_validation_outputs((relay_parent, para_id, commitments), b),
 			SessionIndexForChild(relay_parent, session_index) =>
 				self.requests_cache.cache_session_index_for_child(relay_parent, session_index),
-			ValidationCode(relay_parent, indra_id, assumption, code) => self
+			ValidationCode(relay_parent, para_id, assumption, code) => self
 				.requests_cache
-				.cache_validation_code((relay_parent, indra_id, assumption), code),
+				.cache_validation_code((relay_parent, para_id, assumption), code),
 			ValidationCodeByHash(_relay_parent, validation_code_hash, code) =>
 				self.requests_cache.cache_validation_code_by_hash(validation_code_hash, code),
-			CandidatePendingAvailability(relay_parent, indra_id, candidate) => self
+			CandidatePendingAvailability(relay_parent, para_id, candidate) => self
 				.requests_cache
-				.cache_candidate_pending_availability((relay_parent, indra_id), candidate),
+				.cache_candidate_pending_availability((relay_parent, para_id), candidate),
 			CandidateEvents(relay_parent, events) =>
 				self.requests_cache.cache_candidate_events(relay_parent, events),
 			SessionInfo(_relay_parent, session_index, info) =>
 				if let Some(info) = info {
 					self.requests_cache.cache_session_info(session_index, info);
 				},
-			DmqContents(relay_parent, indra_id, messages) =>
-				self.requests_cache.cache_dmq_contents((relay_parent, indra_id), messages),
-			InboundHrmpChannelsContents(relay_parent, indra_id, contents) => self
+			DmqContents(relay_parent, para_id, messages) =>
+				self.requests_cache.cache_dmq_contents((relay_parent, para_id), messages),
+			InboundHrmpChannelsContents(relay_parent, para_id, contents) => self
 				.requests_cache
-				.cache_inbound_hrmp_channel_contents((relay_parent, indra_id), contents),
+				.cache_inbound_hrmp_channel_contents((relay_parent, para_id), contents),
 			CurrentBabeEpoch(relay_parent, epoch) =>
 				self.requests_cache.cache_current_babe_epoch(relay_parent, epoch),
 			FetchOnChainVotes(relay_parent, scraped) =>
@@ -156,9 +156,9 @@ where
 			PvfsRequirePrecheck(relay_parent, pvfs) =>
 				self.requests_cache.cache_pvfs_require_precheck(relay_parent, pvfs),
 			SubmitPvfCheckStatement(_, _, _, ()) => {},
-			ValidationCodeHash(relay_parent, indra_id, assumption, hash) => self
+			ValidationCodeHash(relay_parent, para_id, assumption, hash) => self
 				.requests_cache
-				.cache_validation_code_hash((relay_parent, indra_id, assumption), hash),
+				.cache_validation_code_hash((relay_parent, para_id, assumption), hash),
 			Version(relay_parent, version) =>
 				self.requests_cache.cache_version(relay_parent, version),
 			StagingDisputes(relay_parent, disputes) =>
@@ -203,38 +203,38 @@ where
 				query!(validator_groups(), sender).map(|sender| Request::ValidatorGroups(sender)),
 			Request::AvailabilityCores(sender) => query!(availability_cores(), sender)
 				.map(|sender| Request::AvailabilityCores(sender)),
-			Request::PersistedValidationData(indra, assumption, sender) =>
-				query!(persisted_validation_data(indra, assumption), sender)
-					.map(|sender| Request::PersistedValidationData(indra, assumption, sender)),
+			Request::PersistedValidationData(para, assumption, sender) =>
+				query!(persisted_validation_data(para, assumption), sender)
+					.map(|sender| Request::PersistedValidationData(para, assumption, sender)),
 			Request::AssumedValidationData(
-				indra,
+				para,
 				expected_persisted_validation_data_hash,
 				sender,
 			) => query!(
-				assumed_validation_data(indra, expected_persisted_validation_data_hash),
+				assumed_validation_data(para, expected_persisted_validation_data_hash),
 				sender
 			)
 			.map(|sender| {
 				Request::AssumedValidationData(
-					indra,
+					para,
 					expected_persisted_validation_data_hash,
 					sender,
 				)
 			}),
-			Request::CheckValidationOutputs(indra, commitments, sender) =>
-				query!(check_validation_outputs(indra, commitments), sender)
-					.map(|sender| Request::CheckValidationOutputs(indra, commitments, sender)),
+			Request::CheckValidationOutputs(para, commitments, sender) =>
+				query!(check_validation_outputs(para, commitments), sender)
+					.map(|sender| Request::CheckValidationOutputs(para, commitments, sender)),
 			Request::SessionIndexForChild(sender) => query!(session_index_for_child(), sender)
 				.map(|sender| Request::SessionIndexForChild(sender)),
-			Request::ValidationCode(indra, assumption, sender) =>
-				query!(validation_code(indra, assumption), sender)
-					.map(|sender| Request::ValidationCode(indra, assumption, sender)),
+			Request::ValidationCode(para, assumption, sender) =>
+				query!(validation_code(para, assumption), sender)
+					.map(|sender| Request::ValidationCode(para, assumption, sender)),
 			Request::ValidationCodeByHash(validation_code_hash, sender) =>
 				query!(validation_code_by_hash(validation_code_hash), sender)
 					.map(|sender| Request::ValidationCodeByHash(validation_code_hash, sender)),
-			Request::CandidatePendingAvailability(indra, sender) =>
-				query!(candidate_pending_availability(indra), sender)
-					.map(|sender| Request::CandidatePendingAvailability(indra, sender)),
+			Request::CandidatePendingAvailability(para, sender) =>
+				query!(candidate_pending_availability(para), sender)
+					.map(|sender| Request::CandidatePendingAvailability(para, sender)),
 			Request::CandidateEvents(sender) =>
 				query!(candidate_events(), sender).map(|sender| Request::CandidateEvents(sender)),
 			Request::SessionInfo(index, sender) => {
@@ -261,9 +261,9 @@ where
 				// This request is side-effecting and thus cannot be cached.
 				Some(request)
 			},
-			Request::ValidationCodeHash(indra, assumption, sender) =>
-				query!(validation_code_hash(indra, assumption), sender)
-					.map(|sender| Request::ValidationCodeHash(indra, assumption, sender)),
+			Request::ValidationCodeHash(para, assumption, sender) =>
+				query!(validation_code_hash(para, assumption), sender)
+					.map(|sender| Request::ValidationCodeHash(para, assumption, sender)),
 			Request::StagingDisputes(sender) =>
 				query!(disputes(), sender).map(|sender| Request::StagingDisputes(sender)),
 		}
@@ -318,7 +318,7 @@ async fn run<Client, Context>(
 ) -> SubsystemResult<()>
 where
 	Client: ProvideRuntimeApi<Block> + Send + Sync + 'static,
-	Client::Api: IndracoreHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
+	Client::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
 {
 	loop {
 		// Let's add some back pressure when the subsystem is running at `MAX_PARALLEL_REQUESTS`.
@@ -356,7 +356,7 @@ fn make_runtime_api_request<Client>(
 ) -> Option<RequestResult>
 where
 	Client: ProvideRuntimeApi<Block>,
-	Client::Api: IndracoreHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
+	Client::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
 {
 	use sp_api::ApiExt;
 
@@ -367,7 +367,7 @@ where
 			let sender = $sender;
 			let api = client.runtime_api();
 
-			let runtime_version = api.api_version::<dyn IndracoreHost<Block>>(&BlockId::Hash(relay_parent))
+			let runtime_version = api.api_version::<dyn ParachainHost<Block>>(&BlockId::Hash(relay_parent))
 				.unwrap_or_else(|e| {
 					gum::warn!(
 						target: LOG_TARGET,
@@ -407,7 +407,7 @@ where
 			let api = client.runtime_api();
 
 			let runtime_version = match api
-				.api_version::<dyn IndracoreHost<Block>>(&BlockId::Hash(relay_parent))
+				.api_version::<dyn ParachainHost<Block>>(&BlockId::Hash(relay_parent))
 			{
 				Ok(Some(v)) => Ok(v),
 				Ok(None) => Err(RuntimeApiError::NotSupported { runtime_api_name: "api_version" }),
@@ -427,38 +427,38 @@ where
 			query!(ValidatorGroups, validator_groups(), ver = 1, sender),
 		Request::AvailabilityCores(sender) =>
 			query!(AvailabilityCores, availability_cores(), ver = 1, sender),
-		Request::PersistedValidationData(indra, assumption, sender) => query!(
+		Request::PersistedValidationData(para, assumption, sender) => query!(
 			PersistedValidationData,
-			persisted_validation_data(indra, assumption),
+			persisted_validation_data(para, assumption),
 			ver = 1,
 			sender
 		),
-		Request::AssumedValidationData(indra, expected_persisted_validation_data_hash, sender) =>
+		Request::AssumedValidationData(para, expected_persisted_validation_data_hash, sender) =>
 			query!(
 				AssumedValidationData,
-				assumed_validation_data(indra, expected_persisted_validation_data_hash),
+				assumed_validation_data(para, expected_persisted_validation_data_hash),
 				ver = 1,
 				sender
 			),
-		Request::CheckValidationOutputs(indra, commitments, sender) => query!(
+		Request::CheckValidationOutputs(para, commitments, sender) => query!(
 			CheckValidationOutputs,
-			check_validation_outputs(indra, commitments),
+			check_validation_outputs(para, commitments),
 			ver = 1,
 			sender
 		),
 		Request::SessionIndexForChild(sender) =>
 			query!(SessionIndexForChild, session_index_for_child(), ver = 1, sender),
-		Request::ValidationCode(indra, assumption, sender) =>
-			query!(ValidationCode, validation_code(indra, assumption), ver = 1, sender),
+		Request::ValidationCode(para, assumption, sender) =>
+			query!(ValidationCode, validation_code(para, assumption), ver = 1, sender),
 		Request::ValidationCodeByHash(validation_code_hash, sender) => query!(
 			ValidationCodeByHash,
 			validation_code_by_hash(validation_code_hash),
 			ver = 1,
 			sender
 		),
-		Request::CandidatePendingAvailability(indra, sender) => query!(
+		Request::CandidatePendingAvailability(para, sender) => query!(
 			CandidatePendingAvailability,
-			candidate_pending_availability(indra),
+			candidate_pending_availability(para),
 			ver = 1,
 			sender
 		),
@@ -469,7 +469,7 @@ where
 			let block_id = BlockId::Hash(relay_parent);
 
 			let api_version = api
-				.api_version::<dyn IndracoreHost<Block>>(&BlockId::Hash(relay_parent))
+				.api_version::<dyn ParachainHost<Block>>(&BlockId::Hash(relay_parent))
 				.unwrap_or_default()
 				.unwrap_or_default();
 
@@ -516,8 +516,8 @@ where
 		Request::PvfsRequirePrecheck(sender) => {
 			query!(PvfsRequirePrecheck, pvfs_require_precheck(), ver = 2, sender)
 		},
-		Request::ValidationCodeHash(indra, assumption, sender) =>
-			query!(ValidationCodeHash, validation_code_hash(indra, assumption), ver = 2, sender),
+		Request::ValidationCodeHash(para, assumption, sender) =>
+			query!(ValidationCodeHash, validation_code_hash(para, assumption), ver = 2, sender),
 		Request::StagingDisputes(sender) =>
 			query!(StagingDisputes, staging_get_disputes(), ver = 2, sender),
 	}

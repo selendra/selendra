@@ -27,7 +27,7 @@ use selendra_erasure_coding::{branches, obtain_chunks_v1 as obtain_chunks};
 use selendra_node_primitives::{AvailableData, BlockData, ErasureChunk, PoV, Proof};
 use selendra_primitives::v2::{
 	CandidateCommitments, CandidateDescriptor, CandidateHash, CommittedCandidateReceipt,
-	GroupIndex, Hash, HeadData, Id as IndraId, OccupiedCore, PersistedValidationData, SessionInfo,
+	GroupIndex, Hash, HeadData, Id as ParaId, OccupiedCore, PersistedValidationData, SessionInfo,
 	ValidatorIndex,
 };
 
@@ -72,7 +72,7 @@ pub fn make_session_info() -> SessionInfo {
 /// Takes all the values we care about and fills the rest with dummy values on `build`.
 pub struct OccupiedCoreBuilder {
 	pub group_responsible: GroupIndex,
-	pub indra_id: IndraId,
+	pub para_id: ParaId,
 	pub relay_parent: Hash,
 }
 
@@ -82,7 +82,7 @@ impl OccupiedCoreBuilder {
 		let pov_hash = pov.hash();
 		let (erasure_root, chunk) = get_valid_chunk_data(pov.clone());
 		let candidate_receipt = TestCandidateBuilder {
-			indra_id: self.indra_id,
+			para_id: self.para_id,
 			pov_hash,
 			relay_parent: self.relay_parent,
 			erasure_root,
@@ -105,7 +105,7 @@ impl OccupiedCoreBuilder {
 
 #[derive(Default)]
 pub struct TestCandidateBuilder {
-	indra_id: IndraId,
+	para_id: ParaId,
 	head_data: HeadData,
 	pov_hash: Hash,
 	relay_parent: Hash,
@@ -116,14 +116,14 @@ impl TestCandidateBuilder {
 	pub fn build(self) -> CommittedCandidateReceipt {
 		CommittedCandidateReceipt {
 			descriptor: CandidateDescriptor {
-				indra_id: self.indra_id,
+				para_id: self.para_id,
 				pov_hash: self.pov_hash,
 				relay_parent: self.relay_parent,
 				erasure_root: self.erasure_root,
 				collator: dummy_collator(),
 				persisted_validation_data_hash: dummy_hash(),
 				signature: dummy_collator_signature(),
-				indra_head: dummy_hash(),
+				para_head: dummy_hash(),
 				validation_code_hash: dummy_validation_code().hash(),
 			},
 			commitments: CandidateCommitments { head_data: self.head_data, ..Default::default() },

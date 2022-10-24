@@ -24,13 +24,13 @@ use pallet_transaction_payment::CurrencyAdapter;
 use parity_scale_codec::Encode;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 
-use selendra_runtime_indracores::{
-	configuration as indracores_configuration, disputes as indracores_disputes,
-	dmp as indracores_dmp, hrmp as indracores_hrmp, inclusion as indracores_inclusion,
-	indras as indracores_indras, indras_inherent as indracores_indras_inherent,
-	initializer as indracores_initializer, origin as indracores_origin,
-	runtime_api_impl::v2 as runtime_impl, scheduler as indracores_scheduler,
-	session_info as indracores_session_info, shared as indracores_shared, ump as indracores_ump,
+use selendra_runtime_parachains::{
+	configuration as parachains_configuration, disputes as parachains_disputes,
+	dmp as parachains_dmp, hrmp as parachains_hrmp, inclusion as parachains_inclusion,
+	initializer as parachains_initializer, origin as parachains_origin, paras as parachains_paras,
+	paras_inherent as parachains_paras_inherent, runtime_api_impl::v2 as runtime_impl,
+	scheduler as parachains_scheduler, session_info as parachains_session_info,
+	shared as parachains_shared, ump as parachains_ump,
 };
 
 use authority_discovery_primitives::AuthorityId as AuthorityDiscoveryId;
@@ -46,15 +46,15 @@ use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
 use primitives::v2::{
 	AccountId, AccountIndex, Balance, BlockNumber, CandidateEvent, CandidateHash,
 	CommittedCandidateReceipt, CoreState, DisputeState, GroupRotationInfo, Hash as HashT,
-	Id as IndraId, InboundDownwardMessage, InboundHrmpMessage, Moment, Nonce,
+	Id as ParaId, InboundDownwardMessage, InboundHrmpMessage, Moment, Nonce,
 	OccupiedCoreAssumption, PersistedValidationData, ScrapedOnChainVotes,
 	SessionInfo as SessionInfoData, Signature, ValidationCode, ValidationCodeHash, ValidatorId,
 	ValidatorIndex,
 };
 use runtime_common::{
-	impl_runtime_weights, indras_sudo_wrapper, BlockHashCount, BlockLength, SlowAdjustingFeeUpdate,
+	impl_runtime_weights, paras_sudo_wrapper, BlockHashCount, BlockLength, SlowAdjustingFeeUpdate,
 };
-use selendra_runtime_indracores::reward_points::RewardValidatorsWithEraPoints;
+use selendra_runtime_parachains::reward_points::RewardValidatorsWithEraPoints;
 use sp_core::OpaqueMetadata;
 use sp_mmr_primitives as mmr;
 use sp_runtime::{
@@ -73,12 +73,12 @@ use sp_staking::SessionIndex;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
-pub use indras_sudo_wrapper::Call as IndrasSudoWrapperCall;
 pub use pallet_balances::Call as BalancesCall;
 #[cfg(feature = "std")]
 pub use pallet_staking::StakerStatus;
 pub use pallet_sudo::Call as SudoCall;
 pub use pallet_timestamp::Call as TimestampCall;
+pub use paras_sudo_wrapper::Call as ParasSudoWrapperCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 
@@ -274,8 +274,8 @@ impl_opaque_keys! {
 	pub struct SessionKeys {
 		pub grandpa: Grandpa,
 		pub babe: Babe,
-		pub indra_validator: Initializer,
-		pub indra_assignment: IndraSessionInfo,
+		pub para_validator: Initializer,
+		pub para_assignment: ParaSessionInfo,
 		pub authority_discovery: AuthorityDiscovery,
 	}
 }
@@ -458,62 +458,62 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
-impl indracores_configuration::Config for Runtime {
-	type WeightInfo = indracores_configuration::TestWeightInfo;
+impl parachains_configuration::Config for Runtime {
+	type WeightInfo = parachains_configuration::TestWeightInfo;
 }
 
-impl indracores_shared::Config for Runtime {}
+impl parachains_shared::Config for Runtime {}
 
-impl indracores_inclusion::Config for Runtime {
+impl parachains_inclusion::Config for Runtime {
 	type Event = Event;
-	type DisputesHandler = IndrasDisputes;
+	type DisputesHandler = ParasDisputes;
 	type RewardValidators = RewardValidatorsWithEraPoints<Runtime>;
 }
 
-impl indracores_disputes::Config for Runtime {
+impl parachains_disputes::Config for Runtime {
 	type Event = Event;
 	type RewardValidators = ();
 	type PunishValidators = ();
-	type WeightInfo = indracores_disputes::TestWeightInfo;
+	type WeightInfo = parachains_disputes::TestWeightInfo;
 }
 
-impl indracores_indras_inherent::Config for Runtime {
-	type WeightInfo = indracores_indras_inherent::TestWeightInfo;
+impl parachains_paras_inherent::Config for Runtime {
+	type WeightInfo = parachains_paras_inherent::TestWeightInfo;
 }
 
-impl indracores_initializer::Config for Runtime {
+impl parachains_initializer::Config for Runtime {
 	type Randomness = pallet_babe::RandomnessFromOneEpochAgo<Runtime>;
 	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
 	type WeightInfo = ();
 }
 
-impl indracores_session_info::Config for Runtime {
+impl parachains_session_info::Config for Runtime {
 	type ValidatorSet = Historical;
 }
 
 parameter_types! {
-	pub const IndrasUnsignedPriority: TransactionPriority = TransactionPriority::max_value();
+	pub const ParasUnsignedPriority: TransactionPriority = TransactionPriority::max_value();
 }
 
-impl indracores_indras::Config for Runtime {
+impl parachains_paras::Config for Runtime {
 	type Event = Event;
-	type WeightInfo = indracores_indras::TestWeightInfo;
-	type UnsignedPriority = IndrasUnsignedPriority;
+	type WeightInfo = parachains_paras::TestWeightInfo;
+	type UnsignedPriority = ParasUnsignedPriority;
 	type NextSessionRotation = Babe;
 }
 
-impl indracores_dmp::Config for Runtime {}
+impl parachains_dmp::Config for Runtime {}
 
 parameter_types! {
 	pub const FirstMessageFactorPercent: u64 = 100;
 }
 
-impl indracores_ump::Config for Runtime {
+impl parachains_ump::Config for Runtime {
 	type Event = Event;
 	type UmpSink = ();
 	type FirstMessageFactorPercent = FirstMessageFactorPercent;
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
-	type WeightInfo = indracores_ump::TestWeightInfo;
+	type WeightInfo = parachains_ump::TestWeightInfo;
 }
 
 parameter_types! {
@@ -543,18 +543,18 @@ impl pallet_xcm::Config for Runtime {
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
 
-impl indracores_hrmp::Config for Runtime {
+impl parachains_hrmp::Config for Runtime {
 	type Event = Event;
 	type Origin = Origin;
 	type Currency = Balances;
-	type WeightInfo = indracores_hrmp::TestWeightInfo;
+	type WeightInfo = parachains_hrmp::TestWeightInfo;
 }
 
-impl indracores_scheduler::Config for Runtime {}
+impl parachains_scheduler::Config for Runtime {}
 
-impl indras_sudo_wrapper::Config for Runtime {}
+impl paras_sudo_wrapper::Config for Runtime {}
 
-impl indracores_origin::Config for Runtime {}
+impl parachains_origin::Config for Runtime {}
 
 impl pallet_test_notifier::Config for Runtime {
 	type Event = Event;
@@ -671,22 +671,22 @@ construct_runtime! {
 		// Vesting. Usable initially, but removed once all vesting is finished.
 		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>},
 
-		// Indracores runtime modules
-		Configuration: indracores_configuration::{Pallet, Call, Storage, Config<T>},
-		IndraInclusion: indracores_inclusion::{Pallet, Call, Storage, Event<T>},
-		IndraInherent: indracores_indras_inherent::{Pallet, Call, Storage, Inherent},
-		Initializer: indracores_initializer::{Pallet, Call, Storage},
-		Indras: indracores_indras::{Pallet, Call, Storage, Event},
-		IndrasShared: indracores_shared::{Pallet, Call, Storage},
-		Scheduler: indracores_scheduler::{Pallet, Storage},
-		IndrasSudoWrapper: indras_sudo_wrapper::{Pallet, Call},
-		IndrasOrigin: indracores_origin::{Pallet, Origin},
-		IndraSessionInfo: indracores_session_info::{Pallet, Storage},
-		Hrmp: indracores_hrmp::{Pallet, Call, Storage, Event<T>},
-		Ump: indracores_ump::{Pallet, Call, Storage, Event},
-		Dmp: indracores_dmp::{Pallet, Call, Storage},
+		// Parachains runtime modules
+		Configuration: parachains_configuration::{Pallet, Call, Storage, Config<T>},
+		ParaInclusion: parachains_inclusion::{Pallet, Call, Storage, Event<T>},
+		ParaInherent: parachains_paras_inherent::{Pallet, Call, Storage, Inherent},
+		Initializer: parachains_initializer::{Pallet, Call, Storage},
+		Paras: parachains_paras::{Pallet, Call, Storage, Event},
+		ParasShared: parachains_shared::{Pallet, Call, Storage},
+		Scheduler: parachains_scheduler::{Pallet, Storage},
+		ParasSudoWrapper: paras_sudo_wrapper::{Pallet, Call},
+		ParasOrigin: parachains_origin::{Pallet, Origin},
+		ParaSessionInfo: parachains_session_info::{Pallet, Storage},
+		Hrmp: parachains_hrmp::{Pallet, Call, Storage, Event<T>},
+		Ump: parachains_ump::{Pallet, Call, Storage, Event},
+		Dmp: parachains_dmp::{Pallet, Call, Storage},
 		Xcm: pallet_xcm::{Pallet, Call, Event<T>, Origin},
-		IndrasDisputes: indracores_disputes::{Pallet, Storage, Event<T>},
+		ParasDisputes: parachains_disputes::{Pallet, Storage, Event<T>},
 
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
 
@@ -795,7 +795,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl primitives::runtime_api::IndracoreHost<Block, Hash, BlockNumber> for Runtime {
+	impl primitives::runtime_api::ParachainHost<Block, Hash, BlockNumber> for Runtime {
 		fn validators() -> Vec<ValidatorId> {
 			runtime_impl::validators::<Runtime>()
 		}
@@ -808,41 +808,41 @@ sp_api::impl_runtime_apis! {
 			runtime_impl::availability_cores::<Runtime>()
 		}
 
-		fn persisted_validation_data(indra_id: IndraId, assumption: OccupiedCoreAssumption)
+		fn persisted_validation_data(para_id: ParaId, assumption: OccupiedCoreAssumption)
 			-> Option<PersistedValidationData<Hash, BlockNumber>>
 		{
-			runtime_impl::persisted_validation_data::<Runtime>(indra_id, assumption)
+			runtime_impl::persisted_validation_data::<Runtime>(para_id, assumption)
 		}
 
 		fn assumed_validation_data(
-			indra_id: IndraId,
+			para_id: ParaId,
 			expected_persisted_validation_data_hash: Hash,
 		) -> Option<(PersistedValidationData<Hash, BlockNumber>, ValidationCodeHash)> {
 			runtime_impl::assumed_validation_data::<Runtime>(
-				indra_id,
+				para_id,
 				expected_persisted_validation_data_hash,
 			)
 		}
 
 		fn check_validation_outputs(
-			indra_id: IndraId,
+			para_id: ParaId,
 			outputs: primitives::v2::CandidateCommitments,
 		) -> bool {
-			runtime_impl::check_validation_outputs::<Runtime>(indra_id, outputs)
+			runtime_impl::check_validation_outputs::<Runtime>(para_id, outputs)
 		}
 
 		fn session_index_for_child() -> SessionIndex {
 			runtime_impl::session_index_for_child::<Runtime>()
 		}
 
-		fn validation_code(indra_id: IndraId, assumption: OccupiedCoreAssumption)
+		fn validation_code(para_id: ParaId, assumption: OccupiedCoreAssumption)
 			-> Option<ValidationCode>
 		{
-			runtime_impl::validation_code::<Runtime>(indra_id, assumption)
+			runtime_impl::validation_code::<Runtime>(para_id, assumption)
 		}
 
-		fn candidate_pending_availability(indra_id: IndraId) -> Option<CommittedCandidateReceipt<Hash>> {
-			runtime_impl::candidate_pending_availability::<Runtime>(indra_id)
+		fn candidate_pending_availability(para_id: ParaId) -> Option<CommittedCandidateReceipt<Hash>> {
+			runtime_impl::candidate_pending_availability::<Runtime>(para_id)
 		}
 
 		fn candidate_events() -> Vec<CandidateEvent<Hash>> {
@@ -854,14 +854,14 @@ sp_api::impl_runtime_apis! {
 		}
 
 		fn dmq_contents(
-			recipient: IndraId,
+			recipient: ParaId,
 		) -> Vec<InboundDownwardMessage<BlockNumber>> {
 			runtime_impl::dmq_contents::<Runtime>(recipient)
 		}
 
 		fn inbound_hrmp_channels_contents(
-			recipient: IndraId,
-		) -> BTreeMap<IndraId, Vec<InboundHrmpMessage<BlockNumber>>> {
+			recipient: ParaId,
+		) -> BTreeMap<ParaId, Vec<InboundHrmpMessage<BlockNumber>>> {
 			runtime_impl::inbound_hrmp_channels_contents::<Runtime>(recipient)
 		}
 
@@ -884,14 +884,14 @@ sp_api::impl_runtime_apis! {
 			runtime_impl::pvfs_require_precheck::<Runtime>()
 		}
 
-		fn validation_code_hash(indra_id: IndraId, assumption: OccupiedCoreAssumption)
+		fn validation_code_hash(para_id: ParaId, assumption: OccupiedCoreAssumption)
 			-> Option<ValidationCodeHash>
 		{
-			runtime_impl::validation_code_hash::<Runtime>(indra_id, assumption)
+			runtime_impl::validation_code_hash::<Runtime>(para_id, assumption)
 		}
 
 		fn staging_get_disputes() -> Vec<(SessionIndex, CandidateHash, DisputeState<BlockNumber>)> {
-			selendra_runtime_indracores::runtime_api_impl::vstaging::get_session_disputes::<Runtime>()
+			selendra_runtime_parachains::runtime_api_impl::vstaging::get_session_disputes::<Runtime>()
 		}
 	}
 

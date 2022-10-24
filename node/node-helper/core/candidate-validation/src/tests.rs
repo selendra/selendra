@@ -22,7 +22,7 @@ use node_subsystem_test_helpers as test_helpers;
 use selendra_node_core_pvf::PrepareError;
 use selendra_node_subsystem::messages::AllMessages;
 use selendra_node_subsystem_util::reexports::SubsystemContext;
-use selendra_primitives::v2::{HeadData, Id as IndraId, UpwardMessage};
+use selendra_primitives::v2::{HeadData, Id as ParaId, UpwardMessage};
 use sp_core::testing::TaskExecutor;
 use sp_keyring::Sr25519Keyring;
 
@@ -33,10 +33,10 @@ fn correctly_checks_included_assumption() {
 
 	let persisted_validation_data_hash = validation_data.hash();
 	let relay_parent = [2; 32].into();
-	let indra_id = IndraId::from(5_u32);
+	let para_id = ParaId::from(5_u32);
 
 	let descriptor = make_valid_candidate_descriptor(
-		indra_id,
+		para_id,
 		relay_parent,
 		persisted_validation_data_hash,
 		dummy_hash(),
@@ -69,7 +69,7 @@ fn correctly_checks_included_assumption() {
 				),
 			)) => {
 				assert_eq!(rp, relay_parent);
-				assert_eq!(p, indra_id);
+				assert_eq!(p, para_id);
 
 				let _ = tx.send(Ok(Some(validation_data.clone())));
 			}
@@ -82,7 +82,7 @@ fn correctly_checks_included_assumption() {
 				RuntimeApiRequest::ValidationCode(p, OccupiedCoreAssumption::Included, tx)
 			)) => {
 				assert_eq!(rp, relay_parent);
-				assert_eq!(p, indra_id);
+				assert_eq!(p, para_id);
 
 				let _ = tx.send(Ok(Some(validation_code.clone())));
 			}
@@ -105,10 +105,10 @@ fn correctly_checks_timed_out_assumption() {
 
 	let persisted_validation_data_hash = validation_data.hash();
 	let relay_parent = [2; 32].into();
-	let indra_id = IndraId::from(5_u32);
+	let para_id = ParaId::from(5_u32);
 
 	let descriptor = make_valid_candidate_descriptor(
-		indra_id,
+		para_id,
 		relay_parent,
 		persisted_validation_data_hash,
 		dummy_hash(),
@@ -141,7 +141,7 @@ fn correctly_checks_timed_out_assumption() {
 				),
 			)) => {
 				assert_eq!(rp, relay_parent);
-				assert_eq!(p, indra_id);
+				assert_eq!(p, para_id);
 
 				let _ = tx.send(Ok(Some(validation_data.clone())));
 			}
@@ -154,7 +154,7 @@ fn correctly_checks_timed_out_assumption() {
 				RuntimeApiRequest::ValidationCode(p, OccupiedCoreAssumption::TimedOut, tx)
 			)) => {
 				assert_eq!(rp, relay_parent);
-				assert_eq!(p, indra_id);
+				assert_eq!(p, para_id);
 
 				let _ = tx.send(Ok(Some(validation_code.clone())));
 			}
@@ -175,10 +175,10 @@ fn check_is_bad_request_if_no_validation_data() {
 	let validation_data: PersistedValidationData = Default::default();
 	let persisted_validation_data_hash = validation_data.hash();
 	let relay_parent = [2; 32].into();
-	let indra_id = IndraId::from(5_u32);
+	let para_id = ParaId::from(5_u32);
 
 	let descriptor = make_valid_candidate_descriptor(
-		indra_id,
+		para_id,
 		relay_parent,
 		persisted_validation_data_hash,
 		dummy_hash(),
@@ -211,7 +211,7 @@ fn check_is_bad_request_if_no_validation_data() {
 				),
 			)) => {
 				assert_eq!(rp, relay_parent);
-				assert_eq!(p, indra_id);
+				assert_eq!(p, para_id);
 
 				let _ = tx.send(Ok(None));
 			}
@@ -229,10 +229,10 @@ fn check_is_bad_request_if_no_validation_code() {
 	let validation_data: PersistedValidationData = Default::default();
 	let persisted_validation_data_hash = validation_data.hash();
 	let relay_parent = [2; 32].into();
-	let indra_id = IndraId::from(5_u32);
+	let para_id = ParaId::from(5_u32);
 
 	let descriptor = make_valid_candidate_descriptor(
-		indra_id,
+		para_id,
 		relay_parent,
 		persisted_validation_data_hash,
 		dummy_hash(),
@@ -265,7 +265,7 @@ fn check_is_bad_request_if_no_validation_code() {
 				),
 			)) => {
 				assert_eq!(rp, relay_parent);
-				assert_eq!(p, indra_id);
+				assert_eq!(p, para_id);
 
 				let _ = tx.send(Ok(Some(validation_data.clone())));
 			}
@@ -278,7 +278,7 @@ fn check_is_bad_request_if_no_validation_code() {
 				RuntimeApiRequest::ValidationCode(p, OccupiedCoreAssumption::TimedOut, tx)
 			)) => {
 				assert_eq!(rp, relay_parent);
-				assert_eq!(p, indra_id);
+				assert_eq!(p, para_id);
 
 				let _ = tx.send(Ok(None));
 			}
@@ -295,10 +295,10 @@ fn check_is_bad_request_if_no_validation_code() {
 fn check_does_not_match() {
 	let validation_data: PersistedValidationData = Default::default();
 	let relay_parent = Hash::repeat_byte(0x02);
-	let indra_id = IndraId::from(5_u32);
+	let para_id = ParaId::from(5_u32);
 
 	let descriptor = make_valid_candidate_descriptor(
-		indra_id,
+		para_id,
 		relay_parent,
 		Hash::from([3; 32]),
 		dummy_hash(),
@@ -331,7 +331,7 @@ fn check_does_not_match() {
 				),
 			)) => {
 				assert_eq!(rp, relay_parent);
-				assert_eq!(p, indra_id);
+				assert_eq!(p, para_id);
 
 				let _ = tx.send(Ok(Some(validation_data.clone())));
 			}
@@ -379,7 +379,7 @@ fn candidate_validation_ok_is_ok() {
 	let validation_code = ValidationCode(vec![2; 16]);
 
 	let descriptor = make_valid_candidate_descriptor(
-		IndraId::from(1_u32),
+		ParaId::from(1_u32),
 		dummy_hash(),
 		validation_data.hash(),
 		pov.hash(),
@@ -446,7 +446,7 @@ fn candidate_validation_bad_return_is_invalid() {
 	let validation_code = ValidationCode(vec![2; 16]);
 
 	let descriptor = make_valid_candidate_descriptor(
-		IndraId::from(1_u32),
+		ParaId::from(1_u32),
 		dummy_hash(),
 		validation_data.hash(),
 		pov.hash(),
@@ -490,7 +490,7 @@ fn candidate_validation_timeout_is_internal_error() {
 	let validation_code = ValidationCode(vec![2; 16]);
 
 	let descriptor = make_valid_candidate_descriptor(
-		IndraId::from(1_u32),
+		ParaId::from(1_u32),
 		dummy_hash(),
 		validation_data.hash(),
 		pov.hash(),
@@ -534,7 +534,7 @@ fn candidate_validation_commitment_hash_mismatch_is_invalid() {
 
 	let candidate_receipt = CandidateReceipt {
 		descriptor: make_valid_candidate_descriptor(
-			IndraId::from(1_u32),
+			ParaId::from(1_u32),
 			validation_data.parent_head.hash(),
 			validation_data.hash(),
 			pov.hash(),
@@ -579,7 +579,7 @@ fn candidate_validation_code_mismatch_is_invalid() {
 	let validation_code = ValidationCode(vec![2; 16]);
 
 	let descriptor = make_valid_candidate_descriptor(
-		IndraId::from(1_u32),
+		ParaId::from(1_u32),
 		dummy_hash(),
 		validation_data.hash(),
 		pov.hash(),
@@ -627,7 +627,7 @@ fn compressed_code_works() {
 		.unwrap();
 
 	let descriptor = make_valid_candidate_descriptor(
-		IndraId::from(1_u32),
+		ParaId::from(1_u32),
 		dummy_hash(),
 		validation_data.hash(),
 		pov.hash(),
@@ -683,7 +683,7 @@ fn code_decompression_failure_is_invalid() {
 			.unwrap();
 
 	let descriptor = make_valid_candidate_descriptor(
-		IndraId::from(1_u32),
+		ParaId::from(1_u32),
 		dummy_hash(),
 		validation_data.hash(),
 		pov.hash(),
@@ -731,7 +731,7 @@ fn pov_decompression_failure_is_invalid() {
 	let validation_code = ValidationCode(vec![2; 16]);
 
 	let descriptor = make_valid_candidate_descriptor(
-		IndraId::from(1_u32),
+		ParaId::from(1_u32),
 		dummy_hash(),
 		validation_data.hash(),
 		pov.hash(),

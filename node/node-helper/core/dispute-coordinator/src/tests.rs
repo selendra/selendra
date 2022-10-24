@@ -77,7 +77,7 @@ fn make_keystore(seeds: impl Iterator<Item = String>) -> LocalKeystore {
 
 	for s in seeds {
 		store
-			.sr25519_generate_new(selendra_primitives::v2::INDRACORE_KEY_TYPE_ID, Some(&s))
+			.sr25519_generate_new(selendra_primitives::v2::PARACHAIN_KEY_TYPE_ID, Some(&s))
 			.unwrap();
 	}
 

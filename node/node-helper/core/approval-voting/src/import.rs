@@ -193,7 +193,7 @@ async fn imported_block_info<Context>(
 		// block in BABE has the epoch _it was authored in_ within its post-state. So we use the
 		// block, and not its parent.
 		//
-		// It's worth nothing that Selendra session changes, at least for the purposes of indracores,
+		// It's worth nothing that Selendra session changes, at least for the purposes of parachains,
 		// would function the same way, except for the fact that they're always delayed by one block.
 		// This gives us the opposite invariant for sessions - the parent block's post-state gives
 		// us the canonical information about the session index for any of its children, regardless
@@ -619,7 +619,7 @@ pub(crate) mod tests {
 	use selendra_node_primitives::approval::{VRFOutput, VRFProof};
 	use selendra_node_subsystem::messages::{AllMessages, ApprovalVotingMessage};
 	use selendra_node_subsystem_util::database::Database;
-	use selendra_primitives::v2::{Id as IndraId, SessionInfo, ValidatorIndex};
+	use selendra_primitives::v2::{Id as ParaId, SessionInfo, ValidatorIndex};
 	pub(crate) use sp_consensus_babe::{
 		digests::{CompatibleDigestItem, PreDigest, SecondaryVRFPreDigest},
 		AllowedSlots, BabeEpochConfiguration, Epoch as BabeEpoch,
@@ -756,9 +756,9 @@ pub(crate) mod tests {
 		};
 
 		let hash = header.hash();
-		let make_candidate = |indra_id| {
+		let make_candidate = |para_id| {
 			let mut r = dummy_candidate_receipt(dummy_hash());
-			r.descriptor.indra_id = indra_id;
+			r.descriptor.para_id = para_id;
 			r.descriptor.relay_parent = hash;
 			r
 		};
@@ -870,9 +870,9 @@ pub(crate) mod tests {
 		};
 
 		let hash = header.hash();
-		let make_candidate = |indra_id| {
+		let make_candidate = |para_id| {
 			let mut r = dummy_candidate_receipt(dummy_hash());
-			r.descriptor.indra_id = indra_id;
+			r.descriptor.para_id = para_id;
 			r.descriptor.relay_parent = hash;
 			r
 		};
@@ -973,9 +973,9 @@ pub(crate) mod tests {
 		};
 
 		let hash = header.hash();
-		let make_candidate = |indra_id| {
+		let make_candidate = |para_id| {
 			let mut r = dummy_candidate_receipt(dummy_hash());
-			r.descriptor.indra_id = indra_id;
+			r.descriptor.para_id = para_id;
 			r.descriptor.relay_parent = hash;
 			r
 		};
@@ -1063,9 +1063,9 @@ pub(crate) mod tests {
 		};
 
 		let hash = header.hash();
-		let make_candidate = |indra_id| {
+		let make_candidate = |para_id| {
 			let mut r = dummy_candidate_receipt(dummy_hash());
-			r.descriptor.indra_id = indra_id;
+			r.descriptor.para_id = para_id;
 			r.descriptor.relay_parent = hash;
 			r
 		};
@@ -1210,15 +1210,15 @@ pub(crate) mod tests {
 		};
 
 		let hash = header.hash();
-		let make_candidate = |indra_id| {
+		let make_candidate = |para_id| {
 			let mut r = dummy_candidate_receipt(dummy_hash());
-			r.descriptor.indra_id = indra_id;
+			r.descriptor.para_id = para_id;
 			r.descriptor.relay_parent = hash;
 			r
 		};
 		let candidates = vec![
-			(make_candidate(IndraId::from(1)), CoreIndex(0), GroupIndex(0)),
-			(make_candidate(IndraId::from(2)), CoreIndex(1), GroupIndex(1)),
+			(make_candidate(ParaId::from(1)), CoreIndex(0), GroupIndex(0)),
+			(make_candidate(ParaId::from(2)), CoreIndex(1), GroupIndex(1)),
 		];
 		let inclusion_events = candidates
 			.iter()

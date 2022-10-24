@@ -87,7 +87,7 @@ use parity_scale_codec::Encode;
 use sc_network::PeerId;
 use selendra_node_primitives::PoV;
 use selendra_primitives::v2::{
-	BlakeTwo256, CandidateHash, Hash, HashT, Id as IndraId, ValidatorIndex,
+	BlakeTwo256, CandidateHash, Hash, HashT, Id as ParaId, ValidatorIndex,
 };
 
 use std::{fmt, sync::Arc};
@@ -297,10 +297,10 @@ impl Span {
 		self.with_string_fmt_debug_tag("candidate-hash", &candidate_hash.0)
 	}
 
-	/// Attach a indra-id to the span.
+	/// Attach a para-id to the span.
 	#[inline(always)]
-	pub fn with_indra_id(self, indra_id: IndraId) -> Self {
-		self.with_int_tag("indra-id", u32::from(indra_id) as i64)
+	pub fn with_para_id(self, para_id: ParaId) -> Self {
+		self.with_int_tag("para-id", u32::from(para_id) as i64)
 	}
 
 	/// Attach a candidate stage.
@@ -377,8 +377,8 @@ impl Span {
 	}
 
 	#[inline(always)]
-	pub fn add_indra_id(&mut self, indra_id: IndraId) {
-		self.add_int_tag("indra-id", u32::from(indra_id) as i64);
+	pub fn add_para_id(&mut self, para_id: ParaId) {
+		self.add_int_tag("para-id", u32::from(para_id) as i64);
 	}
 
 	/// Add a string tag, without consuming the span.

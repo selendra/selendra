@@ -38,9 +38,9 @@ use sc_service::{
 use selendra_node_primitives::{CollationGenerationConfig, CollatorFn};
 use selendra_node_subsystem::messages::{CollationGenerationMessage, CollatorProtocolMessage};
 use selendra_overseer::Handle;
-use selendra_primitives::v2::{Balance, CollatorPair, HeadData, Id as IndraId, ValidationCode};
+use selendra_primitives::v2::{Balance, CollatorPair, HeadData, Id as ParaId, ValidationCode};
 use selendra_runtime_common::BlockHashCount;
-use selendra_runtime_indracores::indras::IndraGenesisArgs;
+use selendra_runtime_parachains::paras::ParaGenesisArgs;
 use selendra_service::{
 	ClientHandle, Error, ExecuteWithClient, FullClient, IsCollator, NewFull, PrometheusConfig,
 };
@@ -58,7 +58,7 @@ use substrate_test_client::{
 	BlockchainEventsExt, RpcHandlersExt, RpcTransactionError, RpcTransactionOutput,
 };
 use test_runtime::{
-	IndrasSudoWrapperCall, Runtime, SignedExtra, SignedPayload, SudoCall, UncheckedExtrinsic,
+	ParasSudoWrapperCall, Runtime, SignedExtra, SignedPayload, SudoCall, UncheckedExtrinsic,
 	VERSION,
 };
 
@@ -295,19 +295,19 @@ impl SelendraTestNode {
 		self.rpc_handlers.send_transaction(extrinsic.into()).await
 	}
 
-	/// Register a indracore at this relay chain.
-	pub async fn register_indracore(
+	/// Register a parachain at this relay chain.
+	pub async fn register_parachain(
 		&self,
-		id: IndraId,
+		id: ParaId,
 		validation_code: impl Into<ValidationCode>,
 		genesis_head: impl Into<HeadData>,
 	) -> Result<(), RpcTransactionError> {
-		let call = IndrasSudoWrapperCall::sudo_schedule_indra_initialize {
+		let call = ParasSudoWrapperCall::sudo_schedule_para_initialize {
 			id,
-			genesis: IndraGenesisArgs {
+			genesis: ParaGenesisArgs {
 				genesis_head: genesis_head.into(),
 				validation_code: validation_code.into(),
-				indracore: true,
+				parachain: true,
 			},
 		};
 
@@ -326,17 +326,17 @@ impl SelendraTestNode {
 	pub async fn register_collator(
 		&mut self,
 		collator_key: CollatorPair,
-		indra_id: IndraId,
+		para_id: ParaId,
 		collator: CollatorFn,
 	) {
-		let config = CollationGenerationConfig { key: collator_key, collator, indra_id };
+		let config = CollationGenerationConfig { key: collator_key, collator, para_id };
 
 		self.overseer_handle
 			.send_msg(CollationGenerationMessage::Initialize(config), "Collator")
 			.await;
 
 		self.overseer_handle
-			.send_msg(CollatorProtocolMessage::CollateOn(indra_id), "Collator")
+			.send_msg(CollatorProtocolMessage::CollateOn(para_id), "Collator")
 			.await;
 	}
 }

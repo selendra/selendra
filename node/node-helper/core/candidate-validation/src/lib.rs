@@ -23,7 +23,6 @@
 #![deny(unused_crate_dependencies, unused_results)]
 #![warn(missing_docs)]
 
-use selendra_indracore::primitives::{ValidationParams, ValidationResult as WasmValidationResult};
 use selendra_node_core_pvf::{
 	InvalidCandidate as WasmInvalidCandidate, PrepareError, Pvf, ValidationError, ValidationHost,
 };
@@ -39,6 +38,7 @@ use selendra_node_subsystem::{
 	overseer, FromOrchestra, OverseerSignal, SpawnedSubsystem, SubsystemError, SubsystemResult,
 	SubsystemSender,
 };
+use selendra_parachain::primitives::{ValidationParams, ValidationResult as WasmValidationResult};
 use selendra_primitives::v2::{
 	CandidateCommitments, CandidateDescriptor, CandidateReceipt, Hash, OccupiedCoreAssumption,
 	PersistedValidationData, ValidationCode, ValidationCodeHash,
@@ -58,7 +58,7 @@ use self::metrics::Metrics;
 #[cfg(test)]
 mod tests;
 
-const LOG_TARGET: &'static str = "indracore::candidate-validation";
+const LOG_TARGET: &'static str = "parachain::candidate-validation";
 
 /// Configuration for the candidate validation subsystem
 #[derive(Clone)]
@@ -343,7 +343,7 @@ where
 		let d = runtime_api_request(
 			sender,
 			descriptor.relay_parent,
-			RuntimeApiRequest::PersistedValidationData(descriptor.indra_id, assumption, tx),
+			RuntimeApiRequest::PersistedValidationData(descriptor.para_id, assumption, tx),
 			rx,
 		)
 		.await;
@@ -361,7 +361,7 @@ where
 		let validation_code = runtime_api_request(
 			sender,
 			descriptor.relay_parent,
-			RuntimeApiRequest::ValidationCode(descriptor.indra_id, assumption, code_tx),
+			RuntimeApiRequest::ValidationCode(descriptor.para_id, assumption, code_tx),
 			code_rx,
 		)
 		.await;
@@ -421,7 +421,7 @@ where
 		AssumptionCheckOutcome::Matches(validation_data, validation_code) =>
 			Ok(Some((validation_data, validation_code))),
 		AssumptionCheckOutcome::DoesNotMatch => {
-			// If neither the assumption of the occupied core having the indra included or the assumption
+			// If neither the assumption of the occupied core having the para included or the assumption
 			// of the occupied core timing out are valid, then the persisted_validation_data_hash in the descriptor
 			// is not based on the relay parent and is thus invalid.
 			Ok(None)
@@ -471,7 +471,7 @@ where
 			sender,
 			candidate_receipt.descriptor.relay_parent,
 			RuntimeApiRequest::CheckValidationOutputs(
-				candidate_receipt.descriptor.indra_id,
+				candidate_receipt.descriptor.para_id,
 				outputs.clone(),
 				tx,
 			),
@@ -504,7 +504,7 @@ async fn validate_candidate_exhaustive(
 	gum::debug!(
 		target: LOG_TARGET,
 		?validation_code_hash,
-		indra_id = ?candidate_receipt.descriptor.indra_id,
+		para_id = ?candidate_receipt.descriptor.para_id,
 		"About to validate a candidate.",
 	);
 
@@ -575,8 +575,8 @@ async fn validate_candidate_exhaustive(
 			Ok(ValidationResult::Invalid(InvalidCandidate::ExecutionError(e))),
 
 		Ok(res) =>
-			if res.head_data.hash() != candidate_receipt.descriptor.indra_head {
-				Ok(ValidationResult::Invalid(InvalidCandidate::IndraHeadHashMismatch))
+			if res.head_data.hash() != candidate_receipt.descriptor.para_head {
+				Ok(ValidationResult::Invalid(InvalidCandidate::ParaHeadHashMismatch))
 			} else {
 				let outputs = CandidateCommitments {
 					head_data: res.head_data,

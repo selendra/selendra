@@ -40,7 +40,7 @@ pub const TRANCHE_RANDOMNESS_CONTEXT: &[u8] = b"A&V TRANCHE";
 pub struct RelayVRFStory(pub [u8; 32]);
 
 /// Different kinds of input data or criteria that can prove a validator's assignment
-/// to check a particular indracore.
+/// to check a particular parachain.
 #[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
 pub enum AssignmentCertKind {
 	/// An assignment story based on the VRF that authorized the relay-chain block where the

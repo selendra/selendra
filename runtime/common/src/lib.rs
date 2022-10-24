@@ -19,8 +19,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod assigned_slots;
-pub mod indras_registrar;
-pub mod indras_sudo_wrapper;
+pub mod paras_registrar;
+pub mod paras_sudo_wrapper;
 pub mod slot_range;
 pub mod slots;
 pub mod traits;

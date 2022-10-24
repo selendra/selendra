@@ -111,7 +111,7 @@ const BENEFIT_VALID_RESPONSE: Rep =
 /// Typically we will only keep 1, but when a validator equivocates we will need to track 2.
 const VC_THRESHOLD: usize = 2;
 
-const LOG_TARGET: &str = "indracore::statement-distribution";
+const LOG_TARGET: &str = "parachain::statement-distribution";
 
 /// Large statements should be rare.
 const MAX_LARGE_STATEMENTS_PER_SENDER: usize = 20;
@@ -311,7 +311,7 @@ impl PeerRelayParentKnowledge {
 	///
 	/// Provide the maximum message count that we can receive per candidate. In practice we should
 	/// not receive more statements for any one candidate than there are members in the group assigned
-	/// to that indra, but this maximum needs to be lenient to account for equivocations that may be
+	/// to that para, but this maximum needs to be lenient to account for equivocations that may be
 	/// cross-group. As such, a maximum of 2 * `n_validators` is recommended.
 	///
 	/// This returns an error if the peer should not have sent us this message according to protocol
@@ -480,7 +480,7 @@ impl PeerData {
 	///
 	/// Provide the maximum message count that we can receive per candidate. In practice we should
 	/// not receive more statements for any one candidate than there are members in the group assigned
-	/// to that indra, but this maximum needs to be lenient to account for equivocations that may be
+	/// to that para, but this maximum needs to be lenient to account for equivocations that may be
 	/// cross-group. As such, a maximum of 2 * `n_validators` is recommended.
 	///
 	/// This returns an error if the peer should not have sent us this message according to protocol
@@ -658,7 +658,7 @@ struct ActiveHeadData {
 	statements: IndexMap<StoredStatementComparator, SignedFullStatement>,
 	/// Large statements we are waiting for with associated meta data.
 	waiting_large_statements: HashMap<CandidateHash, LargeStatementStatus>,
-	/// The indracore validators at the head's child session index.
+	/// The parachain validators at the head's child session index.
 	validators: Vec<ValidatorId>,
 	/// The current session index of this fork.
 	session_index: sp_staking::SessionIndex,
@@ -2004,7 +2004,7 @@ impl<R: rand::Rng> StatementDistributionSubsystem<R> {
 						"New active leaf",
 					);
 
-					// Retrieve the indracore validators at the child of the head we track.
+					// Retrieve the parachain validators at the child of the head we track.
 					let session_index =
 						runtime.get_session_index_for_child(ctx.sender(), relay_parent).await?;
 					let info = runtime

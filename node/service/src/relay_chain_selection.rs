@@ -16,7 +16,7 @@
 
 //! A [`SelectChain`] implementation designed for relay chains.
 //!
-//! This uses information about indracores to inform GRANDPA and BABE
+//! This uses information about parachains to inform GRANDPA and BABE
 //! about blocks which are safe to build on and blocks which are safe to
 //! finalize.
 //!
@@ -57,7 +57,7 @@ use std::sync::Arc;
 // and `MAX_BATCH_SCRAPE_ANCESTORS` in `dispute-coordinator`.
 const MAX_FINALITY_LAG: selendra_primitives::v2::BlockNumber = PRIMITIVES_MAX_FINALITY_LAG;
 
-const LOG_TARGET: &str = "indracore::chain-selection";
+const LOG_TARGET: &str = "parachain::chain-selection";
 
 /// Prometheus metrics for chain-selection.
 #[derive(Debug, Default, Clone)]
@@ -75,7 +75,7 @@ impl metrics::Metrics for Metrics {
 			approval_checking_finality_lag: prometheus::register(
 				prometheus::Gauge::with_opts(
 					prometheus::Opts::new(
-						"selendra_indracore_approval_checking_finality_lag",
+						"selendra_parachain_approval_checking_finality_lag",
 						"How far behind the head of the chain the Approval Checking protocol wants to vote",
 					)
 				)?,
@@ -84,7 +84,7 @@ impl metrics::Metrics for Metrics {
 			disputes_finality_lag: prometheus::register(
 				prometheus::Gauge::with_opts(
 					prometheus::Opts::new(
-						"selendra_indracore_disputes_finality_lag",
+						"selendra_parachain_disputes_finality_lag",
 						"How far behind the head of the chain the Disputes protocol wants to vote",
 					)
 				)?,

@@ -102,7 +102,7 @@ const APPROVAL_CHECKING_TIMEOUT: Duration = Duration::from_secs(120);
 const APPROVAL_CACHE_SIZE: usize = 1024;
 const TICK_TOO_FAR_IN_FUTURE: Tick = 20; // 10 seconds.
 const APPROVAL_DELAY: Tick = 2;
-const LOG_TARGET: &str = "indracore::approval-voting";
+const LOG_TARGET: &str = "parachain::approval-voting";
 
 /// Configuration for the approval voting subsystem
 #[derive(Debug, Clone)]
@@ -241,7 +241,7 @@ impl metrics::Metrics for Metrics {
 		let metrics = MetricsInner {
 			imported_candidates_total: prometheus::register(
 				prometheus::Counter::new(
-					"selendra_indracore_imported_candidates_total",
+					"selendra_parachain_imported_candidates_total",
 					"Number of candidates imported by the approval voting subsystem",
 				)?,
 				registry,
@@ -249,7 +249,7 @@ impl metrics::Metrics for Metrics {
 			assignments_produced: prometheus::register(
 				prometheus::Histogram::with_opts(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_assignments_produced",
+						"selendra_parachain_assignments_produced",
 						"Assignments and tranches produced by the approval voting subsystem",
 					).buckets(vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 15.0, 25.0, 40.0, 70.0]),
 				)?,
@@ -258,7 +258,7 @@ impl metrics::Metrics for Metrics {
 			approvals_produced_total: prometheus::register(
 				prometheus::CounterVec::new(
 					prometheus::Opts::new(
-						"selendra_indracore_approvals_produced_total",
+						"selendra_parachain_approvals_produced_total",
 						"Number of approvals produced by the approval voting subsystem",
 					),
 					&["status"]
@@ -267,14 +267,14 @@ impl metrics::Metrics for Metrics {
 			)?,
 			no_shows_total: prometheus::register(
 				prometheus::Counter::new(
-					"selendra_indracore_approvals_no_shows_total",
+					"selendra_parachain_approvals_no_shows_total",
 					"Number of assignments which became no-shows in the approval voting subsystem",
 				)?,
 				registry,
 			)?,
 			wakeups_triggered_total: prometheus::register(
 				prometheus::Counter::new(
-					"selendra_indracore_approvals_wakeups_total",
+					"selendra_parachain_approvals_wakeups_total",
 					"Number of times we woke up to process a candidate in the approval voting subsystem",
 				)?,
 				registry,
@@ -282,7 +282,7 @@ impl metrics::Metrics for Metrics {
 			candidate_approval_time_ticks: prometheus::register(
 				prometheus::Histogram::with_opts(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_approvals_candidate_approval_time_ticks",
+						"selendra_parachain_approvals_candidate_approval_time_ticks",
 						"Number of ticks (500ms) to approve candidates.",
 					).buckets(vec![6.0, 12.0, 18.0, 24.0, 30.0, 36.0, 72.0, 100.0, 144.0]),
 				)?,
@@ -291,7 +291,7 @@ impl metrics::Metrics for Metrics {
 			block_approval_time_ticks: prometheus::register(
 				prometheus::Histogram::with_opts(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_approvals_blockapproval_time_ticks",
+						"selendra_parachain_approvals_blockapproval_time_ticks",
 						"Number of ticks (500ms) to approve blocks.",
 					).buckets(vec![6.0, 12.0, 18.0, 24.0, 30.0, 36.0, 72.0, 100.0, 144.0]),
 				)?,
@@ -300,7 +300,7 @@ impl metrics::Metrics for Metrics {
 			time_db_transaction: prometheus::register(
 				prometheus::Histogram::with_opts(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_time_approval_db_transaction",
+						"selendra_parachain_time_approval_db_transaction",
 						"Time spent writing an approval db transaction.",
 					)
 				)?,
@@ -309,7 +309,7 @@ impl metrics::Metrics for Metrics {
 			time_recover_and_approve: prometheus::register(
 				prometheus::Histogram::with_opts(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_time_recover_and_approve",
+						"selendra_parachain_time_recover_and_approve",
 						"Time spent recovering and approving data in approval voting",
 					)
 				)?,
@@ -1639,7 +1639,7 @@ fn check_and_import_assignment(
 				target: LOG_TARGET,
 				validator = assignment.validator.0,
 				candidate_hash = ?assigned_candidate_hash,
-				indra_id = ?candidate_entry.candidate_receipt().descriptor.indra_id,
+				para_id = ?candidate_entry.candidate_receipt().descriptor.para_id,
 				"Imported assignment.",
 			);
 
@@ -1763,7 +1763,7 @@ fn check_and_import_approval<T>(
 		validator_index = approval.validator.0,
 		validator = ?pubkey,
 		candidate_hash = ?approved_candidate_hash,
-		indra_id = ?candidate_entry.candidate_receipt().descriptor.indra_id,
+		para_id = ?candidate_entry.candidate_receipt().descriptor.para_id,
 		"Importing approval vote",
 	);
 
@@ -2105,7 +2105,7 @@ fn process_wakeup(
 			gum::trace!(
 				target: LOG_TARGET,
 				?candidate_hash,
-				indra_id = ?candidate_receipt.descriptor.indra_id,
+				para_id = ?candidate_receipt.descriptor.para_id,
 				block_hash = ?relay_block,
 				"Launching approval work.",
 			);
@@ -2185,9 +2185,9 @@ async fn launch_approval<Context>(
 	}
 
 	let candidate_hash = candidate.hash();
-	let indra_id = candidate.descriptor.indra_id;
+	let para_id = candidate.descriptor.para_id;
 
-	gum::trace!(target: LOG_TARGET, ?candidate_hash, ?indra_id, "Recovering data.");
+	gum::trace!(target: LOG_TARGET, ?candidate_hash, ?para_id, "Recovering data.");
 
 	let timer = metrics.time_recover_and_approve();
 	ctx.send_message(AvailabilityRecoveryMessage::RecoverAvailableData(
@@ -2223,10 +2223,10 @@ async fn launch_approval<Context>(
 					&RecoveryError::Unavailable => {
 						gum::warn!(
 							target: LOG_TARGET,
-							?indra_id,
+							?para_id,
 							?candidate_hash,
 							"Data unavailable for candidate {:?}",
-							(candidate_hash, candidate.descriptor.indra_id),
+							(candidate_hash, candidate.descriptor.para_id),
 						);
 						// do nothing. we'll just be a no-show and that'll cause others to rise up.
 						metrics_guard.take().on_approval_unavailable();
@@ -2234,10 +2234,10 @@ async fn launch_approval<Context>(
 					&RecoveryError::Invalid => {
 						gum::warn!(
 							target: LOG_TARGET,
-							?indra_id,
+							?para_id,
 							?candidate_hash,
 							"Data recovery invalid for candidate {:?}",
-							(candidate_hash, candidate.descriptor.indra_id),
+							(candidate_hash, candidate.descriptor.para_id),
 						);
 
 						sender
@@ -2293,7 +2293,7 @@ async fn launch_approval<Context>(
 				// Validation checked out. Issue an approval command. If the underlying service is unreachable,
 				// then there isn't anything we can do.
 
-				gum::trace!(target: LOG_TARGET, ?candidate_hash, ?indra_id, "Candidate Valid");
+				gum::trace!(target: LOG_TARGET, ?candidate_hash, ?para_id, "Candidate Valid");
 
 				let expected_commitments_hash = candidate.commitments_hash;
 				if commitments.hash() == expected_commitments_hash {
@@ -2319,7 +2319,7 @@ async fn launch_approval<Context>(
 					target: LOG_TARGET,
 					?reason,
 					?candidate_hash,
-					?indra_id,
+					?para_id,
 					"Detected invalid candidate as an approval checker.",
 				);
 
@@ -2340,7 +2340,7 @@ async fn launch_approval<Context>(
 					target: LOG_TARGET,
 					err = ?e,
 					?candidate_hash,
-					?indra_id,
+					?para_id,
 					"Failed to validate candidate due to internal error",
 				);
 				metrics_guard.take().on_approval_error();

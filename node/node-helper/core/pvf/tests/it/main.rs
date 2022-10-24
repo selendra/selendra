@@ -16,10 +16,10 @@
 
 use async_std::sync::Mutex;
 use parity_scale_codec::Encode as _;
-use selendra_indracore::primitives::{BlockData, ValidationParams, ValidationResult};
 use selendra_node_core_pvf::{
 	start, Config, InvalidCandidate, Metrics, Pvf, ValidationError, ValidationHost,
 };
+use selendra_parachain::primitives::{BlockData, ValidationParams, ValidationResult};
 use std::time::Duration;
 
 mod adder;

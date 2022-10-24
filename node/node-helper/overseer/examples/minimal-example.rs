@@ -29,13 +29,13 @@ use selendra_overseer::{
 	self as overseer,
 	dummy::dummy_overseer_builder,
 	gen::{FromOrchestra, SpawnedSubsystem},
-	HeadSupportsIndracores, SubsystemError,
+	HeadSupportsParachains, SubsystemError,
 };
 use selendra_primitives::v2::{CandidateReceipt, Hash};
 
-struct AlwaysSupportsIndracores;
-impl HeadSupportsIndracores for AlwaysSupportsIndracores {
-	fn head_supports_indracores(&self, _head: &Hash) -> bool {
+struct AlwaysSupportsParachains;
+impl HeadSupportsParachains for AlwaysSupportsParachains {
+	fn head_supports_parachains(&self, _head: &Hash) -> bool {
 		true
 	}
 }
@@ -150,7 +150,7 @@ fn main() {
 			Delay::new(Duration::from_secs(1)).await;
 		});
 
-		let (overseer, _handle) = dummy_overseer_builder(spawner, AlwaysSupportsIndracores, None)
+		let (overseer, _handle) = dummy_overseer_builder(spawner, AlwaysSupportsParachains, None)
 			.unwrap()
 			.replace_candidate_validation(|_| Subsystem2)
 			.replace_candidate_backing(|orig| orig)

@@ -54,14 +54,14 @@ fn table_statement_to_primitive(statement: TableStatement) -> Statement {
 }
 
 struct TestState {
-	chain_ids: Vec<IndraId>,
+	chain_ids: Vec<ParaId>,
 	keystore: SyncCryptoStorePtr,
 	validators: Vec<Sr25519Keyring>,
 	validator_public: Vec<ValidatorId>,
 	validation_data: PersistedValidationData,
 	validator_groups: (Vec<Vec<ValidatorIndex>>, GroupRotationInfo),
 	availability_cores: Vec<CoreState>,
-	head_data: HashMap<IndraId, HeadData>,
+	head_data: HashMap<ParaId, HeadData>,
 	signing_context: SigningContext,
 	relay_parent: Hash,
 }
@@ -74,9 +74,9 @@ impl TestState {
 
 impl Default for TestState {
 	fn default() -> Self {
-		let chain_a = IndraId::from(1);
-		let chain_b = IndraId::from(2);
-		let thread_a = IndraId::from(3);
+		let chain_a = ParaId::from(1);
+		let chain_b = ParaId::from(2);
+		let thread_a = ParaId::from(3);
 
 		let chain_ids = vec![chain_a, chain_b, thread_a];
 
@@ -90,7 +90,7 @@ impl Default for TestState {
 		];
 
 		let keystore = Arc::new(sc_keystore::LocalKeystore::in_memory());
-		// Make sure `Alice` key is in the keystore, so this mocked node will be a indracore validator.
+		// Make sure `Alice` key is in the keystore, so this mocked node will be a parachain validator.
 		SyncCryptoStore::sr25519_generate_new(
 			&*keystore,
 			ValidatorId::ID,
@@ -109,10 +109,10 @@ impl Default for TestState {
 
 		let thread_collator: CollatorId = Sr25519Keyring::Two.public().into();
 		let availability_cores = vec![
-			CoreState::Scheduled(ScheduledCore { indra_id: chain_a, collator: None }),
-			CoreState::Scheduled(ScheduledCore { indra_id: chain_b, collator: None }),
+			CoreState::Scheduled(ScheduledCore { para_id: chain_a, collator: None }),
+			CoreState::Scheduled(ScheduledCore { para_id: chain_b, collator: None }),
 			CoreState::Scheduled(ScheduledCore {
-				indra_id: thread_a,
+				para_id: thread_a,
 				collator: Some(thread_collator.clone()),
 			}),
 		];
@@ -185,7 +185,7 @@ fn make_erasure_root(test: &TestState, pov: PoV) -> Hash {
 
 #[derive(Default)]
 struct TestCandidateBuilder {
-	indra_id: IndraId,
+	para_id: ParaId,
 	head_data: HeadData,
 	pov_hash: Hash,
 	relay_parent: Hash,
@@ -196,13 +196,13 @@ impl TestCandidateBuilder {
 	fn build(self) -> CommittedCandidateReceipt {
 		CommittedCandidateReceipt {
 			descriptor: CandidateDescriptor {
-				indra_id: self.indra_id,
+				para_id: self.para_id,
 				pov_hash: self.pov_hash,
 				relay_parent: self.relay_parent,
 				erasure_root: self.erasure_root,
 				collator: dummy_collator(),
 				signature: dummy_collator_signature(),
-				indra_head: dummy_hash(),
+				para_head: dummy_hash(),
 				validation_code_hash: dummy_validation_code().hash(),
 				persisted_validation_data_hash: dummy_hash(),
 			},
@@ -315,7 +315,7 @@ fn backing_second_works() {
 
 		let pov_hash = pov.hash();
 		let candidate = TestCandidateBuilder {
-			indra_id: test_state.chain_ids[0],
+			para_id: test_state.chain_ids[0],
 			relay_parent: test_state.relay_parent,
 			pov_hash,
 			head_data: expected_head_data.clone(),
@@ -413,7 +413,7 @@ fn backing_works() {
 		let expected_head_data = test_state.head_data.get(&test_state.chain_ids[0]).unwrap();
 
 		let candidate_a = TestCandidateBuilder {
-			indra_id: test_state.chain_ids[0],
+			para_id: test_state.chain_ids[0],
 			relay_parent: test_state.relay_parent,
 			pov_hash,
 			head_data: expected_head_data.clone(),
@@ -590,7 +590,7 @@ fn backing_works_while_validation_ongoing() {
 		let expected_head_data = test_state.head_data.get(&test_state.chain_ids[0]).unwrap();
 
 		let candidate_a = TestCandidateBuilder {
-			indra_id: test_state.chain_ids[0],
+			para_id: test_state.chain_ids[0],
 			relay_parent: test_state.relay_parent,
 			pov_hash,
 			head_data: expected_head_data.clone(),
@@ -797,7 +797,7 @@ fn backing_misbehavior_works() {
 		let expected_head_data = test_state.head_data.get(&test_state.chain_ids[0]).unwrap();
 
 		let candidate_a = TestCandidateBuilder {
-			indra_id: test_state.chain_ids[0],
+			para_id: test_state.chain_ids[0],
 			relay_parent: test_state.relay_parent,
 			pov_hash,
 			erasure_root: make_erasure_root(&test_state, pov.clone()),
@@ -1000,7 +1000,7 @@ fn backing_dont_second_invalid() {
 		let expected_head_data = test_state.head_data.get(&test_state.chain_ids[0]).unwrap();
 
 		let candidate_a = TestCandidateBuilder {
-			indra_id: test_state.chain_ids[0],
+			para_id: test_state.chain_ids[0],
 			relay_parent: test_state.relay_parent,
 			pov_hash: pov_hash_a,
 			erasure_root: make_erasure_root(&test_state, pov_block_a.clone()),
@@ -1009,7 +1009,7 @@ fn backing_dont_second_invalid() {
 		.build();
 
 		let candidate_b = TestCandidateBuilder {
-			indra_id: test_state.chain_ids[0],
+			para_id: test_state.chain_ids[0],
 			relay_parent: test_state.relay_parent,
 			pov_hash: pov_hash_b,
 			erasure_root: make_erasure_root(&test_state, pov_block_b.clone()),
@@ -1129,7 +1129,7 @@ fn backing_second_after_first_fails_works() {
 		let pov_hash = pov.hash();
 
 		let candidate = TestCandidateBuilder {
-			indra_id: test_state.chain_ids[0],
+			para_id: test_state.chain_ids[0],
 			relay_parent: test_state.relay_parent,
 			pov_hash,
 			erasure_root: make_erasure_root(&test_state, pov.clone()),
@@ -1215,7 +1215,7 @@ fn backing_second_after_first_fails_works() {
 		let pov_hash = pov_to_second.hash();
 
 		let candidate_to_second = TestCandidateBuilder {
-			indra_id: test_state.chain_ids[0],
+			para_id: test_state.chain_ids[0],
 			relay_parent: test_state.relay_parent,
 			pov_hash,
 			erasure_root: make_erasure_root(&test_state, pov_to_second.clone()),
@@ -1264,7 +1264,7 @@ fn backing_works_after_failed_validation() {
 		let pov_hash = pov.hash();
 
 		let candidate = TestCandidateBuilder {
-			indra_id: test_state.chain_ids[0],
+			para_id: test_state.chain_ids[0],
 			relay_parent: test_state.relay_parent,
 			pov_hash,
 			erasure_root: make_erasure_root(&test_state, pov.clone()),
@@ -1355,7 +1355,7 @@ fn backing_works_after_failed_validation() {
 fn backing_doesnt_second_wrong_collator() {
 	let mut test_state = TestState::default();
 	test_state.availability_cores[0] = CoreState::Scheduled(ScheduledCore {
-		indra_id: IndraId::from(1),
+		para_id: ParaId::from(1),
 		collator: Some(Sr25519Keyring::Bob.public().into()),
 	});
 
@@ -1368,7 +1368,7 @@ fn backing_doesnt_second_wrong_collator() {
 
 		let pov_hash = pov.hash();
 		let candidate = TestCandidateBuilder {
-			indra_id: test_state.chain_ids[0],
+			para_id: test_state.chain_ids[0],
 			relay_parent: test_state.relay_parent,
 			pov_hash,
 			head_data: expected_head_data.clone(),
@@ -1406,7 +1406,7 @@ fn backing_doesnt_second_wrong_collator() {
 fn validation_work_ignores_wrong_collator() {
 	let mut test_state = TestState::default();
 	test_state.availability_cores[0] = CoreState::Scheduled(ScheduledCore {
-		indra_id: IndraId::from(1),
+		para_id: ParaId::from(1),
 		collator: Some(Sr25519Keyring::Bob.public().into()),
 	});
 
@@ -1420,7 +1420,7 @@ fn validation_work_ignores_wrong_collator() {
 		let expected_head_data = test_state.head_data.get(&test_state.chain_ids[0]).unwrap();
 
 		let candidate_a = TestCandidateBuilder {
-			indra_id: test_state.chain_ids[0],
+			para_id: test_state.chain_ids[0],
 			relay_parent: test_state.relay_parent,
 			pov_hash,
 			head_data: expected_head_data.clone(),
@@ -1467,7 +1467,7 @@ fn validation_work_ignores_wrong_collator() {
 fn candidate_backing_reorders_votes() {
 	use sp_core::Encode;
 
-	let indra_id = IndraId::from(10);
+	let para_id = ParaId::from(10);
 	let validators = vec![
 		Sr25519Keyring::Alice,
 		Sr25519Keyring::Bob,
@@ -1481,7 +1481,7 @@ fn candidate_backing_reorders_votes() {
 	let validator_groups = {
 		let mut validator_groups = HashMap::new();
 		validator_groups
-			.insert(indra_id, vec![0, 1, 2, 3, 4, 5].into_iter().map(ValidatorIndex).collect());
+			.insert(para_id, vec![0, 1, 2, 3, 4, 5].into_iter().map(ValidatorIndex).collect());
 		validator_groups
 	};
 
@@ -1510,7 +1510,7 @@ fn candidate_backing_reorders_votes() {
 			(ValidatorIndex(3), fake_attestation(3)),
 			(ValidatorIndex(1), fake_attestation(1)),
 		],
-		group_id: indra_id,
+		group_id: para_id,
 	};
 
 	let backed = table_attested_to_backed(attested, &table_context).unwrap();
@@ -1547,7 +1547,7 @@ fn retry_works() {
 		let pov_hash = pov.hash();
 
 		let candidate = TestCandidateBuilder {
-			indra_id: test_state.chain_ids[0],
+			para_id: test_state.chain_ids[0],
 			relay_parent: test_state.relay_parent,
 			pov_hash,
 			erasure_root: make_erasure_root(&test_state, pov.clone()),
@@ -1726,7 +1726,7 @@ fn observes_backing_even_if_not_validator() {
 		let expected_head_data = test_state.head_data.get(&test_state.chain_ids[0]).unwrap();
 
 		let candidate_a = TestCandidateBuilder {
-			indra_id: test_state.chain_ids[0],
+			para_id: test_state.chain_ids[0],
 			relay_parent: test_state.relay_parent,
 			pov_hash,
 			head_data: expected_head_data.clone(),

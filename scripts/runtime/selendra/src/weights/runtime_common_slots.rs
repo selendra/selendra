@@ -36,12 +36,12 @@ impl<T: frame_system::Config> runtime_common::slots::WeightInfo for WeightInfo<T
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
-	// Storage: Indras Indracores (r:1 w:0)
+	// Storage: Paras Parachains (r:1 w:0)
 	// Storage: Slots Leases (r:101 w:100)
-	// Storage: Indras IndraLifecycles (r:101 w:101)
-	// Storage: IndrasShared CurrentSessionIndex (r:1 w:0)
-	// Storage: Indras ActionsQueue (r:1 w:1)
-	// Storage: Registrar Indras (r:100 w:100)
+	// Storage: Paras ParaLifecycles (r:101 w:101)
+	// Storage: ParasShared CurrentSessionIndex (r:1 w:0)
+	// Storage: Paras ActionsQueue (r:1 w:1)
+	// Storage: Registrar Paras (r:100 w:100)
 	/// The range of component `c` is `[1, 100]`.
 	/// The range of component `t` is `[1, 100]`.
 	fn manage_lease_period_start(c: u32, t: u32, ) -> Weight {
@@ -65,10 +65,10 @@ impl<T: frame_system::Config> runtime_common::slots::WeightInfo for WeightInfo<T
 			.saturating_add(T::DbWeight::get().writes(9 as Weight))
 	}
 	// Storage: Slots Leases (r:1 w:0)
-	// Storage: Indras IndraLifecycles (r:1 w:1)
-	// Storage: IndrasShared CurrentSessionIndex (r:1 w:0)
-	// Storage: Indras ActionsQueue (r:1 w:1)
-	// Storage: Registrar Indras (r:1 w:1)
+	// Storage: Paras ParaLifecycles (r:1 w:1)
+	// Storage: ParasShared CurrentSessionIndex (r:1 w:0)
+	// Storage: Paras ActionsQueue (r:1 w:1)
+	// Storage: Registrar Paras (r:1 w:1)
 	fn trigger_onboard() -> Weight {
 		(21_978_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))

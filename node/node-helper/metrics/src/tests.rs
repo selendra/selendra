@@ -17,7 +17,7 @@
 //! Selendra runtime metrics integration test.
 
 use hyper::{Client, Uri};
-use primitives::v2::metric_definitions::INDRACORE_INHERENT_DATA_BITFIELDS_PROCESSED;
+use primitives::v2::metric_definitions::PARACHAIN_INHERENT_DATA_BITFIELDS_PROCESSED;
 use sc_client_api::{execution_extensions::ExecutionStrategies, ExecutionStrategy};
 use sp_keyring::AccountKeyring::*;
 use std::collections::HashMap;
@@ -70,7 +70,7 @@ async fn runtime_can_publish_metrics() {
 	// There should be at least 1 bitfield processed by now.
 	assert!(
 		*metrics
-			.get(&INDRACORE_INHERENT_DATA_BITFIELDS_PROCESSED.name.to_owned())
+			.get(&PARACHAIN_INHERENT_DATA_BITFIELDS_PROCESSED.name.to_owned())
 			.unwrap() > 1
 	);
 }

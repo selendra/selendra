@@ -206,7 +206,7 @@ async fn send_message_from_peer(
 
 fn fake_assignment_cert(block_hash: Hash, validator: ValidatorIndex) -> IndirectAssignmentCert {
 	let ctx = schnorrkel::signing_context(RELAY_VRF_MODULO_CONTEXT);
-	let msg = b"WhenIndracores?";
+	let msg = b"WhenParachains?";
 	let mut prng = rand_core::OsRng;
 	let keypair = schnorrkel::Keypair::generate_with(&mut prng);
 	let (inout, proof, _) = keypair.vrf_sign(ctx.bytes(msg));

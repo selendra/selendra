@@ -22,7 +22,7 @@ use selendra_node_primitives::{BabeAllowedSlots, BabeEpoch, BabeEpochConfigurati
 use selendra_node_subsystem::SpawnGlue;
 use selendra_primitives::v2::{
 	AuthorityDiscoveryId, BlockNumber, CandidateEvent, CandidateHash, CommittedCandidateReceipt,
-	CoreState, DisputeState, GroupRotationInfo, Id as IndraId, InboundDownwardMessage,
+	CoreState, DisputeState, GroupRotationInfo, Id as ParaId, InboundDownwardMessage,
 	InboundHrmpMessage, OccupiedCoreAssumption, PersistedValidationData, PvfCheckStatement,
 	ScrapedOnChainVotes, SessionIndex, SessionInfo, ValidationCode, ValidationCodeHash,
 	ValidatorId, ValidatorIndex, ValidatorSignature,
@@ -40,21 +40,21 @@ struct MockRuntimeApi {
 	validator_groups: Vec<Vec<ValidatorIndex>>,
 	availability_cores: Vec<CoreState>,
 	availability_cores_wait: Arc<Mutex<()>>,
-	validation_data: HashMap<IndraId, PersistedValidationData>,
+	validation_data: HashMap<ParaId, PersistedValidationData>,
 	session_index_for_child: SessionIndex,
 	session_info: HashMap<SessionIndex, SessionInfo>,
-	validation_code: HashMap<IndraId, ValidationCode>,
+	validation_code: HashMap<ParaId, ValidationCode>,
 	validation_code_by_hash: HashMap<ValidationCodeHash, ValidationCode>,
-	validation_outputs_results: HashMap<IndraId, bool>,
-	candidate_pending_availability: HashMap<IndraId, CommittedCandidateReceipt>,
+	validation_outputs_results: HashMap<ParaId, bool>,
+	candidate_pending_availability: HashMap<ParaId, CommittedCandidateReceipt>,
 	candidate_events: Vec<CandidateEvent>,
-	dmq_contents: HashMap<IndraId, Vec<InboundDownwardMessage>>,
-	hrmp_channels: HashMap<IndraId, BTreeMap<IndraId, Vec<InboundHrmpMessage>>>,
+	dmq_contents: HashMap<ParaId, Vec<InboundDownwardMessage>>,
+	hrmp_channels: HashMap<ParaId, BTreeMap<ParaId, Vec<InboundHrmpMessage>>>,
 	babe_epoch: Option<BabeEpoch>,
 	on_chain_votes: Option<ScrapedOnChainVotes>,
 	submitted_pvf_check_statement: Arc<Mutex<Vec<(PvfCheckStatement, ValidatorSignature)>>>,
 	pvfs_require_precheck: Vec<ValidationCodeHash>,
-	validation_code_hash: HashMap<IndraId, ValidationCodeHash>,
+	validation_code_hash: HashMap<ParaId, ValidationCodeHash>,
 }
 
 impl ProvideRuntimeApi<Block> for MockRuntimeApi {
@@ -66,7 +66,7 @@ impl ProvideRuntimeApi<Block> for MockRuntimeApi {
 }
 
 sp_api::mock_impl_runtime_apis! {
-	impl IndracoreHost<Block> for MockRuntimeApi {
+	impl ParachainHost<Block> for MockRuntimeApi {
 		fn validators(&self) -> Vec<ValidatorId> {
 			self.validators.clone()
 		}
@@ -89,30 +89,30 @@ sp_api::mock_impl_runtime_apis! {
 
 		fn persisted_validation_data(
 			&self,
-			indra: IndraId,
+			para: ParaId,
 			_assumption: OccupiedCoreAssumption,
 		) -> Option<PersistedValidationData> {
-			self.validation_data.get(&indra).cloned()
+			self.validation_data.get(&para).cloned()
 		}
 
 		fn assumed_validation_data(
-			indra_id: IndraId,
+			para_id: ParaId,
 			expected_persisted_validation_data_hash: Hash,
 		) -> Option<(PersistedValidationData, ValidationCodeHash)> {
 			self.validation_data
-				.get(&indra_id)
+				.get(&para_id)
 				.cloned()
 				.filter(|data| data.hash() == expected_persisted_validation_data_hash)
-				.zip(self.validation_code.get(&indra_id).map(|code| code.hash()))
+				.zip(self.validation_code.get(&para_id).map(|code| code.hash()))
 		}
 
 		fn check_validation_outputs(
 			&self,
-			indra_id: IndraId,
+			para_id: ParaId,
 			_commitments: selendra_primitives::v2::CandidateCommitments,
 		) -> bool {
 			self.validation_outputs_results
-				.get(&indra_id)
+				.get(&para_id)
 				.cloned()
 				.expect(
 					"`check_validation_outputs` called but the expected result hasn't been supplied"
@@ -129,17 +129,17 @@ sp_api::mock_impl_runtime_apis! {
 
 		fn validation_code(
 			&self,
-			indra: IndraId,
+			para: ParaId,
 			_assumption: OccupiedCoreAssumption,
 		) -> Option<ValidationCode> {
-			self.validation_code.get(&indra).map(|c| c.clone())
+			self.validation_code.get(&para).map(|c| c.clone())
 		}
 
 		fn candidate_pending_availability(
 			&self,
-			indra: IndraId,
+			para: ParaId,
 		) -> Option<CommittedCandidateReceipt> {
-			self.candidate_pending_availability.get(&indra).map(|c| c.clone())
+			self.candidate_pending_availability.get(&para).map(|c| c.clone())
 		}
 
 		fn candidate_events(&self) -> Vec<CandidateEvent> {
@@ -148,15 +148,15 @@ sp_api::mock_impl_runtime_apis! {
 
 		fn dmq_contents(
 			&self,
-			recipient: IndraId,
+			recipient: ParaId,
 		) -> Vec<InboundDownwardMessage> {
 			self.dmq_contents.get(&recipient).map(|q| q.clone()).unwrap_or_default()
 		}
 
 		fn inbound_hrmp_channels_contents(
 			&self,
-			recipient: IndraId
-		) -> BTreeMap<IndraId, Vec<InboundHrmpMessage>> {
+			recipient: ParaId
+		) -> BTreeMap<ParaId, Vec<InboundHrmpMessage>> {
 			self.hrmp_channels.get(&recipient).map(|q| q.clone()).unwrap_or_default()
 		}
 
@@ -185,10 +185,10 @@ sp_api::mock_impl_runtime_apis! {
 
 		fn validation_code_hash(
 			&self,
-			indra: IndraId,
+			para: ParaId,
 			_assumption: OccupiedCoreAssumption,
 		) -> Option<ValidationCodeHash> {
-			self.validation_code_hash.get(&indra).map(|c| c.clone())
+			self.validation_code_hash.get(&para).map(|c| c.clone())
 		}
 
 		fn staging_get_disputes() -> Vec<(SessionIndex, CandidateHash, DisputeState<BlockNumber>)> {
@@ -347,12 +347,12 @@ fn requests_availability_cores() {
 fn requests_persisted_validation_data() {
 	let (ctx, mut ctx_handle) = make_subsystem_context(TaskExecutor::new());
 	let relay_parent = [1; 32].into();
-	let indra_a = IndraId::from(5_u32);
-	let indra_b = IndraId::from(6_u32);
+	let para_a = ParaId::from(5_u32);
+	let para_b = ParaId::from(6_u32);
 	let spawner = sp_core::testing::TaskExecutor::new();
 
 	let mut runtime_api = MockRuntimeApi::default();
-	runtime_api.validation_data.insert(indra_a, Default::default());
+	runtime_api.validation_data.insert(para_a, Default::default());
 	let runtime_api = Arc::new(runtime_api);
 
 	let subsystem =
@@ -365,7 +365,7 @@ fn requests_persisted_validation_data() {
 			.send(FromOrchestra::Communication {
 				msg: RuntimeApiMessage::Request(
 					relay_parent,
-					Request::PersistedValidationData(indra_a, OccupiedCoreAssumption::Included, tx),
+					Request::PersistedValidationData(para_a, OccupiedCoreAssumption::Included, tx),
 				),
 			})
 			.await;
@@ -377,7 +377,7 @@ fn requests_persisted_validation_data() {
 			.send(FromOrchestra::Communication {
 				msg: RuntimeApiMessage::Request(
 					relay_parent,
-					Request::PersistedValidationData(indra_b, OccupiedCoreAssumption::Included, tx),
+					Request::PersistedValidationData(para_b, OccupiedCoreAssumption::Included, tx),
 				),
 			})
 			.await;
@@ -394,8 +394,8 @@ fn requests_persisted_validation_data() {
 fn requests_assumed_validation_data() {
 	let (ctx, mut ctx_handle) = make_subsystem_context(TaskExecutor::new());
 	let relay_parent = [1; 32].into();
-	let indra_a = IndraId::from(5_u32);
-	let indra_b = IndraId::from(6_u32);
+	let para_a = ParaId::from(5_u32);
+	let para_b = ParaId::from(6_u32);
 	let spawner = sp_core::testing::TaskExecutor::new();
 
 	let validation_code = ValidationCode(vec![1, 2, 3]);
@@ -403,9 +403,9 @@ fn requests_assumed_validation_data() {
 	let expected_code_hash = validation_code.hash();
 
 	let mut runtime_api = MockRuntimeApi::default();
-	runtime_api.validation_data.insert(indra_a, Default::default());
-	runtime_api.validation_code.insert(indra_a, validation_code);
-	runtime_api.validation_data.insert(indra_b, Default::default());
+	runtime_api.validation_data.insert(para_a, Default::default());
+	runtime_api.validation_code.insert(para_a, validation_code);
+	runtime_api.validation_data.insert(para_b, Default::default());
 	let runtime_api = Arc::new(runtime_api);
 
 	let subsystem =
@@ -418,7 +418,7 @@ fn requests_assumed_validation_data() {
 			.send(FromOrchestra::Communication {
 				msg: RuntimeApiMessage::Request(
 					relay_parent,
-					Request::AssumedValidationData(indra_a, expected_data_hash, tx),
+					Request::AssumedValidationData(para_a, expected_data_hash, tx),
 				),
 			})
 			.await;
@@ -430,7 +430,7 @@ fn requests_assumed_validation_data() {
 			.send(FromOrchestra::Communication {
 				msg: RuntimeApiMessage::Request(
 					relay_parent,
-					Request::AssumedValidationData(indra_a, Hash::zero(), tx),
+					Request::AssumedValidationData(para_a, Hash::zero(), tx),
 				),
 			})
 			.await;
@@ -448,13 +448,13 @@ fn requests_check_validation_outputs() {
 	let (ctx, mut ctx_handle) = make_subsystem_context(TaskExecutor::new());
 	let mut runtime_api = MockRuntimeApi::default();
 	let relay_parent = [1; 32].into();
-	let indra_a = IndraId::from(5_u32);
-	let indra_b = IndraId::from(6_u32);
+	let para_a = ParaId::from(5_u32);
+	let para_b = ParaId::from(6_u32);
 	let commitments = selendra_primitives::v2::CandidateCommitments::default();
 	let spawner = sp_core::testing::TaskExecutor::new();
 
-	runtime_api.validation_outputs_results.insert(indra_a, false);
-	runtime_api.validation_outputs_results.insert(indra_b, true);
+	runtime_api.validation_outputs_results.insert(para_a, false);
+	runtime_api.validation_outputs_results.insert(para_b, true);
 
 	let runtime_api = Arc::new(runtime_api);
 
@@ -468,22 +468,22 @@ fn requests_check_validation_outputs() {
 			.send(FromOrchestra::Communication {
 				msg: RuntimeApiMessage::Request(
 					relay_parent,
-					Request::CheckValidationOutputs(indra_a, commitments.clone(), tx),
+					Request::CheckValidationOutputs(para_a, commitments.clone(), tx),
 				),
 			})
 			.await;
-		assert_eq!(rx.await.unwrap().unwrap(), runtime_api.validation_outputs_results[&indra_a]);
+		assert_eq!(rx.await.unwrap().unwrap(), runtime_api.validation_outputs_results[&para_a]);
 
 		let (tx, rx) = oneshot::channel();
 		ctx_handle
 			.send(FromOrchestra::Communication {
 				msg: RuntimeApiMessage::Request(
 					relay_parent,
-					Request::CheckValidationOutputs(indra_b, commitments, tx),
+					Request::CheckValidationOutputs(para_b, commitments, tx),
 				),
 			})
 			.await;
-		assert_eq!(rx.await.unwrap().unwrap(), runtime_api.validation_outputs_results[&indra_b]);
+		assert_eq!(rx.await.unwrap().unwrap(), runtime_api.validation_outputs_results[&para_b]);
 
 		ctx_handle.send(FromOrchestra::Signal(OverseerSignal::Conclude)).await;
 	};
@@ -574,13 +574,13 @@ fn requests_validation_code() {
 	let (ctx, mut ctx_handle) = make_subsystem_context(TaskExecutor::new());
 
 	let relay_parent = [1; 32].into();
-	let indra_a = IndraId::from(5_u32);
-	let indra_b = IndraId::from(6_u32);
+	let para_a = ParaId::from(5_u32);
+	let para_b = ParaId::from(6_u32);
 	let spawner = sp_core::testing::TaskExecutor::new();
 	let validation_code = dummy_validation_code();
 
 	let mut runtime_api = MockRuntimeApi::default();
-	runtime_api.validation_code.insert(indra_a, validation_code.clone());
+	runtime_api.validation_code.insert(para_a, validation_code.clone());
 	let runtime_api = Arc::new(runtime_api);
 
 	let subsystem =
@@ -593,7 +593,7 @@ fn requests_validation_code() {
 			.send(FromOrchestra::Communication {
 				msg: RuntimeApiMessage::Request(
 					relay_parent,
-					Request::ValidationCode(indra_a, OccupiedCoreAssumption::Included, tx),
+					Request::ValidationCode(para_a, OccupiedCoreAssumption::Included, tx),
 				),
 			})
 			.await;
@@ -605,7 +605,7 @@ fn requests_validation_code() {
 			.send(FromOrchestra::Communication {
 				msg: RuntimeApiMessage::Request(
 					relay_parent,
-					Request::ValidationCode(indra_b, OccupiedCoreAssumption::Included, tx),
+					Request::ValidationCode(para_b, OccupiedCoreAssumption::Included, tx),
 				),
 			})
 			.await;
@@ -622,15 +622,15 @@ fn requests_validation_code() {
 fn requests_candidate_pending_availability() {
 	let (ctx, mut ctx_handle) = make_subsystem_context(TaskExecutor::new());
 	let relay_parent = [1; 32].into();
-	let indra_a = IndraId::from(5_u32);
-	let indra_b = IndraId::from(6_u32);
+	let para_a = ParaId::from(5_u32);
+	let para_b = ParaId::from(6_u32);
 	let spawner = sp_core::testing::TaskExecutor::new();
 	let candidate_receipt = dummy_committed_candidate_receipt(relay_parent);
 
 	let mut runtime_api = MockRuntimeApi::default();
 	runtime_api
 		.candidate_pending_availability
-		.insert(indra_a, candidate_receipt.clone());
+		.insert(para_a, candidate_receipt.clone());
 	let runtime_api = Arc::new(runtime_api);
 
 	let subsystem =
@@ -643,7 +643,7 @@ fn requests_candidate_pending_availability() {
 			.send(FromOrchestra::Communication {
 				msg: RuntimeApiMessage::Request(
 					relay_parent,
-					Request::CandidatePendingAvailability(indra_a, tx),
+					Request::CandidatePendingAvailability(para_a, tx),
 				),
 			})
 			.await;
@@ -656,7 +656,7 @@ fn requests_candidate_pending_availability() {
 			.send(FromOrchestra::Communication {
 				msg: RuntimeApiMessage::Request(
 					relay_parent,
-					Request::CandidatePendingAvailability(indra_b, tx),
+					Request::CandidatePendingAvailability(para_b, tx),
 				),
 			})
 			.await;
@@ -701,16 +701,16 @@ fn requests_dmq_contents() {
 	let (ctx, mut ctx_handle) = make_subsystem_context(TaskExecutor::new());
 
 	let relay_parent = [1; 32].into();
-	let indra_a = IndraId::from(5_u32);
-	let indra_b = IndraId::from(6_u32);
+	let para_a = ParaId::from(5_u32);
+	let para_b = ParaId::from(6_u32);
 	let spawner = sp_core::testing::TaskExecutor::new();
 
 	let runtime_api = Arc::new({
 		let mut runtime_api = MockRuntimeApi::default();
 
-		runtime_api.dmq_contents.insert(indra_a, vec![]);
+		runtime_api.dmq_contents.insert(para_a, vec![]);
 		runtime_api.dmq_contents.insert(
-			indra_b,
+			para_b,
 			vec![InboundDownwardMessage { sent_at: 228, msg: b"Novus Ordo Seclorum".to_vec() }],
 		);
 
@@ -724,7 +724,7 @@ fn requests_dmq_contents() {
 		let (tx, rx) = oneshot::channel();
 		ctx_handle
 			.send(FromOrchestra::Communication {
-				msg: RuntimeApiMessage::Request(relay_parent, Request::DmqContents(indra_a, tx)),
+				msg: RuntimeApiMessage::Request(relay_parent, Request::DmqContents(para_a, tx)),
 			})
 			.await;
 		assert_eq!(rx.await.unwrap().unwrap(), vec![]);
@@ -732,7 +732,7 @@ fn requests_dmq_contents() {
 		let (tx, rx) = oneshot::channel();
 		ctx_handle
 			.send(FromOrchestra::Communication {
-				msg: RuntimeApiMessage::Request(relay_parent, Request::DmqContents(indra_b, tx)),
+				msg: RuntimeApiMessage::Request(relay_parent, Request::DmqContents(para_b, tx)),
 			})
 			.await;
 		assert_eq!(
@@ -750,14 +750,14 @@ fn requests_inbound_hrmp_channels_contents() {
 	let (ctx, mut ctx_handle) = make_subsystem_context(TaskExecutor::new());
 
 	let relay_parent = [1; 32].into();
-	let indra_a = IndraId::from(99_u32);
-	let indra_b = IndraId::from(66_u32);
-	let indra_c = IndraId::from(33_u32);
+	let para_a = ParaId::from(99_u32);
+	let para_b = ParaId::from(66_u32);
+	let para_c = ParaId::from(33_u32);
 	let spawner = sp_core::testing::TaskExecutor::new();
 
-	let indra_b_inbound_channels = [
-		(indra_a, vec![]),
-		(indra_c, vec![InboundHrmpMessage { sent_at: 1, data: "𝙀=𝙈𝘾²".as_bytes().to_owned() }]),
+	let para_b_inbound_channels = [
+		(para_a, vec![]),
+		(para_c, vec![InboundHrmpMessage { sent_at: 1, data: "𝙀=𝙈𝘾²".as_bytes().to_owned() }]),
 	]
 	.iter()
 	.cloned()
@@ -766,8 +766,8 @@ fn requests_inbound_hrmp_channels_contents() {
 	let runtime_api = Arc::new({
 		let mut runtime_api = MockRuntimeApi::default();
 
-		runtime_api.hrmp_channels.insert(indra_a, BTreeMap::new());
-		runtime_api.hrmp_channels.insert(indra_b, indra_b_inbound_channels.clone());
+		runtime_api.hrmp_channels.insert(para_a, BTreeMap::new());
+		runtime_api.hrmp_channels.insert(para_b, para_b_inbound_channels.clone());
 
 		runtime_api
 	});
@@ -781,7 +781,7 @@ fn requests_inbound_hrmp_channels_contents() {
 			.send(FromOrchestra::Communication {
 				msg: RuntimeApiMessage::Request(
 					relay_parent,
-					Request::InboundHrmpChannelsContents(indra_a, tx),
+					Request::InboundHrmpChannelsContents(para_a, tx),
 				),
 			})
 			.await;
@@ -792,11 +792,11 @@ fn requests_inbound_hrmp_channels_contents() {
 			.send(FromOrchestra::Communication {
 				msg: RuntimeApiMessage::Request(
 					relay_parent,
-					Request::InboundHrmpChannelsContents(indra_b, tx),
+					Request::InboundHrmpChannelsContents(para_b, tx),
 				),
 			})
 			.await;
-		assert_eq!(rx.await.unwrap().unwrap(), indra_b_inbound_channels);
+		assert_eq!(rx.await.unwrap().unwrap(), para_b_inbound_channels);
 
 		ctx_handle.send(FromOrchestra::Signal(OverseerSignal::Conclude)).await;
 	};
@@ -1033,13 +1033,13 @@ fn requests_validation_code_hash() {
 	let (ctx, mut ctx_handle) = make_subsystem_context(TaskExecutor::new());
 
 	let relay_parent = [1; 32].into();
-	let indra_a = IndraId::from(5_u32);
-	let indra_b = IndraId::from(6_u32);
+	let para_a = ParaId::from(5_u32);
+	let para_b = ParaId::from(6_u32);
 	let spawner = sp_core::testing::TaskExecutor::new();
 	let validation_code_hash = dummy_validation_code().hash();
 
 	let mut runtime_api = MockRuntimeApi::default();
-	runtime_api.validation_code_hash.insert(indra_a, validation_code_hash.clone());
+	runtime_api.validation_code_hash.insert(para_a, validation_code_hash.clone());
 	let runtime_api = Arc::new(runtime_api);
 
 	let subsystem =
@@ -1052,7 +1052,7 @@ fn requests_validation_code_hash() {
 			.send(FromOrchestra::Communication {
 				msg: RuntimeApiMessage::Request(
 					relay_parent,
-					Request::ValidationCodeHash(indra_a, OccupiedCoreAssumption::Included, tx),
+					Request::ValidationCodeHash(para_a, OccupiedCoreAssumption::Included, tx),
 				),
 			})
 			.await;
@@ -1064,7 +1064,7 @@ fn requests_validation_code_hash() {
 			.send(FromOrchestra::Communication {
 				msg: RuntimeApiMessage::Request(
 					relay_parent,
-					Request::ValidationCodeHash(indra_b, OccupiedCoreAssumption::Included, tx),
+					Request::ValidationCodeHash(para_b, OccupiedCoreAssumption::Included, tx),
 				),
 			})
 			.await;

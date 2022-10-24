@@ -62,7 +62,7 @@ mod metrics;
 
 use metrics::Metrics;
 
-const LOG_TARGET: &str = "indracore::gossip-support";
+const LOG_TARGET: &str = "parachain::gossip-support";
 // How much time should we wait to reissue a connection request
 // since the last authority discovery resolution failure.
 const BACKOFF_DURATION: Duration = Duration::from_secs(5);
@@ -123,7 +123,7 @@ where
 	pub fn new(keystore: SyncCryptoStorePtr, authority_discovery: AD, metrics: Metrics) -> Self {
 		// Initialize metrics to `0`.
 		metrics.on_is_not_authority();
-		metrics.on_is_not_indracore_validator();
+		metrics.on_is_not_parachain_validator();
 
 		Self {
 			keystore,
@@ -275,7 +275,7 @@ where
 	}
 
 	// Checks if the node is an authority and also updates `selendra_node_is_authority` and
-	// `selendra_node_is_indracore_validator` metrics accordingly.
+	// `selendra_node_is_parachain_validator` metrics accordingly.
 	// On success, returns the index of our keys in `session_info.discovery_keys`.
 	async fn get_key_index_and_update_metrics(
 		&mut self,
@@ -289,23 +289,23 @@ where
 				gum::trace!(target: LOG_TARGET, "We are now an authority",);
 				self.metrics.on_is_authority();
 
-				// The subset of authorities participating in indracore consensus.
-				let indracore_validators_this_session = session_info.validators.len();
+				// The subset of authorities participating in parachain consensus.
+				let parachain_validators_this_session = session_info.validators.len();
 
-				// First `maxValidators` entries are the indracore validators. We'll check
+				// First `maxValidators` entries are the parachain validators. We'll check
 				// if our index is in this set to avoid searching for the keys.
-				if *index < indracore_validators_this_session {
-					gum::trace!(target: LOG_TARGET, "We are now a indracore validator",);
-					self.metrics.on_is_indracore_validator();
+				if *index < parachain_validators_this_session {
+					gum::trace!(target: LOG_TARGET, "We are now a parachain validator",);
+					self.metrics.on_is_parachain_validator();
 				} else {
-					gum::trace!(target: LOG_TARGET, "We are no longer a indracore validator",);
-					self.metrics.on_is_not_indracore_validator();
+					gum::trace!(target: LOG_TARGET, "We are no longer a parachain validator",);
+					self.metrics.on_is_not_parachain_validator();
 				}
 			},
 			Err(util::Error::NotAValidator) => {
 				gum::trace!(target: LOG_TARGET, "We are no longer an authority",);
 				self.metrics.on_is_not_authority();
-				self.metrics.on_is_not_indracore_validator();
+				self.metrics.on_is_not_parachain_validator();
 			},
 			// Don't update on runtime errors.
 			Err(_) => {},
@@ -486,8 +486,8 @@ async fn remove_all_controlled(
 
 /// We partition the list of all sorted `authorities` into `sqrt(len)` groups of `sqrt(len)` size
 /// and form a matrix where each validator is connected to all validators in its row and column.
-/// This is similar to `[web3]` research proposed topology, except for the groups are not indracore
-/// groups (because not all validators are indracore validators and the group size is small),
+/// This is similar to `[web3]` research proposed topology, except for the groups are not parachain
+/// groups (because not all validators are parachain validators and the group size is small),
 /// but formed randomly via BABE randomness from two epochs ago.
 /// This limits the amount of gossip peers to 2 * `sqrt(len)` and ensures the diameter of 2.
 ///

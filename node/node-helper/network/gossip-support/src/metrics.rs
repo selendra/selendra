@@ -30,8 +30,8 @@ pub struct Metrics(Option<MetricsInner>);
 struct MetricsInner {
 	/// Tracks authority status for producing relay chain blocks.
 	is_authority: Gauge<U64>,
-	/// Tracks authority status for indracore approval checking.
-	is_indracore_validator: Gauge<U64>,
+	/// Tracks authority status for parachain approval checking.
+	is_parachain_validator: Gauge<U64>,
 }
 
 impl Metrics {
@@ -55,17 +55,17 @@ impl Metrics {
 		}
 	}
 
-	/// Set the `indracore validator` metric.
-	pub fn on_is_indracore_validator(&self) {
+	/// Set the `parachain validator` metric.
+	pub fn on_is_parachain_validator(&self) {
 		if let Some(metrics) = &self.0 {
-			metrics.is_indracore_validator.set(1);
+			metrics.is_parachain_validator.set(1);
 		}
 	}
 
-	/// Unset the `indracore validator` metric.
-	pub fn on_is_not_indracore_validator(&self) {
+	/// Unset the `parachain validator` metric.
+	pub fn on_is_not_parachain_validator(&self) {
 		if let Some(metrics) = &self.0 {
-			metrics.is_indracore_validator.set(0);
+			metrics.is_parachain_validator.set(0);
 		}
 	}
 }
@@ -78,10 +78,10 @@ impl metrics::Metrics for Metrics {
 				Updates at session boundary.")?,
 				registry,
 			)?,
-			is_indracore_validator: prometheus::register(
-				Gauge::new("selendra_node_is_indracore_validator",
-				"Tracks if the validator participates in indracore consensus. Indracore validators are a \
-				subset of the active set validators that perform approval checking of all indracore candidates in a session.\
+			is_parachain_validator: prometheus::register(
+				Gauge::new("selendra_node_is_parachain_validator",
+				"Tracks if the validator participates in parachain consensus. Parachain validators are a \
+				subset of the active set validators that perform approval checking of all parachain candidates in a session.\
 				Updates at session boundary.")?,
 				registry,
 			)?,

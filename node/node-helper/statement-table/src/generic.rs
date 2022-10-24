@@ -20,7 +20,7 @@
 //!
 //! These messages are used to create a proposal submitted to a BFT consensus process.
 //!
-//! Each indracore is associated with a committee of authorities, who issue statements
+//! Each parachain is associated with a committee of authorities, who issue statements
 //! indicating whether the candidate is valid or invalid. Once a threshold of the committee
 //! has signed validity statements, the candidate may be marked includable.
 
@@ -593,7 +593,7 @@ mod tests {
 
 	#[derive(Debug, PartialEq, Eq)]
 	struct TestContext {
-		// v -> indracore group
+		// v -> parachain group
 		authorities: HashMap<AuthorityId, GroupId>,
 	}
 

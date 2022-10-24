@@ -53,7 +53,7 @@ use selendra_node_subsystem::{
 	overseer, FromOrchestra, OverseerSignal, PerLeafSpan, SubsystemSender,
 };
 use selendra_node_subsystem_util::metrics::{self, prometheus};
-use selendra_primitives::v2::{CandidateReceipt, CollatorId, Hash, Id as IndraId};
+use selendra_primitives::v2::{CandidateReceipt, CollatorId, Hash, Id as ParaId};
 
 use crate::error::Result;
 
@@ -69,7 +69,7 @@ const COST_CORRUPTED_MESSAGE: Rep = Rep::CostMinor("Message was corrupt");
 const COST_NETWORK_ERROR: Rep = Rep::CostMinor("Some network error");
 const COST_INVALID_SIGNATURE: Rep = Rep::Malicious("Invalid network message signature");
 const COST_REPORT_BAD: Rep = Rep::Malicious("A collator was reported by another subsystem");
-const COST_WRONG_INDRA: Rep = Rep::Malicious("A collator provided a collation for the wrong indra");
+const COST_WRONG_PARA: Rep = Rep::Malicious("A collator provided a collation for the wrong para");
 const COST_UNNEEDED_COLLATOR: Rep = Rep::CostMinor("An unneeded collator connected");
 const BENEFIT_NOTIFY_GOOD: Rep =
 	Rep::BenefitMinor("A collator was noted good by another subsystem");
@@ -157,7 +157,7 @@ impl metrics::Metrics for Metrics {
 			collation_requests: prometheus::register(
 				prometheus::CounterVec::new(
 					prometheus::Opts::new(
-						"selendra_indracore_collation_requests_total",
+						"selendra_parachain_collation_requests_total",
 						"Number of collations requested from Collators.",
 					),
 					&["success"],
@@ -167,7 +167,7 @@ impl metrics::Metrics for Metrics {
 			process_msg: prometheus::register(
 				prometheus::Histogram::with_opts(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_collator_protocol_validator_process_msg",
+						"selendra_parachain_collator_protocol_validator_process_msg",
 						"Time spent within `collator_protocol_validator::process_msg`",
 					)
 				)?,
@@ -176,7 +176,7 @@ impl metrics::Metrics for Metrics {
 			handle_collation_request_result: prometheus::register(
 				prometheus::Histogram::with_opts(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_collator_protocol_validator_handle_collation_request_result",
+						"selendra_parachain_collator_protocol_validator_handle_collation_request_result",
 						"Time spent within `collator_protocol_validator::handle_collation_request_result`",
 					)
 				)?,
@@ -184,7 +184,7 @@ impl metrics::Metrics for Metrics {
 			)?,
 			collator_peer_count: prometheus::register(
 				prometheus::Gauge::new(
-					"selendra_indracore_collator_peer_count",
+					"selendra_parachain_collator_peer_count",
 					"Amount of collator peers connected",
 				)?,
 				registry,
@@ -192,7 +192,7 @@ impl metrics::Metrics for Metrics {
 			collation_request_duration: prometheus::register(
 				prometheus::Histogram::with_opts(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_collator_protocol_validator_collation_request_duration",
+						"selendra_parachain_collator_protocol_validator_collation_request_duration",
 						"Lifetime of the `PerRequest` structure",
 					).buckets(vec![0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9, 1.0, 1.2, 1.5, 1.75]),
 				)?,
@@ -218,7 +218,7 @@ struct PerRequest {
 #[derive(Debug)]
 struct CollatingPeerState {
 	collator_id: CollatorId,
-	indra_id: IndraId,
+	para_id: ParaId,
 	// Advertised relay parents.
 	advertisements: HashSet<Hash>,
 	last_active: Instant,
@@ -275,14 +275,14 @@ impl PeerData {
 		&mut self,
 		on_relay_parent: Hash,
 		our_view: &View,
-	) -> std::result::Result<(CollatorId, IndraId), AdvertisementError> {
+	) -> std::result::Result<(CollatorId, ParaId), AdvertisementError> {
 		match self.state {
 			PeerState::Connected(_) => Err(AdvertisementError::UndeclaredCollator),
 			_ if !our_view.contains(&on_relay_parent) => Err(AdvertisementError::OutOfOurView),
 			PeerState::Collating(ref mut state) =>
 				if state.advertisements.insert(on_relay_parent) {
 					state.last_active = Instant::now();
-					Ok((state.collator_id.clone(), state.indra_id.clone()))
+					Ok((state.collator_id.clone(), state.para_id.clone()))
 				} else {
 					Err(AdvertisementError::Duplicate)
 				},
@@ -297,14 +297,14 @@ impl PeerData {
 		}
 	}
 
-	/// Note that a peer is now collating with the given collator and indra ids.
+	/// Note that a peer is now collating with the given collator and para ids.
 	///
 	/// This will overwrite any previous call to `set_collating` and should only be called
 	/// if `is_collating` is false.
-	fn set_collating(&mut self, collator_id: CollatorId, indra_id: IndraId) {
+	fn set_collating(&mut self, collator_id: CollatorId, para_id: ParaId) {
 		self.state = PeerState::Collating(CollatingPeerState {
 			collator_id,
-			indra_id,
+			para_id,
 			advertisements: HashSet::new(),
 			last_active: Instant::now(),
 		});
@@ -317,10 +317,10 @@ impl PeerData {
 		}
 	}
 
-	fn collating_indra(&self) -> Option<IndraId> {
+	fn collating_para(&self) -> Option<ParaId> {
 		match self.state {
 			PeerState::Connected(_) => None,
-			PeerState::Collating(ref state) => Some(state.indra_id),
+			PeerState::Collating(ref state) => Some(state.para_id),
 		}
 	}
 
@@ -349,16 +349,16 @@ impl Default for PeerData {
 }
 
 struct GroupAssignments {
-	current: Option<IndraId>,
+	current: Option<ParaId>,
 }
 
 #[derive(Default)]
-struct ActiveIndras {
+struct ActiveParas {
 	relay_parent_assignments: HashMap<Hash, GroupAssignments>,
-	current_assignments: HashMap<IndraId, usize>,
+	current_assignments: HashMap<ParaId, usize>,
 }
 
-impl ActiveIndras {
+impl ActiveParas {
 	async fn assign_incoming(
 		&mut self,
 		sender: &mut impl SubsystemSender<RuntimeApiMessage>,
@@ -400,7 +400,7 @@ impl ActiveIndras {
 				},
 			};
 
-			let indra_now =
+			let para_now =
 				match selendra_node_subsystem_util::signing_key_and_index(&validators, keystore)
 					.await
 					.and_then(|(_, index)| {
@@ -409,7 +409,7 @@ impl ActiveIndras {
 					Some(group) => {
 						let core_now = rotation_info.core_for_group(group, cores.len());
 
-						cores.get(core_now.0 as usize).and_then(|c| c.indra_id())
+						cores.get(core_now.0 as usize).and_then(|c| c.para_id())
 					},
 					None => {
 						gum::trace!(target: LOG_TARGET, ?relay_parent, "Not a validator");
@@ -418,29 +418,29 @@ impl ActiveIndras {
 					},
 				};
 
-			// This code won't work well, if at all for indrabases. For indrabases we'll
-			// have to be aware of which core the indrabase claim is going to be multiplexed
-			// onto. The indrabase claim will also have a known collator, and we should always
+			// This code won't work well, if at all for parathreads. For parathreads we'll
+			// have to be aware of which core the parathread claim is going to be multiplexed
+			// onto. The parathread claim will also have a known collator, and we should always
 			// allow an incoming connection from that collator. If not even connecting to them
 			// directly.
 			//
-			// However, this'll work fine for indracores, as each indracore gets a dedicated
+			// However, this'll work fine for parachains, as each parachain gets a dedicated
 			// core.
-			if let Some(indra_now) = indra_now {
-				let entry = self.current_assignments.entry(indra_now).or_default();
+			if let Some(para_now) = para_now {
+				let entry = self.current_assignments.entry(para_now).or_default();
 				*entry += 1;
 				if *entry == 1 {
 					gum::debug!(
 						target: LOG_TARGET,
 						?relay_parent,
-						indra_id = ?indra_now,
-						"Assigned to a indracore",
+						para_id = ?para_now,
+						"Assigned to a parachain",
 					);
 				}
 			}
 
 			self.relay_parent_assignments
-				.insert(relay_parent, GroupAssignments { current: indra_now });
+				.insert(relay_parent, GroupAssignments { current: para_now });
 		}
 	}
 
@@ -456,8 +456,8 @@ impl ActiveIndras {
 							occupied.remove_entry();
 							gum::debug!(
 								target: LOG_TARGET,
-								indra_id = ?cur,
-								"Unassigned from a indracore",
+								para_id = ?cur,
+								"Unassigned from a parachain",
 							);
 						}
 					}
@@ -466,7 +466,7 @@ impl ActiveIndras {
 		}
 	}
 
-	fn is_current(&self, id: &IndraId) -> bool {
+	fn is_current(&self, id: &ParaId) -> bool {
 		self.current_assignments.contains_key(id)
 	}
 }
@@ -474,16 +474,16 @@ impl ActiveIndras {
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 struct PendingCollation {
 	relay_parent: Hash,
-	indra_id: IndraId,
+	para_id: ParaId,
 	peer_id: PeerId,
 	commitments_hash: Option<Hash>,
 }
 
 impl PendingCollation {
-	fn new(relay_parent: Hash, indra_id: &IndraId, peer_id: &PeerId) -> Self {
+	fn new(relay_parent: Hash, para_id: &ParaId, peer_id: &PeerId) -> Self {
 		Self {
 			relay_parent,
-			indra_id: indra_id.clone(),
+			para_id: para_id.clone(),
 			peer_id: peer_id.clone(),
 			commitments_hash: None,
 		}
@@ -582,15 +582,15 @@ struct State {
 	/// Our own view.
 	view: OurView,
 
-	/// Active indras based on our view. We only accept collators from these indras.
-	active_indras: ActiveIndras,
+	/// Active paras based on our view. We only accept collators from these paras.
+	active_paras: ActiveParas,
 
 	/// Track all active collators and their data.
 	peer_data: HashMap<PeerId, PeerData>,
 
-	/// The collations we have requested by relay parent and indra id.
+	/// The collations we have requested by relay parent and para id.
 	///
-	/// For each relay parent and indra id we may be connected to a number
+	/// For each relay parent and para id we may be connected to a number
 	/// of collators each of those may have advertised a different collation.
 	/// So we group such cases here.
 	requested_collations: HashMap<PendingCollation, PerRequest>,
@@ -635,7 +635,7 @@ async fn disconnect_peer(sender: &mut impl overseer::CollatorProtocolSenderTrait
 		.await
 }
 
-/// Another subsystem has requested to fetch collations on a particular leaf for some indra.
+/// Another subsystem has requested to fetch collations on a particular leaf for some para.
 async fn fetch_collation(
 	sender: &mut impl overseer::CollatorProtocolSenderTrait,
 	state: &mut State,
@@ -644,7 +644,7 @@ async fn fetch_collation(
 ) {
 	let (tx, rx) = oneshot::channel();
 
-	let PendingCollation { relay_parent, indra_id, peer_id, .. } = pc;
+	let PendingCollation { relay_parent, para_id, peer_id, .. } = pc;
 
 	let timeout = |collator_id, relay_parent| async move {
 		Delay::new(MAX_UNSHARED_DOWNLOAD_TIME).await;
@@ -656,12 +656,12 @@ async fn fetch_collation(
 
 	if let Some(peer_data) = state.peer_data.get(&peer_id) {
 		if peer_data.has_advertised(&relay_parent) {
-			request_collation(sender, state, relay_parent, indra_id, peer_id, tx).await;
+			request_collation(sender, state, relay_parent, para_id, peer_id, tx).await;
 		} else {
 			gum::debug!(
 				target: LOG_TARGET,
 				?peer_id,
-				?indra_id,
+				?para_id,
 				?relay_parent,
 				"Collation is not advertised for the relay parent by the peer, do not request it",
 			);
@@ -670,7 +670,7 @@ async fn fetch_collation(
 		gum::warn!(
 			target: LOG_TARGET,
 			?peer_id,
-			?indra_id,
+			?para_id,
 			?relay_parent,
 			"Requested to fetch a collation from an unknown peer",
 		);
@@ -744,7 +744,7 @@ async fn request_collation(
 	sender: &mut impl overseer::CollatorProtocolSenderTrait,
 	state: &mut State,
 	relay_parent: Hash,
-	indra_id: IndraId,
+	para_id: ParaId,
 	peer_id: PeerId,
 	result: oneshot::Sender<(CandidateReceipt, PoV)>,
 ) {
@@ -752,18 +752,18 @@ async fn request_collation(
 		gum::debug!(
 			target: LOG_TARGET,
 			peer_id = %peer_id,
-			indra_id = %indra_id,
+			para_id = %para_id,
 			relay_parent = %relay_parent,
 			"collation is no longer in view",
 		);
 		return
 	}
-	let pending_collation = PendingCollation::new(relay_parent, &indra_id, &peer_id);
+	let pending_collation = PendingCollation::new(relay_parent, &para_id, &peer_id);
 	if state.requested_collations.contains_key(&pending_collation) {
 		gum::warn!(
 			target: LOG_TARGET,
 			peer_id = %pending_collation.peer_id,
-			%pending_collation.indra_id,
+			%pending_collation.para_id,
 			?pending_collation.relay_parent,
 			"collation has already been requested",
 		);
@@ -772,7 +772,7 @@ async fn request_collation(
 
 	let (full_request, response_recv) = OutgoingRequest::new(
 		Recipient::Peer(peer_id),
-		CollationFetchingRequest { relay_parent, indra_id },
+		CollationFetchingRequest { relay_parent, para_id },
 	);
 	let requests = Requests::CollationFetchingV1(full_request);
 
@@ -782,18 +782,18 @@ async fn request_collation(
 		span: state
 			.span_per_relay_parent
 			.get(&relay_parent)
-			.map(|s| s.child("collation-request").with_indra_id(indra_id)),
+			.map(|s| s.child("collation-request").with_para_id(para_id)),
 		_lifetime_timer: state.metrics.time_collation_request_duration(),
 	};
 
 	state
 		.requested_collations
-		.insert(PendingCollation::new(relay_parent, &indra_id, &peer_id), per_request);
+		.insert(PendingCollation::new(relay_parent, &para_id, &peer_id), per_request);
 
 	gum::debug!(
 		target: LOG_TARGET,
 		peer_id = %peer_id,
-		%indra_id,
+		%para_id,
 		?relay_parent,
 		"Requesting collation",
 	);
@@ -817,7 +817,7 @@ async fn process_incoming_peer_message<Context>(
 	use protocol_v1::CollatorProtocolMessage::*;
 	use sp_runtime::traits::AppVerify;
 	match msg {
-		Declare(collator_id, indra_id, signature) => {
+		Declare(collator_id, para_id, signature) => {
 			if collator_peer_id(&state.peer_data, &collator_id).is_some() {
 				modify_reputation(ctx.sender(), origin, COST_UNEXPECTED_MESSAGE).await;
 				return
@@ -829,7 +829,7 @@ async fn process_incoming_peer_message<Context>(
 					gum::debug!(
 						target: LOG_TARGET,
 						peer_id = ?origin,
-						?indra_id,
+						?para_id,
 						"Unknown peer",
 					);
 					modify_reputation(ctx.sender(), origin, COST_UNEXPECTED_MESSAGE).await;
@@ -841,7 +841,7 @@ async fn process_incoming_peer_message<Context>(
 				gum::debug!(
 					target: LOG_TARGET,
 					peer_id = ?origin,
-					?indra_id,
+					?para_id,
 					"Peer is not in the collating state",
 				);
 				modify_reputation(ctx.sender(), origin, COST_UNEXPECTED_MESSAGE).await;
@@ -852,30 +852,30 @@ async fn process_incoming_peer_message<Context>(
 				gum::debug!(
 					target: LOG_TARGET,
 					peer_id = ?origin,
-					?indra_id,
+					?para_id,
 					"Signature verification failure",
 				);
 				modify_reputation(ctx.sender(), origin, COST_INVALID_SIGNATURE).await;
 				return
 			}
 
-			if state.active_indras.is_current(&indra_id) {
+			if state.active_paras.is_current(&para_id) {
 				gum::debug!(
 					target: LOG_TARGET,
 					peer_id = ?origin,
 					?collator_id,
-					?indra_id,
-					"Declared as collator for current indra",
+					?para_id,
+					"Declared as collator for current para",
 				);
 
-				peer_data.set_collating(collator_id, indra_id);
+				peer_data.set_collating(collator_id, para_id);
 			} else {
 				gum::debug!(
 					target: LOG_TARGET,
 					peer_id = ?origin,
 					?collator_id,
-					?indra_id,
-					"Declared as collator for unneeded indra",
+					?para_id,
+					"Declared as collator for unneeded para",
 				);
 
 				modify_reputation(ctx.sender(), origin.clone(), COST_UNNEEDED_COLLATOR).await;
@@ -915,16 +915,16 @@ async fn process_incoming_peer_message<Context>(
 			};
 
 			match peer_data.insert_advertisement(relay_parent, &state.view) {
-				Ok((id, indra_id)) => {
+				Ok((id, para_id)) => {
 					gum::debug!(
 						target: LOG_TARGET,
 						peer_id = ?origin,
-						%indra_id,
+						%para_id,
 						?relay_parent,
 						"Received advertise collation",
 					);
 
-					let pending_collation = PendingCollation::new(relay_parent, &indra_id, &origin);
+					let pending_collation = PendingCollation::new(relay_parent, &para_id, &origin);
 
 					let collations =
 						state.collations_per_relay_parent.entry(relay_parent).or_default();
@@ -934,7 +934,7 @@ async fn process_incoming_peer_message<Context>(
 							gum::trace!(
 								target: LOG_TARGET,
 								peer_id = ?origin,
-								%indra_id,
+								%para_id,
 								?relay_parent,
 								"Added collation to the pending list"
 							);
@@ -951,7 +951,7 @@ async fn process_incoming_peer_message<Context>(
 							gum::trace!(
 								target: LOG_TARGET,
 								peer_id = ?origin,
-								%indra_id,
+								%para_id,
 								?relay_parent,
 								"Valid seconded collation"
 							);
@@ -1023,23 +1023,23 @@ async fn handle_our_view_change<Context>(
 		state.span_per_relay_parent.remove(&removed);
 	}
 
-	state.active_indras.assign_incoming(ctx.sender(), keystore, added).await;
-	state.active_indras.remove_outgoing(removed);
+	state.active_paras.assign_incoming(ctx.sender(), keystore, added).await;
+	state.active_paras.remove_outgoing(removed);
 
 	for (peer_id, peer_data) in state.peer_data.iter_mut() {
 		peer_data.prune_old_advertisements(&state.view);
 
-		// Disconnect peers who are not relevant to our current or next indra.
+		// Disconnect peers who are not relevant to our current or next para.
 		//
 		// If the peer hasn't declared yet, they will be disconnected if they do not
 		// declare.
-		if let Some(indra_id) = peer_data.collating_indra() {
-			if !state.active_indras.is_current(&indra_id) {
+		if let Some(para_id) = peer_data.collating_para() {
+			if !state.active_paras.is_current(&para_id) {
 				gum::trace!(
 					target: LOG_TARGET,
 					?peer_id,
-					?indra_id,
-					"Disconnecting peer on view change (not current indracore id)"
+					?para_id,
+					"Disconnecting peer on view change (not current parachain id)"
 				);
 				disconnect_peer(ctx.sender(), peer_id.clone()).await;
 			}
@@ -1101,7 +1101,7 @@ async fn process_msg<Context>(
 		CollateOn(id) => {
 			gum::warn!(
 				target: LOG_TARGET,
-				indra_id = %id,
+				para_id = %id,
 				"CollateOn message is not expected on the validator side of the protocol",
 			);
 		},
@@ -1324,7 +1324,7 @@ async fn handle_collation_fetched_result<Context>(
 			gum::debug!(
 				target: LOG_TARGET,
 				relay_parent = ?collation_event.1.relay_parent,
-				indra_id = ?collation_event.1.indra_id,
+				para_id = ?collation_event.1.para_id,
 				peer_id = ?collation_event.1.peer_id,
 				collator_id = ?collation_event.0,
 				error = ?e,
@@ -1433,7 +1433,7 @@ async fn poll_collation_response(
 				gum::warn!(
 					target: LOG_TARGET,
 					hash = ?pending_collation.relay_parent,
-					indra_id = ?pending_collation.indra_id,
+					para_id = ?pending_collation.para_id,
 					peer_id = ?pending_collation.peer_id,
 					err = ?err,
 					"Collator provided response that could not be decoded"
@@ -1444,7 +1444,7 @@ async fn poll_collation_response(
 				gum::debug!(
 					target: LOG_TARGET,
 					hash = ?pending_collation.relay_parent,
-					indra_id = ?pending_collation.indra_id,
+					para_id = ?pending_collation.para_id,
 					peer_id = ?pending_collation.peer_id,
 					"Request timed out"
 				);
@@ -1454,7 +1454,7 @@ async fn poll_collation_response(
 				gum::debug!(
 					target: LOG_TARGET,
 					hash = ?pending_collation.relay_parent,
-					indra_id = ?pending_collation.indra_id,
+					para_id = ?pending_collation.para_id,
 					peer_id = ?pending_collation.peer_id,
 					err = ?err,
 					"Fetching collation failed due to network error"
@@ -1469,7 +1469,7 @@ async fn poll_collation_response(
 				gum::debug!(
 					target: LOG_TARGET,
 					hash = ?pending_collation.relay_parent,
-					indra_id = ?pending_collation.indra_id,
+					para_id = ?pending_collation.para_id,
 					peer_id = ?pending_collation.peer_id,
 					err = ?err,
 					"Canceled should be handled by `is_timed_out` above - this is a bug!"
@@ -1477,22 +1477,22 @@ async fn poll_collation_response(
 				CollationFetchResult::Error(None)
 			},
 			Ok(CollationFetchingResponse::Collation(receipt, _))
-				if receipt.descriptor().indra_id != pending_collation.indra_id =>
+				if receipt.descriptor().para_id != pending_collation.para_id =>
 			{
 				gum::debug!(
 					target: LOG_TARGET,
-					expected_indra_id = ?pending_collation.indra_id,
-					got_indra_id = ?receipt.descriptor().indra_id,
+					expected_para_id = ?pending_collation.para_id,
+					got_para_id = ?receipt.descriptor().para_id,
 					peer_id = ?pending_collation.peer_id,
-					"Got wrong indra ID for requested collation."
+					"Got wrong para ID for requested collation."
 				);
 
-				CollationFetchResult::Error(Some(COST_WRONG_INDRA))
+				CollationFetchResult::Error(Some(COST_WRONG_PARA))
 			},
 			Ok(CollationFetchingResponse::Collation(receipt, pov)) => {
 				gum::debug!(
 					target: LOG_TARGET,
-					indra_id = %pending_collation.indra_id,
+					para_id = %pending_collation.para_id,
 					hash = ?pending_collation.relay_parent,
 					candidate_hash = ?receipt.hash(),
 					"Received collation",
@@ -1507,7 +1507,7 @@ async fn poll_collation_response(
 					gum::warn!(
 						target: LOG_TARGET,
 						hash = ?pending_collation.relay_parent,
-						indra_id = ?pending_collation.indra_id,
+						para_id = ?pending_collation.para_id,
 						peer_id = ?pending_collation.peer_id,
 						"Sending response back to requester failed (receiving side closed)"
 					);

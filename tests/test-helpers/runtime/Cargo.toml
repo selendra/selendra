@@ -56,12 +56,12 @@ pallet-vesting = { git = "https://github.com/paritytech/substrate", default-feat
 test-runtime-constants = { path = "./constants", default-features = false }
 runtime-common = { package = "selendra-runtime-common", path = "../../../runtime/common", default-features = false }
 primitives = { package = "selendra-primitives", path = "../../../primitives", default-features = false }
-pallet-xcm = { path = "../../../indracore/xcm/pallet-xcm", default-features = false }
-selendra-indracore = { path = "../../../indracore/core", default-features = false }
-selendra-runtime-indracores = { path = "../../../indracore/runtime", default-features = false, features = ["vstaging"]}
-xcm-builder = { path = "../../../indracore/xcm/xcm-builder", default-features = false }
-xcm-executor = { path = "../../../indracore/xcm/xcm-executor", default-features = false }
-xcm = { path = "../../../indracore/xcm", default-features = false }
+pallet-xcm = { path = "../../../parachain/xcm/pallet-xcm", default-features = false }
+selendra-parachain = { path = "../../../parachain/core", default-features = false }
+selendra-runtime-parachains = { path = "../../../parachain/runtime", default-features = false, features = ["vstaging"]}
+xcm-builder = { path = "../../../parachain/xcm/xcm-builder", default-features = false }
+xcm-executor = { path = "../../../parachain/xcm/xcm-executor", default-features = false }
+xcm = { path = "../../../parachain/xcm", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
@@ -78,7 +78,7 @@ substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", bran
 default = ["std"]
 no_std = []
 only-staking = []
-runtime-metrics = ["selendra-runtime-indracores/runtime-metrics", "sp-io/with-tracing"]
+runtime-metrics = ["selendra-runtime-parachains/runtime-metrics", "sp-io/with-tracing"]
 
 std = [
 	"authority-discovery-primitives/std",
@@ -90,7 +90,7 @@ std = [
 	"scale-info/std",
 	"inherents/std",
 	"sp-core/std",
-	"selendra-indracore/std",
+	"selendra-parachain/std",
 	"pallet-xcm/std",
 	"xcm-builder/std",
 	"xcm-executor/std",

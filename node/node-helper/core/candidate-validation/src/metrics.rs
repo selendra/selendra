@@ -76,7 +76,7 @@ impl metrics::Metrics for Metrics {
 			validation_requests: prometheus::register(
 				prometheus::CounterVec::new(
 					prometheus::Opts::new(
-						"selendra_indracore_validation_requests_total",
+						"selendra_parachain_validation_requests_total",
 						"Number of validation requests served.",
 					),
 					&["validity"],
@@ -85,21 +85,21 @@ impl metrics::Metrics for Metrics {
 			)?,
 			validate_from_chain_state: prometheus::register(
 				prometheus::Histogram::with_opts(prometheus::HistogramOpts::new(
-					"selendra_indracore_candidate_validation_validate_from_chain_state",
+					"selendra_parachain_candidate_validation_validate_from_chain_state",
 					"Time spent within `candidate_validation::validate_from_chain_state`",
 				))?,
 				registry,
 			)?,
 			validate_from_exhaustive: prometheus::register(
 				prometheus::Histogram::with_opts(prometheus::HistogramOpts::new(
-					"selendra_indracore_candidate_validation_validate_from_exhaustive",
+					"selendra_parachain_candidate_validation_validate_from_exhaustive",
 					"Time spent within `candidate_validation::validate_from_exhaustive`",
 				))?,
 				registry,
 			)?,
 			validate_candidate_exhaustive: prometheus::register(
 				prometheus::Histogram::with_opts(prometheus::HistogramOpts::new(
-					"selendra_indracore_candidate_validation_validate_candidate_exhaustive",
+					"selendra_parachain_candidate_validation_validate_candidate_exhaustive",
 					"Time spent within `candidate_validation::validate_candidate_exhaustive`",
 				))?,
 				registry,

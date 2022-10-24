@@ -32,7 +32,7 @@ use selendra_node_network_protocol::{
 };
 use selendra_primitives::v2::AuthorityDiscoveryId;
 
-const LOG_TARGET: &str = "indracore::validator-discovery";
+const LOG_TARGET: &str = "parachain::validator-discovery";
 
 pub(super) struct Service<N, AD> {
 	state: PerPeerSet<StatePerPeerSet>,

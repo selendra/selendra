@@ -48,7 +48,7 @@ use selendra_node_subsystem::{
 	ActivatedLeaf, ActiveLeavesUpdate, FromOrchestra, LeafStatus, OverseerSignal,
 };
 use selendra_primitives::v2::{
-	CandidateHash, CoreState, GroupIndex, Hash, Id as IndraId, ScheduledCore, SessionInfo,
+	CandidateHash, CoreState, GroupIndex, Hash, Id as ParaId, ScheduledCore, SessionInfo,
 	ValidatorIndex,
 };
 use test_helpers::{mock::make_ferdie_keystore, SingleItemSink};
@@ -89,8 +89,8 @@ pub struct TestState {
 impl Default for TestState {
 	fn default() -> Self {
 		let relay_chain: Vec<_> = (1u8..10).map(Hash::repeat_byte).collect();
-		let chain_a = IndraId::from(1);
-		let chain_b = IndraId::from(2);
+		let chain_a = ParaId::from(1);
+		let chain_b = ParaId::from(2);
 
 		let chain_ids = vec![chain_a, chain_b];
 
@@ -105,8 +105,8 @@ impl Default for TestState {
 			cores.insert(
 				relay_chain[0],
 				vec![
-					CoreState::Scheduled(ScheduledCore { indra_id: chain_ids[0], collator: None }),
-					CoreState::Scheduled(ScheduledCore { indra_id: chain_ids[1], collator: None }),
+					CoreState::Scheduled(ScheduledCore { para_id: chain_ids[0], collator: None }),
+					CoreState::Scheduled(ScheduledCore { para_id: chain_ids[1], collator: None }),
 				],
 			);
 
@@ -119,10 +119,10 @@ impl Default for TestState {
 				let (p_cores, p_chunks): (Vec<_>, Vec<_>) = chain_ids
 					.iter()
 					.enumerate()
-					.map(|(i, indra_id)| {
+					.map(|(i, para_id)| {
 						let (core, chunk) = OccupiedCoreBuilder {
 							group_responsible: GroupIndex(i as _),
-							indra_id: *indra_id,
+							para_id: *para_id,
 							relay_parent: relay_parent.clone(),
 						}
 						.build();

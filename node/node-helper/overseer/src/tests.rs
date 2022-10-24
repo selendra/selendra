@@ -37,7 +37,7 @@ use crate::{
 	self as overseer,
 	dummy::{dummy_overseer_builder, one_for_all_overseer_builder},
 	gen::Delay,
-	HeadSupportsIndracores,
+	HeadSupportsParachains,
 };
 use metered;
 
@@ -152,10 +152,10 @@ where
 	}
 }
 
-struct MockSupportsIndracores;
+struct MockSupportsParachains;
 
-impl HeadSupportsIndracores for MockSupportsIndracores {
-	fn head_supports_indracores(&self, _head: &Hash) -> bool {
+impl HeadSupportsParachains for MockSupportsParachains {
+	fn head_supports_parachains(&self, _head: &Hash) -> bool {
 		true
 	}
 }
@@ -171,7 +171,7 @@ fn overseer_works() {
 
 		let mut s1_rx = s1_rx.fuse();
 		let mut s2_rx = s2_rx.fuse();
-		let (overseer, handle) = dummy_overseer_builder(spawner, MockSupportsIndracores, None)
+		let (overseer, handle) = dummy_overseer_builder(spawner, MockSupportsParachains, None)
 			.unwrap()
 			.replace_candidate_validation(move |_| TestSubsystem1(s1_tx))
 			.replace_candidate_backing(move |_| TestSubsystem2(s2_tx))
@@ -232,7 +232,7 @@ fn overseer_metrics_work() {
 
 		let registry = prometheus::Registry::new();
 		let (overseer, handle) =
-			dummy_overseer_builder(spawner, MockSupportsIndracores, Some(&registry))
+			dummy_overseer_builder(spawner, MockSupportsParachains, Some(&registry))
 				.unwrap()
 				.leaves(block_info_to_pair(vec![first_block]))
 				.build()
@@ -276,9 +276,9 @@ fn extract_metrics(registry: &prometheus::Registry) -> HashMap<&'static str, u64
 			.get_value() as u64
 	};
 
-	let activated = extract("selendra_indracore_activated_heads_total");
-	let deactivated = extract("selendra_indracore_deactivated_heads_total");
-	let relayed = extract("selendra_indracore_messages_relayed_total");
+	let activated = extract("selendra_parachain_activated_heads_total");
+	let deactivated = extract("selendra_parachain_deactivated_heads_total");
+	let relayed = extract("selendra_parachain_messages_relayed_total");
 	let mut result = HashMap::new();
 	result.insert("activated", activated);
 	result.insert("deactivated", deactivated);
@@ -294,7 +294,7 @@ fn overseer_ends_on_subsystem_exit() {
 	let spawner = sp_core::testing::TaskExecutor::new();
 
 	executor::block_on(async move {
-		let (overseer, _handle) = dummy_overseer_builder(spawner, MockSupportsIndracores, None)
+		let (overseer, _handle) = dummy_overseer_builder(spawner, MockSupportsParachains, None)
 			.unwrap()
 			.replace_candidate_backing(|_| ReturnOnStart)
 			.build()
@@ -389,7 +389,7 @@ fn overseer_start_stop_works() {
 		let (tx_5, mut rx_5) = metered::channel(64);
 		let (tx_6, mut rx_6) = metered::channel(64);
 
-		let (overseer, handle) = dummy_overseer_builder(spawner, MockSupportsIndracores, None)
+		let (overseer, handle) = dummy_overseer_builder(spawner, MockSupportsParachains, None)
 			.unwrap()
 			.replace_candidate_validation(move |_| TestSubsystem5(tx_5))
 			.replace_candidate_backing(move |_| TestSubsystem6(tx_6))
@@ -488,7 +488,7 @@ fn overseer_finalize_works() {
 
 		// start with two forks of different height.
 
-		let (overseer, handle) = dummy_overseer_builder(spawner, MockSupportsIndracores, None)
+		let (overseer, handle) = dummy_overseer_builder(spawner, MockSupportsParachains, None)
 			.unwrap()
 			.replace_candidate_validation(move |_| TestSubsystem5(tx_5))
 			.replace_candidate_backing(move |_| TestSubsystem6(tx_6))
@@ -584,7 +584,7 @@ fn overseer_finalize_leaf_preserves_it() {
 
 		// start with two forks at height 1.
 
-		let (overseer, handle) = dummy_overseer_builder(spawner, MockSupportsIndracores, None)
+		let (overseer, handle) = dummy_overseer_builder(spawner, MockSupportsParachains, None)
 			.unwrap()
 			.replace_candidate_validation(move |_| TestSubsystem5(tx_5))
 			.replace_candidate_backing(move |_| TestSubsystem6(tx_6))
@@ -674,7 +674,7 @@ fn do_not_send_empty_leaves_update_on_block_finalization() {
 
 		let (tx_5, mut rx_5) = metered::channel(64);
 
-		let (overseer, handle) = dummy_overseer_builder(spawner, MockSupportsIndracores, None)
+		let (overseer, handle) = dummy_overseer_builder(spawner, MockSupportsParachains, None)
 			.unwrap()
 			.replace_candidate_backing(move |_| TestSubsystem6(tx_5))
 			.build()
@@ -808,7 +808,7 @@ fn test_collator_generation_msg() -> CollationGenerationMessage {
 	CollationGenerationMessage::Initialize(CollationGenerationConfig {
 		key: CollatorPair::generate().0,
 		collator: Box::new(|_, _| TestCollator.boxed()),
-		indra_id: Default::default(),
+		para_id: Default::default(),
 	})
 }
 struct TestCollator;
@@ -930,7 +930,7 @@ fn overseer_all_subsystems_receive_signals_and_messages() {
 		);
 
 		let (overseer, handle) =
-			one_for_all_overseer_builder(spawner, MockSupportsIndracores, subsystem, None)
+			one_for_all_overseer_builder(spawner, MockSupportsParachains, subsystem, None)
 				.unwrap()
 				.build()
 				.unwrap();

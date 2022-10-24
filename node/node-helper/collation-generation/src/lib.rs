@@ -32,7 +32,7 @@ use selendra_node_subsystem_util::{
 };
 use selendra_primitives::v2::{
 	collator_signature_payload, CandidateCommitments, CandidateDescriptor, CandidateReceipt,
-	CoreState, Hash, Id as IndraId, OccupiedCoreAssumption, PersistedValidationData,
+	CoreState, Hash, Id as ParaId, OccupiedCoreAssumption, PersistedValidationData,
 	ValidationCodeHash,
 };
 use sp_core::crypto::Pair;
@@ -46,7 +46,7 @@ mod tests;
 mod metrics;
 use self::metrics::Metrics;
 
-const LOG_TARGET: &'static str = "indracore::collation-generation";
+const LOG_TARGET: &'static str = "parachain::collation-generation";
 
 /// Collation Generation Subsystem
 pub struct CollationGenerationSubsystem {
@@ -177,7 +177,7 @@ async fn handle_new_activations<Context>(
 	sender: &mpsc::Sender<overseer::CollationGenerationOutgoingMessages>,
 ) -> crate::error::Result<()> {
 	// follow the procedure from the guide:
-	// https://w3f.github.io/indracore-implementers-guide/node/collators/collation-generation.html
+	// https://w3f.github.io/parachain-implementers-guide/node/collators/collation-generation.html
 
 	let _overall_timer = metrics.time_new_activations();
 
@@ -217,14 +217,14 @@ async fn handle_new_activations<Context>(
 				},
 			};
 
-			if scheduled_core.indra_id != config.indra_id {
+			if scheduled_core.para_id != config.para_id {
 				gum::trace!(
 					target: LOG_TARGET,
 					core_idx = %core_idx,
 					relay_parent = ?relay_parent,
-					our_indra = %config.indra_id,
-					their_indra = %scheduled_core.indra_id,
-					"core is not assigned to our indra. Keep going.",
+					our_para = %config.para_id,
+					their_para = %scheduled_core.para_id,
+					"core is not assigned to our para. Keep going.",
 				);
 				continue
 			}
@@ -235,7 +235,7 @@ async fn handle_new_activations<Context>(
 
 			let validation_data = match request_persisted_validation_data(
 				relay_parent,
-				scheduled_core.indra_id,
+				scheduled_core.para_id,
 				assumption,
 				ctx.sender(),
 			)
@@ -248,8 +248,8 @@ async fn handle_new_activations<Context>(
 						target: LOG_TARGET,
 						core_idx = %core_idx,
 						relay_parent = ?relay_parent,
-						our_indra = %config.indra_id,
-						their_indra = %scheduled_core.indra_id,
+						our_para = %config.para_id,
+						their_para = %scheduled_core.para_id,
 						"validation data is not available",
 					);
 					continue
@@ -258,7 +258,7 @@ async fn handle_new_activations<Context>(
 
 			let validation_code_hash = match obtain_current_validation_code_hash(
 				relay_parent,
-				scheduled_core.indra_id,
+				scheduled_core.para_id,
 				assumption,
 				ctx.sender(),
 			)
@@ -270,8 +270,8 @@ async fn handle_new_activations<Context>(
 						target: LOG_TARGET,
 						core_idx = %core_idx,
 						relay_parent = ?relay_parent,
-						our_indra = %config.indra_id,
-						their_indra = %scheduled_core.indra_id,
+						our_para = %config.para_id,
+						their_para = %scheduled_core.para_id,
 						"validation code hash is not found.",
 					);
 					continue
@@ -292,7 +292,7 @@ async fn handle_new_activations<Context>(
 							None => {
 								gum::debug!(
 									target: LOG_TARGET,
-									indra_id = %scheduled_core.indra_id,
+									para_id = %scheduled_core.para_id,
 									"collator returned no collation on collate",
 								);
 								return
@@ -312,7 +312,7 @@ async fn handle_new_activations<Context>(
 						if encoded_size > validation_data.max_pov_size as usize {
 							gum::debug!(
 								target: LOG_TARGET,
-								indra_id = %scheduled_core.indra_id,
+								para_id = %scheduled_core.para_id,
 								size = encoded_size,
 								max_size = validation_data.max_pov_size,
 								"PoV exceeded maximum size"
@@ -328,7 +328,7 @@ async fn handle_new_activations<Context>(
 
 					let signature_payload = collator_signature_payload(
 						&relay_parent,
-						&scheduled_core.indra_id,
+						&scheduled_core.para_id,
 						&persisted_validation_data_hash,
 						&pov_hash,
 						&validation_code_hash,
@@ -340,7 +340,7 @@ async fn handle_new_activations<Context>(
 							Err(err) => {
 								gum::error!(
 									target: LOG_TARGET,
-									indra_id = %scheduled_core.indra_id,
+									para_id = %scheduled_core.para_id,
 									err = ?err,
 									"failed to calculate erasure root",
 								);
@@ -361,13 +361,13 @@ async fn handle_new_activations<Context>(
 						commitments_hash: commitments.hash(),
 						descriptor: CandidateDescriptor {
 							signature: task_config.key.sign(&signature_payload),
-							indra_id: scheduled_core.indra_id,
+							para_id: scheduled_core.para_id,
 							relay_parent,
 							collator: task_config.key.public(),
 							persisted_validation_data_hash,
 							pov_hash,
 							erasure_root,
-							indra_head: commitments.head_data.hash(),
+							para_head: commitments.head_data.hash(),
 							validation_code_hash,
 						},
 					};
@@ -377,7 +377,7 @@ async fn handle_new_activations<Context>(
 						candidate_hash = ?ccr.hash(),
 						?pov_hash,
 						?relay_parent,
-						indra_id = %scheduled_core.indra_id,
+						para_id = %scheduled_core.para_id,
 						"candidate is generated",
 					);
 					metrics.on_collation_generated();
@@ -391,7 +391,7 @@ async fn handle_new_activations<Context>(
 					{
 						gum::warn!(
 							target: LOG_TARGET,
-							indra_id = %scheduled_core.indra_id,
+							para_id = %scheduled_core.para_id,
 							err = ?err,
 							"failed to send collation result",
 						);
@@ -406,23 +406,20 @@ async fn handle_new_activations<Context>(
 
 async fn obtain_current_validation_code_hash(
 	relay_parent: Hash,
-	indra_id: IndraId,
+	para_id: ParaId,
 	assumption: OccupiedCoreAssumption,
 	sender: &mut impl overseer::CollationGenerationSenderTrait,
 ) -> Result<Option<ValidationCodeHash>, crate::error::Error> {
 	use selendra_node_subsystem::RuntimeApiError;
 
-	match request_validation_code_hash(relay_parent, indra_id, assumption, sender)
+	match request_validation_code_hash(relay_parent, para_id, assumption, sender)
 		.await
 		.await?
 	{
 		Ok(Some(v)) => Ok(Some(v)),
 		Ok(None) => Ok(None),
 		Err(RuntimeApiError::NotSupported { .. }) => {
-			match request_validation_code(relay_parent, indra_id, assumption, sender)
-				.await
-				.await?
-			{
+			match request_validation_code(relay_parent, para_id, assumption, sender).await.await? {
 				Ok(Some(v)) => Ok(Some(v.hash())),
 				Ok(None) => Ok(None),
 				Err(e) => {

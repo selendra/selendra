@@ -30,9 +30,9 @@ use selendra_node_subsystem::{
 	ActivatedLeaf, ActiveLeavesUpdate, LeafStatus,
 };
 use selendra_node_subsystem_util::TimeoutExt;
-use selendra_overseer::HeadSupportsIndracores;
+use selendra_overseer::HeadSupportsParachains;
 use selendra_primitives::v2::{
-	CandidateCommitments, CandidateEvent, CoreIndex, GroupIndex, Header, Id as IndraId,
+	CandidateCommitments, CandidateEvent, CoreIndex, GroupIndex, Header, Id as ParaId,
 	ValidationCode, ValidatorSignature,
 };
 use std::time::Duration;
@@ -115,10 +115,10 @@ pub mod test_constants {
 	pub(crate) const TEST_CONFIG: DatabaseConfig = DatabaseConfig { col_data: DATA_COL };
 }
 
-struct MockSupportsIndracores;
+struct MockSupportsParachains;
 
-impl HeadSupportsIndracores for MockSupportsIndracores {
-	fn head_supports_indracores(&self, _head: &Hash) -> bool {
+impl HeadSupportsParachains for MockSupportsParachains {
+	fn head_supports_parachains(&self, _head: &Hash) -> bool {
 		true
 	}
 }
@@ -473,7 +473,7 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
 
 	let keystore = LocalKeystore::in_memory();
 	let _ = keystore.sr25519_generate_new(
-		selendra_primitives::v2::INDRACORE_KEY_TYPE_ID,
+		selendra_primitives::v2::PARACHAIN_KEY_TYPE_ID,
 		Some(&Sr25519Keyring::Alice.to_seed()),
 	);
 
@@ -561,9 +561,9 @@ where
 	db.write(write_ops).unwrap();
 }
 
-fn make_candidate(indra_id: IndraId, hash: &Hash) -> CandidateReceipt {
+fn make_candidate(para_id: ParaId, hash: &Hash) -> CandidateReceipt {
 	let mut r = dummy_candidate_receipt_bad_sig(hash.clone(), Some(Default::default()));
-	r.descriptor.indra_id = indra_id;
+	r.descriptor.para_id = para_id;
 	r
 }
 
@@ -773,7 +773,7 @@ async fn import_block(
 ) {
 	let (new_head, new_header) = &hashes[hashes.len() - 1];
 	let candidates = config.candidates.clone().unwrap_or(vec![(
-		make_candidate(IndraId::from(0_u32), &new_head),
+		make_candidate(ParaId::from(0_u32), &new_head),
 		CoreIndex(0),
 		GroupIndex(0),
 	)]);
@@ -1127,7 +1127,7 @@ fn subsystem_rejects_approval_if_no_candidate_entry() {
 		let candidate_index = 0;
 		let validator = ValidatorIndex(0);
 
-		let candidate_descriptor = make_candidate(IndraId::from(1_u32), &block_hash);
+		let candidate_descriptor = make_candidate(ParaId::from(1_u32), &block_hash);
 		let candidate_hash = candidate_descriptor.hash();
 
 		let head: Hash = ChainBuilder::GENESIS_HASH;
@@ -1233,7 +1233,7 @@ fn subsystem_rejects_approval_before_assignment() {
 		let candidate_hash = {
 			let mut candidate_receipt =
 				dummy_candidate_receipt_bad_sig(block_hash, Some(Default::default()));
-			candidate_receipt.descriptor.indra_id = IndraId::from(0_u32);
+			candidate_receipt.descriptor.para_id = ParaId::from(0_u32);
 			candidate_receipt.descriptor.relay_parent = block_hash;
 			candidate_receipt.hash()
 		};
@@ -1448,7 +1448,7 @@ fn subsystem_accepts_and_imports_approval_after_assignment() {
 		let candidate_hash = {
 			let mut candidate_receipt =
 				dummy_candidate_receipt_bad_sig(block_hash, Some(Default::default()));
-			candidate_receipt.descriptor.indra_id = IndraId::from(0_u32);
+			candidate_receipt.descriptor.para_id = ParaId::from(0_u32);
 			candidate_receipt.descriptor.relay_parent = block_hash;
 			candidate_receipt.hash()
 		};
@@ -1519,7 +1519,7 @@ fn subsystem_second_approval_import_only_schedules_wakeups() {
 		let candidate_hash = {
 			let mut candidate_receipt =
 				dummy_candidate_receipt_bad_sig(block_hash, Some(Default::default()));
-			candidate_receipt.descriptor.indra_id = IndraId::from(0_u32);
+			candidate_receipt.descriptor.para_id = ParaId::from(0_u32);
 			candidate_receipt.descriptor.relay_parent = block_hash;
 			candidate_receipt.hash()
 		};
@@ -1883,7 +1883,7 @@ fn import_checked_approval_updates_entries_and_schedules() {
 			..session_info(&validators)
 		};
 
-		let candidate_descriptor = make_candidate(IndraId::from(1_u32), &block_hash);
+		let candidate_descriptor = make_candidate(ParaId::from(1_u32), &block_hash);
 		let candidate_hash = candidate_descriptor.hash();
 
 		let head: Hash = ChainBuilder::GENESIS_HASH;
@@ -2009,12 +2009,12 @@ fn subsystem_import_checked_approval_sets_one_block_bit_at_a_time() {
 
 		let candidate_receipt1 = {
 			let mut receipt = dummy_candidate_receipt(block_hash);
-			receipt.descriptor.indra_id = IndraId::from(1_u32);
+			receipt.descriptor.para_id = ParaId::from(1_u32);
 			receipt
 		};
 		let candidate_receipt2 = {
 			let mut receipt = dummy_candidate_receipt(block_hash);
-			receipt.descriptor.indra_id = IndraId::from(2_u32);
+			receipt.descriptor.para_id = ParaId::from(2_u32);
 			receipt
 		};
 		let candidate_hash1 = candidate_receipt1.hash();
@@ -2154,7 +2154,7 @@ fn approved_ancestor_test(
 			.enumerate()
 			.map(|(i, hash)| {
 				let mut candidate_receipt = dummy_candidate_receipt(*hash);
-				candidate_receipt.descriptor.indra_id = i.into();
+				candidate_receipt.descriptor.para_id = i.into();
 				candidate_receipt
 			})
 			.collect();
@@ -2867,7 +2867,7 @@ fn pre_covers_dont_stall_approval() {
 			..session_info(&validators)
 		};
 
-		let candidate_descriptor = make_candidate(IndraId::from(1_u32), &block_hash);
+		let candidate_descriptor = make_candidate(ParaId::from(1_u32), &block_hash);
 		let candidate_hash = candidate_descriptor.hash();
 
 		let head: Hash = ChainBuilder::GENESIS_HASH;
@@ -3046,7 +3046,7 @@ fn waits_until_approving_assignments_are_old_enough() {
 			..session_info(&validators)
 		};
 
-		let candidate_descriptor = make_candidate(IndraId::from(1_u32), &block_hash);
+		let candidate_descriptor = make_candidate(ParaId::from(1_u32), &block_hash);
 		let candidate_hash = candidate_descriptor.hash();
 
 		let head: Hash = ChainBuilder::GENESIS_HASH;

@@ -50,7 +50,7 @@ use selendra_node_subsystem_util::{
 };
 use selendra_primitives::v2::{
 	BackedCandidate, CandidateCommitments, CandidateHash, CandidateReceipt, CollatorId,
-	CommittedCandidateReceipt, CoreIndex, CoreState, Hash, Id as IndraId, SessionIndex,
+	CommittedCandidateReceipt, CoreIndex, CoreState, Hash, Id as ParaId, SessionIndex,
 	SigningContext, ValidatorId, ValidatorIndex, ValidatorSignature, ValidityAttestation,
 };
 use sp_keystore::SyncCryptoStorePtr;
@@ -71,7 +71,7 @@ use self::metrics::Metrics;
 #[cfg(test)]
 mod tests;
 
-const LOG_TARGET: &str = "indracore::candidate-backing";
+const LOG_TARGET: &str = "parachain::candidate-backing";
 
 /// PoV data to validate.
 enum PoVData {
@@ -354,9 +354,9 @@ async fn handle_active_leaves_update<Context>(
 			let group_index = group_rotation_info.group_for_core(core_index, n_cores);
 			if let Some(g) = validator_groups.get(group_index.0 as usize) {
 				if validator.as_ref().map_or(false, |v| g.contains(&v.index())) {
-					assignment = Some((scheduled.indra_id, scheduled.collator));
+					assignment = Some((scheduled.para_id, scheduled.collator));
 				}
-				groups.insert(scheduled.indra_id, g.clone());
+				groups.insert(scheduled.para_id, g.clone());
 			}
 		}
 	}
@@ -370,7 +370,7 @@ async fn handle_active_leaves_update<Context>(
 		},
 		Some((assignment, required_collator)) => {
 			assignments_span.add_string_tag("assigned", "true");
-			assignments_span.add_indra_id(assignment);
+			assignments_span.add_para_id(assignment);
 			(Some(assignment), required_collator)
 		},
 	};
@@ -413,8 +413,8 @@ struct CandidateBackingJob<Context> {
 	parent: Hash,
 	/// The session index this corresponds to.
 	session_index: SessionIndex,
-	/// The `IndraId` assigned to this validator
-	assignment: Option<IndraId>,
+	/// The `ParaId` assigned to this validator
+	assignment: Option<ParaId>,
 	/// The collator required to author the candidate, if any.
 	required_collator: Option<CollatorId>,
 	/// Spans for all candidates that are not yet backable.
@@ -465,14 +465,14 @@ fn minimum_votes(n_validators: usize) -> usize {
 #[derive(Default)]
 struct TableContext {
 	validator: Option<Validator>,
-	groups: HashMap<IndraId, Vec<ValidatorIndex>>,
+	groups: HashMap<ParaId, Vec<ValidatorIndex>>,
 	validators: Vec<ValidatorId>,
 }
 
 impl TableContextTrait for TableContext {
 	type AuthorityId = ValidatorIndex;
 	type Digest = CandidateHash;
-	type GroupId = IndraId;
+	type GroupId = ParaId;
 	type Signature = ValidatorSignature;
 	type Candidate = CommittedCandidateReceipt;
 
@@ -480,17 +480,17 @@ impl TableContextTrait for TableContext {
 		candidate.hash()
 	}
 
-	fn candidate_group(candidate: &CommittedCandidateReceipt) -> IndraId {
-		candidate.descriptor().indra_id
+	fn candidate_group(candidate: &CommittedCandidateReceipt) -> ParaId {
+		candidate.descriptor().para_id
 	}
 
-	fn is_member_of(&self, authority: &ValidatorIndex, group: &IndraId) -> bool {
+	fn is_member_of(&self, authority: &ValidatorIndex, group: &ParaId) -> bool {
 		self.groups
 			.get(group)
 			.map_or(false, |g| g.iter().position(|a| a == authority).is_some())
 	}
 
-	fn requisite_votes(&self, group: &IndraId) -> usize {
+	fn requisite_votes(&self, group: &ParaId) -> usize {
 		self.groups.get(group).map_or(usize::MAX, |g| minimum_votes(g.len()))
 	}
 }
@@ -514,19 +514,19 @@ fn primitive_statement_to_table(s: &SignedFullStatement) -> TableSignedStatement
 
 fn table_attested_to_backed(
 	attested: TableAttestedCandidate<
-		IndraId,
+		ParaId,
 		CommittedCandidateReceipt,
 		ValidatorIndex,
 		ValidatorSignature,
 	>,
 	table_context: &TableContext,
 ) -> Option<BackedCandidate> {
-	let TableAttestedCandidate { candidate, validity_votes, group_id: indra_id } = attested;
+	let TableAttestedCandidate { candidate, validity_votes, group_id: para_id } = attested;
 
 	let (ids, validity_votes): (Vec<_>, Vec<ValidityAttestation>) =
 		validity_votes.into_iter().map(|(id, vote)| (id, vote.into())).unzip();
 
-	let group = table_context.groups.get(&indra_id)?;
+	let group = table_context.groups.get(&para_id)?;
 
 	let mut validator_indices = BitVec::with_capacity(group.len());
 
@@ -723,7 +723,7 @@ async fn validate_and_make_available(
 		let _span = span.as_ref().map(|s| {
 			s.child("request-validation")
 				.with_pov(&pov)
-				.with_indra_id(candidate.descriptor().indra_id)
+				.with_para_id(candidate.descriptor().para_id)
 		});
 		request_candidate_validation(&mut sender, candidate.clone(), pov.clone()).await?
 	};
@@ -925,7 +925,7 @@ impl<Context> CandidateBackingJob<Context> {
 		let mut span = self.get_unbacked_validation_child(
 			root_span,
 			candidate_hash,
-			candidate.descriptor().indra_id,
+			candidate.descriptor().para_id,
 		);
 
 		span.as_mut().map(|span| span.add_follows_from(parent_span));
@@ -1047,7 +1047,7 @@ impl<Context> CandidateBackingJob<Context> {
 						target: LOG_TARGET,
 						candidate_hash = ?candidate_hash,
 						relay_parent = ?self.parent,
-						indra_id = %backed.candidate.descriptor.indra_id,
+						para_id = %backed.candidate.descriptor.para_id,
 						"Candidate backed",
 					);
 
@@ -1055,7 +1055,7 @@ impl<Context> CandidateBackingJob<Context> {
 					// that we need to send unbounded messages to avoid cycles.
 					//
 					// Backed candidates are bounded by the number of validators,
-					// indracores, and the block production rate of the relay chain.
+					// parachains, and the block production rate of the relay chain.
 					let message = ProvisionerMessage::ProvisionableData(
 						self.parent,
 						ProvisionableData::BackedCandidate(backed.receipt()),
@@ -1162,12 +1162,12 @@ impl<Context> CandidateBackingJob<Context> {
 			.with_relay_parent(self.parent);
 
 		// Sanity check that candidate is from our assignment.
-		if Some(candidate.descriptor().indra_id) != self.assignment {
+		if Some(candidate.descriptor().para_id) != self.assignment {
 			gum::debug!(
 				target: LOG_TARGET,
 				our_assignment = ?self.assignment,
-				collation = ?candidate.descriptor().indra_id,
-				"Subsystem asked to second for indra outside of our assignment",
+				collation = ?candidate.descriptor().para_id,
+				"Subsystem asked to second for para outside of our assignment",
 			);
 
 			return Ok(())
@@ -1361,14 +1361,14 @@ impl<Context> CandidateBackingJob<Context> {
 		&mut self,
 		parent_span: &jaeger::Span,
 		hash: CandidateHash,
-		indra_id: Option<IndraId>,
+		para_id: Option<ParaId>,
 	) -> Option<&jaeger::Span> {
 		if !self.backed.contains(&hash) {
 			// only add if we don't consider this backed.
 			let span = self.unbacked_candidates.entry(hash).or_insert_with(|| {
 				let s = parent_span.child("unbacked-candidate").with_candidate(hash);
-				if let Some(indra_id) = indra_id {
-					s.with_indra_id(indra_id)
+				if let Some(para_id) = para_id {
+					s.with_para_id(para_id)
 				} else {
 					s
 				}
@@ -1383,9 +1383,9 @@ impl<Context> CandidateBackingJob<Context> {
 		&mut self,
 		parent_span: &jaeger::Span,
 		hash: CandidateHash,
-		indra_id: IndraId,
+		para_id: ParaId,
 	) -> Option<jaeger::Span> {
-		self.insert_or_get_unbacked_span(parent_span, hash, Some(indra_id)).map(|span| {
+		self.insert_or_get_unbacked_span(parent_span, hash, Some(para_id)).map(|span| {
 			span.child("validation")
 				.with_candidate(hash)
 				.with_stage(Stage::CandidateBacking)

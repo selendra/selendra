@@ -31,7 +31,7 @@ use async_std::{
 use futures::FutureExt;
 use futures_timer::Delay;
 use parity_scale_codec::{Decode, Encode};
-use selendra_indracore::primitives::ValidationResult;
+use selendra_parachain::primitives::ValidationResult;
 use std::time::{Duration, Instant};
 
 /// Spawns a new worker with the given program path that acts as the worker and the spawn timeout.

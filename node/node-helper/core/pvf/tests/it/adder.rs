@@ -17,7 +17,7 @@
 use super::TestHost;
 use adder::{hash_state, BlockData, HeadData};
 use parity_scale_codec::{Decode, Encode};
-use selendra_indracore::primitives::{
+use selendra_parachain::primitives::{
 	BlockData as GenericBlockData, HeadData as GenericHeadData, RelayChainBlockNumber,
 	ValidationParams,
 };

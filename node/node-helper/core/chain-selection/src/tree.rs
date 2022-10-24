@@ -380,7 +380,7 @@ fn apply_reversions(
 						block_number,
 						revert_target = revert_number,
 						revert_hash = ?ancestor_entry.block_hash,
-						"A block has signaled that its ancestor be reverted due to a bad indracore block.",
+						"A block has signaled that its ancestor be reverted due to a bad parachain block.",
 					);
 
 					ancestor_entry

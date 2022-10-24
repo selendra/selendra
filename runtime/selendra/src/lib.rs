@@ -71,7 +71,7 @@ pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::{CurrencyAdapter, FeeDetails, RuntimeDispatchInfo};
 
 use runtime_common::{
-	impl_runtime_weights, impls::DealWithFees, indras_registrar, prod_or_fast, slots,
+	impl_runtime_weights, impls::DealWithFees, paras_registrar, prod_or_fast, slots,
 	BlockHashCount, BlockLength, CouncilInstance, CouncilMembershipInstance, CurrencyToVote,
 	EnsureRootOrAllCouncil, EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil,
 	EnsureRootOrThreeFourthsCouncil, EnsureRootOrTwoThirdsCouncil,
@@ -79,18 +79,18 @@ use runtime_common::{
 	TechnicalMembershipInstance,
 };
 
-use runtime_indracores::{
-	configuration as indracores_configuration, disputes as indracores_disputes,
-	dmp as indracores_dmp, hrmp as indracores_hrmp, inclusion as indracores_inclusion,
-	indras as indracores_indras, indras_inherent as indracores_indras_inherent,
-	initializer as indracores_initializer, origin as indracores_origin,
-	runtime_api_impl::v2 as indracores_runtime_api_impl, scheduler as indracores_scheduler,
-	session_info as indracores_session_info, shared as indracores_shared, ump as indracores_ump,
+use runtime_parachains::{
+	configuration as parachains_configuration, disputes as parachains_disputes,
+	dmp as parachains_dmp, hrmp as parachains_hrmp, inclusion as parachains_inclusion,
+	initializer as parachains_initializer, origin as parachains_origin, paras as parachains_paras,
+	paras_inherent as parachains_paras_inherent,
+	runtime_api_impl::v2 as parachains_runtime_api_impl, scheduler as parachains_scheduler,
+	session_info as parachains_session_info, shared as parachains_shared, ump as parachains_ump,
 };
 
 use primitives::v2::{
 	AccountId, AccountIndex, Balance, BlockNumber, CandidateEvent, CandidateHash,
-	CommittedCandidateReceipt, CoreState, DisputeState, GroupRotationInfo, Hash, Id as IndraId,
+	CommittedCandidateReceipt, CoreState, DisputeState, GroupRotationInfo, Hash, Id as ParaId,
 	InboundDownwardMessage, InboundHrmpMessage, Moment, Nonce, OccupiedCoreAssumption,
 	PersistedValidationData, ScrapedOnChainVotes, SessionInfo, Signature, ValidationCode,
 	ValidationCodeHash, ValidatorId, ValidatorIndex,
@@ -99,7 +99,7 @@ use primitives::v2::{
 /// Constant values used within the runtime.
 pub use selendra_runtime_constants::{currency::*, fee::*, time::*};
 
-pub mod indracore_config;
+pub mod parachain_config;
 pub mod xcm_config;
 
 mod filters;
@@ -344,8 +344,8 @@ impl_opaque_keys! {
 		pub babe: Babe,
 		pub grandpa: Grandpa,
 		pub im_online: ImOnline,
-		pub indra_validator: Initializer,
-		pub indra_assignment: IndrasessionInfo,
+		pub para_validator: Initializer,
+		pub para_assignment: ParasessionInfo,
 		pub authority_discovery: AuthorityDiscovery,
 	}
 }
@@ -1097,23 +1097,23 @@ construct_runtime! {
 		PhragmenElection: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 67,
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 68,
 
-		// Indracores pallets. Start indices at 70 to leave room.
-		IndracoresOrigin: indracores_origin::{Pallet, Origin} = 70,
-		Configuration: indracores_configuration::{Pallet, Call, Storage, Config<T>} = 71,
-		IndrasShared: indracores_shared::{Pallet, Call, Storage} = 72,
-		IndraInclusion: indracores_inclusion::{Pallet, Call, Storage, Event<T>} = 73,
-		IndraInherent: indracores_indras_inherent::{Pallet, Call, Storage, Inherent} = 74,
-		Indrascheduler: indracores_scheduler::{Pallet, Storage} = 75,
-		Indras: indracores_indras::{Pallet, Call, Storage, Event, Config} = 76,
-		Initializer: indracores_initializer::{Pallet, Call, Storage} = 77,
-		Dmp: indracores_dmp::{Pallet, Call, Storage} = 78,
-		Ump: indracores_ump::{Pallet, Call, Storage, Event} = 79,
-		Hrmp: indracores_hrmp::{Pallet, Call, Storage, Event<T>, Config} = 80,
-		IndrasessionInfo: indracores_session_info::{Pallet, Storage} = 81,
-		IndrasDisputes: indracores_disputes::{Pallet, Call, Storage, Event<T>} = 82,
+		// Parachains pallets. Start indices at 70 to leave room.
+		ParachainsOrigin: parachains_origin::{Pallet, Origin} = 70,
+		Configuration: parachains_configuration::{Pallet, Call, Storage, Config<T>} = 71,
+		ParasShared: parachains_shared::{Pallet, Call, Storage} = 72,
+		ParaInclusion: parachains_inclusion::{Pallet, Call, Storage, Event<T>} = 73,
+		ParaInherent: parachains_paras_inherent::{Pallet, Call, Storage, Inherent} = 74,
+		Parascheduler: parachains_scheduler::{Pallet, Storage} = 75,
+		Paras: parachains_paras::{Pallet, Call, Storage, Event, Config} = 76,
+		Initializer: parachains_initializer::{Pallet, Call, Storage} = 77,
+		Dmp: parachains_dmp::{Pallet, Call, Storage} = 78,
+		Ump: parachains_ump::{Pallet, Call, Storage, Event} = 79,
+		Hrmp: parachains_hrmp::{Pallet, Call, Storage, Event<T>, Config} = 80,
+		ParasessionInfo: parachains_session_info::{Pallet, Storage} = 81,
+		ParasDisputes: parachains_disputes::{Pallet, Call, Storage, Event<T>} = 82,
 
-		// Indracore Onboarding Pallets. Start indices at 90 to leave room.
-		Registrar: indras_registrar::{Pallet, Call, Storage, Event<T>} = 90,
+		// Parachain Onboarding Pallets. Start indices at 90 to leave room.
+		Registrar: paras_registrar::{Pallet, Call, Storage, Event<T>} = 90,
 		Slots: slots::{Pallet, Call, Storage, Event<T>} = 91,
 
 		// Pallet for sending XCM.
@@ -1169,13 +1169,13 @@ mod benches {
 		// NOTE: Make sure to prefix these with `runtime_common::` so
 		// the that path resolves correctly in the generated file.
 		[runtime_common::slots, Slots]
-		[runtime_common::indras_registrar, Registrar]
-		[runtime_indracores::configuration, Configuration]
-		[runtime_indracores::disputes, IndrasDisputes]
-		[runtime_indracores::initializer, Initializer]
-		[runtime_indracores::indras, Indras]
-		[runtime_indracores::indras_inherent, IndraInherent]
-		[runtime_indracores::ump, Ump]
+		[runtime_common::paras_registrar, Registrar]
+		[runtime_parachains::configuration, Configuration]
+		[runtime_parachains::disputes, ParasDisputes]
+		[runtime_parachains::initializer, Initializer]
+		[runtime_parachains::paras, Paras]
+		[runtime_parachains::paras_inherent, ParaInherent]
+		[runtime_parachains::ump, Ump]
 		// Substrate
 		[pallet_bags_list, VoterList]
 		[pallet_balances, Balances]
@@ -1267,58 +1267,58 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl primitives::runtime_api::IndracoreHost<Block, Hash, BlockNumber> for Runtime {
+	impl primitives::runtime_api::ParachainHost<Block, Hash, BlockNumber> for Runtime {
 		fn validators() -> Vec<ValidatorId> {
-			indracores_runtime_api_impl::validators::<Runtime>()
+			parachains_runtime_api_impl::validators::<Runtime>()
 		}
 
 		fn validator_groups() -> (Vec<Vec<ValidatorIndex>>, GroupRotationInfo<BlockNumber>) {
-			indracores_runtime_api_impl::validator_groups::<Runtime>()
+			parachains_runtime_api_impl::validator_groups::<Runtime>()
 		}
 
 		fn availability_cores() -> Vec<CoreState<Hash, BlockNumber>> {
-			indracores_runtime_api_impl::availability_cores::<Runtime>()
+			parachains_runtime_api_impl::availability_cores::<Runtime>()
 		}
 
-		fn persisted_validation_data(indra_id: IndraId, assumption: OccupiedCoreAssumption)
+		fn persisted_validation_data(para_id: ParaId, assumption: OccupiedCoreAssumption)
 			-> Option<PersistedValidationData<Hash, BlockNumber>> {
-			indracores_runtime_api_impl::persisted_validation_data::<Runtime>(indra_id, assumption)
+			parachains_runtime_api_impl::persisted_validation_data::<Runtime>(para_id, assumption)
 		}
 
 		fn assumed_validation_data(
-			indra_id: IndraId,
+			para_id: ParaId,
 			expected_persisted_validation_data_hash: Hash,
 		) -> Option<(PersistedValidationData<Hash, BlockNumber>, ValidationCodeHash)> {
-			indracores_runtime_api_impl::assumed_validation_data::<Runtime>(
-				indra_id,
+			parachains_runtime_api_impl::assumed_validation_data::<Runtime>(
+				para_id,
 				expected_persisted_validation_data_hash,
 			)
 		}
 
 		fn check_validation_outputs(
-			indra_id: IndraId,
+			para_id: ParaId,
 			outputs: primitives::v2::CandidateCommitments,
 		) -> bool {
-			indracores_runtime_api_impl::check_validation_outputs::<Runtime>(indra_id, outputs)
+			parachains_runtime_api_impl::check_validation_outputs::<Runtime>(para_id, outputs)
 		}
 
 		fn session_index_for_child() -> SessionIndex {
-			indracores_runtime_api_impl::session_index_for_child::<Runtime>()
+			parachains_runtime_api_impl::session_index_for_child::<Runtime>()
 		}
 
-		fn validation_code(indra_id: IndraId, assumption: OccupiedCoreAssumption)
+		fn validation_code(para_id: ParaId, assumption: OccupiedCoreAssumption)
 			-> Option<ValidationCode> {
-			indracores_runtime_api_impl::validation_code::<Runtime>(indra_id, assumption)
+			parachains_runtime_api_impl::validation_code::<Runtime>(para_id, assumption)
 		}
 
-		fn candidate_pending_availability(indra_id: IndraId) -> Option<CommittedCandidateReceipt<Hash>> {
-			indracores_runtime_api_impl::candidate_pending_availability::<Runtime>(indra_id)
+		fn candidate_pending_availability(para_id: ParaId) -> Option<CommittedCandidateReceipt<Hash>> {
+			parachains_runtime_api_impl::candidate_pending_availability::<Runtime>(para_id)
 		}
 
 		fn candidate_events() -> Vec<CandidateEvent<Hash>> {
-			indracores_runtime_api_impl::candidate_events::<Runtime, _>(|ev| {
+			parachains_runtime_api_impl::candidate_events::<Runtime, _>(|ev| {
 				match ev {
-					Event::IndraInclusion(ev) => {
+					Event::ParaInclusion(ev) => {
 						Some(ev)
 					}
 					_ => None,
@@ -1327,42 +1327,42 @@ sp_api::impl_runtime_apis! {
 		}
 
 		fn session_info(index: SessionIndex) -> Option<SessionInfo> {
-			indracores_runtime_api_impl::session_info::<Runtime>(index)
+			parachains_runtime_api_impl::session_info::<Runtime>(index)
 		}
 
-		fn dmq_contents(recipient: IndraId) -> Vec<InboundDownwardMessage<BlockNumber>> {
-			indracores_runtime_api_impl::dmq_contents::<Runtime>(recipient)
+		fn dmq_contents(recipient: ParaId) -> Vec<InboundDownwardMessage<BlockNumber>> {
+			parachains_runtime_api_impl::dmq_contents::<Runtime>(recipient)
 		}
 
 		fn inbound_hrmp_channels_contents(
-			recipient: IndraId
-		) -> BTreeMap<IndraId, Vec<InboundHrmpMessage<BlockNumber>>> {
-			indracores_runtime_api_impl::inbound_hrmp_channels_contents::<Runtime>(recipient)
+			recipient: ParaId
+		) -> BTreeMap<ParaId, Vec<InboundHrmpMessage<BlockNumber>>> {
+			parachains_runtime_api_impl::inbound_hrmp_channels_contents::<Runtime>(recipient)
 		}
 
 		fn validation_code_by_hash(hash: ValidationCodeHash) -> Option<ValidationCode> {
-			indracores_runtime_api_impl::validation_code_by_hash::<Runtime>(hash)
+			parachains_runtime_api_impl::validation_code_by_hash::<Runtime>(hash)
 		}
 
 		fn on_chain_votes() -> Option<ScrapedOnChainVotes<Hash>> {
-			indracores_runtime_api_impl::on_chain_votes::<Runtime>()
+			parachains_runtime_api_impl::on_chain_votes::<Runtime>()
 		}
 
 		fn submit_pvf_check_statement(
 			stmt: primitives::v2::PvfCheckStatement,
 			signature: primitives::v2::ValidatorSignature,
 		) {
-			indracores_runtime_api_impl::submit_pvf_check_statement::<Runtime>(stmt, signature)
+			parachains_runtime_api_impl::submit_pvf_check_statement::<Runtime>(stmt, signature)
 		}
 
 		fn pvfs_require_precheck() -> Vec<ValidationCodeHash> {
-			indracores_runtime_api_impl::pvfs_require_precheck::<Runtime>()
+			parachains_runtime_api_impl::pvfs_require_precheck::<Runtime>()
 		}
 
-		fn validation_code_hash(indra_id: IndraId, assumption: OccupiedCoreAssumption)
+		fn validation_code_hash(para_id: ParaId, assumption: OccupiedCoreAssumption)
 			-> Option<ValidationCodeHash>
 		{
-			indracores_runtime_api_impl::validation_code_hash::<Runtime>(indra_id, assumption)
+			parachains_runtime_api_impl::validation_code_hash::<Runtime>(para_id, assumption)
 		}
 
 		fn staging_get_disputes() -> Vec<(SessionIndex, CandidateHash, DisputeState<BlockNumber>)> {
@@ -1513,7 +1513,7 @@ sp_api::impl_runtime_apis! {
 
 	impl sp_authority_discovery::AuthorityDiscoveryApi<Block> for Runtime {
 		fn authorities() -> Vec<AuthorityDiscoveryId> {
-			indracores_runtime_api_impl::relevant_authority_ids::<Runtime>()
+			parachains_runtime_api_impl::relevant_authority_ids::<Runtime>()
 		}
 	}
 

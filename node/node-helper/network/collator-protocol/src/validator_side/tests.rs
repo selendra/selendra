@@ -44,7 +44,7 @@ const DECLARE_TIMEOUT: Duration = Duration::from_millis(25);
 
 #[derive(Clone)]
 struct TestState {
-	chain_ids: Vec<IndraId>,
+	chain_ids: Vec<ParaId>,
 	relay_parent: Hash,
 	collators: Vec<CollatorPair>,
 	validator_public: Vec<ValidatorId>,
@@ -55,8 +55,8 @@ struct TestState {
 
 impl Default for TestState {
 	fn default() -> Self {
-		let chain_a = IndraId::from(1);
-		let chain_b = IndraId::from(2);
+		let chain_a = ParaId::from(1);
+		let chain_b = ParaId::from(2);
 
 		let chain_ids = vec![chain_a, chain_b];
 		let relay_parent = Hash::repeat_byte(0x05);
@@ -81,7 +81,7 @@ impl Default for TestState {
 			GroupRotationInfo { session_start_block: 0, group_rotation_frequency: 1, now: 0 };
 
 		let cores = vec![
-			CoreState::Scheduled(ScheduledCore { indra_id: chain_ids[0], collator: None }),
+			CoreState::Scheduled(ScheduledCore { para_id: chain_ids[0], collator: None }),
 			CoreState::Free,
 			CoreState::Occupied(OccupiedCore {
 				next_up_on_available: None,
@@ -93,7 +93,7 @@ impl Default for TestState {
 				candidate_hash: Default::default(),
 				candidate_descriptor: {
 					let mut d = dummy_candidate_descriptor(dummy_hash());
-					d.indra_id = chain_ids[1];
+					d.para_id = chain_ids[1];
 
 					d
 				},
@@ -132,7 +132,7 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(test: impl FnOnce(TestHarne
 	let keystore = TestKeyStore::new();
 	keystore
 		.sr25519_generate_new(
-			selendra_primitives::v2::INDRACORE_KEY_TYPE_ID,
+			selendra_primitives::v2::PARACHAIN_KEY_TYPE_ID,
 			Some(&Sr25519Keyring::Alice.to_seed()),
 		)
 		.unwrap();
@@ -242,7 +242,7 @@ async fn respond_to_core_info_queries(
 async fn assert_candidate_backing_second(
 	virtual_overseer: &mut VirtualOverseer,
 	expected_relay_parent: Hash,
-	expected_indra_id: IndraId,
+	expected_para_id: ParaId,
 	expected_pov: &PoV,
 ) -> CandidateReceipt {
 	assert_matches!(
@@ -250,7 +250,7 @@ async fn assert_candidate_backing_second(
 		AllMessages::CandidateBacking(CandidateBackingMessage::Second(relay_parent, candidate_receipt, incoming_pov)
 	) => {
 		assert_eq!(expected_relay_parent, relay_parent);
-		assert_eq!(expected_indra_id, candidate_receipt.descriptor.indra_id);
+		assert_eq!(expected_para_id, candidate_receipt.descriptor.para_id);
 		assert_eq!(*expected_pov, incoming_pov);
 		candidate_receipt
 	})
@@ -274,7 +274,7 @@ async fn assert_collator_disconnect(virtual_overseer: &mut VirtualOverseer, expe
 async fn assert_fetch_collation_request(
 	virtual_overseer: &mut VirtualOverseer,
 	relay_parent: Hash,
-	indra_id: IndraId,
+	para_id: ParaId,
 ) -> ResponseSender {
 	assert_matches!(
 		overseer_recv(virtual_overseer).await,
@@ -286,7 +286,7 @@ async fn assert_fetch_collation_request(
 			Requests::CollationFetchingV1(req) => {
 				let payload = req.payload;
 				assert_eq!(payload.relay_parent, relay_parent);
-				assert_eq!(payload.indra_id, indra_id);
+				assert_eq!(payload.para_id, para_id);
 				req.pending_response
 			}
 			_ => panic!("Unexpected request"),
@@ -299,7 +299,7 @@ async fn connect_and_declare_collator(
 	virtual_overseer: &mut VirtualOverseer,
 	peer: PeerId,
 	collator: CollatorPair,
-	indra_id: IndraId,
+	para_id: ParaId,
 ) {
 	overseer_send(
 		virtual_overseer,
@@ -318,7 +318,7 @@ async fn connect_and_declare_collator(
 			peer.clone(),
 			Versioned::V1(protocol_v1::CollatorProtocolMessage::Declare(
 				collator.public(),
-				indra_id,
+				para_id,
 				collator.sign(&protocol_v1::declare_signature_payload(&peer)),
 			)),
 		)),
@@ -558,7 +558,7 @@ fn fetch_collations_works() {
 		let pov = PoV { block_data: BlockData(vec![]) };
 		let mut candidate_a =
 			dummy_candidate_receipt_bad_sig(dummy_hash(), Some(Default::default()));
-		candidate_a.descriptor.indra_id = test_state.chain_ids[0];
+		candidate_a.descriptor.para_id = test_state.chain_ids[0];
 		candidate_a.descriptor.relay_parent = test_state.relay_parent;
 		response_channel
 			.send(Ok(
@@ -640,7 +640,7 @@ fn fetch_collations_works() {
 		let pov = PoV { block_data: BlockData(vec![1]) };
 		let mut candidate_a =
 			dummy_candidate_receipt_bad_sig(dummy_hash(), Some(Default::default()));
-		candidate_a.descriptor.indra_id = test_state.chain_ids[0];
+		candidate_a.descriptor.para_id = test_state.chain_ids[0];
 		candidate_a.descriptor.relay_parent = second;
 
 		// First request finishes now:
@@ -691,7 +691,7 @@ fn reject_connection_to_next_group() {
 			&mut virtual_overseer,
 			peer_b.clone(),
 			test_state.collators[0].clone(),
-			test_state.chain_ids[1].clone(), // next, not current `indra_id`
+			test_state.chain_ids[1].clone(), // next, not current `para_id`
 		)
 		.await;
 
@@ -765,7 +765,7 @@ fn fetch_next_collation_on_invalid_collation() {
 		let pov = PoV { block_data: BlockData(vec![]) };
 		let mut candidate_a =
 			dummy_candidate_receipt_bad_sig(dummy_hash(), Some(Default::default()));
-		candidate_a.descriptor.indra_id = test_state.chain_ids[0];
+		candidate_a.descriptor.para_id = test_state.chain_ids[0];
 		candidate_a.descriptor.relay_parent = test_state.relay_parent;
 		response_channel
 			.send(Ok(
@@ -996,7 +996,7 @@ fn disconnect_if_wrong_declare() {
 				peer_b.clone(),
 				Versioned::V1(protocol_v1::CollatorProtocolMessage::Declare(
 					pair.public(),
-					IndraId::from(69),
+					ParaId::from(69),
 					pair.sign(&protocol_v1::declare_signature_payload(&peer_b)),
 				)),
 			)),

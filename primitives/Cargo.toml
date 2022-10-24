@@ -29,7 +29,7 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", default-features
 sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.26" }
 
 selendra-core-primitives = { path = "core", default-features = false }
-selendra-indracore = { path = "../indracore/core", default-features = false }
+selendra-parachain = { path = "../parachain/core", default-features = false }
 
 [features]
 default = ["std"]
@@ -57,7 +57,7 @@ std = [
 	"sp-trie/std",
 
     "selendra-core-primitives/std",
-	"selendra-indracore/std"
+	"selendra-parachain/std"
 ]
 
 runtime-benchmarks = []

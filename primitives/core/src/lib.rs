@@ -18,7 +18,7 @@
 
 //! Core Primitive types.
 //!
-//! These core Selendra types are used by the relay chain and the Indracore.
+//! These core Selendra types are used by the relay chain and the Parachain.
 
 use parity_scale_codec::{Decode, Encode};
 #[cfg(feature = "std")]
@@ -112,14 +112,14 @@ pub type BlockId = generic::BlockId<Block>;
 /// Opaque, encoded, unchecked extrinsic.
 pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 
-/// The information that goes alongside a `transfer_into_indracore` operation. Entirely opaque, it
+/// The information that goes alongside a `transfer_into_parachain` operation. Entirely opaque, it
 /// will generally be used for identifying the reason for the transfer. Typically it will hold the
 /// destination account to which the transfer should be credited. If still more information is
 /// needed, then this should be a hash with the pre-image presented via an off-chain mechanism on
-/// the indracore.
+/// the parachain.
 pub type Remark = [u8; 32];
 
-/// A message sent from the relay-chain down to a indracore.
+/// A message sent from the relay-chain down to a parachain.
 ///
 /// The size of the message is limited by the `config.max_downward_message_size` parameter.
 pub type DownwardMessage = sp_std::vec::Vec<u8>;
@@ -151,7 +151,7 @@ pub struct InboundHrmpMessage<BlockNumber = crate::BlockNumber> {
 #[derive(Encode, Decode, Clone, sp_runtime::RuntimeDebug, PartialEq, Eq, Hash, TypeInfo)]
 #[cfg_attr(feature = "std", derive(MallocSizeOf))]
 pub struct OutboundHrmpMessage<Id> {
-	/// The indra that will get this message in its downward message queue.
+	/// The para that will get this message in its downward message queue.
 	pub recipient: Id,
 	/// The message payload.
 	pub data: sp_std::vec::Vec<u8>,

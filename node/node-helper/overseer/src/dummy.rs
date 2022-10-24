@@ -15,7 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	prometheus::Registry, HeadSupportsIndracores, InitializedOverseerBuilder, MetricsTrait,
+	prometheus::Registry, HeadSupportsParachains, InitializedOverseerBuilder, MetricsTrait,
 	Overseer, OverseerMetrics, OverseerSignal, OverseerSubsystemContext, SpawnGlue,
 	KNOWN_LEAVES_CACHE_SIZE,
 };
@@ -56,14 +56,14 @@ where
 /// Create an overseer with all subsystem being `Sub`.
 ///
 /// Preferred way of initializing a dummy overseer for subsystem tests.
-pub fn dummy_overseer_builder<'a, Spawner, SupportsIndracores>(
+pub fn dummy_overseer_builder<'a, Spawner, SupportsParachains>(
 	spawner: Spawner,
-	supports_indracores: SupportsIndracores,
+	supports_parachains: SupportsParachains,
 	registry: Option<&'a Registry>,
 ) -> Result<
 	InitializedOverseerBuilder<
 		SpawnGlue<Spawner>,
-		SupportsIndracores,
+		SupportsParachains,
 		DummySubsystem,
 		DummySubsystem,
 		DummySubsystem,
@@ -90,21 +90,21 @@ pub fn dummy_overseer_builder<'a, Spawner, SupportsIndracores>(
 >
 where
 	SpawnGlue<Spawner>: orchestra::Spawner + 'static,
-	SupportsIndracores: HeadSupportsIndracores,
+	SupportsParachains: HeadSupportsParachains,
 {
-	one_for_all_overseer_builder(spawner, supports_indracores, DummySubsystem, registry)
+	one_for_all_overseer_builder(spawner, supports_parachains, DummySubsystem, registry)
 }
 
 /// Create an overseer with all subsystem being `Sub`.
-pub fn one_for_all_overseer_builder<'a, Spawner, SupportsIndracores, Sub>(
+pub fn one_for_all_overseer_builder<'a, Spawner, SupportsParachains, Sub>(
 	spawner: Spawner,
-	supports_indracores: SupportsIndracores,
+	supports_parachains: SupportsParachains,
 	subsystem: Sub,
 	registry: Option<&'a Registry>,
 ) -> Result<
 	InitializedOverseerBuilder<
 		SpawnGlue<Spawner>,
-		SupportsIndracores,
+		SupportsParachains,
 		Sub,
 		Sub,
 		Sub,
@@ -131,7 +131,7 @@ pub fn one_for_all_overseer_builder<'a, Spawner, SupportsIndracores, Sub>(
 >
 where
 	SpawnGlue<Spawner>: orchestra::Spawner + 'static,
-	SupportsIndracores: HeadSupportsIndracores,
+	SupportsParachains: HeadSupportsParachains,
 	Sub: Clone
 		+ Subsystem<OverseerSubsystemContext<AvailabilityDistributionMessage>, SubsystemError>
 		+ Subsystem<OverseerSubsystemContext<AvailabilityRecoveryMessage>, SubsystemError>
@@ -186,6 +186,6 @@ where
 		.leaves(Default::default())
 		.spawner(SpawnGlue(spawner))
 		.metrics(metrics)
-		.supports_indracores(supports_indracores);
+		.supports_parachains(supports_parachains);
 	Ok(builder)
 }

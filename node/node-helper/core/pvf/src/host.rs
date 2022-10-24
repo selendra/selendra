@@ -32,7 +32,7 @@ use futures::{
 	channel::{mpsc, oneshot},
 	Future, FutureExt, SinkExt, StreamExt,
 };
-use selendra_indracore::primitives::ValidationResult;
+use selendra_parachain::primitives::ValidationResult;
 use std::{
 	collections::HashMap,
 	time::{Duration, SystemTime},

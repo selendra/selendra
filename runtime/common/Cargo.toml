@@ -38,9 +38,9 @@ pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "p
 
 # primitives
 primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
-runtime-indracores = { package = "selendra-runtime-indracores", path = "../../indracore/runtime", default-features = false }
+runtime-parachains = { package = "selendra-runtime-parachains", path = "../../parachain/runtime", default-features = false }
 slot-range-helper = { path = "slot_range_helper", default-features = false }
-xcm = { path = "../../indracore/xcm", default-features = false }
+xcm = { path = "../../parachain/xcm", default-features = false }
 
 [dev-dependencies]
 parity-scale-codec = { version = "3.0.0" }
@@ -73,7 +73,7 @@ std = [
 	"pallet-staking/std",
 	"pallet-transaction-payment/std",
 	"primitives/std",
-	"runtime-indracores/std",
+	"runtime-parachains/std",
 	"slot-range-helper/std",
 	"xcm/std",
 ]
@@ -84,11 +84,11 @@ runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
-	"runtime-indracores/runtime-benchmarks",
+	"runtime-parachains/runtime-benchmarks",
 	"pallet-babe/runtime-benchmarks",
 ]
 try-runtime = [
-	"runtime-indracores/try-runtime",
+	"runtime-parachains/try-runtime",
 	"pallet-authorship/try-runtime",
 	"pallet-balances/try-runtime",
 	"pallet-session/try-runtime",

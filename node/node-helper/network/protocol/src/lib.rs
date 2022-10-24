@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-//! Network protocol types for indracores.
+//! Network protocol types for parachains.
 
 #![deny(unused_crate_dependencies)]
 #![warn(missing_docs)]
@@ -32,7 +32,7 @@ pub use std::sync::Arc;
 mod reputation;
 pub use self::reputation::{ReputationChange, UnifiedReputationChange};
 
-/// Peer-sets and protocols used for indracores.
+/// Peer-sets and protocols used for parachains.
 pub mod peer_set;
 
 /// Request/response protocols used in Selendra.
@@ -402,7 +402,7 @@ pub mod v1 {
 
 	use selendra_primitives::v2::{
 		CandidateHash, CandidateIndex, CollatorId, CollatorSignature, CompactStatement, Hash,
-		Id as IndraId, UncheckedSignedAvailabilityBitfield, ValidatorIndex, ValidatorSignature,
+		Id as ParaId, UncheckedSignedAvailabilityBitfield, ValidatorIndex, ValidatorSignature,
 	};
 
 	use selendra_node_primitives::{
@@ -507,7 +507,7 @@ pub mod v1 {
 		/// Declare the intent to advertise collations under a collator ID, attaching a
 		/// signature of the `PeerId` of the node using the given collator ID key.
 		#[codec(index = 0)]
-		Declare(CollatorId, IndraId, CollatorSignature),
+		Declare(CollatorId, ParaId, CollatorSignature),
 		/// Advertise a collation to a validator. Can only be sent once the peer has
 		/// declared that they are a collator with given ID.
 		#[codec(index = 1)]

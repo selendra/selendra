@@ -15,7 +15,7 @@
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>
 
 /// Filers
-use super::{indras_registrar, Call, RuntimeDebug};
+use super::{paras_registrar, Call, RuntimeDebug};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::traits::{Contains, InstanceFilter};
 
@@ -54,12 +54,12 @@ impl Contains<Call> for BaseFilter {
 			Call::CouncilMembership(_) |
 			Call::Sudo(_) |
 			Call::Configuration(_) |
-			Call::IndrasShared(_) |
-			Call::IndraInclusion(_) |
-			Call::Indras(_) |
+			Call::ParasShared(_) |
+			Call::ParaInclusion(_) |
+			Call::Paras(_) |
 			Call::Initializer(_) |
-			Call::IndraInherent(_) |
-			Call::IndrasDisputes(_) |
+			Call::ParaInherent(_) |
+			Call::ParasDisputes(_) |
 			Call::Dmp(_) |
 			Call::Ump(_) |
 			Call::Hrmp(_) |
@@ -167,10 +167,10 @@ impl InstanceFilter<Call> for ProxyType {
 				Call::Recovery(pallet_recovery::Call::close_recovery {..}) |
 				Call::Recovery(pallet_recovery::Call::remove_recovery {..}) |
 				Call::Recovery(pallet_recovery::Call::cancel_recovered {..}) |
-				Call::Registrar(indras_registrar::Call::register {..}) |
-				Call::Registrar(indras_registrar::Call::deregister {..}) |
+				Call::Registrar(paras_registrar::Call::register {..}) |
+				Call::Registrar(paras_registrar::Call::deregister {..}) |
 				// Specifically omitting Registrar `swap`
-				Call::Registrar(indras_registrar::Call::reserve {..}) |
+				Call::Registrar(paras_registrar::Call::reserve {..}) |
 				Call::Slots(..) |
 				// Specifically omitting Vesting `vested_transfer`, and `force_vested_transfer`
 				Call::Utility(..) |

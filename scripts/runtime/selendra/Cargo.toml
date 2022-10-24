@@ -64,7 +64,7 @@ pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/parityt
 pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 pallet-utility = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 pallet-vesting = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26", default-features = false }
-pallet-xcm = { path = "../../indracore/xcm/pallet-xcm", default-features = false }
+pallet-xcm = { path = "../../parachain/xcm/pallet-xcm", default-features = false }
 
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
@@ -88,10 +88,10 @@ beefy-primitives = { git = "https://github.com/paritytech/substrate", branch = "
 primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
 selendra-runtime-constants = { path = "constants", default-features = false }
 runtime-common = { package = "selendra-runtime-common", path = "../common", default-features = false }
-runtime-indracores = { package = "selendra-runtime-indracores", path = "../../indracore/runtime", default-features = false }
-xcm = { package = "xcm", path = "../../indracore/xcm", default-features = false }
-xcm-executor = { package = "xcm-executor", path = "../../indracore/xcm/xcm-executor", default-features = false }
-xcm-builder = { package = "xcm-builder", path = "../../indracore/xcm/xcm-builder", default-features = false }
+runtime-parachains = { package = "selendra-runtime-parachains", path = "../../parachain/runtime", default-features = false }
+xcm = { package = "xcm", path = "../../parachain/xcm", default-features = false }
+xcm-executor = { package = "xcm-executor", path = "../../parachain/xcm/xcm-executor", default-features = false }
+xcm-builder = { package = "xcm-builder", path = "../../parachain/xcm/xcm-builder", default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
@@ -172,7 +172,7 @@ std = [
 	"primitives/std",
 	"selendra-runtime-constants/std",
 	"runtime-common/std",
-	"runtime-indracores/std",
+	"runtime-parachains/std",
 	"xcm/std",
 	"xcm-executor/std",
 	"xcm-builder/std",

@@ -20,58 +20,58 @@ use frame_support::{
 	dispatch::DispatchResult,
 	traits::{Currency, ReservableCurrency},
 };
-use primitives::v2::{HeadData, Id as IndraId, ValidationCode};
+use primitives::v2::{HeadData, Id as ParaId, ValidationCode};
 use sp_std::vec::*;
 
-/// Indracore registration API.
+/// Parachain registration API.
 pub trait Registrar {
-	/// The account ID type that encodes a indracore manager ID.
+	/// The account ID type that encodes a parachain manager ID.
 	type AccountId;
 
-	/// Report the manager (permissioned owner) of a indracore, if there is one.
-	fn manager_of(id: IndraId) -> Option<Self::AccountId>;
+	/// Report the manager (permissioned owner) of a parachain, if there is one.
+	fn manager_of(id: ParaId) -> Option<Self::AccountId>;
 
-	/// All indracores. Ordered ascending by `IndraId`. Indrabases are not included.
-	fn indracores() -> Vec<IndraId>;
+	/// All parachains. Ordered ascending by `ParaId`. Parathreads are not included.
+	fn parachains() -> Vec<ParaId>;
 
-	/// Return if a `IndraId` is a Indracore.
-	fn is_indracore(id: IndraId) -> bool {
-		Self::indracores().binary_search(&id).is_ok()
+	/// Return if a `ParaId` is a Parachain.
+	fn is_parachain(id: ParaId) -> bool {
+		Self::parachains().binary_search(&id).is_ok()
 	}
 
-	/// Return if a `IndraId` is a Indrabase.
-	fn is_indrabase(id: IndraId) -> bool;
+	/// Return if a `ParaId` is a Parathread.
+	fn is_parathread(id: ParaId) -> bool;
 
-	/// Return if a `IndraId` is registered in the system.
-	fn is_registered(id: IndraId) -> bool {
-		Self::is_indrabase(id) || Self::is_indracore(id)
+	/// Return if a `ParaId` is registered in the system.
+	fn is_registered(id: ParaId) -> bool {
+		Self::is_parathread(id) || Self::is_parachain(id)
 	}
 
-	/// Apply a lock to the indra registration so that it cannot be modified by
-	/// the manager directly. Instead the indra must use its sovereign governance
+	/// Apply a lock to the para registration so that it cannot be modified by
+	/// the manager directly. Instead the para must use its sovereign governance
 	/// or the governance of the relay chain.
-	fn apply_lock(id: IndraId);
+	fn apply_lock(id: ParaId);
 
-	/// Remove any lock on the indra registration.
-	fn remove_lock(id: IndraId);
+	/// Remove any lock on the para registration.
+	fn remove_lock(id: ParaId);
 
-	/// Register a Indra ID under control of `who`. Registration may be be
+	/// Register a Para ID under control of `who`. Registration may be be
 	/// delayed by session rotation.
 	fn register(
 		who: Self::AccountId,
-		id: IndraId,
+		id: ParaId,
 		genesis_head: HeadData,
 		validation_code: ValidationCode,
 	) -> DispatchResult;
 
-	/// Deregister a Indra ID, free any data, and return any deposits.
-	fn deregister(id: IndraId) -> DispatchResult;
+	/// Deregister a Para ID, free any data, and return any deposits.
+	fn deregister(id: ParaId) -> DispatchResult;
 
-	/// Elevate a indra to indracore status.
-	fn make_indracore(id: IndraId) -> DispatchResult;
+	/// Elevate a para to parachain status.
+	fn make_parachain(id: ParaId) -> DispatchResult;
 
-	/// Lower a indra back to normal from indracore status.
-	fn make_indrabase(id: IndraId) -> DispatchResult;
+	/// Lower a para back to normal from parachain status.
+	fn make_parathread(id: ParaId) -> DispatchResult;
 
 	#[cfg(any(feature = "runtime-benchmarks", test))]
 	fn worst_head_data() -> HeadData;
@@ -79,8 +79,8 @@ pub trait Registrar {
 	#[cfg(any(feature = "runtime-benchmarks", test))]
 	fn worst_validation_code() -> ValidationCode;
 
-	/// Execute any pending state transitions for indras.
-	/// For example onboarding to indrabase, or indrabase to indracore.
+	/// Execute any pending state transitions for paras.
+	/// For example onboarding to parathread, or parathread to parachain.
 	#[cfg(any(feature = "runtime-benchmarks", test))]
 	fn execute_pending_transitions();
 }
@@ -90,7 +90,7 @@ pub trait Registrar {
 pub enum LeaseError {
 	/// Unable to reserve the funds in the leaser's account.
 	ReserveFailed,
-	/// There is already a lease on at least one period for the given indra.
+	/// There is already a lease on at least one period for the given para.
 	AlreadyLeased,
 	/// The period to be leased has already ended.
 	AlreadyEnded,
@@ -98,7 +98,7 @@ pub enum LeaseError {
 	NoLeasePeriod,
 }
 
-/// Lease manager. Used by the auction module to handle indracore slot leases.
+/// Lease manager. Used by the auction module to handle parachain slot leases.
 pub trait Leaser<BlockNumber> {
 	/// An account identifier for a leaser.
 	type AccountId;
@@ -109,29 +109,29 @@ pub trait Leaser<BlockNumber> {
 	/// The currency type in which the lease is taken.
 	type Currency: ReservableCurrency<Self::AccountId>;
 
-	/// Lease a new indracore slot for `indra`.
+	/// Lease a new parachain slot for `para`.
 	///
 	/// `leaser` shall have a total of `amount` balance reserved by the implementer of this trait.
 	///
 	/// Note: The implementer of the trait (the leasing system) is expected to do all reserve/unreserve calls. The
 	/// caller of this trait *SHOULD NOT* pre-reserve the deposit (though should ensure that it is reservable).
 	///
-	/// The lease will last from `period_begin` for `period_count` lease periods. It is undefined if the `indra`
+	/// The lease will last from `period_begin` for `period_count` lease periods. It is undefined if the `para`
 	/// already has a slot leased during those periods.
 	///
 	/// Returns `Err` in the case of an error, and in which case nothing is changed.
 	fn lease_out(
-		indra: IndraId,
+		para: ParaId,
 		leaser: &Self::AccountId,
 		amount: <Self::Currency as Currency<Self::AccountId>>::Balance,
 		period_begin: Self::LeasePeriod,
 		period_count: Self::LeasePeriod,
 	) -> Result<(), LeaseError>;
 
-	/// Return the amount of balance currently held in reserve on `leaser`'s account for leasing `indra`. This won't
+	/// Return the amount of balance currently held in reserve on `leaser`'s account for leasing `para`. This won't
 	/// go down outside a lease period.
 	fn deposit_held(
-		indra: IndraId,
+		para: ParaId,
 		leaser: &Self::AccountId,
 	) -> <Self::Currency as Currency<Self::AccountId>>::Balance;
 
@@ -146,10 +146,10 @@ pub trait Leaser<BlockNumber> {
 	/// is placed.
 	fn lease_period_index(block: BlockNumber) -> Option<(Self::LeasePeriod, bool)>;
 
-	/// Returns true if the indracore already has a lease in any of lease periods in the inclusive
+	/// Returns true if the parachain already has a lease in any of lease periods in the inclusive
 	/// range `[first_period, last_period]`, intersected with the unbounded range [`current_lease_period`..] .
 	fn already_leased(
-		indra_id: IndraId,
+		para_id: ParaId,
 		first_period: Self::LeasePeriod,
 		last_period: Self::LeasePeriod,
 	) -> bool;
@@ -219,7 +219,7 @@ pub trait Auctioneer<BlockNumber> {
 	/// Place a bid in the current auction.
 	///
 	/// - `bidder`: The account that will be funding this bid.
-	/// - `indra`: The indra to bid for.
+	/// - `para`: The para to bid for.
 	/// - `first_slot`: The first lease period index of the range to be bid on.
 	/// - `last_slot`: The last lease period index of the range to be bid on (inclusive).
 	/// - `amount`: The total amount to be the bid for deposit over the range.
@@ -229,7 +229,7 @@ pub trait Auctioneer<BlockNumber> {
 	/// or freed once the bid is rejected or lease has ended.
 	fn place_bid(
 		bidder: Self::AccountId,
-		indra: IndraId,
+		para: ParaId,
 		first_slot: Self::LeasePeriod,
 		last_slot: Self::LeasePeriod,
 		amount: <Self::Currency as Currency<Self::AccountId>>::Balance,
@@ -246,15 +246,15 @@ pub trait Auctioneer<BlockNumber> {
 	/// is placed.
 	fn lease_period_index(block: BlockNumber) -> Option<(Self::LeasePeriod, bool)>;
 
-	/// Check if the indra and user combination has won an auction in the past.
-	fn has_won_an_auction(indra: IndraId, bidder: &Self::AccountId) -> bool;
+	/// Check if the para and user combination has won an auction in the past.
+	fn has_won_an_auction(para: ParaId, bidder: &Self::AccountId) -> bool;
 }
 
-/// Runtime hook for when we swap a indracore and indrabase.
+/// Runtime hook for when we swap a parachain and parathread.
 #[impl_trait_for_tuples::impl_for_tuples(30)]
 pub trait OnSwap {
-	/// Updates any needed state/references to enact a logical swap of two indracores. Identity,
-	/// code and `head_data` remain equivalent for all indracores/threads, however other properties
+	/// Updates any needed state/references to enact a logical swap of two parachains. Identity,
+	/// code and `head_data` remain equivalent for all parachains/threads, however other properties
 	/// such as leases, deposits held and thread/chain nature are swapped.
-	fn on_swap(one: IndraId, other: IndraId);
+	fn on_swap(one: ParaId, other: ParaId);
 }

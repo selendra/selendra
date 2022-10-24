@@ -41,7 +41,7 @@ use selendra_node_primitives::{
 use selendra_primitives::v2::{
 	AuthorityDiscoveryId, BackedCandidate, BlockNumber, CandidateEvent, CandidateHash,
 	CandidateIndex, CandidateReceipt, CollatorId, CommittedCandidateReceipt, CoreState,
-	DisputeState, GroupIndex, GroupRotationInfo, Hash, Header as BlockHeader, Id as IndraId,
+	DisputeState, GroupIndex, GroupRotationInfo, Hash, Header as BlockHeader, Id as ParaId,
 	InboundDownwardMessage, InboundHrmpMessage, MultiDisputeStatementSet, OccupiedCoreAssumption,
 	PersistedValidationData, PvfCheckStatement, SessionIndex, SessionInfo,
 	SignedAvailabilityBitfield, SignedAvailabilityBitfields, ValidationCode, ValidationCodeHash,
@@ -131,7 +131,7 @@ pub enum CandidateValidationMessage {
 	/// This will also perform checking of validation outputs against the acceptance criteria.
 	///
 	/// If there is no state available which can provide this data or the core for
-	/// the indra is not free at the relay-parent, an error is returned.
+	/// the para is not free at the relay-parent, an error is returned.
 	ValidateFromChainState(
 		CandidateReceipt,
 		Arc<PoV>,
@@ -185,15 +185,15 @@ impl CandidateValidationMessage {
 #[derive(Debug, derive_more::From)]
 pub enum CollatorProtocolMessage {
 	/// Signal to the collator protocol that it should connect to validators with the expectation
-	/// of collating on the given indra. This is only expected to be called once, early on, if at all,
+	/// of collating on the given para. This is only expected to be called once, early on, if at all,
 	/// and only by the Collation Generation subsystem. As such, it will overwrite the value of
 	/// the previous signal.
 	///
 	/// This should be sent before any `DistributeCollation` message.
-	CollateOn(IndraId),
+	CollateOn(ParaId),
 	/// Provide a collation to distribute to validators with an optional result sender.
 	///
-	/// The result sender should be informed when at least one indracore validator seconded the collation. It is also
+	/// The result sender should be informed when at least one parachain validator seconded the collation. It is also
 	/// completely okay to just drop the sender.
 	DistributeCollation(CandidateReceipt, PoV, Option<oneshot::Sender<CollationSecondedSignal>>),
 	/// Report a collator as having provided an invalid collation. This should lead to disconnect
@@ -633,50 +633,50 @@ pub enum RuntimeApiRequest {
 	ValidatorGroups(RuntimeApiSender<(Vec<Vec<ValidatorIndex>>, GroupRotationInfo)>),
 	/// Get information on all availability cores.
 	AvailabilityCores(RuntimeApiSender<Vec<CoreState>>),
-	/// Get the persisted validation data for a particular indra, taking the given
+	/// Get the persisted validation data for a particular para, taking the given
 	/// `OccupiedCoreAssumption`, which will inform on how the validation data should be computed
-	/// if the indra currently occupies a core.
+	/// if the para currently occupies a core.
 	PersistedValidationData(
-		IndraId,
+		ParaId,
 		OccupiedCoreAssumption,
 		RuntimeApiSender<Option<PersistedValidationData>>,
 	),
-	/// Get the persisted validation data for a particular indra along with the current validation code
+	/// Get the persisted validation data for a particular para along with the current validation code
 	/// hash, matching the data hash against an expected one.
 	AssumedValidationData(
-		IndraId,
+		ParaId,
 		Hash,
 		RuntimeApiSender<Option<(PersistedValidationData, ValidationCodeHash)>>,
 	),
 	/// Sends back `true` if the validation outputs pass all acceptance criteria checks.
 	CheckValidationOutputs(
-		IndraId,
+		ParaId,
 		selendra_primitives::v2::CandidateCommitments,
 		RuntimeApiSender<bool>,
 	),
 	/// Get the session index that a child of the block will have.
 	SessionIndexForChild(RuntimeApiSender<SessionIndex>),
-	/// Get the validation code for a indra, taking the given `OccupiedCoreAssumption`, which
-	/// will inform on how the validation data should be computed if the indra currently
+	/// Get the validation code for a para, taking the given `OccupiedCoreAssumption`, which
+	/// will inform on how the validation data should be computed if the para currently
 	/// occupies a core.
-	ValidationCode(IndraId, OccupiedCoreAssumption, RuntimeApiSender<Option<ValidationCode>>),
+	ValidationCode(ParaId, OccupiedCoreAssumption, RuntimeApiSender<Option<ValidationCode>>),
 	/// Get validation code by its hash, either past, current or future code can be returned, as long as state is still
 	/// available.
 	ValidationCodeByHash(ValidationCodeHash, RuntimeApiSender<Option<ValidationCode>>),
-	/// Get a the candidate pending availability for a particular indracore by indracore / core index
-	CandidatePendingAvailability(IndraId, RuntimeApiSender<Option<CommittedCandidateReceipt>>),
+	/// Get a the candidate pending availability for a particular parachain by parachain / core index
+	CandidatePendingAvailability(ParaId, RuntimeApiSender<Option<CommittedCandidateReceipt>>),
 	/// Get all events concerning candidates (backing, inclusion, time-out) in the parent of
 	/// the block in whose state this request is executed.
 	CandidateEvents(RuntimeApiSender<Vec<CandidateEvent>>),
 	/// Get the session info for the given session, if stored.
 	SessionInfo(SessionIndex, RuntimeApiSender<Option<SessionInfo>>),
-	/// Get all the pending inbound messages in the downward message queue for a indra.
-	DmqContents(IndraId, RuntimeApiSender<Vec<InboundDownwardMessage<BlockNumber>>>),
+	/// Get all the pending inbound messages in the downward message queue for a para.
+	DmqContents(ParaId, RuntimeApiSender<Vec<InboundDownwardMessage<BlockNumber>>>),
 	/// Get the contents of all channels addressed to the given recipient. Channels that have no
 	/// messages in them are also included.
 	InboundHrmpChannelsContents(
-		IndraId,
-		RuntimeApiSender<BTreeMap<IndraId, Vec<InboundHrmpMessage<BlockNumber>>>>,
+		ParaId,
+		RuntimeApiSender<BTreeMap<ParaId, Vec<InboundHrmpMessage<BlockNumber>>>>,
 	),
 	/// Get information about the BABE epoch the block was included in.
 	CurrentBabeEpoch(RuntimeApiSender<BabeEpoch>),
@@ -686,10 +686,10 @@ pub enum RuntimeApiRequest {
 	SubmitPvfCheckStatement(PvfCheckStatement, ValidatorSignature, RuntimeApiSender<()>),
 	/// Returns code hashes of PVFs that require pre-checking by validators in the active set.
 	PvfsRequirePrecheck(RuntimeApiSender<Vec<ValidationCodeHash>>),
-	/// Get the validation code used by the specified indra, taking the given `OccupiedCoreAssumption`, which
-	/// will inform on how the validation data should be computed if the indra currently occupies a core.
+	/// Get the validation code used by the specified para, taking the given `OccupiedCoreAssumption`, which
+	/// will inform on how the validation data should be computed if the para currently occupies a core.
 	ValidationCodeHash(
-		IndraId,
+		ParaId,
 		OccupiedCoreAssumption,
 		RuntimeApiSender<Option<ValidationCodeHash>>,
 	),
@@ -760,7 +760,7 @@ pub enum ProvisionerMessage {
 	/// associated with a particular potential block hash.
 	///
 	/// This is expected to be used by a proposer, to inject that information into the `InherentData`
-	/// where it can be assembled into the `IndraInherent`.
+	/// where it can be assembled into the `ParaInherent`.
 	RequestInherentData(Hash, oneshot::Sender<ProvisionerInherentData>),
 	/// This data should become part of a relay chain block
 	ProvisionableData(Hash, ProvisionableData),
@@ -851,7 +851,7 @@ pub enum ApprovalCheckError {
 	Internal(Hash, CandidateHash),
 }
 
-/// Describes a relay-chain block by the indra-chain candidates
+/// Describes a relay-chain block by the para-chain candidates
 /// it includes.
 #[derive(Clone, Debug)]
 pub struct BlockDescription {
@@ -859,7 +859,7 @@ pub struct BlockDescription {
 	pub block_hash: Hash,
 	/// The session index of this block.
 	pub session: SessionIndex,
-	/// The set of indra-chain candidates.
+	/// The set of para-chain candidates.
 	pub candidates: Vec<CandidateHash>,
 }
 

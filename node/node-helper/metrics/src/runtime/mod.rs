@@ -35,7 +35,7 @@ use std::{
 use substrate_prometheus_endpoint::{
 	register, Counter, CounterVec, Opts, PrometheusError, Registry, U64,
 };
-mod indracore;
+mod parachain;
 
 const LOG_TARGET: &'static str = "metrics::runtime";
 
@@ -196,7 +196,7 @@ pub fn logger_hook() -> impl FnOnce(&mut sc_cli::LoggerBuilder, &sc_service::Con
 		}
 		let registry = config.prometheus_registry().cloned().unwrap();
 		let metrics_provider = RuntimeMetricsProvider::new(registry);
-		indracore::register_metrics(&metrics_provider);
+		parachain::register_metrics(&metrics_provider);
 		logger_builder.with_custom_profiling(Box::new(metrics_provider));
 	}
 }

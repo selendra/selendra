@@ -33,7 +33,7 @@ use selendra_primitives::v2::{
 use sp_keystore::SyncCryptoStorePtr;
 use std::collections::HashSet;
 
-const LOG_TARGET: &str = "indracore::pvf-checker";
+const LOG_TARGET: &str = "parachain::pvf-checker";
 
 mod interest_view;
 mod metrics;

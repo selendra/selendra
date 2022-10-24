@@ -43,12 +43,12 @@ use crate::{
 ///
 /// Keeps track of all the validators that have to be reached for a dispute.
 pub struct SendTask {
-	/// The request we are supposed to get out to all indracore validators of the dispute's session
+	/// The request we are supposed to get out to all parachain validators of the dispute's session
 	/// and to all current authorities.
 	request: DisputeRequest,
 
 	/// The set of authorities we need to send our messages to. This set will change at session
-	/// boundaries. It will always be at least the indracore validators of the session where the
+	/// boundaries. It will always be at least the parachain validators of the session where the
 	/// dispute happened and the authorities of the current sessions as determined by active heads.
 	deliveries: HashMap<AuthorityDiscoveryId, DeliveryStatus>,
 
@@ -193,7 +193,7 @@ impl SendTask {
 
 	/// Determine all validators that should receive the given dispute requests.
 	///
-	/// This is all indracore validators of the session the candidate occurred and all authorities
+	/// This is all parachain validators of the session the candidate occurred and all authorities
 	/// of all currently active sessions, determined by currently active heads.
 
 	async fn get_relevant_validators<Context>(
@@ -203,7 +203,7 @@ impl SendTask {
 		active_sessions: &HashMap<SessionIndex, Hash>,
 	) -> Result<HashSet<AuthorityDiscoveryId>> {
 		let ref_head = self.request.0.candidate_receipt.descriptor.relay_parent;
-		// Retrieve all authorities which participated in the indracore consensus of the session
+		// Retrieve all authorities which participated in the parachain consensus of the session
 		// in which the candidate was backed.
 		let info = runtime
 			.get_session_info_by_index(ctx.sender(), ref_head, self.request.0.session_index)

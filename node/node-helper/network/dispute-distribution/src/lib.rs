@@ -91,7 +91,7 @@ mod metrics;
 //// Prometheus `Metrics` for dispute distribution.
 pub use metrics::Metrics;
 
-const LOG_TARGET: &'static str = "indracore::dispute-distribution";
+const LOG_TARGET: &'static str = "parachain::dispute-distribution";
 
 /// The dispute distribution subsystem.
 pub struct DisputeDistributionSubsystem<AD> {

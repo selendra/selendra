@@ -64,7 +64,7 @@ impl metrics::Metrics for Metrics {
 		let metrics = MetricsInner {
 			collations_generated_total: prometheus::register(
 				prometheus::Counter::new(
-					"selendra_indracore_collations_generated_total",
+					"selendra_parachain_collations_generated_total",
 					"Number of collations generated."
 				)?,
 				registry,
@@ -72,7 +72,7 @@ impl metrics::Metrics for Metrics {
 			new_activations_overall: prometheus::register(
 				prometheus::Histogram::with_opts(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_collation_generation_new_activations",
+						"selendra_parachain_collation_generation_new_activations",
 						"Time spent within fn handle_new_activations",
 					)
 				)?,
@@ -81,7 +81,7 @@ impl metrics::Metrics for Metrics {
 			new_activations_per_relay_parent: prometheus::register(
 				prometheus::Histogram::with_opts(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_collation_generation_per_relay_parent",
+						"selendra_parachain_collation_generation_per_relay_parent",
 						"Time spent handling a particular relay parent within fn handle_new_activations"
 					)
 				)?,
@@ -90,7 +90,7 @@ impl metrics::Metrics for Metrics {
 			new_activations_per_availability_core: prometheus::register(
 				prometheus::Histogram::with_opts(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_collation_generation_per_availability_core",
+						"selendra_parachain_collation_generation_per_availability_core",
 						"Time spent handling a particular availability core for a relay parent in fn handle_new_activations",
 					)
 				)?,

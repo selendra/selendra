@@ -15,8 +15,8 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! This pallet allows to assign permanent (long-lived) or temporary
-//! (short-lived) indracore slots to indras, leveraging the existing
-//! indracore slot lease mechanism. Temporary slots are given turns
+//! (short-lived) parachain slots to paras, leveraging the existing
+//! parachain slot lease mechanism. Temporary slots are given turns
 //! in a fair (though best-effort) manner.
 //! The dispatchables must be called from the configured origin
 //! (typically `Sudo` or a governance origin).
@@ -31,8 +31,8 @@ use frame_support::{pallet_prelude::*, traits::Currency};
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
-use primitives::v2::Id as IndraId;
-use runtime_indracores::{configuration, indras};
+use primitives::v2::Id as ParaId;
+use runtime_parachains::{configuration, paras};
 use scale_info::TypeInfo;
 use sp_runtime::traits::{One, Saturating, Zero};
 use sp_std::prelude::*;
@@ -44,12 +44,12 @@ pub enum SlotLeasePeriodStart {
 	Next,
 }
 
-/// Information about a temporary indracore slot.
+/// Information about a temporary parachain slot.
 #[derive(Encode, Decode, Clone, PartialEq, Eq, Default, MaxEncodedLen, RuntimeDebug, TypeInfo)]
-pub struct IndracoreTemporarySlot<AccountId, LeasePeriod> {
-	/// Manager account of the indra.
+pub struct ParachainTemporarySlot<AccountId, LeasePeriod> {
+	/// Manager account of the para.
 	pub manager: AccountId,
-	/// Lease period the indracore slot should ideally start from,
+	/// Lease period the parachain slot should ideally start from,
 	/// As slot are allocated in a best-effort manner, this could be later,
 	/// but not earlier than the specified period.
 	pub period_begin: LeasePeriod,
@@ -79,7 +79,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
-	pub trait Config: configuration::Config + indras::Config + slots::Config {
+	pub trait Config: configuration::Config + paras::Config + slots::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -93,11 +93,11 @@ pub mod pallet {
 			LeasePeriod = Self::BlockNumber,
 		>;
 
-		/// The number of lease periods a permanent indracore slot lasts.
+		/// The number of lease periods a permanent parachain slot lasts.
 		#[pallet::constant]
 		type PermanentSlotLeasePeriodLength: Get<u32>;
 
-		/// The number of lease periods a temporary indracore slot lasts.
+		/// The number of lease periods a temporary parachain slot lasts.
 		#[pallet::constant]
 		type TemporarySlotLeasePeriodLength: Get<u32>;
 
@@ -118,7 +118,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn permanent_slots)]
 	pub type PermanentSlots<T: Config> =
-		StorageMap<_, Twox64Concat, IndraId, (LeasePeriodOf<T>, LeasePeriodOf<T>), OptionQuery>;
+		StorageMap<_, Twox64Concat, ParaId, (LeasePeriodOf<T>, LeasePeriodOf<T>), OptionQuery>;
 
 	/// Number of assigned (and active) permanent slots.
 	#[pallet::storage]
@@ -131,8 +131,8 @@ pub mod pallet {
 	pub type TemporarySlots<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
-		IndraId,
-		IndracoreTemporarySlot<T::AccountId, LeasePeriodOf<T>>,
+		ParaId,
+		ParachainTemporarySlot<T::AccountId, LeasePeriodOf<T>>,
 		OptionQuery,
 	>;
 
@@ -149,21 +149,21 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// A indra was assigned a permanent indracore slot
-		PermanentSlotAssigned(IndraId),
-		/// A indra was assigned a temporary indracore slot
-		TemporarySlotAssigned(IndraId),
+		/// A para was assigned a permanent parachain slot
+		PermanentSlotAssigned(ParaId),
+		/// A para was assigned a temporary parachain slot
+		TemporarySlotAssigned(ParaId),
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// The specified indracore or indrabase is not registered.
-		IndraDoesntExist,
-		/// Not a indrabase.
-		NotIndrabase,
-		/// Cannot upgrade indrabase.
+		/// The specified parachain or parathread is not registered.
+		ParaDoesntExist,
+		/// Not a parathread.
+		NotParathread,
+		/// Cannot upgrade parathread.
 		CannotUpgrade,
-		/// Cannot downgrade indracore.
+		/// Cannot downgrade parachain.
 		CannotDowngrade,
 		/// Permanent or Temporary slot already assigned.
 		SlotAlreadyAssigned,
@@ -195,14 +195,14 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		// TODO: Benchmark this
-		/// Assign a permanent indracore slot and immediately create a lease for it.
+		/// Assign a permanent parachain slot and immediately create a lease for it.
 		#[pallet::weight(((MAXIMUM_BLOCK_WEIGHT / 10) as Weight, DispatchClass::Operational))]
-		pub fn assign_perm_indracore_slot(origin: OriginFor<T>, id: IndraId) -> DispatchResult {
+		pub fn assign_perm_parachain_slot(origin: OriginFor<T>, id: ParaId) -> DispatchResult {
 			T::AssignSlotOrigin::ensure_origin(origin)?;
 
-			let manager = T::Registrar::manager_of(id).ok_or(Error::<T>::IndraDoesntExist)?;
+			let manager = T::Registrar::manager_of(id).ok_or(Error::<T>::ParaDoesntExist)?;
 
-			ensure!(T::Registrar::is_indrabase(id), Error::<T>::NotIndrabase,);
+			ensure!(T::Registrar::is_parathread(id), Error::<T>::NotParathread,);
 
 			ensure!(
 				!Self::has_permanent_slot(id) && !Self::has_temporary_slot(id),
@@ -251,20 +251,20 @@ pub mod pallet {
 		}
 
 		// TODO: Benchmark this
-		/// Assign a temporary indracore slot. The function tries to create a lease for it
+		/// Assign a temporary parachain slot. The function tries to create a lease for it
 		/// immediately if `SlotLeasePeriodStart::Current` is specified, and if the number
 		/// of currently active temporary slots is below `MaxTemporarySlotPerLeasePeriod`.
 		#[pallet::weight(((MAXIMUM_BLOCK_WEIGHT / 10) as Weight, DispatchClass::Operational))]
-		pub fn assign_temp_indracore_slot(
+		pub fn assign_temp_parachain_slot(
 			origin: OriginFor<T>,
-			id: IndraId,
+			id: ParaId,
 			lease_period_start: SlotLeasePeriodStart,
 		) -> DispatchResult {
 			T::AssignSlotOrigin::ensure_origin(origin)?;
 
-			let manager = T::Registrar::manager_of(id).ok_or(Error::<T>::IndraDoesntExist)?;
+			let manager = T::Registrar::manager_of(id).ok_or(Error::<T>::ParaDoesntExist)?;
 
-			ensure!(T::Registrar::is_indrabase(id), Error::<T>::NotIndrabase);
+			ensure!(T::Registrar::is_parathread(id), Error::<T>::NotParathread);
 
 			ensure!(
 				!Self::has_permanent_slot(id) && !Self::has_temporary_slot(id),
@@ -290,7 +290,7 @@ pub mod pallet {
 				Error::<T>::MaxTemporarySlotsExceeded
 			);
 
-			let mut temp_slot = IndracoreTemporarySlot {
+			let mut temp_slot = ParachainTemporarySlot {
 				manager: manager.clone(),
 				period_begin: match lease_period_start {
 					SlotLeasePeriodStart::Current => current_lease_period,
@@ -320,7 +320,7 @@ pub mod pallet {
 						// Treat failed lease creation as warning .. slot will be allocated a lease
 						// in a subsequent lease period by the `allocate_temporary_slot_leases` function.
 						log::warn!(target: "assigned_slots",
-							"Failed to allocate a temp slot for indra {:?} at period {:?}: {:?}",
+							"Failed to allocate a temp slot for para {:?} at period {:?}: {:?}",
 							id, current_lease_period, err
 						);
 					},
@@ -336,9 +336,9 @@ pub mod pallet {
 		}
 
 		// TODO: Benchmark this
-		/// Unassign a permanent or temporary indracore slot
+		/// Unassign a permanent or temporary parachain slot
 		#[pallet::weight(((MAXIMUM_BLOCK_WEIGHT / 10) as Weight, DispatchClass::Operational))]
-		pub fn unassign_indracore_slot(origin: OriginFor<T>, id: IndraId) -> DispatchResult {
+		pub fn unassign_parachain_slot(origin: OriginFor<T>, id: ParaId) -> DispatchResult {
 			T::AssignSlotOrigin::ensure_origin(origin.clone())?;
 
 			ensure!(
@@ -346,8 +346,8 @@ pub mod pallet {
 				Error::<T>::SlotNotAssigned
 			);
 
-			// Check & cache indra status before we clear the lease
-			let is_indracore = Self::is_indracore(id);
+			// Check & cache para status before we clear the lease
+			let is_parachain = Self::is_parachain(id);
 
 			// Remove perm or temp slot
 			Self::clear_slot_leases(origin.clone(), id)?;
@@ -358,21 +358,21 @@ pub mod pallet {
 			} else if TemporarySlots::<T>::contains_key(id) {
 				TemporarySlots::<T>::remove(id);
 				<TemporarySlotCount<T>>::mutate(|count| *count = count.saturating_sub(One::one()));
-				if is_indracore {
+				if is_parachain {
 					<ActiveTemporarySlotCount<T>>::mutate(|active_count| {
 						*active_count = active_count.saturating_sub(One::one())
 					});
 				}
 			}
 
-			// Force downgrade to indrabase (if needed) before end of lease period
-			if is_indracore {
-				if let Err(err) = runtime_indracores::schedule_indracore_downgrade::<T>(id) {
+			// Force downgrade to parathread (if needed) before end of lease period
+			if is_parachain {
+				if let Err(err) = runtime_parachains::schedule_parachain_downgrade::<T>(id) {
 					// Treat failed downgrade as warning .. slot lease has been cleared,
-					// so the indracore will be downgraded anyway by the slots pallet
+					// so the parachain will be downgraded anyway by the slots pallet
 					// at the end of the lease period .
 					log::warn!(target: "assigned_slots",
-						"Failed to downgrade indracore {:?} at period {:?}: {:?}",
+						"Failed to downgrade parachain {:?} at period {:?}: {:?}",
 						id, Self::current_lease_period_index(), err
 					);
 				}
@@ -391,7 +391,7 @@ impl<T: Config> Pallet<T> {
 	/// - Assigned slots that already had one (or more) turn(s): they will be considered for the
 	/// current slot lease if they weren't active in the preceding one, and will be ranked by
 	/// total number of lease (lower first), and then when they last a turn (older ones first).
-	/// If any remaining ex-aequo, we just take the indra ID in ascending order as discriminator.
+	/// If any remaining ex-aequo, we just take the para ID in ascending order as discriminator.
 	///
 	/// Assigned slots with a `period_begin` bigger than current lease period are not considered (yet).
 	///
@@ -399,7 +399,7 @@ impl<T: Config> Pallet<T> {
 	fn allocate_temporary_slot_leases(lease_period_index: LeasePeriodOf<T>) -> DispatchResult {
 		let mut active_temp_slots = 0u32;
 		let mut pending_temp_slots = Vec::new();
-		TemporarySlots::<T>::iter().for_each(|(indra, slot)| {
+		TemporarySlots::<T>::iter().for_each(|(para, slot)| {
 				match slot.last_lease {
 					Some(last_lease)
 						if last_lease <= lease_period_index &&
@@ -412,11 +412,11 @@ impl<T: Config> Pallet<T> {
 					Some(last_lease)
 						// Slot w/ past lease, only consider it every other slot lease period (times period_count)
 						if last_lease.saturating_add(slot.period_count.saturating_mul(2u32.into())) <= lease_period_index => {
-							pending_temp_slots.push((indra, slot));
+							pending_temp_slots.push((para, slot));
 					},
 					None if slot.period_begin <= lease_period_index => {
 						// Slot hasn't had a lease yet
-						pending_temp_slots.insert(0, (indra, slot));
+						pending_temp_slots.insert(0, (para, slot));
 					},
 					_ => {
 						// Slot not being considered for this lease period (will be for a subsequent one)
@@ -429,7 +429,7 @@ impl<T: Config> Pallet<T> {
 			!pending_temp_slots.is_empty()
 		{
 			// Sort by lease_count, favoring slots that had no or less turns first
-			// (then by last_lease index, and then Indra ID)
+			// (then by last_lease index, and then Para ID)
 			pending_temp_slots.sort_by(|a, b| {
 				a.1.lease_count
 					.cmp(&b.1.lease_count)
@@ -454,7 +454,7 @@ impl<T: Config> Pallet<T> {
 					.map_err(|_| Error::<T>::CannotUpgrade)?;
 
 					// Update temp slot lease info in storage
-					*s = Some(IndracoreTemporarySlot {
+					*s = Some(ParachainTemporarySlot {
 						manager: temp_slot.manager.clone(),
 						period_begin: temp_slot.period_begin,
 						period_count: temp_slot.period_count,
@@ -476,34 +476,34 @@ impl<T: Config> Pallet<T> {
 
 	/// Clear out all slot leases for both permanent & temporary slots.
 	/// The function merely calls out to `Slots::clear_all_leases`.
-	fn clear_slot_leases(origin: OriginFor<T>, id: IndraId) -> DispatchResult {
+	fn clear_slot_leases(origin: OriginFor<T>, id: ParaId) -> DispatchResult {
 		Slots::<T>::clear_all_leases(origin, id)
 	}
 
-	/// Create a indracore slot lease based on given params.
+	/// Create a parachain slot lease based on given params.
 	/// The function merely calls out to `Leaser::lease_out`.
 	fn configure_slot_lease(
-		indra: IndraId,
+		para: ParaId,
 		manager: T::AccountId,
 		lease_period: LeasePeriodOf<T>,
 		lease_duration: LeasePeriodOf<T>,
 	) -> Result<(), LeaseError> {
-		T::Leaser::lease_out(indra, &manager, BalanceOf::<T>::zero(), lease_period, lease_duration)
+		T::Leaser::lease_out(para, &manager, BalanceOf::<T>::zero(), lease_period, lease_duration)
 	}
 
-	/// Returns whether a indra has been assigned a permanent slot.
-	fn has_permanent_slot(id: IndraId) -> bool {
+	/// Returns whether a para has been assigned a permanent slot.
+	fn has_permanent_slot(id: ParaId) -> bool {
 		PermanentSlots::<T>::contains_key(id)
 	}
 
-	/// Returns whether a indra has been assigned temporary slot.
-	fn has_temporary_slot(id: IndraId) -> bool {
+	/// Returns whether a para has been assigned temporary slot.
+	fn has_temporary_slot(id: ParaId) -> bool {
 		TemporarySlots::<T>::contains_key(id)
 	}
 
-	/// Returns whether a indra is currently a indracore.
-	fn is_indracore(id: IndraId) -> bool {
-		T::Registrar::is_indracore(id)
+	/// Returns whether a para is currently a parachain.
+	fn is_parachain(id: ParaId) -> bool {
+		T::Registrar::is_parachain(id)
 	}
 
 	/// Returns current lease period index.
@@ -543,9 +543,9 @@ mod tests {
 	use frame_system::EnsureRoot;
 	use pallet_balances;
 	use primitives::v2::{BlockNumber, Header};
-	use runtime_indracores::{
-		configuration as indracores_configuration, indras as indracores_indras,
-		shared as indracores_shared,
+	use runtime_parachains::{
+		configuration as parachains_configuration, paras as parachains_paras,
+		shared as parachains_shared,
 	};
 	use sp_core::H256;
 	use sp_runtime::{
@@ -565,9 +565,9 @@ mod tests {
 		{
 			System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 			Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-			Configuration: indracores_configuration::{Pallet, Call, Storage, Config<T>},
-			IndrasShared: indracores_shared::{Pallet, Call, Storage},
-			Indracores: indracores_indras::{Pallet, Call, Storage, Config, Event},
+			Configuration: parachains_configuration::{Pallet, Call, Storage, Config<T>},
+			ParasShared: parachains_shared::{Pallet, Call, Storage},
+			Parachains: parachains_paras::{Pallet, Call, Storage, Config, Event},
 			Slots: slots::{Pallet, Call, Storage, Event<T>},
 			AssignedSlots: assigned_slots::{Pallet, Call, Storage, Event<T>},
 		}
@@ -627,27 +627,27 @@ mod tests {
 		type ReserveIdentifier = [u8; 8];
 	}
 
-	impl indracores_configuration::Config for Test {
-		type WeightInfo = indracores_configuration::TestWeightInfo;
+	impl parachains_configuration::Config for Test {
+		type WeightInfo = parachains_configuration::TestWeightInfo;
 	}
 
 	parameter_types! {
-		pub const IndrasUnsignedPriority: TransactionPriority = TransactionPriority::max_value();
+		pub const ParasUnsignedPriority: TransactionPriority = TransactionPriority::max_value();
 	}
 
-	impl indracores_indras::Config for Test {
+	impl parachains_paras::Config for Test {
 		type Event = Event;
-		type WeightInfo = indracores_indras::TestWeightInfo;
-		type UnsignedPriority = IndrasUnsignedPriority;
+		type WeightInfo = parachains_paras::TestWeightInfo;
+		type UnsignedPriority = ParasUnsignedPriority;
 		type NextSessionRotation = crate::mock::TestNextSessionRotation;
 	}
 
-	impl indracores_shared::Config for Test {}
+	impl parachains_shared::Config for Test {}
 
 	parameter_types! {
 		pub const LeasePeriod: BlockNumber = 3;
 		pub static LeaseOffset: BlockNumber = 0;
-		pub const IndraDeposit: u64 = 1;
+		pub const ParaDeposit: u64 = 1;
 	}
 
 	impl slots::Config for Test {
@@ -697,8 +697,8 @@ mod tests {
 			// on_finalize hooks
 			AssignedSlots::on_finalize(block);
 			Slots::on_finalize(block);
-			Indracores::on_finalize(block);
-			IndrasShared::on_finalize(block);
+			Parachains::on_finalize(block);
+			ParasShared::on_finalize(block);
 			Configuration::on_finalize(block);
 			Balances::on_finalize(block);
 			System::on_finalize(block);
@@ -709,8 +709,8 @@ mod tests {
 			System::on_initialize(block);
 			Balances::on_initialize(block);
 			Configuration::on_initialize(block);
-			IndrasShared::on_initialize(block);
-			Indracores::on_initialize(block);
+			ParasShared::on_initialize(block);
+			Parachains::on_initialize(block);
 			Slots::on_initialize(block);
 			AssignedSlots::on_initialize(block);
 		}
@@ -729,13 +729,13 @@ mod tests {
 	}
 
 	#[test]
-	fn assign_perm_slot_fails_for_unknown_indra() {
+	fn assign_perm_slot_fails_for_unknown_para() {
 		new_test_ext().execute_with(|| {
 			run_to_block(1);
 
 			assert_noop!(
-				AssignedSlots::assign_perm_indracore_slot(Origin::root(), IndraId::from(1_u32),),
-				Error::<Test>::IndraDoesntExist
+				AssignedSlots::assign_perm_parachain_slot(Origin::root(), ParaId::from(1_u32),),
+				Error::<Test>::ParaDoesntExist
 			);
 		});
 	}
@@ -746,28 +746,28 @@ mod tests {
 			run_to_block(1);
 
 			assert_noop!(
-				AssignedSlots::assign_perm_indracore_slot(Origin::signed(1), IndraId::from(1_u32),),
+				AssignedSlots::assign_perm_parachain_slot(Origin::signed(1), ParaId::from(1_u32),),
 				BadOrigin
 			);
 		});
 	}
 
 	#[test]
-	fn assign_perm_slot_fails_when_not_indrabase() {
+	fn assign_perm_slot_fails_when_not_parathread() {
 		new_test_ext().execute_with(|| {
 			run_to_block(1);
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code(),
 			));
-			assert_ok!(TestRegistrar::<Test>::make_indracore(IndraId::from(1_u32)));
+			assert_ok!(TestRegistrar::<Test>::make_parachain(ParaId::from(1_u32)));
 
 			assert_noop!(
-				AssignedSlots::assign_perm_indracore_slot(Origin::root(), IndraId::from(1_u32),),
-				Error::<Test>::NotIndrabase
+				AssignedSlots::assign_perm_parachain_slot(Origin::root(), ParaId::from(1_u32),),
+				Error::<Test>::NotParathread
 			);
 		});
 	}
@@ -779,16 +779,16 @@ mod tests {
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code(),
 			));
 
 			// Register lease in current lease period
-			assert_ok!(Slots::lease_out(IndraId::from(1_u32), &1, 1, 1, 1));
+			assert_ok!(Slots::lease_out(ParaId::from(1_u32), &1, 1, 1, 1));
 			// Try to assign a perm slot in current period fails
 			assert_noop!(
-				AssignedSlots::assign_perm_indracore_slot(Origin::root(), IndraId::from(1_u32),),
+				AssignedSlots::assign_perm_parachain_slot(Origin::root(), ParaId::from(1_u32),),
 				Error::<Test>::OngoingLeaseExists
 			);
 
@@ -796,10 +796,10 @@ mod tests {
 			assert_ok!(Slots::clear_all_leases(Origin::root(), 1.into()));
 
 			// Register lease for next lease period
-			assert_ok!(Slots::lease_out(IndraId::from(1_u32), &1, 1, 2, 1));
+			assert_ok!(Slots::lease_out(ParaId::from(1_u32), &1, 1, 2, 1));
 			// Should be detected and also fail
 			assert_noop!(
-				AssignedSlots::assign_perm_indracore_slot(Origin::root(), IndraId::from(1_u32),),
+				AssignedSlots::assign_perm_parachain_slot(Origin::root(), ParaId::from(1_u32),),
 				Error::<Test>::OngoingLeaseExists
 			);
 		});
@@ -812,96 +812,96 @@ mod tests {
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code(),
 			));
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				2,
-				IndraId::from(2_u32),
+				ParaId::from(2_u32),
 				dummy_head_data(),
 				dummy_validation_code(),
 			));
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				3,
-				IndraId::from(3_u32),
+				ParaId::from(3_u32),
 				dummy_head_data(),
 				dummy_validation_code(),
 			));
 
-			assert_ok!(AssignedSlots::assign_perm_indracore_slot(
+			assert_ok!(AssignedSlots::assign_perm_parachain_slot(
 				Origin::root(),
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 			));
-			assert_ok!(AssignedSlots::assign_perm_indracore_slot(
+			assert_ok!(AssignedSlots::assign_perm_parachain_slot(
 				Origin::root(),
-				IndraId::from(2_u32),
+				ParaId::from(2_u32),
 			));
 			assert_eq!(AssignedSlots::permanent_slot_count(), 2);
 
 			assert_noop!(
-				AssignedSlots::assign_perm_indracore_slot(Origin::root(), IndraId::from(3_u32),),
+				AssignedSlots::assign_perm_parachain_slot(Origin::root(), ParaId::from(3_u32),),
 				Error::<Test>::MaxPermanentSlotsExceeded
 			);
 		});
 	}
 
 	#[test]
-	fn assign_perm_slot_succeeds_for_indrabase() {
+	fn assign_perm_slot_succeeds_for_parathread() {
 		new_test_ext().execute_with(|| {
 			let mut block = 1;
 			run_to_block(block);
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code(),
 			));
 
 			assert_eq!(AssignedSlots::permanent_slot_count(), 0);
-			assert_eq!(AssignedSlots::permanent_slots(IndraId::from(1_u32)), None);
+			assert_eq!(AssignedSlots::permanent_slots(ParaId::from(1_u32)), None);
 
-			assert_ok!(AssignedSlots::assign_perm_indracore_slot(
+			assert_ok!(AssignedSlots::assign_perm_parachain_slot(
 				Origin::root(),
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 			));
 
-			// Indra is a indracore for PermanentSlotLeasePeriodLength * LeasePeriod blocks
+			// Para is a parachain for PermanentSlotLeasePeriodLength * LeasePeriod blocks
 			while block < 9 {
 				println!("block #{}", block);
 
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(1_u32)), true);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(1_u32)), true);
 
 				assert_eq!(AssignedSlots::permanent_slot_count(), 1);
-				assert_eq!(AssignedSlots::has_permanent_slot(IndraId::from(1_u32)), true);
-				assert_eq!(AssignedSlots::permanent_slots(IndraId::from(1_u32)), Some((0, 3)));
+				assert_eq!(AssignedSlots::has_permanent_slot(ParaId::from(1_u32)), true);
+				assert_eq!(AssignedSlots::permanent_slots(ParaId::from(1_u32)), Some((0, 3)));
 
-				assert_eq!(Slots::already_leased(IndraId::from(1_u32), 0, 2), true);
+				assert_eq!(Slots::already_leased(ParaId::from(1_u32), 0, 2), true);
 
 				block += 1;
 				run_to_block(block);
 			}
 
-			// Indra lease ended, downgraded back to indrabase
-			assert_eq!(TestRegistrar::<Test>::is_indrabase(IndraId::from(1_u32)), true);
-			assert_eq!(Slots::already_leased(IndraId::from(1_u32), 0, 5), false);
+			// Para lease ended, downgraded back to parathread
+			assert_eq!(TestRegistrar::<Test>::is_parathread(ParaId::from(1_u32)), true);
+			assert_eq!(Slots::already_leased(ParaId::from(1_u32), 0, 5), false);
 		});
 	}
 
 	#[test]
-	fn assign_temp_slot_fails_for_unknown_indra() {
+	fn assign_temp_slot_fails_for_unknown_para() {
 		new_test_ext().execute_with(|| {
 			run_to_block(1);
 
 			assert_noop!(
-				AssignedSlots::assign_temp_indracore_slot(
+				AssignedSlots::assign_temp_parachain_slot(
 					Origin::root(),
-					IndraId::from(1_u32),
+					ParaId::from(1_u32),
 					SlotLeasePeriodStart::Current
 				),
-				Error::<Test>::IndraDoesntExist
+				Error::<Test>::ParaDoesntExist
 			);
 		});
 	}
@@ -912,9 +912,9 @@ mod tests {
 			run_to_block(1);
 
 			assert_noop!(
-				AssignedSlots::assign_temp_indracore_slot(
+				AssignedSlots::assign_temp_parachain_slot(
 					Origin::signed(1),
-					IndraId::from(1_u32),
+					ParaId::from(1_u32),
 					SlotLeasePeriodStart::Current
 				),
 				BadOrigin
@@ -923,25 +923,25 @@ mod tests {
 	}
 
 	#[test]
-	fn assign_temp_slot_fails_when_not_indrabase() {
+	fn assign_temp_slot_fails_when_not_parathread() {
 		new_test_ext().execute_with(|| {
 			run_to_block(1);
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code(),
 			));
-			assert_ok!(TestRegistrar::<Test>::make_indracore(IndraId::from(1_u32)));
+			assert_ok!(TestRegistrar::<Test>::make_parachain(ParaId::from(1_u32)));
 
 			assert_noop!(
-				AssignedSlots::assign_temp_indracore_slot(
+				AssignedSlots::assign_temp_parachain_slot(
 					Origin::root(),
-					IndraId::from(1_u32),
+					ParaId::from(1_u32),
 					SlotLeasePeriodStart::Current
 				),
-				Error::<Test>::NotIndrabase
+				Error::<Test>::NotParathread
 			);
 		});
 	}
@@ -953,18 +953,18 @@ mod tests {
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code(),
 			));
 
 			// Register lease in current lease period
-			assert_ok!(Slots::lease_out(IndraId::from(1_u32), &1, 1, 1, 1));
+			assert_ok!(Slots::lease_out(ParaId::from(1_u32), &1, 1, 1, 1));
 			// Try to assign a perm slot in current period fails
 			assert_noop!(
-				AssignedSlots::assign_temp_indracore_slot(
+				AssignedSlots::assign_temp_parachain_slot(
 					Origin::root(),
-					IndraId::from(1_u32),
+					ParaId::from(1_u32),
 					SlotLeasePeriodStart::Current
 				),
 				Error::<Test>::OngoingLeaseExists
@@ -974,12 +974,12 @@ mod tests {
 			assert_ok!(Slots::clear_all_leases(Origin::root(), 1.into()));
 
 			// Register lease for next lease period
-			assert_ok!(Slots::lease_out(IndraId::from(1_u32), &1, 1, 2, 1));
+			assert_ok!(Slots::lease_out(ParaId::from(1_u32), &1, 1, 2, 1));
 			// Should be detected and also fail
 			assert_noop!(
-				AssignedSlots::assign_temp_indracore_slot(
+				AssignedSlots::assign_temp_parachain_slot(
 					Origin::root(),
-					IndraId::from(1_u32),
+					ParaId::from(1_u32),
 					SlotLeasePeriodStart::Current
 				),
 				Error::<Test>::OngoingLeaseExists
@@ -992,18 +992,18 @@ mod tests {
 		new_test_ext().execute_with(|| {
 			run_to_block(1);
 
-			// Register 6 indras & a temp slot for each
+			// Register 6 paras & a temp slot for each
 			for n in 0..=5 {
 				assert_ok!(TestRegistrar::<Test>::register(
 					n,
-					IndraId::from(n as u32),
+					ParaId::from(n as u32),
 					dummy_head_data(),
 					dummy_validation_code()
 				));
 
-				assert_ok!(AssignedSlots::assign_temp_indracore_slot(
+				assert_ok!(AssignedSlots::assign_temp_parachain_slot(
 					Origin::root(),
-					IndraId::from(n as u32),
+					ParaId::from(n as u32),
 					SlotLeasePeriodStart::Current
 				));
 			}
@@ -1013,14 +1013,14 @@ mod tests {
 			// Attempt to assign one more temp slot
 			assert_ok!(TestRegistrar::<Test>::register(
 				7,
-				IndraId::from(7_u32),
+				ParaId::from(7_u32),
 				dummy_head_data(),
 				dummy_validation_code(),
 			));
 			assert_noop!(
-				AssignedSlots::assign_temp_indracore_slot(
+				AssignedSlots::assign_temp_parachain_slot(
 					Origin::root(),
-					IndraId::from(7_u32),
+					ParaId::from(7_u32),
 					SlotLeasePeriodStart::Current
 				),
 				Error::<Test>::MaxTemporarySlotsExceeded
@@ -1029,41 +1029,41 @@ mod tests {
 	}
 
 	#[test]
-	fn assign_temp_slot_succeeds_for_single_indrabase() {
+	fn assign_temp_slot_succeeds_for_single_parathread() {
 		new_test_ext().execute_with(|| {
 			let mut block = 1;
 			run_to_block(block);
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code(),
 			));
 
-			assert_eq!(AssignedSlots::temporary_slots(IndraId::from(1_u32)), None);
+			assert_eq!(AssignedSlots::temporary_slots(ParaId::from(1_u32)), None);
 
-			assert_ok!(AssignedSlots::assign_temp_indracore_slot(
+			assert_ok!(AssignedSlots::assign_temp_parachain_slot(
 				Origin::root(),
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				SlotLeasePeriodStart::Current
 			));
 			assert_eq!(AssignedSlots::temporary_slot_count(), 1);
 			assert_eq!(AssignedSlots::active_temporary_slot_count(), 1);
 
 			// Block 1-5
-			// Indra is a indracore for TemporarySlotLeasePeriodLength * LeasePeriod blocks
+			// Para is a parachain for TemporarySlotLeasePeriodLength * LeasePeriod blocks
 			while block < 6 {
 				println!("block #{}", block);
 				println!("lease period #{}", AssignedSlots::current_lease_period_index());
-				println!("lease {:?}", Slots::lease(IndraId::from(1_u32)));
+				println!("lease {:?}", Slots::lease(ParaId::from(1_u32)));
 
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(1_u32)), true);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(1_u32)), true);
 
-				assert_eq!(AssignedSlots::has_temporary_slot(IndraId::from(1_u32)), true);
+				assert_eq!(AssignedSlots::has_temporary_slot(ParaId::from(1_u32)), true);
 				assert_eq!(AssignedSlots::active_temporary_slot_count(), 1);
 				assert_eq!(
-					AssignedSlots::temporary_slots(IndraId::from(1_u32)),
-					Some(IndracoreTemporarySlot {
+					AssignedSlots::temporary_slots(ParaId::from(1_u32)),
+					Some(ParachainTemporarySlot {
 						manager: 1,
 						period_begin: 0,
 						period_count: 2, // TemporarySlotLeasePeriodLength
@@ -1072,7 +1072,7 @@ mod tests {
 					})
 				);
 
-				assert_eq!(Slots::already_leased(IndraId::from(1_u32), 0, 1), true);
+				assert_eq!(Slots::already_leased(ParaId::from(1_u32), 0, 1), true);
 
 				block += 1;
 				run_to_block(block);
@@ -1081,45 +1081,45 @@ mod tests {
 			// Block 6
 			println!("block #{}", block);
 			println!("lease period #{}", AssignedSlots::current_lease_period_index());
-			println!("lease {:?}", Slots::lease(IndraId::from(1_u32)));
+			println!("lease {:?}", Slots::lease(ParaId::from(1_u32)));
 
-			// Indra lease ended, downgraded back to indrabase
-			assert_eq!(TestRegistrar::<Test>::is_indrabase(IndraId::from(1_u32)), true);
-			assert_eq!(Slots::already_leased(IndraId::from(1_u32), 0, 3), false);
+			// Para lease ended, downgraded back to parathread
+			assert_eq!(TestRegistrar::<Test>::is_parathread(ParaId::from(1_u32)), true);
+			assert_eq!(Slots::already_leased(ParaId::from(1_u32), 0, 3), false);
 			assert_eq!(AssignedSlots::active_temporary_slot_count(), 0);
 
 			// Block 12
-			// Indra should get a turn after TemporarySlotLeasePeriodLength * LeasePeriod blocks
+			// Para should get a turn after TemporarySlotLeasePeriodLength * LeasePeriod blocks
 			run_to_block(12);
 			println!("block #{}", block);
 			println!("lease period #{}", AssignedSlots::current_lease_period_index());
-			println!("lease {:?}", Slots::lease(IndraId::from(1_u32)));
+			println!("lease {:?}", Slots::lease(ParaId::from(1_u32)));
 
-			assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(1_u32)), true);
-			assert_eq!(Slots::already_leased(IndraId::from(1_u32), 4, 5), true);
+			assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(1_u32)), true);
+			assert_eq!(Slots::already_leased(ParaId::from(1_u32), 4, 5), true);
 			assert_eq!(AssignedSlots::active_temporary_slot_count(), 1);
 		});
 	}
 
 	#[test]
-	fn assign_temp_slot_succeeds_for_multiple_indrabases() {
+	fn assign_temp_slot_succeeds_for_multiple_parathreads() {
 		new_test_ext().execute_with(|| {
 			// Block 1, Period 0
 			run_to_block(1);
 
-			// Register 6 indras & a temp slot for each
+			// Register 6 paras & a temp slot for each
 			// (3 slots in current lease period, 3 in the next one)
 			for n in 0..=5 {
 				assert_ok!(TestRegistrar::<Test>::register(
 					n,
-					IndraId::from(n as u32),
+					ParaId::from(n as u32),
 					dummy_head_data(),
 					dummy_validation_code()
 				));
 
-				assert_ok!(AssignedSlots::assign_temp_indracore_slot(
+				assert_ok!(AssignedSlots::assign_temp_parachain_slot(
 					Origin::root(),
-					IndraId::from(n as u32),
+					ParaId::from(n as u32),
 					if (n % 2).is_zero() {
 						SlotLeasePeriodStart::Current
 					} else {
@@ -1133,84 +1133,84 @@ mod tests {
 				if n > 1 {
 					run_to_block(n);
 				}
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(0)), true);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(1_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(2_u32)), true);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(3_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(4_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(5_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(0)), true);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(1_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(2_u32)), true);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(3_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(4_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(5_u32)), false);
 				assert_eq!(AssignedSlots::active_temporary_slot_count(), 2);
 			}
 
 			// Block 6-11, Period 2-3
 			for n in 6..=11 {
 				run_to_block(n);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(0)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(1_u32)), true);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(2_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(3_u32)), true);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(4_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(5_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(0)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(1_u32)), true);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(2_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(3_u32)), true);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(4_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(5_u32)), false);
 				assert_eq!(AssignedSlots::active_temporary_slot_count(), 2);
 			}
 
 			// Block 12-17, Period 4-5
 			for n in 12..=17 {
 				run_to_block(n);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(0)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(1_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(2_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(3_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(4_u32)), true);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(5_u32)), true);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(0)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(1_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(2_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(3_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(4_u32)), true);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(5_u32)), true);
 				assert_eq!(AssignedSlots::active_temporary_slot_count(), 2);
 			}
 
 			// Block 18-23, Period 6-7
 			for n in 18..=23 {
 				run_to_block(n);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(0)), true);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(1_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(2_u32)), true);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(3_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(4_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(5_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(0)), true);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(1_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(2_u32)), true);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(3_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(4_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(5_u32)), false);
 				assert_eq!(AssignedSlots::active_temporary_slot_count(), 2);
 			}
 
 			// Block 24-29, Period 8-9
 			for n in 24..=29 {
 				run_to_block(n);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(0)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(1_u32)), true);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(2_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(3_u32)), true);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(4_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(5_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(0)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(1_u32)), true);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(2_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(3_u32)), true);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(4_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(5_u32)), false);
 				assert_eq!(AssignedSlots::active_temporary_slot_count(), 2);
 			}
 
 			// Block 30-35, Period 10-11
 			for n in 30..=35 {
 				run_to_block(n);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(0)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(1_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(2_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(3_u32)), false);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(4_u32)), true);
-				assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(5_u32)), true);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(0)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(1_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(2_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(3_u32)), false);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(4_u32)), true);
+				assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(5_u32)), true);
 				assert_eq!(AssignedSlots::active_temporary_slot_count(), 2);
 			}
 		});
 	}
 
 	#[test]
-	fn unassign_slot_fails_for_unknown_indra() {
+	fn unassign_slot_fails_for_unknown_para() {
 		new_test_ext().execute_with(|| {
 			run_to_block(1);
 
 			assert_noop!(
-				AssignedSlots::unassign_indracore_slot(Origin::root(), IndraId::from(1_u32),),
+				AssignedSlots::unassign_parachain_slot(Origin::root(), ParaId::from(1_u32),),
 				Error::<Test>::SlotNotAssigned
 			);
 		});
@@ -1222,7 +1222,7 @@ mod tests {
 			run_to_block(1);
 
 			assert_noop!(
-				AssignedSlots::assign_perm_indracore_slot(Origin::signed(1), IndraId::from(1_u32),),
+				AssignedSlots::assign_perm_parachain_slot(Origin::signed(1), ParaId::from(1_u32),),
 				BadOrigin
 			);
 		});
@@ -1235,28 +1235,27 @@ mod tests {
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code(),
 			));
 
-			assert_ok!(AssignedSlots::assign_perm_indracore_slot(
+			assert_ok!(AssignedSlots::assign_perm_parachain_slot(
 				Origin::root(),
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 			));
 
-			assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(1_u32)), true);
+			assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(1_u32)), true);
 
-			assert_ok!(AssignedSlots::unassign_indracore_slot(
-				Origin::root(),
-				IndraId::from(1_u32),
-			));
+			assert_ok!(
+				AssignedSlots::unassign_parachain_slot(Origin::root(), ParaId::from(1_u32),)
+			);
 
 			assert_eq!(AssignedSlots::permanent_slot_count(), 0);
-			assert_eq!(AssignedSlots::has_permanent_slot(IndraId::from(1_u32)), false);
-			assert_eq!(AssignedSlots::permanent_slots(IndraId::from(1_u32)), None);
+			assert_eq!(AssignedSlots::has_permanent_slot(ParaId::from(1_u32)), false);
+			assert_eq!(AssignedSlots::permanent_slots(ParaId::from(1_u32)), None);
 
-			assert_eq!(Slots::already_leased(IndraId::from(1_u32), 0, 2), false);
+			assert_eq!(Slots::already_leased(ParaId::from(1_u32), 0, 2), false);
 		});
 	}
 
@@ -1267,30 +1266,29 @@ mod tests {
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code(),
 			));
 
-			assert_ok!(AssignedSlots::assign_temp_indracore_slot(
+			assert_ok!(AssignedSlots::assign_temp_parachain_slot(
 				Origin::root(),
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				SlotLeasePeriodStart::Current
 			));
 
-			assert_eq!(TestRegistrar::<Test>::is_indracore(IndraId::from(1_u32)), true);
+			assert_eq!(TestRegistrar::<Test>::is_parachain(ParaId::from(1_u32)), true);
 
-			assert_ok!(AssignedSlots::unassign_indracore_slot(
-				Origin::root(),
-				IndraId::from(1_u32),
-			));
+			assert_ok!(
+				AssignedSlots::unassign_parachain_slot(Origin::root(), ParaId::from(1_u32),)
+			);
 
 			assert_eq!(AssignedSlots::temporary_slot_count(), 0);
 			assert_eq!(AssignedSlots::active_temporary_slot_count(), 0);
-			assert_eq!(AssignedSlots::has_temporary_slot(IndraId::from(1_u32)), false);
-			assert_eq!(AssignedSlots::temporary_slots(IndraId::from(1_u32)), None);
+			assert_eq!(AssignedSlots::has_temporary_slot(ParaId::from(1_u32)), false);
+			assert_eq!(AssignedSlots::temporary_slots(ParaId::from(1_u32)), None);
 
-			assert_eq!(Slots::already_leased(IndraId::from(1_u32), 0, 1), false);
+			assert_eq!(Slots::already_leased(ParaId::from(1_u32), 0, 1), false);
 		});
 	}
 }

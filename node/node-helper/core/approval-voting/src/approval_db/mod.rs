@@ -22,7 +22,7 @@
 //! reason that may be, the amount of data we'd need to keep would be potentially too large
 //! for memory.
 //!
-//! With tens or hundreds of indracores, hundreds of validators, and indrablocks
+//! With tens or hundreds of parachains, hundreds of validators, and parablocks
 //! in every relay chain block, there can be a humongous amount of information to reference
 //! at any given time.
 //!

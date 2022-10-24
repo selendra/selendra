@@ -43,7 +43,7 @@ selendra-runtime = { path = "../../runtime/selendra", optional = true }
 selendra-runtime-common = { path = "../../runtime/common" }
 selendra-core-primitives = { path = "../../primitives/core" }
 selendra-primitives = { path = "../../primitives" }
-selendra-node-core-indracores-inherent = { path = "../node-helper/core/indracores-inherent" }
+selendra-node-core-parachains-inherent = { path = "../node-helper/core/parachains-inherent" }
 
 [features]
 default = ["selendra"]

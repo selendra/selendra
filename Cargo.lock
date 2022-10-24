@@ -5237,8 +5237,8 @@ dependencies = [
  "pallet-balances",
  "parity-scale-codec",
  "scale-info",
- "selendra-indracore",
- "selendra-runtime-indracores",
+ "selendra-parachain",
+ "selendra-runtime-parachains",
  "serde",
  "sp-core",
  "sp-io",
@@ -7713,7 +7713,7 @@ dependencies = [
  "sc-executor",
  "sc-service",
  "selendra-core-primitives",
- "selendra-node-core-indracores-inherent",
+ "selendra-node-core-parachains-inherent",
  "selendra-primitives",
  "selendra-runtime",
  "selendra-runtime-common",
@@ -7845,22 +7845,6 @@ dependencies = [
  "sp-keystore",
  "sp-tracing",
  "tracing-gum",
-]
-
-[[package]]
-name = "selendra-indracore"
-version = "0.2.0"
-dependencies = [
- "derive_more",
- "frame-support",
- "parity-scale-codec",
- "parity-util-mem",
- "scale-info",
- "selendra-core-primitives",
- "serde",
- "sp-core",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -8026,11 +8010,11 @@ dependencies = [
  "node-subsystem-test-helpers",
  "parity-scale-codec",
  "primitives-test-helpers",
- "selendra-indracore",
  "selendra-node-core-pvf",
  "selendra-node-primitives",
  "selendra-node-subsystem",
  "selendra-node-subsystem-util",
+ "selendra-parachain",
  "selendra-primitives",
  "sp-core",
  "sp-keyring",
@@ -8105,7 +8089,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "selendra-node-core-indracores-inherent"
+name = "selendra-node-core-parachains-inherent"
 version = "0.2.0"
 dependencies = [
  "async-trait",
@@ -8160,8 +8144,8 @@ dependencies = [
  "sc-executor-common",
  "sc-executor-wasmtime",
  "selendra-core-primitives",
- "selendra-indracore",
  "selendra-node-subsystem-util",
+ "selendra-parachain",
  "slotmap",
  "sp-core",
  "sp-externalities",
@@ -8170,8 +8154,8 @@ dependencies = [
  "sp-tracing",
  "sp-wasm-interface",
  "tempfile",
- "test-indracore-adder",
- "test-indracore-halt",
+ "test-parachain-adder",
+ "test-parachain-halt",
  "tracing-gum",
 ]
 
@@ -8294,7 +8278,7 @@ dependencies = [
  "parity-scale-codec",
  "schnorrkel",
  "selendra-erasure-coding",
- "selendra-indracore",
+ "selendra-parachain",
  "selendra-primitives",
  "serde",
  "sp-application-crypto",
@@ -8400,6 +8384,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-parachain"
+version = "0.2.0"
+dependencies = [
+ "derive_more",
+ "frame-support",
+ "parity-scale-codec",
+ "parity-util-mem",
+ "scale-info",
+ "selendra-core-primitives",
+ "serde",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "selendra-primitives"
 version = "0.2.0"
 dependencies = [
@@ -8410,7 +8410,7 @@ dependencies = [
  "parity-util-mem",
  "scale-info",
  "selendra-core-primitives",
- "selendra-indracore",
+ "selendra-parachain",
  "serde",
  "sp-api",
  "sp-application-crypto",
@@ -8519,7 +8519,7 @@ dependencies = [
  "selendra-primitives",
  "selendra-runtime-common",
  "selendra-runtime-constants",
- "selendra-runtime-indracores",
+ "selendra-runtime-parachains",
  "separator",
  "serde",
  "serde_json",
@@ -8579,7 +8579,7 @@ dependencies = [
  "rustc-hex",
  "scale-info",
  "selendra-primitives",
- "selendra-runtime-indracores",
+ "selendra-runtime-parachains",
  "serde",
  "serde_derive",
  "slot-range-helper",
@@ -8603,7 +8603,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "selendra-runtime-indracores"
+name = "selendra-runtime-metrics"
+version = "0.2.0"
+dependencies = [
+ "bs58",
+ "parity-scale-codec",
+ "selendra-primitives",
+ "sp-std",
+ "sp-tracing",
+]
+
+[[package]]
+name = "selendra-runtime-parachains"
 version = "0.2.0"
 dependencies = [
  "assert_matches",
@@ -8651,17 +8662,6 @@ dependencies = [
  "thousands",
  "xcm",
  "xcm-executor",
-]
-
-[[package]]
-name = "selendra-runtime-metrics"
-version = "0.2.0"
-dependencies = [
- "bs58",
- "parity-scale-codec",
- "selendra-primitives",
- "sp-std",
- "sp-tracing",
 ]
 
 [[package]]
@@ -8714,7 +8714,6 @@ dependencies = [
  "selendra-collator-protocol",
  "selendra-dispute-distribution",
  "selendra-gossip-support",
- "selendra-indracore",
  "selendra-network-bridge",
  "selendra-node-collation-generation",
  "selendra-node-core-approval-voting",
@@ -8725,7 +8724,7 @@ dependencies = [
  "selendra-node-core-chain-api",
  "selendra-node-core-chain-selection",
  "selendra-node-core-dispute-coordinator",
- "selendra-node-core-indracores-inherent",
+ "selendra-node-core-parachains-inherent",
  "selendra-node-core-provisioner",
  "selendra-node-core-pvf-checker",
  "selendra-node-core-runtime-api",
@@ -8735,11 +8734,12 @@ dependencies = [
  "selendra-node-subsystem-types",
  "selendra-node-subsystem-util",
  "selendra-overseer",
+ "selendra-parachain",
  "selendra-primitives",
  "selendra-rpc",
  "selendra-runtime",
  "selendra-runtime-constants",
- "selendra-runtime-indracores",
+ "selendra-runtime-parachains",
  "selendra-statement-distribution",
  "serde",
  "serde_json",
@@ -10220,12 +10220,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "test-indracore-adder"
+name = "test-parachain-adder"
 version = "0.2.0"
 dependencies = [
  "dlmalloc",
  "parity-scale-codec",
- "selendra-indracore",
+ "selendra-parachain",
  "sp-io",
  "sp-std",
  "substrate-wasm-builder",
@@ -10233,7 +10233,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "test-indracore-halt"
+name = "test-parachain-halt"
 version = "0.2.0"
 dependencies = [
  "substrate-wasm-builder",
@@ -10271,10 +10271,10 @@ dependencies = [
  "parity-scale-codec",
  "rustc-hex",
  "scale-info",
- "selendra-indracore",
+ "selendra-parachain",
  "selendra-primitives",
  "selendra-runtime-common",
- "selendra-runtime-indracores",
+ "selendra-runtime-parachains",
  "serde",
  "serde_derive",
  "serde_json",
@@ -10339,14 +10339,14 @@ dependencies = [
  "sc-service",
  "sc-tracing",
  "sc-transaction-pool",
- "selendra-indracore",
  "selendra-node-primitives",
  "selendra-node-subsystem",
  "selendra-overseer",
+ "selendra-parachain",
  "selendra-primitives",
  "selendra-rpc",
  "selendra-runtime-common",
- "selendra-runtime-indracores",
+ "selendra-runtime-parachains",
  "selendra-service",
  "serde_json",
  "sp-arithmetic",
@@ -11602,8 +11602,8 @@ dependencies = [
  "pallet-xcm",
  "parity-scale-codec",
  "scale-info",
- "selendra-indracore",
- "selendra-runtime-indracores",
+ "selendra-parachain",
+ "selendra-runtime-parachains",
  "sp-arithmetic",
  "sp-core",
  "sp-io",

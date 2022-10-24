@@ -31,7 +31,7 @@ mod handle_new_activations {
 		messages::{AllMessages, RuntimeApiMessage, RuntimeApiRequest},
 	};
 	use selendra_primitives::v2::{
-		CollatorPair, Id as IndraId, PersistedValidationData, ScheduledCore, ValidationCode,
+		CollatorPair, Id as ParaId, PersistedValidationData, ScheduledCore, ValidationCode,
 	};
 	use std::pin::Pin;
 
@@ -73,16 +73,16 @@ mod handle_new_activations {
 
 	impl Unpin for TestCollator {}
 
-	fn test_config<Id: Into<IndraId>>(indra_id: Id) -> Arc<CollationGenerationConfig> {
+	fn test_config<Id: Into<ParaId>>(para_id: Id) -> Arc<CollationGenerationConfig> {
 		Arc::new(CollationGenerationConfig {
 			key: CollatorPair::generate().0,
 			collator: Box::new(|_: Hash, _vd: &PersistedValidationData| TestCollator.boxed()),
-			indra_id: indra_id.into(),
+			para_id: para_id.into(),
 		})
 	}
 
-	fn scheduled_core_for<Id: Into<IndraId>>(indra_id: Id) -> ScheduledCore {
-		ScheduledCore { indra_id: indra_id.into(), collator: None }
+	fn scheduled_core_for<Id: Into<ParaId>>(para_id: Id) -> ScheduledCore {
+		ScheduledCore { para_id: para_id.into(), collator: None }
 	}
 
 	#[test]
@@ -167,7 +167,7 @@ mod handle_new_activations {
 					Some(AllMessages::RuntimeApi(RuntimeApiMessage::Request(
 						hash,
 						RuntimeApiRequest::PersistedValidationData(
-							_indra_id,
+							_para_id,
 							_occupied_core_assumption,
 							tx,
 						),
@@ -202,7 +202,7 @@ mod handle_new_activations {
 
 		// the only activated hash should be from the 4 hash:
 		// each activated hash generates two scheduled cores: one with its value * 4, one with its value * 5
-		// given that the test configuration has a `indra_id` of 16, there's only one way to get that value: with the 4
+		// given that the test configuration has a `para_id` of 16, there's only one way to get that value: with the 4
 		// hash.
 		assert_eq!(requested_validation_data, vec![[4; 32].into()]);
 	}
@@ -239,7 +239,7 @@ mod handle_new_activations {
 					Some(AllMessages::RuntimeApi(RuntimeApiMessage::Request(
 						_hash,
 						RuntimeApiRequest::PersistedValidationData(
-							_indra_id,
+							_para_id,
 							_occupied_core_assumption,
 							tx,
 						),
@@ -255,7 +255,7 @@ mod handle_new_activations {
 					Some(AllMessages::RuntimeApi(RuntimeApiMessage::Request(
 						_hash,
 						RuntimeApiRequest::ValidationCodeHash(
-							_indra_id,
+							_para_id,
 							OccupiedCoreAssumption::Free,
 							tx,
 						),
@@ -308,20 +308,20 @@ mod handle_new_activations {
 		let expect_validation_code_hash = ValidationCode(vec![1, 2, 3]).hash();
 		let expect_payload = collator_signature_payload(
 			&expect_relay_parent,
-			&config.indra_id,
+			&config.para_id,
 			&expect_validation_data_hash,
 			&expect_pov_hash,
 			&expect_validation_code_hash,
 		);
 		let expect_descriptor = CandidateDescriptor {
 			signature: config.key.sign(&expect_payload),
-			indra_id: config.indra_id,
+			para_id: config.para_id,
 			relay_parent: expect_relay_parent,
 			collator: config.key.public(),
 			persisted_validation_data_hash: expect_validation_data_hash,
 			pov_hash: expect_pov_hash,
 			erasure_root: dummy_hash(), // this isn't something we're checking right now
-			indra_head: test_collation().head_data.hash(),
+			para_head: test_collation().head_data.hash(),
 			validation_code_hash: expect_validation_code_hash,
 		};
 
@@ -340,7 +340,7 @@ mod handle_new_activations {
 					&descriptor.signature,
 					&collator_signature_payload(
 						&descriptor.relay_parent,
-						&descriptor.indra_id,
+						&descriptor.para_id,
 						&descriptor.persisted_validation_data_hash,
 						&descriptor.pov_hash,
 						&descriptor.validation_code_hash,
@@ -393,7 +393,7 @@ mod handle_new_activations {
 					Some(AllMessages::RuntimeApi(RuntimeApiMessage::Request(
 						_hash,
 						RuntimeApiRequest::PersistedValidationData(
-							_indra_id,
+							_para_id,
 							_occupied_core_assumption,
 							tx,
 						),
@@ -409,7 +409,7 @@ mod handle_new_activations {
 					Some(AllMessages::RuntimeApi(RuntimeApiMessage::Request(
 						_hash,
 						RuntimeApiRequest::ValidationCodeHash(
-							_indra_id,
+							_para_id,
 							OccupiedCoreAssumption::Free,
 							tx,
 						),
@@ -422,7 +422,7 @@ mod handle_new_activations {
 					Some(AllMessages::RuntimeApi(RuntimeApiMessage::Request(
 						_hash,
 						RuntimeApiRequest::ValidationCode(
-							_indra_id,
+							_para_id,
 							OccupiedCoreAssumption::Free,
 							tx,
 						),

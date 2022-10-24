@@ -17,7 +17,7 @@
 //! XCM configuration for Selendra.
 
 use super::{
-	indracores_origin, AccountId, Balances, Call, CouncilInstance, Event, IndraId, Origin, Runtime,
+	parachains_origin, AccountId, Balances, Call, CouncilInstance, Event, ParaId, Origin, Runtime,
 	WeightToFee, XcmPallet,
 };
 use frame_support::{
@@ -29,8 +29,8 @@ use runtime_common::{impls::ToAuthor, xcm_sender};
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
-	AllowTopLevelPaidExecutionFrom, BackingToPlurality, ChildIndracoreAsNative,
-	ChildIndracoreConvertsVia, CurrencyAdapter as XcmCurrencyAdapter, FixedWeightBounds,
+	AllowTopLevelPaidExecutionFrom, BackingToPlurality, ChildParachainAsNative,
+	ChildParachainConvertsVia, CurrencyAdapter as XcmCurrencyAdapter, FixedWeightBounds,
 	IsConcrete, LocationInverter, SignedAccountId32AsNative, SignedToAccountId32,
 	SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 };
@@ -52,8 +52,8 @@ parameter_types! {
 /// The canonical means of converting a `MultiLocation` into an `AccountId`, used when we want to determine
 /// the sovereign account controlled by a location.
 pub type SovereignAccountOf = (
-	// We can convert a child indracore using the standard `AccountId` conversion.
-	ChildIndracoreConvertsVia<IndraId, AccountId>,
+	// We can convert a child parachain using the standard `AccountId` conversion.
+	ChildParachainConvertsVia<ParaId, AccountId>,
 	// We can directly alias an `AccountId32` into a local account.
 	AccountId32Aliases<SelendraNetwork, AccountId>,
 );
@@ -82,9 +82,9 @@ type LocalOriginConverter = (
 	// If the origin kind is `Sovereign`, then return a `Signed` origin with the account determined
 	// by the `SovereignAccountOf` converter.
 	SovereignSignedViaLocation<SovereignAccountOf, Origin>,
-	// If the origin kind is `Native` and the XCM origin is a child indracore, then we can express
-	// it with the special `indracores_origin::Origin` origin variant.
-	ChildIndracoreAsNative<indracores_origin::Origin, Origin>,
+	// If the origin kind is `Native` and the XCM origin is a child parachain, then we can express
+	// it with the special `parachains_origin::Origin` origin variant.
+	ChildParachainAsNative<parachains_origin::Origin, Origin>,
 	// If the origin kind is `Native` and the XCM origin is the `AccountId32` location, then it can
 	// be expressed using the `Signed` origin variant.
 	SignedAccountId32AsNative<SelendraNetwork, Origin>,
@@ -101,21 +101,21 @@ parameter_types! {
 /// The XCM router. When we want to send an XCM message, we use this type. It amalgamates all of our
 /// individual routers.
 pub type XcmRouter = (
-	// Only one router so far - use DMP to communicate with child indracores.
-	xcm_sender::ChildIndracoreRouter<Runtime, XcmPallet>,
+	// Only one router so far - use DMP to communicate with child parachains.
+	xcm_sender::ChildParachainRouter<Runtime, XcmPallet>,
 );
 
 parameter_types! {
 	pub const Selendra: MultiAssetFilter = Wild(AllOf { fun: WildFungible, id: Concrete(SelLocation::get()) });
-	pub const SelendraForEvm: (MultiAssetFilter, MultiLocation) = (Selendra::get(), Indracore(1000).into());
+	pub const SelendraForEvm: (MultiAssetFilter, MultiLocation) = (Selendra::get(), Parachain(1000).into());
 }
 
 /// Selendra Relay recognizes/respects the Statemint chain as a teleporter.
 pub type TrustedTeleporters = (xcm_builder::Case<SelendraForEvm>,);
 
 match_types! {
-	pub type OnlyIndracores: impl Contains<MultiLocation> = {
-		MultiLocation { parents: 0, interior: X1(Indracore(_)) }
+	pub type OnlyParachains: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 0, interior: X1(Parachain(_)) }
 	};
 }
 
@@ -128,7 +128,7 @@ pub type Barrier = (
 	// Expected responses are OK.
 	AllowKnownQueryResponses<XcmPallet>,
 	// Subscriptions for version tracking are OK.
-	AllowSubscriptionsFrom<OnlyIndracores>,
+	AllowSubscriptionsFrom<OnlyParachains>,
 );
 
 pub struct XcmConfig;

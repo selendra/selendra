@@ -22,7 +22,7 @@ use selendra_node_network_protocol::jaeger;
 use selendra_node_primitives::{BlockData, ErasureChunk, PoV};
 use selendra_node_subsystem_util::runtime::RuntimeInfo;
 use selendra_primitives::v2::{
-	BlockNumber, CoreState, GroupIndex, Hash, Id as IndraId, ScheduledCore, SessionIndex,
+	BlockNumber, CoreState, GroupIndex, Hash, Id as ParaId, ScheduledCore, SessionIndex,
 	SessionInfo,
 };
 use sp_core::traits::SpawnNamed;
@@ -119,21 +119,21 @@ fn spawn_virtual_overseer(
 									.expect("Receiver should be alive.");
 							},
 							RuntimeApiRequest::AvailabilityCores(tx) => {
-								let indra_id = IndraId::from(1_u32);
+								let para_id = ParaId::from(1_u32);
 								let maybe_block_position =
 									test_state.relay_chain.iter().position(|h| *h == hash);
 								let cores = match maybe_block_position {
 									Some(block_num) => {
 										let core = if block_num == 0 {
 											CoreState::Scheduled(ScheduledCore {
-												indra_id,
+												para_id,
 												collator: None,
 											})
 										} else {
 											CoreState::Occupied(
 												OccupiedCoreBuilder {
 													group_responsible: GroupIndex(1),
-													indra_id,
+													para_id,
 													relay_parent: hash,
 												}
 												.build()

@@ -49,7 +49,7 @@ use self::metrics::Metrics;
 #[cfg(test)]
 mod tests;
 
-const LOG_TARGET: &str = "indracore::chain-api";
+const LOG_TARGET: &str = "parachain::chain-api";
 
 /// The Chain API Subsystem implementation.
 pub struct ChainApiSubsystem<Client> {

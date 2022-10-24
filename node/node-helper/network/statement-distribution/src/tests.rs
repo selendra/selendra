@@ -57,21 +57,21 @@ fn active_head_accepts_only_2_seconded_per_validator() {
 	let candidate_a = {
 		let mut c = dummy_committed_candidate_receipt(dummy_hash());
 		c.descriptor.relay_parent = parent_hash;
-		c.descriptor.indra_id = 1.into();
+		c.descriptor.para_id = 1.into();
 		c
 	};
 
 	let candidate_b = {
 		let mut c = dummy_committed_candidate_receipt(dummy_hash());
 		c.descriptor.relay_parent = parent_hash;
-		c.descriptor.indra_id = 2.into();
+		c.descriptor.para_id = 2.into();
 		c
 	};
 
 	let candidate_c = {
 		let mut c = dummy_committed_candidate_receipt(dummy_hash());
 		c.descriptor.relay_parent = parent_hash;
-		c.descriptor.indra_id = 3.into();
+		c.descriptor.para_id = 3.into();
 		c
 	};
 
@@ -381,7 +381,7 @@ fn peer_view_update_sends_messages() {
 	let candidate = {
 		let mut c = dummy_committed_candidate_receipt(dummy_hash());
 		c.descriptor.relay_parent = hash_c;
-		c.descriptor.indra_id = 1.into();
+		c.descriptor.para_id = 1.into();
 		c
 	};
 	let candidate_hash = candidate.hash();
@@ -568,7 +568,7 @@ fn circulated_statement_goes_to_all_peers_with_view() {
 	let candidate = {
 		let mut c = dummy_committed_candidate_receipt(dummy_hash());
 		c.descriptor.relay_parent = hash_b;
-		c.descriptor.indra_id = 1.into();
+		c.descriptor.para_id = 1.into();
 		c
 	};
 
@@ -702,7 +702,7 @@ fn receiving_from_one_sends_to_another_and_to_candidate_backing() {
 	let candidate = {
 		let mut c = dummy_committed_candidate_receipt(dummy_hash());
 		c.descriptor.relay_parent = hash_a;
-		c.descriptor.indra_id = 1.into();
+		c.descriptor.para_id = 1.into();
 		c
 	};
 
@@ -890,7 +890,7 @@ fn receiving_large_statement_from_one_sends_to_another_and_to_candidate_backing(
 	let candidate = {
 		let mut c = dummy_committed_candidate_receipt(dummy_hash());
 		c.descriptor.relay_parent = hash_a;
-		c.descriptor.indra_id = 1.into();
+		c.descriptor.para_id = 1.into();
 		c.commitments.new_validation_code = Some(ValidationCode(vec![1, 2, 3]));
 		c
 	};
@@ -1198,7 +1198,7 @@ fn receiving_large_statement_from_one_sends_to_another_and_to_candidate_backing(
 				assert_eq!(outgoing.peer, Recipient::Peer(peer_bad));
 				let bad_candidate = {
 					let mut bad = candidate.clone();
-					bad.descriptor.indra_id = 0xeadbeaf.into();
+					bad.descriptor.para_id = 0xeadbeaf.into();
 					bad
 				};
 				let response = StatementFetchingResponse::Statement(bad_candidate);
@@ -1384,7 +1384,7 @@ fn share_prioritizes_backing_group() {
 	let candidate = {
 		let mut c = dummy_committed_candidate_receipt(dummy_hash());
 		c.descriptor.relay_parent = hash_a;
-		c.descriptor.indra_id = 1.into();
+		c.descriptor.para_id = 1.into();
 		c.commitments.new_validation_code = Some(ValidationCode(vec![1, 2, 3]));
 		c
 	};
@@ -1697,7 +1697,7 @@ fn peer_cant_flood_with_large_statements() {
 	let candidate = {
 		let mut c = dummy_committed_candidate_receipt(dummy_hash());
 		c.descriptor.relay_parent = hash_a;
-		c.descriptor.indra_id = 1.into();
+		c.descriptor.para_id = 1.into();
 		c.commitments.new_validation_code = Some(ValidationCode(vec![1, 2, 3]));
 		c
 	};

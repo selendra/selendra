@@ -32,7 +32,7 @@ sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = 
 sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 
-selendra-indracore = { path = "../../../../indracore/core" }
+selendra-parachain = { path = "../../../../parachain/core" }
 selendra-core-primitives = { path = "../../../../primitives/core" }
 selendra-node-subsystem-util = { path = "../../subsystem-util"}
 gum = { package = "tracing-gum", path = "../../gum" }
@@ -40,6 +40,6 @@ gum = { package = "tracing-gum", path = "../../gum" }
 [dev-dependencies]
 hex-literal = "0.3.4"
 tempfile = "3.2.0"
-adder = { package = "test-indracore-adder", path = "../../../../tests/test-helpers/indracore/adder" }
-halt = { package = "test-indracore-halt", path = "../../../../tests/test-helpers/indracore/halt" }
+adder = { package = "test-parachain-adder", path = "../../../../tests/test-helpers/parachain/adder" }
+halt = { package = "test-parachain-halt", path = "../../../../tests/test-helpers/parachain/halt" }
 

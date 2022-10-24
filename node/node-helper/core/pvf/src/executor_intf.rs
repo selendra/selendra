@@ -228,19 +228,19 @@ struct ValidationExternalities(sp_externalities::Extensions);
 
 impl sp_externalities::Externalities for ValidationExternalities {
 	fn storage(&self, _: &[u8]) -> Option<Vec<u8>> {
-		panic!("storage: unsupported feature for indracore validation")
+		panic!("storage: unsupported feature for parachain validation")
 	}
 
 	fn storage_hash(&self, _: &[u8]) -> Option<Vec<u8>> {
-		panic!("storage_hash: unsupported feature for indracore validation")
+		panic!("storage_hash: unsupported feature for parachain validation")
 	}
 
 	fn child_storage_hash(&self, _: &ChildInfo, _: &[u8]) -> Option<Vec<u8>> {
-		panic!("child_storage_hash: unsupported feature for indracore validation")
+		panic!("child_storage_hash: unsupported feature for parachain validation")
 	}
 
 	fn child_storage(&self, _: &ChildInfo, _: &[u8]) -> Option<Vec<u8>> {
-		panic!("child_storage: unsupported feature for indracore validation")
+		panic!("child_storage: unsupported feature for parachain validation")
 	}
 
 	fn kill_child_storage(
@@ -249,7 +249,7 @@ impl sp_externalities::Externalities for ValidationExternalities {
 		_maybe_limit: Option<u32>,
 		_maybe_cursor: Option<&[u8]>,
 	) -> MultiRemovalResults {
-		panic!("kill_child_storage: unsupported feature for indracore validation")
+		panic!("kill_child_storage: unsupported feature for parachain validation")
 	}
 
 	fn clear_prefix(
@@ -258,7 +258,7 @@ impl sp_externalities::Externalities for ValidationExternalities {
 		_maybe_limit: Option<u32>,
 		_maybe_cursor: Option<&[u8]>,
 	) -> MultiRemovalResults {
-		panic!("clear_prefix: unsupported feature for indracore validation")
+		panic!("clear_prefix: unsupported feature for parachain validation")
 	}
 
 	fn clear_child_prefix(
@@ -268,79 +268,79 @@ impl sp_externalities::Externalities for ValidationExternalities {
 		_maybe_limit: Option<u32>,
 		_maybe_cursor: Option<&[u8]>,
 	) -> MultiRemovalResults {
-		panic!("clear_child_prefix: unsupported feature for indracore validation")
+		panic!("clear_child_prefix: unsupported feature for parachain validation")
 	}
 
 	fn place_storage(&mut self, _: Vec<u8>, _: Option<Vec<u8>>) {
-		panic!("place_storage: unsupported feature for indracore validation")
+		panic!("place_storage: unsupported feature for parachain validation")
 	}
 
 	fn place_child_storage(&mut self, _: &ChildInfo, _: Vec<u8>, _: Option<Vec<u8>>) {
-		panic!("place_child_storage: unsupported feature for indracore validation")
+		panic!("place_child_storage: unsupported feature for parachain validation")
 	}
 
 	fn storage_root(&mut self, _: sp_core::storage::StateVersion) -> Vec<u8> {
-		panic!("storage_root: unsupported feature for indracore validation")
+		panic!("storage_root: unsupported feature for parachain validation")
 	}
 
 	fn child_storage_root(&mut self, _: &ChildInfo, _: sp_core::storage::StateVersion) -> Vec<u8> {
-		panic!("child_storage_root: unsupported feature for indracore validation")
+		panic!("child_storage_root: unsupported feature for parachain validation")
 	}
 
 	fn next_child_storage_key(&self, _: &ChildInfo, _: &[u8]) -> Option<Vec<u8>> {
-		panic!("next_child_storage_key: unsupported feature for indracore validation")
+		panic!("next_child_storage_key: unsupported feature for parachain validation")
 	}
 
 	fn next_storage_key(&self, _: &[u8]) -> Option<Vec<u8>> {
-		panic!("next_storage_key: unsupported feature for indracore validation")
+		panic!("next_storage_key: unsupported feature for parachain validation")
 	}
 
 	fn storage_append(&mut self, _key: Vec<u8>, _value: Vec<u8>) {
-		panic!("storage_append: unsupported feature for indracore validation")
+		panic!("storage_append: unsupported feature for parachain validation")
 	}
 
 	fn storage_start_transaction(&mut self) {
-		panic!("storage_start_transaction: unsupported feature for indracore validation")
+		panic!("storage_start_transaction: unsupported feature for parachain validation")
 	}
 
 	fn storage_rollback_transaction(&mut self) -> Result<(), ()> {
-		panic!("storage_rollback_transaction: unsupported feature for indracore validation")
+		panic!("storage_rollback_transaction: unsupported feature for parachain validation")
 	}
 
 	fn storage_commit_transaction(&mut self) -> Result<(), ()> {
-		panic!("storage_commit_transaction: unsupported feature for indracore validation")
+		panic!("storage_commit_transaction: unsupported feature for parachain validation")
 	}
 
 	fn wipe(&mut self) {
-		panic!("wipe: unsupported feature for indracore validation")
+		panic!("wipe: unsupported feature for parachain validation")
 	}
 
 	fn commit(&mut self) {
-		panic!("commit: unsupported feature for indracore validation")
+		panic!("commit: unsupported feature for parachain validation")
 	}
 
 	fn read_write_count(&self) -> (u32, u32, u32, u32) {
-		panic!("read_write_count: unsupported feature for indracore validation")
+		panic!("read_write_count: unsupported feature for parachain validation")
 	}
 
 	fn reset_read_write_count(&mut self) {
-		panic!("reset_read_write_count: unsupported feature for indracore validation")
+		panic!("reset_read_write_count: unsupported feature for parachain validation")
 	}
 
 	fn get_whitelist(&self) -> Vec<TrackedStorageKey> {
-		panic!("get_whitelist: unsupported feature for indracore validation")
+		panic!("get_whitelist: unsupported feature for parachain validation")
 	}
 
 	fn set_whitelist(&mut self, _: Vec<TrackedStorageKey>) {
-		panic!("set_whitelist: unsupported feature for indracore validation")
+		panic!("set_whitelist: unsupported feature for parachain validation")
 	}
 
 	fn set_offchain_storage(&mut self, _: &[u8], _: std::option::Option<&[u8]>) {
-		panic!("set_offchain_storage: unsupported feature for indracore validation")
+		panic!("set_offchain_storage: unsupported feature for parachain validation")
 	}
 
 	fn get_read_and_written_keys(&self) -> Vec<(Vec<u8>, u32, u32, bool)> {
-		panic!("get_read_and_written_keys: unsupported feature for indracore validation")
+		panic!("get_read_and_written_keys: unsupported feature for parachain validation")
 	}
 }
 

@@ -84,7 +84,7 @@ pub struct ActivatedLeaf {
 	pub span: Arc<jaeger::Span>,
 }
 
-/// Changes in the set of active leaves: the indracore heads which we care to work on.
+/// Changes in the set of active leaves: the parachain heads which we care to work on.
 ///
 /// Note that the activated and deactivated fields indicate deltas, not complete sets.
 #[derive(Clone, Default)]

@@ -22,7 +22,7 @@
 use sc_client_api::{AuxStore, Backend as BackendT, BlockchainEvents, KeyIterator, UsageProvider};
 use sc_executor::NativeElseWasmExecutor;
 use selendra_primitives::{
-	runtime_api::IndracoreHost,
+	runtime_api::ParachainHost,
 	v2::{AccountId, Balance, Block, BlockNumber, Hash, Header, Nonce},
 };
 use sp_api::{CallApiAt, Encode, NumberFor, ProvideRuntimeApi};
@@ -69,7 +69,7 @@ pub trait RuntimeApiCollection:
 	+ sp_api::ApiExt<Block>
 	+ sp_consensus_babe::BabeApi<Block>
 	+ sp_finality_grandpa::GrandpaApi<Block>
-	+ IndracoreHost<Block>
+	+ ParachainHost<Block>
 	+ sp_block_builder::BlockBuilder<Block>
 	+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
 	+ sp_mmr_primitives::MmrApi<Block, <Block as BlockT>::Hash>
@@ -90,7 +90,7 @@ where
 		+ sp_api::ApiExt<Block>
 		+ sp_consensus_babe::BabeApi<Block>
 		+ sp_finality_grandpa::GrandpaApi<Block>
-		+ IndracoreHost<Block>
+		+ ParachainHost<Block>
 		+ sp_block_builder::BlockBuilder<Block>
 		+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
 		+ sp_mmr_primitives::MmrApi<Block, <Block as BlockT>::Hash>
@@ -627,14 +627,14 @@ pub fn benchmark_inherent_data(
 	let timestamp = sp_timestamp::InherentDataProvider::new(d.into());
 	timestamp.provide_inherent_data(&mut inherent_data)?;
 
-	let indra_data = selendra_primitives::v2::InherentData {
+	let para_data = selendra_primitives::v2::InherentData {
 		bitfields: Vec::new(),
 		backed_candidates: Vec::new(),
 		disputes: Vec::new(),
 		parent_header: header,
 	};
 
-	selendra_node_core_indracores_inherent::IndracoresInherentDataProvider::from_data(indra_data)
+	selendra_node_core_parachains_inherent::ParachainsInherentDataProvider::from_data(para_data)
 		.provide_inherent_data(&mut inherent_data)?;
 
 	Ok(inherent_data)

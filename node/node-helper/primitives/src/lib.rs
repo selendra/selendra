@@ -31,7 +31,7 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 
 use selendra_primitives::v2::{
 	BlakeTwo256, CandidateCommitments, CandidateHash, CollatorPair, CommittedCandidateReceipt,
-	CompactStatement, EncodeAs, Hash, HashT, HeadData, Id as IndraId, OutboundHrmpMessage,
+	CompactStatement, EncodeAs, Hash, HashT, HeadData, Id as ParaId, OutboundHrmpMessage,
 	PersistedValidationData, SessionIndex, Signed, UncheckedSigned, UpwardMessage, ValidationCode,
 	ValidatorIndex, MAX_CODE_SIZE, MAX_POV_SIZE,
 };
@@ -39,7 +39,7 @@ pub use sp_consensus_babe::{
 	AllowedSlots as BabeAllowedSlots, BabeEpochConfiguration, Epoch as BabeEpoch,
 };
 
-pub use selendra_indracore::primitives::BlockData;
+pub use selendra_parachain::primitives::BlockData;
 
 pub mod approval;
 
@@ -139,7 +139,7 @@ pub type BlockWeight = u32;
 ///
 /// This is the committed candidate receipt instead of the bare candidate receipt. As such,
 /// it gives access to the commitments to validators who have not executed the candidate. This
-/// is necessary to allow a block-producing validator to include candidates from outside the indra
+/// is necessary to allow a block-producing validator to include candidates from outside the para
 /// it is assigned to.
 #[derive(Clone, PartialEq, Eq, Encode, Decode)]
 pub enum Statement {
@@ -230,8 +230,8 @@ pub enum InvalidCandidate {
 	PoVHashMismatch,
 	/// Bad collator signature.
 	BadSignature,
-	/// Indra head hash does not match.
-	IndraHeadHashMismatch,
+	/// Para head hash does not match.
+	ParaHeadHashMismatch,
 	/// Validation code hash does not match.
 	CodeHashMismatch,
 	/// Validation has generated different candidate commitments.
@@ -296,13 +296,13 @@ impl MaybeCompressedPoV {
 pub struct Collation<BlockNumber = selendra_primitives::v2::BlockNumber> {
 	/// Messages destined to be interpreted by the Relay chain itself.
 	pub upward_messages: Vec<UpwardMessage>,
-	/// The horizontal messages sent by the indracore.
-	pub horizontal_messages: Vec<OutboundHrmpMessage<IndraId>>,
+	/// The horizontal messages sent by the parachain.
+	pub horizontal_messages: Vec<OutboundHrmpMessage<ParaId>>,
 	/// New validation code.
 	pub new_validation_code: Option<ValidationCode>,
 	/// The head-data produced as a result of execution.
 	pub head_data: HeadData,
-	/// Proof to verify the state transition of the indracore.
+	/// Proof to verify the state transition of the parachain.
 	pub proof_of_validity: MaybeCompressedPoV,
 	/// The number of messages processed from the DMQ.
 	pub processed_downward_messages: u32,
@@ -330,7 +330,7 @@ pub struct CollationResult {
 	/// An optional result sender that should be informed about a successfully seconded collation.
 	///
 	/// There is no guarantee that this sender is informed ever about any result, it is completely okay to just drop it.
-	/// However, if it is called, it should be called with the signed statement of a indracore validator seconding the
+	/// However, if it is called, it should be called with the signed statement of a parachain validator seconding the
 	/// collation.
 	pub result_sender: Option<futures::channel::oneshot::Sender<CollationSecondedSignal>>,
 }
@@ -347,8 +347,8 @@ impl CollationResult {
 
 /// Collation function.
 ///
-/// Will be called with the hash of the relay chain block the indracore block should be build on and the
-/// [`ValidationData`] that provides information about the state of the indracore on the relay chain.
+/// Will be called with the hash of the relay chain block the parachain block should be build on and the
+/// [`ValidationData`] that provides information about the state of the parachain on the relay chain.
 ///
 /// Returns an optional [`CollationResult`].
 #[cfg(not(target_os = "unknown"))]
@@ -368,8 +368,8 @@ pub struct CollationGenerationConfig {
 	pub key: CollatorPair,
 	/// Collation function. See [`CollatorFn`] for more details.
 	pub collator: CollatorFn,
-	/// The indracore that this collator collates for
-	pub indra_id: IndraId,
+	/// The parachain that this collator collates for
+	pub para_id: ParaId,
 }
 
 #[cfg(not(target_os = "unknown"))]

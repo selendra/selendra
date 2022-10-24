@@ -15,7 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! The provisioner is responsible for assembling a relay chain block
-//! from a set of available indracore candidates of its choice.
+//! from a set of available parachain candidates of its choice.
 
 #![deny(missing_docs, unused_crate_dependencies)]
 
@@ -56,7 +56,7 @@ mod tests;
 /// How long to wait before proposing.
 const PRE_PROPOSE_TIMEOUT: std::time::Duration = core::time::Duration::from_millis(2000);
 
-const LOG_TARGET: &str = "indracore::provisioner";
+const LOG_TARGET: &str = "parachain::provisioner";
 
 /// The provisioner subsystem.
 pub struct ProvisionerSubsystem {
@@ -272,13 +272,13 @@ fn note_provisionable_data(
 			gum::trace!(
 				target: LOG_TARGET,
 				?candidate_hash,
-				indra = ?backed_candidate.descriptor().indra_id,
+				para = ?backed_candidate.descriptor().para_id,
 				"noted backed candidate",
 			);
 			let _span = span
 				.child("provisionable-backed")
 				.with_candidate(candidate_hash)
-				.with_indra_id(backed_candidate.descriptor().indra_id);
+				.with_para_id(backed_candidate.descriptor().para_id);
 			per_relay_parent.backed_candidates.push(backed_candidate)
 		},
 		_ => {},
@@ -292,8 +292,8 @@ type CoreAvailability = BitVec<u8, bitvec::order::Lsb0>;
 /// block. To engage this functionality, a
 /// `ProvisionerMessage::RequestInherentData` is sent; the response is a set of
 /// non-conflicting candidates and the appropriate bitfields. Non-conflicting
-/// means that there are never two distinct indracore candidates included for
-/// the same indracore and that new indracore candidates cannot be included
+/// means that there are never two distinct parachain candidates included for
+/// the same parachain and that new parachain candidates cannot be included
 /// until the previous one either gets declared available or expired.
 ///
 /// The main complication here is going to be around handling
@@ -469,7 +469,7 @@ async fn select_candidates(
 
 		let validation_data = match request_persisted_validation_data(
 			relay_parent,
-			scheduled_core.indra_id,
+			scheduled_core.para_id,
 			assumption,
 			sender,
 		)
@@ -486,7 +486,7 @@ async fn select_candidates(
 		// we arbitrarily pick the first of the backed candidates which match the appropriate selection criteria
 		if let Some(candidate) = candidates.iter().find(|backed_candidate| {
 			let descriptor = &backed_candidate.descriptor;
-			descriptor.indra_id == scheduled_core.indra_id &&
+			descriptor.para_id == scheduled_core.para_id &&
 				descriptor.persisted_validation_data_hash == computed_validation_data_hash
 		}) {
 			let candidate_hash = candidate.hash();
@@ -494,7 +494,7 @@ async fn select_candidates(
 				target: LOG_TARGET,
 				leaf_hash=?relay_parent,
 				?candidate_hash,
-				indra = ?candidate.descriptor.indra_id,
+				para = ?candidate.descriptor.para_id,
 				core = core_idx,
 				"Selected candidate receipt",
 			);

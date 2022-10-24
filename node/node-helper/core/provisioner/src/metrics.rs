@@ -103,7 +103,7 @@ impl metrics::Metrics for Metrics {
 			inherent_data_requests: prometheus::register(
 				prometheus::CounterVec::new(
 					prometheus::Opts::new(
-						"selendra_indracore_inherent_data_requests_total",
+						"selendra_parachain_inherent_data_requests_total",
 						"Number of InherentData requests served by provisioner.",
 					),
 					&["success"],
@@ -112,14 +112,14 @@ impl metrics::Metrics for Metrics {
 			)?,
 			request_inherent_data: prometheus::register(
 				prometheus::Histogram::with_opts(prometheus::HistogramOpts::new(
-					"selendra_indracore_provisioner_request_inherent_data_time",
+					"selendra_parachain_provisioner_request_inherent_data_time",
 					"Time spent within `provisioner::request_inherent_data`",
 				))?,
 				registry,
 			)?,
 			provisionable_data: prometheus::register(
 				prometheus::Histogram::with_opts(prometheus::HistogramOpts::new(
-					"selendra_indracore_provisioner_provisionable_data_time",
+					"selendra_parachain_provisioner_provisionable_data_time",
 					"Time spent within `provisioner::provisionable_data`",
 				))?,
 				registry,
@@ -127,7 +127,7 @@ impl metrics::Metrics for Metrics {
 			inherent_data_dispute_statements: prometheus::register(
 				prometheus::CounterVec::new(
 					prometheus::Opts::new(
-						"selendra_indracore_inherent_data_dispute_statements",
+						"selendra_parachain_inherent_data_dispute_statements",
 						"Number of dispute statements passed to `create_inherent()`.",
 					),
 					&["validity"],
@@ -136,7 +136,7 @@ impl metrics::Metrics for Metrics {
 			)?,
 			inherent_data_dispute_statement_sets: prometheus::register(
 				prometheus::Counter::new(
-					"selendra_indracore_inherent_data_dispute_statement_sets",
+					"selendra_parachain_inherent_data_dispute_statement_sets",
 					"Number of dispute statements sets passed to `create_inherent()`.",
 				)?,
 				registry,
@@ -144,7 +144,7 @@ impl metrics::Metrics for Metrics {
 			inherent_data_response_bitfields: prometheus::register(
 				prometheus::Histogram::with_opts(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_provisioner_inherent_data_response_bitfields_sent",
+						"selendra_parachain_provisioner_inherent_data_response_bitfields_sent",
 						"Number of inherent bitfields sent in response to `ProvisionerMessage::RequestInherentData`.",
 					).buckets(vec![0.0, 10.0, 25.0, 50.0, 75.0, 100.0, 150.0, 200.0, 250.0, 300.0]),
 				)?,

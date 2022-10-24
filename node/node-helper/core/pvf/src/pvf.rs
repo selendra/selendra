@@ -15,11 +15,11 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use crate::artifacts::ArtifactId;
-use selendra_indracore::primitives::ValidationCodeHash;
+use selendra_parachain::primitives::ValidationCodeHash;
 use sp_core::blake2_256;
 use std::{fmt, sync::Arc};
 
-/// A struct that carries code of a indracore validation function and it's hash.
+/// A struct that carries code of a parachain validation function and it's hash.
 ///
 /// Should be cheap to clone.
 #[derive(Clone)]

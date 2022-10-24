@@ -100,7 +100,7 @@ use crate::status::Clock;
 #[cfg(test)]
 mod tests;
 
-pub(crate) const LOG_TARGET: &str = "indracore::dispute-coordinator";
+pub(crate) const LOG_TARGET: &str = "parachain::dispute-coordinator";
 
 /// An implementation of the dispute coordinator subsystem.
 pub struct DisputeCoordinatorSubsystem {

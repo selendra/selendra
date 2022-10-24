@@ -126,14 +126,14 @@ impl metrics::Metrics for Metrics {
 		let metrics = MetricsInner {
 			statements_distributed: prometheus::register(
 				prometheus::Counter::new(
-					"selendra_indracore_statements_distributed_total",
+					"selendra_parachain_statements_distributed_total",
 					"Number of candidate validity statements distributed to other peers.",
 				)?,
 				registry,
 			)?,
 			sent_requests: prometheus::register(
 				prometheus::Counter::new(
-					"selendra_indracore_statement_distribution_sent_requests_total",
+					"selendra_parachain_statement_distribution_sent_requests_total",
 					"Number of large statement fetching requests sent.",
 				)?,
 				registry,
@@ -141,7 +141,7 @@ impl metrics::Metrics for Metrics {
 			received_responses: prometheus::register(
 				prometheus::CounterVec::new(
 					prometheus::Opts::new(
-						"selendra_indracore_statement_distribution_received_responses_total",
+						"selendra_parachain_statement_distribution_received_responses_total",
 						"Number of received responses for large statement data.",
 					),
 					&["success"],
@@ -151,7 +151,7 @@ impl metrics::Metrics for Metrics {
 			active_leaves_update: prometheus::register(
 				prometheus::Histogram::with_opts(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_statement_distribution_active_leaves_update",
+						"selendra_parachain_statement_distribution_active_leaves_update",
 						"Time spent within `statement_distribution::active_leaves_update`",
 					)
 					.buckets(HISTOGRAM_LATENCY_BUCKETS.into()),
@@ -161,7 +161,7 @@ impl metrics::Metrics for Metrics {
 			share: prometheus::register(
 				prometheus::Histogram::with_opts(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_statement_distribution_share",
+						"selendra_parachain_statement_distribution_share",
 						"Time spent within `statement_distribution::share`",
 					)
 					.buckets(HISTOGRAM_LATENCY_BUCKETS.into()),
@@ -171,7 +171,7 @@ impl metrics::Metrics for Metrics {
 			network_bridge_update_v1: prometheus::register(
 				prometheus::HistogramVec::new(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_statement_distribution_network_bridge_update_v1",
+						"selendra_parachain_statement_distribution_network_bridge_update_v1",
 						"Time spent within `statement_distribution::network_bridge_update_v1`",
 					)
 					.buckets(HISTOGRAM_LATENCY_BUCKETS.into()),
@@ -182,7 +182,7 @@ impl metrics::Metrics for Metrics {
 			statements_unexpected: prometheus::register(
 				prometheus::CounterVec::new(
 					prometheus::Opts::new(
-						"selendra_indracore_statement_distribution_statements_unexpected",
+						"selendra_parachain_statement_distribution_statements_unexpected",
 						"Number of statements that were not expected to be received.",
 					),
 					&["type"],
@@ -191,7 +191,7 @@ impl metrics::Metrics for Metrics {
 			)?,
 			created_message_size: prometheus::register(
 				prometheus::Gauge::with_opts(prometheus::Opts::new(
-					"selendra_indracore_statement_distribution_created_message_size",
+					"selendra_parachain_statement_distribution_created_message_size",
 					"Size of created messages containing Seconded statements.",
 				))?,
 				registry,

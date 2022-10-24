@@ -17,20 +17,20 @@
 //! XCM sender for relay chain.
 
 use parity_scale_codec::Encode;
-use runtime_indracores::{configuration, dmp};
+use runtime_parachains::{configuration, dmp};
 use sp_std::marker::PhantomData;
 use xcm::latest::prelude::*;
 
 /// XCM sender for relay chain. It only sends downward message.
-pub struct ChildIndracoreRouter<T, W>(PhantomData<(T, W)>);
+pub struct ChildParachainRouter<T, W>(PhantomData<(T, W)>);
 
 impl<T: configuration::Config + dmp::Config, W: xcm::WrapVersion> SendXcm
-	for ChildIndracoreRouter<T, W>
+	for ChildParachainRouter<T, W>
 {
 	fn send_xcm(dest: impl Into<MultiLocation>, msg: Xcm<()>) -> SendResult {
 		let dest = dest.into();
 		match dest {
-			MultiLocation { parents: 0, interior: X1(Indracore(id)) } => {
+			MultiLocation { parents: 0, interior: X1(Parachain(id)) } => {
 				// Downward message passing.
 				let versioned_xcm =
 					W::wrap_version(&dest, msg).map_err(|()| SendError::DestinationUnsupported)?;

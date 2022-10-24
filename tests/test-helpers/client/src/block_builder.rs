@@ -17,7 +17,7 @@
 use crate::{Client, FullBackend};
 use parity_scale_codec::{Decode, Encode};
 use sc_block_builder::{BlockBuilder, BlockBuilderProvider};
-use selendra_primitives::v2::{Block, InherentData as IndracoresInherentData};
+use selendra_primitives::v2::{Block, InherentData as ParachainsInherentData};
 use sp_api::ProvideRuntimeApi;
 use sp_consensus_babe::{
 	digests::{PreDigest, SecondaryPlainPreDigest},
@@ -101,7 +101,7 @@ impl InitSelendraBlockBuilder for Client {
 			.expect("Get the parent block header")
 			.expect("The target block header must exist");
 
-		let indracores_inherent_data = IndracoresInherentData {
+		let parachains_inherent_data = ParachainsInherentData {
 			bitfields: Vec::new(),
 			backed_candidates: Vec::new(),
 			disputes: Vec::new(),
@@ -110,10 +110,10 @@ impl InitSelendraBlockBuilder for Client {
 
 		inherent_data
 			.put_data(
-				selendra_primitives::v2::INDRACORES_INHERENT_IDENTIFIER,
-				&indracores_inherent_data,
+				selendra_primitives::v2::PARACHAINS_INHERENT_IDENTIFIER,
+				&parachains_inherent_data,
 			)
-			.expect("Put indracores inherent data");
+			.expect("Put parachains inherent data");
 
 		let inherents = block_builder.create_inherents(inherent_data).expect("Creates inherents");
 

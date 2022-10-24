@@ -132,8 +132,8 @@ fn selendra_testnet_genesis(
 						runtime::SessionKeys {
 							babe: x.2.clone(),
 							grandpa: x.3.clone(),
-							indra_validator: x.4.clone(),
-							indra_assignment: x.5.clone(),
+							para_validator: x.4.clone(),
+							para_assignment: x.5.clone(),
 							authority_discovery: x.6.clone(),
 						},
 					)
@@ -161,7 +161,7 @@ fn selendra_testnet_genesis(
 		vesting: runtime::VestingConfig { vesting: vec![] },
 		sudo: runtime::SudoConfig { key: Some(root_key) },
 		configuration: runtime::ConfigurationConfig {
-			config: selendra_runtime_indracores::configuration::HostConfiguration {
+			config: selendra_runtime_parachains::configuration::HostConfiguration {
 				validation_upgrade_cooldown: 10u32,
 				validation_upgrade_delay: 5,
 				code_retention_period: 1200,

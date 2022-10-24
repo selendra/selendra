@@ -43,7 +43,7 @@ mod metrics;
 #[cfg(test)]
 mod tests;
 
-const LOG_TARGET: &str = "indracore::approval-distribution";
+const LOG_TARGET: &str = "parachain::approval-distribution";
 
 const COST_UNEXPECTED_MESSAGE: Rep =
 	Rep::CostMinor("Peer sent an out-of-view assignment or approval");

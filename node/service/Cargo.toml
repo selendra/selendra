@@ -74,12 +74,12 @@ prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https:
 
 # Selendra
 selendra-primitives = { path = "../../primitives" }
-selendra-indracore = { path = "../../indracore/core" }
-selendra-runtime-indracores = { path = "../../indracore/runtime" }
+selendra-parachain = { path = "../../parachain/core" }
+selendra-runtime-parachains = { path = "../../parachain/runtime" }
 selendra-rpc = { path = "../rpc" }
 selendra-client = { path = "../client", default-features = false, optional = true }
 selendra-node-primitives = { path = "../node-helper/primitives" }
-selendra-node-core-indracores-inherent = { path = "../node-helper/core/indracores-inherent" }
+selendra-node-core-parachains-inherent = { path = "../node-helper/core/parachains-inherent" }
 selendra-overseer = { path = "../node-helper/overseer" }
 selendra-node-subsystem = {path = "../node-helper/subsystem" }
 selendra-node-subsystem-util = { path = "../node-helper/subsystem-util" }
@@ -175,7 +175,7 @@ malus = ["full-node"]
 runtime-metrics = [
 	"selendra-client/runtime-metrics",
 	"selendra-runtime/runtime-metrics",
-	"selendra-runtime-indracores/runtime-metrics"
+	"selendra-runtime-parachains/runtime-metrics"
 ]
 
 staging-client = ["selendra-node-core-provisioner/staging-client"]

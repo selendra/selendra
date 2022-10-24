@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-//! Indrabase and indracores leasing system. Allows indra IDs to be claimed, the code and data to be initialized and
-//! indracore slots (i.e. continuous scheduling) to be leased. Also allows for indracores and indrabases to be
+//! Parathread and parachains leasing system. Allows para IDs to be claimed, the code and data to be initialized and
+//! parachain slots (i.e. continuous scheduling) to be leased. Also allows for parachains and parathreads to be
 //! swapped.
 //!
-//! This doesn't handle the mechanics of determining which indra ID actually ends up with a indracore lease. This
+//! This doesn't handle the mechanics of determining which para ID actually ends up with a parachain lease. This
 //! must handled by a separately, through the trait interface that this pallet provides or the root dispatchables.
 
 use crate::traits::{LeaseError, Leaser, Registrar};
@@ -29,7 +29,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
-use primitives::v2::Id as IndraId;
+use primitives::v2::Id as ParaId;
 use sp_runtime::traits::{CheckedConversion, CheckedSub, Saturating, Zero};
 use sp_std::prelude::*;
 
@@ -77,7 +77,7 @@ pub mod pallet {
 		/// The currency type used for bidding.
 		type Currency: ReservableCurrency<Self::AccountId>;
 
-		/// The indracore registrar type.
+		/// The parachain registrar type.
 		type Registrar: Registrar<AccountId = Self::AccountId>;
 
 		/// The number of blocks over which a single period lasts.
@@ -95,7 +95,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
-	/// Amounts held on deposit for each (possibly future) leased indracore.
+	/// Amounts held on deposit for each (possibly future) leased parachain.
 	///
 	/// The actual amount locked on its behalf by any account at any time is the maximum of the second values
 	/// of the items in this list whose first value is the account.
@@ -103,10 +103,10 @@ pub mod pallet {
 	/// The first item in the list is the amount locked for the current Lease Period. Following
 	/// items are for the subsequent lease periods.
 	///
-	/// The default value (an empty list) implies that the indracore no longer exists (or never
+	/// The default value (an empty list) implies that the parachain no longer exists (or never
 	/// existed) as far as this pallet is concerned.
 	///
-	/// If a indracore doesn't exist *yet* but is scheduled to exist in the future, then it
+	/// If a parachain doesn't exist *yet* but is scheduled to exist in the future, then it
 	/// will be left-padded with one or more `None`s to denote the fact that nothing is held on
 	/// deposit for the non-existent chain currently, but is held at some point in the future.
 	///
@@ -114,18 +114,18 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn lease)]
 	pub type Leases<T: Config> =
-		StorageMap<_, Twox64Concat, IndraId, Vec<Option<(T::AccountId, BalanceOf<T>)>>, ValueQuery>;
+		StorageMap<_, Twox64Concat, ParaId, Vec<Option<(T::AccountId, BalanceOf<T>)>>, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// A new `[lease_period]` is beginning.
 		NewLeasePeriod { lease_period: LeasePeriodOf<T> },
-		/// A indra has won the right to a continuous set of lease periods as a indracore.
-		/// First balance is any extra amount reserved on top of the indra's existing deposit.
+		/// A para has won the right to a continuous set of lease periods as a parachain.
+		/// First balance is any extra amount reserved on top of the para's existing deposit.
 		/// Second balance is the total amount reserved.
 		Leased {
-			indra_id: IndraId,
+			para_id: ParaId,
 			leaser: T::AccountId,
 			period_begin: LeasePeriodOf<T>,
 			period_count: LeasePeriodOf<T>,
@@ -136,8 +136,8 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// The indracore ID is not onboarding.
-		IndraNotOnboarding,
+		/// The parachain ID is not onboarding.
+		ParaNotOnboarding,
 		/// There was an error with the lease.
 		LeaseError,
 	}
@@ -166,25 +166,25 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::force_lease())]
 		pub fn force_lease(
 			origin: OriginFor<T>,
-			indra: IndraId,
+			para: ParaId,
 			leaser: T::AccountId,
 			amount: BalanceOf<T>,
 			period_begin: LeasePeriodOf<T>,
 			period_count: LeasePeriodOf<T>,
 		) -> DispatchResult {
 			T::ForceOrigin::ensure_origin(origin)?;
-			Self::lease_out(indra, &leaser, amount, period_begin, period_count)
+			Self::lease_out(para, &leaser, amount, period_begin, period_count)
 				.map_err(|_| Error::<T>::LeaseError)?;
 			Ok(())
 		}
 
-		/// Clear all leases for a Indra Id, refunding any deposits back to the original owners.
+		/// Clear all leases for a Para Id, refunding any deposits back to the original owners.
 		///
 		/// The dispatch origin for this call must match `T::ForceOrigin`.
 		#[pallet::weight(T::WeightInfo::clear_all_leases())]
-		pub fn clear_all_leases(origin: OriginFor<T>, indra: IndraId) -> DispatchResult {
+		pub fn clear_all_leases(origin: OriginFor<T>, para: ParaId) -> DispatchResult {
 			T::ForceOrigin::ensure_origin(origin)?;
-			let deposits = Self::all_deposits_held(indra);
+			let deposits = Self::all_deposits_held(para);
 
 			// Refund any deposits for these leases
 			for (who, deposit) in deposits {
@@ -192,27 +192,27 @@ pub mod pallet {
 				debug_assert!(err_amount.is_zero());
 			}
 
-			Leases::<T>::remove(indra);
+			Leases::<T>::remove(para);
 			Ok(())
 		}
 
-		/// Try to onboard a indracore that has a lease for the current lease period.
+		/// Try to onboard a parachain that has a lease for the current lease period.
 		///
-		/// This function can be useful if there was some state issue with a indra that should
+		/// This function can be useful if there was some state issue with a para that should
 		/// have onboarded, but was unable to. As long as they have a lease period, we can
 		/// let them onboard from here.
 		///
 		/// Origin must be signed, but can be called by anyone.
 		#[pallet::weight(T::WeightInfo::trigger_onboard())]
-		pub fn trigger_onboard(origin: OriginFor<T>, indra: IndraId) -> DispatchResult {
+		pub fn trigger_onboard(origin: OriginFor<T>, para: ParaId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
-			let leases = Leases::<T>::get(indra);
+			let leases = Leases::<T>::get(para);
 			match leases.first() {
 				// If the first element in leases is present, then it has a lease!
 				// We can try to onboard it.
-				Some(Some(_lease_info)) => T::Registrar::make_indracore(indra)?,
+				Some(Some(_lease_info)) => T::Registrar::make_parachain(para)?,
 				// Otherwise, it does not have a lease.
-				Some(None) | None => return Err(Error::<T>::IndraNotOnboarding.into()),
+				Some(None) | None => return Err(Error::<T>::ParaNotOnboarding.into()),
 			};
 			Ok(())
 		}
@@ -222,16 +222,16 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 	/// A new lease period is beginning. We're at the start of the first block of it.
 	///
-	/// We need to on-board and off-board indracores as needed. We should also handle reducing/
+	/// We need to on-board and off-board parachains as needed. We should also handle reducing/
 	/// returning deposits.
 	fn manage_lease_period_start(lease_period_index: LeasePeriodOf<T>) -> Weight {
 		Self::deposit_event(Event::<T>::NewLeasePeriod { lease_period: lease_period_index });
 
-		let old_indracores = T::Registrar::indracores();
+		let old_parachains = T::Registrar::parachains();
 
 		// Figure out what chains need bringing on.
-		let mut indracores = Vec::new();
-		for (indra, mut lease_periods) in Leases::<T>::iter() {
+		let mut parachains = Vec::new();
+		for (para, mut lease_periods) in Leases::<T>::iter() {
 			if lease_periods.is_empty() {
 				continue
 			}
@@ -240,7 +240,7 @@ impl<T: Config> Pallet<T> {
 			if lease_periods.len() == 1 {
 				// Just one entry, which corresponds to the now-ended lease period.
 				//
-				// `indra` is now just a indrabase.
+				// `para` is now just a parathread.
 				//
 				// Unreserve whatever is left.
 				if let Some((who, value)) = &lease_periods[0] {
@@ -248,21 +248,21 @@ impl<T: Config> Pallet<T> {
 				}
 
 				// Remove the now-empty lease list.
-				Leases::<T>::remove(indra);
+				Leases::<T>::remove(para);
 			} else {
-				// The indracore entry has leased future periods.
+				// The parachain entry has leased future periods.
 
 				// We need to pop the first deposit entry, which corresponds to the now-
 				// ended lease period.
 				let maybe_ended_lease = lease_periods.remove(0);
 
-				Leases::<T>::insert(indra, &lease_periods);
+				Leases::<T>::insert(para, &lease_periods);
 
 				// If we *were* active in the last period and so have ended a lease...
 				if let Some(ended_lease) = maybe_ended_lease {
 					// Then we need to get the new amount that should continue to be held on
-					// deposit for the indracore.
-					let now_held = Self::deposit_held(indra, &ended_lease.0);
+					// deposit for the parachain.
+					let now_held = Self::deposit_held(para, &ended_lease.0);
 
 					// If this is less than what we were holding for this leaser's now-ended lease, then
 					// unreserve it.
@@ -271,42 +271,42 @@ impl<T: Config> Pallet<T> {
 					}
 				}
 
-				// If we have an active lease in the new period, then add to the current indracores
+				// If we have an active lease in the new period, then add to the current parachains
 				if lease_periods[0].is_some() {
-					indracores.push(indra);
+					parachains.push(para);
 				}
 			}
 		}
-		indracores.sort();
+		parachains.sort();
 
-		for indra in indracores.iter() {
-			if old_indracores.binary_search(indra).is_err() {
+		for para in parachains.iter() {
+			if old_parachains.binary_search(para).is_err() {
 				// incoming.
-				let res = T::Registrar::make_indracore(*indra);
+				let res = T::Registrar::make_parachain(*para);
 				debug_assert!(res.is_ok());
 			}
 		}
 
-		for indra in old_indracores.iter() {
-			if indracores.binary_search(indra).is_err() {
+		for para in old_parachains.iter() {
+			if parachains.binary_search(para).is_err() {
 				// outgoing.
-				let res = T::Registrar::make_indrabase(*indra);
+				let res = T::Registrar::make_parathread(*para);
 				debug_assert!(res.is_ok());
 			}
 		}
 
 		T::WeightInfo::manage_lease_period_start(
-			old_indracores.len() as u32,
-			indracores.len() as u32,
+			old_parachains.len() as u32,
+			parachains.len() as u32,
 		)
 	}
 
-	// Return a vector of (user, balance) for all deposits for a indracore.
-	// Useful when trying to clean up a indracore leases, as this would tell
+	// Return a vector of (user, balance) for all deposits for a parachain.
+	// Useful when trying to clean up a parachain leases, as this would tell
 	// you all the balances you need to unreserve.
-	fn all_deposits_held(indra: IndraId) -> Vec<(T::AccountId, BalanceOf<T>)> {
+	fn all_deposits_held(para: ParaId) -> Vec<(T::AccountId, BalanceOf<T>)> {
 		let mut tracker = sp_std::collections::btree_map::BTreeMap::new();
-		Leases::<T>::get(indra).into_iter().for_each(|lease| match lease {
+		Leases::<T>::get(para).into_iter().for_each(|lease| match lease {
 			Some((who, amount)) => match tracker.get(&who) {
 				Some(prev_amount) =>
 					if amount > *prev_amount {
@@ -324,7 +324,7 @@ impl<T: Config> Pallet<T> {
 }
 
 impl<T: Config> crate::traits::OnSwap for Pallet<T> {
-	fn on_swap(one: IndraId, other: IndraId) {
+	fn on_swap(one: ParaId, other: ParaId) {
 		Leases::<T>::mutate(one, |x| Leases::<T>::mutate(other, |y| sp_std::mem::swap(x, y)))
 	}
 }
@@ -335,7 +335,7 @@ impl<T: Config> Leaser<T::BlockNumber> for Pallet<T> {
 	type Currency = T::Currency;
 
 	fn lease_out(
-		indra: IndraId,
+		para: ParaId,
 		leaser: &Self::AccountId,
 		amount: <Self::Currency as Currency<Self::AccountId>>::Balance,
 		period_begin: Self::LeasePeriod,
@@ -354,11 +354,11 @@ impl<T: Config> Leaser<T::BlockNumber> for Pallet<T> {
 		// offset is the amount into the `Deposits` items list that our lease begins. `period_count`
 		// is the number of items that it lasts for.
 
-		// The lease period index range (begin, end) that newly belongs to this indracore
+		// The lease period index range (begin, end) that newly belongs to this parachain
 		// ID. We need to ensure that it features in `Deposits` to prevent it from being
-		// reaped too early (any managed indracore whose `Deposits` set runs low will be
+		// reaped too early (any managed parachain whose `Deposits` set runs low will be
 		// removed).
-		Leases::<T>::try_mutate(indra, |d| {
+		Leases::<T>::try_mutate(para, |d| {
 			// Left-pad with `None`s as necessary.
 			if d.len() < offset {
 				d.resize_with(offset, || None);
@@ -388,9 +388,9 @@ impl<T: Config> Leaser<T::BlockNumber> for Pallet<T> {
 				}
 			}
 
-			// Figure out whether we already have some funds of `leaser` held in reserve for `indra_id`.
+			// Figure out whether we already have some funds of `leaser` held in reserve for `para_id`.
 			//  If so, then we can deduct those from the amount that we need to reserve.
-			let maybe_additional = amount.checked_sub(&Self::deposit_held(indra, &leaser));
+			let maybe_additional = amount.checked_sub(&Self::deposit_held(para, &leaser));
 			if let Some(ref additional) = maybe_additional {
 				T::Currency::reserve(&leaser, *additional)
 					.map_err(|_| LeaseError::ReserveFailed)?;
@@ -399,14 +399,14 @@ impl<T: Config> Leaser<T::BlockNumber> for Pallet<T> {
 			let reserved = maybe_additional.unwrap_or_default();
 
 			// Check if current lease period is same as period begin, and onboard them directly.
-			// This will allow us to support onboarding new indracores in the middle of a lease period.
+			// This will allow us to support onboarding new parachains in the middle of a lease period.
 			if current_lease_period == period_begin {
 				// Best effort. Not much we can do if this fails.
-				let _ = T::Registrar::make_indracore(indra);
+				let _ = T::Registrar::make_parachain(para);
 			}
 
 			Self::deposit_event(Event::<T>::Leased {
-				indra_id: indra,
+				para_id: para,
 				leaser: leaser.clone(),
 				period_begin,
 				period_count,
@@ -419,10 +419,10 @@ impl<T: Config> Leaser<T::BlockNumber> for Pallet<T> {
 	}
 
 	fn deposit_held(
-		indra: IndraId,
+		para: ParaId,
 		leaser: &Self::AccountId,
 	) -> <Self::Currency as Currency<Self::AccountId>>::Balance {
-		Leases::<T>::get(indra)
+		Leases::<T>::get(para)
 			.into_iter()
 			.map(|lease| match lease {
 				Some((who, amount)) =>
@@ -452,7 +452,7 @@ impl<T: Config> Leaser<T::BlockNumber> for Pallet<T> {
 	}
 
 	fn already_leased(
-		indra_id: IndraId,
+		para_id: ParaId,
 		first_period: Self::LeasePeriod,
 		last_period: Self::LeasePeriod,
 	) -> bool {
@@ -478,7 +478,7 @@ impl<T: Config> Leaser<T::BlockNumber> for Pallet<T> {
 		};
 
 		// Get the leases, and check each item in the vec which is part of the range we are checking.
-		let leases = Leases::<T>::get(indra_id);
+		let leases = Leases::<T>::get(para_id);
 		for slot in offset..=offset + period_count {
 			if let Some(Some(_)) = leases.get(slot) {
 				// If there exists any lease period, we exit early and return true.
@@ -569,7 +569,7 @@ mod tests {
 	parameter_types! {
 		pub const LeasePeriod: BlockNumber = 10;
 		pub static LeaseOffset: BlockNumber = 0;
-		pub const IndraDeposit: u64 = 1;
+		pub const ParaDeposit: u64 = 1;
 	}
 
 	impl Config for Test {
@@ -628,7 +628,7 @@ mod tests {
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code()
 			));
@@ -659,7 +659,7 @@ mod tests {
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code()
 			));
@@ -702,7 +702,7 @@ mod tests {
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code()
 			));
@@ -752,7 +752,7 @@ mod tests {
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code()
 			));
@@ -787,7 +787,7 @@ mod tests {
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code()
 			));
@@ -830,14 +830,14 @@ mod tests {
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code()
 			));
 
 			let max_num = 5u32;
 
-			// max_num different people are reserved for leases to Indra ID 1
+			// max_num different people are reserved for leases to Para ID 1
 			for i in 1u32..=max_num {
 				let j: u64 = i.into();
 				assert_ok!(Slots::lease_out(1.into(), &j, j * 10, i * i, i));
@@ -855,7 +855,7 @@ mod tests {
 			}
 
 			// Leases is empty.
-			assert!(Leases::<Test>::get(IndraId::from(1_u32)).is_empty());
+			assert!(Leases::<Test>::get(ParaId::from(1_u32)).is_empty());
 		});
 	}
 
@@ -866,13 +866,13 @@ mod tests {
 
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code()
 			));
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(2_u32),
+				ParaId::from(2_u32),
 				dummy_head_data(),
 				dummy_validation_code()
 			));
@@ -897,46 +897,46 @@ mod tests {
 			run_to_block(1);
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(1_u32),
+				ParaId::from(1_u32),
 				dummy_head_data(),
 				dummy_validation_code()
 			));
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(2_u32),
+				ParaId::from(2_u32),
 				dummy_head_data(),
 				dummy_validation_code()
 			));
 			assert_ok!(TestRegistrar::<Test>::register(
 				1,
-				IndraId::from(3_u32),
+				ParaId::from(3_u32),
 				dummy_head_data(),
 				dummy_validation_code()
 			));
 
 			// We will directly manipulate leases to emulate some kind of failure in the system.
-			// Indra 1 will have no leases
-			// Indra 2 will have a lease period in the current index
-			Leases::<Test>::insert(IndraId::from(2_u32), vec![Some((0, 0))]);
-			// Indra 3 will have a lease period in a future index
-			Leases::<Test>::insert(IndraId::from(3_u32), vec![None, None, Some((0, 0))]);
+			// Para 1 will have no leases
+			// Para 2 will have a lease period in the current index
+			Leases::<Test>::insert(ParaId::from(2_u32), vec![Some((0, 0))]);
+			// Para 3 will have a lease period in a future index
+			Leases::<Test>::insert(ParaId::from(3_u32), vec![None, None, Some((0, 0))]);
 
-			// Indra 1 should fail cause they don't have any leases
+			// Para 1 should fail cause they don't have any leases
 			assert_noop!(
 				Slots::trigger_onboard(Origin::signed(1), 1.into()),
-				Error::<Test>::IndraNotOnboarding
+				Error::<Test>::ParaNotOnboarding
 			);
 
-			// Indra 2 should succeed
+			// Para 2 should succeed
 			assert_ok!(Slots::trigger_onboard(Origin::signed(1), 2.into()));
 
-			// Indra 3 should fail cause their lease is in the future
+			// Para 3 should fail cause their lease is in the future
 			assert_noop!(
 				Slots::trigger_onboard(Origin::signed(1), 3.into()),
-				Error::<Test>::IndraNotOnboarding
+				Error::<Test>::ParaNotOnboarding
 			);
 
-			// Trying Indra 2 again should fail cause they are not currently a indrabase
+			// Trying Para 2 again should fail cause they are not currently a parathread
 			assert!(Slots::trigger_onboard(Origin::signed(1), 2.into()).is_err());
 
 			assert_eq!(TestRegistrar::<Test>::operations(), vec![(2.into(), 1, true),]);
@@ -994,8 +994,8 @@ mod benchmarking {
 		assert_eq!(event, &system_event);
 	}
 
-	fn register_a_indrabase<T: Config>(i: u32) -> (IndraId, T::AccountId) {
-		let indra = IndraId::from(i);
+	fn register_a_parathread<T: Config>(i: u32) -> (ParaId, T::AccountId) {
+		let para = ParaId::from(i);
 		let leaser: T::AccountId = account("leaser", i, 0);
 		T::Currency::make_free_balance_be(&leaser, BalanceOf::<T>::max_value());
 		let worst_head_data = T::Registrar::worst_head_data();
@@ -1003,29 +1003,29 @@ mod benchmarking {
 
 		assert_ok!(T::Registrar::register(
 			leaser.clone(),
-			indra,
+			para,
 			worst_head_data,
 			worst_validation_code
 		));
 		T::Registrar::execute_pending_transitions();
 
-		(indra, leaser)
+		(para, leaser)
 	}
 
 	benchmarks! {
 		force_lease {
 			// If there is an offset, we need to be on that block to be able to do lease things.
 			frame_system::Pallet::<T>::set_block_number(T::LeaseOffset::get() + One::one());
-			let indra = IndraId::from(1337);
+			let para = ParaId::from(1337);
 			let leaser: T::AccountId = account("leaser", 0, 0);
 			T::Currency::make_free_balance_be(&leaser, BalanceOf::<T>::max_value());
 			let amount = T::Currency::minimum_balance();
 			let period_begin = 69u32.into();
 			let period_count = 3u32.into();
-		}: _(RawOrigin::Root, indra, leaser.clone(), amount, period_begin, period_count)
+		}: _(RawOrigin::Root, para, leaser.clone(), amount, period_begin, period_count)
 		verify {
 			assert_last_event::<T>(Event::<T>::Leased {
-				indra_id: indra,
+				para_id: para,
 				leaser, period_begin,
 				period_count,
 				extra_reserved: amount,
@@ -1033,9 +1033,9 @@ mod benchmarking {
 			}.into());
 		}
 
-		// Worst case scenario, T indrabases onboard, and C indracores offboard.
+		// Worst case scenario, T parathreads onboard, and C parachains offboard.
 		manage_lease_period_start {
-			// Assume reasonable maximum of 100 indras at any time
+			// Assume reasonable maximum of 100 paras at any time
 			let c in 1 .. 100;
 			let t in 1 .. 100;
 
@@ -1045,55 +1045,55 @@ mod benchmarking {
 			// If there is an offset, we need to be on that block to be able to do lease things.
 			frame_system::Pallet::<T>::set_block_number(T::LeaseOffset::get() + One::one());
 
-			// Make T indrabases
-			let indras_info = (0..t).map(|i| {
-				register_a_indrabase::<T>(i)
+			// Make T parathreads
+			let paras_info = (0..t).map(|i| {
+				register_a_parathread::<T>(i)
 			}).collect::<Vec<_>>();
 
 			T::Registrar::execute_pending_transitions();
 
-			// T indrabase are upgrading to indracores
-			for (indra, leaser) in indras_info {
+			// T parathread are upgrading to parachains
+			for (para, leaser) in paras_info {
 				let amount = T::Currency::minimum_balance();
 
-				Slots::<T>::force_lease(RawOrigin::Root.into(), indra, leaser, amount, period_begin, period_count)?;
+				Slots::<T>::force_lease(RawOrigin::Root.into(), para, leaser, amount, period_begin, period_count)?;
 			}
 
 			T::Registrar::execute_pending_transitions();
 
-			// C indracores are downgrading to indrabases
+			// C parachains are downgrading to parathreads
 			for i in 200 .. 200 + c {
-				let (indra, leaser) = register_a_indrabase::<T>(i);
-				T::Registrar::make_indracore(indra)?;
+				let (para, leaser) = register_a_parathread::<T>(i);
+				T::Registrar::make_parachain(para)?;
 			}
 
 			T::Registrar::execute_pending_transitions();
 
 			for i in 0 .. t {
-				assert!(T::Registrar::is_indrabase(IndraId::from(i)));
+				assert!(T::Registrar::is_parathread(ParaId::from(i)));
 			}
 
 			for i in 200 .. 200 + c {
-				assert!(T::Registrar::is_indracore(IndraId::from(i)));
+				assert!(T::Registrar::is_parachain(ParaId::from(i)));
 			}
 		}: {
 				Slots::<T>::manage_lease_period_start(period_begin);
 		} verify {
-			// All indras should have switched.
+			// All paras should have switched.
 			T::Registrar::execute_pending_transitions();
 			for i in 0 .. t {
-				assert!(T::Registrar::is_indracore(IndraId::from(i)));
+				assert!(T::Registrar::is_parachain(ParaId::from(i)));
 			}
 			for i in 200 .. 200 + c {
-				assert!(T::Registrar::is_indrabase(IndraId::from(i)));
+				assert!(T::Registrar::is_parathread(ParaId::from(i)));
 			}
 		}
 
-		// Assume that at most 8 people have deposits for leases on a indracore.
+		// Assume that at most 8 people have deposits for leases on a parachain.
 		// This would cover at least 4 years of leases in the worst case scenario.
 		clear_all_leases {
 			let max_people = 8;
-			let (indra, _) = register_a_indrabase::<T>(1);
+			let (para, _) = register_a_parathread::<T>(1);
 
 			// If there is an offset, we need to be on that block to be able to do lease things.
 			frame_system::Pallet::<T>::set_block_number(T::LeaseOffset::get() + One::one());
@@ -1106,7 +1106,7 @@ mod benchmarking {
 				// Average slot has 4 lease periods.
 				let period_count: LeasePeriodOf<T> = 4u32.into();
 				let period_begin = period_count * i.into();
-				Slots::<T>::force_lease(RawOrigin::Root.into(), indra, leaser, amount, period_begin, period_count)?;
+				Slots::<T>::force_lease(RawOrigin::Root.into(), para, leaser, amount, period_begin, period_count)?;
 			}
 
 			for i in 0 .. max_people {
@@ -1114,7 +1114,7 @@ mod benchmarking {
 				assert_eq!(T::Currency::reserved_balance(&leaser), T::Currency::minimum_balance());
 			}
 
-		}: _(RawOrigin::Root, indra)
+		}: _(RawOrigin::Root, para)
 		verify {
 			for i in 0 .. max_people {
 				let leaser = account("lease_deposit", i, 0);
@@ -1123,15 +1123,15 @@ mod benchmarking {
 		}
 
 		trigger_onboard {
-			// get a indracore into a bad state where they did not onboard
-			let (indra, _) = register_a_indrabase::<T>(1);
-			Leases::<T>::insert(indra, vec![Some((account::<T::AccountId>("lease_insert", 0, 0), BalanceOf::<T>::default()))]);
-			assert!(T::Registrar::is_indrabase(indra));
+			// get a parachain into a bad state where they did not onboard
+			let (para, _) = register_a_parathread::<T>(1);
+			Leases::<T>::insert(para, vec![Some((account::<T::AccountId>("lease_insert", 0, 0), BalanceOf::<T>::default()))]);
+			assert!(T::Registrar::is_parathread(para));
 			let caller = whitelisted_caller();
-		}: _(RawOrigin::Signed(caller), indra)
+		}: _(RawOrigin::Signed(caller), para)
 		verify {
 			T::Registrar::execute_pending_transitions();
-			assert!(T::Registrar::is_indracore(indra));
+			assert!(T::Registrar::is_parachain(para));
 		}
 
 		impl_benchmark_test_suite!(

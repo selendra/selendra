@@ -50,7 +50,7 @@ use selendra_node_subsystem_util::{
 };
 use selendra_primitives::v2::{
 	AuthorityDiscoveryId, CandidateHash, CandidateReceipt, CollatorPair, CoreIndex, CoreState,
-	Hash, Id as IndraId,
+	Hash, Id as ParaId,
 };
 
 use super::LOG_TARGET;
@@ -126,21 +126,21 @@ impl metrics::Metrics for Metrics {
 		let metrics = MetricsInner {
 			advertisements_made: prometheus::register(
 				prometheus::Counter::new(
-					"selendra_indracore_collation_advertisements_made_total",
+					"selendra_parachain_collation_advertisements_made_total",
 					"A number of collation advertisements sent to validators.",
 				)?,
 				registry,
 			)?,
 			collations_send_requested: prometheus::register(
 				prometheus::Counter::new(
-					"selendra_indracore_collations_sent_requested_total",
+					"selendra_parachain_collations_sent_requested_total",
 					"A number of collations requested to be sent to validators.",
 				)?,
 				registry,
 			)?,
 			collations_sent: prometheus::register(
 				prometheus::Counter::new(
-					"selendra_indracore_collations_sent_total",
+					"selendra_parachain_collations_sent_total",
 					"A number of collations sent to validators.",
 				)?,
 				registry,
@@ -148,7 +148,7 @@ impl metrics::Metrics for Metrics {
 			process_msg: prometheus::register(
 				prometheus::Histogram::with_opts(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_collator_protocol_collator_process_msg",
+						"selendra_parachain_collator_protocol_collator_process_msg",
 						"Time spent within `collator_protocol_collator::process_msg`",
 					)
 					.buckets(vec![
@@ -161,7 +161,7 @@ impl metrics::Metrics for Metrics {
 			collation_distribution_time: prometheus::register(
 				prometheus::HistogramVec::new(
 					prometheus::HistogramOpts::new(
-						"selendra_indracore_collator_protocol_collator_distribution_time",
+						"selendra_parachain_collator_protocol_collator_distribution_time",
 						"Time spent within `collator_protocol_collator::distribute_collation`",
 					)
 					.buckets(vec![
@@ -278,9 +278,9 @@ struct State {
 	/// Our collator pair.
 	collator_pair: CollatorPair,
 
-	/// The indra this collator is collating on.
+	/// The para this collator is collating on.
 	/// Starts as `None` and is updated with every `CollateOn` message.
-	collating_on: Option<IndraId>,
+	collating_on: Option<ParaId>,
 
 	/// Track all active peers and their views
 	/// to determine what is relevant to them.
@@ -355,9 +355,9 @@ impl State {
 
 /// Distribute a collation.
 ///
-/// Figure out the core our indra is assigned to and the relevant validators.
+/// Figure out the core our para is assigned to and the relevant validators.
 /// Issue a connection request to these validators.
-/// If the indra is not scheduled or next up on any core, at the relay-parent,
+/// If the para is not scheduled or next up on any core, at the relay-parent,
 /// or the relay-parent isn't in the active-leaves set, we ignore the message
 /// as it must be invalid in that case - although this indicates a logic error
 /// elsewhere in the node.
@@ -366,7 +366,7 @@ async fn distribute_collation<Context>(
 	ctx: &mut Context,
 	runtime: &mut RuntimeInfo,
 	state: &mut State,
-	id: IndraId,
+	id: ParaId,
 	receipt: CandidateReceipt,
 	pov: PoV,
 	result_sender: Option<oneshot::Sender<CollationSecondedSignal>>,
@@ -394,14 +394,14 @@ async fn distribute_collation<Context>(
 		return Ok(())
 	}
 
-	// Determine which core the indra collated-on is assigned to.
+	// Determine which core the para collated-on is assigned to.
 	// If it is not scheduled then ignore the message.
 	let (our_core, num_cores) = match determine_core(ctx.sender(), id, relay_parent).await? {
 		Some(core) => core,
 		None => {
 			gum::warn!(
 				target: LOG_TARGET,
-				indra_id = %id,
+				para_id = %id,
 				?relay_parent,
 				"looks like no core is assigned to {} at {}", id, relay_parent,
 			);
@@ -426,7 +426,7 @@ async fn distribute_collation<Context>(
 
 	gum::debug!(
 		target: LOG_TARGET,
-		indra_id = %id,
+		para_id = %id,
 		relay_parent = %relay_parent,
 		candidate_hash = ?receipt.hash(),
 		pov_hash = ?pov.hash(),
@@ -457,18 +457,18 @@ async fn distribute_collation<Context>(
 	Ok(())
 }
 
-/// Get the Id of the Core that is assigned to the indra being collated on if any
+/// Get the Id of the Core that is assigned to the para being collated on if any
 /// and the total number of cores.
 async fn determine_core(
 	sender: &mut impl overseer::SubsystemSender<RuntimeApiMessage>,
-	indra_id: IndraId,
+	para_id: ParaId,
 	relay_parent: Hash,
 ) -> Result<Option<(CoreIndex, usize)>> {
 	let cores = get_availability_cores(sender, relay_parent).await?;
 
 	for (idx, core) in cores.iter().enumerate() {
 		if let CoreState::Scheduled(occupied) = core {
-			if occupied.indra_id == indra_id {
+			if occupied.para_id == para_id {
 				return Ok(Some(((idx as u32).into(), cores.len())))
 			}
 		}
@@ -484,7 +484,7 @@ struct GroupValidators {
 	validators: Vec<AuthorityDiscoveryId>,
 }
 
-/// Figure out current group of validators assigned to the indra being collated on.
+/// Figure out current group of validators assigned to the para being collated on.
 ///
 /// Returns [`ValidatorId`]'s of current group as determined based on the `relay_parent`.
 #[overseer::contextbounds(CollatorProtocol, prefix = self::overseer)]
@@ -525,10 +525,10 @@ async fn determine_our_validators<Context>(
 async fn declare<Context>(ctx: &mut Context, state: &mut State, peer: PeerId) {
 	let declare_signature_payload = protocol_v1::declare_signature_payload(&state.local_peer_id);
 
-	if let Some(indra_id) = state.collating_on {
+	if let Some(para_id) = state.collating_on {
 		let wire_message = protocol_v1::CollatorProtocolMessage::Declare(
 			state.collator_pair.public(),
-			indra_id,
+			para_id,
 			state.collator_pair.sign(&declare_signature_payload),
 		);
 
@@ -561,7 +561,7 @@ async fn connect_to_validators<Context>(
 /// Advertise collation to the given `peer`.
 ///
 /// This will only advertise a collation if there exists one for the given `relay_parent` and the given `peer` is
-/// set as validator for our indra at the given `relay_parent`.
+/// set as validator for our para at the given `relay_parent`.
 #[overseer::contextbounds(CollatorProtocol, prefix = self::overseer)]
 async fn advertise_collation<Context>(
 	ctx: &mut Context,
@@ -641,14 +641,14 @@ async fn process_msg<Context>(
 				.map(|s| s.child("distributing-collation"));
 			let _span2 = jaeger::Span::new(&pov, "distributing-collation");
 			match state.collating_on {
-				Some(id) if receipt.descriptor.indra_id != id => {
-					// If the IndraId of a collation requested to be distributed does not match
+				Some(id) if receipt.descriptor.para_id != id => {
+					// If the ParaId of a collation requested to be distributed does not match
 					// the one we expect, we ignore the message.
 					gum::warn!(
 						target: LOG_TARGET,
-						indra_id = %receipt.descriptor.indra_id,
+						para_id = %receipt.descriptor.para_id,
 						collating_on = %id,
-						"DistributeCollation for unexpected indra_id",
+						"DistributeCollation for unexpected para_id",
 					);
 				},
 				Some(id) => {
@@ -659,7 +659,7 @@ async fn process_msg<Context>(
 				None => {
 					gum::warn!(
 						target: LOG_TARGET,
-						indra_id = %receipt.descriptor.indra_id,
+						para_id = %receipt.descriptor.para_id,
 						"DistributeCollation message while not collating on any",
 					);
 				},
@@ -823,7 +823,7 @@ async fn handle_incoming_request<Context>(
 		.map(|s| s.child("request-collation"));
 
 	match state.collating_on {
-		Some(our_indra_id) if our_indra_id == req.payload.indra_id => {
+		Some(our_para_id) if our_para_id == req.payload.para_id => {
 			let (receipt, pov) =
 				if let Some(collation) = state.collations.get_mut(&req.payload.relay_parent) {
 					collation.status.advance_to_requested();
@@ -864,19 +864,19 @@ async fn handle_incoming_request<Context>(
 				send_collation(state, req, receipt, pov).await;
 			}
 		},
-		Some(our_indra_id) => {
+		Some(our_para_id) => {
 			gum::warn!(
 				target: LOG_TARGET,
-				for_indra_id = %req.payload.indra_id,
-				our_indra_id = %our_indra_id,
-				"received a `CollationFetchingRequest` for unexpected indra_id",
+				for_para_id = %req.payload.para_id,
+				our_para_id = %our_para_id,
+				"received a `CollationFetchingRequest` for unexpected para_id",
 			);
 		},
 		None => {
 			gum::warn!(
 				target: LOG_TARGET,
-				for_indra_id = %req.payload.indra_id,
-				"received a `RequestCollation` while not collating on any indra",
+				for_para_id = %req.payload.para_id,
+				"received a `RequestCollation` while not collating on any para",
 			);
 		},
 	}
