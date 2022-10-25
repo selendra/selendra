@@ -1,7 +1,7 @@
 
 [package]
 name = "selendra-node-network-protocol"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Selendra <info@selendra.org>"]
 description = "Primitives types for the Node-side"
 edition = "2021"

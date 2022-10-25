@@ -242,7 +242,8 @@ fn selendra_staging_testnet_config_genesis(
 /// Returns the properties for the [`SelendraChainSpec`].
 pub fn selendra_chain_spec_properties() -> serde_json::map::Map<String, serde_json::Value> {
 	serde_json::json!({
-		"tokenDecimals": 10,
+		"tokenDecimals": 12,
+		"tokenSymbol": "SEL",
 	})
 	.as_object()
 	.expect("Map given; qed")

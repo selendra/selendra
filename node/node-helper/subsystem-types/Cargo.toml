@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-subsystem-types"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Selendra <info@selendra.org>"]
 description = "Subsystem traits and message definitions"
 edition = "2021"
