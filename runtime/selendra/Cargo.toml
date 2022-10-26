@@ -262,7 +262,7 @@ try-runtime = [
 
 # When enabled, the runtime API will not be build.
 #
-# This is required by Cumulus to access certain types of the
+# This is required by Forests to access certain types of the
 # runtime without clashing with the runtime API exported functions
 # in WASM.
 disable-runtime-api = []

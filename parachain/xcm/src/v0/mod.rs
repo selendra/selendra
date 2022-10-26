@@ -59,21 +59,21 @@ pub mod prelude {
 #[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, Debug, TypeInfo)]
 pub enum OriginKind {
 	/// Origin should just be the native dispatch origin representation for the sender in the
-	/// local runtime framework. For Cumulus/Frame chains this is the `Parachain` or `Relay` origin
+	/// local runtime framework. For Forests/Frame chains this is the `Parachain` or `Relay` origin
 	/// if coming from a chain, though there may be others if the `MultiLocation` XCM origin has a
 	/// primary/native dispatch origin form.
 	Native,
 
 	/// Origin should just be the standard account-based origin with the sovereign account of
-	/// the sender. For Cumulus/Frame chains, this is the `Signed` origin.
+	/// the sender. For Forests/Frame chains, this is the `Signed` origin.
 	SovereignAccount,
 
-	/// Origin should be the super-user. For Cumulus/Frame chains, this is the `Root` origin.
+	/// Origin should be the super-user. For Forests/Frame chains, this is the `Root` origin.
 	/// This will not usually be an available option.
 	Superuser,
 
 	/// Origin should be interpreted as an XCM native origin and the `MultiLocation` should be
-	/// encoded directly in the dispatch origin unchanged. For Cumulus/Frame chains, this will be
+	/// encoded directly in the dispatch origin unchanged. For Forests/Frame chains, this will be
 	/// the `pallet_xcm::Origin::Xcm` type.
 	Xcm,
 }

@@ -911,7 +911,7 @@ where
 		let authority_discovery_role = if role.is_authority() {
 			sc_authority_discovery::Role::PublishAndDiscover(keystore_container.keystore())
 		} else {
-			// don't publish our addresses when we're not an authority (collator, cumulus, ..)
+			// don't publish our addresses when we're not an authority (collator, forests, ..)
 			sc_authority_discovery::Role::Discover
 		};
 		let dht_event_stream =

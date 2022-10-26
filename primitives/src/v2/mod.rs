@@ -1066,7 +1066,7 @@ impl From<ValidityError> for u8 {
 }
 
 /// Abridged version of `HostConfiguration` (from the `Configuration` parachains host runtime module)
-/// meant to be used by a parachain or PDK such as cumulus.
+/// meant to be used by a parachain or PDK such as forests.
 #[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(PartialEq))]
 pub struct AbridgedHostConfiguration {
@@ -1099,7 +1099,7 @@ pub struct AbridgedHostConfiguration {
 }
 
 /// Abridged version of `HrmpChannel` (from the `Hrmp` parachains host runtime module) meant to be
-/// used by a parachain or PDK such as cumulus.
+/// used by a parachain or PDK such as forests.
 #[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(PartialEq))]
 pub struct AbridgedHrmpChannel {
