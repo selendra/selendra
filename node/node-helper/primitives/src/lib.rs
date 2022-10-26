@@ -289,7 +289,7 @@ impl MaybeCompressedPoV {
 ///
 /// This differs from `CandidateCommitments` in two ways:
 ///
-/// - does not contain the erasure root; that's computed at the Selendra level, not at Cumulus
+/// - does not contain the erasure root; that's computed at the Selendra level, not at Forests
 /// - contains a proof of validity.
 #[derive(Clone, Encode, Decode)]
 #[cfg(not(target_os = "unknown"))]
