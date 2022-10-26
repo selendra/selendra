@@ -1,0 +1,27 @@
+[package]
+name = "forests-primitives-timestamp"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+description = "Provides timestamp related functionality for parachains."
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [ "derive" ] }
+futures = "0.3.21"
+
+# Substrate
+sp-inherents = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+sp-timestamp = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+
+# Forests
+forests-primitives-core = { path = "../core", default-features = false }
+
+[features]
+default = [ "std" ]
+std = [
+	"sp-inherents/std",
+	"sp-std/std",
+	"sp-timestamp/std",
+	"forests-primitives-core/std",
+]
