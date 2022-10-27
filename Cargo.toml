@@ -96,6 +96,7 @@ members = [
 	"forests/pallets/session-benchmarking",
 	"forests/pallets/xcm",
 	"forests/pallets/xcmp-queue",
+	"forests/pallets/parachain-info",
 	"forests/primitives/core",
 	"forests/primitives/parachain-inherent",
 	"forests/primitives/timestamp",

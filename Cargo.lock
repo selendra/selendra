@@ -2335,6 +2335,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "forests-parachain-info"
+version = "0.1.0"
+dependencies = [
+ "forests-primitives-core",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+]
+
+[[package]]
 name = "forests-primitives-core"
 version = "0.1.0"
 dependencies = [
