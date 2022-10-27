@@ -239,7 +239,7 @@ fn teleport_to_statemine_works() {
 			)]
 		);
 
-		// teleports are allowed from SelendraEvm to Selendra.
+		// teleports are allowed from Indranet to Selendra.
 		let r = XcmExecutor::<XcmConfig>::execute_xcm(
 			Parachain(PARA_ID).into(),
 			Xcm(vec![

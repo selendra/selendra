@@ -107,11 +107,11 @@ pub type XcmRouter = (
 
 parameter_types! {
 	pub const Selendra: MultiAssetFilter = Wild(AllOf { fun: WildFungible, id: Concrete(SelLocation::get()) });
-	pub const SelendraForEvm: (MultiAssetFilter, MultiLocation) = (Selendra::get(), Parachain(1000).into());
+	pub const SelendraForIndranet: (MultiAssetFilter, MultiLocation) = (Selendra::get(), Parachain(1000).into());
 }
 
 /// Selendra Relay recognizes/respects the Statemint chain as a teleporter.
-pub type TrustedTeleporters = (xcm_builder::Case<SelendraForEvm>,);
+pub type TrustedTeleporters = (xcm_builder::Case<SelendraForIndranet>,);
 
 match_types! {
 	pub type OnlyParachains: impl Contains<MultiLocation> = {
