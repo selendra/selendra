@@ -39,7 +39,7 @@ use selendra_runtime as selendra;
 use selendra_runtime_constants::currency::UNITS as SEL;
 
 #[cfg(feature = "selendra-native")]
-const SELENDRA_STAGING_TELEMETRY_URL: &str = "wss://telemetry.selendra.io/submit/";
+const SELENDRA_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 const DEFAULT_PROTOCOL_ID: &str = "sel";
 
 /// Node `ChainSpec` extensions.

@@ -1,5 +1,5 @@
-// Copyright 2017-2021 Parity Technologies (UK) Ltd.
-// This file is part of Selendra.
+// Copyright (C) 2021-2022 Selendra.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

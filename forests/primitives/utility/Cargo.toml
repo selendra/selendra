@@ -1,0 +1,38 @@
+
+[package]
+name = "forests-primitives-utility"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [ "derive" ] }
+
+# Substrate
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+
+# Selendra
+selendra-core-primitives = { path = "../../../primitives/core", default-features = false }
+selendra-primitives = { path = "../../../primitives", default-features = false }
+selendra-parachain = { path = "../../../parachain/core", default-features = false }
+xcm = { path = "../../../parachain/xcm", default-features = false }
+
+# Forests
+forests-primitives-core = { path = "../core", default-features = false }
+
+[features]
+default = [ "std" ]
+std = [
+	"codec/std",
+	"frame-support/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"sp-trie/std",
+	"selendra-core-primitives/std",
+	"selendra-parachain/std",
+	"selendra-primitives/std",
+	"forests-primitives-core/std",
+]

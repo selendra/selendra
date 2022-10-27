@@ -1,0 +1,39 @@
+[package]
+name = "forests-pallet-solo-to-para"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+description = "Adds functionality to migrate from a Solo to a Parachain"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.0.0", default-features = false, features = ["derive"] }
+
+# Substrate
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+pallet-sudo = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+
+# Selendra
+selendra-primitives = { path = "../../../primitives", default-features = false }
+
+# Forests
+forests-pallet-parachain-system = { default-features = false, path = "../parachain-system" }
+forests-primitives-core = { path = "../../primitives/core", default-features = false }
+
+[features]
+default = [ "std" ]
+std = [
+	"codec/std",
+	"scale-info/std",
+	"forests-pallet-parachain-system/std",
+	"forests-primitives-core/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-sudo/std",
+	"polkadot-primitives/std",
+	"sp-runtime/std",
+	"sp-std/std",
+]

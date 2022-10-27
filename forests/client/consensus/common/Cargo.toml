@@ -1,0 +1,31 @@
+[package]
+name = "forests-client-consensus-common"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+description = "Forests specific common consensus implementations"
+edition = "2021"
+
+[dependencies]
+async-trait = "0.1.56"
+codec = { package = "parity-scale-codec", version = "3.0.0", features = [ "derive" ] }
+dyn-clone = "1.0.6"
+futures = "0.3.21"
+tracing = "0.1.34"
+
+# Substrate
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+
+selendra-primitives = { path = "../../../../primitives" }
+forests-relay-chain-interface = { path = "../../relay-chain-interface" }
+
+[dev-dependencies]
+futures-timer = "3.0.2"
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+
+forests-test-client = { path = "../../../../tests/test-helpers/forests/client" }

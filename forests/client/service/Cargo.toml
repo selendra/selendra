@@ -1,0 +1,34 @@
+[package]
+name = "forests-client-service"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+parking_lot = "0.12.1"
+tracing = "0.1.34"
+
+# Substrate
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sc-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+
+# Selendra
+selendra-overseer = { path = "../../../node/node-helper/overseer" }
+selendra-primitives = { path = "../../../primitives" }
+
+# Forests
+forests-client-cli = { path = "../cli" }
+forests-client-collator = { path = "../collator" }
+forests-client-consensus-common = { path = "../consensus/common" }
+forests-client-pov-recovery = { path = "../pov-recovery" }
+forests-primitives-core = { path = "../../primitives/core" }
+forests-relay-chain-interface = { path = "../relay-chain-interface" }

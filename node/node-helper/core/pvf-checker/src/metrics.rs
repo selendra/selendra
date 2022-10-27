@@ -1,4 +1,3 @@
-// Copyright 2022 Parity Technologies (UK) Ltd.
 // Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
@@ -14,7 +13,6 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
-
 //! Metrics definitions for the PVF pre-checking subsystem.
 
 use selendra_node_subsystem_util::metrics::{self, prometheus};

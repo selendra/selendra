@@ -1,4 +1,3 @@
-// Copyright 2017-2022 Parity Technologies (UK) Ltd.
 // Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
