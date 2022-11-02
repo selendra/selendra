@@ -366,7 +366,7 @@ mod tests {
 	};
 	use forests_test_runtime::{Block, Header};
 	use futures::{channel::mpsc, executor::block_on, StreamExt};
-	use selendra_node_subsystem_test_helpers::ForwardSubsystem;
+	use node_subsystem_test_helpers::ForwardSubsystem;
 	use selendra_overseer::{dummy::dummy_overseer_builder, HeadSupportsParachains};
 	use sp_consensus::BlockOrigin;
 	use sp_core::{testing::TaskExecutor, Pair};
