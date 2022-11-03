@@ -78,7 +78,7 @@ use runtime_common::{
 	TechnicalCommitteeInstance, TechnicalMembershipInstance,
 };
 
-use primitives::v2::{
+use primitives::v1::{
 	AccountId, AccountIndex, Balance, BlockNumber, Hash, Moment, Nonce, Signature,
 };
 /// Constant values used within the runtime.
@@ -1034,7 +1034,7 @@ impl pallet_sudo::Config for Runtime {
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
-		NodeBlock = primitives::v2::Block,
+		NodeBlock = primitives::v1::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		// Basic stuff; balances is uncallable initially.
