@@ -74,6 +74,10 @@ pub fn selendra_config() -> Result<SelendraChainSpec, String> {
 	SelendraChainSpec::from_json_bytes(&include_bytes!("../../resources/selendra.json")[..])
 }
 
+pub fn testnet_config() -> Result<SelendraChainSpec, String> {
+	SelendraChainSpec::from_json_bytes(&include_bytes!("../../resources/testnet.json")[..])
+}
+
 /// The default parachains host configuration.
 #[cfg(any(feature = "selendra-native"))]
 fn default_parachains_host_configuration(
@@ -163,7 +167,7 @@ fn selendra_staging_testnet_config_genesis(
 		AuthorityDiscoveryId,
 	)> = vec![];
 
-	const ENDOWMENT: u128 = 1_000_000 * SEL;
+	const ENDOWMENT: u128 = 527_922_923 * SEL;
 	const STASH: u128 = 100 * SEL;
 
 	selendra::GenesisConfig {
@@ -242,7 +246,7 @@ fn selendra_staging_testnet_config_genesis(
 /// Returns the properties for the [`SelendraChainSpec`].
 pub fn selendra_chain_spec_properties() -> serde_json::map::Map<String, serde_json::Value> {
 	serde_json::json!({
-		"tokenDecimals": 12,
+		"tokenDecimals": 18,
 		"tokenSymbol": "SEL",
 	})
 	.as_object()

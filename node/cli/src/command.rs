@@ -82,6 +82,7 @@ impl SubstrateCli for Cli {
 		};
 		Ok(match id {
 			"selendra" => Box::new(service::chain_spec::selendra_config()?),
+			"testnet" => Box::new(service::chain_spec::testnet_config()?),
 			#[cfg(feature = "selendra-native")]
 			"selendra-dev" | "dev" => Box::new(service::chain_spec::selendra_development_config()?),
 			#[cfg(feature = "selendra-native")]
