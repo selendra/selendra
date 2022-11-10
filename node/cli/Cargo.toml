@@ -65,6 +65,6 @@ fast-runtime = ["service/fast-runtime"]
 pyroscope = ["pyro"]
 
 selendra-native = ["service/selendra-native"]
-malus = ["full-node"]
+malus = ["full-node", "service/malus"]
 runtime-metrics = ["service/runtime-metrics", "selendra-node-metrics/runtime-metrics"]
 staging-client = ["service/staging-client"]

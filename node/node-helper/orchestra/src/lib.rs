@@ -58,6 +58,7 @@
 // #![deny(unused_results)]
 // unused dependencies can not work for test and examples at the same time
 // yielding false positives
+#![allow(dead_code)]
 #![deny(missing_docs)]
 #![deny(unused_crate_dependencies)]
 
@@ -504,7 +505,7 @@ where
 	fn send_unbounded_message(&mut self, msg: OutgoingMessage);
 }
 
-#[allow(dead_code)]
+
 /// A future that wraps another future with a `Delay` allowing for time-limited futures.
 #[pin_project::pin_project]
 pub struct Timeout<F: Future> {

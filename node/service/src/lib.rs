@@ -680,6 +680,7 @@ pub fn new_full<RuntimeApi, ExecutorDispatch, OverseerGenerator>(
 	overseer_enable_anyways: bool,
 	overseer_gen: OverseerGenerator,
 	overseer_message_channel_capacity_override: Option<usize>,
+	_malus_finality_delay: Option<u32>,
 	hwbench: Option<sc_sysinfo::HwBench>,
 ) -> Result<NewFull<Arc<FullClient<RuntimeApi, ExecutorDispatch>>>, Error>
 where
@@ -1136,7 +1137,16 @@ where
 		// add a custom voting rule to temporarily stop voting for new blocks
 		// after the given pause block is finalized and restarting after the
 		// given delay.
-		let builder = sc_finality_grandpa::VotingRulesBuilder::default();
+
+		let mut builder = sc_finality_grandpa::VotingRulesBuilder::default();
+
+		#[cfg(not(feature = "malus"))]
+		let _malus_finality_delay = None;
+
+		if let Some(delay) = _malus_finality_delay {
+			info!(?delay, "Enabling malus finality delay",);
+			builder = builder.add(sc_finality_grandpa::BeforeBestBlockBy(delay));
+		};
 
 		let voting_rule = match grandpa_pause {
 			Some((block, delay)) => {
@@ -1246,6 +1256,7 @@ pub fn build_full(
 	overseer_enable_anyways: bool,
 	overseer_gen: impl OverseerGen,
 	overseer_message_channel_override: Option<usize>,
+	malus_finality_delay: Option<u32>,
 	hwbench: Option<sc_sysinfo::HwBench>,
 ) -> Result<NewFull<Client>, Error> {
 	#[cfg(feature = "selendra-native")]
@@ -1264,6 +1275,7 @@ pub fn build_full(
 				gum::warn!("Channel capacity should _never_ be tampered with on selendra!");
 				capacity
 			}),
+			malus_finality_delay,
 			hwbench,
 		)
 		.map(|full| full.with_client(Client::Selendra))
