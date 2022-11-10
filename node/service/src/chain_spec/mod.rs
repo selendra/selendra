@@ -167,7 +167,7 @@ fn selendra_staging_testnet_config_genesis(
 		AuthorityDiscoveryId,
 	)> = vec![];
 
-	const ENDOWMENT: u128 = 527_922_923 * SEL;
+	const ENDOWMENT: u128 = 531_542_750 * SEL;
 	const STASH: u128 = 100 * SEL;
 
 	selendra::GenesisConfig {
@@ -246,7 +246,7 @@ fn selendra_staging_testnet_config_genesis(
 /// Returns the properties for the [`SelendraChainSpec`].
 pub fn selendra_chain_spec_properties() -> serde_json::map::Map<String, serde_json::Value> {
 	serde_json::json!({
-		"tokenDecimals": 12,
+		"tokenDecimals": 18,
 		"tokenSymbol": "SEL",
 	})
 	.as_object()
