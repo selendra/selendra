@@ -25,6 +25,7 @@ use std::{borrow::Cow, collections::HashSet};
 use sc_network::{Event as NetworkEvent, IfDisconnected};
 
 use node_subsystem_test_helpers::TestSubsystemContextHandle;
+use primitives_test_helpers::dummy_collator_signature;
 use sc_network::Multiaddr;
 use selendra_node_network_protocol::{
 	request_response::outgoing::Requests, ObservedRole, Versioned,
@@ -32,7 +33,6 @@ use selendra_node_network_protocol::{
 use selendra_node_subsystem::{FromOrchestra, OverseerSignal};
 use selendra_node_subsystem_util::metered;
 use selendra_primitives::v2::AuthorityDiscoveryId;
-use selendra_primitives_test_helpers::dummy_collator_signature;
 use sp_keyring::Sr25519Keyring;
 
 const TIMEOUT: std::time::Duration =

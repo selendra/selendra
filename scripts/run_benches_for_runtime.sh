@@ -26,14 +26,14 @@ while read -r line; do
   # '!' has the side effect of bypassing errexit / set -e
   ! ./target/production/selendra benchmark pallet \
     --chain="${runtime}-dev" \
-    --steps=1 \
-    --repeat=1 \
+    --steps=50 \
+    --repeat=50 \
     --pallet="$pallet" \
     --extrinsic="*" \
     --execution=wasm \
     --wasm-execution=compiled \
     --heap-pages=4096 \
-    --output=".run/weights/${pallet/::/_}.rs"
+    --output="./runtime/${runtime}/src/weights/${pallet/::/_}.rs"
 done < "${runtime}_pallets"
 rm "${runtime}_pallets"
 

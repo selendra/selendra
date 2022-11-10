@@ -9162,6 +9162,7 @@ dependencies = [
  "selendra-node-subsystem-types",
  "selendra-node-subsystem-util",
  "selendra-primitives",
+ "sp-api",
  "sp-authority-discovery",
  "sp-consensus-babe",
  "sp-core",

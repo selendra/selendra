@@ -29,13 +29,13 @@ use selendra_node_network_protocol::{
 	},
 	view, ObservedRole,
 };
-use selendra_node_primitives::{Id as ParaId, Statement, UncheckedSignedFullStatement};
+use selendra_node_primitives::{Statement, UncheckedSignedFullStatement};
 use selendra_node_subsystem::{
 	jaeger,
 	messages::{network_bridge_event, AllMessages, RuntimeApiMessage, RuntimeApiRequest},
 	ActivatedLeaf, LeafStatus,
 };
-use selendra_primitives::v2::{Hash, SessionInfo, ValidationCode};
+use selendra_primitives::v2::{Hash, Id as ParaId, SessionInfo, ValidationCode};
 use sp_application_crypto::{sr25519::Pair, AppKey, Pair as TraitPair};
 use sp_authority_discovery::AuthorityPair;
 use sp_keyring::Sr25519Keyring;

@@ -196,8 +196,7 @@ where
 
 	// PoV Recovery is currently not supported when we connect to the
 	// relay chain via RPC, so we return early. The node will work, but not be able to recover PoVs from the
-	// relay chain if blocks are not announced on parachain. This will be enabled again once
-	// https://github.com/paritytech/forests/issues/545 is finished.
+	// relay chain if blocks are not announced on parachain.
 	if collator_options.relay_chain_rpc_url.is_some() {
 		return Ok(())
 	}

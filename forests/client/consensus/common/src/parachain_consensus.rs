@@ -241,7 +241,6 @@ async fn handle_new_block_imported<Block, P>(
 {
 	// HACK
 	//
-	// Remove after https://github.com/paritytech/substrate/pull/8052 or similar is merged
 	if notification.origin != BlockOrigin::Own {
 		announce_block(notification.hash, None);
 	}

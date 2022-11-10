@@ -255,7 +255,7 @@ async fn test_neighbors(overseer: &mut VirtualOverseer, expected_session: Sessio
 
 	assert_matches!(
 		overseer_recv(overseer).await,
-		AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::NewGossipTopology {
+		AllMessages::NetworkBridgeRx(NetworkBridgeRxMessage::NewGossipTopology {
 			session: got_session,
 			our_neighbors_x,
 			our_neighbors_y,
