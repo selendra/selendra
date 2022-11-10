@@ -8862,6 +8862,7 @@ name = "selendra-node-core-approval-voting"
 version = "0.2.1"
 dependencies = [
  "assert_matches",
+ "async-trait",
  "bitvec",
  "derive_more",
  "futures",
@@ -9158,9 +9159,9 @@ dependencies = [
  "primitives-test-helpers",
  "selendra-node-primitives",
  "selendra-node-subsystem",
+ "selendra-node-subsystem-types",
  "selendra-node-subsystem-util",
  "selendra-primitives",
- "sp-api",
  "sp-authority-discovery",
  "sp-consensus-babe",
  "sp-core",
@@ -9269,6 +9270,7 @@ dependencies = [
 name = "selendra-node-subsystem-types"
 version = "0.2.1"
 dependencies = [
+ "async-trait",
  "derive_more",
  "futures",
  "orchestra",
@@ -9279,6 +9281,9 @@ dependencies = [
  "selendra-primitives",
  "selendra-statement-table",
  "smallvec",
+ "sp-api",
+ "sp-authority-discovery",
+ "sp-consensus-babe",
  "substrate-prometheus-endpoint",
  "thiserror",
 ]
@@ -9328,6 +9333,7 @@ name = "selendra-overseer"
 version = "0.2.1"
 dependencies = [
  "assert_matches",
+ "async-trait",
  "femme",
  "futures",
  "futures-timer",

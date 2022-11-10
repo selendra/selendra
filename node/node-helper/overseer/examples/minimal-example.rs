@@ -23,6 +23,7 @@ use futures_timer::Delay;
 use std::time::Duration;
 
 use ::test_helpers::{dummy_candidate_descriptor, dummy_hash};
+use orchestra::async_trait;
 use selendra_node_primitives::{BlockData, PoV};
 use selendra_node_subsystem_types::messages::CandidateValidationMessage;
 use selendra_overseer::{
@@ -34,8 +35,10 @@ use selendra_overseer::{
 use selendra_primitives::v2::{CandidateReceipt, Hash};
 
 struct AlwaysSupportsParachains;
+
+#[async_trait]
 impl HeadSupportsParachains for AlwaysSupportsParachains {
-	fn head_supports_parachains(&self, _head: &Hash) -> bool {
+	async fn head_supports_parachains(&self, _head: &Hash) -> bool {
 		true
 	}
 }

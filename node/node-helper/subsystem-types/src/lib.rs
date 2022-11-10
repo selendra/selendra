@@ -30,6 +30,9 @@ use smallvec::SmallVec;
 pub mod errors;
 pub mod messages;
 
+mod runtime_client;
+pub use runtime_client::RuntimeApiSubsystemClient;
+
 pub use jaeger::*;
 pub use selendra_node_jaeger as jaeger;
 

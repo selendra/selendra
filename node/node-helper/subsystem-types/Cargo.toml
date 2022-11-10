@@ -10,9 +10,13 @@ derive_more = "0.99.17"
 futures = "0.3.21"
 smallvec = "1.8.0"
 thiserror = "1.0.31"
+async-trait = "0.1.56"
 
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 selendra-primitives = { path = "../../../primitives" }
 selendra-node-primitives = { path = "../primitives" }
