@@ -13,12 +13,12 @@ rand = "0.8.5"
 tracing = "0.1.34"
 
 # Substrate
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
-sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
-sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 # Selendra
 selendra-node-primitives = { path = "../../../node/node-helper/primitives" }
@@ -34,9 +34,9 @@ forests-relay-chain-interface = {path = "../relay-chain-interface"}
 tokio = { version = "1.19.2", features = ["macros"] }
 
 # Substrate
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
-substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 # Forests
 forests-test-service = { path = "../../../tests/test-helpers/forests/service" }
