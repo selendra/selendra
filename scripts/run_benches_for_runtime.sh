@@ -27,7 +27,7 @@ while read -r line; do
   ! ./target/production/selendra benchmark pallet \
     --chain="${runtime}-dev" \
     --steps=50 \
-    --repeat=50 \
+    --repeat=20 \
     --pallet="$pallet" \
     --extrinsic="*" \
     --execution=wasm \
