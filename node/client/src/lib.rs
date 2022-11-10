@@ -28,15 +28,15 @@ use selendra_primitives::{
 use sp_api::{CallApiAt, Encode, NumberFor, ProvideRuntimeApi};
 use sp_blockchain::{HeaderBackend, HeaderMetadata};
 use sp_consensus::BlockStatus;
-use sp_core::{Pair, H256};
-use sp_keyring::Sr25519Keyring;
 use sp_runtime::{
 	generic::{BlockId, SignedBlock},
 	traits::{BlakeTwo256, Block as BlockT},
-	Justifications, OpaqueExtrinsic,
+	Justifications,
 };
 use sp_storage::{ChildInfo, StorageData, StorageKey};
 use std::sync::Arc;
+
+pub mod benchmarking;
 
 pub type FullBackend = sc_service::TFullBackend<Block>;
 
@@ -187,7 +187,9 @@ pub trait ClientHandle {
 /// provides the concrete runtime as `runtime`.
 macro_rules! with_client {
 	{
-		$self:ident,
+		// The client instance that should be unwrapped.
+		$self:expr,
+		// The name that the unwrapped client will have.
 		$client:ident,
 		// NOTE: Using an expression here is fine since blocks are also expressions.
 		$code:expr
@@ -203,6 +205,8 @@ macro_rules! with_client {
 		}
 	}
 }
+// Make the macro available only within this crate.
+pub(crate) use with_client;
 
 /// A client instance of Selendra.
 ///

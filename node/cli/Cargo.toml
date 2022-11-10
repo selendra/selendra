@@ -24,6 +24,7 @@ pyro = { package = "pyroscope", version = "0.3.1", optional = true }
 # see https://github.com/paritytech/substrate/pull/6745
 sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.27" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sc-cli = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.27" }
 sc-service = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.27" }
 sc-tracing = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.27" }
