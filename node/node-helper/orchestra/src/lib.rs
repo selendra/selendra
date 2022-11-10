@@ -505,7 +505,6 @@ where
 	fn send_unbounded_message(&mut self, msg: OutgoingMessage);
 }
 
-
 /// A future that wraps another future with a `Delay` allowing for time-limited futures.
 #[pin_project::pin_project]
 pub struct Timeout<F: Future> {

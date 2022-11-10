@@ -157,9 +157,9 @@ async fn setup_gossip_topology(
 ) {
 	overseer_send(
 		virtual_overseer,
-		ApprovalDistributionMessage::NetworkBridgeUpdate(
-			NetworkBridgeTxEvent::NewGossipTopology(gossip_topology),
-		),
+		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::NewGossipTopology(
+			gossip_topology,
+		)),
 	)
 	.await;
 }
@@ -389,9 +389,10 @@ fn spam_attack_results_in_negative_reputation_change() {
 		// send a view update that removes block B from peer's view by bumping the finalized_number
 		overseer_send(
 			overseer,
-			ApprovalDistributionMessage::NetworkBridgeUpdate(
-				NetworkBridgeTxEvent::PeerViewChange(peer.clone(), View::with_finalized(2)),
-			),
+			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerViewChange(
+				peer.clone(),
+				View::with_finalized(2),
+			)),
 		)
 		.await;
 
@@ -447,9 +448,10 @@ fn peer_sending_us_the_same_we_just_sent_them_is_ok() {
 		// update peer view to include the hash
 		overseer_send(
 			overseer,
-			ApprovalDistributionMessage::NetworkBridgeUpdate(
-				NetworkBridgeTxEvent::PeerViewChange(peer.clone(), view![hash]),
-			),
+			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerViewChange(
+				peer.clone(),
+				view![hash],
+			)),
 		)
 		.await;
 
@@ -815,12 +817,10 @@ fn update_peer_view() {
 		// update peer's view
 		overseer_send(
 			overseer,
-			ApprovalDistributionMessage::NetworkBridgeUpdate(
-				NetworkBridgeTxEvent::PeerViewChange(
-					peer.clone(),
-					View::new(vec![hash_b, hash_c, hash_d], 2),
-				),
-			),
+			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerViewChange(
+				peer.clone(),
+				View::new(vec![hash_b, hash_c, hash_d], 2),
+			)),
 		)
 		.await;
 
@@ -870,12 +870,10 @@ fn update_peer_view() {
 		// update peer's view
 		overseer_send(
 			overseer,
-			ApprovalDistributionMessage::NetworkBridgeUpdate(
-				NetworkBridgeTxEvent::PeerViewChange(
-					peer.clone(),
-					View::with_finalized(finalized_number),
-				),
-			),
+			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerViewChange(
+				peer.clone(),
+				View::with_finalized(finalized_number),
+			)),
 		)
 		.await;
 		virtual_overseer
@@ -1084,9 +1082,9 @@ fn race_condition_in_local_vs_remote_view_update() {
 		// Send our view update to include a new head
 		overseer_send(
 			overseer,
-			ApprovalDistributionMessage::NetworkBridgeUpdate(
-				NetworkBridgeTxEvent::OurViewChange(our_view![hash_b]),
-			),
+			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::OurViewChange(
+				our_view![hash_b],
+			)),
 		)
 		.await;
 

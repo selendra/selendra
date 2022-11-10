@@ -17,10 +17,10 @@
 use crate::cli::{Cli, Subcommand};
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::future::TryFutureExt;
+use sc_cli::{RuntimeVersion, SubstrateCli};
 use selendra_client::benchmarking::{
 	benchmark_inherent_data, ExistentialDepositProvider, RemarkBuilder, TransferKeepAliveBuilder,
 };
-use sc_cli::{RuntimeVersion, SubstrateCli};
 use service::{self, HeaderBackend, IdentifyVariant};
 use sp_core::crypto::Ss58AddressFormat;
 use sp_keyring::Sr25519Keyring;
@@ -190,8 +190,7 @@ where
 	let chain_spec = &runner.config().chain_spec;
 
 	// Disallow BEEFY on production networks.
-	if cli.run.beefy && chain_spec.is_selendra()
-	{
+	if cli.run.beefy && chain_spec.is_selendra() {
 		return Err(Error::Other("BEEFY disallowed on production networks".to_string()))
 	}
 

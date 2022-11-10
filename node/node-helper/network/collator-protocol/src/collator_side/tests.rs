@@ -411,9 +411,7 @@ async fn connect_peer(
 async fn disconnect_peer(virtual_overseer: &mut VirtualOverseer, peer: PeerId) {
 	overseer_send(
 		virtual_overseer,
-		CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerDisconnected(
-			peer,
-		)),
+		CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerDisconnected(peer)),
 	)
 	.await;
 }

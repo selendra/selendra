@@ -45,8 +45,8 @@ use selendra_node_network_protocol::{
 };
 use selendra_node_subsystem::{
 	messages::{
-		GossipSupportMessage, NetworkBridgeTxEvent, NetworkBridgeRxMessage, NetworkBridgeTxMessage, RuntimeApiMessage,
-		RuntimeApiRequest,
+		GossipSupportMessage, NetworkBridgeRxMessage, NetworkBridgeTxEvent, NetworkBridgeTxMessage,
+		RuntimeApiMessage, RuntimeApiRequest,
 	},
 	overseer, ActiveLeavesUpdate, FromOrchestra, OverseerSignal, SpawnedSubsystem, SubsystemError,
 };

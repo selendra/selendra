@@ -37,7 +37,7 @@ use selendra_node_subsystem::{
 	messages::{
 		network_bridge_event::{NewGossipTopology, TopologyPeerInfo},
 		ApprovalDistributionMessage, BitfieldDistributionMessage, CollatorProtocolMessage,
-		GossipSupportMessage, NetworkBridgeTxEvent, NetworkBridgeRxMessage,
+		GossipSupportMessage, NetworkBridgeRxMessage, NetworkBridgeTxEvent,
 		StatementDistributionMessage,
 	},
 	overseer, ActivatedLeaf, ActiveLeavesUpdate, FromOrchestra, OverseerSignal, SpawnedSubsystem,
