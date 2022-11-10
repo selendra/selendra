@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-
 use fatality::Nested;
 use futures::channel::{mpsc, oneshot};
 

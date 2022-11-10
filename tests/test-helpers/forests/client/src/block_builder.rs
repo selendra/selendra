@@ -19,8 +19,8 @@ use forests_primitives_core::{ParachainBlockData, PersistedValidationData};
 use forests_primitives_parachain_inherent::{ParachainInherentData, INHERENT_IDENTIFIER};
 use forests_test_relay_sproof_builder::RelayStateSproofBuilder;
 use forests_test_runtime::{Block, GetLastTimestamp, Hash, Header};
-use selendra_primitives::v2::{BlockNumber as PBlockNumber, Hash as PHash};
 use sc_block_builder::{BlockBuilder, BlockBuilderProvider};
+use selendra_primitives::v2::{BlockNumber as PBlockNumber, Hash as PHash};
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::{
 	generic::BlockId,

@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use selendra_primitives::v2::{Hash as PHash, PersistedValidationData};
 use sc_consensus::BlockImport;
+use selendra_primitives::v2::{Hash as PHash, PersistedValidationData};
 use sp_runtime::traits::Block as BlockT;
 
 mod parachain_consensus;

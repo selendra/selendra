@@ -42,8 +42,6 @@ use forests_test_runtime::{Hash, Header, NodeBlock as Block, RuntimeApi};
 use parking_lot::Mutex;
 
 use frame_system_rpc_runtime_api::AccountNonceApi;
-use selendra_primitives::v2::{CollatorPair, Hash as PHash, PersistedValidationData};
-use selendra_service::ProvideRuntimeApi;
 use sc_client_api::execution_extensions::ExecutionStrategies;
 use sc_network::{config::TransportConfig, multiaddr, NetworkService};
 use sc_service::{
@@ -54,6 +52,8 @@ use sc_service::{
 	BasePath, ChainSpec, Configuration, Error as ServiceError, PartialComponents, Role,
 	RpcHandlers, TFullBackend, TFullClient, TaskManager,
 };
+use selendra_primitives::v2::{CollatorPair, Hash as PHash, PersistedValidationData};
+use selendra_service::ProvideRuntimeApi;
 use sp_arithmetic::traits::SaturatedConversion;
 use sp_blockchain::HeaderBackend;
 use sp_core::{Pair, H256};
@@ -484,10 +484,7 @@ impl TestNodeBuilder {
 	///
 	/// By default the node will not be connected to any node or will be able to discover any other
 	/// node.
-	pub fn connect_to_relay_chain_node(
-		mut self,
-		node: &test_service::SelendraTestNode,
-	) -> Self {
+	pub fn connect_to_relay_chain_node(mut self, node: &test_service::SelendraTestNode) -> Self {
 		self.relay_chain_nodes.push(node.addr.clone());
 		self
 	}
@@ -792,13 +789,8 @@ pub fn run_relay_chain_validator_node(
 	boot_nodes: Vec<MultiaddrWithPeerId>,
 	websocket_port: Option<u16>,
 ) -> test_service::SelendraTestNode {
-	let mut config = test_service::node_config(
-		storage_update_func,
-		tokio_handle,
-		key,
-		boot_nodes,
-		true,
-	);
+	let mut config =
+		test_service::node_config(storage_update_func, tokio_handle, key, boot_nodes, true);
 
 	if let Some(port) = websocket_port {
 		config.rpc_ws = Some(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), port));

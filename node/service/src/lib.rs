@@ -773,6 +773,7 @@ where
 		&client.block_hash(0).ok().flatten().expect("Genesis block exists; qed"),
 		&config.chain_spec,
 	);
+
 	if enable_beefy {
 		config
 			.network
