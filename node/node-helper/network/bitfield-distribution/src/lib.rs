@@ -281,7 +281,7 @@ async fn modify_reputation(
 ) {
 	gum::trace!(target: LOG_TARGET, ?relay_parent, ?rep, %peer, "reputation change");
 
-	sender.send_message(NetworkBridgeMessage::ReportPeer(peer, rep)).await
+	sender.send_message(NetworkBridgeTxMessage::ReportPeer(peer, rep)).await
 }
 /// Distribute a given valid and signature checked bitfield message.
 ///
@@ -427,7 +427,7 @@ async fn relay_message<Context>(
 		);
 	} else {
 		let _span = span.child("gossip");
-		ctx.send_message(NetworkBridgeMessage::SendValidationMessage(
+		ctx.send_message(NetworkBridgeTxMessage::SendValidationMessage(
 			interested_peers,
 			message.into_validation_protocol(),
 		))
@@ -561,23 +561,23 @@ async fn handle_network_msg<Context>(
 	ctx: &mut Context,
 	state: &mut ProtocolState,
 	metrics: &Metrics,
-	bridge_message: NetworkBridgeEvent<net_protocol::BitfieldDistributionMessage>,
+	bridge_message: NetworkBridgeTxEvent<net_protocol::BitfieldDistributionMessage>,
 	rng: &mut (impl CryptoRng + Rng),
 ) {
 	let _timer = metrics.time_handle_network_msg();
 
 	match bridge_message {
-		NetworkBridgeEvent::PeerConnected(peer, role, _, _) => {
+		NetworkBridgeTxEvent::PeerConnected(peer, role, _, _) => {
 			gum::trace!(target: LOG_TARGET, ?peer, ?role, "Peer connected");
 			// insert if none already present
 			state.peer_views.entry(peer).or_default();
 		},
-		NetworkBridgeEvent::PeerDisconnected(peer) => {
+		NetworkBridgeTxEvent::PeerDisconnected(peer) => {
 			gum::trace!(target: LOG_TARGET, ?peer, "Peer disconnected");
 			// get rid of superfluous data
 			state.peer_views.remove(&peer);
 		},
-		NetworkBridgeEvent::NewGossipTopology(gossip_topology) => {
+		NetworkBridgeTxEvent::NewGossipTopology(gossip_topology) => {
 			let session_index = gossip_topology.session;
 			let new_topology = SessionGridTopology::from(gossip_topology);
 			let newly_added = new_topology.peers_diff(&new_topology);
@@ -598,15 +598,15 @@ async fn handle_network_msg<Context>(
 				}
 			}
 		},
-		NetworkBridgeEvent::PeerViewChange(peerid, new_view) => {
+		NetworkBridgeTxEvent::PeerViewChange(peerid, new_view) => {
 			gum::trace!(target: LOG_TARGET, ?peerid, ?new_view, "Peer view change");
 			handle_peer_view_change(ctx, state, peerid, new_view, rng).await;
 		},
-		NetworkBridgeEvent::OurViewChange(new_view) => {
+		NetworkBridgeTxEvent::OurViewChange(new_view) => {
 			gum::trace!(target: LOG_TARGET, ?new_view, "Our view change");
 			handle_our_view_change(state, new_view);
 		},
-		NetworkBridgeEvent::PeerMessage(remote, Versioned::V1(message)) =>
+		NetworkBridgeTxEvent::PeerMessage(remote, Versioned::V1(message)) =>
 			process_incoming_peer_message(ctx, state, metrics, remote, message, rng).await,
 	}
 }
@@ -722,7 +722,7 @@ async fn send_tracked_gossip_message<Context>(
 		.or_default()
 		.insert(validator.clone());
 
-	ctx.send_message(NetworkBridgeMessage::SendValidationMessage(
+	ctx.send_message(NetworkBridgeTxMessage::SendValidationMessage(
 		vec![dest],
 		message.into_validation_protocol(),
 	))

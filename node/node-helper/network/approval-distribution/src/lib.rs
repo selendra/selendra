@@ -27,7 +27,7 @@ use selendra_node_primitives::approval::{
 use selendra_node_subsystem::{
 	messages::{
 		ApprovalCheckResult, ApprovalDistributionMessage, ApprovalVotingMessage,
-		AssignmentCheckResult, NetworkBridgeEvent, NetworkBridgeMessage,
+		AssignmentCheckResult, NetworkBridgeTxEvent, NetworkBridgeTxMessage,
 	},
 	overseer, ActiveLeavesUpdate, FromOrchestra, OverseerSignal, SpawnedSubsystem, SubsystemError,
 };
@@ -320,31 +320,31 @@ impl State {
 		&mut self,
 		ctx: &mut Context,
 		metrics: &Metrics,
-		event: NetworkBridgeEvent<net_protocol::ApprovalDistributionMessage>,
+		event: NetworkBridgeTxEvent<net_protocol::ApprovalDistributionMessage>,
 		rng: &mut (impl CryptoRng + Rng),
 	) {
 		match event {
-			NetworkBridgeEvent::PeerConnected(peer_id, role, _, _) => {
+			NetworkBridgeTxEvent::PeerConnected(peer_id, role, _, _) => {
 				// insert a blank view if none already present
 				gum::trace!(target: LOG_TARGET, ?peer_id, ?role, "Peer connected");
 				self.peer_views.entry(peer_id).or_default();
 			},
-			NetworkBridgeEvent::PeerDisconnected(peer_id) => {
+			NetworkBridgeTxEvent::PeerDisconnected(peer_id) => {
 				gum::trace!(target: LOG_TARGET, ?peer_id, "Peer disconnected");
 				self.peer_views.remove(&peer_id);
 				self.blocks.iter_mut().for_each(|(_hash, entry)| {
 					entry.known_by.remove(&peer_id);
 				})
 			},
-			NetworkBridgeEvent::NewGossipTopology(topology) => {
+			NetworkBridgeTxEvent::NewGossipTopology(topology) => {
 				let session = topology.session;
 				self.handle_new_session_topology(ctx, session, SessionGridTopology::from(topology))
 					.await;
 			},
-			NetworkBridgeEvent::PeerViewChange(peer_id, view) => {
+			NetworkBridgeTxEvent::PeerViewChange(peer_id, view) => {
 				self.handle_peer_view_change(ctx, metrics, peer_id, view, rng).await;
 			},
-			NetworkBridgeEvent::OurViewChange(view) => {
+			NetworkBridgeTxEvent::OurViewChange(view) => {
 				gum::trace!(target: LOG_TARGET, ?view, "Own view change");
 				for head in view.iter() {
 					if !self.blocks.contains_key(head) {
@@ -364,7 +364,7 @@ impl State {
 					live
 				});
 			},
-			NetworkBridgeEvent::PeerMessage(peer_id, Versioned::V1(msg)) => {
+			NetworkBridgeTxEvent::PeerMessage(peer_id, Versioned::V1(msg)) => {
 				self.process_incoming_peer_message(ctx, metrics, peer_id, msg, rng).await;
 			},
 		}
@@ -931,7 +931,7 @@ impl State {
 				"Sending an assignment to peers",
 			);
 
-			ctx.send_message(NetworkBridgeMessage::SendValidationMessage(
+			ctx.send_message(NetworkBridgeTxMessage::SendValidationMessage(
 				peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Assignments(assignments),
@@ -1193,7 +1193,7 @@ impl State {
 				"Sending an approval to peers",
 			);
 
-			ctx.send_message(NetworkBridgeMessage::SendValidationMessage(
+			ctx.send_message(NetworkBridgeTxMessage::SendValidationMessage(
 				peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Approvals(approvals),
@@ -1321,7 +1321,7 @@ impl State {
 			);
 
 			sender
-				.send_message(NetworkBridgeMessage::SendValidationMessage(
+				.send_message(NetworkBridgeTxMessage::SendValidationMessage(
 					vec![peer_id.clone()],
 					Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 						protocol_v1::ApprovalDistributionMessage::Assignments(assignments_to_send),
@@ -1339,7 +1339,7 @@ impl State {
 			);
 
 			sender
-				.send_message(NetworkBridgeMessage::SendValidationMessage(
+				.send_message(NetworkBridgeTxMessage::SendValidationMessage(
 					vec![peer_id],
 					Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 						protocol_v1::ApprovalDistributionMessage::Approvals(approvals_to_send),
@@ -1542,7 +1542,7 @@ async fn adjust_required_routing_and_propagate<Context, BlockFilter, RoutingModi
 	// Send messages in accumulated packets, assignments preceding approvals.
 
 	for (peer, assignments_packet) in peer_assignments {
-		ctx.send_message(NetworkBridgeMessage::SendValidationMessage(
+		ctx.send_message(NetworkBridgeTxMessage::SendValidationMessage(
 			vec![peer],
 			Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 				protocol_v1::ApprovalDistributionMessage::Assignments(assignments_packet),
@@ -1552,7 +1552,7 @@ async fn adjust_required_routing_and_propagate<Context, BlockFilter, RoutingModi
 	}
 
 	for (peer, approvals_packet) in peer_approvals {
-		ctx.send_message(NetworkBridgeMessage::SendValidationMessage(
+		ctx.send_message(NetworkBridgeTxMessage::SendValidationMessage(
 			vec![peer],
 			Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 				protocol_v1::ApprovalDistributionMessage::Approvals(approvals_packet),
@@ -1575,7 +1575,7 @@ async fn modify_reputation(
 		"Reputation change for peer",
 	);
 
-	sender.send_message(NetworkBridgeMessage::ReportPeer(peer_id, rep)).await;
+	sender.send_message(NetworkBridgeTxMessage::ReportPeer(peer_id, rep)).await;
 }
 
 #[overseer::contextbounds(ApprovalDistribution, prefix = self::overseer)]

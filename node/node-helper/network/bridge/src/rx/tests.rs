@@ -16,6 +16,8 @@
 
 use super::*;
 use futures::{channel::oneshot, executor, stream::BoxStream};
+use selendra_node_network_protocol::{self as net_protocol, OurView};
+use selendra_node_subsystem::{messages::NetworkBridgeTxEvent, ActivatedLeaf};
 
 use assert_matches::assert_matches;
 use async_trait::async_trait;
@@ -29,8 +31,6 @@ use std::{
 use sc_network::{Event as NetworkEvent, IfDisconnected};
 
 use node_subsystem_test_helpers::{SingleItemSink, SingleItemStream, TestSubsystemContextHandle};
-use primitives_test_helpers::dummy_collator_signature;
-use sc_network::Multiaddr;
 use selendra_node_network_protocol::{
 	request_response::outgoing::Requests, view, ObservedRole, Versioned,
 };
@@ -44,6 +44,8 @@ use selendra_node_subsystem::{
 };
 use selendra_node_subsystem_util::metered;
 use selendra_primitives::v2::AuthorityDiscoveryId;
+
+use sc_network::Multiaddr;
 use sp_keyring::Sr25519Keyring;
 
 use crate::{network::Network, validator_discovery::AuthorityDiscovery, Rep};
@@ -212,18 +214,18 @@ fn assert_network_actions_contains(actions: &[NetworkAction], action: &NetworkAc
 
 #[derive(Clone)]
 struct TestSyncOracle {
-	flag: Arc<AtomicBool>,
+	is_major_syncing: Arc<AtomicBool>,
 	done_syncing_sender: Arc<Mutex<Option<oneshot::Sender<()>>>>,
 }
 
 struct TestSyncOracleHandle {
 	done_syncing_receiver: oneshot::Receiver<()>,
-	flag: Arc<AtomicBool>,
+	is_major_syncing: Arc<AtomicBool>,
 }
 
 impl TestSyncOracleHandle {
 	fn set_done(&self) {
-		self.flag.store(false, Ordering::SeqCst);
+		self.is_major_syncing.store(false, Ordering::SeqCst);
 	}
 
 	async fn await_mode_switch(self) {
@@ -233,7 +235,7 @@ impl TestSyncOracleHandle {
 
 impl SyncOracle for TestSyncOracle {
 	fn is_major_syncing(&mut self) -> bool {
-		let is_major_syncing = self.flag.load(Ordering::SeqCst);
+		let is_major_syncing = self.is_major_syncing.load(Ordering::SeqCst);
 
 		if !is_major_syncing {
 			if let Some(sender) = self.done_syncing_sender.lock().take() {
@@ -250,13 +252,16 @@ impl SyncOracle for TestSyncOracle {
 }
 
 // val - result of `is_major_syncing`.
-fn make_sync_oracle(val: bool) -> (TestSyncOracle, TestSyncOracleHandle) {
+fn make_sync_oracle(is_major_syncing: bool) -> (TestSyncOracle, TestSyncOracleHandle) {
 	let (tx, rx) = oneshot::channel();
-	let flag = Arc::new(AtomicBool::new(val));
+	let is_major_syncing = Arc::new(AtomicBool::new(is_major_syncing));
 
 	(
-		TestSyncOracle { flag: flag.clone(), done_syncing_sender: Arc::new(Mutex::new(Some(tx))) },
-		TestSyncOracleHandle { flag, done_syncing_receiver: rx },
+		TestSyncOracle {
+			is_major_syncing: is_major_syncing.clone(),
+			done_syncing_sender: Arc::new(Mutex::new(Some(tx))),
+		},
+		TestSyncOracleHandle { is_major_syncing, done_syncing_receiver: rx },
 	)
 }
 
@@ -265,7 +270,7 @@ fn done_syncing_oracle() -> Box<dyn SyncOracle + Send> {
 	Box::new(oracle)
 }
 
-type VirtualOverseer = TestSubsystemContextHandle<NetworkBridgeTxMessage>;
+type VirtualOverseer = TestSubsystemContextHandle<NetworkBridgeRxMessage>;
 
 struct TestHarness {
 	network_handle: TestNetworkHandle,
@@ -281,14 +286,15 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
 	let (context, virtual_overseer) = node_subsystem_test_helpers::make_subsystem_context(pool);
 	let network_stream = network.event_stream();
 
-	let bridge = NetworkBridgeTx {
+	let bridge = NetworkBridgeRx {
 		network_service: network,
 		authority_discovery_service: discovery,
 		metrics: Metrics(None),
 		sync_oracle,
+		shared: Shared::default(),
 	};
 
-	let network_bridge = run_network(bridge, context, network_stream)
+	let network_bridge = run_network_in(bridge, context, network_stream)
 		.map_err(|_| panic!("subsystem execution failed"))
 		.map(|_| ());
 
@@ -308,7 +314,7 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
 
 async fn assert_sends_validation_event_to_all(
 	event: NetworkBridgeTxEvent<net_protocol::VersionedValidationProtocol>,
-	virtual_overseer: &mut TestSubsystemContextHandle<NetworkBridgeTxMessage>,
+	virtual_overseer: &mut TestSubsystemContextHandle<NetworkBridgeRxMessage>,
 ) {
 	// Ordering must be consistent across:
 	// `fn dispatch_validation_event_to_all_unbounded`
@@ -344,7 +350,7 @@ async fn assert_sends_validation_event_to_all(
 
 async fn assert_sends_collation_event_to_all(
 	event: NetworkBridgeTxEvent<net_protocol::VersionedCollationProtocol>,
-	virtual_overseer: &mut TestSubsystemContextHandle<NetworkBridgeTxMessage>,
+	virtual_overseer: &mut TestSubsystemContextHandle<NetworkBridgeRxMessage>,
 ) {
 	assert_matches!(
 		virtual_overseer.recv().await,
@@ -482,6 +488,7 @@ fn do_not_send_view_update_until_synced() {
 
 		let peer_a = PeerId::random();
 		let peer_b = PeerId::random();
+		assert_ne!(peer_a, peer_b);
 
 		network_handle
 			.connect_peer(peer_a.clone(), PeerSet::Validation, ObservedRole::Full)
@@ -1075,117 +1082,6 @@ fn view_finalized_number_can_not_go_down() {
 			&actions,
 			&NetworkAction::ReputationChange(peer_a.clone(), MALFORMED_VIEW_COST),
 		);
-		virtual_overseer
-	});
-}
-
-#[test]
-fn send_messages_to_peers() {
-	test_harness(done_syncing_oracle(), |test_harness| async move {
-		let TestHarness { mut network_handle, mut virtual_overseer } = test_harness;
-
-		let peer = PeerId::random();
-
-		network_handle
-			.connect_peer(peer.clone(), PeerSet::Validation, ObservedRole::Full)
-			.await;
-		network_handle
-			.connect_peer(peer.clone(), PeerSet::Collation, ObservedRole::Full)
-			.await;
-
-		// bridge will inform about all connected peers.
-		{
-			assert_sends_validation_event_to_all(
-				NetworkBridgeTxEvent::PeerConnected(peer.clone(), ObservedRole::Full, 1, None),
-				&mut virtual_overseer,
-			)
-			.await;
-
-			assert_sends_validation_event_to_all(
-				NetworkBridgeTxEvent::PeerViewChange(peer.clone(), View::default()),
-				&mut virtual_overseer,
-			)
-			.await;
-		}
-
-		{
-			assert_sends_collation_event_to_all(
-				NetworkBridgeTxEvent::PeerConnected(peer.clone(), ObservedRole::Full, 1, None),
-				&mut virtual_overseer,
-			)
-			.await;
-
-			assert_sends_collation_event_to_all(
-				NetworkBridgeTxEvent::PeerViewChange(peer.clone(), View::default()),
-				&mut virtual_overseer,
-			)
-			.await;
-		}
-
-		// consume peer view changes
-		{
-			let _peer_view_changes = network_handle.next_network_actions(2).await;
-		}
-
-		// send a validation protocol message.
-
-		{
-			let approval_distribution_message =
-				protocol_v1::ApprovalDistributionMessage::Approvals(Vec::new());
-
-			let message_v1 = protocol_v1::ValidationProtocol::ApprovalDistribution(
-				approval_distribution_message.clone(),
-			);
-
-			virtual_overseer
-				.send(FromOrchestra::Communication {
-					msg: NetworkBridgeTxMessage::SendValidationMessage(
-						vec![peer.clone()],
-						Versioned::V1(message_v1.clone()),
-					),
-				})
-				.await;
-
-			assert_eq!(
-				network_handle.next_network_action().await,
-				NetworkAction::WriteNotification(
-					peer.clone(),
-					PeerSet::Validation,
-					WireMessage::ProtocolMessage(message_v1).encode(),
-				)
-			);
-		}
-
-		// send a collation protocol message.
-
-		{
-			let collator_protocol_message = protocol_v1::CollatorProtocolMessage::Declare(
-				Sr25519Keyring::Alice.public().into(),
-				0_u32.into(),
-				dummy_collator_signature(),
-			);
-
-			let message_v1 =
-				protocol_v1::CollationProtocol::CollatorProtocol(collator_protocol_message.clone());
-
-			virtual_overseer
-				.send(FromOrchestra::Communication {
-					msg: NetworkBridgeTxMessage::SendCollationMessage(
-						vec![peer.clone()],
-						Versioned::V1(message_v1.clone()),
-					),
-				})
-				.await;
-
-			assert_eq!(
-				network_handle.next_network_action().await,
-				NetworkAction::WriteNotification(
-					peer.clone(),
-					PeerSet::Collation,
-					WireMessage::ProtocolMessage(message_v1).encode(),
-				)
-			);
-		}
 		virtual_overseer
 	});
 }

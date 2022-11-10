@@ -47,8 +47,8 @@ use selendra_node_primitives::{PoV, SignedFullStatement};
 use selendra_node_subsystem::{
 	jaeger,
 	messages::{
-		CandidateBackingMessage, CollatorProtocolMessage, IfDisconnected, NetworkBridgeEvent,
-		NetworkBridgeMessage, RuntimeApiMessage,
+		CandidateBackingMessage, CollatorProtocolMessage, IfDisconnected, NetworkBridgeTxEvent,
+		NetworkBridgeTxMessage, RuntimeApiMessage,
 	},
 	overseer, FromOrchestra, OverseerSignal, PerLeafSpan, SubsystemSender,
 };
@@ -631,7 +631,7 @@ fn collator_peer_id(
 
 async fn disconnect_peer(sender: &mut impl overseer::CollatorProtocolSenderTrait, peer_id: PeerId) {
 	sender
-		.send_message(NetworkBridgeMessage::DisconnectPeer(peer_id, PeerSet::Collation))
+		.send_message(NetworkBridgeTxMessage::DisconnectPeer(peer_id, PeerSet::Collation))
 		.await
 }
 
@@ -711,7 +711,7 @@ async fn notify_collation_seconded(
 	let wire_message =
 		protocol_v1::CollatorProtocolMessage::CollationSeconded(relay_parent, statement.into());
 	sender
-		.send_message(NetworkBridgeMessage::SendCollationMessage(
+		.send_message(NetworkBridgeTxMessage::SendCollationMessage(
 			vec![peer_id],
 			Versioned::V1(protocol_v1::CollationProtocol::CollatorProtocol(wire_message)),
 		))
@@ -799,7 +799,7 @@ async fn request_collation(
 	);
 
 	sender
-		.send_message(NetworkBridgeMessage::SendRequests(
+		.send_message(NetworkBridgeTxMessage::SendRequests(
 			vec![requests],
 			IfDisconnected::ImmediateError,
 		))
@@ -1055,9 +1055,9 @@ async fn handle_network_msg<Context>(
 	ctx: &mut Context,
 	state: &mut State,
 	keystore: &SyncCryptoStorePtr,
-	bridge_message: NetworkBridgeEvent<net_protocol::CollatorProtocolMessage>,
+	bridge_message: NetworkBridgeTxEvent<net_protocol::CollatorProtocolMessage>,
 ) -> Result<()> {
-	use NetworkBridgeEvent::*;
+	use NetworkBridgeTxEvent::*;
 
 	match bridge_message {
 		PeerConnected(peer_id, _role, _version, _) => {
@@ -1369,7 +1369,7 @@ async fn handle_collation_fetched_result<Context>(
 	}
 }
 
-// This issues `NetworkBridge` notifications to disconnect from all inactive peers at the
+// This issues `NetworkBridgeTx` notifications to disconnect from all inactive peers at the
 // earliest possible point. This does not yet clean up any metadata, as that will be done upon
 // receipt of the `PeerDisconnected` event.
 async fn disconnect_inactive_peers(

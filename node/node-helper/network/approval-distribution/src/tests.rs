@@ -157,9 +157,9 @@ async fn setup_gossip_topology(
 ) {
 	overseer_send(
 		virtual_overseer,
-		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::NewGossipTopology(
-			gossip_topology,
-		)),
+		ApprovalDistributionMessage::NetworkBridgeUpdate(
+			NetworkBridgeTxEvent::NewGossipTopology(gossip_topology),
+		),
 	)
 	.await;
 }
@@ -171,7 +171,7 @@ async fn setup_peer_with_view(
 ) {
 	overseer_send(
 		virtual_overseer,
-		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerConnected(
+		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerConnected(
 			peer_id.clone(),
 			ObservedRole::Full,
 			1,
@@ -181,7 +181,7 @@ async fn setup_peer_with_view(
 	.await;
 	overseer_send(
 		virtual_overseer,
-		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerViewChange(
+		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerViewChange(
 			peer_id.clone(),
 			view,
 		)),
@@ -196,7 +196,7 @@ async fn send_message_from_peer(
 ) {
 	overseer_send(
 		virtual_overseer,
-		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerMessage(
+		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerMessage(
 			peer_id.clone(),
 			Versioned::V1(msg),
 		)),
@@ -229,8 +229,8 @@ async fn expect_reputation_change(
 ) {
 	assert_matches!(
 		overseer_recv(virtual_overseer).await,
-		AllMessages::NetworkBridge(
-			NetworkBridgeMessage::ReportPeer(
+		AllMessages::NetworkBridgeTx(
+			NetworkBridgeTxMessage::ReportPeer(
 				rep_peer,
 				rep,
 			)
@@ -299,7 +299,7 @@ fn try_import_the_same_assignment() {
 
 		assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Assignments(assignments)
@@ -389,10 +389,9 @@ fn spam_attack_results_in_negative_reputation_change() {
 		// send a view update that removes block B from peer's view by bumping the finalized_number
 		overseer_send(
 			overseer,
-			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerViewChange(
-				peer.clone(),
-				View::with_finalized(2),
-			)),
+			ApprovalDistributionMessage::NetworkBridgeUpdate(
+				NetworkBridgeTxEvent::PeerViewChange(peer.clone(), View::with_finalized(2)),
+			),
 		)
 		.await;
 
@@ -448,17 +447,16 @@ fn peer_sending_us_the_same_we_just_sent_them_is_ok() {
 		// update peer view to include the hash
 		overseer_send(
 			overseer,
-			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerViewChange(
-				peer.clone(),
-				view![hash],
-			)),
+			ApprovalDistributionMessage::NetworkBridgeUpdate(
+				NetworkBridgeTxEvent::PeerViewChange(peer.clone(), view![hash]),
+			),
 		)
 		.await;
 
 		// we should send them the assignment
 		assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Assignments(assignments)
@@ -525,7 +523,7 @@ fn import_approval_happy_path() {
 
 		assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Assignments(assignments)
@@ -561,7 +559,7 @@ fn import_approval_happy_path() {
 
 		assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Approvals(approvals)
@@ -784,7 +782,7 @@ fn update_peer_view() {
 		// we should send relevant assignments to the peer
 		assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Assignments(assignments)
@@ -817,10 +815,12 @@ fn update_peer_view() {
 		// update peer's view
 		overseer_send(
 			overseer,
-			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerViewChange(
-				peer.clone(),
-				View::new(vec![hash_b, hash_c, hash_d], 2),
-			)),
+			ApprovalDistributionMessage::NetworkBridgeUpdate(
+				NetworkBridgeTxEvent::PeerViewChange(
+					peer.clone(),
+					View::new(vec![hash_b, hash_c, hash_d], 2),
+				),
+			),
 		)
 		.await;
 
@@ -835,7 +835,7 @@ fn update_peer_view() {
 		// we should send relevant assignments to the peer
 		assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Assignments(assignments)
@@ -870,10 +870,12 @@ fn update_peer_view() {
 		// update peer's view
 		overseer_send(
 			overseer,
-			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerViewChange(
-				peer.clone(),
-				View::with_finalized(finalized_number),
-			)),
+			ApprovalDistributionMessage::NetworkBridgeUpdate(
+				NetworkBridgeTxEvent::PeerViewChange(
+					peer.clone(),
+					View::with_finalized(finalized_number),
+				),
+			),
 		)
 		.await;
 		virtual_overseer
@@ -1022,7 +1024,7 @@ fn sends_assignments_even_when_state_is_approved() {
 
 		assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Assignments(sent_assignments)
@@ -1035,7 +1037,7 @@ fn sends_assignments_even_when_state_is_approved() {
 
 		assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Approvals(sent_approvals)
@@ -1082,9 +1084,9 @@ fn race_condition_in_local_vs_remote_view_update() {
 		// Send our view update to include a new head
 		overseer_send(
 			overseer,
-			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::OurViewChange(
-				our_view![hash_b],
-			)),
+			ApprovalDistributionMessage::NetworkBridgeUpdate(
+				NetworkBridgeTxEvent::OurViewChange(our_view![hash_b]),
+			),
 		)
 		.await;
 
@@ -1195,7 +1197,7 @@ fn propagates_locally_generated_assignment_to_both_dimensions() {
 
 		let assignment_sent_peers = assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				sent_peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Assignments(sent_assignments)
@@ -1216,7 +1218,7 @@ fn propagates_locally_generated_assignment_to_both_dimensions() {
 
 		assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				sent_peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Approvals(sent_approvals)
@@ -1299,7 +1301,7 @@ fn propagates_assignments_along_unshared_dimension() {
 
 			assert_matches!(
 				overseer_recv(overseer).await,
-				AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+				AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 					sent_peers,
 					Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 						protocol_v1::ApprovalDistributionMessage::Assignments(sent_assignments)
@@ -1348,7 +1350,7 @@ fn propagates_assignments_along_unshared_dimension() {
 
 			assert_matches!(
 				overseer_recv(overseer).await,
-				AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+				AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 					sent_peers,
 					Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 						protocol_v1::ApprovalDistributionMessage::Assignments(sent_assignments)
@@ -1443,7 +1445,7 @@ fn propagates_to_required_after_connect() {
 
 		let assignment_sent_peers = assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				sent_peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Assignments(sent_assignments)
@@ -1464,7 +1466,7 @@ fn propagates_to_required_after_connect() {
 
 		assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				sent_peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Approvals(sent_approvals)
@@ -1481,7 +1483,7 @@ fn propagates_to_required_after_connect() {
 
 			assert_matches!(
 				overseer_recv(overseer).await,
-				AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+				AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 					sent_peers,
 					Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 						protocol_v1::ApprovalDistributionMessage::Assignments(sent_assignments)
@@ -1495,7 +1497,7 @@ fn propagates_to_required_after_connect() {
 
 			assert_matches!(
 				overseer_recv(overseer).await,
-				AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+				AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 					sent_peers,
 					Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 						protocol_v1::ApprovalDistributionMessage::Approvals(sent_approvals)
@@ -1569,7 +1571,7 @@ fn sends_to_more_peers_after_getting_topology() {
 		let mut expected_indices = vec![0, 10, 20, 30, 50, 51, 52, 53];
 		let assignment_sent_peers = assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				sent_peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Assignments(sent_assignments)
@@ -1591,7 +1593,7 @@ fn sends_to_more_peers_after_getting_topology() {
 
 		assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				sent_peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Approvals(sent_approvals)
@@ -1616,7 +1618,7 @@ fn sends_to_more_peers_after_getting_topology() {
 		for _ in 0..expected_indices_assignments.len() {
 			assert_matches!(
 				overseer_recv(overseer).await,
-				AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+				AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 					sent_peers,
 					Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 						protocol_v1::ApprovalDistributionMessage::Assignments(sent_assignments)
@@ -1637,7 +1639,7 @@ fn sends_to_more_peers_after_getting_topology() {
 		for _ in 0..expected_indices_approvals.len() {
 			assert_matches!(
 				overseer_recv(overseer).await,
-				AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+				AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 					sent_peers,
 					Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 						protocol_v1::ApprovalDistributionMessage::Approvals(sent_approvals)
@@ -1727,7 +1729,7 @@ fn originator_aggression_l1() {
 
 		let prev_sent_indices = assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				sent_peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Assignments(_)
@@ -1741,7 +1743,7 @@ fn originator_aggression_l1() {
 
 		assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				_,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Approvals(_)
@@ -1777,7 +1779,7 @@ fn originator_aggression_l1() {
 		for _ in 0..unsent_indices.len() {
 			assert_matches!(
 				overseer_recv(overseer).await,
-				AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+				AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 					sent_peers,
 					Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 						protocol_v1::ApprovalDistributionMessage::Assignments(sent_assignments)
@@ -1797,7 +1799,7 @@ fn originator_aggression_l1() {
 		for _ in 0..unsent_indices.len() {
 			assert_matches!(
 				overseer_recv(overseer).await,
-				AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+				AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 					sent_peers,
 					Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 						protocol_v1::ApprovalDistributionMessage::Approvals(sent_approvals)
@@ -1886,7 +1888,7 @@ fn non_originator_aggression_l1() {
 
 		assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				_,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Assignments(_)
@@ -1991,7 +1993,7 @@ fn non_originator_aggression_l2() {
 
 		let prev_sent_indices = assert_matches!(
 			overseer_recv(overseer).await,
-			AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+			AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 				sent_peers,
 				Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 					protocol_v1::ApprovalDistributionMessage::Assignments(_)
@@ -2061,7 +2063,7 @@ fn non_originator_aggression_l2() {
 		for _ in 0..unsent_indices.len() {
 			assert_matches!(
 				overseer_recv(overseer).await,
-				AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+				AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 					sent_peers,
 					Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 						protocol_v1::ApprovalDistributionMessage::Assignments(sent_assignments)
@@ -2152,7 +2154,7 @@ fn resends_messages_periodically() {
 
 			assert_matches!(
 				overseer_recv(overseer).await,
-				AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+				AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 					sent_peers,
 					Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 						protocol_v1::ApprovalDistributionMessage::Assignments(sent_assignments)
@@ -2201,7 +2203,7 @@ fn resends_messages_periodically() {
 			for _ in 0..expected_y.len() {
 				assert_matches!(
 					overseer_recv(overseer).await,
-					AllMessages::NetworkBridge(NetworkBridgeMessage::SendValidationMessage(
+					AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
 						sent_peers,
 						Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
 							protocol_v1::ApprovalDistributionMessage::Assignments(sent_assignments)

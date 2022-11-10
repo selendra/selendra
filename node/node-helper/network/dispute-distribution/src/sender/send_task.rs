@@ -26,7 +26,7 @@ use selendra_node_network_protocol::{
 	},
 	IfDisconnected,
 };
-use selendra_node_subsystem::{messages::NetworkBridgeMessage, overseer};
+use selendra_node_subsystem::{messages::NetworkBridgeTxMessage, overseer};
 use selendra_node_subsystem_util::{metrics, runtime::RuntimeInfo};
 use selendra_primitives::v2::{
 	AuthorityDiscoveryId, CandidateHash, Hash, SessionIndex, ValidatorIndex,
@@ -270,7 +270,7 @@ async fn send_requests<Context>(
 		statuses.insert(receiver, DeliveryStatus::Pending(remote_handle));
 	}
 
-	let msg = NetworkBridgeMessage::SendRequests(reqs, IfDisconnected::ImmediateError);
+	let msg = NetworkBridgeTxMessage::SendRequests(reqs, IfDisconnected::ImmediateError);
 	ctx.send_message(msg).await;
 	Ok(statuses)
 }

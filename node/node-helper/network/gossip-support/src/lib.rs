@@ -22,7 +22,7 @@
 //! which limits the amount of messages sent and received
 //! to be an order of sqrt of the validators. Our neighbors
 //! in this graph will be forwarded to the network bridge with
-//! the `NetworkBridgeMessage::NewGossipTopology` message.
+//! the `NetworkBridgeTxMessage::NewGossipTopology` message.
 
 use std::{
 	collections::{HashMap, HashSet},
@@ -45,7 +45,7 @@ use selendra_node_network_protocol::{
 };
 use selendra_node_subsystem::{
 	messages::{
-		GossipSupportMessage, NetworkBridgeEvent, NetworkBridgeMessage, RuntimeApiMessage,
+		GossipSupportMessage, NetworkBridgeTxEvent, NetworkBridgeRxMessage, NetworkBridgeTxMessage, RuntimeApiMessage,
 		RuntimeApiRequest,
 	},
 	overseer, ActiveLeavesUpdate, FromOrchestra, OverseerSignal, SpawnedSubsystem, SubsystemError,
@@ -344,7 +344,7 @@ where
 		gum::debug!(target: LOG_TARGET, %num, "Issuing a connection request");
 
 		sender
-			.send_message(NetworkBridgeMessage::ConnectToResolvedValidators {
+			.send_message(NetworkBridgeTxMessage::ConnectToResolvedValidators {
 				validator_addrs,
 				peer_set: PeerSet::Validation,
 			})
@@ -380,9 +380,9 @@ where
 		};
 	}
 
-	fn handle_connect_disconnect(&mut self, ev: NetworkBridgeEvent<GossipSupportNetworkMessage>) {
+	fn handle_connect_disconnect(&mut self, ev: NetworkBridgeTxEvent<GossipSupportNetworkMessage>) {
 		match ev {
-			NetworkBridgeEvent::PeerConnected(peer_id, _, _, o_authority) => {
+			NetworkBridgeTxEvent::PeerConnected(peer_id, _, _, o_authority) => {
 				if let Some(authority_ids) = o_authority {
 					authority_ids.iter().for_each(|a| {
 						self.connected_authorities.insert(a.clone(), peer_id);
@@ -390,7 +390,7 @@ where
 					self.connected_authorities_by_peer_id.insert(peer_id, authority_ids);
 				}
 			},
-			NetworkBridgeEvent::PeerDisconnected(peer_id) => {
+			NetworkBridgeTxEvent::PeerDisconnected(peer_id) => {
 				if let Some(authority_ids) = self.connected_authorities_by_peer_id.remove(&peer_id)
 				{
 					authority_ids.into_iter().for_each(|a| {
@@ -398,10 +398,10 @@ where
 					});
 				}
 			},
-			NetworkBridgeEvent::OurViewChange(_) => {},
-			NetworkBridgeEvent::PeerViewChange(_, _) => {},
-			NetworkBridgeEvent::NewGossipTopology { .. } => {},
-			NetworkBridgeEvent::PeerMessage(_, Versioned::V1(v)) => {
+			NetworkBridgeTxEvent::OurViewChange(_) => {},
+			NetworkBridgeTxEvent::PeerViewChange(_, _) => {},
+			NetworkBridgeTxEvent::NewGossipTopology { .. } => {},
+			NetworkBridgeTxEvent::PeerMessage(_, Versioned::V1(v)) => {
 				match v {};
 			},
 		}
@@ -542,7 +542,7 @@ async fn update_gossip_topology(
 		.collect();
 
 	sender
-		.send_message(NetworkBridgeMessage::NewGossipTopology {
+		.send_message(NetworkBridgeRxMessage::NewGossipTopology {
 			session: session_index,
 			our_neighbors_x: row_neighbors,
 			our_neighbors_y: column_neighbors,

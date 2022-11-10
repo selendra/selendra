@@ -210,7 +210,7 @@ fn receive_invalid_signature() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeEvent::PeerMessage(peer_b.clone(), invalid_msg.into_network_message()),
+			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), invalid_msg.into_network_message()),
 			&mut rng,
 		));
 
@@ -221,14 +221,14 @@ fn receive_invalid_signature() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeEvent::PeerMessage(peer_b.clone(), invalid_msg_2.into_network_message()),
+			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), invalid_msg_2.into_network_message()),
 			&mut rng,
 		));
 		// reputation change due to invalid signature
 		assert_matches!(
 			handle.recv().await,
-			AllMessages::NetworkBridge(
-				NetworkBridgeMessage::ReportPeer(peer, rep)
+			AllMessages::NetworkBridgeTx(
+				NetworkBridgeTxMessage::ReportPeer(peer, rep)
 			) => {
 				assert_eq!(peer, peer_b);
 				assert_eq!(rep, COST_SIGNATURE_INVALID)
@@ -281,15 +281,15 @@ fn receive_invalid_validator_index() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeEvent::PeerMessage(peer_b.clone(), msg.into_network_message()),
+			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), msg.into_network_message()),
 			&mut rng,
 		));
 
 		// reputation change due to invalid validator index
 		assert_matches!(
 			handle.recv().await,
-			AllMessages::NetworkBridge(
-				NetworkBridgeMessage::ReportPeer(peer, rep)
+			AllMessages::NetworkBridgeTx(
+				NetworkBridgeTxMessage::ReportPeer(peer, rep)
 			) => {
 				assert_eq!(peer, peer_b);
 				assert_eq!(rep, COST_VALIDATOR_INDEX_INVALID)
@@ -344,7 +344,7 @@ fn receive_duplicate_messages() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
+			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
 			&mut rng,
 		));
 
@@ -364,8 +364,8 @@ fn receive_duplicate_messages() {
 
 		assert_matches!(
 			handle.recv().await,
-			AllMessages::NetworkBridge(
-				NetworkBridgeMessage::ReportPeer(peer, rep)
+			AllMessages::NetworkBridgeTx(
+				NetworkBridgeTxMessage::ReportPeer(peer, rep)
 			) => {
 				assert_eq!(peer, peer_b);
 				assert_eq!(rep, BENEFIT_VALID_MESSAGE_FIRST)
@@ -377,14 +377,14 @@ fn receive_duplicate_messages() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeEvent::PeerMessage(peer_a.clone(), msg.clone().into_network_message(),),
+			NetworkBridgeTxEvent::PeerMessage(peer_a.clone(), msg.clone().into_network_message(),),
 			&mut rng,
 		));
 
 		assert_matches!(
 			handle.recv().await,
-			AllMessages::NetworkBridge(
-				NetworkBridgeMessage::ReportPeer(peer, rep)
+			AllMessages::NetworkBridgeTx(
+				NetworkBridgeTxMessage::ReportPeer(peer, rep)
 			) => {
 				assert_eq!(peer, peer_a);
 				assert_eq!(rep, BENEFIT_VALID_MESSAGE)
@@ -396,14 +396,14 @@ fn receive_duplicate_messages() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
+			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
 			&mut rng,
 		));
 
 		assert_matches!(
 			handle.recv().await,
-			AllMessages::NetworkBridge(
-				NetworkBridgeMessage::ReportPeer(peer, rep)
+			AllMessages::NetworkBridgeTx(
+				NetworkBridgeTxMessage::ReportPeer(peer, rep)
 			) => {
 				assert_eq!(peer, peer_b);
 				assert_eq!(rep, COST_PEER_DUPLICATE_MESSAGE)
@@ -484,8 +484,8 @@ fn do_not_relay_message_twice() {
 
 		assert_matches!(
 			handle.recv().await,
-			AllMessages::NetworkBridge(
-				NetworkBridgeMessage::SendValidationMessage(peers, send_msg),
+			AllMessages::NetworkBridgeTx(
+				NetworkBridgeTxMessage::SendValidationMessage(peers, send_msg),
 			) => {
 				assert_eq!(2, peers.len());
 				assert!(peers.contains(&peer_a));
@@ -568,7 +568,7 @@ fn changing_view() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeEvent::PeerConnected(peer_b.clone(), ObservedRole::Full, 1, None),
+			NetworkBridgeTxEvent::PeerConnected(peer_b.clone(), ObservedRole::Full, 1, None),
 			&mut rng,
 		));
 
@@ -577,7 +577,7 @@ fn changing_view() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeEvent::PeerViewChange(peer_b.clone(), view![hash_a, hash_b]),
+			NetworkBridgeTxEvent::PeerViewChange(peer_b.clone(), view![hash_a, hash_b]),
 			&mut rng,
 		));
 
@@ -588,7 +588,7 @@ fn changing_view() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
+			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
 			&mut rng,
 		));
 
@@ -607,8 +607,8 @@ fn changing_view() {
 		// reputation change for peer B
 		assert_matches!(
 			handle.recv().await,
-			AllMessages::NetworkBridge(
-				NetworkBridgeMessage::ReportPeer(peer, rep)
+			AllMessages::NetworkBridgeTx(
+				NetworkBridgeTxMessage::ReportPeer(peer, rep)
 			) => {
 				assert_eq!(peer, peer_b);
 				assert_eq!(rep, BENEFIT_VALID_MESSAGE_FIRST)
@@ -619,7 +619,7 @@ fn changing_view() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeEvent::PeerViewChange(peer_b.clone(), view![]),
+			NetworkBridgeTxEvent::PeerViewChange(peer_b.clone(), view![]),
 			&mut rng,
 		));
 
@@ -632,15 +632,15 @@ fn changing_view() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
+			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
 			&mut rng,
 		));
 
 		// reputation change for peer B
 		assert_matches!(
 			handle.recv().await,
-			AllMessages::NetworkBridge(
-				NetworkBridgeMessage::ReportPeer(peer, rep)
+			AllMessages::NetworkBridgeTx(
+				NetworkBridgeTxMessage::ReportPeer(peer, rep)
 			) => {
 				assert_eq!(peer, peer_b);
 				assert_eq!(rep, COST_PEER_DUPLICATE_MESSAGE)
@@ -651,7 +651,7 @@ fn changing_view() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeEvent::PeerDisconnected(peer_b.clone()),
+			NetworkBridgeTxEvent::PeerDisconnected(peer_b.clone()),
 			&mut rng,
 		));
 
@@ -664,15 +664,15 @@ fn changing_view() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeEvent::PeerMessage(peer_a.clone(), msg.clone().into_network_message(),),
+			NetworkBridgeTxEvent::PeerMessage(peer_a.clone(), msg.clone().into_network_message(),),
 			&mut rng,
 		));
 
 		// reputation change for peer B
 		assert_matches!(
 			handle.recv().await,
-			AllMessages::NetworkBridge(
-				NetworkBridgeMessage::ReportPeer(peer, rep)
+			AllMessages::NetworkBridgeTx(
+				NetworkBridgeTxMessage::ReportPeer(peer, rep)
 			) => {
 				assert_eq!(peer, peer_a);
 				assert_eq!(rep, COST_NOT_IN_VIEW)
@@ -728,7 +728,7 @@ fn do_not_send_message_back_to_origin() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
+			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
 			&mut rng,
 		));
 
@@ -745,8 +745,8 @@ fn do_not_send_message_back_to_origin() {
 
 		assert_matches!(
 			handle.recv().await,
-			AllMessages::NetworkBridge(
-				NetworkBridgeMessage::SendValidationMessage(peers, send_msg),
+			AllMessages::NetworkBridgeTx(
+				NetworkBridgeTxMessage::SendValidationMessage(peers, send_msg),
 			) => {
 				assert_eq!(1, peers.len());
 				assert!(peers.contains(&peer_a));
@@ -756,8 +756,8 @@ fn do_not_send_message_back_to_origin() {
 
 		assert_matches!(
 			handle.recv().await,
-			AllMessages::NetworkBridge(
-				NetworkBridgeMessage::ReportPeer(peer, rep)
+			AllMessages::NetworkBridgeTx(
+				NetworkBridgeTxMessage::ReportPeer(peer, rep)
 			) => {
 				assert_eq!(peer, peer_b);
 				assert_eq!(rep, BENEFIT_VALID_MESSAGE_FIRST)
@@ -834,7 +834,10 @@ fn topology_test() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeEvent::PeerMessage(peers_x[0].clone(), msg.clone().into_network_message(),),
+			NetworkBridgeTxEvent::PeerMessage(
+				peers_x[0].clone(),
+				msg.clone().into_network_message(),
+			),
 			&mut rng,
 		));
 
@@ -851,8 +854,8 @@ fn topology_test() {
 
 		assert_matches!(
 			handle.recv().await,
-			AllMessages::NetworkBridge(
-				NetworkBridgeMessage::SendValidationMessage(peers, send_msg),
+			AllMessages::NetworkBridgeTx(
+				NetworkBridgeTxMessage::SendValidationMessage(peers, send_msg),
 			) => {
 				let topology = state.topologies.get_current_topology();
 				// It should send message to all peers in y direction and to 4 random peers in x direction
@@ -867,8 +870,8 @@ fn topology_test() {
 
 		assert_matches!(
 			handle.recv().await,
-			AllMessages::NetworkBridge(
-				NetworkBridgeMessage::ReportPeer(peer, rep)
+			AllMessages::NetworkBridgeTx(
+				NetworkBridgeTxMessage::ReportPeer(peer, rep)
 			) => {
 				assert_eq!(peer, peers_x[0]);
 				assert_eq!(rep, BENEFIT_VALID_MESSAGE_FIRST)

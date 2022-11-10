@@ -49,7 +49,7 @@ pub struct NewGossipTopology {
 
 /// Events from network.
 #[derive(Debug, Clone, PartialEq)]
-pub enum NetworkBridgeEvent<M> {
+pub enum NetworkBridgeTxEvent<M> {
 	/// A peer has connected.
 	PeerConnected(PeerId, ObservedRole, ProtocolVersion, Option<HashSet<AuthorityDiscoveryId>>),
 
@@ -75,7 +75,7 @@ pub enum NetworkBridgeEvent<M> {
 	OurViewChange(OurView),
 }
 
-impl<M> NetworkBridgeEvent<M> {
+impl<M> NetworkBridgeTxEvent<M> {
 	/// Focus an overarching network-bridge event into some more specific variant.
 	///
 	/// This tries to transform M in `PeerMessage` to a message type specific to a subsystem.
@@ -84,40 +84,40 @@ impl<M> NetworkBridgeEvent<M> {
 	/// for example into a `BitfieldDistributionMessage` in case of the `BitfieldDistribution`
 	/// constructor.
 	///
-	/// Therefore a `NetworkBridgeEvent<ValidationProtocol>` will become for example a
-	/// `NetworkBridgeEvent<BitfieldDistributionMessage>`, with the more specific message type
+	/// Therefore a `NetworkBridgeTxEvent<ValidationProtocol>` will become for example a
+	/// `NetworkBridgeTxEvent<BitfieldDistributionMessage>`, with the more specific message type
 	/// `BitfieldDistributionMessage`.
 	///
 	/// This acts as a call to `clone`, except in the case where the event is a message event,
 	/// in which case the clone can be expensive and it only clones if the message type can
 	/// be focused.
-	pub fn focus<'a, T>(&'a self) -> Result<NetworkBridgeEvent<T>, WrongVariant>
+	pub fn focus<'a, T>(&'a self) -> Result<NetworkBridgeTxEvent<T>, WrongVariant>
 	where
 		T: 'a + Clone,
 		T: TryFrom<&'a M, Error = WrongVariant>,
 	{
 		Ok(match *self {
-			NetworkBridgeEvent::PeerMessage(ref peer, ref msg) =>
-				NetworkBridgeEvent::PeerMessage(peer.clone(), T::try_from(msg)?),
-			NetworkBridgeEvent::PeerConnected(
+			NetworkBridgeTxEvent::PeerMessage(ref peer, ref msg) =>
+				NetworkBridgeTxEvent::PeerMessage(peer.clone(), T::try_from(msg)?),
+			NetworkBridgeTxEvent::PeerConnected(
 				ref peer,
 				ref role,
 				ref version,
 				ref authority_id,
-			) => NetworkBridgeEvent::PeerConnected(
+			) => NetworkBridgeTxEvent::PeerConnected(
 				peer.clone(),
 				role.clone(),
 				*version,
 				authority_id.clone(),
 			),
-			NetworkBridgeEvent::PeerDisconnected(ref peer) =>
-				NetworkBridgeEvent::PeerDisconnected(peer.clone()),
-			NetworkBridgeEvent::NewGossipTopology(ref topology) =>
-				NetworkBridgeEvent::NewGossipTopology(topology.clone()),
-			NetworkBridgeEvent::PeerViewChange(ref peer, ref view) =>
-				NetworkBridgeEvent::PeerViewChange(peer.clone(), view.clone()),
-			NetworkBridgeEvent::OurViewChange(ref view) =>
-				NetworkBridgeEvent::OurViewChange(view.clone()),
+			NetworkBridgeTxEvent::PeerDisconnected(ref peer) =>
+				NetworkBridgeTxEvent::PeerDisconnected(peer.clone()),
+			NetworkBridgeTxEvent::NewGossipTopology(ref topology) =>
+				NetworkBridgeTxEvent::NewGossipTopology(topology.clone()),
+			NetworkBridgeTxEvent::PeerViewChange(ref peer, ref view) =>
+				NetworkBridgeTxEvent::PeerViewChange(peer.clone(), view.clone()),
+			NetworkBridgeTxEvent::OurViewChange(ref view) =>
+				NetworkBridgeTxEvent::OurViewChange(view.clone()),
 		})
 	}
 }

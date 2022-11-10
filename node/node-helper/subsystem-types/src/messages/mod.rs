@@ -56,7 +56,7 @@ use std::{
 
 /// Network events as transmitted to other subsystems, wrapped in their message types.
 pub mod network_bridge_event;
-pub use network_bridge_event::NetworkBridgeEvent;
+pub use network_bridge_event::NetworkBridgeTxEvent;
 
 /// Subsystem messages where each message is always bound to a relay parent.
 pub trait BoundToRelayParent {
@@ -201,7 +201,7 @@ pub enum CollatorProtocolMessage {
 	ReportCollator(CollatorId),
 	/// Get a network bridge update.
 	#[from]
-	NetworkBridgeUpdate(NetworkBridgeEvent<net_protocol::CollatorProtocolMessage>),
+	NetworkBridgeUpdate(NetworkBridgeTxEvent<net_protocol::CollatorProtocolMessage>),
 	/// We recommended a particular candidate to be seconded, but it was invalid; penalize the collator.
 	///
 	/// The hash is the relay parent.
@@ -318,9 +318,36 @@ pub enum DisputeDistributionMessage {
 	SendDispute(DisputeMessage),
 }
 
-/// Messages received by the network bridge subsystem.
+/// Messages received from other subsystems.
 #[derive(Debug)]
-pub enum NetworkBridgeMessage {
+pub enum NetworkBridgeRxMessage {
+	/// Inform the distribution subsystems about the new
+	/// gossip network topology formed.
+	///
+	/// The only reason to have this here, is the availability of the
+	/// authority discovery service, otherwise, the `GossipSupport`
+	/// subsystem would make more sense.
+	NewGossipTopology {
+		/// The session info this gossip topology is concerned with.
+		session: SessionIndex,
+		/// Ids of our neighbors in the X dimensions of the new gossip topology,
+		/// along with their validator indices within the session.
+		///
+		/// We're not necessarily connected to all of them, but we should
+		/// try to be.
+		our_neighbors_x: HashMap<AuthorityDiscoveryId, ValidatorIndex>,
+		/// Ids of our neighbors in the X dimensions of the new gossip topology,
+		/// along with their validator indices within the session.
+		///
+		/// We're not necessarily connected to all of them, but we should
+		/// try to be.
+		our_neighbors_y: HashMap<AuthorityDiscoveryId, ValidatorIndex>,
+	},
+}
+
+/// Messages received from other subsystems by the network bridge subsystem.
+#[derive(Debug)]
+pub enum NetworkBridgeTxMessage {
 	/// Report a peer for their actions.
 	ReportPeer(PeerId, UnifiedReputationChange),
 
@@ -375,27 +402,9 @@ pub enum NetworkBridgeMessage {
 		/// The peer set we want the connection on.
 		peer_set: PeerSet,
 	},
-	/// Inform the distribution subsystems about the new
-	/// gossip network topology formed.
-	NewGossipTopology {
-		/// The session info this gossip topology is concerned with.
-		session: SessionIndex,
-		/// Ids of our neighbors in the X dimensions of the new gossip topology,
-		/// along with their validator indices within the session.
-		///
-		/// We're not necessarily connected to all of them, but we should
-		/// try to be.
-		our_neighbors_x: HashMap<AuthorityDiscoveryId, ValidatorIndex>,
-		/// Ids of our neighbors in the X dimensions of the new gossip topology,
-		/// along with their validator indices within the session.
-		///
-		/// We're not necessarily connected to all of them, but we should
-		/// try to be.
-		our_neighbors_y: HashMap<AuthorityDiscoveryId, ValidatorIndex>,
-	},
 }
 
-impl NetworkBridgeMessage {
+impl NetworkBridgeTxMessage {
 	/// If the current variant contains the relay parent hash, return it.
 	pub fn relay_parent(&self) -> Option<Hash> {
 		match self {
@@ -408,7 +417,6 @@ impl NetworkBridgeMessage {
 			Self::ConnectToValidators { .. } => None,
 			Self::ConnectToResolvedValidators { .. } => None,
 			Self::SendRequests { .. } => None,
-			Self::NewGossipTopology { .. } => None,
 		}
 	}
 }
@@ -455,7 +463,7 @@ pub enum BitfieldDistributionMessage {
 
 	/// Event from the network bridge.
 	#[from]
-	NetworkBridgeUpdate(NetworkBridgeEvent<net_protocol::BitfieldDistributionMessage>),
+	NetworkBridgeUpdate(NetworkBridgeTxEvent<net_protocol::BitfieldDistributionMessage>),
 }
 
 impl BitfieldDistributionMessage {
@@ -723,7 +731,7 @@ pub enum StatementDistributionMessage {
 	Share(Hash, SignedFullStatement),
 	/// Event from the network bridge.
 	#[from]
-	NetworkBridgeUpdate(NetworkBridgeEvent<net_protocol::StatementDistributionMessage>),
+	NetworkBridgeUpdate(NetworkBridgeTxEvent<net_protocol::StatementDistributionMessage>),
 }
 
 /// This data becomes intrinsics or extrinsics which should be included in a future relay chain block.
@@ -917,7 +925,7 @@ pub enum ApprovalDistributionMessage {
 	DistributeApproval(IndirectSignedApprovalVote),
 	/// An update from the network bridge.
 	#[from]
-	NetworkBridgeUpdate(NetworkBridgeEvent<net_protocol::ApprovalDistributionMessage>),
+	NetworkBridgeUpdate(NetworkBridgeTxEvent<net_protocol::ApprovalDistributionMessage>),
 }
 
 /// Message to the Gossip Support subsystem.
@@ -925,7 +933,7 @@ pub enum ApprovalDistributionMessage {
 pub enum GossipSupportMessage {
 	/// Dummy constructor, so we can receive networking events.
 	#[from]
-	NetworkBridgeUpdate(NetworkBridgeEvent<net_protocol::GossipSupportNetworkMessage>),
+	NetworkBridgeUpdate(NetworkBridgeTxEvent<net_protocol::GossipSupportNetworkMessage>),
 }
 
 /// PVF checker message.

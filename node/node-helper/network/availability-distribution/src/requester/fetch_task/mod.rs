@@ -30,7 +30,7 @@ use selendra_node_network_protocol::request_response::{
 use selendra_node_primitives::ErasureChunk;
 use selendra_node_subsystem::{
 	jaeger,
-	messages::{AvailabilityStoreMessage, IfDisconnected, NetworkBridgeMessage},
+	messages::{AvailabilityStoreMessage, IfDisconnected, NetworkBridgeTxMessage},
 	overseer,
 };
 use selendra_primitives::v2::{
@@ -332,8 +332,11 @@ impl RunningTask {
 
 		self.sender
 			.send(FromFetchTask::Message(
-				NetworkBridgeMessage::SendRequests(vec![requests], IfDisconnected::ImmediateError)
-					.into(),
+				NetworkBridgeTxMessage::SendRequests(
+					vec![requests],
+					IfDisconnected::ImmediateError,
+				)
+				.into(),
 			))
 			.await
 			.map_err(|_| TaskError::ShuttingDown)?;
