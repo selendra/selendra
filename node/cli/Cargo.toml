@@ -43,7 +43,7 @@ performance-test = { path = "../../tests/test-helpers/performance", optional = t
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 [features]
-default = ["wasmtime", "db", "cli", "full-node", "trie-memory-tracker", "selendra-native"]
+default = ["wasmtime", "db", "cli", "hostperfcheck", "full-node", "trie-memory-tracker", "selendra-native"]
 wasmtime = ["sc-cli/wasmtime"]
 db = ["service/db"]
 cli = [
@@ -55,7 +55,6 @@ cli = [
 	"try-runtime-cli",
 	"selendra-client",
 	"selendra-node-core-pvf",
-	"performance-test",
 ]
 runtime-benchmarks = ["service/runtime-benchmarks", "selendra-node-metrics/runtime-benchmarks"]
 trie-memory-tracker = ["sp-trie/memory-tracker"]
@@ -63,6 +62,7 @@ full-node = ["service/full-node"]
 try-runtime = ["service/try-runtime"]
 fast-runtime = ["service/fast-runtime"]
 pyroscope = ["pyro"]
+hostperfcheck = ["performance-test"]
 
 selendra-native = ["service/selendra-native"]
 malus = ["full-node", "service/malus"]

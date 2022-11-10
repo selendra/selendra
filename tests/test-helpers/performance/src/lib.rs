@@ -39,6 +39,9 @@ pub enum PerfCheckError {
 	#[error("No wasm code found for running the performance test")]
 	WasmBinaryMissing,
 
+	#[error("This subcommand is only available when compiled with `{feature}`")]
+	FeatureNotEnabled { feature: &'static str },
+
 	#[error("Failed to decompress wasm code")]
 	CodeDecompressionFailed,
 
