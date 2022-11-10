@@ -45,7 +45,7 @@ pallet-indices = { git = "https://github.com/paritytech/substrate", branch = "po
 pallet-membership = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 pallet-multisig = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 pallet-nomination-pools = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
-pallet-nomination-pools-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+pallet-nomination-pools-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 pallet-nomination-pools-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false, optional = true }
 pallet-offences = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 pallet-offences-benchmarking  = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false, optional = true }
@@ -140,6 +140,7 @@ std = [
 	"pallet-indices/std",
 	"pallet-membership/std",
 	"pallet-multisig/std",
+	"pallet-nomination-pools-runtime-api/std",
 	"pallet-nomination-pools/std",
 	"pallet-proxy/std",
 	"pallet-recovery/std",
@@ -155,7 +156,6 @@ std = [
 	"pallet-utility/std",
 	"pallet-vesting/std",
 	"pallet-xcm/std",
-
 	"sp-authority-discovery/std",
 	"sp-api/std",
 	"sp-block-builder/std",
@@ -172,7 +172,6 @@ std = [
 	"sp-npos-elections/std",
 	"sp-mmr-primitives/std",
 	"beefy-primitives/std",
-
 	"primitives/std",
 	"selendra-runtime-constants/std",
 	"runtime-common/std",
@@ -207,7 +206,6 @@ runtime-benchmarks = [
 	"pallet-membership/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
 	"pallet-nomination-pools-benchmarking",
-	"pallet-nomination-pools-runtime-api/std",
 	"pallet-nomination-pools/runtime-benchmarks",
 	"pallet-offences-benchmarking",
 	"pallet-preimage/runtime-benchmarks",

@@ -882,7 +882,6 @@ impl sp_runtime::traits::Convert<sp_core::U256, Balance> for U256ToBalance {
 parameter_types! {
 	pub const PostUnbondPoolsWindow: u32 = 4;
 	pub const NominationPoolsPalletId: PalletId = PalletId(*b"py/nopls");
-	pub const MinPointsToBalance: u32 = 10;
 	pub const MaxPointsToBalance: u8 = 10;
 	pub const MaxMetadataLen: u32 = 256;
 }
@@ -890,6 +889,7 @@ parameter_types! {
 impl pallet_nomination_pools::Config for Runtime {
 	type WeightInfo = weights::pallet_nomination_pools::WeightInfo<Self>;
 	type Event = Event;
+	type Currency = Balances;
 	type CurrencyBalance = Balance;
 	type RewardCounter = FixedU128;
 	type BalanceToU256 = BalanceToU256;
@@ -899,7 +899,6 @@ impl pallet_nomination_pools::Config for Runtime {
 	type MaxMetadataLen = MaxMetadataLen;
 	type MaxUnbonding = <Self as pallet_staking::Config>::MaxUnlockingChunks;
 	type PalletId = NominationPoolsPalletId;
-	type MinPointsToBalance = MinPointsToBalance;
 	type MaxPointsToBalance = MaxPointsToBalance;
 }
 
