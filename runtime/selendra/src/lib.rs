@@ -329,7 +329,7 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	pub const UncleGenerations: u32 = 5;
+	pub const UncleGenerations: u32 = 0;
 }
 
 impl pallet_authorship::Config for Runtime {
