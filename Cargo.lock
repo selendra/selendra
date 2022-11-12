@@ -9736,6 +9736,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-trie",
  "substrate-prometheus-endpoint",
+ "tempfile",
  "test-client",
  "thiserror",
  "tracing-gum",
