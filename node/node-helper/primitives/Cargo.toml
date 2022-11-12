@@ -11,7 +11,7 @@ bounded-vec = "0.6"
 futures = "0.3.21"
 schnorrkel = "0.9.1"
 thiserror = "1.0.31"
-serde = { version = "1.0.137", features = ["derive"] }
+serde = { version = "1.0.140", features = ["derive"] }
 parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
 
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
