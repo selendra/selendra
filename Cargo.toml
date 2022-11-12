@@ -101,6 +101,7 @@ members = [
 	"forests/primitives/parachain-inherent",
 	"forests/primitives/timestamp",
 	"forests/primitives/utility",
+	"utils/generate-bags"
 ]
 
 [profile.release]
