@@ -1,0 +1,38 @@
+[package]
+name = "forests-test-client"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [ "derive" ] }
+
+# Substrate
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", features = ["wasmtime"] }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", features = ["wasmtime"] }
+sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+substrate-test-client = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+# Selendra
+selendra-primitives = { path = "../../../../primitives" }
+selendra-parachain = { path = "../../../../parachain/core" }
+
+# Forests
+forests-test-runtime = { path = "../runtime" }
+forests-test-service = { path = "../service" }
+forests-test-relay-sproof-builder = { path = "../relay-sproof-builder" }
+forests-primitives-core = { path = "../../../../forests/primitives/core" }
+forests-primitives-parachain-inherent = { path = "../../../../forests/primitives/parachain-inherent" }

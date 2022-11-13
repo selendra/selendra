@@ -16,14 +16,26 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-// //! Selendra CLI library.
+//! Selendra CLI library.
 
-#![warn(unused_extern_crates)]
+#![warn(missing_docs)]
 
 #[cfg(feature = "cli")]
 mod cli;
 #[cfg(feature = "cli")]
 mod command;
+#[cfg(feature = "cli")]
+mod error;
+#[cfg(all(feature = "hostperfcheck", build_type = "release"))]
+mod host_perf_check;
+
+#[cfg(feature = "full-node")]
+pub use service::RuntimeApiCollection;
+#[cfg(feature = "service")]
+pub use service::{self, Block, CoreApi, IdentifyVariant, ProvideRuntimeApi, TFullClient};
+
+#[cfg(feature = "malus")]
+pub use service::overseer::prepared_overseer_builder;
 
 #[cfg(feature = "cli")]
 pub use cli::*;

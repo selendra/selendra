@@ -1,0 +1,27 @@
+
+[package]
+name = "selendra-node-network-protocol"
+version = "0.2.1"
+authors = ["Selendra <info@selendra.org>"]
+description = "Primitives types for the Node-side"
+edition = "2021"
+
+[dependencies]
+async-trait = "0.1.53"
+futures = "0.3.21"
+thiserror = "1.0.31"
+fatality = "0.0.6"
+rand = "0.8"
+derive_more = "0.99"
+strum = { version = "0.24", features = ["derive"] }
+parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+selendra-primitives = { path = "../../../../primitives" }
+selendra-node-primitives = { path = "../../primitives" }
+selendra-node-jaeger = { path = "../../jaeger" }
+gum = { package = "tracing-gum", path = "../../gum" }
+
+[dev-dependencies]
+rand_chacha = "0.3.1"

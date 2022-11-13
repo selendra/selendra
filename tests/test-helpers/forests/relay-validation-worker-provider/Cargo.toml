@@ -1,0 +1,14 @@
+[package]
+name = "forests-test-relay-validation-worker-provider"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+build = "build.rs"
+
+[dependencies]
+
+# Selendra
+selendra-node-core-pvf = { path = "../../../../node/node-helper/core/pvf" }
+
+[build-dependencies]
+toml = "0.5.9"

@@ -1,5 +1,3 @@
-// This file is part of Selendra.
-
 // Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
@@ -20,5 +18,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// `v1` is currently the latest stable version of the runtime API.
-pub mod v1;
+// `v2` is currently the latest stable version of the runtime API.
+pub mod v2;
+
+// `runtime_api` contains the actual API implementation. It contains stable and
+// unstable functions.
+pub mod runtime_api;

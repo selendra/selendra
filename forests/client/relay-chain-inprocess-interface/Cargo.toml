@@ -1,0 +1,43 @@
+[package]
+name = "forests-relay-chain-inprocess-interface"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+async-trait = "0.1.56"
+futures = "0.3.21"
+futures-timer = "3.0.2"
+parking_lot = "0.12.1"
+tracing = "0.1.34"
+
+# Substrate
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-sysinfo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+# Selendra
+selendra-cli = { path = "../../../node/cli" }
+selendra-client = { path = "../../../node/client" }
+selendra-service = { path = "../../../node/service" }
+
+# Forests
+forests-primitives-core = { path = "../../primitives/core" }
+forests-relay-chain-interface = { path = "../relay-chain-interface" }
+
+[dev-dependencies]
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+selendra-primitives = { path = "../../../primitives" }
+test-client = { path = "../../../tests/test-helpers/client" }
+forests-test-service = { path = "../../../tests/test-helpers/forests/service" }

@@ -1,0 +1,37 @@
+[package]
+name = "selendra-availability-distribution"
+version = "0.2.1"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+futures = "0.3.21"
+thiserror = "1.0.31"
+rand = "0.8.5"
+derive_more = "0.99.17"
+lru = "0.7.7"
+fatality = "0.0.6"
+parity-scale-codec = { version = "3.1.5", features = ["std"] }
+
+sp-core = { git = "https://github.com/paritytech/substrate", features = ["std"] , branch = "polkadot-v0.9.27" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+selendra-primitives = { path = "../../../../primitives" }
+selendra-erasure-coding = { path = "../../erasure-coding" }
+selendra-node-network-protocol = { path = "../../network/protocol" }
+selendra-node-subsystem = { path = "../../subsystem" }
+selendra-node-subsystem-util = { path = "../../subsystem-util" }
+selendra-node-primitives = { path = "../../primitives" }
+gum = { package = "tracing-gum", path = "../../gum" }
+
+[dev-dependencies]
+futures-timer = "3.0.2"
+assert_matches = "1.4.0"
+
+sp-core = { git = "https://github.com/paritytech/substrate", features = ["std"] , branch = "polkadot-v0.9.27" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
+primitives-test-helpers = { path = "../../../../tests/test-helpers/primitive" }

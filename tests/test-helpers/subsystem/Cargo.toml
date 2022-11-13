@@ -1,0 +1,25 @@
+
+[package]
+name = "node-subsystem-test-helpers"
+version = "0.2.1"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+description = "Subsystem traits and message definitions"
+
+[dependencies]
+async-trait = "0.1.53"
+futures = "0.3.21"
+parking_lot = "0.12.0"
+
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+selendra-node-subsystem = { path = "../../../node/node-helper/subsystem" }
+selendra-node-subsystem-util = { path = "../../../node/node-helper/subsystem-util" }
+selendra-primitives = { path = "../../../primitives" }
+
+[dev-dependencies]
+selendra-overseer = { path = "../../../node/node-helper/overseer" }

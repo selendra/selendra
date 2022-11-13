@@ -26,25 +26,25 @@ pub use self::currency::DOLLARS;
 
 /// Money matters.
 pub mod currency {
-	use primitives::v1::Balance;
+	use primitives::v2::Balance;
 
 	/// The existential deposit.
 	pub const EXISTENTIAL_DEPOSIT: Balance = 10 * CENTS;
 
-	pub const UNITS: Balance = 1_000_000_000_000;
-	pub const DOLLARS: Balance = UNITS; // 1_000_000_000_000
-	pub const CENTS: Balance = DOLLARS / 100; // 10_000_000_000
-	pub const MILLICENTS: Balance = CENTS / 1_000; // 10_000_000
-	pub const MICROCENT: Balance = MILLICENTS / 1_000; // 10_000
+	pub const UNITS: Balance = 1_000_000_000_000_000_000;
+	pub const DOLLARS: Balance = UNITS; // 1_000_000_000_000_000_000
+	pub const CENTS: Balance = DOLLARS / 100; // 10_000_000_000_000_000
+	pub const MILLICENTS: Balance = CENTS / 1_000; // 10_000_000_000_000
+	pub const MICROCENT: Balance = MILLICENTS / 1_000; // 10_000_000_000
 
 	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 10 * DOLLARS + (bytes as Balance) * CENTS
+		items as Balance * 20 * DOLLARS + (bytes as Balance) * 100 * MILLICENTS
 	}
 }
 
 /// Time and blocks.
 pub mod time {
-	use primitives::v1::{BlockNumber, Moment};
+	use primitives::v2::{BlockNumber, Moment};
 	use runtime_common::prod_or_fast;
 	pub const MILLISECS_PER_BLOCK: Moment = 6000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
@@ -66,7 +66,7 @@ pub mod fee {
 	use frame_support::weights::{
 		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
 	};
-	use primitives::v1::Balance;
+	use primitives::v2::Balance;
 	use smallvec::smallvec;
 	pub use sp_runtime::Perbill;
 
@@ -87,9 +87,9 @@ pub mod fee {
 	impl WeightToFeePolynomial for WeightToFee {
 		type Balance = Balance;
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-			// in Polkadot, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
+			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 MILLICENTS:
 			let p = super::currency::MILLICENTS;
-			let q = Balance::from(ExtrinsicBaseWeight::get());
+			let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,
 				negative: false,
@@ -103,7 +103,7 @@ pub mod fee {
 #[cfg(test)]
 mod tests {
 	use super::{
-		currency::{CENTS, DOLLARS, MILLICENTS},
+		currency::{CENTS, MILLICENTS},
 		fee::WeightToFee,
 	};
 	use crate::weights::ExtrinsicBaseWeight;
@@ -113,19 +113,19 @@ mod tests {
 	#[test]
 	// Test that the fee for `MAXIMUM_BLOCK_WEIGHT` of weight has sane bounds.
 	fn full_block_fee_is_correct() {
-		// A full block should cost between 10 and 100 DOLLARS.
+		// A full block should cost between 1 and 10 CENTS.
 		let full_block = WeightToFee::weight_to_fee(&MAXIMUM_BLOCK_WEIGHT);
-		assert!(full_block >= 10 * DOLLARS);
-		assert!(full_block <= 100 * DOLLARS);
+		assert!(full_block >= 1 * CENTS);
+		assert!(full_block <= 100 * CENTS);
 	}
 
 	#[test]
 	// This function tests that the fee for `ExtrinsicBaseWeight` of weight is correct
 	fn extrinsic_base_fee_is_correct() {
-		// `ExtrinsicBaseWeight` should cost 1/10 of a CENT
+		// `ExtrinsicBaseWeight` should cost 1/10 of a MILLICENTS
 		println!("Base: {}", ExtrinsicBaseWeight::get());
 		let x = WeightToFee::weight_to_fee(&ExtrinsicBaseWeight::get());
-		let y = CENTS / 10;
+		let y = MILLICENTS / 10;
 		assert!(x.max(y) - x.min(y) < MILLICENTS);
 	}
 }

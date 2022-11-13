@@ -1,0 +1,84 @@
+[package]
+name = "forests-test-service"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[[bin]]
+name = "test-parachain"
+path = "src/main.rs"
+
+[dependencies]
+async-trait = "0.1.56"
+clap = { version = "3.2.15", features = ["derive", "deprecated"] }
+codec = { package = "parity-scale-codec", version = "3.0.0" }
+criterion = { version = "0.3.6", features = [ "async_tokio" ] }
+jsonrpsee = { version = "0.14.0", features = ["server"] }
+parking_lot = "0.12.1"
+rand = "0.8.5"
+serde = { version = "1.0.140", features = ["derive"] }
+tokio = { version = "1.19.2", features = ["macros"] }
+tracing = "0.1.25"
+url = "2.2.2"
+
+# Substrate
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", features = ["wasmtime"] }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", features = [ "wasmtime" ] }
+sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+substrate-test-client = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+# Selendra
+selendra-primitives = { path = "../../../../primitives" }
+selendra-service = { path = "../../../../node/service" }
+selendra-cli = { path = "../../../../node/cli" }
+test-service = { path = "../../service" }
+
+# Forests
+forests-client-cli = { path = "../../../../forests/client/cli" }
+parachains-common = { path = "../../../../forests/common" }
+forests-client-consensus-common = { path = "../../../../forests/client/consensus/common" }
+forests-client-consensus-relay-chain = { path = "../../../../forests/client/consensus/relay-chain" }
+forests-client-network = { path = "../../../../forests/client/network" }
+forests-client-service = { path = "../../../../forests/client/service" }
+forests-primitives-core = { path = "../../../../forests/primitives/core" }
+forests-primitives-parachain-inherent = { path = "../../../../forests/primitives/parachain-inherent" }
+forests-relay-chain-inprocess-interface = { path = "../../../../forests/client/relay-chain-inprocess-interface" }
+forests-relay-chain-interface = { path = "../../../../forests/client/relay-chain-interface" }
+forests-relay-chain-rpc-interface = { path = "../../../../forests/client/relay-chain-rpc-interface" }
+forests-test-relay-validation-worker-provider = { path = "../relay-validation-worker-provider" }
+forests-test-runtime = { path = "../runtime" }
+
+[dev-dependencies]
+futures = "0.3.21"
+portpicker = "0.1.1"
+
+# Substrate dependencies
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+[[bench]]
+name = "transaction_throughput"
+harness = false

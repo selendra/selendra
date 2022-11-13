@@ -1,0 +1,26 @@
+[package]
+name = "selendra-runtime-metrics"
+version = "0.2.1"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+parity-scale-codec = { version = "3.1.5", default-features = false }
+bs58 = { version = "0.4.0", default-features = false, features = ["alloc"] }
+
+sp-std = { package = "sp-std", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+
+primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+	"bs58/std",
+	"parity-scale-codec/std",
+	"sp-std/std",
+	"sp-tracing/std",
+    "primitives/std",
+
+]
+runtime-metrics = ["sp-tracing/with-tracing"]

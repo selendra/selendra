@@ -1,5 +1,3 @@
-// This file is part of Selendra.
-
 // Copyright (C) 2021-2022 Selendra.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
@@ -20,6 +18,23 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod assigned_slots;
+pub mod paras_registrar;
+pub mod paras_sudo_wrapper;
+pub mod slot_range;
+pub mod slots;
+pub mod traits;
+pub mod xcm_sender;
+
+pub mod elections;
+pub mod impls;
+pub mod origin;
+
+pub use origin::*;
+
+#[cfg(test)]
+mod mock;
+
 use static_assertions::const_assert;
 
 use frame_support::{
@@ -31,13 +46,7 @@ use frame_system::{limits, EnsureRoot};
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
 
-use primitives::v1::{AccountId, BlockNumber};
-
-pub mod elections;
-pub mod impls;
-pub mod origin;
-
-pub use origin::*;
+use primitives::v2::{AccountId, BlockNumber};
 
 /// We assume that an on-initialize consumes 1% of the weight on average, hence a single extrinsic
 /// will not be allowed to consume more than `AvailableBlockRatio - 1%`.
@@ -59,7 +68,7 @@ pub type SlowAdjustingFeeUpdate<R> =
 ///
 /// This must only be used as long as the balance type is `u128`.
 pub type CurrencyToVote = frame_support::traits::U128CurrencyToVote;
-static_assertions::assert_eq_size!(primitives::v1::Balance, u128);
+static_assertions::assert_eq_size!(primitives::v2::Balance, u128);
 
 // Common constants used in all runtimes.
 parameter_types! {
@@ -134,7 +143,7 @@ macro_rules! impl_runtime_weights {
 /// ```Rust
 /// parameter_types! {
 /// 	// Note that the env variable version parameter cannot be const.
-/// 	pub LaunchPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1, "KSM_LAUNCH_PERIOD");
+/// 	pub LaunchPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1, "SEL_LAUNCH_PERIOD");
 /// 	pub const VotingPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1 * MINUTES);
 /// }
 /// ```

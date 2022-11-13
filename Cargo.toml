@@ -1,29 +1,176 @@
-cargo-features = ["resolver"]
+
+[[bin]]
+name = "selendra"
+path = "src/main.rs"
+
+[package]
+name = "selendra"
+version = "0.2.1"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+readme = "README.md"
+
+[dependencies]
+selendra-cli = { path = "./node/cli", features = [ "selendra-native" ]  }
+color-eyre = { version = "0.6.1", default-features = false }
+parity-util-mem = { version = "0.11.0", default-features = false, features = ["jemalloc-global"] }
+
+[dev-dependencies]
+assert_cmd = "2.0.4"
+nix = "0.24.1"
+tempfile = "3.2.0"
+tokio = "1.18.2"
+remote-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+selendra-core-primitives = { path = "./primitives/core" }
 
 [workspace]
 members = [
-	"primitives",
+	"runtime/common/slot_range_helper",
 	"runtime/common",
 	"runtime/selendra",
 	"runtime/selendra/constants",
-	"rpc",
+	"node/client",
+	"node/rpc",
 	"node/service",
 	"node/cli",
-	"node",
-	"inspect",
-	# "utils/generate-bags"
+	"primitives",
+	"node/node-helper/primitives",
+	"node/node-helper/statement-table",
+	"node/node-helper/erasure-coding",
+	"node/node-helper/jaeger",
+	"node/node-helper/gum",
+	"node/node-helper/metered-channel",
+	"node/node-helper/metrics",
+	"node/node-helper/orchestra",
+	"node/node-helper/subsystem-types",
+	"node/node-helper/overseer",
+	"node/node-helper/subsystem",
+	"node/node-helper/subsystem-util",
+	"node/node-helper/collation-generation",
+	"node/node-helper/network/approval-distribution",
+	"node/node-helper/network/availability-distribution",
+	"node/node-helper/network/availability-recovery",
+	"node/node-helper/network/bitfield-distribution",
+	"node/node-helper/network/bridge",
+	"node/node-helper/network/collator-protocol",
+	"node/node-helper/network/dispute-distribution",
+	"node/node-helper/network/gossip-support",
+	"node/node-helper/network/protocol",
+	"node/node-helper/network/statement-distribution",
+	"node/node-helper/core/approval-voting",
+	"node/node-helper/core/av-store",
+	"node/node-helper/core/backing",
+	"node/node-helper/core/bitfield-signing",
+	"node/node-helper/core/candidate-validation",
+	"node/node-helper/core/chain-api",
+	"node/node-helper/core/chain-selection",
+	"node/node-helper/core/dispute-coordinator",
+	"node/node-helper/core/parachains-inherent",
+	"node/node-helper/core/provisioner",
+	"node/node-helper/core/pvf",
+	"node/node-helper/core/pvf-checker",
+	"node/node-helper/core/runtime-api",
+	"parachain/core",
+	"parachain/metrics",
+	"parachain/runtime",
+	"parachain/xcm",
+	"parachain/xcm/pallet-xcm",
+	"parachain/xcm/pallet-xcm/benchmarks",
+	"parachain/xcm/xcm-builder",
+	"parachain/xcm/xcm-executor",
+	"forests/client/cli",
+	"forests/client/consensus/aura",
+	"forests/client/consensus/common",
+	"forests/client/consensus/relay-chain",
+	"forests/client/network",
+	"forests/client/pov-recovery",
+	"forests/client/service",
+	"forests/client/relay-chain-interface",
+	"forests/client/relay-chain-inprocess-interface",
+	"forests/client/relay-chain-rpc-interface",
+	"forests/pallets/aura-ext",
+	"forests/pallets/collator-selection",
+	"forests/pallets/dmp-queue",
+	"forests/pallets/parachain-system",
+	"forests/pallets/parachain-system/proc-macro",
+	"forests/pallets/session-benchmarking",
+	"forests/pallets/xcm",
+	"forests/pallets/xcmp-queue",
+	"forests/pallets/parachain-info",
+	"forests/primitives/core",
+	"forests/primitives/parachain-inherent",
+	"forests/primitives/timestamp",
+	"forests/primitives/utility",
+	"utils/generate-bags"
 ]
-
-resolver = "2"
-
-[profile.dev]
-split-debuginfo = "unpacked"
 
 [profile.release]
 # Selendra runtime requires unwinding.
 panic = "unwind"
+opt-level = 3
 
 [profile.production]
 inherits = "release"
 lto = true
 codegen-units = 1
+
+# make sure dev builds with backtrace do
+# not slow us down
+[profile.dev.package.backtrace]
+inherits = "release"
+
+[profile.testnet]
+inherits = "release"
+debug = 1 # debug symbols are useful for profilers
+debug-assertions = true
+overflow-checks = true
+
+[features]
+runtime-benchmarks= [ "selendra-cli/runtime-benchmarks" ]
+try-runtime = [ "selendra-cli/try-runtime" ]
+fast-runtime = [ "selendra-cli/fast-runtime" ]
+runtime-metrics = [ "selendra-cli/runtime-metrics" ]
+pyroscope = ["selendra-cli/pyroscope"]
+staging-client = ["selendra-cli/staging-client"]
+
+[profile.dev.package]
+blake2b_simd = { opt-level = 3 }
+blake2 = { opt-level = 3 }
+blake2-rfc = { opt-level = 3 }
+chacha20poly1305 = { opt-level = 3 }
+crc32fast = { opt-level = 3 }
+crypto-mac = { opt-level = 3 }
+curve25519-dalek = { opt-level = 3 }
+ed25519-dalek = { opt-level = 3 }
+flate2 = { opt-level = 3 }
+futures-channel = { opt-level = 3 }
+hashbrown = { opt-level = 3 }
+hash-db = { opt-level = 3 }
+hmac = { opt-level = 3 }
+httparse = { opt-level = 3 }
+integer-sqrt = { opt-level = 3 }
+keccak = { opt-level = 3 }
+libm = { opt-level = 3 }
+librocksdb-sys = { opt-level = 3 }
+libsecp256k1 = { opt-level = 3 }
+libz-sys = { opt-level = 3 }
+mio = { opt-level = 3 }
+nalgebra = { opt-level = 3 }
+num-bigint = { opt-level = 3 }
+parking_lot_core = { opt-level = 3 }
+parking_lot = { opt-level = 3 }
+percent-encoding = { opt-level = 3 }
+primitive-types = { opt-level = 3 }
+reed-solomon-novelpoly = { opt-level = 3 }
+ring = { opt-level = 3 }
+rustls = { opt-level = 3 }
+sha2 = { opt-level = 3 }
+sha3 = { opt-level = 3 }
+smallvec = { opt-level = 3 }
+snow = { opt-level = 3 }
+twox-hash = { opt-level = 3 }
+uint = { opt-level = 3 }
+wasmi = { opt-level = 3 }
+x25519-dalek = { opt-level = 3 }
+yamux = { opt-level = 3 }
+zeroize = { opt-level = 3 }
