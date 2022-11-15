@@ -1,12 +1,11 @@
-# Selendra
-
-An interoperable nominated Proof-of-Stake network for developing and running Substrate-based and EVM compatible blockchain applications.
-
-Read more at [selendra.org](https://selendra.org)
+## 🙋‍♀️ Introduction 
+Selendra is a mulitchain interoperable nominated proof-of-stake for building and running EVM compatible and Substrate based blockchain applications. 
 
 ## Mission
+Our mission is to build simple and easy to use tools for next generation of blockchain builders and users from around the world, especially developing countries. So they can build more useful use cases that drive mass adoption and reach all cornors of the world.
 
-Open opportunities for individuals, businesses, and communities by making access to emerging blockchain products and services a reality, for all members of society. We bring the blockchain evolution a step closer to the masses and hope to help accelerate the advancement and strengthen the industry as a whole.
+## Goal
+Open opportunities for individuals, businesses, and communities by making access to emerging blockchain products and services a reality, for all members of society. Bringing the blockchain evolution a step closer to the masses and to help accelerate the advancement and strengthen the industry as a whole, together with other industry builders and players. 
 
 ## Acknowledgement
 
