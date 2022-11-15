@@ -14,8 +14,8 @@ LABEL description="Multistage Docker image for Selendra: a platform for web3" \
 	io.parity.image.authors="info@selendra.org" \
 	io.parity.image.vendor="Selendra" \
 	io.parity.image.description="Selendra: a platform for web3" \
-	io.parity.image.source="https://github.com/selendra/selendrachain/blob/${VCS_REF}/scripts/dockerfiles/selendra/selendra_builder.Dockerfile" \
-	io.parity.image.documentation="https://github.com/selendra/selendrachain/"
+	io.parity.image.source="https://github.com/selendra/selendra/blob/${VCS_REF}/scripts/dockerfiles/selendra/selendra_builder.Dockerfile" \
+	io.parity.image.documentation="https://github.com/selendra/selendra/"
 
 COPY --from=builder /selendra/target/release/selendra /usr/local/bin
 
