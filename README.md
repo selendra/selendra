@@ -1,11 +1,11 @@
 ## 🙋‍♀️ Introduction 
 Selendra is a multichain inter-operable nominated proof-of-stake (noun) used for building and running EVM (what is EVM?) compatible and Substrate-based blockchain applications. 
 
-## Mission
+### Mission
 Our mission is to create simple and easy-to-use tools for next generation blockchain builders and users from around the world, especially those in developing countries, so together we may drive mass-adoption of more useful use cases reaching all corners of the world.
 
-## Goal
-Oour goal is to open opportunities for individuals, businesses, and communities by making access to emerging blockchain products and services a reality, for all members of society, bringing blockchain evolution one step closer to mass adoption thereby accelerating advancement and strengthen the industry as a whole. 
+### Goal
+Our goal is to open opportunities for individuals, businesses, and communities by making access to emerging blockchain products and services a reality, for all members of society, bringing blockchain evolution one step closer to mass adoption thereby accelerating advancement and strengthen the industry as a whole. 
 
 ## Acknowledgement
 
