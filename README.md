@@ -15,4 +15,4 @@ Selendra project is inspired by the excellent work of many growing projects in t
 This is a work in progress, we will update more information as we progress further. Please refer to the token economy working paper for more details.
 
 ## License
-Selendra are inspire by [Polkadot](https://github.com/paritytech/polkadot) under [GPL 3.0 licensed](LICENSE).
+Selendra project is inspired by [Polkadot](https://github.com/paritytech/polkadot) under [GPL 3.0 licensed](LICENSE).
