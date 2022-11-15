@@ -1,18 +1,17 @@
-# Selendra
+## 🙋‍♀️ Introduction 
+Selendra is a multichain inter-operable nominated proof-of-stake (noun) used for building and running EVM (what is EVM?) compatible and Substrate-based blockchain applications. 
 
-An interoperable nominated Proof-of-Stake network for developing and running Substrate-based and EVM compatible blockchain applications.
+### Mission
+Our mission is to create simple and easy-to-use tools for next generation blockchain builders and users from around the world, especially those in developing countries, so together we may drive mass-adoption of more useful use cases reaching all corners of the world.
 
-Read more at [selendra.org](https://selendra.org)
-
-## Mission
-
-Open opportunities for individuals, businesses, and communities by making access to emerging blockchain products and services a reality, for all members of society. We bring the blockchain evolution a step closer to the masses, the ordinary people, and help accelerate the advancement and strengthen the industry as a whole.
+### Goal
+Our goal is to open opportunities for individuals, businesses, and communities by making access to emerging blockchain products and services a reality, for all members of society, bringing blockchain evolution one step closer to mass adoption thereby accelerating advancement and strengthen the industry as a whole. 
 
 ## Acknowledgement
 
-Selendra project is inspired by the excellent work of many growing projects in the Polkadot ecosystem and many other blockchain developers around the world. Our progress in the past, the present and the future is only possible thanks to the open sources software community, framework, and tools. Thank you!
+Selendra is inspired by the excellent work of many growing projects in the Polkadot ecosystem and other blockchain developers around the world. Our past, present and future progress is only possible through the framework, tools and generous efforts of the open source software community. Thank you!
 
-This is a work in progress, we will update more information as we progress further. Please refer to the token economy working paper for more details.
+Selendra is a work in progress, and we will be providing regular information updates. Please refer to the token economy working paper for more details.
 
 ## License
-Selendra are inspire by [Polkadot](https://github.com/paritytech/polkadot) under [GPL 3.0 licensed](LICENSE).
+Selendra project is inspired by [Polkadot](https://github.com/paritytech/polkadot) under [GPL 3.0 licensed](LICENSE).
