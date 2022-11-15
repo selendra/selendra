@@ -17,7 +17,7 @@
 ///! Parachain configuration for Selendra.
 use super::{
 	deposit, parameter_types, weights, xcm_config, Babe, Balances, EnsureRoot, Event, Historical,
-	Origin, ParasDisputes, Registrar, Runtime, Slots, TransactionPriority, DAYS, DOLLARS, WEEKS,
+	Origin, ParasDisputes, Registrar, Runtime, Slots, TransactionPriority, DOLLARS, WEEKS,
 };
 
 use primitives::v2::{AccountId, Balance, BlockNumber};
