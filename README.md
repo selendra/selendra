@@ -1,5 +1,5 @@
 ## 🙋‍♀️ Introduction 
-Selendra is a multichain interoperable proof-of-stake network for building and running Ethereum Virtual Machine (EVM) compatible and Substrate-based blockchain applications.
+Selendra is  a multichain interoperable proof-of-stake network built with Substrate Framework for building and running Ethereum Virtual Machine (EVM) compatible and Substrate-based blockchain applications.
 
 ### Mission
 Our mission is to build simple and easy to use tools for next generation of blockchain builders and users from around the world, especially developing countries. So they can build more useful use cases that drive mass adoption and reach all cornors of the world.
