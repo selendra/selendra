@@ -169,7 +169,7 @@ where
 	}
 
 	async fn is_major_syncing(&self) -> RelayChainResult<bool> {
-		let mut network = self.sync_oracle.lock();
+		let network = self.sync_oracle.lock();
 		Ok(network.is_major_syncing())
 	}
 

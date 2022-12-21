@@ -923,6 +923,7 @@ where
 	let authority_discovery_service = if auth_or_collator || overseer_enable_anyways {
 		use futures::StreamExt;
 		use sc_network::Event;
+		use sc_network_common::service::NetworkEventStream;
 
 		let authority_discovery_role = if role.is_authority() {
 			sc_authority_discovery::Role::PublishAndDiscover(keystore_container.keystore())
@@ -1111,6 +1112,7 @@ where
 			prometheus_registry: prometheus_registry.clone(),
 			protocol_name: beefy_protocol_name,
 			links: beefy_links,
+		};
 
 		let gadget = beefy_gadget::start_beefy_gadget::<_, _, _, _, _>(beefy_params);
 
