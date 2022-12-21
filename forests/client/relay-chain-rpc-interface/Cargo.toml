@@ -6,6 +6,7 @@ edition = "2021"
 
 [dependencies]
 futures = "0.3.21"
+tokio = { version = "1.19.2", features = ["sync"] }
 futures-timer = "3.0.2"
 parity-scale-codec = "3.1.5"
 parking_lot = "0.12.1"
