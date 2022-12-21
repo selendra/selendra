@@ -14,10 +14,10 @@ bs58 = { version = "0.4.0", features = ["alloc"] }
 gum = { package = "tracing-gum", path = "../gum" }
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 
 primitives = { package = "selendra-primitives", path = "../../../primitives/" }
 metered = { package = "prioritized-metered-channel", path = "../metered-channel" }
@@ -29,10 +29,10 @@ tempfile = "3.2.0"
 tokio = "1.18.2"
 prometheus-parse = {version = "0.2.2"}
 hyper = { version = "0.14.19", default-features = false, features = ["http1", "tcp"] }
-substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 test-service = { path = "../../../tests/test-helpers/service", features=["runtime-metrics"]}
 
 [features]

@@ -36,6 +36,7 @@ static RUNTIMES: [&'static str; 1] = ["selendra"];
 
 /// `benchmark block` works for all dev runtimes using the wasm executor.
 #[tokio::test]
+#[ignore]
 async fn benchmark_block_works() {
 	for runtime in RUNTIMES {
 		let tmp_dir = tempdir().expect("could not create a temp dir");

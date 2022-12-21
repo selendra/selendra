@@ -126,12 +126,6 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for WeightIn
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
 
-	// Storage: PhragmenElection RunnersUp (r:1 w:0)
-	fn remove_member_wrong_refund() -> Weight {
-		(55_793_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-	}
-
 	// Storage: PhragmenElection Voting (r:5001 w:5000)
 	// Storage: PhragmenElection Members (r:1 w:0)
 	// Storage: PhragmenElection RunnersUp (r:1 w:0)
