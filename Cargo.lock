@@ -2635,6 +2635,7 @@ dependencies = [
  "sc-consensus",
  "sc-executor",
  "sc-network",
+ "sc-network-common",
  "sc-rpc",
  "sc-service",
  "sc-telemetry",

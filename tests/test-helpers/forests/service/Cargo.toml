@@ -31,6 +31,7 @@ sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "pol
 sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", features = ["wasmtime"] }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", features = [ "wasmtime" ] }
 sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
