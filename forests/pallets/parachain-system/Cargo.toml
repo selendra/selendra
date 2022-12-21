@@ -14,18 +14,18 @@ scale-info = { version = "2.1.1", default-features = false, features = ["derive"
 serde = { version = "1.0.140", optional = true, features = ["derive"] }
 
 # Substrate
-frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
-frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
-sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
-sp-externalities = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
-sp-inherents = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
-sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
-sp-state-machine = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
-sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
-sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
-sp-version = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+sp-externalities = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+sp-inherents = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+sp-version = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
 
 # Selendra
 selendra-parachain = { path = "../../../parachain/core", default-features = false, features = [ "wasm-api" ] }
@@ -41,10 +41,10 @@ hex-literal = "0.3.4"
 lazy_static = "1.4"
 
 # Substrate
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 
 # Forests
 forests-test-client = { path = "../../../tests/test-helpers/forests/client" }
