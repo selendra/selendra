@@ -25,7 +25,6 @@ sc-block-builder = { git = "https://github.com/paritytech/substrate", branch = "
 sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
-sc-consensus-uncles = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 sc-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
