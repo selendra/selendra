@@ -26,7 +26,7 @@ metered = { package = "prioritized-metered-channel", path = "../metered-channel"
 assert_cmd = "2.0.4"
 nix = "0.24.1"
 tempfile = "3.2.0"
-tokio = "1.18.2"
+tokio = "1.19.2"
 prometheus-parse = {version = "0.2.2"}
 hyper = { version = "0.14.19", default-features = false, features = ["http1", "tcp"] }
 substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
