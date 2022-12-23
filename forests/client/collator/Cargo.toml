@@ -30,7 +30,7 @@ forests-primitives-core = { path = "../../primitives/core" }
 forests-relay-chain-interface = { path = "../relay-chain-interface" }
 
 [dev-dependencies]
-async-trait = "0.1.42"
+async-trait = "0.1.60"
 
 # Substrate
 sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }

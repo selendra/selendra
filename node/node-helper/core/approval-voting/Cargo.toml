@@ -31,7 +31,7 @@ selendra-node-jaeger = { path = "../../jaeger" }
 gum = { package = "tracing-gum", path = "../../gum" }
 
 [dev-dependencies]
-async-trait = "0.1.56"
+async-trait = "0.1.60"
 parking_lot = "0.12.0"
 rand_core = "0.5.1" # should match schnorrkel
 assert_matches = "1.4.0"

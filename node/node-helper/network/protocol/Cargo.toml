@@ -7,7 +7,7 @@ description = "Primitives types for the Node-side"
 edition = "2021"
 
 [dependencies]
-async-trait = "0.1.53"
+async-trait = "0.1.60"
 futures = "0.3.21"
 thiserror = "1.0.31"
 fatality = "0.0.6"

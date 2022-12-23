@@ -10,7 +10,7 @@ derive_more = "0.99.17"
 futures = "0.3.21"
 smallvec = "1.9.0"
 thiserror = "1.0.31"
-async-trait = "0.1.56"
+async-trait = "0.1.60"
 
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
