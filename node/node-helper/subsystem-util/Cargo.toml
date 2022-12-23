@@ -21,9 +21,9 @@ parity-db = { version = "0.3.16" }
 parity-util-mem = { version = "0.11", default-features = false }
 parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
 
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 
 selendra-primitives = { path = "../../../primitives" }
 selendra-node-subsystem = {path = "../subsystem" }

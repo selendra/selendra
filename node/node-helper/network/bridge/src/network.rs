@@ -26,6 +26,10 @@ use sc_network::{
 	NetworkService, OutboundFailure, RequestFailure,
 };
 
+use sc_network_common::service::{
+	NetworkEventStream, NetworkNotification, NetworkPeers, NetworkRequest,
+};
+
 use selendra_node_network_protocol::{
 	peer_set::PeerSet,
 	request_response::{OutgoingRequest, Recipient, Requests},

@@ -169,7 +169,7 @@ where
 	}
 
 	async fn is_major_syncing(&self) -> RelayChainResult<bool> {
-		let mut network = self.sync_oracle.lock();
+		let network = self.sync_oracle.lock();
 		Ok(network.is_major_syncing())
 	}
 
@@ -410,11 +410,11 @@ mod tests {
 	struct DummyNetwork {}
 
 	impl SyncOracle for DummyNetwork {
-		fn is_major_syncing(&mut self) -> bool {
+		fn is_major_syncing(&self) -> bool {
 			unimplemented!("Not needed for test")
 		}
 
-		fn is_offline(&mut self) -> bool {
+		fn is_offline(&self) -> bool {
 			unimplemented!("Not needed for test")
 		}
 	}

@@ -28,12 +28,13 @@ use sc_network::{
 	config::{NetworkConfiguration, TransportConfig},
 	multiaddr,
 };
+use sc_network_common::service::NetworkStateInfo;
 use sc_service::{
 	config::{
 		DatabaseSource, KeystoreConfig, MultiaddrWithPeerId, WasmExecutionMethod,
 		WasmtimeInstantiationStrategy,
 	},
-	BasePath, Configuration, KeepBlocks, Role, RpcHandlers, TaskManager,
+	BasePath, BlocksPruning, Configuration, Role, RpcHandlers, TaskManager,
 };
 use selendra_node_primitives::{CollationGenerationConfig, CollatorFn};
 use selendra_node_subsystem::messages::{CollationGenerationMessage, CollatorProtocolMessage};
@@ -178,7 +179,7 @@ pub fn node_config(
 		state_cache_size: 16777216,
 		state_cache_child_ratio: None,
 		state_pruning: Default::default(),
-		keep_blocks: KeepBlocks::All,
+		blocks_pruning: BlocksPruning::All,
 		chain_spec: Box::new(spec),
 		wasm_method: WasmExecutionMethod::Compiled {
 			instantiation_strategy: WasmtimeInstantiationStrategy::PoolingCopyOnWrite,
