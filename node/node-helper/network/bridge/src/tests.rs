@@ -232,7 +232,7 @@ impl TestSyncOracleHandle {
 }
 
 impl SyncOracle for TestSyncOracle {
-	fn is_major_syncing(&mut self) -> bool {
+	fn is_major_syncing(&self) -> bool {
 		let is_major_syncing = self.flag.load(Ordering::SeqCst);
 
 		if !is_major_syncing {
@@ -244,7 +244,7 @@ impl SyncOracle for TestSyncOracle {
 		is_major_syncing
 	}
 
-	fn is_offline(&mut self) -> bool {
+	fn is_offline(&self) -> bool {
 		unimplemented!("not used in network bridge")
 	}
 }
