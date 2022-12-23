@@ -9,7 +9,7 @@ futures = "0.3.21"
 hex = "0.4.3"
 rand = "0.8.5"
 tempfile = "3.2.0"
-tokio = "1.18.2"
+tokio = "1.19.2"
 
 # Substrate dependencies
 sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
@@ -59,7 +59,7 @@ test-runtime-constants = { path = "../runtime/constants" }
 
 [dev-dependencies]
 serde_json = "1.0.81"
-tokio = { version = "1.18.2", features = ["macros"] }
+tokio = { version = "1.19.2", features = ["macros"] }
 pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.28" }
 substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 

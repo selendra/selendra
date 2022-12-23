@@ -25,7 +25,7 @@ selendra-node-primitives = { path = "../../primitives" }
 gum = { package = "tracing-gum", path = "../../gum" }
 
 [dev-dependencies]
-async-trait = "0.1.53"
+async-trait = "0.1.60"
 futures-timer = "3.0.2"
 assert_matches = "1.4.0"
 lazy_static = "1.4.0"

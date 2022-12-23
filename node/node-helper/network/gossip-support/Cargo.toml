@@ -23,7 +23,7 @@ gum = { package = "tracing-gum", path = "../../gum" }
 
 [dev-dependencies]
 assert_matches = "1.4.0"
-async-trait = "0.1.53"
+async-trait = "0.1.60"
 lazy_static = "1.4.0"
 
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
