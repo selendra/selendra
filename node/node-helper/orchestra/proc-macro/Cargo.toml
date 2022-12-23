@@ -25,7 +25,7 @@ itertools = { version = "0.10.3" }
 assert_matches = "1.5"
 orchestra = { path = "../" }
 thiserror = "1"
-tracing = "0.1"
+tracing = "0.1.35"
 
 [features]
 default = [] # enable "graph" by default, blocked by <https://github.com/paritytech/ci_cd/issues/433>
