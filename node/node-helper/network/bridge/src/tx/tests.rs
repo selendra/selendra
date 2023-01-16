@@ -28,11 +28,12 @@ use node_subsystem_test_helpers::TestSubsystemContextHandle;
 use primitives_test_helpers::dummy_collator_signature;
 use sc_network::Multiaddr;
 use selendra_node_network_protocol::{
-	request_response::outgoing::Requests, ObservedRole, Versioned,
+	request_response::{outgoing::Requests, ReqProtocolNames},
+	ObservedRole, Versioned,
 };
 use selendra_node_subsystem::{FromOrchestra, OverseerSignal};
 use selendra_node_subsystem_util::metered;
-use selendra_primitives::v2::AuthorityDiscoveryId;
+use selendra_primitives::v2::{AuthorityDiscoveryId, Hash};
 use sp_keyring::Sr25519Keyring;
 
 const TIMEOUT: std::time::Duration =
@@ -105,6 +106,7 @@ impl Network for TestNetwork {
 		&self,
 		_: &mut AD,
 		_: Requests,
+		_: &ReqProtocolNames,
 		_: IfDisconnected,
 	) {
 	}
@@ -182,7 +184,10 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(test: impl FnOnce(TestHarne
 
 	let (context, virtual_overseer) = node_subsystem_test_helpers::make_subsystem_context(pool);
 
-	let bridge_out = NetworkBridgeTx::new(network, discovery, Metrics(None));
+	let genesis_hash = Hash::repeat_byte(0xff);
+	let protocol_names = ReqProtocolNames::new(genesis_hash, None);
+
+	let bridge_out = NetworkBridgeTx::new(network, discovery, Metrics(None), protocol_names);
 
 	let network_bridge_out_fut = run_network_out(bridge_out, context)
 		.map_err(|e| panic!("bridge-out subsystem execution failed {:?}", e))

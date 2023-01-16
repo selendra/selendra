@@ -22,10 +22,10 @@ static EXTRINSICS: [(&str, &str); 2] = [("system", "remark"), ("balances", "tran
 /// `benchmark extrinsic` works for all dev runtimes and some extrinsics.
 #[test]
 fn benchmark_extrinsic_works() {
-		for (pallet, extrinsic) in EXTRINSICS {
-			let runtime = "selendra-dev";
-			assert!(benchmark_extrinsic(&runtime, pallet, extrinsic).is_ok());
-		}
+	for (pallet, extrinsic) in EXTRINSICS {
+		let runtime = "selendra-dev";
+		assert!(benchmark_extrinsic(&runtime, pallet, extrinsic).is_ok());
+	}
 }
 
 /// `benchmark extrinsic` rejects all non-dev runtimes.

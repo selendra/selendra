@@ -32,7 +32,8 @@ use node_subsystem_test_helpers::{SingleItemSink, SingleItemStream, TestSubsyste
 use primitives_test_helpers::dummy_collator_signature;
 use sc_network::Multiaddr;
 use selendra_node_network_protocol::{
-	request_response::outgoing::Requests, view, ObservedRole, Versioned,
+	request_response::{outgoing::Requests, ReqProtocolNames},
+	view, ObservedRole, Versioned,
 };
 use selendra_node_subsystem::{
 	jaeger,
@@ -113,6 +114,7 @@ impl Network for TestNetwork {
 		&self,
 		_: &mut AD,
 		_: Requests,
+		_: &ReqProtocolNames,
 		_: IfDisconnected,
 	) {
 	}
