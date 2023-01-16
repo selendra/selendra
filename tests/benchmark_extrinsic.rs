@@ -17,34 +17,27 @@
 use assert_cmd::cargo::cargo_bin;
 use std::{process::Command, result::Result};
 
-static RUNTIMES: [&'static str; 1] = ["selendra"];
-
-static EXTRINSICS: [(&'static str, &'static str); 2] =
-	[("system", "remark"), ("balances", "transfer_keep_alive")];
+static EXTRINSICS: [(&str, &str); 2] = [("system", "remark"), ("balances", "transfer_keep_alive")];
 
 /// `benchmark extrinsic` works for all dev runtimes and some extrinsics.
 #[test]
 fn benchmark_extrinsic_works() {
-	for runtime in RUNTIMES {
 		for (pallet, extrinsic) in EXTRINSICS {
-			let runtime = format!("{}-dev", runtime);
+			let runtime = "selendra-dev";
 			assert!(benchmark_extrinsic(&runtime, pallet, extrinsic).is_ok());
 		}
-	}
 }
 
 /// `benchmark extrinsic` rejects all non-dev runtimes.
 #[test]
 fn benchmark_extrinsic_rejects_non_dev_runtimes() {
-	for runtime in RUNTIMES {
-		assert!(benchmark_extrinsic(runtime, "system", "remark").is_err());
-	}
+	assert!(benchmark_extrinsic("selendra-dev", "system", "remark").is_err());
 }
 
 fn benchmark_extrinsic(runtime: &str, pallet: &str, extrinsic: &str) -> Result<(), String> {
 	let status = Command::new(cargo_bin("selendra"))
-		.args(["benchmark", "extrinsic", "--chain", &runtime])
-		.args(&["--pallet", pallet, "--extrinsic", extrinsic])
+		.args(["benchmark", "extrinsic", "--chain", runtime])
+		.args(["--pallet", pallet, "--extrinsic", extrinsic])
 		// Run with low repeats for faster execution.
 		.args(["--repeat=1", "--warmup=1", "--max-ext-per-block=1"])
 		.status()
