@@ -1,6 +1,6 @@
 [package]
 name = "xcm-builder"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Selendra <info@selendra.org>"]
 description = "Tools & types for building with XCM and its executor."
 edition = "2021"

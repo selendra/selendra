@@ -1,7 +1,7 @@
 
 [package]
 name = "tracing-gum-proc-macro"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Selendra <info@selendra.org>"]
 description = "Generate an overseer including builder pattern and message wrapper from a single annotated struct definition."
 edition = "2021"
