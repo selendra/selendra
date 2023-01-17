@@ -32,7 +32,8 @@ use sc_network::{Event as NetworkEvent, IfDisconnected};
 
 use node_subsystem_test_helpers::{SingleItemSink, SingleItemStream, TestSubsystemContextHandle};
 use selendra_node_network_protocol::{
-	request_response::outgoing::Requests, view, ObservedRole, Versioned,
+	request_response::{outgoing::Requests, ReqProtocolNames},
+	view, ObservedRole, Versioned,
 };
 use selendra_node_subsystem::{
 	jaeger,
@@ -115,6 +116,7 @@ impl Network for TestNetwork {
 		&self,
 		_: &mut AD,
 		_: Requests,
+		_: &ReqProtocolNames,
 		_: IfDisconnected,
 	) {
 	}

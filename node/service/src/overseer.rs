@@ -24,7 +24,9 @@ use selendra_node_core_av_store::Config as AvailabilityConfig;
 use selendra_node_core_candidate_validation::Config as CandidateValidationConfig;
 use selendra_node_core_chain_selection::Config as ChainSelectionConfig;
 use selendra_node_core_dispute_coordinator::Config as DisputeCoordinatorConfig;
-use selendra_node_network_protocol::request_response::{v1 as request_v1, IncomingRequestReceiver};
+use selendra_node_network_protocol::request_response::{
+	v1 as request_v1, IncomingRequestReceiver, ReqProtocolNames,
+};
 #[cfg(any(feature = "malus", test))]
 pub use selendra_overseer::{
 	dummy::{dummy_overseer_builder, DummySubsystem},
@@ -118,6 +120,8 @@ where
 	pub pvf_checker_enabled: bool,
 	/// Overseer channel capacity override.
 	pub overseer_message_channel_capacity_override: Option<usize>,
+	/// Request-response protocol names source.
+	pub req_protocol_names: ReqProtocolNames,
 }
 
 /// Obtain a prepared `OverseerBuilder`, that is initialized
@@ -146,6 +150,7 @@ pub fn prepared_overseer_builder<'a, Spawner, RuntimeClient>(
 		dispute_coordinator_config,
 		pvf_checker_enabled,
 		overseer_message_channel_capacity_override,
+		req_protocol_names,
 	}: OverseerGenArgs<'a, Spawner, RuntimeClient>,
 ) -> Result<
 	InitializedOverseerBuilder<
@@ -200,6 +205,7 @@ where
 			network_service.clone(),
 			authority_discovery_service.clone(),
 			network_bridge_metrics.clone(),
+			req_protocol_names,
 		))
 		.network_bridge_rx(NetworkBridgeRxSubsystem::new(
 			network_service.clone(),
