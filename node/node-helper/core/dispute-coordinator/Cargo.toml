@@ -26,6 +26,7 @@ futures-timer = "3.0.2"
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
 
 test-helpers = { package = "primitives-test-helpers", path = "../../../../tests/test-helpers/primitive" }
 node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }

@@ -187,7 +187,8 @@ impl DisputeSender {
 		// A relay chain head is required as context for receiving session info information from runtime and
 		// storage. We will iterate `active_sessions` to find a suitable head. We assume that there is at
 		// least one active head which, by `session_index`, is at least as recent as the `dispute` passed in.
-		// We need to avoid picking an older one from a session that might not yet exist in storage..
+		// We need to avoid picking an older one from a session that might not yet exist in storage.
+		// Related to <https://github.com/paritytech/selendra/issues/4730> .
 		let ref_head = self
 			.active_sessions
 			.iter()
@@ -230,24 +231,25 @@ impl DisputeSender {
 			Some(votes) => votes,
 		};
 
-		let our_valid_vote = votes.valid.iter().find(|(_, i, _)| *i == our_index);
+		let our_valid_vote = votes.valid.get(&our_index);
 
-		let our_invalid_vote = votes.invalid.iter().find(|(_, i, _)| *i == our_index);
+		let our_invalid_vote = votes.invalid.get(&our_index);
 
 		let (valid_vote, invalid_vote) = if let Some(our_valid_vote) = our_valid_vote {
 			// Get some invalid vote as well:
 			let invalid_vote =
-				votes.invalid.get(0).ok_or(JfyiError::MissingVotesFromCoordinator)?;
-			(our_valid_vote, invalid_vote)
+				votes.invalid.iter().next().ok_or(JfyiError::MissingVotesFromCoordinator)?;
+			((&our_index, our_valid_vote), invalid_vote)
 		} else if let Some(our_invalid_vote) = our_invalid_vote {
 			// Get some valid vote as well:
-			let valid_vote = votes.valid.get(0).ok_or(JfyiError::MissingVotesFromCoordinator)?;
-			(valid_vote, our_invalid_vote)
+			let valid_vote =
+				votes.valid.iter().next().ok_or(JfyiError::MissingVotesFromCoordinator)?;
+			(valid_vote, (&our_index, our_invalid_vote))
 		} else {
 			// There is no vote from us yet - nothing to do.
 			return Ok(())
 		};
-		let (kind, valid_index, signature) = valid_vote;
+		let (valid_index, (kind, signature)) = valid_vote;
 		let valid_public = info
 			.session_info
 			.validators
@@ -262,7 +264,7 @@ impl DisputeSender {
 		)
 		.map_err(|()| JfyiError::InvalidStatementFromCoordinator)?;
 
-		let (kind, invalid_index, signature) = invalid_vote;
+		let (invalid_index, (kind, signature)) = invalid_vote;
 		let invalid_public = info
 			.session_info
 			.validators
