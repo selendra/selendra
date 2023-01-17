@@ -9089,6 +9089,7 @@ dependencies = [
  "selendra-node-subsystem",
  "selendra-node-subsystem-util",
  "selendra-primitives",
+ "sp-application-crypto",
  "sp-core",
  "sp-keyring",
  "sp-keystore",

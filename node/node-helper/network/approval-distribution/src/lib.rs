@@ -13,6 +13,11 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
+//! [`ApprovalDistributionSubsystem`] implementation.
+//!
+//! https://w3f.github.io/parachain-implementers-guide/node/approval/approval-distribution.html
+
+#![warn(missing_docs)]
 
 use futures::{channel::oneshot, FutureExt as _};
 use rand::{CryptoRng, Rng, SeedableRng};
@@ -795,6 +800,7 @@ impl State {
 				AssignmentCheckResult::AcceptedDuplicate => {
 					// "duplicate" assignments aren't necessarily equal.
 					// There is more than one way each validator can be assigned to each core.
+					// cf. https://github.com/paritytech/selendra/pull/2160#discussion_r557628699
 					if let Some(peer_knowledge) = entry.known_by.get_mut(&peer_id) {
 						peer_knowledge.received.insert(message_subject.clone(), message_kind);
 					}
@@ -1201,6 +1207,49 @@ impl State {
 			))
 			.await;
 		}
+	}
+
+	/// Retrieve approval signatures from state for the given relay block/indices:
+	fn get_approval_signatures(
+		&mut self,
+		indices: HashSet<(Hash, CandidateIndex)>,
+	) -> HashMap<ValidatorIndex, ValidatorSignature> {
+		let mut all_sigs = HashMap::new();
+		for (hash, index) in indices {
+			let block_entry = match self.blocks.get(&hash) {
+				None => {
+					gum::debug!(
+						target: LOG_TARGET,
+						?hash,
+						"`get_approval_signatures`: could not find block entry for given hash!"
+					);
+					continue
+				},
+				Some(e) => e,
+			};
+
+			let candidate_entry = match block_entry.candidates.get(index as usize) {
+				None => {
+					gum::debug!(
+						target: LOG_TARGET,
+						?hash,
+						?index,
+						"`get_approval_signatures`: could not find candidate entry for given hash and index!"
+						);
+					continue
+				},
+				Some(e) => e,
+			};
+			let sigs =
+				candidate_entry.messages.iter().filter_map(|(validator_index, message_state)| {
+					match &message_state.approval_state {
+						ApprovalState::Approved(_, sig) => Some((*validator_index, sig.clone())),
+						ApprovalState::Assigned(_) => None,
+					}
+				});
+			all_sigs.extend(sigs);
+		}
+		all_sigs
 	}
 
 	async fn unify_with_peer(
@@ -1673,6 +1722,15 @@ impl ApprovalDistribution {
 				state
 					.import_and_circulate_approval(ctx, metrics, MessageSource::Local, vote)
 					.await;
+			},
+			ApprovalDistributionMessage::GetApprovalSignatures(indices, tx) => {
+				let sigs = state.get_approval_signatures(indices);
+				if let Err(_) = tx.send(sigs) {
+					gum::debug!(
+						target: LOG_TARGET,
+						"Sending back approval signatures failed, oneshot got closed"
+					);
+				}
 			},
 		}
 	}
