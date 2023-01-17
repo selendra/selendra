@@ -46,6 +46,7 @@ use {
 	selendra_node_core_chain_selection::{
 		self as chain_selection_subsystem, Config as ChainSelectionConfig,
 	},
+	selendra_node_core_dispute_coordinator::Config as DisputeCoordinatorConfig,
 	selendra_node_network_protocol::request_response::ReqProtocolNames,
 	selendra_overseer::BlockInfo,
 	sp_core::traits::SpawnNamed,
@@ -776,7 +777,7 @@ where
 	// Note: GrandPa is pushed before the Selendra-specific protocols. This doesn't change
 	// anything in terms of behaviour, but makes the logs more consistent with the other
 	// Substrate nodes.
-	let grandpa_protocol_name = grandpa::protocol_standard_name(&genesis_hash, &config.chain_spec);
+	let grandpa_protocol_name = sc_finality_grandpa::protocol_standard_name(&genesis_hash, &config.chain_spec);
 	config
 		.network
 		.extra_sets

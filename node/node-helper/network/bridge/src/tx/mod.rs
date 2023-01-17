@@ -291,8 +291,6 @@ where
 	N: Network,
 	AD: validator_discovery::AuthorityDiscovery + Clone + Sync,
 {
-	let NetworkBridgeTx { network_service, authority_discovery_service, metrics } = bridge;
-
 	let NetworkBridgeTx {
 		network_service,
 		authority_discovery_service,
