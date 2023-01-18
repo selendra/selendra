@@ -27,7 +27,7 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 
 # Selendra
-selendra-cli = { path = "../../../node/cli" }
+selendra-cli = { path = "../../../node/cli", features = ["cli"] }
 selendra-client = { path = "../../../node/client" }
 selendra-service = { path = "../../../node/service" }
 
