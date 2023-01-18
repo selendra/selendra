@@ -7,9 +7,9 @@ edition = "2021"
 [dependencies]
 futures = "0.3.21"
 
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
-sc-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+sc-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 
 selendra-primitives = { path = "../../../../primitives" }
 selendra-node-subsystem = {path = "../../subsystem" }
@@ -20,7 +20,7 @@ gum = { package = "tracing-gum", path = "../../gum" }
 maplit = "1.0.2"
 parity-scale-codec = "3.1.5"
 futures = { version = "0.3.21", features = ["thread-pool"] }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 
 selendra-node-primitives = { path = "../../primitives" }
 node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }

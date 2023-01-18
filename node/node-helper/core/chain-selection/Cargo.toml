@@ -22,5 +22,5 @@ gum = { package = "tracing-gum", path = "../../gum" }
 parking_lot = "0.12.0"
 assert_matches = "1"
 kvdb-memorydb = "0.11.0"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
