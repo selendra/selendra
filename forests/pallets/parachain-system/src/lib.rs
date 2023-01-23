@@ -269,7 +269,7 @@ pub mod pallet {
 		}
 
 		fn on_initialize(_n: T::BlockNumber) -> Weight {
-			let mut weight = 0;
+			let mut weight = Weight::new();
 
 			// To prevent removing `NewValidationCode` that was set by another `on_initialize`
 			// like for example from scheduler, we only kill the storage entry if it was not yet

@@ -89,7 +89,7 @@ pub mod fee {
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 MILLICENTS:
 			let p = super::currency::MILLICENTS;
-			let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
+			let q = 10 * Balance::from(ExtrinsicBaseWeight::get().ref_time());
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,
 				negative: false,
@@ -123,8 +123,8 @@ mod tests {
 	// This function tests that the fee for `ExtrinsicBaseWeight` of weight is correct
 	fn extrinsic_base_fee_is_correct() {
 		// `ExtrinsicBaseWeight` should cost 1/10 of a MILLICENTS
-		println!("Base: {}", ExtrinsicBaseWeight::get());
-		let x = WeightToFee::weight_to_fee(&ExtrinsicBaseWeight::get());
+		println!("Base: {}", ExtrinsicBaseWeight::get().ref_time());
+		let x = WeightToFee::weight_to_fee(&ExtrinsicBaseWeight::get().ref_time());
 		let y = MILLICENTS / 10;
 		assert!(x.max(y) - x.min(y) < MILLICENTS);
 	}

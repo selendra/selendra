@@ -207,7 +207,7 @@ impl ParaLifecycle {
 
 	/// Returns true if para is currently treated as a parachain.
 	/// This also includes transitioning states, so you may want to combine
-	/// this check with `is_stable` if you specifically want `ParaLifecycle::Parachain`.
+	/// this check with `is_stable` if you specifically want `Paralifecycle::Parachain`.
 	pub fn is_parachain(&self) -> bool {
 		matches!(
 			self,
@@ -219,7 +219,7 @@ impl ParaLifecycle {
 
 	/// Returns true if para is currently treated as a parathread.
 	/// This also includes transitioning states, so you may want to combine
-	/// this check with `is_stable` if you specifically want `ParaLifecycle::Parathread`.
+	/// this check with `is_stable` if you specifically want `Paralifecycle::Parathread`.
 	pub fn is_parathread(&self) -> bool {
 		matches!(
 			self,
@@ -449,7 +449,7 @@ impl WeightInfo for TestWeightInfo {
 	}
 	fn include_pvf_check_statement() -> Weight {
 		// This special value is to distinguish from the finalizing variants above in tests.
-		Weight::MAX - 1
+		Weight::MAX - Weight::from_ref_time(1)
 	}
 }
 
@@ -1372,7 +1372,7 @@ impl<T: Config> Pallet<T> {
 		sessions_observed: SessionIndex,
 		cfg: &configuration::HostConfiguration<T::BlockNumber>,
 	) -> Weight {
-		let mut weight = 0;
+		let mut weight = Weight::zero();
 		for cause in causes {
 			weight += T::DbWeight::get().reads_writes(3, 2);
 			Self::deposit_event(Event::PvfCheckAccepted(*code_hash, cause.para_id()));
@@ -1417,7 +1417,7 @@ impl<T: Config> Pallet<T> {
 		relay_parent_number: T::BlockNumber,
 		cfg: &configuration::HostConfiguration<T::BlockNumber>,
 	) -> Weight {
-		let mut weight = 0;
+		let mut weight = Weight::zero();
 
 		// Compute the relay-chain block number starting at which the code upgrade is ready to be
 		// applied.
@@ -1457,7 +1457,7 @@ impl<T: Config> Pallet<T> {
 		code_hash: &ValidationCodeHash,
 		causes: Vec<PvfCheckCause<T::BlockNumber>>,
 	) -> Weight {
-		let mut weight = 0;
+		let mut weight = Weight::zero();
 
 		for cause in causes {
 			// Whenever PVF pre-checking is started or a new cause is added to it, the RC is bumped.
@@ -1547,7 +1547,8 @@ impl<T: Config> Pallet<T> {
 		// - Empty value is treated as the current code is already inserted during the onboarding.
 		//
 		// This is only an intermediate solution and should be fixed in foreseable future.
-		//8
+		//
+		// [soaking issue]: https://github.com/paritytech/polkadot/issues/3918
 		let validation_code =
 			mem::replace(&mut genesis_data.validation_code, ValidationCode(Vec::new()));
 		UpcomingParasGenesis::<T>::insert(&id, genesis_data);
@@ -1745,7 +1746,7 @@ impl<T: Config> Pallet<T> {
 		code: ValidationCode,
 		cfg: &configuration::HostConfiguration<T::BlockNumber>,
 	) -> Weight {
-		let mut weight = 0;
+		let mut weight = Weight::zero();
 
 		weight += T::DbWeight::get().reads_writes(3, 2);
 		Self::deposit_event(Event::PvfCheckStarted(code_hash, cause.para_id()));
@@ -1844,7 +1845,7 @@ impl<T: Config> Pallet<T> {
 					Self::note_past_code(id, expected_at, now, prior_code_hash)
 				} else {
 					log::error!(target: LOG_TARGET, "Missing prior code hash for para {:?}", &id);
-					0 as Weight
+					Weight::zero()
 				};
 
 				// add 1 to writes due to heads update.
@@ -1894,7 +1895,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Returns whether the given ID refers to a valid para.
 	///
-	/// paras that are onboarding or offboarding are not included.
+	/// Paras that are onboarding or offboarding are not included.
 	pub fn is_valid_para(id: ParaId) -> bool {
 		if let Some(state) = ParaLifecycles::<T>::get(&id) {
 			!state.is_onboarding() && !state.is_offboarding()

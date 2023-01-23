@@ -476,7 +476,7 @@ where
 			client.clone(),
 		);
 
-	let babe_config = sc_consensus_babe::Config::get(&*client)?;
+	let babe_config = sc_consensus_babe::configuration(&*client)?;
 	let (block_import, babe_link) =
 		sc_consensus_babe::block_import(babe_config.clone(), beefy_block_import, client.clone())?;
 

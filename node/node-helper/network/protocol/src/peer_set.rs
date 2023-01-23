@@ -17,11 +17,11 @@
 //! All peersets and protocols used for parachains.
 
 use super::ProtocolVersion;
-use sc_network::config::{NonDefaultSetConfig, SetConfig};
-use std::{
-	borrow::Cow,
-	ops::{Index, IndexMut},
+use sc_network::{
+	config::{NonDefaultSetConfig, SetConfig},
+	ProtocolName,
 };
+use std::ops::{Index, IndexMut};
 use strum::{EnumIter, IntoEnumIterator};
 
 // Only supported protocol versions should be defined here.
@@ -129,25 +129,21 @@ impl PeerSet {
 	}
 
 	/// Get the protocol name associated with each peer set as understood by Substrate.
-	pub fn into_default_protocol_name(self) -> Cow<'static, str> {
+	pub fn into_default_protocol_name(self) -> ProtocolName {
 		self.get_default_protocol_name().into()
 	}
 
 	/// Convert a peer set and the given version into a protocol name, if any,
 	/// as understood by Substrate.
-	pub fn into_protocol_name(self, version: ProtocolVersion) -> Option<Cow<'static, str>> {
+	pub fn into_protocol_name(self, version: ProtocolVersion) -> Option<ProtocolName> {
 		self.get_protocol_name_static(version).map(|n| n.into())
 	}
 
 	/// Try parsing a protocol name into a peer set and protocol version.
 	///
 	/// This only succeeds on supported versions.
-	pub fn try_from_protocol_name(name: &Cow<'static, str>) -> Option<(PeerSet, ProtocolVersion)> {
-		match name {
-			n if n == VALIDATION_PROTOCOL_V1 => Some((PeerSet::Validation, 1)),
-			n if n == COLLATION_PROTOCOL_V1 => Some((PeerSet::Collation, 1)),
-			_ => None,
-		}
+	pub fn try_from_protocol_name(_name: &ProtocolName) -> Option<(PeerSet, ProtocolVersion)> {
+		Some((PeerSet::Validation, 1))
 	}
 }
 

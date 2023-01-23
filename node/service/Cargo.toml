@@ -70,6 +70,7 @@ pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/parityt
 
 # Substrate Other
 frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 
 # Selendra

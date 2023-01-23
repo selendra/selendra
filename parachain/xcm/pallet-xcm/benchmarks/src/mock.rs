@@ -31,7 +31,7 @@ impl xcm_executor::traits::OnResponse for DevNull {
 		false
 	}
 	fn on_response(_: &MultiLocation, _: u64, _: Response, _: Weight) -> Weight {
-		0
+		Weight::zero()
 	}
 }
 

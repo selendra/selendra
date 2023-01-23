@@ -162,16 +162,13 @@ mod tests {
 
 	use async_trait::async_trait;
 	use futures::stream::BoxStream;
-	use sc_network::{Event as NetworkEvent, IfDisconnected};
+	use sc_network::{Event as NetworkEvent, IfDisconnected, ProtocolName};
 	use selendra_node_network_protocol::{
 		request_response::{outgoing::Requests, ReqProtocolNames},
 		PeerId,
 	};
 	use sp_keyring::Sr25519Keyring;
-	use std::{
-		borrow::Cow,
-		collections::{HashMap, HashSet},
-	};
+	use std::collections::{HashMap, HashSet};
 
 	fn new_service() -> Service<TestNetwork, TestAuthorityDiscovery> {
 		Service::new()
@@ -220,18 +217,14 @@ mod tests {
 
 		async fn set_reserved_peers(
 			&mut self,
-			_protocol: Cow<'static, str>,
+			_protocol: ProtocolName,
 			multiaddresses: HashSet<Multiaddr>,
 		) -> Result<(), String> {
 			self.peers_set = extract_peer_ids(multiaddresses.into_iter());
 			Ok(())
 		}
 
-		async fn remove_from_peers_set(
-			&mut self,
-			_protocol: Cow<'static, str>,
-			peers: Vec<PeerId>,
-		) {
+		async fn remove_from_peers_set(&mut self, _protocol: ProtocolName, peers: Vec<PeerId>) {
 			self.peers_set.retain(|elem| !peers.contains(elem));
 		}
 

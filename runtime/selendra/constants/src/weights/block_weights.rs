@@ -54,7 +54,7 @@ parameter_types! {
 	///   99th: 6_168_369
 	///   95th: 5_966_671
 	///   75th: 5_862_198
-	pub const BlockExecutionWeight: Weight = 5_829_138 * WEIGHT_PER_NANOS;
+	pub const BlockExecutionWeight: Weight =  WEIGHT_PER_NANOS.saturating_mul(5_829_138);
 }
 
 #[cfg(test)]
