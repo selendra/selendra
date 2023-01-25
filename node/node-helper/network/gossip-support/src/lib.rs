@@ -22,7 +22,7 @@
 //! which limits the amount of messages sent and received
 //! to be an order of sqrt of the validators. Our neighbors
 //! in this graph will be forwarded to the network bridge with
-//! the `NetworkBridgeTxMessage::NewGossipTopology` message.
+//! the `NetworkBridgeRxMessage::NewGossipTopology` message.
 
 use std::{
 	collections::{HashMap, HashSet},
@@ -45,7 +45,7 @@ use selendra_node_network_protocol::{
 };
 use selendra_node_subsystem::{
 	messages::{
-		GossipSupportMessage, NetworkBridgeRxMessage, NetworkBridgeTxEvent, NetworkBridgeTxMessage,
+		GossipSupportMessage, NetworkBridgeEvent, NetworkBridgeRxMessage, NetworkBridgeTxMessage,
 		RuntimeApiMessage, RuntimeApiRequest,
 	},
 	overseer, ActiveLeavesUpdate, FromOrchestra, OverseerSignal, SpawnedSubsystem, SubsystemError,
@@ -70,7 +70,7 @@ const BACKOFF_DURATION: Duration = Duration::from_secs(5);
 /// Duration after which we consider low connectivity a problem.
 ///
 /// Especially at startup low connectivity is expected (authority discovery cache needs to be
-/// populated). Authority discovery on Selendra takes around 8 minutes, so warning after 10 minutes
+/// populated). Authority discovery on Kusama takes around 8 minutes, so warning after 10 minutes
 /// should be fine:
 ///
 /// https://github.com/paritytech/substrate/blob/fc49802f263529160635471c8a17888846035f5d/client/authority-discovery/src/lib.rs#L88
@@ -294,6 +294,7 @@ where
 
 				// First `maxValidators` entries are the parachain validators. We'll check
 				// if our index is in this set to avoid searching for the keys.
+				// https://github.com/paritytech/selendra/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/parachains/src/configuration.rs#L148
 				if *index < parachain_validators_this_session {
 					gum::trace!(target: LOG_TARGET, "We are now a parachain validator",);
 					self.metrics.on_is_parachain_validator();
@@ -380,9 +381,9 @@ where
 		};
 	}
 
-	fn handle_connect_disconnect(&mut self, ev: NetworkBridgeTxEvent<GossipSupportNetworkMessage>) {
+	fn handle_connect_disconnect(&mut self, ev: NetworkBridgeEvent<GossipSupportNetworkMessage>) {
 		match ev {
-			NetworkBridgeTxEvent::PeerConnected(peer_id, _, _, o_authority) => {
+			NetworkBridgeEvent::PeerConnected(peer_id, _, _, o_authority) => {
 				if let Some(authority_ids) = o_authority {
 					authority_ids.iter().for_each(|a| {
 						self.connected_authorities.insert(a.clone(), peer_id);
@@ -390,7 +391,7 @@ where
 					self.connected_authorities_by_peer_id.insert(peer_id, authority_ids);
 				}
 			},
-			NetworkBridgeTxEvent::PeerDisconnected(peer_id) => {
+			NetworkBridgeEvent::PeerDisconnected(peer_id) => {
 				if let Some(authority_ids) = self.connected_authorities_by_peer_id.remove(&peer_id)
 				{
 					authority_ids.into_iter().for_each(|a| {
@@ -398,10 +399,10 @@ where
 					});
 				}
 			},
-			NetworkBridgeTxEvent::OurViewChange(_) => {},
-			NetworkBridgeTxEvent::PeerViewChange(_, _) => {},
-			NetworkBridgeTxEvent::NewGossipTopology { .. } => {},
-			NetworkBridgeTxEvent::PeerMessage(_, Versioned::V1(v)) => {
+			NetworkBridgeEvent::OurViewChange(_) => {},
+			NetworkBridgeEvent::PeerViewChange(_, _) => {},
+			NetworkBridgeEvent::NewGossipTopology { .. } => {},
+			NetworkBridgeEvent::PeerMessage(_, Versioned::V1(v)) => {
 				match v {};
 			},
 		}
@@ -419,6 +420,7 @@ where
 			.filter(|(a, _)| !self.connected_authorities.contains_key(a));
 		// TODO: Make that warning once connectivity issues are fixed (no point in warning, if
 		// we already know it is broken.
+		// https://github.com/paritytech/selendra/issues/3921
 		if connected_ratio <= LOW_CONNECTIVITY_WARN_THRESHOLD {
 			gum::debug!(
 				target: LOG_TARGET,
@@ -491,7 +493,6 @@ async fn remove_all_controlled(
 /// but formed randomly via BABE randomness from two epochs ago.
 /// This limits the amount of gossip peers to 2 * `sqrt(len)` and ensures the diameter of 2.
 ///
-/// [web3]: https://research.web3.foundation/en/latest/polkadot/networking/3-avail-valid.html#topology
 async fn update_gossip_topology(
 	sender: &mut impl overseer::GossipSupportSenderTrait,
 	our_index: usize,

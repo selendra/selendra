@@ -16,6 +16,10 @@
 
 //! The Network Bridge Subsystem - protocol multiplexer for Selendra.
 
+//! The Network Bridge Subsystem - protocol multiplexer for Selendra.
+//!
+//! Split into incoming (`..In`) and outgoing (`..Out`) subsystems.
+
 #![deny(unused_crate_dependencies)]
 #![warn(missing_docs)]
 
@@ -26,7 +30,8 @@ use parking_lot::Mutex;
 use sp_consensus::SyncOracle;
 
 use selendra_node_network_protocol::{
-	peer_set::PeerSet, PeerId, ProtocolVersion, UnifiedReputationChange as Rep, View,
+	peer_set::{PeerSet, ProtocolVersion},
+	PeerId, UnifiedReputationChange as Rep, View,
 };
 
 /// Peer set info for network initialization.

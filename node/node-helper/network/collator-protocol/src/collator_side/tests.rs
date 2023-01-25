@@ -29,10 +29,9 @@ use sp_core::crypto::Pair;
 use sp_keyring::Sr25519Keyring;
 use sp_runtime::traits::AppVerify;
 
-use node_subsystem_test_helpers as test_helpers;
-use primitives_test_helpers::TestCandidateBuilder;
 use selendra_node_network_protocol::{
 	our_view,
+	peer_set::CollationVersion,
 	request_response::{IncomingRequest, ReqProtocolNames},
 	view,
 };
@@ -42,11 +41,13 @@ use selendra_node_subsystem::{
 	messages::{AllMessages, RuntimeApiMessage, RuntimeApiRequest},
 	ActivatedLeaf, ActiveLeavesUpdate, LeafStatus,
 };
+use node_subsystem_test_helpers as test_helpers;
 use selendra_node_subsystem_util::TimeoutExt;
 use selendra_primitives::v2::{
 	AuthorityDiscoveryId, CollatorPair, GroupRotationInfo, ScheduledCore, SessionIndex,
 	SessionInfo, ValidatorId, ValidatorIndex,
 };
+use primitives_test_helpers::TestCandidateBuilder;
 
 #[derive(Clone)]
 struct TestState {
@@ -175,7 +176,7 @@ impl TestState {
 
 		overseer_send(
 			virtual_overseer,
-			CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::OurViewChange(
+			CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeEvent::OurViewChange(
 				our_view,
 			)),
 		)
@@ -285,9 +286,9 @@ async fn setup_system(virtual_overseer: &mut VirtualOverseer, test_state: &TestS
 
 	overseer_send(
 		virtual_overseer,
-		CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::OurViewChange(
-			our_view![test_state.relay_parent],
-		)),
+		CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeEvent::OurViewChange(our_view![
+			test_state.relay_parent
+		])),
 	)
 	.await;
 }
@@ -396,10 +397,10 @@ async fn connect_peer(
 ) {
 	overseer_send(
 		virtual_overseer,
-		CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerConnected(
+		CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerConnected(
 			peer.clone(),
 			selendra_node_network_protocol::ObservedRole::Authority,
-			1,
+			CollationVersion::V1.into(),
 			authority_id.map(|v| HashSet::from([v])),
 		)),
 	)
@@ -407,7 +408,7 @@ async fn connect_peer(
 
 	overseer_send(
 		virtual_overseer,
-		CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerViewChange(
+		CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerViewChange(
 			peer,
 			view![],
 		)),
@@ -419,7 +420,7 @@ async fn connect_peer(
 async fn disconnect_peer(virtual_overseer: &mut VirtualOverseer, peer: PeerId) {
 	overseer_send(
 		virtual_overseer,
-		CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerDisconnected(peer)),
+		CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerDisconnected(peer)),
 	)
 	.await;
 }
@@ -493,7 +494,7 @@ async fn send_peer_view_change(
 ) {
 	overseer_send(
 		virtual_overseer,
-		CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerViewChange(
+		CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerViewChange(
 			peer.clone(),
 			View::new(hashes, 0),
 		)),
@@ -636,7 +637,7 @@ fn advertise_and_send_collation() {
 		// Send info about peer's view.
 		overseer_send(
 			&mut virtual_overseer,
-			CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerViewChange(
+			CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerViewChange(
 				peer.clone(),
 				view![test_state.relay_parent],
 			)),
@@ -833,7 +834,7 @@ fn collators_reject_declare_messages() {
 
 		overseer_send(
 			virtual_overseer,
-			CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerMessage(
+			CollatorProtocolMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerMessage(
 				peer.clone(),
 				Versioned::V1(protocol_v1::CollatorProtocolMessage::Declare(
 					collator_pair2.public(),

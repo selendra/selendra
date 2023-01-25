@@ -26,7 +26,7 @@ use selendra_node_primitives::{
 };
 use selendra_node_subsystem_types::{
 	jaeger,
-	messages::{NetworkBridgeTxEvent, RuntimeApiRequest},
+	messages::{NetworkBridgeEvent, RuntimeApiRequest},
 	ActivatedLeaf, LeafStatus,
 };
 use selendra_primitives::v2::{
@@ -829,8 +829,8 @@ fn test_collator_protocol_msg() -> CollatorProtocolMessage {
 	CollatorProtocolMessage::CollateOn(Default::default())
 }
 
-fn test_network_bridge_event<M>() -> NetworkBridgeTxEvent<M> {
-	NetworkBridgeTxEvent::PeerDisconnected(PeerId::random())
+fn test_network_bridge_event<M>() -> NetworkBridgeEvent<M> {
+	NetworkBridgeEvent::PeerDisconnected(PeerId::random())
 }
 
 fn test_statement_distribution_msg() -> StatementDistributionMessage {

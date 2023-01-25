@@ -39,7 +39,7 @@ use selendra_node_primitives::{CollationSecondedSignal, PoV, Statement};
 use selendra_node_subsystem::{
 	jaeger,
 	messages::{
-		CollatorProtocolMessage, NetworkBridgeTxEvent, NetworkBridgeTxMessage, RuntimeApiMessage,
+		CollatorProtocolMessage, NetworkBridgeEvent, NetworkBridgeTxMessage, RuntimeApiMessage,
 	},
 	overseer, FromOrchestra, OverseerSignal, PerLeafSpan,
 };
@@ -70,6 +70,7 @@ const COST_APPARENT_FLOOD: Rep =
 ///
 /// This is to protect from a single slow validator preventing collations from happening.
 ///
+/// For considerations on this value, see: https://github.com/paritytech/selendra/issues/4386
 const MAX_UNSHARED_UPLOAD_TIME: Duration = Duration::from_millis(150);
 
 #[derive(Clone, Default)]
@@ -908,9 +909,9 @@ async fn handle_network_msg<Context>(
 	ctx: &mut Context,
 	runtime: &mut RuntimeInfo,
 	state: &mut State,
-	bridge_message: NetworkBridgeTxEvent<net_protocol::CollatorProtocolMessage>,
+	bridge_message: NetworkBridgeEvent<net_protocol::CollatorProtocolMessage>,
 ) -> Result<()> {
-	use NetworkBridgeTxEvent::*;
+	use NetworkBridgeEvent::*;
 
 	match bridge_message {
 		PeerConnected(peer_id, observed_role, _, maybe_authority) => {

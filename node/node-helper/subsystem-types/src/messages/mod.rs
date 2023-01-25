@@ -56,7 +56,7 @@ use std::{
 
 /// Network events as transmitted to other subsystems, wrapped in their message types.
 pub mod network_bridge_event;
-pub use network_bridge_event::NetworkBridgeTxEvent;
+pub use network_bridge_event::NetworkBridgeEvent;
 
 /// Subsystem messages where each message is always bound to a relay parent.
 pub trait BoundToRelayParent {
@@ -201,7 +201,7 @@ pub enum CollatorProtocolMessage {
 	ReportCollator(CollatorId),
 	/// Get a network bridge update.
 	#[from]
-	NetworkBridgeUpdate(NetworkBridgeTxEvent<net_protocol::CollatorProtocolMessage>),
+	NetworkBridgeUpdate(NetworkBridgeEvent<net_protocol::CollatorProtocolMessage>),
 	/// We recommended a particular candidate to be seconded, but it was invalid; penalize the collator.
 	///
 	/// The hash is the relay parent.
@@ -461,7 +461,7 @@ pub enum BitfieldDistributionMessage {
 
 	/// Event from the network bridge.
 	#[from]
-	NetworkBridgeUpdate(NetworkBridgeTxEvent<net_protocol::BitfieldDistributionMessage>),
+	NetworkBridgeUpdate(NetworkBridgeEvent<net_protocol::BitfieldDistributionMessage>),
 }
 
 impl BitfieldDistributionMessage {
@@ -729,7 +729,7 @@ pub enum StatementDistributionMessage {
 	Share(Hash, SignedFullStatement),
 	/// Event from the network bridge.
 	#[from]
-	NetworkBridgeUpdate(NetworkBridgeTxEvent<net_protocol::StatementDistributionMessage>),
+	NetworkBridgeUpdate(NetworkBridgeEvent<net_protocol::StatementDistributionMessage>),
 }
 
 /// This data becomes intrinsics or extrinsics which should be included in a future relay chain block.
@@ -932,7 +932,7 @@ pub enum ApprovalDistributionMessage {
 	DistributeApproval(IndirectSignedApprovalVote),
 	/// An update from the network bridge.
 	#[from]
-	NetworkBridgeUpdate(NetworkBridgeTxEvent<net_protocol::ApprovalDistributionMessage>),
+	NetworkBridgeUpdate(NetworkBridgeEvent<net_protocol::ApprovalDistributionMessage>),
 
 	/// Get all approval signatures for all chains a candidate appeared in.
 	GetApprovalSignatures(
@@ -946,7 +946,7 @@ pub enum ApprovalDistributionMessage {
 pub enum GossipSupportMessage {
 	/// Dummy constructor, so we can receive networking events.
 	#[from]
-	NetworkBridgeUpdate(NetworkBridgeTxEvent<net_protocol::GossipSupportNetworkMessage>),
+	NetworkBridgeUpdate(NetworkBridgeEvent<net_protocol::GossipSupportNetworkMessage>),
 }
 
 /// PVF checker message.
