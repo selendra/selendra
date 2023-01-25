@@ -13,6 +13,7 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 //! [`ApprovalDistributionSubsystem`] implementation.
 //!
 //! https://w3f.github.io/parachain-implementers-guide/node/approval/approval-distribution.html
@@ -20,7 +21,6 @@
 #![warn(missing_docs)]
 
 use futures::{channel::oneshot, FutureExt as _};
-use rand::{CryptoRng, Rng, SeedableRng};
 use selendra_node_network_protocol::{
 	self as net_protocol,
 	grid_topology::{RandomRouting, RequiredRouting, SessionGridTopologies, SessionGridTopology},
@@ -32,13 +32,14 @@ use selendra_node_primitives::approval::{
 use selendra_node_subsystem::{
 	messages::{
 		ApprovalCheckResult, ApprovalDistributionMessage, ApprovalVotingMessage,
-		AssignmentCheckResult, NetworkBridgeTxEvent, NetworkBridgeTxMessage,
+		AssignmentCheckResult, NetworkBridgeEvent, NetworkBridgeTxMessage,
 	},
 	overseer, ActiveLeavesUpdate, FromOrchestra, OverseerSignal, SpawnedSubsystem, SubsystemError,
 };
 use selendra_primitives::v2::{
 	BlockNumber, CandidateIndex, Hash, SessionIndex, ValidatorIndex, ValidatorSignature,
 };
+use rand::{CryptoRng, Rng, SeedableRng};
 use std::collections::{hash_map, BTreeMap, HashMap, HashSet, VecDeque};
 
 use self::metrics::Metrics;
@@ -325,31 +326,31 @@ impl State {
 		&mut self,
 		ctx: &mut Context,
 		metrics: &Metrics,
-		event: NetworkBridgeTxEvent<net_protocol::ApprovalDistributionMessage>,
+		event: NetworkBridgeEvent<net_protocol::ApprovalDistributionMessage>,
 		rng: &mut (impl CryptoRng + Rng),
 	) {
 		match event {
-			NetworkBridgeTxEvent::PeerConnected(peer_id, role, _, _) => {
+			NetworkBridgeEvent::PeerConnected(peer_id, role, _, _) => {
 				// insert a blank view if none already present
 				gum::trace!(target: LOG_TARGET, ?peer_id, ?role, "Peer connected");
 				self.peer_views.entry(peer_id).or_default();
 			},
-			NetworkBridgeTxEvent::PeerDisconnected(peer_id) => {
+			NetworkBridgeEvent::PeerDisconnected(peer_id) => {
 				gum::trace!(target: LOG_TARGET, ?peer_id, "Peer disconnected");
 				self.peer_views.remove(&peer_id);
 				self.blocks.iter_mut().for_each(|(_hash, entry)| {
 					entry.known_by.remove(&peer_id);
 				})
 			},
-			NetworkBridgeTxEvent::NewGossipTopology(topology) => {
+			NetworkBridgeEvent::NewGossipTopology(topology) => {
 				let session = topology.session;
 				self.handle_new_session_topology(ctx, session, SessionGridTopology::from(topology))
 					.await;
 			},
-			NetworkBridgeTxEvent::PeerViewChange(peer_id, view) => {
+			NetworkBridgeEvent::PeerViewChange(peer_id, view) => {
 				self.handle_peer_view_change(ctx, metrics, peer_id, view, rng).await;
 			},
-			NetworkBridgeTxEvent::OurViewChange(view) => {
+			NetworkBridgeEvent::OurViewChange(view) => {
 				gum::trace!(target: LOG_TARGET, ?view, "Own view change");
 				for head in view.iter() {
 					if !self.blocks.contains_key(head) {
@@ -369,7 +370,7 @@ impl State {
 					live
 				});
 			},
-			NetworkBridgeTxEvent::PeerMessage(peer_id, Versioned::V1(msg)) => {
+			NetworkBridgeEvent::PeerMessage(peer_id, Versioned::V1(msg)) => {
 				self.process_incoming_peer_message(ctx, metrics, peer_id, msg, rng).await;
 			},
 		}

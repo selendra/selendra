@@ -47,7 +47,7 @@ use selendra_node_primitives::{PoV, SignedFullStatement};
 use selendra_node_subsystem::{
 	jaeger,
 	messages::{
-		CandidateBackingMessage, CollatorProtocolMessage, IfDisconnected, NetworkBridgeTxEvent,
+		CandidateBackingMessage, CollatorProtocolMessage, IfDisconnected, NetworkBridgeEvent,
 		NetworkBridgeTxMessage, RuntimeApiMessage,
 	},
 	overseer, FromOrchestra, OverseerSignal, PerLeafSpan, SubsystemSender,
@@ -79,7 +79,7 @@ const BENEFIT_NOTIFY_GOOD: Rep =
 ///
 /// This is to protect from a single slow collator preventing collations from happening.
 ///
-/// With a collation size of 5MB and bandwidth of 500Mbit/s (requirement for Selendra validators),
+/// With a collation size of 5MB and bandwidth of 500Mbit/s (requirement for Kusama validators),
 /// the transfer should be possible within 0.1 seconds. 400 milliseconds should therefore be
 /// plenty, even with multiple heads and should be low enough for later collators to still be able
 /// to finish on time.
@@ -96,6 +96,7 @@ const ACTIVITY_POLL: Duration = Duration::from_millis(10);
 
 // How often to poll collation responses.
 // This is a hack that should be removed in a refactoring.
+// See https://github.com/paritytech/selendra/issues/4182
 const CHECK_COLLATIONS_POLL: Duration = Duration::from_millis(5);
 
 #[derive(Clone, Default)]
@@ -1055,9 +1056,9 @@ async fn handle_network_msg<Context>(
 	ctx: &mut Context,
 	state: &mut State,
 	keystore: &SyncCryptoStorePtr,
-	bridge_message: NetworkBridgeTxEvent<net_protocol::CollatorProtocolMessage>,
+	bridge_message: NetworkBridgeEvent<net_protocol::CollatorProtocolMessage>,
 ) -> Result<()> {
-	use NetworkBridgeTxEvent::*;
+	use NetworkBridgeEvent::*;
 
 	match bridge_message {
 		PeerConnected(peer_id, _role, _version, _) => {
@@ -1369,7 +1370,7 @@ async fn handle_collation_fetched_result<Context>(
 	}
 }
 
-// This issues `NetworkBridgeTx` notifications to disconnect from all inactive peers at the
+// This issues `NetworkBridge` notifications to disconnect from all inactive peers at the
 // earliest possible point. This does not yet clean up any metadata, as that will be done upon
 // receipt of the `PeerDisconnected` event.
 async fn disconnect_inactive_peers(
@@ -1448,6 +1449,8 @@ async fn poll_collation_response(
 					peer_id = ?pending_collation.peer_id,
 					"Request timed out"
 				);
+				// For now we don't want to change reputation on timeout, to mitigate issues like
+				// this: https://github.com/paritytech/selendra/issues/4617
 				CollationFetchResult::Error(None)
 			},
 			Err(RequestError::NetworkError(err)) => {

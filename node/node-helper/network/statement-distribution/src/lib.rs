@@ -39,7 +39,7 @@ use selendra_node_subsystem_util::{self as util, rand, MIN_GOSSIP_PEERS};
 use selendra_node_subsystem::{
 	jaeger,
 	messages::{
-		CandidateBackingMessage, NetworkBridgeTxEvent, NetworkBridgeTxMessage,
+		CandidateBackingMessage, NetworkBridgeEvent, NetworkBridgeTxMessage,
 		StatementDistributionMessage,
 	},
 	overseer, ActiveLeavesUpdate, FromOrchestra, OverseerSignal, PerLeafSpan, SpawnedSubsystem,
@@ -236,6 +236,12 @@ struct PeerRelayParentKnowledge {
 	/// How many large statements this peer already sent us.
 	///
 	/// Flood protection for large statements is rather hard and as soon as we get
+	/// `https://github.com/paritytech/selendra/issues/2979` implemented also no longer necessary.
+	/// Reason: We keep messages around until we fetched the payload, but if a node makes up
+	/// statements and never provides the data, we will keep it around for the slot duration. Not
+	/// even signature checking would help, as the sender, if a validator, can just sign arbitrary
+	/// invalid statements and will not face any consequences as long as it won't provide the
+	/// payload.
 	///
 	/// Quick and temporary fix, only accept `MAX_LARGE_STATEMENTS_PER_SENDER` per connected node.
 	///
@@ -990,7 +996,7 @@ fn is_statement_large(statement: &SignedFullStatement) -> (bool, Option<usize>) 
 
 			// Half max size seems to be a good threshold to start not using notifications:
 			let threshold =
-				PeerSet::Validation.get_info(IsAuthority::Yes).max_notification_size as usize / 2;
+				PeerSet::Validation.get_max_notification_size(IsAuthority::Yes) as usize / 2;
 
 			(size >= threshold, Some(size))
 		},
@@ -1631,7 +1637,7 @@ async fn handle_network_update<Context, R>(
 	recent_outdated_heads: &RecentOutdatedHeads,
 	ctx: &mut Context,
 	req_sender: &mpsc::Sender<RequesterMessage>,
-	update: NetworkBridgeTxEvent<net_protocol::StatementDistributionMessage>,
+	update: NetworkBridgeEvent<net_protocol::StatementDistributionMessage>,
 	metrics: &Metrics,
 	runtime: &mut RuntimeInfo,
 	rng: &mut R,
@@ -1639,7 +1645,7 @@ async fn handle_network_update<Context, R>(
 	R: rand::Rng,
 {
 	match update {
-		NetworkBridgeTxEvent::PeerConnected(peer, role, _, maybe_authority) => {
+		NetworkBridgeEvent::PeerConnected(peer, role, _, maybe_authority) => {
 			gum::trace!(target: LOG_TARGET, ?peer, ?role, "Peer connected");
 			peers.insert(
 				peer,
@@ -1655,7 +1661,7 @@ async fn handle_network_update<Context, R>(
 				});
 			}
 		},
-		NetworkBridgeTxEvent::PeerDisconnected(peer) => {
+		NetworkBridgeEvent::PeerDisconnected(peer) => {
 			gum::trace!(target: LOG_TARGET, ?peer, "Peer disconnected");
 			if let Some(auth_ids) = peers.remove(&peer).and_then(|p| p.maybe_authority) {
 				auth_ids.into_iter().for_each(|a| {
@@ -1663,7 +1669,7 @@ async fn handle_network_update<Context, R>(
 				});
 			}
 		},
-		NetworkBridgeTxEvent::NewGossipTopology(topology) => {
+		NetworkBridgeEvent::NewGossipTopology(topology) => {
 			let _ = metrics.time_network_bridge_update_v1("new_gossip_topology");
 
 			let new_session_index = topology.session;
@@ -1688,7 +1694,7 @@ async fn handle_network_update<Context, R>(
 				}
 			}
 		},
-		NetworkBridgeTxEvent::PeerMessage(peer, Versioned::V1(message)) => {
+		NetworkBridgeEvent::PeerMessage(peer, Versioned::V1(message)) => {
 			handle_incoming_message_and_circulate(
 				peer,
 				topology_storage,
@@ -1704,7 +1710,7 @@ async fn handle_network_update<Context, R>(
 			)
 			.await;
 		},
-		NetworkBridgeTxEvent::PeerViewChange(peer, view) => {
+		NetworkBridgeEvent::PeerViewChange(peer, view) => {
 			let _ = metrics.time_network_bridge_update_v1("peer_view_change");
 			gum::trace!(target: LOG_TARGET, ?peer, ?view, "Peer view change");
 			match peers.get_mut(&peer) {
@@ -1723,7 +1729,7 @@ async fn handle_network_update<Context, R>(
 				None => (),
 			}
 		},
-		NetworkBridgeTxEvent::OurViewChange(_view) => {
+		NetworkBridgeEvent::OurViewChange(_view) => {
 			// handled by `ActiveLeavesUpdate`
 		},
 	}

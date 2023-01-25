@@ -145,7 +145,7 @@ mod test_fees {
 			"can support {} voters in a single block for council elections; total bond {}",
 			voters, cost_dollars,
 		);
-		assert!(cost_dollars > 150_00); // DOLLAR ~ new SEL ~ 10e12
+		assert!(cost_dollars > 5000); // DOLLAR ~ new SEL ~ 10e18
 	}
 
 	#[test]

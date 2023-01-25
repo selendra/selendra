@@ -37,8 +37,8 @@ use selendra_node_subsystem::{
 };
 use selendra_node_subsystem_util::{self as util};
 
-use rand::{CryptoRng, Rng, SeedableRng};
 use selendra_primitives::v2::{Hash, SignedAvailabilityBitfield, SigningContext, ValidatorId};
+use rand::{CryptoRng, Rng, SeedableRng};
 use std::collections::{HashMap, HashSet};
 
 use self::metrics::Metrics;
@@ -561,23 +561,23 @@ async fn handle_network_msg<Context>(
 	ctx: &mut Context,
 	state: &mut ProtocolState,
 	metrics: &Metrics,
-	bridge_message: NetworkBridgeTxEvent<net_protocol::BitfieldDistributionMessage>,
+	bridge_message: NetworkBridgeEvent<net_protocol::BitfieldDistributionMessage>,
 	rng: &mut (impl CryptoRng + Rng),
 ) {
 	let _timer = metrics.time_handle_network_msg();
 
 	match bridge_message {
-		NetworkBridgeTxEvent::PeerConnected(peer, role, _, _) => {
+		NetworkBridgeEvent::PeerConnected(peer, role, _, _) => {
 			gum::trace!(target: LOG_TARGET, ?peer, ?role, "Peer connected");
 			// insert if none already present
 			state.peer_views.entry(peer).or_default();
 		},
-		NetworkBridgeTxEvent::PeerDisconnected(peer) => {
+		NetworkBridgeEvent::PeerDisconnected(peer) => {
 			gum::trace!(target: LOG_TARGET, ?peer, "Peer disconnected");
 			// get rid of superfluous data
 			state.peer_views.remove(&peer);
 		},
-		NetworkBridgeTxEvent::NewGossipTopology(gossip_topology) => {
+		NetworkBridgeEvent::NewGossipTopology(gossip_topology) => {
 			let session_index = gossip_topology.session;
 			let new_topology = SessionGridTopology::from(gossip_topology);
 			let newly_added = new_topology.peers_diff(&new_topology);
@@ -598,15 +598,15 @@ async fn handle_network_msg<Context>(
 				}
 			}
 		},
-		NetworkBridgeTxEvent::PeerViewChange(peerid, new_view) => {
+		NetworkBridgeEvent::PeerViewChange(peerid, new_view) => {
 			gum::trace!(target: LOG_TARGET, ?peerid, ?new_view, "Peer view change");
 			handle_peer_view_change(ctx, state, peerid, new_view, rng).await;
 		},
-		NetworkBridgeTxEvent::OurViewChange(new_view) => {
+		NetworkBridgeEvent::OurViewChange(new_view) => {
 			gum::trace!(target: LOG_TARGET, ?new_view, "Our view change");
 			handle_our_view_change(state, new_view);
 		},
-		NetworkBridgeTxEvent::PeerMessage(remote, Versioned::V1(message)) =>
+		NetworkBridgeEvent::PeerMessage(remote, Versioned::V1(message)) =>
 			process_incoming_peer_message(ctx, state, metrics, remote, message, rng).await,
 	}
 }

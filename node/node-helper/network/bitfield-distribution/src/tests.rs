@@ -19,15 +19,16 @@ use assert_matches::assert_matches;
 use bitvec::bitvec;
 use futures::executor;
 use maplit::hashmap;
-use node_subsystem_test_helpers::make_subsystem_context;
 use rand_chacha::ChaCha12Rng;
 use selendra_node_network_protocol::{
-	grid_topology::SessionBoundGridTopologyStorage, our_view, view, ObservedRole,
+	grid_topology::SessionBoundGridTopologyStorage, our_view, peer_set::ValidationVersion, view,
+	ObservedRole,
 };
 use selendra_node_subsystem::{
 	jaeger,
 	jaeger::{PerLeafSpan, Span},
 };
+use node_subsystem_test_helpers::make_subsystem_context;
 use selendra_node_subsystem_util::TimeoutExt;
 use selendra_primitives::v2::{AvailabilityBitfield, Signed, ValidatorIndex};
 use sp_application_crypto::AppKey;
@@ -210,7 +211,7 @@ fn receive_invalid_signature() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), invalid_msg.into_network_message()),
+			NetworkBridgeEvent::PeerMessage(peer_b.clone(), invalid_msg.into_network_message()),
 			&mut rng,
 		));
 
@@ -221,7 +222,7 @@ fn receive_invalid_signature() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), invalid_msg_2.into_network_message()),
+			NetworkBridgeEvent::PeerMessage(peer_b.clone(), invalid_msg_2.into_network_message()),
 			&mut rng,
 		));
 		// reputation change due to invalid signature
@@ -281,7 +282,7 @@ fn receive_invalid_validator_index() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), msg.into_network_message()),
+			NetworkBridgeEvent::PeerMessage(peer_b.clone(), msg.into_network_message()),
 			&mut rng,
 		));
 
@@ -344,7 +345,7 @@ fn receive_duplicate_messages() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
+			NetworkBridgeEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
 			&mut rng,
 		));
 
@@ -377,7 +378,7 @@ fn receive_duplicate_messages() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeTxEvent::PeerMessage(peer_a.clone(), msg.clone().into_network_message(),),
+			NetworkBridgeEvent::PeerMessage(peer_a.clone(), msg.clone().into_network_message(),),
 			&mut rng,
 		));
 
@@ -396,7 +397,7 @@ fn receive_duplicate_messages() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
+			NetworkBridgeEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
 			&mut rng,
 		));
 
@@ -568,7 +569,12 @@ fn changing_view() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeTxEvent::PeerConnected(peer_b.clone(), ObservedRole::Full, 1, None),
+			NetworkBridgeEvent::PeerConnected(
+				peer_b.clone(),
+				ObservedRole::Full,
+				ValidationVersion::V1.into(),
+				None
+			),
 			&mut rng,
 		));
 
@@ -577,7 +583,7 @@ fn changing_view() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeTxEvent::PeerViewChange(peer_b.clone(), view![hash_a, hash_b]),
+			NetworkBridgeEvent::PeerViewChange(peer_b.clone(), view![hash_a, hash_b]),
 			&mut rng,
 		));
 
@@ -588,7 +594,7 @@ fn changing_view() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
+			NetworkBridgeEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
 			&mut rng,
 		));
 
@@ -619,7 +625,7 @@ fn changing_view() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeTxEvent::PeerViewChange(peer_b.clone(), view![]),
+			NetworkBridgeEvent::PeerViewChange(peer_b.clone(), view![]),
 			&mut rng,
 		));
 
@@ -632,7 +638,7 @@ fn changing_view() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
+			NetworkBridgeEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
 			&mut rng,
 		));
 
@@ -651,7 +657,7 @@ fn changing_view() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeTxEvent::PeerDisconnected(peer_b.clone()),
+			NetworkBridgeEvent::PeerDisconnected(peer_b.clone()),
 			&mut rng,
 		));
 
@@ -664,7 +670,7 @@ fn changing_view() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeTxEvent::PeerMessage(peer_a.clone(), msg.clone().into_network_message(),),
+			NetworkBridgeEvent::PeerMessage(peer_a.clone(), msg.clone().into_network_message(),),
 			&mut rng,
 		));
 
@@ -728,7 +734,7 @@ fn do_not_send_message_back_to_origin() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeTxEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
+			NetworkBridgeEvent::PeerMessage(peer_b.clone(), msg.clone().into_network_message(),),
 			&mut rng,
 		));
 
@@ -834,10 +840,7 @@ fn topology_test() {
 			&mut ctx,
 			&mut state,
 			&Default::default(),
-			NetworkBridgeTxEvent::PeerMessage(
-				peers_x[0].clone(),
-				msg.clone().into_network_message(),
-			),
+			NetworkBridgeEvent::PeerMessage(peers_x[0].clone(), msg.clone().into_network_message(),),
 			&mut rng,
 		));
 

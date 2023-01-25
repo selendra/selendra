@@ -27,9 +27,11 @@ use sp_consensus::SyncOracle;
 
 use selendra_node_network_protocol::{
 	self as net_protocol,
-	peer_set::{PeerSet, PerPeerSet},
-	v1 as protocol_v1, ObservedRole, OurView, PeerId, ProtocolVersion,
-	UnifiedReputationChange as Rep, View,
+	peer_set::{
+		CollationVersion, PeerSet, PeerSetProtocolNames, PerPeerSet, ProtocolVersion,
+		ValidationVersion,
+	},
+	v1 as protocol_v1, ObservedRole, OurView, PeerId, UnifiedReputationChange as Rep, View,
 };
 
 use selendra_node_subsystem::{
@@ -37,7 +39,7 @@ use selendra_node_subsystem::{
 	messages::{
 		network_bridge_event::{NewGossipTopology, TopologyPeerInfo},
 		ApprovalDistributionMessage, BitfieldDistributionMessage, CollatorProtocolMessage,
-		GossipSupportMessage, NetworkBridgeRxMessage, NetworkBridgeTxEvent,
+		GossipSupportMessage, NetworkBridgeEvent, NetworkBridgeRxMessage,
 		StatementDistributionMessage,
 	},
 	overseer, ActivatedLeaf, ActiveLeavesUpdate, FromOrchestra, OverseerSignal, SpawnedSubsystem,
@@ -80,6 +82,7 @@ pub struct NetworkBridgeRx<N, AD> {
 	sync_oracle: Box<dyn SyncOracle + Send>,
 	shared: Shared,
 	metrics: Metrics,
+	peerset_protocol_names: PeerSetProtocolNames,
 }
 
 impl<N, AD> NetworkBridgeRx<N, AD> {
@@ -92,9 +95,17 @@ impl<N, AD> NetworkBridgeRx<N, AD> {
 		authority_discovery_service: AD,
 		sync_oracle: Box<dyn SyncOracle + Send>,
 		metrics: Metrics,
+		peerset_protocol_names: PeerSetProtocolNames,
 	) -> Self {
 		let shared = Shared::default();
-		Self { network_service, authority_discovery_service, sync_oracle, shared, metrics }
+		Self {
+			network_service,
+			authority_discovery_service,
+			sync_oracle,
+			shared,
+			metrics,
+			peerset_protocol_names,
+		}
 	}
 }
 
@@ -147,6 +158,7 @@ async fn handle_network_messages<AD>(
 	mut authority_discovery_service: AD,
 	metrics: Metrics,
 	shared: Shared,
+	peerset_protocol_names: PeerSetProtocolNames,
 ) -> Result<(), Error>
 where
 	AD: validator_discovery::AuthorityDiscovery + Send,
@@ -166,13 +178,14 @@ where
 			}) => {
 				let role = ObservedRole::from(role);
 				let (peer_set, version) = {
-					let (peer_set, version) = match PeerSet::try_from_protocol_name(&protocol) {
-						None => continue,
-						Some(p) => p,
-					};
+					let (peer_set, version) =
+						match peerset_protocol_names.try_get_protocol(&protocol) {
+							None => continue,
+							Some(p) => p,
+						};
 
 					if let Some(fallback) = negotiated_fallback {
-						match PeerSet::try_from_protocol_name(&fallback) {
+						match peerset_protocol_names.try_get_protocol(&fallback) {
 							None => {
 								gum::debug!(
 									target: LOG_TARGET,
@@ -210,7 +223,7 @@ where
 					target: LOG_TARGET,
 					action = "PeerConnected",
 					peer_set = ?peer_set,
-					version,
+					version = %version,
 					peer = ?peer,
 					role = ?role
 				);
@@ -242,13 +255,13 @@ where
 					PeerSet::Validation => {
 						dispatch_validation_events_to_all(
 							vec![
-								NetworkBridgeTxEvent::PeerConnected(
+								NetworkBridgeEvent::PeerConnected(
 									peer.clone(),
 									role,
-									1,
+									version,
 									maybe_authority,
 								),
-								NetworkBridgeTxEvent::PeerViewChange(peer.clone(), View::default()),
+								NetworkBridgeEvent::PeerViewChange(peer.clone(), View::default()),
 							],
 							&mut sender,
 						)
@@ -259,6 +272,7 @@ where
 							vec![peer],
 							PeerSet::Validation,
 							version,
+							&peerset_protocol_names,
 							WireMessage::<protocol_v1::ValidationProtocol>::ViewUpdate(local_view),
 							&metrics,
 						);
@@ -266,13 +280,13 @@ where
 					PeerSet::Collation => {
 						dispatch_collation_events_to_all(
 							vec![
-								NetworkBridgeTxEvent::PeerConnected(
+								NetworkBridgeEvent::PeerConnected(
 									peer.clone(),
 									role,
-									1,
+									version,
 									maybe_authority,
 								),
-								NetworkBridgeTxEvent::PeerViewChange(peer.clone(), View::default()),
+								NetworkBridgeEvent::PeerViewChange(peer.clone(), View::default()),
 							],
 							&mut sender,
 						)
@@ -283,6 +297,7 @@ where
 							vec![peer],
 							PeerSet::Collation,
 							version,
+							&peerset_protocol_names,
 							WireMessage::<protocol_v1::CollationProtocol>::ViewUpdate(local_view),
 							&metrics,
 						);
@@ -290,7 +305,7 @@ where
 				}
 			},
 			Some(NetworkEvent::NotificationStreamClosed { remote: peer, protocol }) => {
-				let (peer_set, version) = match PeerSet::try_from_protocol_name(&protocol) {
+				let (peer_set, version) = match peerset_protocol_names.try_get_protocol(&protocol) {
 					None => continue,
 					Some(peer_set) => peer_set,
 				};
@@ -317,17 +332,17 @@ where
 					w
 				};
 
-				if was_connected && version == peer_set.get_default_version() {
+				if was_connected && version == peer_set.get_main_version() {
 					match peer_set {
 						PeerSet::Validation =>
 							dispatch_validation_event_to_all(
-								NetworkBridgeTxEvent::PeerDisconnected(peer),
+								NetworkBridgeEvent::PeerDisconnected(peer),
 								&mut sender,
 							)
 							.await,
 						PeerSet::Collation =>
 							dispatch_collation_event_to_all(
-								NetworkBridgeTxEvent::PeerDisconnected(peer),
+								NetworkBridgeEvent::PeerDisconnected(peer),
 								&mut sender,
 							)
 							.await,
@@ -355,7 +370,8 @@ where
 					.filter_map(|(protocol, msg_bytes)| {
 						// version doesn't matter because we always receive on the 'correct'
 						// protocol name, not the negotiated fallback.
-						let (peer_set, _version) = PeerSet::try_from_protocol_name(protocol)?;
+						let (peer_set, _version) =
+							peerset_protocol_names.try_get_protocol(protocol)?;
 						if peer_set == PeerSet::Validation {
 							if expected_versions[PeerSet::Validation].is_none() {
 								return Some(Err(UNCONNECTED_PEERSET_COST))
@@ -384,7 +400,8 @@ where
 					.filter_map(|(protocol, msg_bytes)| {
 						// version doesn't matter because we always receive on the 'correct'
 						// protocol name, not the negotiated fallback.
-						let (peer_set, _version) = PeerSet::try_from_protocol_name(protocol)?;
+						let (peer_set, _version) =
+							peerset_protocol_names.try_get_protocol(protocol)?;
 
 						if peer_set == PeerSet::Collation {
 							if expected_versions[PeerSet::Collation].is_none() {
@@ -422,7 +439,9 @@ where
 
 				if !v_messages.is_empty() {
 					let (events, reports) =
-						if expected_versions[PeerSet::Validation] == Some(1) {
+						if expected_versions[PeerSet::Validation] ==
+							Some(ValidationVersion::V1.into())
+						{
 							handle_v1_peer_messages::<protocol_v1::ValidationProtocol, _>(
 								remote.clone(),
 								PeerSet::Validation,
@@ -453,7 +472,9 @@ where
 
 				if !c_messages.is_empty() {
 					let (events, reports) =
-						if expected_versions[PeerSet::Collation] == Some(1) {
+						if expected_versions[PeerSet::Collation] ==
+							Some(CollationVersion::V1.into())
+						{
 							handle_v1_peer_messages::<protocol_v1::CollationProtocol, _>(
 								remote.clone(),
 								PeerSet::Collation,
@@ -494,6 +515,7 @@ async fn run_incoming_orchestra_signals<Context, N, AD>(
 	shared: Shared,
 	sync_oracle: Box<dyn SyncOracle + Send>,
 	metrics: Metrics,
+	peerset_protocol_names: PeerSetProtocolNames,
 ) -> Result<(), Error>
 where
 	N: Network,
@@ -529,7 +551,7 @@ where
 					update_gossip_peers_1d(&mut authority_discovery_service, our_neighbors_y).await;
 
 				dispatch_validation_event_to_all_unbounded(
-					NetworkBridgeTxEvent::NewGossipTopology(NewGossipTopology {
+					NetworkBridgeEvent::NewGossipTopology(NewGossipTopology {
 						session,
 						our_neighbors_x: gossip_peers_x,
 						our_neighbors_y: gossip_peers_y,
@@ -574,6 +596,7 @@ where
 							&shared,
 							finalized_number,
 							&metrics,
+							&peerset_protocol_names,
 						);
 					}
 				}
@@ -619,6 +642,7 @@ where
 		metrics,
 		sync_oracle,
 		shared,
+		peerset_protocol_names,
 	} = bridge;
 
 	let (task, network_event_handler) = handle_network_messages(
@@ -628,6 +652,7 @@ where
 		authority_discovery_service.clone(),
 		metrics.clone(),
 		shared.clone(),
+		peerset_protocol_names.clone(),
 	)
 	.remote_handle();
 
@@ -641,6 +666,7 @@ where
 		shared,
 		sync_oracle,
 		metrics,
+		peerset_protocol_names,
 	);
 
 	futures::pin_mut!(orchestra_signal_handler);
@@ -667,6 +693,7 @@ fn update_our_view<Net, Context>(
 	shared: &Shared,
 	finalized_number: BlockNumber,
 	metrics: &Metrics,
+	peerset_protocol_names: &PeerSetProtocolNames,
 ) where
 	Net: Network,
 {
@@ -700,11 +727,18 @@ fn update_our_view<Net, Context>(
 	send_validation_message_v1(
 		net,
 		validation_peers,
+		peerset_protocol_names,
 		WireMessage::ViewUpdate(new_view.clone()),
 		metrics,
 	);
 
-	send_collation_message_v1(net, collation_peers, WireMessage::ViewUpdate(new_view), metrics);
+	send_collation_message_v1(
+		net,
+		collation_peers,
+		peerset_protocol_names,
+		WireMessage::ViewUpdate(new_view),
+		metrics,
+	);
 
 	let our_view = OurView::new(
 		live_heads.iter().take(MAX_VIEW_HEADS).cloned().map(|a| (a.hash, a.span)),
@@ -712,12 +746,12 @@ fn update_our_view<Net, Context>(
 	);
 
 	dispatch_validation_event_to_all_unbounded(
-		NetworkBridgeTxEvent::OurViewChange(our_view.clone()),
+		NetworkBridgeEvent::OurViewChange(our_view.clone()),
 		ctx.sender(),
 	);
 
 	dispatch_collation_event_to_all_unbounded(
-		NetworkBridgeTxEvent::OurViewChange(our_view),
+		NetworkBridgeEvent::OurViewChange(our_view),
 		ctx.sender(),
 	);
 }
@@ -730,7 +764,7 @@ fn handle_v1_peer_messages<RawMessage: Decode, OutMessage: From<RawMessage>>(
 	peers: &mut HashMap<PeerId, PeerData>,
 	messages: Vec<Bytes>,
 	metrics: &Metrics,
-) -> (Vec<NetworkBridgeTxEvent<OutMessage>>, Vec<Rep>) {
+) -> (Vec<NetworkBridgeEvent<OutMessage>>, Vec<Rep>) {
 	let peer_data = match peers.get_mut(&peer) {
 		None => return (Vec::new(), vec![UNCONNECTED_PEERSET_COST]),
 		Some(d) => d,
@@ -764,11 +798,11 @@ fn handle_v1_peer_messages<RawMessage: Decode, OutMessage: From<RawMessage>>(
 				} else {
 					peer_data.view = new_view;
 
-					NetworkBridgeTxEvent::PeerViewChange(peer.clone(), peer_data.view.clone())
+					NetworkBridgeEvent::PeerViewChange(peer.clone(), peer_data.view.clone())
 				}
 			},
 			WireMessage::ProtocolMessage(message) =>
-				NetworkBridgeTxEvent::PeerMessage(peer.clone(), message.into()),
+				NetworkBridgeEvent::PeerMessage(peer.clone(), message.into()),
 		})
 	}
 
@@ -778,37 +812,55 @@ fn handle_v1_peer_messages<RawMessage: Decode, OutMessage: From<RawMessage>>(
 fn send_validation_message_v1(
 	net: &mut impl Network,
 	peers: Vec<PeerId>,
+	peerset_protocol_names: &PeerSetProtocolNames,
 	message: WireMessage<protocol_v1::ValidationProtocol>,
 	metrics: &Metrics,
 ) {
-	send_message(net, peers, PeerSet::Validation, 1, message, metrics);
+	send_message(
+		net,
+		peers,
+		PeerSet::Validation,
+		ValidationVersion::V1.into(),
+		peerset_protocol_names,
+		message,
+		metrics,
+	);
 }
 
 fn send_collation_message_v1(
 	net: &mut impl Network,
 	peers: Vec<PeerId>,
+	peerset_protocol_names: &PeerSetProtocolNames,
 	message: WireMessage<protocol_v1::CollationProtocol>,
 	metrics: &Metrics,
 ) {
-	send_message(net, peers, PeerSet::Collation, 1, message, metrics)
+	send_message(
+		net,
+		peers,
+		PeerSet::Collation,
+		CollationVersion::V1.into(),
+		peerset_protocol_names,
+		message,
+		metrics,
+	);
 }
 
 async fn dispatch_validation_event_to_all(
-	event: NetworkBridgeTxEvent<net_protocol::VersionedValidationProtocol>,
+	event: NetworkBridgeEvent<net_protocol::VersionedValidationProtocol>,
 	ctx: &mut impl overseer::NetworkBridgeRxSenderTrait,
 ) {
 	dispatch_validation_events_to_all(std::iter::once(event), ctx).await
 }
 
 async fn dispatch_collation_event_to_all(
-	event: NetworkBridgeTxEvent<net_protocol::VersionedCollationProtocol>,
+	event: NetworkBridgeEvent<net_protocol::VersionedCollationProtocol>,
 	ctx: &mut impl overseer::NetworkBridgeRxSenderTrait,
 ) {
 	dispatch_collation_events_to_all(std::iter::once(event), ctx).await
 }
 
 fn dispatch_validation_event_to_all_unbounded(
-	event: NetworkBridgeTxEvent<net_protocol::VersionedValidationProtocol>,
+	event: NetworkBridgeEvent<net_protocol::VersionedValidationProtocol>,
 	sender: &mut impl overseer::NetworkBridgeRxSenderTrait,
 ) {
 	event
@@ -834,7 +886,7 @@ fn dispatch_validation_event_to_all_unbounded(
 }
 
 fn dispatch_collation_event_to_all_unbounded(
-	event: NetworkBridgeTxEvent<net_protocol::VersionedCollationProtocol>,
+	event: NetworkBridgeEvent<net_protocol::VersionedCollationProtocol>,
 	sender: &mut impl overseer::NetworkBridgeRxSenderTrait,
 ) {
 	if let Ok(msg) = event.focus() {
@@ -846,7 +898,7 @@ async fn dispatch_validation_events_to_all<I>(
 	events: I,
 	sender: &mut impl overseer::NetworkBridgeRxSenderTrait,
 ) where
-	I: IntoIterator<Item = NetworkBridgeTxEvent<net_protocol::VersionedValidationProtocol>>,
+	I: IntoIterator<Item = NetworkBridgeEvent<net_protocol::VersionedValidationProtocol>>,
 	I::IntoIter: Send,
 {
 	for event in events {
@@ -863,10 +915,10 @@ async fn dispatch_collation_events_to_all<I>(
 	events: I,
 	ctx: &mut impl overseer::NetworkBridgeRxSenderTrait,
 ) where
-	I: IntoIterator<Item = NetworkBridgeTxEvent<net_protocol::VersionedCollationProtocol>>,
+	I: IntoIterator<Item = NetworkBridgeEvent<net_protocol::VersionedCollationProtocol>>,
 	I::IntoIter: Send,
 {
-	let messages_for = |event: NetworkBridgeTxEvent<net_protocol::VersionedCollationProtocol>| {
+	let messages_for = |event: NetworkBridgeEvent<net_protocol::VersionedCollationProtocol>| {
 		event.focus().ok().map(|m| CollatorProtocolMessage::NetworkBridgeUpdate(m))
 	};
 

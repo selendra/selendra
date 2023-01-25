@@ -17,13 +17,13 @@
 use super::*;
 use assert_matches::assert_matches;
 use futures::{executor, future, Future};
-use node_subsystem_test_helpers as test_helpers;
 use rand::SeedableRng;
-use selendra_node_network_protocol::{our_view, view, ObservedRole};
+use selendra_node_network_protocol::{our_view, peer_set::ValidationVersion, view, ObservedRole};
 use selendra_node_primitives::approval::{
 	AssignmentCertKind, VRFOutput, VRFProof, RELAY_VRF_MODULO_CONTEXT,
 };
 use selendra_node_subsystem::messages::{network_bridge_event, AllMessages, ApprovalCheckError};
+use node_subsystem_test_helpers as test_helpers;
 use selendra_node_subsystem_util::TimeoutExt as _;
 use selendra_primitives::v2::{AuthorityDiscoveryId, BlakeTwo256, HashT};
 use sp_authority_discovery::AuthorityPair as AuthorityDiscoveryPair;
@@ -157,7 +157,7 @@ async fn setup_gossip_topology(
 ) {
 	overseer_send(
 		virtual_overseer,
-		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::NewGossipTopology(
+		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::NewGossipTopology(
 			gossip_topology,
 		)),
 	)
@@ -171,17 +171,17 @@ async fn setup_peer_with_view(
 ) {
 	overseer_send(
 		virtual_overseer,
-		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerConnected(
+		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerConnected(
 			peer_id.clone(),
 			ObservedRole::Full,
-			1,
+			ValidationVersion::V1.into(),
 			None,
 		)),
 	)
 	.await;
 	overseer_send(
 		virtual_overseer,
-		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerViewChange(
+		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerViewChange(
 			peer_id.clone(),
 			view,
 		)),
@@ -196,7 +196,7 @@ async fn send_message_from_peer(
 ) {
 	overseer_send(
 		virtual_overseer,
-		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerMessage(
+		ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerMessage(
 			peer_id.clone(),
 			Versioned::V1(msg),
 		)),
@@ -325,6 +325,8 @@ fn try_import_the_same_assignment() {
 	});
 }
 
+/// <https://github.com/paritytech/selendra/pull/2160#discussion_r547594835>
+///
 /// 1. Send a view update that removes block B from their view.
 /// 2. Send a message from B that they incur `COST_UNEXPECTED_MESSAGE` for,
 ///    but then they receive `BENEFIT_VALID_MESSAGE`.
@@ -389,7 +391,7 @@ fn spam_attack_results_in_negative_reputation_change() {
 		// send a view update that removes block B from peer's view by bumping the finalized_number
 		overseer_send(
 			overseer,
-			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerViewChange(
+			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerViewChange(
 				peer.clone(),
 				View::with_finalized(2),
 			)),
@@ -448,7 +450,7 @@ fn peer_sending_us_the_same_we_just_sent_them_is_ok() {
 		// update peer view to include the hash
 		overseer_send(
 			overseer,
-			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerViewChange(
+			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerViewChange(
 				peer.clone(),
 				view![hash],
 			)),
@@ -817,7 +819,7 @@ fn update_peer_view() {
 		// update peer's view
 		overseer_send(
 			overseer,
-			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerViewChange(
+			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerViewChange(
 				peer.clone(),
 				View::new(vec![hash_b, hash_c, hash_d], 2),
 			)),
@@ -870,7 +872,7 @@ fn update_peer_view() {
 		// update peer's view
 		overseer_send(
 			overseer,
-			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::PeerViewChange(
+			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::PeerViewChange(
 				peer.clone(),
 				View::with_finalized(finalized_number),
 			)),
@@ -1051,6 +1053,8 @@ fn sends_assignments_even_when_state_is_approved() {
 	});
 }
 
+/// <https://github.com/paritytech/selendra/pull/5089>
+///
 /// 1. Receive remote peer view update with an unknown head
 /// 2. Receive assignments for that unknown head
 /// 3. Update our view and import the new block
@@ -1082,7 +1086,7 @@ fn race_condition_in_local_vs_remote_view_update() {
 		// Send our view update to include a new head
 		overseer_send(
 			overseer,
-			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeTxEvent::OurViewChange(
+			ApprovalDistributionMessage::NetworkBridgeUpdate(NetworkBridgeEvent::OurViewChange(
 				our_view![hash_b],
 			)),
 		)

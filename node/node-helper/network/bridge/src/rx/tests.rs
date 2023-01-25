@@ -17,7 +17,7 @@
 use super::*;
 use futures::{channel::oneshot, executor, stream::BoxStream};
 use selendra_node_network_protocol::{self as net_protocol, OurView};
-use selendra_node_subsystem::{messages::NetworkBridgeTxEvent, ActivatedLeaf};
+use selendra_node_subsystem::{messages::NetworkBridgeEvent, ActivatedLeaf};
 
 use assert_matches::assert_matches;
 use async_trait::async_trait;
@@ -29,8 +29,8 @@ use std::{
 
 use sc_network::{Event as NetworkEvent, IfDisconnected, ProtocolName};
 
-use node_subsystem_test_helpers::{SingleItemSink, SingleItemStream, TestSubsystemContextHandle};
 use selendra_node_network_protocol::{
+	peer_set::PeerSetProtocolNames,
 	request_response::{outgoing::Requests, ReqProtocolNames},
 	view, ObservedRole, Versioned,
 };
@@ -42,8 +42,11 @@ use selendra_node_subsystem::{
 	},
 	ActiveLeavesUpdate, FromOrchestra, LeafStatus, OverseerSignal,
 };
+use node_subsystem_test_helpers::{
+	SingleItemSink, SingleItemStream, TestSubsystemContextHandle,
+};
 use selendra_node_subsystem_util::metered;
-use selendra_primitives::v2::AuthorityDiscoveryId;
+use selendra_primitives::v2::{AuthorityDiscoveryId, Hash};
 
 use sc_network::Multiaddr;
 use sp_keyring::Sr25519Keyring;
@@ -65,6 +68,7 @@ pub enum NetworkAction {
 struct TestNetwork {
 	net_events: Arc<Mutex<Option<SingleItemStream<NetworkEvent>>>>,
 	action_tx: Arc<Mutex<metered::UnboundedMeteredSender<NetworkAction>>>,
+	protocol_names: Arc<PeerSetProtocolNames>,
 }
 
 #[derive(Clone, Debug)]
@@ -75,9 +79,12 @@ struct TestAuthorityDiscovery;
 struct TestNetworkHandle {
 	action_rx: metered::UnboundedMeteredReceiver<NetworkAction>,
 	net_tx: SingleItemSink<NetworkEvent>,
+	protocol_names: PeerSetProtocolNames,
 }
 
-fn new_test_network() -> (TestNetwork, TestNetworkHandle, TestAuthorityDiscovery) {
+fn new_test_network(
+	protocol_names: PeerSetProtocolNames,
+) -> (TestNetwork, TestNetworkHandle, TestAuthorityDiscovery) {
 	let (net_tx, net_rx) = node_subsystem_test_helpers::single_item_sink();
 	let (action_tx, action_rx) = metered::unbounded();
 
@@ -85,8 +92,9 @@ fn new_test_network() -> (TestNetwork, TestNetworkHandle, TestAuthorityDiscovery
 		TestNetwork {
 			net_events: Arc::new(Mutex::new(Some(net_rx))),
 			action_tx: Arc::new(Mutex::new(action_tx)),
+			protocol_names: Arc::new(protocol_names.clone()),
 		},
-		TestNetworkHandle { action_rx, net_tx },
+		TestNetworkHandle { action_rx, net_tx, protocol_names },
 		TestAuthorityDiscovery,
 	)
 }
@@ -127,14 +135,20 @@ impl Network for TestNetwork {
 			.unwrap();
 	}
 
-	fn disconnect_peer(&self, who: PeerId, peer_set: PeerSet) {
+	fn disconnect_peer(&self, who: PeerId, protocol: ProtocolName) {
+		let (peer_set, version) = self.protocol_names.try_get_protocol(&protocol).unwrap();
+		assert_eq!(version, peer_set.get_main_version());
+
 		self.action_tx
 			.lock()
 			.unbounded_send(NetworkAction::DisconnectPeer(who, peer_set))
 			.unwrap();
 	}
 
-	fn write_notification(&self, who: PeerId, peer_set: PeerSet, message: Vec<u8>) {
+	fn write_notification(&self, who: PeerId, protocol: ProtocolName, message: Vec<u8>) {
+		let (peer_set, version) = self.protocol_names.try_get_protocol(&protocol).unwrap();
+		assert_eq!(version, peer_set.get_main_version());
+
 		self.action_tx
 			.lock()
 			.unbounded_send(NetworkAction::WriteNotification(who, peer_set, message))
@@ -178,7 +192,7 @@ impl TestNetworkHandle {
 	async fn connect_peer(&mut self, peer: PeerId, peer_set: PeerSet, role: ObservedRole) {
 		self.send_network_event(NetworkEvent::NotificationStreamOpened {
 			remote: peer,
-			protocol: peer_set.into_default_protocol_name(),
+			protocol: self.protocol_names.get_main_name(peer_set),
 			negotiated_fallback: None,
 			role: role.into(),
 		})
@@ -188,7 +202,7 @@ impl TestNetworkHandle {
 	async fn disconnect_peer(&mut self, peer: PeerId, peer_set: PeerSet) {
 		self.send_network_event(NetworkEvent::NotificationStreamClosed {
 			remote: peer,
-			protocol: peer_set.into_default_protocol_name(),
+			protocol: self.protocol_names.get_main_name(peer_set),
 		})
 		.await;
 	}
@@ -196,7 +210,7 @@ impl TestNetworkHandle {
 	async fn peer_message(&mut self, peer: PeerId, peer_set: PeerSet, message: Vec<u8>) {
 		self.send_network_event(NetworkEvent::NotificationsReceived {
 			remote: peer,
-			messages: vec![(peer_set.into_default_protocol_name(), message.into())],
+			messages: vec![(self.protocol_names.get_main_name(peer_set), message.into())],
 		})
 		.await;
 	}
@@ -282,9 +296,14 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
 	sync_oracle: Box<dyn SyncOracle + Send>,
 	test: impl FnOnce(TestHarness) -> T,
 ) {
+	let genesis_hash = Hash::repeat_byte(0xff);
+	let fork_id = None;
+	let peerset_protocol_names = PeerSetProtocolNames::new(genesis_hash, fork_id);
+
 	let pool = sp_core::testing::TaskExecutor::new();
-	let (mut network, network_handle, discovery) = new_test_network();
-	let (context, virtual_overseer) = node_subsystem_test_helpers::make_subsystem_context(pool);
+	let (mut network, network_handle, discovery) = new_test_network(peerset_protocol_names.clone());
+	let (context, virtual_overseer) =
+		node_subsystem_test_helpers::make_subsystem_context(pool);
 	let network_stream = network.event_stream();
 
 	let bridge = NetworkBridgeRx {
@@ -293,6 +312,7 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
 		metrics: Metrics(None),
 		sync_oracle,
 		shared: Shared::default(),
+		peerset_protocol_names,
 	};
 
 	let network_bridge = run_network_in(bridge, context, network_stream)
@@ -314,7 +334,7 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
 }
 
 async fn assert_sends_validation_event_to_all(
-	event: NetworkBridgeTxEvent<net_protocol::VersionedValidationProtocol>,
+	event: NetworkBridgeEvent<net_protocol::VersionedValidationProtocol>,
 	virtual_overseer: &mut TestSubsystemContextHandle<NetworkBridgeRxMessage>,
 ) {
 	// Ordering must be consistent across:
@@ -350,7 +370,7 @@ async fn assert_sends_validation_event_to_all(
 }
 
 async fn assert_sends_collation_event_to_all(
-	event: NetworkBridgeTxEvent<net_protocol::VersionedCollationProtocol>,
+	event: NetworkBridgeEvent<net_protocol::VersionedCollationProtocol>,
 	virtual_overseer: &mut TestSubsystemContextHandle<NetworkBridgeRxMessage>,
 ) {
 	assert_matches!(
@@ -652,13 +672,18 @@ fn peer_view_updates_sent_via_overseer() {
 		// bridge will inform about all connected peers.
 		{
 			assert_sends_validation_event_to_all(
-				NetworkBridgeTxEvent::PeerConnected(peer.clone(), ObservedRole::Full, 1, None),
+				NetworkBridgeEvent::PeerConnected(
+					peer.clone(),
+					ObservedRole::Full,
+					ValidationVersion::V1.into(),
+					None,
+				),
 				&mut virtual_overseer,
 			)
 			.await;
 
 			assert_sends_validation_event_to_all(
-				NetworkBridgeTxEvent::PeerViewChange(peer.clone(), View::default()),
+				NetworkBridgeEvent::PeerViewChange(peer.clone(), View::default()),
 				&mut virtual_overseer,
 			)
 			.await;
@@ -673,7 +698,7 @@ fn peer_view_updates_sent_via_overseer() {
 			.await;
 
 		assert_sends_validation_event_to_all(
-			NetworkBridgeTxEvent::PeerViewChange(peer.clone(), view),
+			NetworkBridgeEvent::PeerViewChange(peer.clone(), view),
 			&mut virtual_overseer,
 		)
 		.await;
@@ -695,13 +720,18 @@ fn peer_messages_sent_via_overseer() {
 		// bridge will inform about all connected peers.
 		{
 			assert_sends_validation_event_to_all(
-				NetworkBridgeTxEvent::PeerConnected(peer.clone(), ObservedRole::Full, 1, None),
+				NetworkBridgeEvent::PeerConnected(
+					peer.clone(),
+					ObservedRole::Full,
+					ValidationVersion::V1.into(),
+					None,
+				),
 				&mut virtual_overseer,
 			)
 			.await;
 
 			assert_sends_validation_event_to_all(
-				NetworkBridgeTxEvent::PeerViewChange(peer.clone(), View::default()),
+				NetworkBridgeEvent::PeerViewChange(peer.clone(), View::default()),
 				&mut virtual_overseer,
 			)
 			.await;
@@ -731,7 +761,7 @@ fn peer_messages_sent_via_overseer() {
 			virtual_overseer.recv().await,
 			AllMessages::ApprovalDistribution(
 				ApprovalDistributionMessage::NetworkBridgeUpdate(
-					NetworkBridgeTxEvent::PeerMessage(p, Versioned::V1(m))
+					NetworkBridgeEvent::PeerMessage(p, Versioned::V1(m))
 				)
 			) => {
 				assert_eq!(p, peer);
@@ -740,7 +770,7 @@ fn peer_messages_sent_via_overseer() {
 		);
 
 		assert_sends_validation_event_to_all(
-			NetworkBridgeTxEvent::PeerDisconnected(peer),
+			NetworkBridgeEvent::PeerDisconnected(peer),
 			&mut virtual_overseer,
 		)
 		.await;
@@ -765,13 +795,18 @@ fn peer_disconnect_from_just_one_peerset() {
 		// bridge will inform about all connected peers.
 		{
 			assert_sends_validation_event_to_all(
-				NetworkBridgeTxEvent::PeerConnected(peer.clone(), ObservedRole::Full, 1, None),
+				NetworkBridgeEvent::PeerConnected(
+					peer.clone(),
+					ObservedRole::Full,
+					ValidationVersion::V1.into(),
+					None,
+				),
 				&mut virtual_overseer,
 			)
 			.await;
 
 			assert_sends_validation_event_to_all(
-				NetworkBridgeTxEvent::PeerViewChange(peer.clone(), View::default()),
+				NetworkBridgeEvent::PeerViewChange(peer.clone(), View::default()),
 				&mut virtual_overseer,
 			)
 			.await;
@@ -779,13 +814,18 @@ fn peer_disconnect_from_just_one_peerset() {
 
 		{
 			assert_sends_collation_event_to_all(
-				NetworkBridgeTxEvent::PeerConnected(peer.clone(), ObservedRole::Full, 1, None),
+				NetworkBridgeEvent::PeerConnected(
+					peer.clone(),
+					ObservedRole::Full,
+					ValidationVersion::V1.into(),
+					None,
+				),
 				&mut virtual_overseer,
 			)
 			.await;
 
 			assert_sends_collation_event_to_all(
-				NetworkBridgeTxEvent::PeerViewChange(peer.clone(), View::default()),
+				NetworkBridgeEvent::PeerViewChange(peer.clone(), View::default()),
 				&mut virtual_overseer,
 			)
 			.await;
@@ -794,7 +834,7 @@ fn peer_disconnect_from_just_one_peerset() {
 		network_handle.disconnect_peer(peer.clone(), PeerSet::Validation).await;
 
 		assert_sends_validation_event_to_all(
-			NetworkBridgeTxEvent::PeerDisconnected(peer.clone()),
+			NetworkBridgeEvent::PeerDisconnected(peer.clone()),
 			&mut virtual_overseer,
 		)
 		.await;
@@ -848,13 +888,18 @@ fn relays_collation_protocol_messages() {
 		// bridge will inform about all connected peers.
 		{
 			assert_sends_validation_event_to_all(
-				NetworkBridgeTxEvent::PeerConnected(peer_a.clone(), ObservedRole::Full, 1, None),
+				NetworkBridgeEvent::PeerConnected(
+					peer_a.clone(),
+					ObservedRole::Full,
+					ValidationVersion::V1.into(),
+					None,
+				),
 				&mut virtual_overseer,
 			)
 			.await;
 
 			assert_sends_validation_event_to_all(
-				NetworkBridgeTxEvent::PeerViewChange(peer_a.clone(), View::default()),
+				NetworkBridgeEvent::PeerViewChange(peer_a.clone(), View::default()),
 				&mut virtual_overseer,
 			)
 			.await;
@@ -862,13 +907,18 @@ fn relays_collation_protocol_messages() {
 
 		{
 			assert_sends_collation_event_to_all(
-				NetworkBridgeTxEvent::PeerConnected(peer_b.clone(), ObservedRole::Full, 1, None),
+				NetworkBridgeEvent::PeerConnected(
+					peer_b.clone(),
+					ObservedRole::Full,
+					ValidationVersion::V1.into(),
+					None,
+				),
 				&mut virtual_overseer,
 			)
 			.await;
 
 			assert_sends_collation_event_to_all(
-				NetworkBridgeTxEvent::PeerViewChange(peer_b.clone(), View::default()),
+				NetworkBridgeEvent::PeerViewChange(peer_b.clone(), View::default()),
 				&mut virtual_overseer,
 			)
 			.await;
@@ -913,7 +963,7 @@ fn relays_collation_protocol_messages() {
 			virtual_overseer.recv().await,
 			AllMessages::CollatorProtocol(
 				CollatorProtocolMessage::NetworkBridgeUpdate(
-					NetworkBridgeTxEvent::PeerMessage(p, Versioned::V1(m))
+					NetworkBridgeEvent::PeerMessage(p, Versioned::V1(m))
 				)
 			) => {
 				assert_eq!(p, peer_b);
@@ -941,13 +991,18 @@ fn different_views_on_different_peer_sets() {
 		// bridge will inform about all connected peers.
 		{
 			assert_sends_validation_event_to_all(
-				NetworkBridgeTxEvent::PeerConnected(peer.clone(), ObservedRole::Full, 1, None),
+				NetworkBridgeEvent::PeerConnected(
+					peer.clone(),
+					ObservedRole::Full,
+					ValidationVersion::V1.into(),
+					None,
+				),
 				&mut virtual_overseer,
 			)
 			.await;
 
 			assert_sends_validation_event_to_all(
-				NetworkBridgeTxEvent::PeerViewChange(peer.clone(), View::default()),
+				NetworkBridgeEvent::PeerViewChange(peer.clone(), View::default()),
 				&mut virtual_overseer,
 			)
 			.await;
@@ -955,13 +1010,18 @@ fn different_views_on_different_peer_sets() {
 
 		{
 			assert_sends_collation_event_to_all(
-				NetworkBridgeTxEvent::PeerConnected(peer.clone(), ObservedRole::Full, 1, None),
+				NetworkBridgeEvent::PeerConnected(
+					peer.clone(),
+					ObservedRole::Full,
+					ValidationVersion::V1.into(),
+					None,
+				),
 				&mut virtual_overseer,
 			)
 			.await;
 
 			assert_sends_collation_event_to_all(
-				NetworkBridgeTxEvent::PeerViewChange(peer.clone(), View::default()),
+				NetworkBridgeEvent::PeerViewChange(peer.clone(), View::default()),
 				&mut virtual_overseer,
 			)
 			.await;
@@ -987,13 +1047,13 @@ fn different_views_on_different_peer_sets() {
 			.await;
 
 		assert_sends_validation_event_to_all(
-			NetworkBridgeTxEvent::PeerViewChange(peer.clone(), view_a.clone()),
+			NetworkBridgeEvent::PeerViewChange(peer.clone(), view_a.clone()),
 			&mut virtual_overseer,
 		)
 		.await;
 
 		assert_sends_collation_event_to_all(
-			NetworkBridgeTxEvent::PeerViewChange(peer.clone(), view_b.clone()),
+			NetworkBridgeEvent::PeerViewChange(peer.clone(), view_b.clone()),
 			&mut virtual_overseer,
 		)
 		.await;
@@ -1122,13 +1182,13 @@ fn our_view_updates_decreasing_order_and_limited_to_max() {
 
 		for our_view in our_views {
 			assert_sends_validation_event_to_all(
-				NetworkBridgeTxEvent::OurViewChange(our_view.clone()),
+				NetworkBridgeEvent::OurViewChange(our_view.clone()),
 				&mut virtual_overseer,
 			)
 			.await;
 
 			assert_sends_collation_event_to_all(
-				NetworkBridgeTxEvent::OurViewChange(our_view),
+				NetworkBridgeEvent::OurViewChange(our_view),
 				&mut virtual_overseer,
 			)
 			.await;
