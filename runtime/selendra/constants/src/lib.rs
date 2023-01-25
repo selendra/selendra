@@ -122,9 +122,9 @@ mod tests {
 	#[test]
 	// This function tests that the fee for `ExtrinsicBaseWeight` of weight is correct
 	fn extrinsic_base_fee_is_correct() {
-		// `ExtrinsicBaseWeight` should cost 1/10 of a MILLICENTS
-		println!("Base: {}", ExtrinsicBaseWeight::get().ref_time());
-		let x = WeightToFee::weight_to_fee(&ExtrinsicBaseWeight::get().ref_time());
+		// `ExtrinsicBaseWeight` should cost 1/10 of a CENT
+		println!("Base: {}", ExtrinsicBaseWeight::get());
+		let x = WeightToFee::weight_to_fee(&ExtrinsicBaseWeight::get());
 		let y = MILLICENTS / 10;
 		assert!(x.max(y) - x.min(y) < MILLICENTS);
 	}

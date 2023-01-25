@@ -27,7 +27,7 @@ use std::{
 	time::Duration,
 };
 use url::Url;
-
+use crate::runtime::Weight;
 use forests_client_cli::CollatorOptions;
 use forests_client_consensus_common::{ParachainCandidate, ParachainConsensus};
 use forests_client_network::BlockAnnounceValidator;
@@ -715,7 +715,10 @@ impl TestNode {
 		let call = frame_system::Call::set_code { code: validation };
 
 		self.send_extrinsic(
-			runtime::SudoCall::sudo_unchecked_weight { call: Box::new(call.into()), weight: 1_000 },
+			runtime::SudoCall::sudo_unchecked_weight {
+				call: Box::new(call.into()),
+				weight: Weight::from_ref_time(1_000),
+			},
 			Sr25519Keyring::Alice,
 		)
 		.await

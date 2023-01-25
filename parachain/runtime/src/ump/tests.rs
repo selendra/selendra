@@ -13,6 +13,7 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 use super::*;
 use crate::mock::{
 	assert_last_event, new_test_ext, take_processed, Configuration, MockGenesisConfig, Origin,
@@ -295,8 +296,7 @@ fn service_overweight_unknown() {
 	// the next test.
 	new_test_ext(GenesisConfigBuilder::default().build()).execute_with(|| {
 		assert_noop!(
-			ump_service_total_weight: Weight::from_ref_time(900),
-			ump_max_individual_weight: Weight::from_ref_time(300),
+			Ump::service_overweight(Origin::root(), 0, Weight::from_ref_time(1000)),
 			Error::<Test>::UnknownMessageIndex
 		);
 	});
@@ -312,8 +312,8 @@ fn overweight_queue_works() {
 
 	new_test_ext(
 		GenesisConfigBuilder {
-			ump_service_total_weight: 900,
-			ump_max_individual_weight: 300,
+			ump_service_total_weight: Weight::from_ref_time(900),
+			ump_max_individual_weight: Weight::from_ref_time(300),
 			..Default::default()
 		}
 		.build(),

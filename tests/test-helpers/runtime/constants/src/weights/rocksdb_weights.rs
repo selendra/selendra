@@ -39,7 +39,7 @@ pub mod constants {
 		// NOTE: If this test fails but you are sure that the generated values are fine,
 		// you can delete it.
 		#[test]
-		fn sane() {
+		fn bound() {
 			// At least 1 µs.
 			assert!(
 				W::get().reads(1) >= constants::WEIGHT_PER_MICROS,
