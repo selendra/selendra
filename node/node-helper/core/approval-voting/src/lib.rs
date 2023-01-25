@@ -1207,8 +1207,25 @@ async fn get_approval_signatures_for_candidate<Context>(
 	candidate_hash: CandidateHash,
 	tx: oneshot::Sender<HashMap<ValidatorIndex, ValidatorSignature>>,
 ) -> SubsystemResult<()> {
+	let send_votes = |votes| {
+		if let Err(_) = tx.send(votes) {
+			gum::debug!(
+				target: LOG_TARGET,
+				"Sending approval signatures back failed, as receiver got closed."
+			);
+		}
+	};
+
 	let entry = match db.load_candidate_entry(&candidate_hash)? {
-		None => return Ok(()),
+		None => {
+			send_votes(HashMap::new());
+			gum::debug!(
+				target: LOG_TARGET,
+				?candidate_hash,
+				"Sent back empty votes because the candidate was not found in db."
+			);
+			return Ok(())
+		},
 		Some(e) => e,
 	};
 
@@ -1258,13 +1275,7 @@ async fn get_approval_signatures_for_candidate<Context>(
 				target: LOG_TARGET,
 				"Request for approval signatures got cancelled by `approval-distribution`."
 			),
-			Some(Ok(votes)) =>
-				if let Err(_) = tx.send(votes) {
-					gum::debug!(
-						target: LOG_TARGET,
-						"Sending approval signatures back failed, as receiver got closed"
-					);
-				},
+			Some(Ok(votes)) => send_votes(votes),
 		}
 	};
 
