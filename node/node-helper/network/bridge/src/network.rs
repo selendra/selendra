@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use std::{borrow::Cow, collections::HashSet, sync::Arc};
+use std::{collections::HashSet, sync::Arc};
 
 use async_trait::async_trait;
 use futures::{prelude::*, stream::BoxStream};
@@ -22,12 +22,14 @@ use futures::{prelude::*, stream::BoxStream};
 use parity_scale_codec::Encode;
 
 use sc_network::{
-	config::parse_addr, multiaddr::Multiaddr, Event as NetworkEvent, IfDisconnected,
-	NetworkService, OutboundFailure, RequestFailure,
+	multiaddr::Multiaddr, Event as NetworkEvent, IfDisconnected, NetworkService, OutboundFailure,
+	RequestFailure,
 };
 
-use sc_network_common::service::{
-	NetworkEventStream, NetworkNotification, NetworkPeers, NetworkRequest,
+use sc_network_common::{
+	config::parse_addr,
+	protocol::ProtocolName,
+	service::{NetworkEventStream, NetworkNotification, NetworkPeers, NetworkRequest},
 };
 
 use selendra_node_network_protocol::{
@@ -89,12 +91,12 @@ pub trait Network: Clone + Send + 'static {
 	/// Note that `out_peers` setting has no effect on this.
 	async fn set_reserved_peers(
 		&mut self,
-		protocol: Cow<'static, str>,
+		protocol: ProtocolName,
 		multiaddresses: HashSet<Multiaddr>,
 	) -> Result<(), String>;
 
 	/// Removes the peers for the protocol's peer set (both reserved and non-reserved).
-	async fn remove_from_peers_set(&mut self, protocol: Cow<'static, str>, peers: Vec<PeerId>);
+	async fn remove_from_peers_set(&mut self, protocol: ProtocolName, peers: Vec<PeerId>);
 
 	/// Send a request to a remote peer.
 	async fn start_request<AD: AuthorityDiscovery>(
@@ -123,13 +125,13 @@ impl Network for Arc<NetworkService<Block, Hash>> {
 
 	async fn set_reserved_peers(
 		&mut self,
-		protocol: Cow<'static, str>,
+		protocol: ProtocolName,
 		multiaddresses: HashSet<Multiaddr>,
 	) -> Result<(), String> {
 		NetworkService::set_reserved_peers(&**self, protocol, multiaddresses)
 	}
 
-	async fn remove_from_peers_set(&mut self, protocol: Cow<'static, str>, peers: Vec<PeerId>) {
+	async fn remove_from_peers_set(&mut self, protocol: ProtocolName, peers: Vec<PeerId>) {
 		NetworkService::remove_peers_from_reserved_set(&**self, protocol, peers);
 	}
 

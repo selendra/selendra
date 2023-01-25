@@ -26,7 +26,9 @@ use frame_support::{
 use frame_system::{self, ensure_root, ensure_signed};
 use primitives::v2::{HeadData, Id as ParaId, ValidationCode, LOWEST_PUBLIC_ID};
 use runtime_parachains::{
-	configuration, ensure_parachain, paras, paras::ParaGenesisArgs, Origin, ParaLifecycle,
+	configuration, ensure_parachain,
+	paras::{self, ParaGenesisArgs},
+	Origin, ParaLifecycle,
 };
 use sp_std::{prelude::*, result};
 
@@ -63,19 +65,19 @@ pub trait WeightInfo {
 pub struct TestWeightInfo;
 impl WeightInfo for TestWeightInfo {
 	fn reserve() -> Weight {
-		0
+		Weight::zero()
 	}
 	fn register() -> Weight {
-		0
+		Weight::zero()
 	}
 	fn force_register() -> Weight {
-		0
+		Weight::zero()
 	}
 	fn deregister() -> Weight {
-		0
+		Weight::zero()
 	}
 	fn swap() -> Weight {
-		0
+		Weight::zero()
 	}
 }
 
@@ -639,7 +641,7 @@ mod tests {
 	parameter_types! {
 		pub const BlockHashCount: u32 = 250;
 		pub BlockWeights: limits::BlockWeights =
-			frame_system::limits::BlockWeights::simple_max(1024);
+			frame_system::limits::BlockWeights::simple_max(Weight::from_ref_time(1024));
 		pub BlockLength: limits::BlockLength =
 			limits::BlockLength::max_with_normal_ratio(4 * 1024 * 1024, NORMAL_RATIO);
 	}

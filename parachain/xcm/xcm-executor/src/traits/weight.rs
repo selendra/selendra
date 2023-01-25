@@ -14,9 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 use crate::Assets;
-use frame_support::weights::Weight;
 use sp_std::result::Result;
-use xcm::latest::prelude::*;
+use xcm::latest::{prelude::*, Weight};
 
 /// Determine the weight of an XCM message.
 pub trait WeightBounds<Call> {

@@ -16,6 +16,7 @@
 
 //! Selendra chain configurations.
 
+use frame_support::weights::Weight;
 use hex_literal::hex;
 
 use beefy_primitives::crypto::AuthorityId as BeefyId;
@@ -99,7 +100,7 @@ fn default_parachains_host_configuration(
 		max_upward_queue_count: 8,
 		max_upward_queue_size: 1024 * 1024,
 		max_downward_message_size: 1024 * 1024,
-		ump_service_total_weight: 100_000_000_000,
+		ump_service_total_weight: Weight::from_ref_time(100_000_000_000),
 		max_upward_message_size: 50 * 1024,
 		max_upward_message_num_per_candidate: 5,
 		hrmp_sender_deposit: 0,

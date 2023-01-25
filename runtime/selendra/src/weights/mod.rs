@@ -18,8 +18,8 @@
 
 //! A list of the different weight modules for our runtime.
 #![allow(clippy::unnecessary_cast)]
-pub mod frame_system;
 
+pub mod frame_system;
 pub mod pallet_bags_list;
 pub mod pallet_balances;
 pub mod pallet_bounties;
@@ -42,7 +42,6 @@ pub mod pallet_tips;
 pub mod pallet_treasury;
 pub mod pallet_utility;
 pub mod pallet_vesting;
-
 pub mod runtime_common_paras_registrar;
 pub mod runtime_common_slots;
 pub mod runtime_parachains_configuration;

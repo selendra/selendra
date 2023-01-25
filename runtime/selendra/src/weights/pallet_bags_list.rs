@@ -24,7 +24,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `pallet_bags_list`.
@@ -35,18 +35,18 @@ impl<T: frame_system::Config> pallet_bags_list::WeightInfo for WeightInfo<T> {
 	// Storage: VoterList ListNodes (r:4 w:4)
 	// Storage: VoterList ListBags (r:1 w:1)
 	fn rebag_non_terminal() -> Weight {
-		(149_356_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(7 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+		Weight::from_ref_time(149_356_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(7 as u64))
+			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
 	// Storage: Staking Bonded (r:1 w:0)
 	// Storage: Staking Ledger (r:1 w:0)
 	// Storage: VoterList ListNodes (r:3 w:3)
 	// Storage: VoterList ListBags (r:2 w:2)
 	fn rebag_terminal() -> Weight {
-		(127_919_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(7 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+		Weight::from_ref_time(127_919_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(7 as u64))
+			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
 	// Storage: VoterList ListNodes (r:4 w:4)
 	// Storage: Staking Bonded (r:2 w:0)
@@ -54,8 +54,8 @@ impl<T: frame_system::Config> pallet_bags_list::WeightInfo for WeightInfo<T> {
 	// Storage: VoterList CounterForListNodes (r:1 w:1)
 	// Storage: VoterList ListBags (r:1 w:1)
 	fn put_in_front_of() -> Weight {
-		(147_603_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(10 as Weight))
-			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+		Weight::from_ref_time(147_603_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(10 as u64))
+			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
 }

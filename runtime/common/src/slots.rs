@@ -47,16 +47,16 @@ pub trait WeightInfo {
 pub struct TestWeightInfo;
 impl WeightInfo for TestWeightInfo {
 	fn force_lease() -> Weight {
-		0
+		Weight::zero()
 	}
 	fn manage_lease_period_start(_c: u32, _t: u32) -> Weight {
-		0
+		Weight::zero()
 	}
 	fn clear_all_leases() -> Weight {
-		0
+		Weight::zero()
 	}
 	fn trigger_onboard() -> Weight {
-		0
+		Weight::zero()
 	}
 }
 
@@ -153,7 +153,7 @@ pub mod pallet {
 			}
 
 			// We didn't return early above, so we didn't do anything.
-			0
+			Weight::zero()
 		}
 	}
 

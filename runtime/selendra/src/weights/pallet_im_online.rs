@@ -24,7 +24,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `pallet_im_online`.
@@ -38,12 +38,12 @@ impl<T: frame_system::Config> pallet_im_online::WeightInfo for WeightInfo<T> {
 	/// The range of component `k` is `[1, 1000]`.
 	/// The range of component `e` is `[1, 100]`.
 	fn validate_unsigned_and_then_heartbeat(k: u32, e: u32, ) -> Weight {
-		(179_104_000 as Weight)
-			// Standard Error: 8_000
-			.saturating_add((111_000 as Weight).saturating_mul(k as Weight))
-			// Standard Error: 82_000
-			.saturating_add((899_000 as Weight).saturating_mul(e as Weight))
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(76_336_000 as u64)
+			// Standard Error: 0
+			.saturating_add(Weight::from_ref_time(23_000 as u64).saturating_mul(k as u64))
+			// Standard Error: 2_000
+			.saturating_add(Weight::from_ref_time(291_000 as u64).saturating_mul(e as u64))
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 }

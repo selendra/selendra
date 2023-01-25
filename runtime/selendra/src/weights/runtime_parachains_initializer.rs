@@ -24,7 +24,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `runtime_parachains::initializer`.
@@ -33,10 +33,10 @@ impl<T: frame_system::Config> runtime_parachains::initializer::WeightInfo for We
 	// Storage: System Digest (r:1 w:1)
 	/// The range of component `d` is `[0, 65536]`.
 	fn force_approve(d: u32, ) -> Weight {
-		(33_515_000 as Weight)
+		Weight::from_ref_time(9_756_000 as u64)
 			// Standard Error: 0
-			.saturating_add((5_000 as Weight).saturating_mul(d as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(1_000 as u64).saturating_mul(d as u64))
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 }

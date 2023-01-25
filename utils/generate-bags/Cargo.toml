@@ -7,6 +7,6 @@ edition = "2021"
 [dependencies]
 clap = { version = "3.2.15", features = ["derive"] }
 
-generate-bags = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }
+generate-bags = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 selendra-runtime = { path = "../../runtime/selendra" }

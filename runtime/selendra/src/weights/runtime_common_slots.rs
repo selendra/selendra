@@ -24,7 +24,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `runtime_common::slots`.
@@ -33,9 +33,9 @@ impl<T: frame_system::Config> runtime_common::slots::WeightInfo for WeightInfo<T
 	// Storage: Slots Leases (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn force_lease() -> Weight {
-		(69_186_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(29_433_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Paras Parachains (r:1 w:0)
 	// Storage: Slots Leases (r:101 w:100)
@@ -46,24 +46,24 @@ impl<T: frame_system::Config> runtime_common::slots::WeightInfo for WeightInfo<T
 	/// The range of component `c` is `[1, 100]`.
 	/// The range of component `t` is `[1, 100]`.
 	fn manage_lease_period_start(c: u32, t: u32, ) -> Weight {
-		(0 as Weight)
-			// Standard Error: 147_000
-			.saturating_add((21_750_000 as Weight).saturating_mul(c as Weight))
-			// Standard Error: 147_000
-			.saturating_add((56_654_000 as Weight).saturating_mul(t as Weight))
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(c as Weight)))
-			.saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(t as Weight)))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(c as Weight)))
-			.saturating_add(T::DbWeight::get().writes((3 as Weight).saturating_mul(t as Weight)))
+		Weight::from_ref_time(0 as u64)
+			// Standard Error: 15_000
+			.saturating_add(Weight::from_ref_time(5_768_000 as u64).saturating_mul(c as u64))
+			// Standard Error: 15_000
+			.saturating_add(Weight::from_ref_time(15_445_000 as u64).saturating_mul(t as u64))
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(c as u64)))
+			.saturating_add(T::DbWeight::get().reads((3 as u64).saturating_mul(t as u64)))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(c as u64)))
+			.saturating_add(T::DbWeight::get().writes((3 as u64).saturating_mul(t as u64)))
 	}
 	// Storage: Slots Leases (r:1 w:1)
 	// Storage: System Account (r:8 w:8)
 	fn clear_all_leases() -> Weight {
-		(297_309_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(9 as Weight))
-			.saturating_add(T::DbWeight::get().writes(9 as Weight))
+		Weight::from_ref_time(90_622_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(9 as u64))
+			.saturating_add(T::DbWeight::get().writes(9 as u64))
 	}
 	// Storage: Slots Leases (r:1 w:0)
 	// Storage: Paras ParaLifecycles (r:1 w:1)
@@ -71,8 +71,8 @@ impl<T: frame_system::Config> runtime_common::slots::WeightInfo for WeightInfo<T
 	// Storage: Paras ActionsQueue (r:1 w:1)
 	// Storage: Registrar Paras (r:1 w:1)
 	fn trigger_onboard() -> Weight {
-		(81_292_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(28_143_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(5 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 }

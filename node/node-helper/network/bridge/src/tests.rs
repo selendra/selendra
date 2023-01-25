@@ -21,12 +21,11 @@ use assert_matches::assert_matches;
 use async_trait::async_trait;
 use parking_lot::Mutex;
 use std::{
-	borrow::Cow,
 	collections::HashSet,
 	sync::atomic::{AtomicBool, Ordering},
 };
 
-use sc_network::{Event as NetworkEvent, IfDisconnected};
+use sc_network::{Event as NetworkEvent, IfDisconnected, ProtocolName};
 
 use node_subsystem_test_helpers::{SingleItemSink, SingleItemStream, TestSubsystemContextHandle};
 use primitives_test_helpers::dummy_collator_signature;
@@ -102,13 +101,13 @@ impl Network for TestNetwork {
 
 	async fn set_reserved_peers(
 		&mut self,
-		_protocol: Cow<'static, str>,
+		_protocol: ProtocolName,
 		_: HashSet<Multiaddr>,
 	) -> Result<(), String> {
 		Ok(())
 	}
 
-	async fn remove_from_peers_set(&mut self, _protocol: Cow<'static, str>, _: Vec<PeerId>) {}
+	async fn remove_from_peers_set(&mut self, _protocol: ProtocolName, _: Vec<PeerId>) {}
 
 	async fn start_request<AD: AuthorityDiscovery>(
 		&self,

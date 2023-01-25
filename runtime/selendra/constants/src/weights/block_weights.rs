@@ -45,16 +45,16 @@ parameter_types! {
 	/// Calculated by multiplying the *Average* with `1` and adding `0`.
 	///
 	/// Stats nanoseconds:
-	///   Min, Max: 5_734_411, 6_289_660
-	///   Average:  5_829_138
-	///   Median:   5_807_693
-	///   Std-Dev:  88673.03
+	///   Min, Max: 5_736_651, 6_591_625
+	///   Average:  5_849_907
+	///   Median:   5_847_129
+	///   Std-Dev:  109200.59
 	///
 	/// Percentiles nanoseconds:
-	///   99th: 6_168_369
-	///   95th: 5_966_671
-	///   75th: 5_862_198
-	pub const BlockExecutionWeight: Weight = 5_829_138 * WEIGHT_PER_NANOS;
+	///   99th: 6_131_246
+	///   95th: 5_988_921
+	///   75th: 5_885_724
+	pub const BlockExecutionWeight: Weight = WEIGHT_PER_NANOS.saturating_mul(5_849_907);
 }
 
 #[cfg(test)]
@@ -69,8 +69,14 @@ mod test_weights {
 		let w = super::BlockExecutionWeight::get();
 
 		// At least 100 µs.
-		assert!(w >= 100 * constants::WEIGHT_PER_MICROS, "Weight should be at least 100 µs.");
+		assert!(
+			w.ref_time() >= 100u64 * constants::WEIGHT_PER_MICROS.ref_time(),
+			"Weight should be at least 100 µs."
+		);
 		// At most 50 ms.
-		assert!(w <= 50 * constants::WEIGHT_PER_MILLIS, "Weight should be at most 50 ms.");
+		assert!(
+			w.ref_time() <= 50u64 * constants::WEIGHT_PER_MILLIS.ref_time(),
+			"Weight should be at most 50 ms."
+		);
 	}
 }

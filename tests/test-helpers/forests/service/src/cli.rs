@@ -16,12 +16,12 @@
 
 use std::{net::SocketAddr, path::PathBuf};
 
+use selendra_service::{ChainSpec, ParaId, PrometheusConfig};
 use sc_cli::{
 	CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams, NetworkParams,
 	Result as CliResult, RuntimeVersion, SharedParams, SubstrateCli,
 };
 use sc_service::BasePath;
-use selendra_service::{ChainSpec, ParaId, PrometheusConfig};
 
 #[derive(Debug, clap::Parser)]
 #[clap(
@@ -137,7 +137,7 @@ impl CliConfiguration<Self> for RelayChainCli {
 	fn base_path(&self) -> CliResult<Option<BasePath>> {
 		Ok(self
 			.shared_params()
-			.base_path()
+			.base_path()?
 			.or_else(|| self.base_path.clone().map(Into::into)))
 	}
 
@@ -191,8 +191,8 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.transaction_pool(is_dev)
 	}
 
-	fn state_cache_child_ratio(&self) -> CliResult<Option<usize>> {
-		self.base.base.state_cache_child_ratio()
+	fn trie_cache_maximum_size(&self) -> CliResult<Option<usize>> {
+		self.base.base.trie_cache_maximum_size()
 	}
 
 	fn rpc_methods(&self) -> CliResult<sc_service::config::RpcMethods> {
