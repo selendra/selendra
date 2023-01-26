@@ -20,16 +20,16 @@ use selendra_node_subsystem_util::metrics::{self, prometheus};
 struct MetricsInner {
 	/// Tracks successful/unsuccessful inherent data requests
 	inherent_data_requests: prometheus::CounterVec<prometheus::U64>,
-	request_inherent_data: prometheus::Histogram,
 	/// How much time the `RequestInherentData` processing takes
 	request_inherent_data_duration: prometheus::Histogram,
 	/// How much time `ProvisionableData` processing takes
 	provisionable_data_duration: prometheus::Histogram,
 	/// Bitfields array length in `ProvisionerInherentData` (the result for `RequestInherentData`)
+	inherent_data_response_bitfields: prometheus::Histogram,
 
 	/// The following metrics track how many disputes/votes the runtime will have to process. These will count
-	/// all recent statements meaning every dispute from last sessions: 4 hours on Selendra.
-	/// The metrics are updated only when the node authors a block, so values vary across nodes.
+	/// all recent statements meaning every dispute from last sessions: 10 min on Rococo, 60 min on Kusama and
+	/// 4 hours on Selendra. The metrics are updated only when the node authors a block, so values vary across nodes.
 	inherent_data_dispute_statement_sets: prometheus::Counter<prometheus::U64>,
 	inherent_data_dispute_statements: prometheus::CounterVec<prometheus::U64>,
 }
