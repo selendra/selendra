@@ -21,6 +21,7 @@
 #![warn(missing_docs)]
 
 use futures::{channel::oneshot, FutureExt as _};
+use rand::{CryptoRng, Rng, SeedableRng};
 use selendra_node_network_protocol::{
 	self as net_protocol,
 	grid_topology::{RandomRouting, RequiredRouting, SessionGridTopologies, SessionGridTopology},
@@ -39,7 +40,6 @@ use selendra_node_subsystem::{
 use selendra_primitives::v2::{
 	BlockNumber, CandidateIndex, Hash, SessionIndex, ValidatorIndex, ValidatorSignature,
 };
-use rand::{CryptoRng, Rng, SeedableRng};
 use std::collections::{hash_map, BTreeMap, HashMap, HashSet, VecDeque};
 
 use self::metrics::Metrics;

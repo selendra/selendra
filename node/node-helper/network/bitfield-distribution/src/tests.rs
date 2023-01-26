@@ -19,6 +19,7 @@ use assert_matches::assert_matches;
 use bitvec::bitvec;
 use futures::executor;
 use maplit::hashmap;
+use node_subsystem_test_helpers::make_subsystem_context;
 use rand_chacha::ChaCha12Rng;
 use selendra_node_network_protocol::{
 	grid_topology::SessionBoundGridTopologyStorage, our_view, peer_set::ValidationVersion, view,
@@ -28,7 +29,6 @@ use selendra_node_subsystem::{
 	jaeger,
 	jaeger::{PerLeafSpan, Span},
 };
-use node_subsystem_test_helpers::make_subsystem_context;
 use selendra_node_subsystem_util::TimeoutExt;
 use selendra_primitives::v2::{AvailabilityBitfield, Signed, ValidatorIndex};
 use sp_application_crypto::AppKey;
