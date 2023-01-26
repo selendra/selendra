@@ -37,8 +37,8 @@ use selendra_node_subsystem::{
 };
 use selendra_node_subsystem_util::{self as util};
 
-use selendra_primitives::v2::{Hash, SignedAvailabilityBitfield, SigningContext, ValidatorId};
 use rand::{CryptoRng, Rng, SeedableRng};
+use selendra_primitives::v2::{Hash, SignedAvailabilityBitfield, SigningContext, ValidatorId};
 use std::collections::{HashMap, HashSet};
 
 use self::metrics::Metrics;

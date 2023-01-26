@@ -18,7 +18,10 @@ use super::{metrics::Metrics, *};
 use assert_matches::assert_matches;
 use futures::executor::{self, block_on};
 use futures_timer::Delay;
+use node_subsystem_test_helpers::mock::make_ferdie_keystore;
 use parity_scale_codec::{Decode, Encode};
+use primitives_test_helpers::{dummy_committed_candidate_receipt, dummy_hash, AlwaysZeroRng};
+use sc_keystore::LocalKeystore;
 use selendra_node_network_protocol::{
 	peer_set::ValidationVersion,
 	request_response::{
@@ -33,12 +36,7 @@ use selendra_node_subsystem::{
 	messages::{network_bridge_event, AllMessages, RuntimeApiMessage, RuntimeApiRequest},
 	ActivatedLeaf, LeafStatus,
 };
-use node_subsystem_test_helpers::mock::make_ferdie_keystore;
 use selendra_primitives::v2::{Hash, Id as ParaId, SessionInfo, ValidationCode};
-use primitives_test_helpers::{
-	dummy_committed_candidate_receipt, dummy_hash, AlwaysZeroRng,
-};
-use sc_keystore::LocalKeystore;
 use sp_application_crypto::{sr25519::Pair, AppKey, Pair as TraitPair};
 use sp_authority_discovery::AuthorityPair;
 use sp_keyring::Sr25519Keyring;

@@ -29,6 +29,7 @@ use std::{
 
 use sc_network::{Event as NetworkEvent, IfDisconnected, ProtocolName};
 
+use node_subsystem_test_helpers::{SingleItemSink, SingleItemStream, TestSubsystemContextHandle};
 use selendra_node_network_protocol::{
 	peer_set::PeerSetProtocolNames,
 	request_response::{outgoing::Requests, ReqProtocolNames},
@@ -41,9 +42,6 @@ use selendra_node_subsystem::{
 		GossipSupportMessage, StatementDistributionMessage,
 	},
 	ActiveLeavesUpdate, FromOrchestra, LeafStatus, OverseerSignal,
-};
-use node_subsystem_test_helpers::{
-	SingleItemSink, SingleItemStream, TestSubsystemContextHandle,
 };
 use selendra_node_subsystem_util::metered;
 use selendra_primitives::v2::{AuthorityDiscoveryId, Hash};
@@ -302,8 +300,7 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
 
 	let pool = sp_core::testing::TaskExecutor::new();
 	let (mut network, network_handle, discovery) = new_test_network(peerset_protocol_names.clone());
-	let (context, virtual_overseer) =
-		node_subsystem_test_helpers::make_subsystem_context(pool);
+	let (context, virtual_overseer) = node_subsystem_test_helpers::make_subsystem_context(pool);
 	let network_stream = network.event_stream();
 
 	let bridge = NetworkBridgeRx {

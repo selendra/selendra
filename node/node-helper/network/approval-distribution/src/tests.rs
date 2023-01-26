@@ -17,13 +17,13 @@
 use super::*;
 use assert_matches::assert_matches;
 use futures::{executor, future, Future};
+use node_subsystem_test_helpers as test_helpers;
 use rand::SeedableRng;
 use selendra_node_network_protocol::{our_view, peer_set::ValidationVersion, view, ObservedRole};
 use selendra_node_primitives::approval::{
 	AssignmentCertKind, VRFOutput, VRFProof, RELAY_VRF_MODULO_CONTEXT,
 };
 use selendra_node_subsystem::messages::{network_bridge_event, AllMessages, ApprovalCheckError};
-use node_subsystem_test_helpers as test_helpers;
 use selendra_node_subsystem_util::TimeoutExt as _;
 use selendra_primitives::v2::{AuthorityDiscoveryId, BlakeTwo256, HashT};
 use sp_authority_discovery::AuthorityPair as AuthorityDiscoveryPair;
