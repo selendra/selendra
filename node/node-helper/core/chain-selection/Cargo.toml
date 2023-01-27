@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-core-chain-selection"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Selendra <info@selendra.org>"]
 description = "Chain Selection Subsystem"
 edition = "2021"

@@ -1,6 +1,6 @@
 [package]
 name = "selendra-gossip-support"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
