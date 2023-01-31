@@ -66,6 +66,7 @@ impl Contains<Call> for BaseFilter {
 			Call::Slots(_) |
 			Call::Registrar(_) |
 			Call::XcmPallet(_) |
+			Call::ParasSudoWrapper(_) |
 			Call::VoterList(_) => true,
 		}
 	}

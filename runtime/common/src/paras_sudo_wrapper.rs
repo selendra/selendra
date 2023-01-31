@@ -22,7 +22,9 @@ pub use pallet::*;
 use parity_scale_codec::Encode;
 use primitives::v2::Id as ParaId;
 use runtime_parachains::{
-	configuration, dmp, hrmp, paras, paras::ParaGenesisArgs, ump, ParaLifecycle,
+	configuration, dmp, hrmp,
+	paras::{self, ParaGenesisArgs},
+	ump, ParaLifecycle,
 };
 use sp_std::boxed::Box;
 

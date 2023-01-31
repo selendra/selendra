@@ -71,8 +71,8 @@ pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::{CurrencyAdapter, FeeDetails, RuntimeDispatchInfo};
 
 use runtime_common::{
-	impl_runtime_weights, impls::DealWithFees, paras_registrar, prod_or_fast, slots,
-	BlockHashCount, BlockLength, CouncilInstance, CouncilMembershipInstance, CurrencyToVote,
+	impl_runtime_weights, impls::DealWithFees, paras_registrar, paras_sudo_wrapper, prod_or_fast,
+	slots, BlockHashCount, BlockLength, CouncilInstance, CouncilMembershipInstance, CurrencyToVote,
 	EnsureRootOrAllCouncil, EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil,
 	EnsureRootOrThreeFourthsCouncil, EnsureRootOrTwoThirdsCouncil,
 	EnsureRootOrTwoThirdsTechnicalCommittee, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
@@ -1057,6 +1057,8 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
+impl paras_sudo_wrapper::Config for Runtime {}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -1124,6 +1126,7 @@ construct_runtime! {
 		// Parachain Onboarding Pallets. Start indices at 90 to leave room.
 		Registrar: paras_registrar::{Pallet, Call, Storage, Event<T>} = 90,
 		Slots: slots::{Pallet, Call, Storage, Event<T>} = 91,
+		ParasSudoWrapper: paras_sudo_wrapper::{Pallet, Call} = 92,
 
 		// Pallet for sending XCM.
 		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin, Config} = 99,
