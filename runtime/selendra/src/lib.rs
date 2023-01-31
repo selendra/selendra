@@ -1126,12 +1126,11 @@ construct_runtime! {
 		// Parachain Onboarding Pallets. Start indices at 90 to leave room.
 		Registrar: paras_registrar::{Pallet, Call, Storage, Event<T>} = 90,
 		Slots: slots::{Pallet, Call, Storage, Event<T>} = 91,
-		ParasSudoWrapper: paras_sudo_wrapper::{Pallet, Call} = 92,
-
 		// Pallet for sending XCM.
 		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin, Config} = 99,
 
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Event<T>, Config<T>} = 200,
+		ParasSudoWrapper: paras_sudo_wrapper::{Pallet, Call} = 201,
 	}
 }
 
