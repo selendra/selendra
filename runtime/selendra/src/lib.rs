@@ -434,7 +434,7 @@ impl onchain::Config for OnChainSeqPhragmen {
 		pallet_election_provider_multi_phase::SolutionAccuracyOf<Runtime>,
 	>;
 	type DataProvider = Staking;
-	type WeightInfo = ();
+	type WeightInfo = weights::frame_election_provider_support::WeightInfo<Runtime>;
 }
 
 impl onchain::BoundedConfig for OnChainSeqPhragmen {

@@ -26,6 +26,7 @@ pub mod pallet_bounties;
 pub mod pallet_collective;
 pub mod pallet_democracy;
 pub mod pallet_election_provider_multi_phase;
+pub mod frame_election_provider_support;
 pub mod pallet_elections_phragmen;
 pub mod pallet_identity;
 pub mod pallet_im_online;
