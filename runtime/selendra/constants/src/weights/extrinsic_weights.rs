@@ -44,16 +44,16 @@ parameter_types! {
 	/// Calculated by multiplying the *Average* with `1` and adding `0`.
 	///
 	/// Stats [NS]:
-	///   Min, Max: 84_940, 86_590
-	///   Average:  85_212
-	///   Median:   85_156
-	///   Std-Dev:  243.25
+	///   Min, Max: 85_946, 88_408
+	///   Average:  86_309
+	///   Median:   86_213
+	///   Std-Dev:  345.03
 	///
 	/// Percentiles [NS]:
-	///   99th: 86_269
-	///   95th: 85_510
-	///   75th: 85_216
-	pub const ExtrinsicBaseWeight: Weight = WEIGHT_PER_NANOS.saturating_mul(85_212);
+	///   99th: 87_527
+	///   95th: 86_901
+	///   75th: 86_308
+	pub const ExtrinsicBaseWeight: Weight = WEIGHT_PER_NANOS.saturating_mul(86_309);
 }
 
 #[cfg(test)]
@@ -69,13 +69,13 @@ mod test_weights {
 
 		// At least 10 µs.
 		assert!(
-			w.ref_time() >= 100u64 * constants::WEIGHT_PER_MICROS.ref_time(),
-			"Weight should be at least 100 µs."
+			w.ref_time() >= 10u64 * constants::WEIGHT_PER_MICROS.ref_time(),
+			"Weight should be at least 10 µs."
 		);
 		// At most 1 ms.
 		assert!(
-			w.ref_time() <= 50u64 * constants::WEIGHT_PER_MILLIS.ref_time(),
-			"Weight should be at most 50 ms."
+			w.ref_time() <= constants::WEIGHT_PER_MILLIS.ref_time(),
+			"Weight should be at most 1 ms."
 		);
 	}
 }

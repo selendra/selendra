@@ -131,7 +131,6 @@ try-runtime = [ "selendra-cli/try-runtime" ]
 fast-runtime = [ "selendra-cli/fast-runtime" ]
 runtime-metrics = [ "selendra-cli/runtime-metrics" ]
 pyroscope = ["selendra-cli/pyroscope"]
-staging-client = ["selendra-cli/staging-client"]
 
 [profile.dev.package]
 blake2b_simd = { opt-level = 3 }

@@ -180,4 +180,3 @@ runtime-metrics = [
 	"selendra-runtime-parachains/runtime-metrics"
 ]
 
-staging-client = ["selendra-node-core-provisioner/staging-client"]

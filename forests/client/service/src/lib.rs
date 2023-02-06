@@ -125,9 +125,8 @@ where
 	task_manager
 		.spawn_essential_handle()
 		.spawn("forests-pov-recovery", None, pov_recovery.run());
-
 	forests_client_collator::start_collator(forests_client_collator::StartCollatorParams {
-		runtime_api: client.clone(),
+		runtime_api: client,
 		block_status,
 		announce_block,
 		overseer_handle,

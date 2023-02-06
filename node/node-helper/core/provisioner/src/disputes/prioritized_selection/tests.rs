@@ -24,7 +24,7 @@ use selendra_node_primitives::{CandidateVotes, DisputeStatus, ACTIVE_DURATION_SE
 use selendra_node_subsystem::messages::{
 	AllMessages, DisputeCoordinatorMessage, RuntimeApiMessage, RuntimeApiRequest,
 };
-use selendra_node_subsystem_test_helpers::TestSubsystemSender;
+use node_subsystem_test_helpers::TestSubsystemSender;
 use selendra_primitives::v2::{
 	CandidateHash, DisputeState, InvalidDisputeStatementKind, SessionIndex,
 	ValidDisputeStatementKind, ValidatorSignature,

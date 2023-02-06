@@ -34,8 +34,8 @@ fn wo_alias() {
 	error!(target: "foo",
 		"Something something {}, {:?}, or maybe {}",
 		a,
-		b = Y::default(),
-		c = a
+		Y::default(),
+		a
 	);
 }
 

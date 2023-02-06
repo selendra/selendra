@@ -16,12 +16,12 @@
 
 use std::{net::SocketAddr, path::PathBuf};
 
+use forests_service::{ChainSpec, ParaId, PrometheusConfig};
 use sc_cli::{
 	CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams, NetworkParams,
 	Result as CliResult, RuntimeVersion, SharedParams, SubstrateCli,
 };
 use sc_service::BasePath;
-use selendra_service::{ChainSpec, ParaId, PrometheusConfig};
 
 #[derive(Debug, clap::Parser)]
 #[clap(
@@ -97,7 +97,7 @@ impl CliConfiguration for ExportGenesisWasmCommand {
 #[derive(Debug)]
 pub struct RelayChainCli {
 	/// The actual relay chain cli object.
-	pub base: selendra_cli::RunCmd,
+	pub base: forests_cli::RunCmd,
 
 	/// Optional chain id that should be passed to the relay chain.
 	pub chain_id: Option<String>,
@@ -112,7 +112,7 @@ impl RelayChainCli {
 		para_config: &sc_service::Configuration,
 		relay_chain_args: impl Iterator<Item = &'a String>,
 	) -> Self {
-		let base_path = para_config.base_path.as_ref().map(|x| x.path().join("selendra"));
+		let base_path = para_config.base_path.as_ref().map(|x| x.path().join("forests"));
 		Self { base_path, chain_id: None, base: clap::Parser::parse_from(relay_chain_args) }
 	}
 }
@@ -171,7 +171,7 @@ impl CliConfiguration<Self> for RelayChainCli {
 	where
 		F: FnOnce(&mut sc_cli::LoggerBuilder, &sc_service::Configuration),
 	{
-		unreachable!("SelendraCli is never initialized; qed");
+		unreachable!("ForestsCli is never initialized; qed");
 	}
 
 	fn chain_id(&self, is_dev: bool) -> CliResult<String> {
@@ -288,9 +288,16 @@ impl SubstrateCli for TestCollatorCli {
 		2017
 	}
 
-	fn load_spec(&self, _: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-		Ok(Box::new(forests_test_service::get_chain_spec(ParaId::from(self.parachain_id)))
-			as Box<_>)
+	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
+		Ok(match id {
+			"" => Box::new(forests_test_service::get_chain_spec(ParaId::from(self.parachain_id)))
+				as Box<_>,
+			path => {
+				let chain_spec =
+					forests_test_service::chain_spec::ChainSpec::from_json_file(path.into())?;
+				Box::new(chain_spec)
+			},
+		})
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
@@ -300,7 +307,7 @@ impl SubstrateCli for TestCollatorCli {
 
 impl SubstrateCli for RelayChainCli {
 	fn impl_name() -> String {
-		"Selendra collator".into()
+		"Forests collator".into()
 	}
 
 	fn impl_version() -> String {
@@ -309,7 +316,7 @@ impl SubstrateCli for RelayChainCli {
 
 	fn description() -> String {
 		format!(
-			"Selendra collator\n\nThe command-line arguments provided first will be \
+			"Forests collator\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relay chain node.\n\n\
 		{} [parachain-args] -- [relay_chain-args]",
@@ -330,11 +337,11 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-		<selendra_cli::Cli as SubstrateCli>::from_iter([RelayChainCli::executable_name()].iter())
+		<forests_cli::Cli as SubstrateCli>::from_iter([RelayChainCli::executable_name()].iter())
 			.load_spec(id)
 	}
 
 	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		selendra_cli::Cli::native_runtime_version(chain_spec)
+		forests_cli::Cli::native_runtime_version(chain_spec)
 	}
 }

@@ -13,12 +13,14 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
 use forests_pallet_parachain_system as parachain_system;
-use frame_support::{dispatch::DispatchResult, pallet_prelude::*, weights::DispatchInfo};
+use frame_support::{
+	dispatch::{DispatchInfo, DispatchResult},
+	pallet_prelude::*,
+};
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
 use selendra_primitives::v2::PersistedValidationData;
@@ -40,7 +42,7 @@ pub mod pallet {
 	pub trait Config:
 		frame_system::Config + parachain_system::Config + pallet_sudo::Config
 	{
-		type Event: From<Event> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 	}
 
 	#[pallet::pallet]
@@ -133,10 +135,10 @@ pub mod pallet {
 
 	impl<T: Config + Send + Sync> SignedExtension for CheckSudo<T>
 	where
-		<T as frame_system::Config>::Call: Dispatchable<Info = DispatchInfo>,
+		<T as frame_system::Config>::RuntimeCall: Dispatchable<Info = DispatchInfo>,
 	{
 		type AccountId = T::AccountId;
-		type Call = <T as frame_system::Config>::Call;
+		type Call = <T as frame_system::Config>::RuntimeCall;
 		type AdditionalSigned = ();
 		type Pre = ();
 		const IDENTIFIER: &'static str = "CheckSudo";

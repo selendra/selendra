@@ -58,7 +58,7 @@ runtime-common = { package = "selendra-runtime-common", path = "../../../runtime
 primitives = { package = "selendra-primitives", path = "../../../primitives", default-features = false }
 pallet-xcm = { path = "../../../parachain/xcm/pallet-xcm", default-features = false }
 selendra-parachain = { path = "../../../parachain/core", default-features = false }
-selendra-runtime-parachains = { path = "../../../parachain/runtime", default-features = false, features = ["vstaging"]}
+selendra-runtime-parachains = { path = "../../../parachain/runtime", default-features = false }
 xcm-builder = { path = "../../../parachain/xcm/xcm-builder", default-features = false }
 xcm-executor = { path = "../../../parachain/xcm/xcm-executor", default-features = false }
 xcm = { path = "../../../parachain/xcm", default-features = false }

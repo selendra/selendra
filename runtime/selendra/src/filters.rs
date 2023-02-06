@@ -15,62 +15,9 @@
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>
 
 /// Filers
-use super::{paras_registrar, Call, RuntimeDebug};
+use super::{paras_registrar, RuntimeCall, RuntimeDebug};
 use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::traits::{Contains, InstanceFilter};
-
-pub struct BaseFilter;
-impl Contains<Call> for BaseFilter {
-	fn contains(call: &Call) -> bool {
-		match call {
-			RuntimeCall::Democracy(_) |
-			RuntimeCall::NominationPools(_) |
-			RuntimeCall::Council(_) |
-			RuntimeCall::TechnicalCommittee(_) |
-			RuntimeCall::TechnicalMembership(_) |
-			RuntimeCall::Treasury(_) |
-			RuntimeCall::PhragmenElection(_) |
-			RuntimeCall::System(_) |
-			RuntimeCall::Scheduler(_) |
-			RuntimeCall::Preimage(_) |
-			RuntimeCall::Indices(_) |
-			RuntimeCall::Babe(_) |
-			RuntimeCall::Timestamp(_) |
-			RuntimeCall::Balances(_) |
-			RuntimeCall::Authorship(_) |
-			RuntimeCall::Staking(_) |
-			RuntimeCall::Session(_) |
-			RuntimeCall::Grandpa(_) |
-			RuntimeCall::ImOnline(_) |
-			RuntimeCall::Utility(_) |
-			RuntimeCall::Vesting(_) |
-			RuntimeCall::Identity(_) |
-			RuntimeCall::Proxy(_) |
-			RuntimeCall::Multisig(_) |
-			RuntimeCall::Bounties(_) |
-			RuntimeCall::Tips(_) |
-			RuntimeCall::ElectionProviderMultiPhase(_) |
-			RuntimeCall::Recovery(_) |
-			RuntimeCall::CouncilMembership(_) |
-			RuntimeCall::Sudo(_) |
-			RuntimeCall::Configuration(_) |
-			RuntimeCall::ParasShared(_) |
-			RuntimeCall::ParaInclusion(_) |
-			RuntimeCall::Paras(_) |
-			RuntimeCall::Initializer(_) |
-			RuntimeCall::ParaInherent(_) |
-			RuntimeCall::ParasDisputes(_) |
-			RuntimeCall::Dmp(_) |
-			RuntimeCall::Ump(_) |
-			RuntimeCall::Hrmp(_) |
-			RuntimeCall::Slots(_) |
-			RuntimeCall::Registrar(_) |
-			RuntimeCall::XcmPallet(_) |
-			RuntimeCall::ParasSudoWrapper(_) |
-			RuntimeCall::VoterList(_) => true,
-		}
-	}
-}
+use frame_support::traits::InstanceFilter;
 
 /// The type used to represent the kinds of proxying allowed.
 #[derive(
@@ -132,8 +79,8 @@ impl Default for ProxyType {
 		Self::Any
 	}
 }
-impl InstanceFilter<Call> for ProxyType {
-	fn filter(&self, c: &Call) -> bool {
+impl InstanceFilter<RuntimeCall> for ProxyType {
+	fn filter(&self, c: &RuntimeCall) -> bool {
 		match self {
 			ProxyType::Any => true,
 			ProxyType::NonTransfer => matches!(
@@ -200,14 +147,11 @@ impl InstanceFilter<Call> for ProxyType {
 			},
 			ProxyType::IdentityJudgement => matches!(
 				c,
-				RuntimeCall::Identity(pallet_identity::RuntimeCall::provide_judgement { .. }) |
+				RuntimeCall::Identity(pallet_identity::Call::provide_judgement { .. }) |
 					RuntimeCall::Utility(..)
 			),
 			ProxyType::CancelProxy => {
-				matches!(
-					c,
-					RuntimeCall::Proxy(pallet_proxy::RuntimeCall::reject_announcement { .. })
-				)
+				matches!(c, RuntimeCall::Proxy(pallet_proxy::Call::reject_announcement { .. }))
 			},
 		}
 	}

@@ -21,6 +21,7 @@
 //! The dispatchables must be called from the configured origin
 //! (typically `Sudo` or a governance origin).
 //! This pallet should not be used on a production relay chain,
+//! only on a test relay chain (e.g. Rococo).
 
 use crate::{
 	slots::{self, Pallet as Slots, WeightInfo},
@@ -32,7 +33,10 @@ use frame_system::pallet_prelude::*;
 pub use pallet::*;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use primitives::v2::Id as ParaId;
-use runtime_parachains::{configuration, paras};
+use runtime_parachains::{
+	configuration,
+	paras::{self},
+};
 use scale_info::TypeInfo;
 use sp_runtime::traits::{One, Saturating, Zero};
 use sp_std::prelude::*;
@@ -81,7 +85,7 @@ pub mod pallet {
 	#[pallet::disable_frame_system_supertrait_check]
 	pub trait Config: configuration::Config + paras::Config + slots::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// Origin for assigning slots.
 		type AssignSlotOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
@@ -575,10 +579,10 @@ mod tests {
 
 	impl<C> frame_system::offchain::SendTransactionTypes<C> for Test
 	where
-		Call: From<C>,
+		RuntimeCall: From<C>,
 	{
 		type Extrinsic = UncheckedExtrinsic;
-		type OverarchingCall = Call;
+		type OverarchingCall = RuntimeCall;
 	}
 
 	parameter_types! {
@@ -589,7 +593,7 @@ mod tests {
 		type BlockWeights = ();
 		type BlockLength = ();
 		type RuntimeOrigin = RuntimeOrigin;
-		type Call = Call;
+		type RuntimeCall = RuntimeCall;
 		type Index = u64;
 		type BlockNumber = BlockNumber;
 		type Hash = H256;
@@ -597,7 +601,7 @@ mod tests {
 		type AccountId = u64;
 		type Lookup = IdentityLookup<Self::AccountId>;
 		type Header = Header;
-		type Event = Event;
+		type RuntimeEvent = RuntimeEvent;
 		type BlockHashCount = BlockHashCount;
 		type DbWeight = ();
 		type Version = ();
@@ -617,7 +621,7 @@ mod tests {
 
 	impl pallet_balances::Config for Test {
 		type Balance = u64;
-		type Event = Event;
+		type RuntimeEvent = RuntimeEvent;
 		type DustRemoval = ();
 		type ExistentialDeposit = ExistentialDeposit;
 		type AccountStore = System;
@@ -636,7 +640,7 @@ mod tests {
 	}
 
 	impl parachains_paras::Config for Test {
-		type Event = Event;
+		type RuntimeEvent = RuntimeEvent;
 		type WeightInfo = parachains_paras::TestWeightInfo;
 		type UnsignedPriority = ParasUnsignedPriority;
 		type NextSessionRotation = crate::mock::TestNextSessionRotation;
@@ -651,7 +655,7 @@ mod tests {
 	}
 
 	impl slots::Config for Test {
-		type Event = Event;
+		type RuntimeEvent = RuntimeEvent;
 		type Currency = Balances;
 		type Registrar = TestRegistrar<Test>;
 		type LeasePeriod = LeasePeriod;
@@ -669,7 +673,7 @@ mod tests {
 	}
 
 	impl assigned_slots::Config for Test {
-		type Event = Event;
+		type RuntimeEvent = RuntimeEvent;
 		type AssignSlotOrigin = EnsureRoot<Self::AccountId>;
 		type Leaser = Slots;
 		type PermanentSlotLeasePeriodLength = PermanentSlotLeasePeriodLength;
@@ -735,7 +739,7 @@ mod tests {
 
 			assert_noop!(
 				AssignedSlots::assign_perm_parachain_slot(
-					RuntimeOrigin::signed(1),
+					RuntimeOrigin::root(),
 					ParaId::from(1_u32),
 				),
 				Error::<Test>::ParaDoesntExist
@@ -773,7 +777,7 @@ mod tests {
 
 			assert_noop!(
 				AssignedSlots::assign_perm_parachain_slot(
-					RuntimeOrigin::signed(1),
+					RuntimeOrigin::root(),
 					ParaId::from(1_u32),
 				),
 				Error::<Test>::NotParathread
@@ -798,21 +802,21 @@ mod tests {
 			// Try to assign a perm slot in current period fails
 			assert_noop!(
 				AssignedSlots::assign_perm_parachain_slot(
-					RuntimeOrigin::signed(1),
+					RuntimeOrigin::root(),
 					ParaId::from(1_u32),
 				),
 				Error::<Test>::OngoingLeaseExists
 			);
 
 			// Cleanup
-			assert_ok!(Slots::clear_all_leases(RuntimeRuntimeOrigin::root(), 1.into()));
+			assert_ok!(Slots::clear_all_leases(RuntimeOrigin::root(), 1.into()));
 
 			// Register lease for next lease period
 			assert_ok!(Slots::lease_out(ParaId::from(1_u32), &1, 1, 2, 1));
 			// Should be detected and also fail
 			assert_noop!(
 				AssignedSlots::assign_perm_parachain_slot(
-					RuntimeOrigin::signed(1),
+					RuntimeOrigin::root(),
 					ParaId::from(1_u32),
 				),
 				Error::<Test>::OngoingLeaseExists
@@ -989,7 +993,7 @@ mod tests {
 			);
 
 			// Cleanup
-			assert_ok!(Slots::clear_all_leases(RuntimeRuntimeOrigin::root(), 1.into()));
+			assert_ok!(Slots::clear_all_leases(RuntimeOrigin::root(), 1.into()));
 
 			// Register lease for next lease period
 			assert_ok!(Slots::lease_out(ParaId::from(1_u32), &1, 1, 2, 1));

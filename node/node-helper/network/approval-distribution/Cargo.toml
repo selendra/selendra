@@ -28,3 +28,4 @@ sp-core = { git = "https://github.com/paritytech/substrate", features = ["std"] 
 
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
+primitives-test-helpers = { path = "../../../../tests/test-helpers/primitive" }
