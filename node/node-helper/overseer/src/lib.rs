@@ -467,7 +467,6 @@ pub struct Overseer<SupportsParachains> {
 		StatementDistributionMessage,
 		ProvisionerMessage,
 		RuntimeApiMessage,
-		DisputeCoordinatorMessage,
 	])]
 	candidate_backing: CandidateBacking,
 

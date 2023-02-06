@@ -18,6 +18,7 @@ use super::*;
 use assert_matches::assert_matches;
 use futures::{executor, future, Future};
 use node_subsystem_test_helpers as test_helpers;
+use primitives_test_helpers::dummy_signature;
 use rand::SeedableRng;
 use selendra_node_network_protocol::{our_view, peer_set::ValidationVersion, view, ObservedRole};
 use selendra_node_primitives::approval::{
@@ -31,10 +32,6 @@ use sp_core::crypto::Pair as PairT;
 use std::time::Duration;
 
 type VirtualOverseer = test_helpers::TestSubsystemContextHandle<ApprovalDistributionMessage>;
-
-fn dummy_signature() -> selendra_primitives::v2::ValidatorSignature {
-	sp_core::crypto::UncheckedFrom::unchecked_from([1u8; 64])
-}
 
 fn test_harness<T: Future<Output = VirtualOverseer>>(
 	mut state: State,

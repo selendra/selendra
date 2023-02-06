@@ -46,8 +46,9 @@ pub mod approval;
 /// Disputes related types.
 pub mod disputes;
 pub use disputes::{
-	CandidateVotes, DisputeMessage, DisputeMessageCheckError, InvalidDisputeVote,
-	SignedDisputeStatement, UncheckedDisputeMessage, ValidDisputeVote,
+	dispute_is_inactive, CandidateVotes, DisputeMessage, DisputeMessageCheckError, DisputeStatus,
+	InvalidDisputeVote, SignedDisputeStatement, Timestamp, UncheckedDisputeMessage,
+	ValidDisputeVote, ACTIVE_DURATION_SECS,
 };
 
 // For a 16-ary Merkle Prefix Trie, we can expect at most 16 32-byte hashes per node
@@ -111,7 +112,7 @@ macro_rules! new_session_window_size {
 }
 
 /// It would be nice to draw this from the chain state, but we have no tools for it right now.
-/// On Selendra this is 1 day.
+/// On Selendra this is 1 day, and on Kusama it's 6 hours.
 ///
 /// Number of sessions we want to consider in disputes.
 pub const DISPUTE_WINDOW: SessionWindowSize = new_session_window_size!(6);

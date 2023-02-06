@@ -33,7 +33,7 @@ pub mod constants {
 		// you can delete it.
 		#[test]
 		fn sane() {
-			let w = super::BlockExecutionWeight::get();
+			let w = super::constants::BlockExecutionWeight::get();
 
 			// At least 100 µs.
 			assert!(

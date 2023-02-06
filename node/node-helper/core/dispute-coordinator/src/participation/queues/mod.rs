@@ -124,6 +124,7 @@ impl ParticipationRequest {
 	pub fn new(candidate_receipt: CandidateReceipt, session: SessionIndex) -> Self {
 		Self { candidate_hash: candidate_receipt.hash(), candidate_receipt, session }
 	}
+
 	pub fn candidate_receipt(&'_ self) -> &'_ CandidateReceipt {
 		&self.candidate_receipt
 	}

@@ -13,6 +13,7 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 //! Runtime modules for parachains code.
 //!
 //! It is crucial to include all the modules from this crate in the runtime, in
@@ -33,11 +34,12 @@ pub mod origin;
 pub mod paras;
 pub mod paras_inherent;
 pub mod reward_points;
-pub mod runtime_api_impl;
 pub mod scheduler;
 pub mod session_info;
 pub mod shared;
 pub mod ump;
+
+pub mod runtime_api_impl;
 
 mod util;
 

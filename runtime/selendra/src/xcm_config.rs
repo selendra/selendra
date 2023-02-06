@@ -17,8 +17,8 @@
 //! XCM configuration for Selendra.
 
 use super::{
-	parachains_origin, AccountId, Balances, Call, CouncilInstance, Event, Origin, ParaId, Runtime,
-	WeightToFee, XcmPallet,
+	parachains_origin, AccountId, Balances, Call, CouncilInstance, Event, ParaId, Runtime,
+	RuntimeOrigin, WeightToFee, XcmPallet,
 };
 use frame_support::{
 	match_types, parameter_types,
@@ -82,8 +82,8 @@ type LocalOriginConverter = (
 	// by the `SovereignAccountOf` converter.
 	SovereignSignedViaLocation<SovereignAccountOf, Origin>,
 	// If the origin kind is `Native` and the XCM origin is a child parachain, then we can express
-	// it with the special `parachains_origin::Origin` origin variant.
-	ChildParachainAsNative<parachains_origin::Origin, Origin>,
+	// it with the special `parachains_origin::RuntimeOrigin` origin variant.
+	ChildParachainAsNative<parachains_origin::RuntimeOrigin, Origin>,
 	// If the origin kind is `Native` and the XCM origin is the `AccountId32` location, then it can
 	// be expressed using the `Signed` origin variant.
 	SignedAccountId32AsNative<SelendraNetwork, Origin>,
@@ -157,8 +157,11 @@ parameter_types! {
 }
 
 /// Type to convert a council origin to a Plurality `MultiLocation` value.
-pub type CouncilToPlurality =
-	BackingToPlurality<Origin, pallet_collective::Origin<Runtime, CouncilInstance>, CouncilBodyId>;
+pub type CouncilToPlurality = BackingToPlurality<
+	Origin,
+	pallet_collective::RuntimeOrigin<Runtime, CouncilInstance>,
+	CouncilBodyId,
+>;
 
 /// Type to convert an `Origin` type value into a `MultiLocation` value which represents an interior location
 /// of this chain.
@@ -184,7 +187,7 @@ impl pallet_xcm::Config for Runtime {
 	type XcmReserveTransferFilter = Everything; // == Allow All
 	type Weigher = FixedWeightBounds<BaseXcmWeight, Call, MaxInstructions>;
 	type LocationInverter = LocationInverter<Ancestry>;
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	type Call = Call;
 	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 	type AdvertisedXcmVersion = AdvertisedXcmVersion;

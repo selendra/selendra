@@ -21,12 +21,12 @@
 //!
 //! Note that `dummy_` prefixed values are meant to be fillers, that should not matter, and will
 //! contain randomness based data.
-pub use rand;
 use selendra_primitives::v2::{
 	CandidateCommitments, CandidateDescriptor, CandidateReceipt, CollatorId, CollatorSignature,
 	CommittedCandidateReceipt, Hash, HeadData, Id as ParaId, ValidationCode, ValidationCodeHash,
 	ValidatorId,
 };
+pub use rand;
 use sp_application_crypto::sr25519;
 use sp_keyring::Sr25519Keyring;
 use sp_runtime::generic::Digest;
@@ -254,4 +254,8 @@ impl rand::RngCore for AlwaysZeroRng {
 		self.fill_bytes(dest);
 		Ok(())
 	}
+}
+
+pub fn dummy_signature() -> selendra_primitives::v2::ValidatorSignature {
+	sp_core::crypto::UncheckedFrom::unchecked_from([1u8; 64])
 }

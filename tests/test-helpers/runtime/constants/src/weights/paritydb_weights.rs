@@ -37,10 +37,10 @@ pub mod constants {
 		// NOTE: If this test fails but you are sure that the generated values are fine,
 		// you can delete it.
 		#[test]
-		fn bound() {
+		fn sane() {
 			// At least 1 µs.
 			assert!(
-				W::get().reads(1).ref_time() <= constants::WEIGHT_PER_MILLIS.ref_time(),
+				W::get().reads(1).ref_time() >= constants::WEIGHT_PER_MICROS.ref_time(),
 				"Read weight should be at least 1 µs."
 			);
 			assert!(

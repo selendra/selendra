@@ -13,6 +13,7 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 use crate::configuration::*;
 use frame_benchmarking::{benchmarks, BenchmarkError, BenchmarkResult};
 use frame_system::RawOrigin;

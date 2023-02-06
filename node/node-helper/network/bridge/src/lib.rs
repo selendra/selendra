@@ -15,8 +15,6 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! The Network Bridge Subsystem - protocol multiplexer for Selendra.
-
-//! The Network Bridge Subsystem - protocol multiplexer for Selendra.
 //!
 //! Split into incoming (`..In`) and outgoing (`..Out`) subsystems.
 

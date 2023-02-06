@@ -100,7 +100,7 @@ impl MallocSizeOf for CollatorSignature {
 }
 
 /// The key type ID for a parachain validator key.
-pub const PARACHAIN_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"indr");
+pub const PARACHAIN_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"para");
 
 mod validator_app {
 	use sp_application_crypto::{app_crypto, sr25519};

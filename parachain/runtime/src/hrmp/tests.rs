@@ -13,10 +13,11 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 use super::*;
 use crate::mock::{
-	new_test_ext, Configuration, Event as MockEvent, Hrmp, MockGenesisConfig, Paras, ParasShared,
-	System, Test,
+	new_test_ext, Configuration, Hrmp, MockGenesisConfig, Paras, ParasShared,
+	RuntimeEvent as MockEvent, System, Test,
 };
 use frame_support::{assert_noop, assert_ok, traits::Currency as _};
 use primitives::v2::BlockNumber;

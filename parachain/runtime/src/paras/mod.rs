@@ -473,7 +473,7 @@ pub mod pallet {
 		+ shared::Config
 		+ frame_system::offchain::SendTransactionTypes<Call<Self>>
 	{
-		type Event: From<Event> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		#[pallet::constant]
 		type UnsignedPriority: Get<TransactionPriority>;
@@ -882,7 +882,7 @@ pub mod pallet {
 				.max(<T as Config>::WeightInfo::include_pvf_check_statement_finalize_upgrade_reject())
 				.max(<T as Config>::WeightInfo::include_pvf_check_statement_finalize_onboarding_accept()
 					.max(<T as Config>::WeightInfo::include_pvf_check_statement_finalize_onboarding_reject())
-			)
+				)
 		)]
 		pub fn include_pvf_check_statement(
 			origin: OriginFor<T>,
@@ -1543,7 +1543,7 @@ impl<T: Config> Pallet<T> {
 		//
 		// This is only an intermediate solution and should be fixed in foreseable future.
 		//
-		// [soaking issue]: https://github.com/paritytech/polkadot/issues/3918
+		// [soaking issue]: https://github.com/paritytech/selendra/issues/3918
 		let validation_code =
 			mem::replace(&mut genesis_data.validation_code, ValidationCode(Vec::new()));
 		UpcomingParasGenesis::<T>::insert(&id, genesis_data);
@@ -1570,15 +1570,21 @@ impl<T: Config> Pallet<T> {
 	///
 	/// No-op if para is not registered at all.
 	pub(crate) fn schedule_para_cleanup(id: ParaId) -> DispatchResult {
-		// Disallow offboarding in case there is an upcoming upgrade.
+		// Disallow offboarding in case there is a PVF pre-checking in progress.
 		//
 		// This is not a fundamential limitation but rather simplification: it allows us to get
 		// away without introducing additional logic for pruning and, more importantly, enacting
 		// ongoing PVF pre-checking votes. It also removes some nasty edge cases.
 		//
+		// However, an upcoming upgrade on its own imposes no restrictions. An upgrade is enacted
+		// with a new para head, so if a para never progresses we still should be able to offboard it.
+		//
 		// This implicitly assumes that the given para exists, i.e. it's lifecycle != None.
-		if FutureCodeHash::<T>::contains_key(&id) {
-			return Err(Error::<T>::CannotOffboard.into())
+		if let Some(future_code_hash) = FutureCodeHash::<T>::get(&id) {
+			let active_prechecking = PvfActiveVoteList::<T>::get();
+			if active_prechecking.contains(&future_code_hash) {
+				return Err(Error::<T>::CannotOffboard.into())
+			}
 		}
 
 		let lifecycle = ParaLifecycles::<T>::get(&id);

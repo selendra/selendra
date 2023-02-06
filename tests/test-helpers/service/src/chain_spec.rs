@@ -33,7 +33,8 @@ use test_runtime_constants::currency::DOTS;
 const DEFAULT_PROTOCOL_ID: &str = "dot";
 
 /// The `ChainSpec` parameterized for selendra test runtime.
-pub type SelendraChainSpec = sc_service::GenericChainSpec<test_runtime::GenesisConfig, Extensions>;
+pub type SelendraChainSpec =
+	sc_service::GenericChainSpec<test_runtime::GenesisConfig, Extensions>;
 
 /// Local testnet config (multivalidator Alice + Bob)
 pub fn selendra_local_testnet_config() -> SelendraChainSpec {

@@ -74,7 +74,7 @@ parameter_types! {
 	pub const ReservedDmpWeight: Weight = Weight::zero();
 }
 impl frame_system::Config for Test {
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	type Call = Call;
 	type Index = u64;
 	type BlockNumber = u64;

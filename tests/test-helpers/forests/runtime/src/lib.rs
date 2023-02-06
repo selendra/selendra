@@ -186,7 +186,7 @@ impl frame_system::Config for Runtime {
 	/// The ubiquitous event type.
 	type Event = Event;
 	/// The ubiquitous origin type.
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
 	/// Runtime version.

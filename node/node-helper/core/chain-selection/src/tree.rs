@@ -594,6 +594,9 @@ pub(super) fn detect_stagnant<'a, B: 'a + Backend>(
 	Ok(backend)
 }
 
+/// Prune stagnant entries at some timestamp without other checks
+/// This function is intended just to clean leftover entries when the real
+/// stagnant checks are disabled
 pub(super) fn prune_only_stagnant<'a, B: 'a + Backend>(
 	backend: &'a B,
 	up_to: Timestamp,

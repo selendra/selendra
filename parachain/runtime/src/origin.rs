@@ -13,6 +13,7 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 //! Declaration of the parachain specific origin and a pallet that hosts it.
 
 use primitives::v2::Id as ParaId;

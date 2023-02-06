@@ -13,6 +13,7 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 //! The inclusion pallet is responsible for inclusion and availability of scheduled parachains
 //! and parathreads.
 //!
@@ -193,7 +194,7 @@ pub mod pallet {
 		+ hrmp::Config
 		+ configuration::Config
 	{
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type DisputesHandler: disputes::DisputesHandler<Self::BlockNumber>;
 		type RewardValidators: RewardValidators;
 	}

@@ -89,7 +89,7 @@ pub mod pallet {
 		type XcmExecutor: ExecuteXcm<Self::Call>;
 
 		/// Origin which is allowed to execute overweight messages.
-		type ExecuteOverweightOrigin: EnsureOrigin<Self::Origin>;
+		type ExecuteOverweightOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	/// The configuration.
@@ -386,7 +386,7 @@ mod tests {
 	type AccountId = u64;
 
 	impl frame_system::Config for Test {
-		type Origin = Origin;
+		type RuntimeOrigin = RuntimeOrigin;
 		type Call = Call;
 		type Index = u64;
 		type BlockNumber = u64;
@@ -741,15 +741,23 @@ mod tests {
 			assert_eq!(overweights(), vec![0]);
 
 			assert_noop!(
-				DmpQueue::service_overweight(Origin::signed(1), 0, Weight::from_ref_time(20000)),
+				DmpQueue::service_overweight(
+					RuntimeOrigin::signed(1),
+					0,
+					Weight::from_ref_time(20000)
+				),
 				BadOrigin
 			);
 			assert_noop!(
-				DmpQueue::service_overweight(Origin::root(), 1, Weight::from_ref_time(20000)),
+				DmpQueue::service_overweight(
+					RuntimeOrigin::root(),
+					1,
+					Weight::from_ref_time(20000)
+				),
 				Error::<Test>::Unknown
 			);
 			assert_noop!(
-				DmpQueue::service_overweight(Origin::root(), 0, Weight::from_ref_time(9999)),
+				DmpQueue::service_overweight(RuntimeOrigin::root(), 0, Weight::from_ref_time(9999)),
 				Error::<Test>::OverLimit
 			);
 			assert_eq!(take_trace(), vec![msg_limit_reached(10000)]);
@@ -759,16 +767,23 @@ mod tests {
 					.get_dispatch_info()
 					.weight;
 			use frame_support::weights::GetDispatchInfo;
-			let info =
-				DmpQueue::service_overweight(Origin::root(), 0, Weight::from_ref_time(20000))
-					.unwrap();
+			let info = DmpQueue::service_overweight(
+				RuntimeOrigin::root(),
+				0,
+				Weight::from_ref_time(20000),
+			)
+			.unwrap();
 			let actual_weight = info.actual_weight.unwrap();
 			assert_eq!(actual_weight, base_weight + Weight::from_ref_time(10000));
 			assert_eq!(take_trace(), vec![msg_complete(10000)]);
 			assert!(overweights().is_empty());
 
 			assert_noop!(
-				DmpQueue::service_overweight(Origin::root(), 0, Weight::from_ref_time(20000)),
+				DmpQueue::service_overweight(
+					RuntimeOrigin::root(),
+					0,
+					Weight::from_ref_time(20000)
+				),
 				Error::<Test>::Unknown
 			);
 		});

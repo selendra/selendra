@@ -35,7 +35,7 @@ pub mod constants {
 		// you can delete it.
 		#[test]
 		fn sane() {
-			let w = super::ExtrinsicBaseWeight::get();
+			let w = super::constants::ExtrinsicBaseWeight::get();
 
 			// At least 10 µs.
 			assert!(
@@ -46,7 +46,7 @@ pub mod constants {
 			assert!(
 				w.ref_time() <= constants::WEIGHT_PER_MILLIS.ref_time(),
 				"Weight should be at most 1 ms."
-			)
+			);
 		}
 	}
 }

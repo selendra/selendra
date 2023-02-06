@@ -4,7 +4,6 @@ version = "0.2.3"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
-
 [package.metadata.wasm-pack.profile.release]
 # `wasm-opt` has some problems on Linux, see
 # https://github.com/rustwasm/wasm-pack/issues/781 etc.
@@ -67,4 +66,3 @@ hostperfcheck = ["performance-test"]
 selendra-native = ["service/selendra-native"]
 malus = ["full-node", "service/malus"]
 runtime-metrics = ["service/runtime-metrics", "selendra-node-metrics/runtime-metrics"]
-staging-client = ["service/staging-client"]

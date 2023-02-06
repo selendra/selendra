@@ -57,6 +57,7 @@ pallet-session-benchmarking = { git = "https://github.com/paritytech/substrate",
 pallet-scheduler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30", default-features = false }
 pallet-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30", default-features = false }
 pallet-staking-reward-curve = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30", default-features = false }
+pallet-fast-unstake = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30", default-features = false }
 pallet-sudo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30", default-features = false }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30", default-features = false }
 pallet-tips = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30", default-features = false }
@@ -147,6 +148,7 @@ std = [
 	"pallet-session/std",
 	"pallet-scheduler/std",
 	"pallet-staking/std",
+	"pallet-fast-unstake/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
 	"pallet-tips/std",
@@ -198,6 +200,7 @@ runtime-benchmarks = [
 	"pallet-democracy/runtime-benchmarks",
 	"pallet-election-provider-multi-phase/runtime-benchmarks",
 	"pallet-election-provider-support-benchmarking/runtime-benchmarks",
+	"pallet-fast-unstake/runtime-benchmarks",
 	"pallet-elections-phragmen/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-identity/runtime-benchmarks",
@@ -260,6 +263,7 @@ try-runtime = [
 	"pallet-utility/try-runtime",
 	"pallet-vesting/try-runtime",
 	"pallet-nomination-pools/try-runtime",
+	"pallet-fast-unstake/try-runtime",
 ]
 
 # When enabled, the runtime API will not be build.

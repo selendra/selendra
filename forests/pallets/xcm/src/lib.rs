@@ -88,12 +88,12 @@ pub mod pallet {
 
 	impl From<ParaId> for Origin {
 		fn from(id: ParaId) -> Origin {
-			Origin::SiblingParachain(id)
+			RuntimeOrigin::SiblingParachain(id)
 		}
 	}
 	impl From<u32> for Origin {
 		fn from(id: u32) -> Origin {
-			Origin::SiblingParachain(id.into())
+			RuntimeOrigin::SiblingParachain(id.into())
 		}
 	}
 }
@@ -174,7 +174,7 @@ where
 	OuterOrigin: Into<Result<Origin, OuterOrigin>>,
 {
 	match o.into() {
-		Ok(Origin::SiblingParachain(id)) => Ok(id),
+		Ok(RuntimeOrigin::SiblingParachain(id)) => Ok(id),
 		_ => Err(BadOrigin),
 	}
 }
@@ -186,7 +186,7 @@ where
 	OuterOrigin: Into<Result<Origin, OuterOrigin>>,
 {
 	match o.into() {
-		Ok(Origin::Relay) => Ok(()),
+		Ok(RuntimeOrigin::Relay) => Ok(()),
 		_ => Err(BadOrigin),
 	}
 }
