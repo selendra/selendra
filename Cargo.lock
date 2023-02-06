@@ -2456,8 +2456,10 @@ dependencies = [
  "parity-scale-codec",
  "sp-consensus",
  "sp-inherents",
+ "sp-runtime",
  "sp-std",
  "sp-timestamp",
+ "sp-tracing",
 ]
 
 [[package]]

@@ -21,7 +21,7 @@ use std::{io::Write, sync::Arc};
 use cli::{RelayChainCli, Subcommand, TestCollatorCli};
 use forests_client_cli::generate_genesis_block;
 use forests_primitives_core::{relay_chain::v2::CollatorPair, ParaId};
-use forests_service::runtime_traits::AccountIdConversion;
+use selendra_service::runtime_traits::AccountIdConversion;
 use forests_test_service::AnnounceBlockFn;
 use sc_cli::{CliConfiguration, SubstrateCli};
 use sp_core::{hexdisplay::HexDisplay, Encode, Pair};
@@ -98,7 +98,7 @@ fn main() -> Result<(), sc_cli::Error> {
 			);
 
 			let parachain_account =
-				AccountIdConversion::<forests_primitives::v2::AccountId>::into_account_truncating(
+				AccountIdConversion::<selendra_primitives::v2::AccountId>::into_account_truncating(
 					&parachain_id,
 				);
 

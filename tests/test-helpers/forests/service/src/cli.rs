@@ -16,7 +16,7 @@
 
 use std::{net::SocketAddr, path::PathBuf};
 
-use forests_service::{ChainSpec, ParaId, PrometheusConfig};
+use selendra_service::{ChainSpec, ParaId, PrometheusConfig};
 use sc_cli::{
 	CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams, NetworkParams,
 	Result as CliResult, RuntimeVersion, SharedParams, SubstrateCli,
@@ -97,7 +97,7 @@ impl CliConfiguration for ExportGenesisWasmCommand {
 #[derive(Debug)]
 pub struct RelayChainCli {
 	/// The actual relay chain cli object.
-	pub base: forests_cli::RunCmd,
+	pub base: selendra_cli::RunCmd,
 
 	/// Optional chain id that should be passed to the relay chain.
 	pub chain_id: Option<String>,
@@ -333,15 +333,15 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn copyright_start_year() -> i32 {
-		2017
+		2021
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-		<forests_cli::Cli as SubstrateCli>::from_iter([RelayChainCli::executable_name()].iter())
+		<selendra_cli::Cli as SubstrateCli>::from_iter([RelayChainCli::executable_name()].iter())
 			.load_spec(id)
 	}
 
 	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		forests_cli::Cli::native_runtime_version(chain_spec)
+		selendra_cli::Cli::native_runtime_version(chain_spec)
 	}
 }

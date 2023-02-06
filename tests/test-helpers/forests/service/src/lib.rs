@@ -41,8 +41,8 @@ use forests_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayC
 use forests_relay_chain_rpc_interface::{create_client_and_start_worker, RelayChainRpcInterface};
 use forests_test_runtime::{Hash, Header, NodeBlock as Block, RuntimeApi};
 
-use forests_primitives::v2::{CollatorPair, Hash as PHash, PersistedValidationData};
-use forests_service::ProvideRuntimeApi;
+use selendra_primitives::v2::{CollatorPair, Hash as PHash, PersistedValidationData};
+use selendra_service::ProvideRuntimeApi;
 use frame_system_rpc_runtime_api::AccountNonceApi;
 use sc_client_api::execution_extensions::ExecutionStrategies;
 use sc_network::{multiaddr, NetworkBlock, NetworkService};
@@ -187,12 +187,12 @@ async fn build_relay_chain_interface(
 		return Ok(Arc::new(RelayChainRpcInterface::new(client)) as Arc<_>)
 	}
 
-	let relay_chain_full_node = forests_test_service::new_full(
+	let relay_chain_full_node = test_service::new_full(
 		relay_chain_config,
 		if let Some(ref key) = collator_key {
-			forests_service::IsCollator::Yes(key.clone())
+			selendra_service::IsCollator::Yes(key.clone())
 		} else {
-			forests_service::IsCollator::Yes(CollatorPair::generate().0)
+			selendra_service::IsCollator::Yes(CollatorPair::generate().0)
 		},
 		None,
 	)?;
@@ -247,7 +247,7 @@ where
 	)
 	.await
 	.map_err(|e| match e {
-		RelayChainError::ServiceError(forests_service::Error::Sub(x)) => x,
+		RelayChainError::ServiceError(selendra_service::Error::Sub(x)) => x,
 		s => s.to_string().into(),
 	})?;
 
@@ -485,7 +485,7 @@ impl TestNodeBuilder {
 	/// node.
 	pub fn connect_to_relay_chain_node(
 		mut self,
-		node: &forests_test_service::ForestsTestNode,
+		node: &test_service::SelendraTestNode,
 	) -> Self {
 		self.relay_chain_nodes.push(node.addr.clone());
 		self
@@ -497,7 +497,7 @@ impl TestNodeBuilder {
 	/// node.
 	pub fn connect_to_relay_chain_nodes<'a>(
 		mut self,
-		nodes: impl IntoIterator<Item = &'a forests_test_service::ForestsTestNode>,
+		nodes: impl IntoIterator<Item = &'a test_service::SelendraTestNode>,
 	) -> Self {
 		self.relay_chain_nodes.extend(nodes.into_iter().map(|n| n.addr.clone()));
 		self
@@ -558,7 +558,7 @@ impl TestNodeBuilder {
 		)
 		.expect("could not generate Configuration");
 
-		let mut relay_chain_config = forests_test_service::node_config(
+		let mut relay_chain_config = test_service::node_config(
 			self.storage_update_func_relay_chain.unwrap_or_else(|| Box::new(|| ())),
 			self.tokio_handle,
 			self.key,
@@ -609,7 +609,7 @@ pub fn node_config(
 	is_collator: bool,
 ) -> Result<Configuration, ServiceError> {
 	let base_path = BasePath::new_temp_dir()?;
-	let root = base_path.path().join(format!("forests_test_service_{}", key.to_string()));
+	let root = base_path.path().join(format!("test_service_{}", key.to_string()));
 	let role = if is_collator { Role::Authority } else { Role::Full };
 	let key_seed = key.to_seed();
 	let mut spec = Box::new(chain_spec::get_chain_spec(para_id));
@@ -785,22 +785,22 @@ pub fn construct_extrinsic(
 /// Run a relay-chain validator node.
 ///
 /// This is essentially a wrapper around
-/// [`run_validator_node`](forests_test_service::run_validator_node).
+/// [`run_validator_node`](test_service::run_validator_node).
 pub fn run_relay_chain_validator_node(
 	tokio_handle: tokio::runtime::Handle,
 	key: Sr25519Keyring,
 	storage_update_func: impl Fn(),
 	boot_nodes: Vec<MultiaddrWithPeerId>,
 	websocket_port: Option<u16>,
-) -> forests_test_service::ForestsTestNode {
+) -> test_service::SelendraTestNode {
 	let mut config =
-		forests_test_service::node_config(storage_update_func, tokio_handle, key, boot_nodes, true);
+		test_service::node_config(storage_update_func, tokio_handle, key, boot_nodes, true);
 
 	if let Some(port) = websocket_port {
 		config.rpc_ws = Some(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), port));
 	}
 
-	forests_test_service::run_validator_node(
+	test_service::run_validator_node(
 		config,
 		Some(forests_test_relay_validation_worker_provider::VALIDATION_WORKER.into()),
 	)

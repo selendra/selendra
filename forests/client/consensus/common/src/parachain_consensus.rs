@@ -27,7 +27,7 @@ use sp_runtime::{
 	traits::{Block as BlockT, Header as HeaderT},
 };
 
-use polkadot_primitives::v2::{Hash as PHash, Id as ParaId, OccupiedCoreAssumption};
+use selendra_primitives::v2::{Hash as PHash, Id as ParaId, OccupiedCoreAssumption};
 
 use codec::Decode;
 use futures::{select, FutureExt, Stream, StreamExt};
@@ -39,7 +39,7 @@ const LOG_TARGET: &str = "forests-consensus";
 /// Helper for the relay chain client. This is expected to be a lightweight handle like an `Arc`.
 #[async_trait]
 pub trait RelaychainClient: Clone + 'static {
-	/// The error type for interacting with the Polkadot client.
+	/// The error type for interacting with the Selendra client.
 	type Error: std::fmt::Debug + Send;
 
 	/// A stream that yields head-data for a parachain.

@@ -19,6 +19,8 @@ forests-primitives-core = { path = "../core", default-features = false }
 
 [dev-dependencies]
 sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 forests-test-client = { path = "../../../tests/test-helpers/forests/client" }
 forests-test-relay-sproof-builder = { path = "../../../tests/test-helpers/forests/relay-sproof-builder" }
 
