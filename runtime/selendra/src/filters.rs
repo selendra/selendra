@@ -181,24 +181,33 @@ impl InstanceFilter<Call> for ProxyType {
 				RuntimeCall::VoterList(..) |
 				RuntimeCall::CouncilMembership(_)
 			),
-			ProxyType::Governance => matches!(
-				c,
-				RuntimeCall::Democracy(..) |
-					RuntimeCall::Council(..) | RuntimeCall::TechnicalCommittee(..) |
-					RuntimeCall::PhragmenElection(..) |
-					RuntimeCall::Treasury(..) | RuntimeCall::Bounties(..) |
-					RuntimeCall::Tips(..) | RuntimeCall::Utility(..) |
-					RuntimeCall::Sudo(..)
-			),
+			ProxyType::Governance =>
+				matches!(
+					c,
+					RuntimeCall::Democracy(..) |
+						RuntimeCall::Council(..) | RuntimeCall::TechnicalCommittee(..) |
+						RuntimeCall::PhragmenElection(..) |
+						RuntimeCall::Treasury(..) |
+						RuntimeCall::Bounties(..) |
+						RuntimeCall::Tips(..) | RuntimeCall::Utility(..) |
+						RuntimeCall::Sudo(..)
+				),
 			ProxyType::Staking => {
-				matches!(c, RuntimeCall::Staking(..) | RuntimeCall::Session(..) | RuntimeCall::Utility(..))
+				matches!(
+					c,
+					RuntimeCall::Staking(..) | RuntimeCall::Session(..) | RuntimeCall::Utility(..)
+				)
 			},
 			ProxyType::IdentityJudgement => matches!(
 				c,
-				RuntimeCall::Identity(pallet_identity::RuntimeCall::provide_judgement { .. }) | RuntimeCall::Utility(..)
+				RuntimeCall::Identity(pallet_identity::RuntimeCall::provide_judgement { .. }) |
+					RuntimeCall::Utility(..)
 			),
 			ProxyType::CancelProxy => {
-				matches!(c, RuntimeCall::Proxy(pallet_proxy::RuntimeCall::reject_announcement { .. }))
+				matches!(
+					c,
+					RuntimeCall::Proxy(pallet_proxy::RuntimeCall::reject_announcement { .. })
+				)
 			},
 		}
 	}

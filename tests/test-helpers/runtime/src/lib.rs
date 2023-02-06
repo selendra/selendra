@@ -43,7 +43,6 @@ use frame_support::{
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId};
 use pallet_session::historical as session_historical;
 use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
-use selendra_runtime_parachains::reward_points::RewardValidatorsWithEraPoints;
 use primitives::v2::{
 	AccountId, AccountIndex, Balance, BlockNumber, CandidateEvent, CommittedCandidateReceipt,
 	CoreState, GroupRotationInfo, Hash as HashT, Id as ParaId, InboundDownwardMessage,
@@ -52,9 +51,9 @@ use primitives::v2::{
 	ValidationCodeHash, ValidatorId, ValidatorIndex,
 };
 use runtime_common::{
-	impl_runtime_weights, paras_sudo_wrapper, BlockHashCount, BlockLength,
-	SlowAdjustingFeeUpdate,
+	impl_runtime_weights, paras_sudo_wrapper, BlockHashCount, BlockLength, SlowAdjustingFeeUpdate,
 };
+use selendra_runtime_parachains::reward_points::RewardValidatorsWithEraPoints;
 use sp_core::OpaqueMetadata;
 use sp_mmr_primitives as mmr;
 use sp_runtime::{

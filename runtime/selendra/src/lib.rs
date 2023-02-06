@@ -34,7 +34,7 @@ use sp_runtime::{
 	curve::PiecewiseLinear,
 	generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Extrinsic as ExtrinsicT,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Extrinsic as ExtrinsicT, Get,
 		OpaqueKeys, SaturatedConversion, Verify,
 	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
@@ -45,7 +45,6 @@ use sp_std::{cmp::Ordering, collections::btree_map::BTreeMap, prelude::*};
 #[cfg(any(feature = "std", test))]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use sp_runtime::traits::Get;
 
 use frame_election_provider_support::{
 	generate_solution_type, onchain, BalancingConfig, ElectionDataProvider, SequentialPhragmen,
@@ -68,9 +67,9 @@ use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_session::historical as session_historical;
 #[cfg(feature = "std")]
 pub use pallet_staking::StakerStatus;
+use pallet_staking::UseValidatorsMap;
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::{CurrencyAdapter, FeeDetails, RuntimeDispatchInfo};
-use pallet_staking::UseValidatorsMap;
 
 use runtime_common::{
 	impl_runtime_weights, impls::DealWithFees, paras_registrar, paras_sudo_wrapper, prod_or_fast,

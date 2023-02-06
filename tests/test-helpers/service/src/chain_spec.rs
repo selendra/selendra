@@ -28,13 +28,12 @@ use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::sr25519;
 use sp_runtime::Perbill;
 use test_runtime::BABE_GENESIS_EPOCH_CONFIG;
-use test_runtime_constants::currency::DOTS;
+use test_runtime_constants::currency::SELS;
 
-const DEFAULT_PROTOCOL_ID: &str = "dot";
+const DEFAULT_PROTOCOL_ID: &str = "sel";
 
 /// The `ChainSpec` parameterized for selendra test runtime.
-pub type SelendraChainSpec =
-	sc_service::GenericChainSpec<test_runtime::GenesisConfig, Extensions>;
+pub type SelendraChainSpec = sc_service::GenericChainSpec<test_runtime::GenesisConfig, Extensions>;
 
 /// Local testnet config (multivalidator Alice + Bob)
 pub fn selendra_local_testnet_config() -> SelendraChainSpec {
@@ -111,8 +110,8 @@ fn selendra_testnet_genesis(
 
 	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
-	const ENDOWMENT: u128 = 1_000_000 * DOTS;
-	const STASH: u128 = 100 * DOTS;
+	const ENDOWMENT: u128 = 1_000_000 * SELS;
+	const STASH: u128 = 100 * SELS;
 
 	runtime::GenesisConfig {
 		system: runtime::SystemConfig {
