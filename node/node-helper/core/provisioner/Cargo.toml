@@ -19,10 +19,7 @@ selendra-node-subsystem-util = { path = "../../subsystem-util" }
 gum = { package = "tracing-gum", path = "../../gum" }
 
 [dev-dependencies]
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
 test-helpers = { package = "primitives-test-helpers", path = "../../../../tests/test-helpers/primitive" }
-
-[features]
-staging-client = []

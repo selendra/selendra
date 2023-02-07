@@ -7,7 +7,7 @@ edition = "2021"
 [dependencies]
 futures = "0.3.21"
 thiserror = "1.0.31"
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 
 gum = { package = "tracing-gum", path = "../../gum" }
 selendra-node-primitives = { path = "../../primitives" }
@@ -18,11 +18,11 @@ selendra-overseer = { path = "../../overseer" }
 
 [dev-dependencies]
 futures-timer = "3.0.2"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
-sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 
 node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem"}
 test-helpers = { package = "primitives-test-helpers", path = "../../../../tests/test-helpers/primitive" }

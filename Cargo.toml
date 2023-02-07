@@ -20,7 +20,7 @@ assert_cmd = "2.0.4"
 nix = "0.24.1"
 tempfile = "3.2.0"
 tokio = "1.19.2"
-remote-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+remote-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 selendra-core-primitives = { path = "./primitives/core" }
 
 [workspace]
@@ -131,7 +131,6 @@ try-runtime = [ "selendra-cli/try-runtime" ]
 fast-runtime = [ "selendra-cli/fast-runtime" ]
 runtime-metrics = [ "selendra-cli/runtime-metrics" ]
 pyroscope = ["selendra-cli/pyroscope"]
-staging-client = ["selendra-cli/staging-client"]
 
 [profile.dev.package]
 blake2b_simd = { opt-level = 3 }

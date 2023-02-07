@@ -50,6 +50,7 @@ use sp_keystore::{SyncCryptoStore, SyncCryptoStorePtr};
 
 use ::test_helpers::{dummy_candidate_receipt_bad_sig, dummy_digest, dummy_hash};
 use node_subsystem_test_helpers::{make_subsystem_context, TestSubsystemContextHandle};
+use selendra_node_primitives::{Timestamp, ACTIVE_DURATION_SECS};
 use selendra_node_subsystem::{
 	jaeger,
 	messages::{AllMessages, BlockDescription, RuntimeApiMessage, RuntimeApiRequest},
@@ -66,7 +67,7 @@ use crate::{
 	backend::Backend,
 	metrics::Metrics,
 	participation::{participation_full_happy_path, participation_missing_availability},
-	status::{Clock, Timestamp, ACTIVE_DURATION_SECS},
+	status::Clock,
 	Config, DisputeCoordinatorSubsystem,
 };
 
@@ -139,9 +140,9 @@ struct TestState {
 
 impl Default for TestState {
 	fn default() -> TestState {
-		let p1 = Pair::from_string("//Polka", None).unwrap();
-		let p2 = Pair::from_string("//Dot", None).unwrap();
-		let p3 = Pair::from_string("//Kusama", None).unwrap();
+		let p1 = Pair::from_string("//Selen", None).unwrap();
+		let p2 = Pair::from_string("//Sel", None).unwrap();
+		let p3 = Pair::from_string("//Selendra", None).unwrap();
 		let validators = vec![
 			(Sr25519Keyring::Alice.pair(), Sr25519Keyring::Alice.to_seed()),
 			(Sr25519Keyring::Bob.pair(), Sr25519Keyring::Bob.to_seed()),
@@ -151,9 +152,9 @@ impl Default for TestState {
 			(Sr25519Keyring::One.pair(), Sr25519Keyring::One.to_seed()),
 			(Sr25519Keyring::Ferdie.pair(), Sr25519Keyring::Ferdie.to_seed()),
 			// Two more keys needed so disputes are not confirmed already with only 3 statements.
-			(p1, "//Polka".into()),
-			(p2, "//Dot".into()),
-			(p3, "//Kusama".into()),
+			(p1, "//Selen".into()),
+			(p2, "//Sel".into()),
+			(p3, "//Selendra".into()),
 		];
 
 		let validator_public = validators

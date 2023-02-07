@@ -62,7 +62,7 @@ fn byte32_slice_from(n: u32) -> [u8; 32] {
 	slice
 }
 
-/// paras inherent `enter` benchmark scenario builder.
+/// Paras inherent `enter` benchmark scenario builder.
 pub(crate) struct BenchBuilder<T: paras_inherent::Config> {
 	/// Active validators. Validators should be declared prior to all other setup.
 	validators: Option<Vec<ValidatorId>>,
@@ -92,7 +92,7 @@ pub(crate) struct BenchBuilder<T: paras_inherent::Config> {
 	_phantom: sp_std::marker::PhantomData<T>,
 }
 
-/// paras inherent `enter` benchmark scenario.
+/// Paras inherent `enter` benchmark scenario.
 #[cfg(any(feature = "runtime-benchmarks", test))]
 pub(crate) struct Bench<T: paras_inherent::Config> {
 	pub(crate) data: ParachainsInherentData<T::Header>,

@@ -72,7 +72,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The currency type used for bidding.
 		type Currency: ReservableCurrency<Self::AccountId>;
@@ -89,7 +89,7 @@ pub mod pallet {
 		type LeaseOffset: Get<Self::BlockNumber>;
 
 		/// The origin which may forcibly create or clear leases. Root can always do this.
-		type ForceOrigin: EnsureOrigin<<Self as frame_system::Config>::Origin>;
+		type ForceOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
 
 		/// Weight Information for the Extrinsics in the Pallet
 		type WeightInfo: WeightInfo;
@@ -527,8 +527,8 @@ mod tests {
 		type BaseCallFilter = frame_support::traits::Everything;
 		type BlockWeights = ();
 		type BlockLength = ();
-		type Origin = Origin;
-		type Call = Call;
+		type RuntimeOrigin = RuntimeOrigin;
+		type RuntimeCall = RuntimeCall;
 		type Index = u64;
 		type BlockNumber = BlockNumber;
 		type Hash = H256;
@@ -536,7 +536,7 @@ mod tests {
 		type AccountId = u64;
 		type Lookup = IdentityLookup<Self::AccountId>;
 		type Header = Header;
-		type Event = Event;
+		type RuntimeEvent = RuntimeEvent;
 		type BlockHashCount = BlockHashCount;
 		type DbWeight = ();
 		type Version = ();
@@ -556,7 +556,7 @@ mod tests {
 
 	impl pallet_balances::Config for Test {
 		type Balance = u64;
-		type Event = Event;
+		type RuntimeEvent = RuntimeEvent;
 		type DustRemoval = ();
 		type ExistentialDeposit = ExistentialDeposit;
 		type AccountStore = System;
@@ -573,7 +573,7 @@ mod tests {
 	}
 
 	impl Config for Test {
-		type Event = Event;
+		type RuntimeEvent = RuntimeEvent;
 		type Currency = Balances;
 		type Registrar = TestRegistrar<Test>;
 		type LeasePeriod = LeasePeriod;
@@ -845,7 +845,7 @@ mod tests {
 				assert_eq!(Balances::reserved_balance(j), j * 10);
 			}
 
-			assert_ok!(Slots::clear_all_leases(Origin::root(), 1.into()));
+			assert_ok!(Slots::clear_all_leases(RuntimeOrigin::root(), 1.into()));
 
 			// Balances cleaned up correctly
 			for i in 1u32..=max_num {
@@ -923,21 +923,21 @@ mod tests {
 
 			// Para 1 should fail cause they don't have any leases
 			assert_noop!(
-				Slots::trigger_onboard(Origin::signed(1), 1.into()),
+				Slots::trigger_onboard(RuntimeOrigin::signed(1), 1.into()),
 				Error::<Test>::ParaNotOnboarding
 			);
 
 			// Para 2 should succeed
-			assert_ok!(Slots::trigger_onboard(Origin::signed(1), 2.into()));
+			assert_ok!(Slots::trigger_onboard(RuntimeOrigin::signed(1), 2.into()));
 
 			// Para 3 should fail cause their lease is in the future
 			assert_noop!(
-				Slots::trigger_onboard(Origin::signed(1), 3.into()),
+				Slots::trigger_onboard(RuntimeOrigin::signed(1), 3.into()),
 				Error::<Test>::ParaNotOnboarding
 			);
 
 			// Trying Para 2 again should fail cause they are not currently a parathread
-			assert!(Slots::trigger_onboard(Origin::signed(1), 2.into()).is_err());
+			assert!(Slots::trigger_onboard(RuntimeOrigin::signed(1), 2.into()).is_err());
 
 			assert_eq!(TestRegistrar::<Test>::operations(), vec![(2.into(), 1, true),]);
 		});
@@ -986,9 +986,9 @@ mod benchmarking {
 
 	use crate::slots::Pallet as Slots;
 
-	fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
+	fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 		let events = frame_system::Pallet::<T>::events();
-		let system_event: <T as frame_system::Config>::Event = generic_event.into();
+		let system_event: <T as frame_system::Config>::RuntimeEvent = generic_event.into();
 		// compare to the last event record
 		let frame_system::EventRecord { event, .. } = &events[events.len() - 1];
 		assert_eq!(event, &system_event);
@@ -1023,7 +1023,7 @@ mod benchmarking {
 			let period_begin = 69u32.into();
 			let period_count = 3u32.into();
 			let origin = T::ForceOrigin::successful_origin();
-		}: _<T::Origin>(origin, para, leaser.clone(), amount, period_begin, period_count)
+		}: _<T::RuntimeOrigin>(origin, para, leaser.clone(), amount, period_begin, period_count)
 		verify {
 			assert_last_event::<T>(Event::<T>::Leased {
 				para_id: para,
@@ -1056,7 +1056,6 @@ mod benchmarking {
 			// T parathread are upgrading to parachains
 			for (para, leaser) in paras_info {
 				let amount = T::Currency::minimum_balance();
-
 				let origin = T::ForceOrigin::successful_origin();
 				Slots::<T>::force_lease(origin, para, leaser, amount, period_begin, period_count)?;
 			}
@@ -1118,7 +1117,7 @@ mod benchmarking {
 			}
 
 			let origin = T::ForceOrigin::successful_origin();
-		}: _<T::Origin>(origin, para)
+		}: _<T::RuntimeOrigin>(origin, para)
 		verify {
 			for i in 0 .. max_people {
 				let leaser = account("lease_deposit", i, 0);

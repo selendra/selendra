@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+//! Selendra CLI library.
+
 use clap::Parser;
 
 #[allow(missing_docs)]
@@ -97,7 +99,7 @@ pub struct RunCmd {
 	#[clap(long = "grandpa-pause", number_of_values(2))]
 	pub grandpa_pause: Vec<u32>,
 
-	/// Enable the BEEFY gadget (not work in Selendra for now).
+	/// Enable the BEEFY gadget (not work for now).
 	#[clap(long)]
 	pub beefy: bool,
 

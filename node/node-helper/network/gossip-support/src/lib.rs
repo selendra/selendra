@@ -70,10 +70,9 @@ const BACKOFF_DURATION: Duration = Duration::from_secs(5);
 /// Duration after which we consider low connectivity a problem.
 ///
 /// Especially at startup low connectivity is expected (authority discovery cache needs to be
-/// populated). Authority discovery on Kusama takes around 8 minutes, so warning after 10 minutes
+/// populated). Authority discovery on Selendra takes around 8 minutes, so warning after 10 minutes
 /// should be fine:
 ///
-/// https://github.com/paritytech/substrate/blob/fc49802f263529160635471c8a17888846035f5d/client/authority-discovery/src/lib.rs#L88
 const LOW_CONNECTIVITY_WARN_DELAY: Duration = Duration::from_secs(600);
 
 /// If connectivity is lower than this in percent, issue warning in logs.
@@ -249,11 +248,15 @@ where
 					let mut connections = authorities_past_present_future(sender, leaf).await?;
 
 					// Remove all of our locally controlled validator indices so we don't connect to ourself.
-					// If we control none of them, don't issue connection requests - we're outside
-					// of the 'clique' of recent validators.
-					if remove_all_controlled(&self.keystore, &mut connections).await != 0 {
-						self.issue_connection_request(sender, connections).await;
-					}
+					let connections =
+						if remove_all_controlled(&self.keystore, &mut connections).await != 0 {
+							connections
+						} else {
+							// If we control none of them, issue an empty connection request
+							// to clean up all connections.
+							Vec::new()
+						};
+					self.issue_connection_request(sender, connections).await;
 				}
 
 				if is_new_session {
@@ -353,7 +356,7 @@ where
 
 		// issue another request for the same session
 		// if at least a third of the authorities were not resolved.
-		if 3 * failures >= num {
+		if num != 0 && 3 * failures >= num {
 			let timestamp = Instant::now();
 			match self.failure_start {
 				None => self.failure_start = Some(timestamp),

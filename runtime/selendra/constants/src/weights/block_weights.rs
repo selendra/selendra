@@ -45,16 +45,16 @@ parameter_types! {
 	/// Calculated by multiplying the *Average* with `1` and adding `0`.
 	///
 	/// Stats nanoseconds:
-	///   Min, Max: 5_736_651, 6_591_625
-	///   Average:  5_849_907
-	///   Median:   5_847_129
-	///   Std-Dev:  109200.59
+	///   Min, Max: 6_094_385, 6_351_993
+	///   Average:  6_192_341
+	///   Median:   6_193_838
+	///   Std-Dev:  63893.84
 	///
 	/// Percentiles nanoseconds:
-	///   99th: 6_131_246
-	///   95th: 5_988_921
-	///   75th: 5_885_724
-	pub const BlockExecutionWeight: Weight = WEIGHT_PER_NANOS.saturating_mul(5_849_907);
+	///   99th: 6_332_047
+	///   95th: 6_308_225
+	///   75th: 6_236_204
+	pub const BlockExecutionWeight: Weight = WEIGHT_PER_NANOS.saturating_mul(6_192_341);
 }
 
 #[cfg(test)]

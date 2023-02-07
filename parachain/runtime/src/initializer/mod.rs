@@ -13,6 +13,7 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 //! This module is responsible for maintaining a consistent initialization order for all other
 //! parachains modules. It's also responsible for finalization and session change notifications.
 //!
@@ -20,7 +21,7 @@
 
 use crate::{
 	configuration::{self, HostConfiguration},
-	disputes::DisputesHandler,
+	disputes::{self, DisputesHandler as _, SlashingHandler as _},
 	dmp, hrmp, inclusion, paras, scheduler, session_info, shared, ump,
 };
 use frame_support::{
@@ -57,6 +58,9 @@ pub struct SessionChangeNotification<BlockNumber> {
 	/// New session index.
 	pub session_index: SessionIndex,
 }
+
+/// Number of validators (not only parachain) in a session.
+pub type ValidatorSetCount = u32;
 
 impl<BlockNumber: Default + From<u32>> Default for SessionChangeNotification<BlockNumber> {
 	fn default() -> Self {
@@ -108,6 +112,7 @@ pub mod pallet {
 		+ scheduler::Config
 		+ inclusion::Config
 		+ session_info::Config
+		+ disputes::Config
 		+ dmp::Config
 		+ ump::Config
 		+ hrmp::Config
@@ -115,7 +120,7 @@ pub mod pallet {
 		/// A randomness beacon.
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
 		/// An origin which is allowed to force updates to parachains.
-		type ForceOrigin: EnsureOrigin<<Self as frame_system::Config>::Origin>;
+		type ForceOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 	}
@@ -162,6 +167,7 @@ pub mod pallet {
 				inclusion::Pallet::<T>::initializer_initialize(now) +
 				session_info::Pallet::<T>::initializer_initialize(now) +
 				T::DisputesHandler::initializer_initialize(now) +
+				T::SlashingHandler::initializer_initialize(now) +
 				dmp::Pallet::<T>::initializer_initialize(now) +
 				ump::Pallet::<T>::initializer_initialize(now) +
 				hrmp::Pallet::<T>::initializer_initialize(now);
@@ -176,6 +182,7 @@ pub mod pallet {
 			hrmp::Pallet::<T>::initializer_finalize();
 			ump::Pallet::<T>::initializer_finalize();
 			dmp::Pallet::<T>::initializer_finalize();
+			T::SlashingHandler::initializer_finalize();
 			T::DisputesHandler::initializer_finalize();
 			session_info::Pallet::<T>::initializer_finalize();
 			inclusion::Pallet::<T>::initializer_finalize();
@@ -227,6 +234,7 @@ impl<T: Config> Pallet<T> {
 		let random_seed = {
 			let mut buf = [0u8; 32];
 			// TODO: audit usage of randomness API
+			// https://github.com/paritytech/selendra/issues/2601
 			let (random_hash, _) = T::Randomness::random(&b"paras"[..]);
 			let len = sp_std::cmp::min(32, random_hash.as_ref().len());
 			buf[..len].copy_from_slice(&random_hash.as_ref()[..len]);
@@ -258,6 +266,7 @@ impl<T: Config> Pallet<T> {
 		inclusion::Pallet::<T>::initializer_on_new_session(&notification);
 		session_info::Pallet::<T>::initializer_on_new_session(&notification);
 		T::DisputesHandler::initializer_on_new_session(&notification);
+		T::SlashingHandler::initializer_on_new_session(session_index);
 		dmp::Pallet::<T>::initializer_on_new_session(&notification, &outgoing_paras);
 		ump::Pallet::<T>::initializer_on_new_session(&notification, &outgoing_paras);
 		hrmp::Pallet::<T>::initializer_on_new_session(&notification, &outgoing_paras);

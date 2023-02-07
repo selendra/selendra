@@ -35,7 +35,7 @@ pub use self::overseer::{OverseerGen, OverseerGenArgs, RealOverseerGen};
 #[cfg(feature = "full-node")]
 use {
 	gum::info,
-	sc_client_api::{BlockBackend, ExecutorProvider},
+	sc_client_api::BlockBackend,
 	sc_finality_grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider},
 	selendra_node_core_approval_voting::{
 		self as approval_voting_subsystem, Config as ApprovalVotingConfig,
@@ -85,6 +85,7 @@ use sc_telemetry::{Telemetry, TelemetryWorkerHandle};
 pub use selendra_client::SelendraExecutorDispatch;
 
 pub use chain_spec::SelendraChainSpec;
+
 pub use sc_client_api::{Backend, CallExecutor, ExecutionStrategy};
 pub use sc_consensus::{BlockImport, LongestChain};
 use sc_executor::NativeElseWasmExecutor;
@@ -239,7 +240,7 @@ pub trait IdentifyVariant {
 
 impl IdentifyVariant for Box<dyn ChainSpec> {
 	fn is_selendra(&self) -> bool {
-		self.id().starts_with("selendra") || self.id().starts_with("sel")
+		self.id().starts_with("selendra") || self.id().starts_with("dot")
 	}
 
 	fn is_dev(&self) -> bool {
@@ -248,7 +249,7 @@ impl IdentifyVariant for Box<dyn ChainSpec> {
 }
 
 #[cfg(feature = "full-node")]
-fn open_database(db_source: &DatabaseSource) -> Result<Arc<dyn Database>, Error> {
+pub fn open_database(db_source: &DatabaseSource) -> Result<Arc<dyn Database>, Error> {
 	let parachains_db = match db_source {
 		DatabaseSource::RocksDb { path, .. } => parachains_db::open_creating_rocksdb(
 			path.clone(),
@@ -498,11 +499,10 @@ where
 					slot_duration,
 				);
 
-			Ok((timestamp, slot))
+			Ok((slot, timestamp))
 		},
 		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry(),
-		sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
 		telemetry.as_ref().map(|x| x.handle()),
 	)?;
 
@@ -676,6 +676,11 @@ where
 	Ok(leaves.into_iter().rev().take(MAX_ACTIVE_LEAVES).collect())
 }
 
+pub const AVAILABILITY_CONFIG: AvailabilityConfig = AvailabilityConfig {
+	col_data: parachains_db::REAL_COLUMNS.col_availability_data,
+	col_meta: parachains_db::REAL_COLUMNS.col_availability_meta,
+};
+
 /// Create a new full node of arbitrary runtime and executor.
 ///
 /// This is an advanced feature and not recommended for general use. Generally, `build_full` is
@@ -741,7 +746,7 @@ where
 	let auth_or_collator = role.is_authority() || is_collator.is_collator();
 	let requires_overseer_for_chain_sel = local_keystore.is_some() && auth_or_collator;
 
-	let pvf_checker_enabled = false;
+	let pvf_checker_enabled = role.is_authority() && !is_collator.is_collator();
 
 	let select_chain = if requires_overseer_for_chain_sel {
 		let metrics =
@@ -829,7 +834,7 @@ where
 		Vec::new(),
 	));
 
-	let (network, system_rpc_tx, network_starter) =
+	let (network, system_rpc_tx, tx_handler_controller, network_starter) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &config,
 			client: client.clone(),
@@ -861,11 +866,6 @@ where
 	}
 
 	let parachains_db = open_database(&config.database)?;
-
-	let availability_config = AvailabilityConfig {
-		col_data: parachains_db::REAL_COLUMNS.col_availability_data,
-		col_meta: parachains_db::REAL_COLUMNS.col_availability_meta,
-	};
 
 	let approval_voting_config = ApprovalVotingConfig {
 		col_data: parachains_db::REAL_COLUMNS.col_approval_data,
@@ -904,6 +904,7 @@ where
 		transaction_pool: transaction_pool.clone(),
 		task_manager: &mut task_manager,
 		system_rpc_tx,
+		tx_handler_controller,
 		telemetry: telemetry.as_mut(),
 	})?;
 
@@ -999,7 +1000,7 @@ where
 					spawner,
 					is_collator,
 					approval_voting_config,
-					availability_config,
+					availability_config: AVAILABILITY_CONFIG,
 					candidate_validation_config,
 					chain_selection_config,
 					dispute_coordinator_config,
@@ -1049,9 +1050,6 @@ where
 	};
 
 	if role.is_authority() {
-		let can_author_with =
-			sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
-
 		let proposer = sc_basic_authorship::ProposerFactory::new(
 			task_manager.spawn_handle(),
 			client.clone(),
@@ -1091,13 +1089,12 @@ where
 							slot_duration,
 						);
 
-					Ok((timestamp, slot, parachain))
+					Ok((slot, timestamp, parachain))
 				}
 			},
 			force_authoring,
 			backoff_authoring_blocks,
 			babe_link,
-			can_author_with,
 			block_proposal_slot_portion: sc_consensus_babe::SlotProportion::new(2f32 / 3f32),
 			max_block_proposal_slot_portion: None,
 			telemetry: telemetry.as_ref().map(|x| x.handle()),

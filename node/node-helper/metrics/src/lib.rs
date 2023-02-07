@@ -35,9 +35,6 @@ pub mod runtime;
 #[cfg(feature = "runtime-metrics")]
 pub use self::runtime::logger_hook;
 
-#[cfg(all(feature = "runtime-metrics", not(feature = "runtime-benchmarks"), test))]
-mod tests;
-
 /// Export a dummy logger hook when the `runtime-metrics` feature is not enabled.
 #[cfg(not(feature = "runtime-metrics"))]
 pub fn logger_hook() -> impl FnOnce(&mut sc_cli::LoggerBuilder, &sc_service::Configuration) {
@@ -83,3 +80,6 @@ pub mod metrics {
 		}
 	}
 }
+
+#[cfg(all(feature = "runtime-metrics", not(feature = "runtime-benchmarks"), test))]
+mod tests;

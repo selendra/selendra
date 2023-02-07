@@ -36,12 +36,12 @@ use forests_primitives_core::{
 };
 use forests_primitives_parachain_inherent::{MessageQueueChain, ParachainInherentData};
 use frame_support::{
-	dispatch::{DispatchError, DispatchResult},
+	dispatch::{DispatchError, DispatchResult, Pays, PostDispatchInfo},
 	ensure,
 	inherent::{InherentData, InherentIdentifier, ProvideInherent},
 	storage,
 	traits::Get,
-	weights::{Pays, PostDispatchInfo, Weight},
+	weights::Weight,
 };
 use frame_system::{ensure_none, ensure_root};
 use selendra_parachain::primitives::RelayChainBlockNumber;
@@ -147,7 +147,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config<OnSetCode = ParachainSetCode<Self>> {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// Something which can be notified when the validation data is set.
 		type OnSystemEvent: OnSystemEvent;
@@ -675,6 +675,7 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
+			// TODO: Remove after https://github.com/paritytech/forests/issues/479
 			sp_io::storage::set(b":c", &[]);
 		}
 	}

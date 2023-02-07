@@ -30,7 +30,7 @@ use crate::configuration::HostConfiguration;
 
 pub use pallet::*;
 
-// `SESSION_DELAY` is used to delay any changes to paras registration or configurations.
+// `SESSION_DELAY` is used to delay any changes to Paras registration or configurations.
 // Wait until the session index is 2 larger then the current index to apply any changes,
 // which guarantees that at least one full session has passed before any changes are applied.
 pub(crate) const SESSION_DELAY: SessionIndex = 2;

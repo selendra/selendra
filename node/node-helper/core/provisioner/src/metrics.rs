@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+use crate::disputes::prioritized_selection::PartitionedDisputes;
 use selendra_node_subsystem_util::metrics::{self, prometheus};
 
 #[derive(Clone)]
@@ -28,10 +29,13 @@ struct MetricsInner {
 	inherent_data_response_bitfields: prometheus::Histogram,
 
 	/// The following metrics track how many disputes/votes the runtime will have to process. These will count
-	/// all recent statements meaning every dispute from last sessions: 10 min on Rococo, 60 min on Kusama and
-	/// 4 hours on Selendra. The metrics are updated only when the node authors a block, so values vary across nodes.
+	/// all recent statements meaning every dispute from last sessions: 60 min on Selendra.
+	/// The metrics are updated only when the node authors a block, so values vary across nodes.
 	inherent_data_dispute_statement_sets: prometheus::Counter<prometheus::U64>,
 	inherent_data_dispute_statements: prometheus::CounterVec<prometheus::U64>,
+
+	/// The disputes received from `disputes-coordinator` by partition
+	partitioned_disputes: prometheus::CounterVec<prometheus::U64>,
 }
 
 /// Provisioner metrics.
@@ -101,6 +105,44 @@ impl Metrics {
 				.inc_by(disputes.try_into().unwrap_or(0));
 		}
 	}
+
+	pub(crate) fn on_partition_recent_disputes(&self, disputes: &PartitionedDisputes) {
+		if let Some(metrics) = &self.0 {
+			let PartitionedDisputes {
+				inactive_unknown_onchain,
+				inactive_unconcluded_onchain: inactive_unconcluded_known_onchain,
+				active_unknown_onchain,
+				active_unconcluded_onchain,
+				active_concluded_onchain,
+				inactive_concluded_onchain: inactive_concluded_known_onchain,
+			} = disputes;
+
+			metrics
+				.partitioned_disputes
+				.with_label_values(&["inactive_unknown_onchain"])
+				.inc_by(inactive_unknown_onchain.len().try_into().unwrap_or(0));
+			metrics
+				.partitioned_disputes
+				.with_label_values(&["inactive_unconcluded_known_onchain"])
+				.inc_by(inactive_unconcluded_known_onchain.len().try_into().unwrap_or(0));
+			metrics
+				.partitioned_disputes
+				.with_label_values(&["active_unknown_onchain"])
+				.inc_by(active_unknown_onchain.len().try_into().unwrap_or(0));
+			metrics
+				.partitioned_disputes
+				.with_label_values(&["active_unconcluded_onchain"])
+				.inc_by(active_unconcluded_onchain.len().try_into().unwrap_or(0));
+			metrics
+				.partitioned_disputes
+				.with_label_values(&["active_concluded_onchain"])
+				.inc_by(active_concluded_onchain.len().try_into().unwrap_or(0));
+			metrics
+				.partitioned_disputes
+				.with_label_values(&["inactive_concluded_known_onchain"])
+				.inc_by(inactive_concluded_known_onchain.len().try_into().unwrap_or(0));
+		}
+	}
 }
 
 impl metrics::Metrics for Metrics {
@@ -155,6 +197,16 @@ impl metrics::Metrics for Metrics {
 					).buckets(vec![0.0, 10.0, 25.0, 50.0, 75.0, 100.0, 150.0, 200.0, 250.0, 300.0]),
 				)?,
 				registry,
+			)?,
+			partitioned_disputes: prometheus::register(
+				prometheus::CounterVec::new(
+					prometheus::Opts::new(
+						"selendra_parachain_provisioner_partitioned_disputes",
+						"some fancy description",
+					),
+					&["partition"],
+				)?,
+				&registry,
 			)?,
 		};
 		Ok(Metrics(Some(metrics)))

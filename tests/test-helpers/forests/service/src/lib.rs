@@ -18,8 +18,15 @@
 
 #![warn(missing_docs)]
 
-mod chain_spec;
+pub mod chain_spec;
 mod genesis;
+
+use std::{
+	future::Future,
+	net::{IpAddr, Ipv4Addr, SocketAddr},
+	time::Duration,
+};
+use url::Url;
 
 use crate::runtime::Weight;
 use forests_client_cli::CollatorOptions;
@@ -33,18 +40,13 @@ use forests_relay_chain_inprocess_interface::RelayChainInProcessInterface;
 use forests_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
 use forests_relay_chain_rpc_interface::{create_client_and_start_worker, RelayChainRpcInterface};
 use forests_test_runtime::{Hash, Header, NodeBlock as Block, RuntimeApi};
-use parking_lot::Mutex;
-use std::{
-	future::Future,
-	net::{IpAddr, Ipv4Addr, SocketAddr},
-	time::Duration,
-};
-use url::Url;
 
+use selendra_primitives::v2::{CollatorPair, Hash as PHash, PersistedValidationData};
+use selendra_service::ProvideRuntimeApi;
 use frame_system_rpc_runtime_api::AccountNonceApi;
 use sc_client_api::execution_extensions::ExecutionStrategies;
-use sc_network::{config::TransportConfig, multiaddr, NetworkService};
-use sc_network_common::service::{NetworkBlock, NetworkStateInfo};
+use sc_network::{multiaddr, NetworkBlock, NetworkService};
+use sc_network_common::{config::TransportConfig, service::NetworkStateInfo};
 use sc_service::{
 	config::{
 		BlocksPruning, DatabaseSource, KeystoreConfig, MultiaddrWithPeerId, NetworkConfiguration,
@@ -53,8 +55,6 @@ use sc_service::{
 	BasePath, ChainSpec, Configuration, Error as ServiceError, PartialComponents, Role,
 	RpcHandlers, TFullBackend, TFullClient, TaskManager,
 };
-use selendra_primitives::v2::{CollatorPair, Hash as PHash, PersistedValidationData};
-use selendra_service::ProvideRuntimeApi;
 use sp_arithmetic::traits::SaturatedConversion;
 use sp_blockchain::HeaderBackend;
 use sp_core::{Pair, H256};
@@ -201,7 +201,7 @@ async fn build_relay_chain_interface(
 	Ok(Arc::new(RelayChainInProcessInterface::new(
 		relay_chain_full_node.client.clone(),
 		relay_chain_full_node.backend.clone(),
-		Arc::new(Mutex::new(Box::new(relay_chain_full_node.network.clone()))),
+		Arc::new(relay_chain_full_node.network.clone()),
 		relay_chain_full_node.overseer_handle,
 	)) as Arc<_>)
 }
@@ -257,7 +257,7 @@ where
 
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let import_queue = forests_client_service::SharedImportQueue::new(params.import_queue);
-	let (network, system_rpc_tx, start_network) =
+	let (network, system_rpc_tx, tx_handler_controller, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
 			client: client.clone(),
@@ -284,6 +284,7 @@ where
 		backend,
 		network: network.clone(),
 		system_rpc_tx,
+		tx_handler_controller,
 		telemetry: None,
 	})?;
 
@@ -482,7 +483,10 @@ impl TestNodeBuilder {
 	///
 	/// By default the node will not be connected to any node or will be able to discover any other
 	/// node.
-	pub fn connect_to_relay_chain_node(mut self, node: &test_service::SelendraTestNode) -> Self {
+	pub fn connect_to_relay_chain_node(
+		mut self,
+		node: &test_service::SelendraTestNode,
+	) -> Self {
 		self.relay_chain_nodes.push(node.addr.clone());
 		self
 	}
@@ -605,7 +609,7 @@ pub fn node_config(
 	is_collator: bool,
 ) -> Result<Configuration, ServiceError> {
 	let base_path = BasePath::new_temp_dir()?;
-	let root = base_path.path().to_path_buf();
+	let root = base_path.path().join(format!("test_service_{}", key.to_string()));
 	let role = if is_collator { Role::Authority } else { Role::Full };
 	let key_seed = key.to_seed();
 	let mut spec = Box::new(chain_spec::get_chain_spec(para_id));
@@ -625,7 +629,7 @@ pub fn node_config(
 	if nodes_exlusive {
 		network_config.default_peers_set.reserved_nodes = nodes;
 		network_config.default_peers_set.non_reserved_mode =
-			sc_network::config::NonReservedPeerMode::Deny;
+			sc_network_common::config::NonReservedPeerMode::Deny;
 	} else {
 		network_config.boot_nodes = nodes;
 	}
@@ -650,7 +654,7 @@ pub fn node_config(
 		database: DatabaseSource::RocksDb { path: root.join("db"), cache_size: 128 },
 		trie_cache_maximum_size: Some(64 * 1024 * 1024),
 		state_pruning: Some(PruningMode::ArchiveAll),
-		blocks_pruning: BlocksPruning::All,
+		blocks_pruning: BlocksPruning::KeepAll,
 		chain_spec: spec,
 		wasm_method: WasmExecutionMethod::Interpreted,
 		// NOTE: we enforce the use of the native runtime to make the errors more debuggable
@@ -702,7 +706,7 @@ impl TestNode {
 	/// Send an extrinsic to this node.
 	pub async fn send_extrinsic(
 		&self,
-		function: impl Into<runtime::Call>,
+		function: impl Into<runtime::RuntimeCall>,
 		caller: Sr25519Keyring,
 	) -> Result<RpcTransactionOutput, RpcTransactionError> {
 		let extrinsic = construct_extrinsic(&*self.client, function, caller.pair(), Some(0));
@@ -738,7 +742,7 @@ pub fn fetch_nonce(client: &Client, account: sp_core::sr25519::Public) -> u32 {
 /// Construct an extrinsic that can be applied to the test runtime.
 pub fn construct_extrinsic(
 	client: &Client,
-	function: impl Into<runtime::Call>,
+	function: impl Into<runtime::RuntimeCall>,
 	caller: sp_core::sr25519::Pair,
 	nonce: Option<u32>,
 ) -> runtime::UncheckedExtrinsic {

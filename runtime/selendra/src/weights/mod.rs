@@ -19,6 +19,7 @@
 //! A list of the different weight modules for our runtime.
 #![allow(clippy::unnecessary_cast)]
 
+pub mod frame_election_provider_support;
 pub mod frame_system;
 pub mod pallet_bags_list;
 pub mod pallet_balances;
@@ -26,7 +27,6 @@ pub mod pallet_bounties;
 pub mod pallet_collective;
 pub mod pallet_democracy;
 pub mod pallet_election_provider_multi_phase;
-pub mod frame_election_provider_support;
 pub mod pallet_elections_phragmen;
 pub mod pallet_identity;
 pub mod pallet_im_online;
