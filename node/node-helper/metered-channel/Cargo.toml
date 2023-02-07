@@ -1,6 +1,6 @@
 [package]
 name = "prioritized-metered-channel"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["Selendra <info@selendra.org>"]
 description = "Channels with built-in observability and message priorizitazion (coming soon™)"
 license = "MIT OR Apache-2.0"

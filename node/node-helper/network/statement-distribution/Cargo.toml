@@ -1,6 +1,6 @@
 [package]
 name = "selendra-statement-distribution"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["Selendra <info@selendra.org>"]
 description = "Statement Distribution Subsystem"
 edition = "2021"

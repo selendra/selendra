@@ -1,6 +1,6 @@
 [package]
 name = "selendra-parachain"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["Selendra <info@selendra.org>"]
 description = "Core types and utilities for creating and working with parachain"
 edition = "2021"

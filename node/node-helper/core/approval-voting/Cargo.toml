@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-core-approval-voting"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
