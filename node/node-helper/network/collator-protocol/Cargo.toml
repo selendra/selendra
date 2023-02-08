@@ -10,6 +10,7 @@ futures = "0.3.21"
 futures-timer = "3"
 fatality = "0.0.6"
 thiserror = "1.0.31"
+bitvec = { version = "1.0.1", default-features = false, features = ["alloc"] }
 
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }

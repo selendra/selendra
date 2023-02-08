@@ -218,7 +218,10 @@ pub mod pallet {
 		///
 		/// \[ location, query ID \]
 		NotifyTargetMigrationFail(VersionedMultiLocation, QueryId),
-				/// Some assets have been claimed from an asset trap
+		/// Some assets have been claimed from an asset trap
+		///
+		/// \[ hash, origin, assets \]
+		AssetsClaimed(H256, MultiLocation, VersionedMultiAssets),
 	}
 
 	#[pallet::origin]

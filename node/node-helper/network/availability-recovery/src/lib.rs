@@ -20,6 +20,7 @@
 
 use std::{
 	collections::{HashMap, VecDeque},
+	num::NonZeroUsize,
 	pin::Pin,
 	time::Duration,
 };
@@ -203,7 +204,7 @@ impl RequestFromBackers {
 			sender
 				.send_message(NetworkBridgeTxMessage::SendRequests(
 					vec![Requests::AvailableDataFetchingV1(req)],
-					IfDisconnected::ImmediateError,
+					IfDisconnected::TryConnect,
 				))
 				.await;
 

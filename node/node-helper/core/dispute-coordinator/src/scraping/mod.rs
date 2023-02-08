@@ -14,7 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use std::collections::{num::NonZeroUsize, BTreeMap, HashSet};
+use std::{
+	collections::{BTreeMap, HashSet},
+	num::NonZeroUsize,
+};
 
 use futures::channel::oneshot;
 use lru::LruCache;

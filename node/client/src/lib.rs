@@ -147,7 +147,7 @@ where
 
 /// Execute something with the client instance.
 ///
-/// As there exist multiple chains inside Selendra, like Selendra itself, etc,
+/// As there exist multiple chains inside Selendra, like Selendra itself, Kusama, Westend etc,
 /// there can exist different kinds of client types. As these client types differ in the generics
 /// that are being used, we can not easily return them from a function. For returning them from a
 /// function there exists [`Client`]. However, the problem on how to use this client instance still
@@ -172,7 +172,7 @@ pub trait ExecuteWithClient {
 
 /// A handle to a Selendra client instance.
 ///
-/// The Selendra service supports multiple different runtimes (Selendra itself, etc). As each runtime has a
+/// The Selendra service supports multiple different runtimes (Westend, Selendra itself, etc). As each runtime has a
 /// specialized client, we need to hide them behind a trait. This is this trait.
 ///
 /// When wanting to work with the inner client, you need to use `execute_with`.
@@ -338,63 +338,63 @@ impl sc_client_api::BlockBackend<Block> for Client {
 impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 	fn storage(
 		&self,
-		id: &BlockId<Block>,
+		hash: &<Block as BlockT>::Hash,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<StorageData>> {
 		with_client! {
 			self,
 			client,
 			{
-				client.storage(id, key)
+				client.storage(hash, key)
 			}
 		}
 	}
 
 	fn storage_keys(
 		&self,
-		id: &BlockId<Block>,
+		hash: &<Block as BlockT>::Hash,
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<StorageKey>> {
 		with_client! {
 			self,
 			client,
 			{
-				client.storage_keys(id, key_prefix)
+				client.storage_keys(hash, key_prefix)
 			}
 		}
 	}
 
 	fn storage_hash(
 		&self,
-		id: &BlockId<Block>,
+		hash: &<Block as BlockT>::Hash,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
 		with_client! {
 			self,
 			client,
 			{
-				client.storage_hash(id, key)
+				client.storage_hash(hash, key)
 			}
 		}
 	}
 
 	fn storage_pairs(
 		&self,
-		id: &BlockId<Block>,
+		hash: &<Block as BlockT>::Hash,
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<(StorageKey, StorageData)>> {
 		with_client! {
 			self,
 			client,
 			{
-				client.storage_pairs(id, key_prefix)
+				client.storage_pairs(hash, key_prefix)
 			}
 		}
 	}
 
 	fn storage_keys_iter<'a>(
 		&self,
-		id: &BlockId<Block>,
+		hash: &<Block as BlockT>::Hash,
 		prefix: Option<&'a StorageKey>,
 		start_key: Option<&StorageKey>,
 	) -> sp_blockchain::Result<
@@ -404,14 +404,14 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 			self,
 			client,
 			{
-				client.storage_keys_iter(id, prefix, start_key)
+				client.storage_keys_iter(hash, prefix, start_key)
 			}
 		}
 	}
 
 	fn child_storage(
 		&self,
-		id: &BlockId<Block>,
+		hash: &<Block as BlockT>::Hash,
 		child_info: &ChildInfo,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<StorageData>> {
@@ -419,14 +419,14 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 			self,
 			client,
 			{
-				client.child_storage(id, child_info, key)
+				client.child_storage(hash, child_info, key)
 			}
 		}
 	}
 
 	fn child_storage_keys(
 		&self,
-		id: &BlockId<Block>,
+		hash: &<Block as BlockT>::Hash,
 		child_info: &ChildInfo,
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<StorageKey>> {
@@ -434,14 +434,14 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 			self,
 			client,
 			{
-				client.child_storage_keys(id, child_info, key_prefix)
+				client.child_storage_keys(hash, child_info, key_prefix)
 			}
 		}
 	}
 
 	fn child_storage_keys_iter<'a>(
 		&self,
-		id: &BlockId<Block>,
+		hash: &<Block as BlockT>::Hash,
 		child_info: ChildInfo,
 		prefix: Option<&'a StorageKey>,
 		start_key: Option<&StorageKey>,
@@ -452,14 +452,14 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 			self,
 			client,
 			{
-				client.child_storage_keys_iter(id, child_info, prefix, start_key)
+				client.child_storage_keys_iter(hash, child_info, prefix, start_key)
 			}
 		}
 	}
 
 	fn child_storage_hash(
 		&self,
-		id: &BlockId<Block>,
+		hash: &<Block as BlockT>::Hash,
 		child_info: &ChildInfo,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
@@ -467,7 +467,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 			self,
 			client,
 			{
-				client.child_storage_hash(id, child_info, key)
+				client.child_storage_hash(hash, child_info, key)
 			}
 		}
 	}
