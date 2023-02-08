@@ -39,7 +39,6 @@ members = [
 	"node/node-helper/erasure-coding",
 	"node/node-helper/jaeger",
 	"node/node-helper/gum",
-	"node/node-helper/metered-channel",
 	"node/node-helper/metrics",
 	"node/node-helper/orchestra",
 	"node/node-helper/subsystem-types",

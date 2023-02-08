@@ -20,7 +20,7 @@ sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkad
 substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
 
 primitives = { package = "selendra-primitives", path = "../../../primitives/" }
-metered = { package = "prioritized-metered-channel", path = "../metered-channel" }
+metered = { package = "prioritized-metered-channel", version = "0.2.0" }
 
 [dev-dependencies]
 assert_cmd = "2.0.4"

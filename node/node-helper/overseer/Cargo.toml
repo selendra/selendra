@@ -10,6 +10,7 @@ futures = "0.3.21"
 futures-timer = "3.0.2"
 parking_lot = "0.12.1"
 async-trait = "0.1.60"
+orchestra = "0.0.2"
 parity-util-mem = { version = "0.12.0", default-features = false }
 
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
@@ -21,15 +22,14 @@ selendra-node-primitives = { path = "../primitives" }
 selendra-node-subsystem-types = { path = "../subsystem-types" }
 selendra-node-metrics = { path = "../metrics" }
 selendra-primitives = { path = "../../../primitives" }
-orchestra = { path = "../orchestra" }
 gum = { package = "tracing-gum", path = "../gum" }
 
 [dev-dependencies]
 femme = "2.2.1"
 assert_matches = "1.4.0"
+metered = { package = "prioritized-metered-channel", version = "0.2.0" }
 futures = { version = "0.3.21", features = ["thread-pool"] }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
-metered = { package = "prioritized-metered-channel", path = "../metered-channel" }
 test-helpers = { package = "primitives-test-helpers", path = "../../../tests/test-helpers/primitive" }
 
 [features]
