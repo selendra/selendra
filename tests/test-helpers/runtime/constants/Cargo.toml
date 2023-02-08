@@ -7,8 +7,8 @@ edition = "2021"
 [dependencies]
 smallvec = "1.9.0"
 
-frame-support = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.30" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.30" }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.31" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.31" }
 
 primitives = { package = "selendra-primitives", path = "../../../../primitives", default-features = false }
 runtime-common = { package = "selendra-runtime-common", path = "../../../../runtime/common", default-features = false }

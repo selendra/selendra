@@ -13,14 +13,14 @@ readme = "README.md"
 [dependencies]
 selendra-cli = { path = "./node/cli", features = [ "selendra-native" ]  }
 color-eyre = { version = "0.6.1", default-features = false }
-parity-util-mem = { version = "0.11.0", default-features = false, features = ["jemalloc-global"] }
+parity-util-mem = { version = "0.12.0", default-features = false, features = ["jemalloc-global"] }
 
 [dev-dependencies]
 assert_cmd = "2.0.4"
 nix = "0.24.1"
 tempfile = "3.2.0"
 tokio = "1.19.2"
-remote-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+remote-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
 selendra-core-primitives = { path = "./primitives/core" }
 
 [workspace]
@@ -78,29 +78,29 @@ members = [
 	"parachain/xcm/pallet-xcm/benchmarks",
 	"parachain/xcm/xcm-builder",
 	"parachain/xcm/xcm-executor",
-	"forests/client/cli",
-	"forests/client/consensus/aura",
-	"forests/client/consensus/common",
-	"forests/client/consensus/relay-chain",
-	"forests/client/network",
-	"forests/client/pov-recovery",
-	"forests/client/service",
-	"forests/client/relay-chain-interface",
-	"forests/client/relay-chain-inprocess-interface",
-	"forests/client/relay-chain-rpc-interface",
-	"forests/pallets/aura-ext",
-	"forests/pallets/collator-selection",
-	"forests/pallets/dmp-queue",
-	"forests/pallets/parachain-system",
-	"forests/pallets/parachain-system/proc-macro",
-	"forests/pallets/session-benchmarking",
-	"forests/pallets/xcm",
-	"forests/pallets/xcmp-queue",
-	"forests/pallets/parachain-info",
-	"forests/primitives/core",
-	"forests/primitives/parachain-inherent",
-	"forests/primitives/timestamp",
-	"forests/primitives/utility",
+	# "forests/client/cli",
+	# "forests/client/consensus/aura",
+	# "forests/client/consensus/common",
+	# "forests/client/consensus/relay-chain",
+	# "forests/client/network",
+	# "forests/client/pov-recovery",
+	# "forests/client/service",
+	# "forests/client/relay-chain-interface",
+	# "forests/client/relay-chain-inprocess-interface",
+	# "forests/client/relay-chain-rpc-interface",
+	# "forests/pallets/aura-ext",
+	# "forests/pallets/collator-selection",
+	# "forests/pallets/dmp-queue",
+	# "forests/pallets/parachain-system",
+	# "forests/pallets/parachain-system/proc-macro",
+	# "forests/pallets/session-benchmarking",
+	# "forests/pallets/xcm",
+	# "forests/pallets/xcmp-queue",
+	# "forests/pallets/parachain-info",
+	# "forests/primitives/core",
+	# "forests/primitives/parachain-inherent",
+	# "forests/primitives/timestamp",
+	# "forests/primitives/utility",
 	"utils/generate-bags"
 ]
 

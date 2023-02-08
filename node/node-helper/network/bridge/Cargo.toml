@@ -11,12 +11,12 @@ thiserror = "1"
 always-assert = "0.1"
 async-trait = "0.1.60"
 futures = "0.3.21"
-parking_lot = "0.12.0"
+parking_lot = "0.12.1"
 
 parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
 
 selendra-primitives = { path = "../../../../primitives" }
 selendra-node-subsystem = {path = "../../subsystem" }
@@ -28,8 +28,8 @@ gum = { package = "tracing-gum", path = "../../gum" }
 [dev-dependencies]
 assert_matches = "1.4.0"
 futures-timer = "3"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
 
 node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
 primitives-test-helpers = { path = "../../../../tests/test-helpers/primitive" }
