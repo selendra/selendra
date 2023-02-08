@@ -1128,9 +1128,11 @@ where
 			justifications_protocol_name,
 			_phantom: core::marker::PhantomData::<Block>,
 		};
+		let payload_provider = beefy_primitives::mmr::MmrRootProvider::new(client.clone());
 		let beefy_params = beefy_gadget::BeefyParams {
 			client: client.clone(),
 			backend: backend.clone(),
+			payload_provider,
 			runtime: client.clone(),
 			key_store: keystore_opt.clone(),
 			network_params,
@@ -1140,7 +1142,7 @@ where
 			on_demand_justifications_handler: beefy_on_demand_justifications_handler,
 		};
 
-		let gadget = beefy_gadget::start_beefy_gadget::<_, _, _, _, _>(beefy_params);
+		let gadget = beefy_gadget::start_beefy_gadget::<_, _, _, _, _, _>(beefy_params);
 
 		task_manager.spawn_handle().spawn_blocking("beefy-gadget", None, gadget);
 	}
