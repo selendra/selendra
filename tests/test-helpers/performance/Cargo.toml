@@ -20,3 +20,6 @@ selendra-runtime = { path = "../../../runtime/selendra" }
 [[bin]]
 name = "gen-ref-constants"
 path = "src/gen_ref_constants.rs"
+
+[features]
+runtime-benchmarks = ["selendra-runtime/runtime-benchmarks"]
