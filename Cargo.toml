@@ -40,7 +40,6 @@ members = [
 	"node/node-helper/jaeger",
 	"node/node-helper/gum",
 	"node/node-helper/metrics",
-	"node/node-helper/orchestra",
 	"node/node-helper/subsystem-types",
 	"node/node-helper/overseer",
 	"node/node-helper/subsystem",
