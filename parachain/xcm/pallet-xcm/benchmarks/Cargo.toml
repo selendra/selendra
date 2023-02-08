@@ -19,8 +19,8 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate" , branch 
 sp-runtime = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.31", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.31", default-features = false }
 
-xcm-executor = { path = "../../xcm-executor", default-features = false, features = ["runtime-benchmarks"] }
-xcm = { path = "../../", default-features = false, features = ["runtime-benchmarks"] }
+xcm-executor = { path = "../../xcm-executor", default-features = false }
+xcm = { path = "../../", default-features = false }
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.31" }
@@ -47,6 +47,8 @@ std = [
 	"sp-std/std"
 ]
 runtime-benchmarks = [
+	"xcm/runtime-benchmarks",
+	"xcm-executor/runtime-benchmarks",
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
