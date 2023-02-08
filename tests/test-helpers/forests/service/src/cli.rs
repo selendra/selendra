@@ -16,12 +16,12 @@
 
 use std::{net::SocketAddr, path::PathBuf};
 
-use selendra_service::{ChainSpec, ParaId, PrometheusConfig};
 use sc_cli::{
 	CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams, NetworkParams,
 	Result as CliResult, RuntimeVersion, SharedParams, SubstrateCli,
 };
 use sc_service::BasePath;
+use selendra_service::{ChainSpec, ParaId, PrometheusConfig};
 
 #[derive(Debug, clap::Parser)]
 #[clap(

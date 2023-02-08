@@ -41,8 +41,6 @@ use forests_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayC
 use forests_relay_chain_rpc_interface::{create_client_and_start_worker, RelayChainRpcInterface};
 use forests_test_runtime::{Hash, Header, NodeBlock as Block, RuntimeApi};
 
-use selendra_primitives::v2::{CollatorPair, Hash as PHash, PersistedValidationData};
-use selendra_service::ProvideRuntimeApi;
 use frame_system_rpc_runtime_api::AccountNonceApi;
 use sc_client_api::execution_extensions::ExecutionStrategies;
 use sc_network::{multiaddr, NetworkBlock, NetworkService};
@@ -55,6 +53,8 @@ use sc_service::{
 	BasePath, ChainSpec, Configuration, Error as ServiceError, PartialComponents, Role,
 	RpcHandlers, TFullBackend, TFullClient, TaskManager,
 };
+use selendra_primitives::v2::{CollatorPair, Hash as PHash, PersistedValidationData};
+use selendra_service::ProvideRuntimeApi;
 use sp_arithmetic::traits::SaturatedConversion;
 use sp_blockchain::HeaderBackend;
 use sp_core::{Pair, H256};
@@ -483,10 +483,7 @@ impl TestNodeBuilder {
 	///
 	/// By default the node will not be connected to any node or will be able to discover any other
 	/// node.
-	pub fn connect_to_relay_chain_node(
-		mut self,
-		node: &test_service::SelendraTestNode,
-	) -> Self {
+	pub fn connect_to_relay_chain_node(mut self, node: &test_service::SelendraTestNode) -> Self {
 		self.relay_chain_nodes.push(node.addr.clone());
 		self
 	}
