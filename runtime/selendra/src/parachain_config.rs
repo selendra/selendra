@@ -81,7 +81,7 @@ impl parachains_hrmp::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeOrigin = RuntimeOrigin;
 	type Currency = Balances;
-	type WeightInfo = weights::runtime_parachains_hrmp::WeightInfo<Self>;
+	type WeightInfo = weights::runtime_parachains_hrmp::WeightInfo<Runtime>;
 }
 
 impl parachains_paras_inherent::Config for Runtime {
