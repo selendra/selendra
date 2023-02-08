@@ -6,6 +6,8 @@ edition = "2021"
 
 [dependencies]
 futures = "0.3.21"
+indexmap = "1.9.1"
+futures-timer = "3.0.2"
 derive_more = "0.99.17"
 thiserror = "1.0.31"
 fatality = "0.0.6"
