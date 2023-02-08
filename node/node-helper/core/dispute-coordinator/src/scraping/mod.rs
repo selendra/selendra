@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{num::NonZeroUsize, BTreeMap, HashSet};
 
 use futures::channel::oneshot;
 use lru::LruCache;
@@ -44,7 +44,10 @@ mod tests;
 /// `last_observed_blocks` LRU. This means, this value should the very least be as large as the
 /// number of expected forks for keeping chain scraping efficient. Making the LRU much larger than
 /// that has very limited use.
-const LRU_OBSERVED_BLOCKS_CAPACITY: usize = 20;
+const LRU_OBSERVED_BLOCKS_CAPACITY: NonZeroUsize = match NonZeroUsize::new(20) {
+	Some(cap) => cap,
+	None => panic!("Observed blocks cache size must be non-zero"),
+};
 
 /// Chain scraper
 ///

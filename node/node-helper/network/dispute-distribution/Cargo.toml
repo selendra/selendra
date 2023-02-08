@@ -9,7 +9,7 @@ futures = "0.3.21"
 derive_more = "0.99.17"
 thiserror = "1.0.31"
 fatality = "0.0.6"
-lru = "0.7.7"
+lru = "0.8.0"
 parity-scale-codec = { version = "3.1.5", features = ["std"] }
 
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
