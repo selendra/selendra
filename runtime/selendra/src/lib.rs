@@ -53,7 +53,7 @@ use frame_support::{
 	construct_runtime,
 	pallet_prelude::ConstU32,
 	parameter_types,
-	traits::{KeyOwnerProofSystem, LockIdentifier, PrivilegeCmp},
+	traits::{KeyOwnerProofSystem, LockIdentifier, PrivilegeCmp, WithdrawReasons},
 	weights::ConstantMultiplier,
 	PalletId, RuntimeDebug,
 };
@@ -980,6 +980,8 @@ where
 
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 10 * DOLLARS;
+	pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
+		WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
 }
 
 impl pallet_vesting::Config for Runtime {
@@ -988,6 +990,7 @@ impl pallet_vesting::Config for Runtime {
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = weights::pallet_vesting::WeightInfo<Runtime>;
+	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 
