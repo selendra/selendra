@@ -501,7 +501,7 @@ fn peer_view_update_sends_messages() {
 	};
 
 	let pool = sp_core::testing::TaskExecutor::new();
-	let (mut ctx, mut handle) = selendra_node_subsystem_test_helpers::make_subsystem_context::<
+	let (mut ctx, mut handle) = node_subsystem_test_helpers::make_subsystem_context::<
 		StatementDistributionMessage,
 		_,
 	>(pool);
@@ -602,7 +602,7 @@ fn circulated_statement_goes_to_all_peers_with_view() {
 	.collect();
 
 	let pool = sp_core::testing::TaskExecutor::new();
-	let (mut ctx, mut handle) = selendra_node_subsystem_test_helpers::make_subsystem_context::<
+	let (mut ctx, mut handle) = node_subsystem_test_helpers::make_subsystem_context::<
 		StatementDistributionMessage,
 		_,
 	>(pool);
@@ -725,7 +725,7 @@ fn receiving_from_one_sends_to_another_and_to_candidate_backing() {
 	let session_index = 1;
 
 	let pool = sp_core::testing::TaskExecutor::new();
-	let (ctx, mut handle) = selendra_node_subsystem_test_helpers::make_subsystem_context(pool);
+	let (ctx, mut handle) = node_subsystem_test_helpers::make_subsystem_context(pool);
 
 	let req_protocol_names = ReqProtocolNames::new(&GENESIS_HASH, None);
 	let (statement_req_receiver, _) = IncomingRequest::get_config_receiver(&req_protocol_names);
@@ -929,7 +929,7 @@ fn receiving_large_statement_from_one_sends_to_another_and_to_candidate_backing(
 	let session_index = 1;
 
 	let pool = sp_core::testing::TaskExecutor::new();
-	let (ctx, mut handle) = selendra_node_subsystem_test_helpers::make_subsystem_context(pool);
+	let (ctx, mut handle) = node_subsystem_test_helpers::make_subsystem_context(pool);
 
 	let req_protocol_names = ReqProtocolNames::new(&GENESIS_HASH, None);
 	let (statement_req_receiver, mut req_cfg) =
@@ -1443,7 +1443,7 @@ fn share_prioritizes_backing_group() {
 	let session_index = 1;
 
 	let pool = sp_core::testing::TaskExecutor::new();
-	let (ctx, mut handle) = selendra_node_subsystem_test_helpers::make_subsystem_context(pool);
+	let (ctx, mut handle) = node_subsystem_test_helpers::make_subsystem_context(pool);
 
 	let req_protocol_names = ReqProtocolNames::new(&GENESIS_HASH, None);
 	let (statement_req_receiver, mut req_cfg) =
@@ -1740,7 +1740,7 @@ fn peer_cant_flood_with_large_statements() {
 	let session_index = 1;
 
 	let pool = sp_core::testing::TaskExecutor::new();
-	let (ctx, mut handle) = selendra_node_subsystem_test_helpers::make_subsystem_context(pool);
+	let (ctx, mut handle) = node_subsystem_test_helpers::make_subsystem_context(pool);
 
 	let req_protocol_names = ReqProtocolNames::new(&GENESIS_HASH, None);
 	let (statement_req_receiver, _) = IncomingRequest::get_config_receiver(&req_protocol_names);
@@ -1945,7 +1945,7 @@ fn handle_multiple_seconded_statements() {
 	let session_index = 1;
 
 	let pool = sp_core::testing::TaskExecutor::new();
-	let (ctx, mut handle) = selendra_node_subsystem_test_helpers::make_subsystem_context(pool);
+	let (ctx, mut handle) = node_subsystem_test_helpers::make_subsystem_context(pool);
 
 	let req_protocol_names = ReqProtocolNames::new(&GENESIS_HASH, None);
 	let (statement_req_receiver, _) = IncomingRequest::get_config_receiver(&req_protocol_names);

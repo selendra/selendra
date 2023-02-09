@@ -387,11 +387,11 @@ async fn load_all_sessions(
 mod tests {
 	use super::*;
 	use assert_matches::assert_matches;
+	use node_subsystem_test_helpers::make_subsystem_context;
 	use selendra_node_subsystem::{
 		messages::{AllMessages, AvailabilityRecoveryMessage},
 		SubsystemContext,
 	};
-	use selendra_node_subsystem_test_helpers::make_subsystem_context;
 	use selendra_primitives::v2::Header;
 	use sp_core::testing::TaskExecutor;
 
