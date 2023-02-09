@@ -31,6 +31,7 @@ selendra-runtime-common = { path = "../../runtime/common", default-features = fa
 xcm = { path = "../../parachain/xcm", default-features = false }
 xcm-executor = { path = "../../parachain/xcm/xcm-executor", default-features = false }
 pallet-collator-selection = { path = "../pallets/collator-selection", default-features = false }
+forests-primitives-utility = { path = "../primitives/utility", default-features = false }
 
 [dev-dependencies]
 pallet-authorship = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.31" }
@@ -57,4 +58,5 @@ std = [
 	"sp-io/std",
 	"sp-std/std",
 	"pallet-collator-selection/std",
+	"forests-primitives-utility/std"
 ]

@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 futures = "0.3.21"
-thiserror = "1.0.31"
+thiserror = "1.0.37"
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
 
 gum = { package = "tracing-gum", path = "../../gum" }

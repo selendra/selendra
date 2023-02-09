@@ -16,6 +16,9 @@
 
 use forests_relay_chain_interface::RelayChainError;
 use lru::LruCache;
+use sc_authority_discovery::Service as AuthorityDiscoveryService;
+use sc_keystore::LocalKeystore;
+use sc_network::NetworkStateInfo;
 use selendra_availability_distribution::{
 	AvailabilityDistributionSubsystem, IncomingRequestReceivers,
 };
@@ -44,9 +47,6 @@ use selendra_service::{
 	},
 	Error, OverseerConnector,
 };
-use sc_authority_discovery::Service as AuthorityDiscoveryService;
-use sc_keystore::LocalKeystore;
-use sc_network::NetworkStateInfo;
 
 use std::sync::Arc;
 

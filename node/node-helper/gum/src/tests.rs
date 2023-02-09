@@ -32,10 +32,10 @@ fn plain() {
 fn wo_alias() {
 	let a: i32 = 7;
 	error!(target: "foo",
-	"Something something {}, {b:?}, or maybe {c}",
+		"Something something {}, {b:?}, or maybe {c}",
 		a,
-		Y::default(),
-		a
+		b = Y::default(),
+		c = a
 	);
 }
 

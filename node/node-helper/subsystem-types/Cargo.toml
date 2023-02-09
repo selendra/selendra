@@ -8,8 +8,8 @@ edition = "2021"
 [dependencies]
 derive_more = "0.99.17"
 futures = "0.3.21"
-smallvec = "1.9.0"
-thiserror = "1.0.31"
+smallvec = "1.10.0"
+thiserror = "1.0.37"
 async-trait = "0.1.60"
 orchestra = "0.0.2"
 

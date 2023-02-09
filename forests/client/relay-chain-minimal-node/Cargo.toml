@@ -1,5 +1,5 @@
 [package]
-name = "forest-relay-chain-minimal-node"
+name = "forests-relay-chain-minimal-node"
 version = "0.1.0"
 edition = "2021"
 authors = ["Selendra <info@selendra.org>"]

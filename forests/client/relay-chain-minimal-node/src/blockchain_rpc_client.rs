@@ -19,10 +19,10 @@ use std::{pin::Pin, str::FromStr};
 use forests_relay_chain_interface::{RelayChainError, RelayChainResult};
 use forests_relay_chain_rpc_interface::RelayChainRpcClient;
 use futures::{Future, Stream, StreamExt};
+use sc_authority_discovery::AuthorityDiscovery;
 use selendra_core_primitives::{Block, BlockId, Hash, Header};
 use selendra_overseer::RuntimeApiSubsystemClient;
 use selendra_service::{AuxStore, HeaderBackend};
-use sc_authority_discovery::AuthorityDiscovery;
 
 use sc_network_common::config::MultiaddrWithPeerId;
 use sp_api::{ApiError, RuntimeApiInfo};

@@ -193,6 +193,7 @@ impl xcm_balances_benchmark::Config for Test {
 	}
 }
 
+#[allow(dead_code)]
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let t = GenesisConfig { ..Default::default() }.build_storage().unwrap();
 	sp_tracing::try_init_simple();

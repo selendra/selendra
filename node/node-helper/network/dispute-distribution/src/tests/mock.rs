@@ -32,12 +32,12 @@ use sp_application_crypto::AppKey;
 use sp_keyring::Sr25519Keyring;
 use sp_keystore::{SyncCryptoStore, SyncCryptoStorePtr};
 
+use primitives_test_helpers::dummy_candidate_descriptor;
 use selendra_node_primitives::{DisputeMessage, SignedDisputeStatement};
 use selendra_primitives::v2::{
 	AuthorityDiscoveryId, CandidateHash, CandidateReceipt, Hash, SessionIndex, SessionInfo,
 	ValidatorId, ValidatorIndex,
 };
-use selendra_primitives_test_helpers::dummy_candidate_descriptor;
 
 use crate::LOG_TARGET;
 

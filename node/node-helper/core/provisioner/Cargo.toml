@@ -10,7 +10,7 @@ futures = "0.3.21"
 futures-timer = "3.0.2"
 rand = "0.8.5"
 fatality = "0.0.6"
-thiserror = "1.0.31"
+thiserror = "1.0.37"
 
 selendra-primitives = { path = "../../../../primitives" }
 selendra-node-primitives = { path = "../../primitives" }

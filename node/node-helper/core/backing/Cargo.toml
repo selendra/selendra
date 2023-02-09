@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 futures = "0.3.21"
-thiserror = "1.0.31"
+thiserror = "1.0.37"
 fatality = "0.0.6"
 bitvec = { version = "1.0.0", default-features = false, features = ["alloc"] }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }

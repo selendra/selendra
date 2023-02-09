@@ -17,8 +17,8 @@
 use selendra_core_primitives::{Block, Hash};
 use selendra_service::{BlockT, NumberFor};
 
-use selendra_node_network_protocol::PeerId;
 use sc_network::{NetworkService, SyncState};
+use selendra_node_network_protocol::PeerId;
 
 use sc_client_api::HeaderBackend;
 use sc_network_common::{
