@@ -8512,6 +8512,7 @@ dependencies = [
  "selendra-node-subsystem-util",
  "selendra-primitives",
  "sp-application-crypto",
+ "sp-authority-discovery",
  "sp-core",
  "sp-keyring",
  "sp-keystore",
