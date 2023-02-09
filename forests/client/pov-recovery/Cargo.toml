@@ -31,7 +31,9 @@ forests-primitives-core = { path = "../../primitives/core" }
 forests-relay-chain-interface = {path = "../relay-chain-interface"}
 
 [dev-dependencies]
+portpicker = "0.1.1"
 tokio = { version = "1.21.2", features = ["macros"] }
+metered = { package = "prioritized-metered-channel", version = "0.2.0" }
 
 # Substrate
 sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }

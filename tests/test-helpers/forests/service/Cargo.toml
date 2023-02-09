@@ -71,6 +71,7 @@ forests-relay-chain-interface = { path = "../../../../forests/client/relay-chain
 forests-relay-chain-rpc-interface = { path = "../../../../forests/client/relay-chain-rpc-interface" }
 forests-test-relay-validation-worker-provider = { path = "../relay-validation-worker-provider" }
 forests-test-runtime = { path = "../runtime" }
+forests-relay-chain-minimal-node = { path = "../../../../forests/client/relay-chain-minimal-node" }
 
 [dev-dependencies]
 futures = "0.3.21"

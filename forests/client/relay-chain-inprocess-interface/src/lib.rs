@@ -391,7 +391,7 @@ mod tests {
 	use super::*;
 
 	use selendra_primitives::v2::Block as PBlock;
-	use selendra_test_client::{
+	use test_client::{
 		construct_transfer_extrinsic, BlockBuilderExt, Client, ClientBlockImportExt,
 		DefaultTestClientBuilderExt, ExecutionStrategy, InitSelendraBlockBuilder,
 		TestClientBuilder, TestClientBuilderExt,
