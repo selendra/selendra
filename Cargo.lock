@@ -9057,6 +9057,7 @@ dependencies = [
  "sc-executor-common",
  "sc-executor-wasmtime",
  "selendra-core-primitives",
+ "selendra-node-metrics",
  "selendra-node-subsystem-util",
  "selendra-parachain",
  "slotmap",

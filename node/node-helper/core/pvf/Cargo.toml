@@ -35,6 +35,7 @@ sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkad
 selendra-parachain = { path = "../../../../parachain/core" }
 selendra-core-primitives = { path = "../../../../primitives/core" }
 selendra-node-subsystem-util = { path = "../../subsystem-util"}
+selendra-node-metrics = { path = "../../metrics"}
 gum = { package = "tracing-gum", path = "../../gum" }
 
 [dev-dependencies]

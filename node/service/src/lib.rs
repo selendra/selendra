@@ -240,7 +240,7 @@ pub trait IdentifyVariant {
 
 impl IdentifyVariant for Box<dyn ChainSpec> {
 	fn is_selendra(&self) -> bool {
-		self.id().starts_with("selendra") || self.id().starts_with("dot")
+		self.id().starts_with("selendra") || self.id().starts_with("sel")
 	}
 
 	fn is_dev(&self) -> bool {
