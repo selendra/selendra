@@ -64,5 +64,4 @@ pyroscope = ["pyro"]
 hostperfcheck = ["performance-test"]
 
 selendra-native = ["service/selendra-native"]
-malus = ["full-node", "service/malus"]
 runtime-metrics = ["service/runtime-metrics", "selendra-node-metrics/runtime-metrics"]
