@@ -1129,7 +1129,7 @@ construct_runtime! {
 		ParaInclusion: parachains_inclusion::{Pallet, Call, Storage, Event<T>} = 73,
 		ParaInherent: parachains_paras_inherent::{Pallet, Call, Storage, Inherent} = 74,
 		Parascheduler: parachains_scheduler::{Pallet, Storage} = 75,
-		Paras: parachains_paras::{Pallet, Call, Storage, Event, Config} = 76,
+		Paras: parachains_paras::{Pallet, Call, Storage, Event, Config, ValidateUnsigned} = 76,
 		Initializer: parachains_initializer::{Pallet, Call, Storage} = 77,
 		Dmp: parachains_dmp::{Pallet, Call, Storage} = 78,
 		Ump: parachains_ump::{Pallet, Call, Storage, Event} = 79,
