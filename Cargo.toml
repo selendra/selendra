@@ -5,7 +5,7 @@ path = "src/main.rs"
 
 [package]
 name = "selendra"
-version = "0.2.4"
+version = "0.2.5"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 readme = "README.md"
@@ -13,14 +13,14 @@ readme = "README.md"
 [dependencies]
 selendra-cli = { path = "./node/cli", features = [ "selendra-native" ]  }
 color-eyre = { version = "0.6.1", default-features = false }
-parity-util-mem = { version = "0.11.0", default-features = false, features = ["jemalloc-global"] }
+parity-util-mem = { version = "0.12.0", default-features = false, features = ["jemalloc-global"] }
 
 [dev-dependencies]
 assert_cmd = "2.0.4"
 nix = "0.24.1"
 tempfile = "3.2.0"
-tokio = "1.19.2"
-remote-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+tokio = "1.21.2"
+substrate-rpc-client = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
 selendra-core-primitives = { path = "./primitives/core" }
 
 [workspace]
@@ -39,9 +39,7 @@ members = [
 	"node/node-helper/erasure-coding",
 	"node/node-helper/jaeger",
 	"node/node-helper/gum",
-	"node/node-helper/metered-channel",
 	"node/node-helper/metrics",
-	"node/node-helper/orchestra",
 	"node/node-helper/subsystem-types",
 	"node/node-helper/overseer",
 	"node/node-helper/subsystem",

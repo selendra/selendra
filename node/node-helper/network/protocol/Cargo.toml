@@ -1,7 +1,7 @@
 
 [package]
 name = "selendra-node-network-protocol"
-version = "0.2.4"
+version = "0.2.5"
 authors = ["Selendra <info@selendra.org>"]
 description = "Primitives types for the Node-side"
 edition = "2021"
@@ -9,16 +9,17 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1.60"
 futures = "0.3.21"
-thiserror = "1.0.31"
+thiserror = "1.0.37"
 fatality = "0.0.6"
 rand = "0.8"
 hex = "0.4.3"
 derive_more = "0.99"
 strum = { version = "0.24", features = ["derive"] }
+bitvec = { version = "1.0.1", default-features = false, features = ["alloc"] }
 parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
 
 selendra-primitives = { path = "../../../../primitives" }
 selendra-node-primitives = { path = "../../primitives" }

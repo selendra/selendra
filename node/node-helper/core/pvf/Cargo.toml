@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-core-pvf"
-version = "0.2.4"
+version = "0.2.5"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
@@ -22,19 +22,20 @@ rayon = "1.5.1"
 async-std = { version = "1.11.0", features = ["attributes"] }
 parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
 
-sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sc-executor-wasmtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sc-executor-wasmtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
 
 selendra-parachain = { path = "../../../../parachain/core" }
 selendra-core-primitives = { path = "../../../../primitives/core" }
 selendra-node-subsystem-util = { path = "../../subsystem-util"}
+selendra-node-metrics = { path = "../../metrics"}
 gum = { package = "tracing-gum", path = "../../gum" }
 
 [dev-dependencies]

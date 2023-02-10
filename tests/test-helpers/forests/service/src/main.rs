@@ -21,9 +21,9 @@ use std::{io::Write, sync::Arc};
 use cli::{RelayChainCli, Subcommand, TestCollatorCli};
 use forests_client_cli::generate_genesis_block;
 use forests_primitives_core::{relay_chain::v2::CollatorPair, ParaId};
-use selendra_service::runtime_traits::AccountIdConversion;
 use forests_test_service::AnnounceBlockFn;
 use sc_cli::{CliConfiguration, SubstrateCli};
+use selendra_service::runtime_traits::AccountIdConversion;
 use sp_core::{hexdisplay::HexDisplay, Encode, Pair};
 use sp_runtime::traits::Block;
 

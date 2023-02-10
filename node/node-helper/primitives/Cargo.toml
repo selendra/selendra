@@ -1,7 +1,7 @@
 
 [package]
 name = "selendra-node-primitives"
-version = "0.2.4"
+version = "0.2.5"
 authors = ["Selendra <info@selendra.org>"]
 description = "Primitives types for the Node-helper-side"
 edition = "2021"
@@ -10,16 +10,16 @@ edition = "2021"
 bounded-vec = "0.6"
 futures = "0.3.21"
 schnorrkel = "0.9.1"
-thiserror = "1.0.31"
+thiserror = "1.0.37"
 serde = { version = "1.0.140", features = ["derive"] }
 parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
 
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-consensus-vrf = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-consensus-vrf = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
 
 selendra-parachain = { path = "../../../parachain/core", default-features = false }
 selendra-primitives = { path = "../../../primitives" }

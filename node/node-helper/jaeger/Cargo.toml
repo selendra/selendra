@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-jaeger"
-version = "0.2.4"
+version = "0.2.5"
 authors = ["Selendra <info@selendra.org>"]
 description = "Selendra Jaeger primitives, but equally useful for Grafana/Tempo"
 edition = "2021"
@@ -9,13 +9,13 @@ edition = "2021"
 async-std = "1.11.0"
 mick-jaeger = "0.1.8"
 lazy_static = "1.4"
-parking_lot = "0.12.0"
-thiserror = "1.0.31"
+parking_lot = "0.12.1"
+thiserror = "1.0.37"
 log = "0.4.17"
 parity-scale-codec = { version = "3.1.5", default-features = false }
 
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
 
 selendra-primitives = { path = "../../../primitives" }
 selendra-node-primitives = { path = "../primitives" }

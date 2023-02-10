@@ -591,6 +591,7 @@ async fn validate_candidate_exhaustive(
 						?para_id,
 						"Invalid candidate (commitments hash)"
 					);
+
 					// If validation produced a new set of commitments, we treat the candidate as invalid.
 					Ok(ValidationResult::Invalid(InvalidCandidate::CommitmentsHashMismatch))
 				} else {

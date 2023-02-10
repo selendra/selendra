@@ -6,23 +6,25 @@ edition = "2021"
 
 [dependencies]
 futures = "0.3.21"
-tokio = { version = "1.19.2", features = ["sync"] }
+tokio = { version = "1.21.2", features = ["sync"] }
 futures-timer = "3.0.2"
 parity-scale-codec = "3.1.5"
 parking_lot = "0.12.1"
 jsonrpsee = { version = "0.15.1", features = ["ws-client"] }
-tracing = "0.1.35"
+tracing = "0.1.37"
 async-trait = "0.1.60"
 url = "2.2.2"
 backoff = { version = "0.4.0", features = ["tokio"] }
 
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
 
 selendra-service = { path = "../../../node/service" }
 

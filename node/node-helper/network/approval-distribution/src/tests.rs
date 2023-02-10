@@ -20,7 +20,12 @@ use futures::{executor, future, Future};
 use node_subsystem_test_helpers as test_helpers;
 use primitives_test_helpers::dummy_signature;
 use rand::SeedableRng;
-use selendra_node_network_protocol::{our_view, peer_set::ValidationVersion, view, ObservedRole};
+use selendra_node_network_protocol::{
+	grid_topology::{SessionGridTopology, TopologyPeerInfo},
+	our_view,
+	peer_set::ValidationVersion,
+	view, ObservedRole,
+};
 use selendra_node_primitives::approval::{
 	AssignmentCertKind, VRFOutput, VRFProof, RELAY_VRF_MODULO_CONTEXT,
 };
@@ -119,33 +124,79 @@ fn make_gossip_topology(
 	neighbors_x: &[usize],
 	neighbors_y: &[usize],
 ) -> network_bridge_event::NewGossipTopology {
-	let mut t = network_bridge_event::NewGossipTopology {
-		session,
-		our_neighbors_x: HashMap::new(),
-		our_neighbors_y: HashMap::new(),
+	// This builds a grid topology which is a square matrix.
+	// The local validator occupies the top left-hand corner.
+	// The X peers occupy the same row and the Y peers occupy
+	// the same column.
+
+	let local_index = 1;
+
+	assert_eq!(
+		neighbors_x.len(),
+		neighbors_y.len(),
+		"mocking grid topology only implemented for squares",
+	);
+
+	let d = neighbors_x.len() + 1;
+
+	let grid_size = d * d;
+	assert!(grid_size > 0);
+	assert!(all_peers.len() >= grid_size);
+
+	let peer_info = |i: usize| TopologyPeerInfo {
+		peer_ids: vec![all_peers[i].0.clone()],
+		validator_index: ValidatorIndex::from(i as u32),
+		discovery_id: all_peers[i].1.clone(),
 	};
 
-	for &i in neighbors_x {
-		t.our_neighbors_x.insert(
-			all_peers[i].1.clone(),
-			network_bridge_event::TopologyPeerInfo {
-				peer_ids: vec![all_peers[i].0.clone()],
-				validator_index: ValidatorIndex::from(i as u32),
-			},
-		);
+	let mut canonical_shuffling: Vec<_> = (0..)
+		.filter(|i| local_index != *i)
+		.filter(|i| !neighbors_x.contains(i))
+		.filter(|i| !neighbors_y.contains(i))
+		.take(grid_size)
+		.map(peer_info)
+		.collect();
+
+	// filled with junk except for own.
+	let mut shuffled_indices = vec![d + 1; grid_size];
+	shuffled_indices[local_index] = 0;
+	canonical_shuffling[0] = peer_info(local_index);
+
+	for (x_pos, v) in neighbors_x.iter().enumerate() {
+		let pos = 1 + x_pos;
+		canonical_shuffling[pos] = peer_info(*v);
 	}
 
-	for &i in neighbors_y {
-		t.our_neighbors_y.insert(
-			all_peers[i].1.clone(),
-			network_bridge_event::TopologyPeerInfo {
-				peer_ids: vec![all_peers[i].0.clone()],
-				validator_index: ValidatorIndex::from(i as u32),
-			},
-		);
+	for (y_pos, v) in neighbors_y.iter().enumerate() {
+		let pos = d * (1 + y_pos);
+		canonical_shuffling[pos] = peer_info(*v);
 	}
 
-	t
+	let topology = SessionGridTopology::new(shuffled_indices, canonical_shuffling);
+
+	// sanity check.
+	{
+		let g_n = topology
+			.compute_grid_neighbors_for(ValidatorIndex(local_index as _))
+			.expect("topology just constructed with this validator index");
+
+		assert_eq!(g_n.validator_indices_x.len(), neighbors_x.len());
+		assert_eq!(g_n.validator_indices_y.len(), neighbors_y.len());
+
+		for i in neighbors_x {
+			assert!(g_n.validator_indices_x.contains(&ValidatorIndex(*i as _)));
+		}
+
+		for i in neighbors_y {
+			assert!(g_n.validator_indices_y.contains(&ValidatorIndex(*i as _)));
+		}
+	}
+
+	network_bridge_event::NewGossipTopology {
+		session,
+		topology,
+		local_index: Some(ValidatorIndex(local_index as _)),
+	}
 }
 
 async fn setup_gossip_topology(
@@ -322,8 +373,6 @@ fn try_import_the_same_assignment() {
 	});
 }
 
-/// <https://github.com/paritytech/selendra/pull/2160#discussion_r547594835>
-///
 /// 1. Send a view update that removes block B from their view.
 /// 2. Send a message from B that they incur `COST_UNEXPECTED_MESSAGE` for,
 ///    but then they receive `BENEFIT_VALID_MESSAGE`.
@@ -1050,7 +1099,6 @@ fn sends_assignments_even_when_state_is_approved() {
 	});
 }
 
-/// <https://github.com/paritytech/selendra/pull/5089>
 ///
 /// 1. Receive remote peer view update with an unknown head
 /// 2. Receive assignments for that unknown head

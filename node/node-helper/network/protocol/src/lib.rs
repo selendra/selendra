@@ -16,7 +16,6 @@
 
 //! Network protocol types for parachains.
 
-#![deny(unused_crate_dependencies)]
 #![warn(missing_docs)]
 
 use parity_scale_codec::{Decode, Encode};

@@ -16,6 +16,7 @@
 
 //! Selendra types shared between the runtime and the Node-side code.
 
+#![warn(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // `v2` is currently the latest stable version of the runtime API.

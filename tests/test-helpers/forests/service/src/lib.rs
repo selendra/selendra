@@ -38,11 +38,10 @@ use forests_client_service::{
 use forests_primitives_core::ParaId;
 use forests_relay_chain_inprocess_interface::RelayChainInProcessInterface;
 use forests_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
-use forests_relay_chain_rpc_interface::{create_client_and_start_worker, RelayChainRpcInterface};
+use forests_relay_chain_minimal_node::build_minimal_relay_chain_node;
+
 use forests_test_runtime::{Hash, Header, NodeBlock as Block, RuntimeApi};
 
-use selendra_primitives::v2::{CollatorPair, Hash as PHash, PersistedValidationData};
-use selendra_service::ProvideRuntimeApi;
 use frame_system_rpc_runtime_api::AccountNonceApi;
 use sc_client_api::execution_extensions::ExecutionStrategies;
 use sc_network::{multiaddr, NetworkBlock, NetworkService};
@@ -55,6 +54,8 @@ use sc_service::{
 	BasePath, ChainSpec, Configuration, Error as ServiceError, PartialComponents, Role,
 	RpcHandlers, TFullBackend, TFullClient, TaskManager,
 };
+use selendra_primitives::v2::{CollatorPair, Hash as PHash, PersistedValidationData};
+use selendra_service::ProvideRuntimeApi;
 use sp_arithmetic::traits::SaturatedConversion;
 use sp_blockchain::HeaderBackend;
 use sp_core::{Pair, H256};
@@ -183,8 +184,9 @@ async fn build_relay_chain_interface(
 	task_manager: &mut TaskManager,
 ) -> RelayChainResult<Arc<dyn RelayChainInterface + 'static>> {
 	if let Some(relay_chain_url) = collator_options.relay_chain_rpc_url {
-		let client = create_client_and_start_worker(relay_chain_url, task_manager).await?;
-		return Ok(Arc::new(RelayChainRpcInterface::new(client)) as Arc<_>)
+		return build_minimal_relay_chain_node(relay_chain_config, task_manager, relay_chain_url)
+			.await
+			.map(|r| r.0)
 	}
 
 	let relay_chain_full_node = test_service::new_full(
@@ -198,12 +200,15 @@ async fn build_relay_chain_interface(
 	)?;
 
 	task_manager.add_child(relay_chain_full_node.task_manager);
+	tracing::info!("Using inprocess node.");
 	Ok(Arc::new(RelayChainInProcessInterface::new(
 		relay_chain_full_node.client.clone(),
 		relay_chain_full_node.backend.clone(),
 		Arc::new(relay_chain_full_node.network.clone()),
-		relay_chain_full_node.overseer_handle,
-	)) as Arc<_>)
+		relay_chain_full_node.overseer_handle.ok_or(RelayChainError::GenericError(
+			"Overseer should be running in full node.".to_string(),
+		))?,
+	)))
 }
 
 /// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
@@ -367,7 +372,6 @@ where
 			// the recovery delay of pov-recovery. We don't want to wait for too
 			// long on the full node to recover, so we reduce this time here.
 			relay_chain_slot_duration: Duration::from_millis(6),
-			collator_options,
 		};
 
 		start_full_node(params)?;
@@ -473,9 +477,9 @@ impl TestNodeBuilder {
 	/// node.
 	pub fn connect_to_parachain_nodes<'a>(
 		mut self,
-		nodes: impl Iterator<Item = &'a TestNode>,
+		nodes: impl IntoIterator<Item = &'a TestNode>,
 	) -> Self {
-		self.parachain_nodes.extend(nodes.map(|n| n.addr.clone()));
+		self.parachain_nodes.extend(nodes.into_iter().map(|n| n.addr.clone()));
 		self
 	}
 
@@ -483,10 +487,7 @@ impl TestNodeBuilder {
 	///
 	/// By default the node will not be connected to any node or will be able to discover any other
 	/// node.
-	pub fn connect_to_relay_chain_node(
-		mut self,
-		node: &test_service::SelendraTestNode,
-	) -> Self {
+	pub fn connect_to_relay_chain_node(mut self, node: &test_service::SelendraTestNode) -> Self {
 		self.relay_chain_nodes.push(node.addr.clone());
 		self
 	}
@@ -609,7 +610,7 @@ pub fn node_config(
 	is_collator: bool,
 ) -> Result<Configuration, ServiceError> {
 	let base_path = BasePath::new_temp_dir()?;
-	let root = base_path.path().join(format!("test_service_{}", key.to_string()));
+	let root = base_path.path().join(format!("forests_test_service_{}", key.to_string()));
 	let role = if is_collator { Role::Authority } else { Role::Full };
 	let key_seed = key.to_seed();
 	let mut spec = Box::new(chain_spec::get_chain_spec(para_id));

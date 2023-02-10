@@ -20,11 +20,11 @@ use super::super::{
 };
 use bitvec::prelude::*;
 use futures::channel::mpsc;
+use node_subsystem_test_helpers::TestSubsystemSender;
 use selendra_node_primitives::{CandidateVotes, DisputeStatus, ACTIVE_DURATION_SECS};
 use selendra_node_subsystem::messages::{
 	AllMessages, DisputeCoordinatorMessage, RuntimeApiMessage, RuntimeApiRequest,
 };
-use node_subsystem_test_helpers::TestSubsystemSender;
 use selendra_primitives::v2::{
 	CandidateHash, DisputeState, InvalidDisputeStatementKind, SessionIndex,
 	ValidDisputeStatementKind, ValidatorSignature,
@@ -241,7 +241,6 @@ fn partitioning_happy_case() {
 // without the 'help' of a double vote (a validator voting for and against at the same time). This makes the test
 // a bit pointless but anyway I'm leaving it here to make this decision explicit and have the test code ready in
 // case this behavior needs to be further tested in the future.
-// Link to the PR with the discussions: https://github.com/paritytech/selendra/pull/5567
 #[test]
 fn partitioning_doubled_onchain_vote() {
 	let mut input = Vec::<(SessionIndex, CandidateHash, DisputeStatus)>::new();
