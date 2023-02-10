@@ -204,7 +204,7 @@ impl RequestFromBackers {
 			sender
 				.send_message(NetworkBridgeTxMessage::SendRequests(
 					vec![Requests::AvailableDataFetchingV1(req)],
-					IfDisconnected::TryConnect,
+					IfDisconnected::ImmediateError,
 				))
 				.await;
 
@@ -362,7 +362,7 @@ impl RequestChunksFromValidators {
 		sender
 			.send_message(NetworkBridgeTxMessage::SendRequests(
 				requests,
-				IfDisconnected::ImmediateError,
+				IfDisconnected::TryConnect,
 			))
 			.await;
 	}

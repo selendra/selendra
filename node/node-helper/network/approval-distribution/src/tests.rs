@@ -373,8 +373,6 @@ fn try_import_the_same_assignment() {
 	});
 }
 
-/// <https://github.com/paritytech/selendra/pull/2160#discussion_r547594835>
-///
 /// 1. Send a view update that removes block B from their view.
 /// 2. Send a message from B that they incur `COST_UNEXPECTED_MESSAGE` for,
 ///    but then they receive `BENEFIT_VALID_MESSAGE`.
@@ -1101,7 +1099,6 @@ fn sends_assignments_even_when_state_is_approved() {
 	});
 }
 
-/// <https://github.com/paritytech/selendra/pull/5089>
 ///
 /// 1. Receive remote peer view update with an unknown head
 /// 2. Receive assignments for that unknown head

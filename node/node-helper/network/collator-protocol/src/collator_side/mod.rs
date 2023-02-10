@@ -76,7 +76,7 @@ const COST_APPARENT_FLOOD: Rep =
 ///
 /// This is to protect from a single slow validator preventing collations from happening.
 ///
-/// For considerations on this value, see:
+/// For considerations on this value.
 const MAX_UNSHARED_UPLOAD_TIME: Duration = Duration::from_millis(150);
 
 /// Ensure that collator issues a connection request at least once every this many seconds.

@@ -391,14 +391,14 @@ mod tests {
 	use super::*;
 
 	use selendra_primitives::v2::Block as PBlock;
+	use sp_consensus::{BlockOrigin, SyncOracle};
+	use sp_runtime::traits::Block as BlockT;
+	use std::sync::Arc;
 	use test_client::{
 		construct_transfer_extrinsic, BlockBuilderExt, Client, ClientBlockImportExt,
 		DefaultTestClientBuilderExt, ExecutionStrategy, InitSelendraBlockBuilder,
 		TestClientBuilder, TestClientBuilderExt,
 	};
-	use sp_consensus::{BlockOrigin, SyncOracle};
-	use sp_runtime::traits::Block as BlockT;
-	use std::sync::Arc;
 
 	use futures::{executor::block_on, poll, task::Poll};
 

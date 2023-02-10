@@ -109,6 +109,7 @@ const APPROVAL_CACHE_SIZE: NonZeroUsize = match NonZeroUsize::new(1024) {
 	Some(cap) => cap,
 	None => panic!("Approval cache size must be non-zero."),
 };
+
 const TICK_TOO_FAR_IN_FUTURE: Tick = 20; // 10 seconds.
 const APPROVAL_DELAY: Tick = 2;
 const LOG_TARGET: &str = "parachain::approval-voting";
