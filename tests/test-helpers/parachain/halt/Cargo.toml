@@ -1,6 +1,6 @@
 [package]
 name = "test-parachain-halt"
-version = "0.2.4"
+version = "0.2.5"
 authors = ["Selendra <info@selendra.org>"]
 description = "Test parachain which executes forever"
 edition = "2021"
