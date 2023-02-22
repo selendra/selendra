@@ -13,11 +13,11 @@ thiserror = "1.0.37"
 async-trait = "0.1.60"
 orchestra = "0.0.2"
 
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
-sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
-sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 
 selendra-primitives = { path = "../../../primitives" }
 selendra-node-primitives = { path = "../primitives" }

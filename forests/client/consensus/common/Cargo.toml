@@ -13,19 +13,19 @@ futures = "0.3.21"
 tracing = "0.1.37"
 
 # Substrate
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
-sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
-sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 
 selendra-primitives = { path = "../../../../primitives" }
 forests-relay-chain-interface = { path = "../../relay-chain-interface" }
 
 [dev-dependencies]
 futures-timer = "3.0.2"
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 
 forests-test-client = { path = "../../../../tests/test-helpers/forests/client" }
