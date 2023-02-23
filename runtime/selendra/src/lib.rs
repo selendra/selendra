@@ -1188,11 +1188,8 @@ pub type Executive = frame_executive::Executive<
 	Runtime,
 	AllPalletsWithSystem,
 	(
-		pallet_preimage::migration::v1::Migration<Runtime>,
-		pallet_scheduler::migration::v3::MigrateToV4<Runtime>,
-		pallet_democracy::migrations::v1::Migration<Runtime>,
-		pallet_multisig::migrations::v1::MigrateToV1<Runtime>,
-		parachains_configuration::migration::v3::MigrateToV3<Runtime>,
+		pallet_election_provider_multi_phase::migrations::v1::MigrateToV1<Runtime>,
+		pallet_fast_unstake::migrations::v1::MigrateToV1<Runtime>,
 	),
 >;
 /// The payload being signed in transactions.
