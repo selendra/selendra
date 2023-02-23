@@ -515,9 +515,10 @@ impl pallet_bags_list::Config<VoterBagsListInstance> for Runtime {
 
 impl pallet_fast_unstake::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type DepositCurrency = Balances;
+	type Currency = Balances;
 	type Deposit = frame_support::traits::ConstU128<{ UNITS }>;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
+	type Staking = Staking;
 	type WeightInfo = pallet_fast_unstake::weights::SubstrateWeight<Runtime>;
 }
 
@@ -548,7 +549,6 @@ parameter_types! {
 impl pallet_staking::Config for Runtime {
 	type MaxNominations = MaxNominations;
 	type Currency = Balances;
-	type CurrencyBalance = Balance;
 	type UnixTime = Timestamp;
 	type CurrencyToVote = CurrencyToVote;
 	type RewardRemainder = Treasury;
@@ -909,7 +909,7 @@ impl pallet_nomination_pools::Config for Runtime {
 	type RewardCounter = FixedU128;
 	type BalanceToU256 = BalanceToU256;
 	type U256ToBalance = U256ToBalance;
-	type StakingInterface = Staking;
+	type Staking = Staking;
 	type PostUnbondingPoolsWindow = PostUnbondPoolsWindow;
 	type MaxMetadataLen = MaxMetadataLen;
 	type MaxUnbonding = <Self as pallet_staking::Config>::MaxUnlockingChunks;
