@@ -8,7 +8,7 @@ edition = "2021"
 futures = "0.3.21"
 wasm-timer = "0.2.5"
 thiserror = "1.0.37"
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 
 gum = { package = "tracing-gum", path = "../../gum" }
 selendra-primitives = { path = "../../../../primitives" }
