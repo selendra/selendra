@@ -37,7 +37,9 @@ use selendra_node_subsystem::{
 	messages::{network_bridge_event, AllMessages, RuntimeApiMessage, RuntimeApiRequest},
 	ActivatedLeaf, LeafStatus,
 };
-use selendra_primitives::v2::{Hash, Id as ParaId, SessionInfo, ValidationCode};
+use selendra_primitives::v2::{
+	GroupIndex, Hash, Id as ParaId, IndexedVec, SessionInfo, ValidationCode, ValidatorId,
+};
 use sp_application_crypto::{sr25519::Pair, AppKey, Pair as TraitPair};
 use sp_authority_discovery::AuthorityPair;
 use sp_keyring::Sr25519Keyring;
@@ -81,7 +83,7 @@ fn active_head_accepts_only_2_seconded_per_validator() {
 	};
 
 	let mut head_data = ActiveHeadData::new(
-		validators,
+		IndexedVec::<ValidatorIndex, ValidatorId>::from(validators),
 		session_index,
 		PerLeafSpan::new(Arc::new(jaeger::Span::Disabled), "test"),
 	);
@@ -427,7 +429,7 @@ fn peer_view_update_sends_messages() {
 
 	let new_head_data = {
 		let mut data = ActiveHeadData::new(
-			validators,
+			IndexedVec::<ValidatorIndex, ValidatorId>::from(validators),
 			session_index,
 			PerLeafSpan::new(Arc::new(jaeger::Span::Disabled), "test"),
 		);
@@ -2317,7 +2319,7 @@ fn handle_multiple_seconded_statements() {
 }
 
 fn make_session_info(validators: Vec<Pair>, groups: Vec<Vec<u32>>) -> SessionInfo {
-	let validator_groups: Vec<Vec<ValidatorIndex>> = groups
+	let validator_groups: IndexedVec<GroupIndex, Vec<ValidatorIndex>> = groups
 		.iter()
 		.map(|g| g.into_iter().map(|v| ValidatorIndex(*v)).collect())
 		.collect();

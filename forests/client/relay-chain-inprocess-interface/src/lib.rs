@@ -180,7 +180,7 @@ where
 		relay_parent: PHash,
 		key: &[u8],
 	) -> RelayChainResult<Option<StorageValue>> {
-		let state = self.backend.state_at(&relay_parent)?;
+		let state_backend = self.backend.state_at(relay_parent)?;
 		state.storage(key).map_err(RelayChainError::GenericError)
 	}
 

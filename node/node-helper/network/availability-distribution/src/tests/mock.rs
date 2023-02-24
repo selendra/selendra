@@ -27,8 +27,8 @@ use selendra_erasure_coding::{branches, obtain_chunks_v1 as obtain_chunks};
 use selendra_node_primitives::{AvailableData, BlockData, ErasureChunk, PoV, Proof};
 use selendra_primitives::v2::{
 	CandidateCommitments, CandidateDescriptor, CandidateHash, CommittedCandidateReceipt,
-	GroupIndex, Hash, HeadData, Id as ParaId, OccupiedCore, PersistedValidationData, SessionInfo,
-	ValidatorIndex,
+	GroupIndex, Hash, HeadData, Id as ParaId, IndexedVec, OccupiedCore, PersistedValidationData,
+	SessionInfo, ValidatorIndex,
 };
 
 /// Create dummy session info with two validator groups.
@@ -43,10 +43,11 @@ pub fn make_session_info() -> SessionInfo {
 		Sr25519Keyring::One,
 	];
 
-	let validator_groups: Vec<Vec<ValidatorIndex>> = [vec![5, 0, 3], vec![1, 6, 2, 4]]
-		.iter()
-		.map(|g| g.into_iter().map(|v| ValidatorIndex(*v)).collect())
-		.collect();
+	let validator_groups: IndexedVec<GroupIndex, Vec<ValidatorIndex>> =
+		[vec![5, 0, 3], vec![1, 6, 2, 4]]
+			.iter()
+			.map(|g| g.into_iter().map(|v| ValidatorIndex(*v)).collect())
+			.collect();
 
 	SessionInfo {
 		discovery_keys: validators.iter().map(|k| k.public().into()).collect(),
