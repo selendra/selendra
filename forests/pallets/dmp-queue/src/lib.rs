@@ -38,7 +38,7 @@ use xcm::{
 	VersionedXcm, MAX_XCM_DECODE_DEPTH,
 };
 
-onst DEFAULT_POV_SIZE: u64 = 64 * 1024; // 64 KB
+const DEFAULT_POV_SIZE: u64 = 64 * 1024; // 64 KB
 
 #[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ConfigData {
