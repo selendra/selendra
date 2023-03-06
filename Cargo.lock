@@ -9747,6 +9747,7 @@ dependencies = [
  "selendra-primitives",
  "selendra-runtime-metrics",
  "serde",
+ "serde_json",
  "sp-api",
  "sp-application-crypto",
  "sp-core",
