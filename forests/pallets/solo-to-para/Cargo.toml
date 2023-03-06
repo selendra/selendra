@@ -6,7 +6,7 @@ edition = "2021"
 description = "Adds functionality to migrate from a Solo to a Parachain"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "3.1.5", default-features = false, features = ["derive"] }
 scale-info = { version = "2.3.0", default-features = false, features = ["derive"] }
 
 # Substrate
