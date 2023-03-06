@@ -5,7 +5,7 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
-scale-info = { version = "2.1.2", default-features = false, features = ["derive"] }
+scale-info = { version = "2.3.0", default-features = false, features = ["derive"] }
 parity-scale-codec = { version = "3.1.5", default-features = false, features = [ "derive" ] }
 parity-util-mem = { version = "0.12.0", default-features = false, optional = true }
 

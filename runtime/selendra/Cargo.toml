@@ -13,7 +13,7 @@ hex = { version = "0.4", default-features = false }
 log = { version = "0.4.17", default-features = false }
 serde = { version = "1.0.140", optional = true, default-features = false }
 libsecp256k1 = { version = "0.7", default-features = false, optional = true }
-scale-info = { version = "2.1", default-features = false, features = ["derive"] }
+scale-info = { version = "2.3.0", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0.68", default-features = false, features = ["alloc"] }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
 
