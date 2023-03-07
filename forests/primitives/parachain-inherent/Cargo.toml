@@ -6,20 +6,20 @@ edition = "2021"
 
 [dependencies]
 async-trait = { version = "0.1.60", optional = true }
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [ "derive" ] }
-scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "3.1.5", default-features = false, features = [ "derive" ] }
+scale-info = { version = "2.3.0", default-features = false, features = ["derive"] }
 tracing = { version = "0.1.37", optional = true }
 
 # Substrate
-sc-client-api = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.32" }
-sp-api = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.32" }
-sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.32" }
-sp-inherents = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.32" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.32" }
-sp-state-machine = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.32" }
-sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.32" }
-sp-storage = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.32" }
-sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.32" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.33" }
+sp-api = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.33" }
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
+sp-inherents = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.33" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.33" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
+sp-storage = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.33" }
+sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
 
 # Forests
 forests-primitives-core = { path = "../core", default-features = false }

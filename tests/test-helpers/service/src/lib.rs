@@ -38,7 +38,7 @@ use selendra_node_subsystem::messages::{CollationGenerationMessage, CollatorProt
 use selendra_overseer::Handle;
 use selendra_primitives::v2::{Balance, CollatorPair, HeadData, Id as ParaId, ValidationCode};
 use selendra_runtime_common::BlockHashCount;
-use selendra_runtime_parachains::paras::ParaGenesisArgs;
+use selendra_runtime_parachains::paras::{ParaGenesisArgs, ParaKind};
 use selendra_service::{
 	ClientHandle, Error, ExecuteWithClient, FullClient, IsCollator, NewFull, PrometheusConfig,
 };
@@ -305,7 +305,7 @@ impl SelendraTestNode {
 			genesis: ParaGenesisArgs {
 				genesis_head: genesis_head.into(),
 				validation_code: validation_code.into(),
-				parachain: true,
+				para_kind: ParaKind::Parachain,
 			},
 		};
 

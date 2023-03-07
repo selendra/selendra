@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-metrics"
-version = "0.2.5"
+version = "0.2.7"
 authors = ["Selendra <info@selendra.org>"]
 description = "Subsystem metric helpers"
 edition = "2021"
@@ -12,12 +12,12 @@ futures-timer = "3.0.2"
 log = "0.4.17"
 bs58 = { version = "0.4.0", features = ["alloc"] }
 gum = { package = "tracing-gum", path = "../gum" }
-codec = { package = "parity-scale-codec", version = "3.0.0" }
+codec = { package = "parity-scale-codec", version = "3.1.5" }
 
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 
 primitives = { package = "selendra-primitives", path = "../../../primitives/" }
 metered = { package = "prioritized-metered-channel", version = "0.2.0" }
@@ -29,10 +29,10 @@ tempfile = "3.2.0"
 tokio = "1.21.2"
 prometheus-parse = {version = "0.2.2"}
 hyper = { version = "0.14.20", default-features = false, features = ["http1", "tcp"] }
-substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 test-service = { path = "../../../tests/test-helpers/service", features=["runtime-metrics"]}
 
 [features]

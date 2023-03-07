@@ -1,6 +1,6 @@
 [package]
 name = "selendra-availability-bitfield-distribution"
-version = "0.2.5"
+version = "0.2.7"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
@@ -22,10 +22,10 @@ assert_matches = "1.4.0"
 rand_chacha = "0.3.1"
 bitvec = { version = "1.0.0", default-features = false, features = ["alloc"] }
 
-sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 
 node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }

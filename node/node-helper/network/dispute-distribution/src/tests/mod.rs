@@ -243,7 +243,7 @@ fn received_request_triggers_import() {
 #[test]
 fn batching_works() {
 	let _test = |mut handle: TestSubsystemContextHandle<DisputeDistributionMessage>,
-	            mut req_cfg: RequestResponseConfig| async move {
+	             mut req_cfg: RequestResponseConfig| async move {
 		let req_tx = req_cfg.inbound_queue.as_mut().unwrap();
 		let _ = handle_subsystem_startup(&mut handle, None).await;
 
@@ -362,13 +362,13 @@ fn batching_works() {
 		gum::trace!(target: LOG_TARGET, "Concluding.");
 		conclude(&mut handle).await;
 	};
-	// test_harness(test); 
+	// test_harness(test);
 }
 
 #[test]
 fn receive_rate_limit_is_enforced() {
 	let _test = |mut handle: TestSubsystemContextHandle<DisputeDistributionMessage>,
-	            mut req_cfg: RequestResponseConfig| async move {
+	             mut req_cfg: RequestResponseConfig| async move {
 		let req_tx = req_cfg.inbound_queue.as_mut().unwrap();
 		let _ = handle_subsystem_startup(&mut handle, None).await;
 
