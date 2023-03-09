@@ -17,7 +17,7 @@
 #[cfg(test)]
 mod test_fees {
 	use crate::*;
-	use frame_support::{weights::WeightToFee as WeightToFeeT};
+	use frame_support::weights::WeightToFee as WeightToFeeT;
 	use pallet_transaction_payment::Multiplier;
 	use runtime_common::MinimumMultiplier;
 	use separator::Separatable;

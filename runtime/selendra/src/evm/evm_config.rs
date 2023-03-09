@@ -14,9 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 use crate::{
-	evm::precompiles::SelendraPrecompiles, AccountId, Babe, Balance, Balances, BaseFee, EVMChainId,
-	Runtime, RuntimeCall, RuntimeEvent, Signature, Weight, MAXIMUM_BLOCK_WEIGHT,
-	NORMAL_DISPATCH_RATIO,
+	evm::precompiles::SelendraPrecompiles, AccountId, Babe, Balance, Balances, BaseFee, Runtime,
+	RuntimeCall, RuntimeEvent, Signature, Weight, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO,
 };
 use codec::Encode;
 pub use selendra_runtime_constants::currency::{MILLICENTS, UNITS};
@@ -27,11 +26,8 @@ use frame_support::{
 
 use sp_core::{H160, U256};
 use sp_runtime::{
-	traits::{
-		BlakeTwo256,
-		Verify,
-	},
-	transaction_validity::{TransactionPriority},
+	traits::{BlakeTwo256, Verify},
+	transaction_validity::TransactionPriority,
 	Permill,
 };
 
@@ -90,6 +86,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 }
 
 parameter_types! {
+	pub ChainId: u64 = 0x7A9;
 	/// EVM gas limit
 	pub BlockGasLimit: U256 = U256::from(
 		NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS
@@ -113,13 +110,11 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesValue = PrecompilesValue;
 	// Ethereum-compatible chain_id:
 	// * Selendra: 1961
-	type ChainId = EVMChainId;
+	type ChainId = ChainId;
 	type OnChargeTransaction = ();
 	type BlockGasLimit = BlockGasLimit;
 	type FindAuthor = FindAuthorTruncated<Babe>;
 }
-
-impl pallet_evm_chain_id::Config for Runtime {}
 
 impl pallet_ethereum::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

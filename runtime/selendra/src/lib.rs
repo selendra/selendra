@@ -111,6 +111,7 @@ mod weights;
 #[cfg(test)]
 mod tests;
 
+use crate::evm::evm_config::ChainId;
 use parachain::xcm_config;
 use utils::{filters::ProxyType, voter_bags};
 
@@ -1149,7 +1150,6 @@ construct_runtime! {
 		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin, Config} = 99,
 
 		// Ethereum compatibility.
-		EVMChainId: pallet_evm_chain_id::{Pallet, Storage, Config} = 100,
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 101,
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Origin, Config} = 102,
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 103,
@@ -1643,7 +1643,7 @@ sp_api::impl_runtime_apis! {
 
 	impl fp_rpc::EthereumRuntimeRPCApi<Block> for Runtime {
 		fn chain_id() -> u64 {
-			EVMChainId::get()
+			ChainId::get()
 		}
 
 		fn account_basic(address: H160) -> pallet_evm::Account {
