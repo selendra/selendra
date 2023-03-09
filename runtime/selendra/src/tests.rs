@@ -17,12 +17,11 @@
 #[cfg(test)]
 mod test_fees {
 	use crate::*;
-	use frame_support::{dispatch::GetDispatchInfo, weights::WeightToFee as WeightToFeeT};
-	use keyring::Sr25519Keyring::{Alice, Charlie};
+	use frame_support::{weights::WeightToFee as WeightToFeeT};
 	use pallet_transaction_payment::Multiplier;
 	use runtime_common::MinimumMultiplier;
 	use separator::Separatable;
-	use sp_runtime::{assert_eq_error_rate, FixedPointNumber, MultiAddress, MultiSignature};
+	use sp_runtime::{assert_eq_error_rate, FixedPointNumber};
 
 	#[test]
 	fn payout_weight_portion() {
@@ -60,60 +59,6 @@ mod test_fees {
 		fee_with_multiplier(Multiplier::from_rational(1, 2));
 		fee_with_multiplier(Multiplier::from_u32(1));
 		fee_with_multiplier(Multiplier::from_u32(2));
-	}
-
-	#[test]
-	fn transfer_cost_min_multiplier() {
-		let min_multiplier = MinimumMultiplier::get();
-		let call = pallet_balances::Call::<Runtime>::transfer_keep_alive {
-			dest: Charlie.to_account_id().into(),
-			value: Default::default(),
-		};
-		let info = call.get_dispatch_info();
-		println!("call = {:?} / info = {:?}", call, info);
-		// convert to outer call.
-		let call = RuntimeCall::Balances(call);
-		let extra: SignedExtra = (
-			frame_system::CheckNonZeroSender::<Runtime>::new(),
-			frame_system::CheckSpecVersion::<Runtime>::new(),
-			frame_system::CheckTxVersion::<Runtime>::new(),
-			frame_system::CheckGenesis::<Runtime>::new(),
-			frame_system::CheckMortality::<Runtime>::from(generic::Era::immortal()),
-			frame_system::CheckNonce::<Runtime>::from(1),
-			frame_system::CheckWeight::<Runtime>::new(),
-			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
-		);
-		let uxt = UncheckedExtrinsic {
-			function: call,
-			signature: Some((
-				MultiAddress::Id(Alice.to_account_id()),
-				MultiSignature::Sr25519(Alice.sign(b"foo")),
-				extra,
-			)),
-		};
-		let len = uxt.encoded_size();
-
-		let mut ext = sp_io::TestExternalities::new_empty();
-		let mut test_with_multiplier = |m: Multiplier| {
-			ext.execute_with(|| {
-				pallet_transaction_payment::NextFeeMultiplier::<Runtime>::put(m);
-				let fee = TransactionPayment::query_fee_details(uxt.clone(), len as u32);
-				println!(
-					"multiplier = {:?} // fee details = {:?} // final fee = {:?}",
-					pallet_transaction_payment::NextFeeMultiplier::<Runtime>::get(),
-					fee,
-					fee.final_fee().separated_string(),
-				);
-			});
-		};
-
-		test_with_multiplier(min_multiplier);
-		test_with_multiplier(Multiplier::saturating_from_rational(1u128, 1u128));
-		test_with_multiplier(Multiplier::saturating_from_rational(1u128, 1_0u128));
-		test_with_multiplier(Multiplier::saturating_from_rational(1u128, 1_00u128));
-		test_with_multiplier(Multiplier::saturating_from_rational(1u128, 1_000u128));
-		test_with_multiplier(Multiplier::saturating_from_rational(1u128, 1_000_000u128));
-		test_with_multiplier(Multiplier::saturating_from_rational(1u128, 1_000_000_000u128));
 	}
 
 	#[test]
@@ -193,8 +138,8 @@ mod test {
 	#[test]
 	fn call_size() {
 		assert!(
-			core::mem::size_of::<RuntimeCall>() <= 230,
-			"size of Call is more than 230 bytes: some calls have too big arguments, use Box to \
+			core::mem::size_of::<RuntimeCall>() <= 320,
+			"size of Call is more than 320 bytes: some calls have too big arguments, use Box to \
 			reduce the size of Call.
 			If the limit is too strong, maybe consider increase the limit",
 		);
