@@ -16,7 +16,7 @@
 
 //! XCM configuration for Selendra.
 
-use super::{
+use crate::{
 	parachains_origin, AccountId, Balances, CouncilInstance, ParaId, Runtime, RuntimeCall,
 	RuntimeEvent, RuntimeOrigin, WeightToFee, XcmPallet,
 };

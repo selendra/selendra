@@ -15,7 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 ///! Parachain configuration for Selendra.
-use super::{
+use crate::{
 	deposit, parameter_types, weights, xcm_config, Babe, Balances, EnsureRoot, Historical,
 	ParasDisputes, Registrar, Runtime, RuntimeEvent, RuntimeOrigin, Slots, TransactionPriority,
 	DOLLARS, WEEKS,

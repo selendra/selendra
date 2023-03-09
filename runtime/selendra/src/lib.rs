@@ -99,17 +99,15 @@ use primitives::v2::{
 /// Constant values used within the runtime.
 pub use selendra_runtime_constants::{currency::*, fee::*, time::*};
 
-pub mod parachain_config;
-pub mod xcm_config;
-
-mod filters;
-mod voter_bags;
+pub mod parachain;
+mod utils;
 mod weights;
 
 #[cfg(test)]
 mod tests;
 
-use filters::ProxyType;
+use parachain::xcm_config;
+use utils::{filters::ProxyType, voter_bags};
 
 impl_runtime_weights!(selendra_runtime_constants);
 

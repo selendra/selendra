@@ -15,7 +15,7 @@
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>
 
 /// Filers
-use super::{paras_registrar, RuntimeCall, RuntimeDebug};
+use crate::{paras_registrar, RuntimeCall, RuntimeDebug};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::traits::InstanceFilter;
 
