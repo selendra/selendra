@@ -99,7 +99,11 @@ members = [
 	"forests/primitives/parachain-inherent",
 	"forests/primitives/timestamp",
 	"forests/primitives/utility",
-	"utils/generate-bags"
+	"utils/generate-bags",
+	"evm/custom-signatures",
+	"evm/precompiles/substrate-ecdsa",
+	"evm/precompiles/sr25519",
+	"evm/precompiles/utils",
 ]
 
 [profile.release]
