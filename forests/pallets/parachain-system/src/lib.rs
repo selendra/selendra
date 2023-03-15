@@ -676,7 +676,6 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			// TODO: Remove after https://github.com/paritytech/forests/issues/479
 			sp_io::storage::set(b":c", &[]);
 		}
 	}

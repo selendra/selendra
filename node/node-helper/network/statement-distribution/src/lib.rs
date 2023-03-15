@@ -235,8 +235,7 @@ struct PeerRelayParentKnowledge {
 
 	/// How many large statements this peer already sent us.
 	///
-	/// Flood protection for large statements is rather hard and as soon as we get
-	/// `https://github.com/paritytech/selendra/issues/2979` implemented also no longer necessary.
+	/// Flood protection for large statements is rather hard and as soon as we get implemented also no longer necessary.
 	/// Reason: We keep messages around until we fetched the payload, but if a node makes up
 	/// statements and never provides the data, we will keep it around for the slot duration. Not
 	/// even signature checking would help, as the sender, if a validator, can just sign arbitrary

@@ -172,6 +172,7 @@ impl<H> Default for ProcessedCandidates<H> {
 /// WARNING: This check has to be kept in sync with the node side check in the backing
 /// subsystem.
 pub fn minimum_backing_votes(n_validators: usize) -> usize {
+	// For considerations on this value see:
 	sp_std::cmp::min(n_validators, 2)
 }
 

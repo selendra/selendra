@@ -494,7 +494,7 @@ where
 			let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
 			let slot =
-				sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+			sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
 					*timestamp,
 					slot_duration,
 				);
@@ -879,7 +879,8 @@ where
 	let parachains_db = open_database(&config.database)?;
 
 	let approval_voting_config = ApprovalVotingConfig {
-		col_data: parachains_db::REAL_COLUMNS.col_approval_data,
+		col_approval_data: parachains_db::REAL_COLUMNS.col_approval_data,
+		col_session_data: parachains_db::REAL_COLUMNS.col_session_window_data,
 		slot_duration_millis: slot_duration.as_millis() as u64,
 	};
 
@@ -902,7 +903,8 @@ where
 	};
 
 	let dispute_coordinator_config = DisputeCoordinatorConfig {
-		col_data: parachains_db::REAL_COLUMNS.col_dispute_coordinator_data,
+		col_dispute_data: parachains_db::REAL_COLUMNS.col_dispute_coordinator_data,
+		col_session_data: parachains_db::REAL_COLUMNS.col_session_window_data,
 	};
 
 	let rpc_handlers = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
@@ -1173,7 +1175,6 @@ where
 		// add a custom voting rule to temporarily stop voting for new blocks
 		// after the given pause block is finalized and restarting after the
 		// given delay.
-
 		let mut builder = sc_finality_grandpa::VotingRulesBuilder::default();
 
 		#[cfg(not(feature = "malus"))]
@@ -1275,7 +1276,7 @@ pub fn new_chain_ops(
 
 /// Build a full node.
 ///
-/// The actual "flavor", aka if it will use `Selendra`, is determined based on
+/// The actual "flavor", aka if it will use `Selendra`, `Rococo` or `Kusama` is determined based on
 /// [`IdentifyVariant`] using the chain spec.
 ///
 /// `overseer_enable_anyways` always enables the overseer, based on the provided `OverseerGenerator`,
@@ -1377,7 +1378,8 @@ fn revert_chain_selection(db: Arc<dyn Database>, hash: Hash) -> sp_blockchain::R
 
 fn revert_approval_voting(db: Arc<dyn Database>, hash: Hash) -> sp_blockchain::Result<()> {
 	let config = approval_voting_subsystem::Config {
-		col_data: parachains_db::REAL_COLUMNS.col_approval_data,
+		col_approval_data: parachains_db::REAL_COLUMNS.col_approval_data,
+		col_session_data: parachains_db::REAL_COLUMNS.col_session_window_data,
 		slot_duration_millis: Default::default(),
 	};
 

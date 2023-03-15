@@ -109,7 +109,6 @@ pub struct HostConfiguration<BlockNumber> {
 	/// invalid candidate produced with the new version of the code, then the relay-chain can revert
 	/// [`validation_upgrade_delay`] many blocks back and still find the new code in the storage by
 	/// hash.
-	///
 	pub validation_upgrade_delay: BlockNumber,
 
 	/**

@@ -283,7 +283,7 @@ impl SubstrateCli for TestCollatorCli {
 	}
 
 	fn support_url() -> String {
-		"https://github.com/paritytech/forests/issues/new".into()
+		"https://github.com/selendra/forests/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {

@@ -18,6 +18,7 @@ use crate::artifacts::ArtifactId;
 use selendra_parachain::primitives::ValidationCodeHash;
 use sp_core::blake2_256;
 use std::{fmt, sync::Arc};
+
 /// A struct that carries code of a parachain validation function and its hash.
 ///
 /// Should be cheap to clone.

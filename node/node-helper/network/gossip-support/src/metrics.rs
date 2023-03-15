@@ -79,7 +79,7 @@ impl metrics::Metrics for Metrics {
 				registry,
 			)?,
 			is_parachain_validator: prometheus::register(
-				Gauge::new("selendra_node_is_parachain_validator",
+				Gauge::new("selendra_node_is_parachain_validator", 
 				"Tracks if the validator participates in parachain consensus. Parachain validators are a \
 				subset of the active set validators that perform approval checking of all parachain candidates in a session.\
 				Updates at session boundary.")?,

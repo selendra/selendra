@@ -151,7 +151,6 @@ where
 		match self.kind {
 			SlashingOffenceKind::ForInvalid => DisableStrategy::Always,
 			// in the future we might change it based on number of disputes initiated:
-			// <https://github.com/paritytech/selendra/issues/5946>
 			SlashingOffenceKind::AgainstValid => DisableStrategy::Never,
 		}
 	}

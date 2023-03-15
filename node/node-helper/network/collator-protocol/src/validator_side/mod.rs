@@ -100,7 +100,6 @@ const ACTIVITY_POLL: Duration = Duration::from_millis(10);
 
 // How often to poll collation responses.
 // This is a hack that should be removed in a refactoring.
-// See https://github.com/paritytech/selendra/issues/4182
 const CHECK_COLLATIONS_POLL: Duration = Duration::from_millis(50);
 
 #[derive(Clone, Default)]
@@ -1435,7 +1434,6 @@ async fn poll_collation_response(
 					"Request timed out"
 				);
 				// For now we don't want to change reputation on timeout, to mitigate issues like
-				// this: https://github.com/paritytech/selendra/issues/4617
 				CollationFetchResult::Error(None)
 			},
 			Err(RequestError::NetworkError(err)) => {

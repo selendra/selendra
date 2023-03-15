@@ -133,7 +133,6 @@ fn handle_event_distribution(
 					Err(error) if error.is_disconnected() => false,
 					// Channel is full. This should not happen.
 					// TODO: Improve error handling here
-					// https://github.com/paritytech/forests/issues/1482
 					Err(error) => {
 						tracing::error!(target: LOG_TARGET, ?error, "Event distribution channel has reached its limit. This can lead to missed notifications.");
 						true

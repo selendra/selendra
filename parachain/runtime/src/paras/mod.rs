@@ -1636,8 +1636,6 @@ impl<T: Config> Pallet<T> {
 		// - Empty value is treated as the current code is already inserted during the onboarding.
 		//
 		// This is only an intermediate solution and should be fixed in foreseable future.
-		//
-		// [soaking issue]: https://github.com/paritytech/selendra/issues/3918
 		let validation_code =
 			mem::replace(&mut genesis_data.validation_code, ValidationCode(Vec::new()));
 		UpcomingParasGenesis::<T>::insert(&id, genesis_data);
