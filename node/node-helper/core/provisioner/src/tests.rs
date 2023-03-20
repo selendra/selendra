@@ -1,19 +1,3 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
-
 use super::*;
 use ::test_helpers::{dummy_candidate_descriptor, dummy_hash};
 use bitvec::bitvec;
@@ -214,8 +198,8 @@ mod select_availability_bitfields {
 pub(crate) mod common {
 	use super::super::*;
 	use futures::channel::mpsc;
-	use node_subsystem_test_helpers::TestSubsystemSender;
 	use selendra_node_subsystem::messages::AllMessages;
+	use selendra_node_subsystem_test_helpers::TestSubsystemSender;
 
 	pub fn test_harness<OverseerFactory, Overseer, TestFactory, Test>(
 		overseer_factory: OverseerFactory,
@@ -226,7 +210,7 @@ pub(crate) mod common {
 		TestFactory: FnOnce(TestSubsystemSender) -> Test,
 		Test: Future<Output = ()>,
 	{
-		let (tx, rx) = node_subsystem_test_helpers::sender_receiver();
+		let (tx, rx) = selendra_node_subsystem_test_helpers::sender_receiver();
 		let overseer = overseer_factory(rx);
 		let test = test_factory(tx);
 
@@ -243,13 +227,13 @@ mod select_candidates {
 	};
 	use ::test_helpers::{dummy_candidate_descriptor, dummy_hash};
 	use futures::channel::mpsc;
-	use node_subsystem_test_helpers::TestSubsystemSender;
 	use selendra_node_subsystem::messages::{
 		AllMessages, RuntimeApiMessage,
 		RuntimeApiRequest::{
 			AvailabilityCores, PersistedValidationData as PersistedValidationDataReq,
 		},
 	};
+	use selendra_node_subsystem_test_helpers::TestSubsystemSender;
 	use selendra_primitives::v2::{
 		BlockNumber, CandidateCommitments, CommittedCandidateReceipt, PersistedValidationData,
 	};

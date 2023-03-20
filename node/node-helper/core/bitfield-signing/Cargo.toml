@@ -7,14 +7,13 @@ edition = "2021"
 [dependencies]
 futures = "0.3.21"
 wasm-timer = "0.2.5"
-thiserror = "1.0.37"
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-
+thiserror = "1.0.31"
 gum = { package = "tracing-gum", path = "../../gum" }
 selendra-primitives = { path = "../../../../primitives" }
 selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 
 [dev-dependencies]
-node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
-test-helpers = { package = "primitives-test-helpers", path = "../../../../tests/test-helpers/primitive" }
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
+test-helpers = { package = "selendra-primitives-test-helpers", path = "../../../../primitives/test-helpers" }

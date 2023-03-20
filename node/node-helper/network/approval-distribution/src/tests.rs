@@ -1,24 +1,22 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::*;
 use assert_matches::assert_matches;
 use futures::{executor, future, Future};
-use node_subsystem_test_helpers as test_helpers;
-use primitives_test_helpers::dummy_signature;
 use rand::SeedableRng;
 use selendra_node_network_protocol::{
 	grid_topology::{SessionGridTopology, TopologyPeerInfo},
@@ -30,8 +28,10 @@ use selendra_node_primitives::approval::{
 	AssignmentCertKind, VRFOutput, VRFProof, RELAY_VRF_MODULO_CONTEXT,
 };
 use selendra_node_subsystem::messages::{network_bridge_event, AllMessages, ApprovalCheckError};
+use selendra_node_subsystem_test_helpers as test_helpers;
 use selendra_node_subsystem_util::TimeoutExt as _;
 use selendra_primitives::v2::{AuthorityDiscoveryId, BlakeTwo256, HashT};
+use selendra_primitives_test_helpers::dummy_signature;
 use sp_authority_discovery::AuthorityPair as AuthorityDiscoveryPair;
 use sp_core::crypto::Pair as PairT;
 use std::time::Duration;
@@ -373,6 +373,8 @@ fn try_import_the_same_assignment() {
 	});
 }
 
+/// <https://github.com/paritytech/polkadot/pull/2160#discussion_r547594835>
+///
 /// 1. Send a view update that removes block B from their view.
 /// 2. Send a message from B that they incur `COST_UNEXPECTED_MESSAGE` for,
 ///    but then they receive `BENEFIT_VALID_MESSAGE`.
@@ -459,6 +461,8 @@ fn spam_attack_results_in_negative_reputation_change() {
 /// Imagine we send a message to peer A and peer B.
 /// Upon receiving them, they both will try to send the message each other.
 /// This test makes sure they will not punish each other for such duplicate messages.
+///
+/// See <https://github.com/paritytech/polkadot/issues/2499>.
 #[test]
 fn peer_sending_us_the_same_we_just_sent_them_is_ok() {
 	let parent_hash = Hash::repeat_byte(0xFF);
@@ -1098,6 +1102,8 @@ fn sends_assignments_even_when_state_is_approved() {
 	});
 }
 
+/// <https://github.com/paritytech/polkadot/pull/5089>
+///
 /// 1. Receive remote peer view update with an unknown head
 /// 2. Receive assignments for that unknown head
 /// 3. Update our view and import the new block

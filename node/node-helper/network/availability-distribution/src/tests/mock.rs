@@ -1,18 +1,18 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Helper functions and tools to generate mock data useful for testing this subsystem.
 
@@ -20,15 +20,15 @@ use std::sync::Arc;
 
 use sp_keyring::Sr25519Keyring;
 
-use primitives_test_helpers::{
-	dummy_collator, dummy_collator_signature, dummy_hash, dummy_validation_code,
-};
 use selendra_erasure_coding::{branches, obtain_chunks_v1 as obtain_chunks};
 use selendra_node_primitives::{AvailableData, BlockData, ErasureChunk, PoV, Proof};
 use selendra_primitives::v2::{
 	CandidateCommitments, CandidateDescriptor, CandidateHash, CommittedCandidateReceipt,
 	GroupIndex, Hash, HeadData, Id as ParaId, IndexedVec, OccupiedCore, PersistedValidationData,
 	SessionInfo, ValidatorIndex,
+};
+use selendra_primitives_test_helpers::{
+	dummy_collator, dummy_collator_signature, dummy_hash, dummy_validation_code,
 };
 
 /// Create dummy session info with two validator groups.

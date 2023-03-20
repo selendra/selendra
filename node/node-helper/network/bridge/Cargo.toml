@@ -5,31 +5,28 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
-bytes = "1"
-fatality = "0.0.6"
-thiserror = "1"
 always-assert = "0.1"
-async-trait = "0.1.60"
+async-trait = "0.1.57"
 futures = "0.3.21"
-parking_lot = "0.12.1"
-
+gum = { package = "tracing-gum", path = "../../gum" }
+selendra-primitives = { path = "../../../../primitives" }
 parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-
-selendra-primitives = { path = "../../../../primitives" }
 selendra-node-subsystem = {path = "../../subsystem" }
 selendra-overseer = { path = "../../overseer" }
 selendra-node-network-protocol = { path = "../protocol" }
 selendra-node-subsystem-util = { path = "../../subsystem-util"}
-gum = { package = "tracing-gum", path = "../../gum" }
+parking_lot = "0.12.0"
+bytes = "1"
+fatality = "0.0.6"
+thiserror = "1"
 
 [dev-dependencies]
 assert_matches = "1.4.0"
-futures-timer = "3"
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-
-node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
-primitives-test-helpers = { path = "../../../../tests/test-helpers/primitive" }
+futures-timer = "3"
+selendra-primitives-test-helpers = { path = "../../../../primitives/test-helpers" }

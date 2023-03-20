@@ -1,20 +1,18 @@
+// Copyright 2022 Smallworld Selendra
 // This file is part of Selendra.
 
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
-
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Selendra-specific RPCs implementation.
 
@@ -27,7 +25,6 @@ use sc_client_api::AuxStore;
 use sc_consensus_babe::{BabeConfiguration, Epoch};
 use sc_finality_grandpa::FinalityProofProvider;
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
-use sc_transaction_pool_api::TransactionPool;
 use selendra_primitives::v2::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
@@ -35,6 +32,7 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus::SelectChain;
 use sp_consensus_babe::BabeApi;
 use sp_keystore::SyncCryptoStorePtr;
+use txpool_api::TransactionPool;
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = RpcModule<()>;
@@ -66,7 +64,6 @@ pub struct GrandpaDeps<B> {
 use beefy_gadget::communication::notification::{
 	BeefyBestBlockStream, BeefyVersionedFinalityProofStream,
 };
-
 /// Dependencies for BEEFY
 pub struct BeefyDeps {
 	/// Receives notifications about finality proof events from BEEFY.

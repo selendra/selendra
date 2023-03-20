@@ -1,18 +1,18 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::*;
 
@@ -29,8 +29,6 @@ use sp_core::crypto::Pair;
 use sp_keyring::Sr25519Keyring;
 use sp_runtime::traits::AppVerify;
 
-use node_subsystem_test_helpers as test_helpers;
-use primitives_test_helpers::TestCandidateBuilder;
 use selendra_node_network_protocol::{
 	our_view,
 	peer_set::CollationVersion,
@@ -43,11 +41,13 @@ use selendra_node_subsystem::{
 	messages::{AllMessages, RuntimeApiMessage, RuntimeApiRequest},
 	ActivatedLeaf, ActiveLeavesUpdate, LeafStatus,
 };
+use selendra_node_subsystem_test_helpers as test_helpers;
 use selendra_node_subsystem_util::TimeoutExt;
 use selendra_primitives::v2::{
 	AuthorityDiscoveryId, CollatorPair, GroupIndex, GroupRotationInfo, IndexedVec, ScheduledCore,
 	SessionIndex, SessionInfo, ValidatorId, ValidatorIndex,
 };
+use selendra_primitives_test_helpers::TestCandidateBuilder;
 
 #[derive(Clone)]
 struct TestState {

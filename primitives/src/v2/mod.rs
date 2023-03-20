@@ -1,20 +1,20 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-//! `V2` Primitives.
+//! `V1` Primitives.
 
 use bitvec::vec::BitVec;
 use parity_scale_codec::{Decode, Encode};
@@ -26,13 +26,13 @@ use sp_std::{
 	vec::IntoIter,
 };
 
-use sp_application_crypto::KeyTypeId;
+use application_crypto::KeyTypeId;
+use inherents::InherentIdentifier;
+use primitives::RuntimeDebug;
+use runtime_primitives::traits::{AppVerify, Header as HeaderT};
 use sp_arithmetic::traits::{BaseArithmetic, Saturating};
-use sp_core::RuntimeDebug;
-use sp_inherents::InherentIdentifier;
-use sp_runtime::traits::{AppVerify, Header as HeaderT};
 
-pub use sp_runtime::traits::{BlakeTwo256, Hash as HashT};
+pub use runtime_primitives::traits::{BlakeTwo256, Hash as HashT};
 
 // Export some core primitives.
 pub use selendra_core_primitives::v2::{
@@ -70,7 +70,7 @@ pub use metrics::{
 pub const COLLATOR_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"coll");
 
 mod collator_app {
-	use sp_application_crypto::{app_crypto, sr25519};
+	use application_crypto::{app_crypto, sr25519};
 	app_crypto!(sr25519, super::COLLATOR_KEY_TYPE_ID);
 }
 
@@ -108,7 +108,7 @@ impl MallocSizeOf for CollatorSignature {
 pub const PARACHAIN_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"para");
 
 mod validator_app {
-	use sp_application_crypto::{app_crypto, sr25519};
+	use application_crypto::{app_crypto, sr25519};
 	app_crypto!(sr25519, super::PARACHAIN_KEY_TYPE_ID);
 }
 
@@ -139,6 +139,7 @@ pub trait TypeIndex {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize, Hash, MallocSizeOf))]
 pub struct ValidatorIndex(pub u32);
 
+// We should really get https://github.com/paritytech/polkadot/issues/2403 going ..
 impl From<u32> for ValidatorIndex {
 	fn from(n: u32) -> Self {
 		ValidatorIndex(n)
@@ -151,7 +152,7 @@ impl TypeIndex for ValidatorIndex {
 	}
 }
 
-sp_application_crypto::with_pair! {
+application_crypto::with_pair! {
 	/// A Parachain validator keypair.
 	pub type ValidatorPair = validator_app::Pair;
 }
@@ -391,7 +392,7 @@ pub const MAX_POV_SIZE: u32 = 5 * 1024 * 1024;
 // The public key of a keypair used by a validator for determining assignments
 /// to approve included parachain candidates.
 mod assignment_app {
-	use sp_application_crypto::{app_crypto, sr25519};
+	use application_crypto::{app_crypto, sr25519};
 	app_crypto!(sr25519, super::ASSIGNMENT_KEY_TYPE_ID);
 }
 
@@ -399,7 +400,7 @@ mod assignment_app {
 /// to approve included parachain candidates.
 pub type AssignmentId = assignment_app::Public;
 
-sp_application_crypto::with_pair! {
+application_crypto::with_pair! {
 	/// The full keypair used by a validator for determining assignments to approve included
 	/// parachain candidates.
 	pub type AssignmentPair = assignment_app::Pair;
@@ -596,6 +597,7 @@ impl PartialOrd for CommittedCandidateReceipt {
 impl Ord for CommittedCandidateReceipt {
 	fn cmp(&self, other: &Self) -> sp_std::cmp::Ordering {
 		// TODO: compare signatures or something more sane
+		// https://github.com/paritytech/polkadot/issues/222
 		self.descriptor()
 			.para_id
 			.cmp(&other.descriptor().para_id)
@@ -1095,7 +1097,7 @@ impl From<ValidityError> for u8 {
 }
 
 /// Abridged version of `HostConfiguration` (from the `Configuration` parachains host runtime module)
-/// meant to be used by a parachain or PDK such as forests.
+/// meant to be used by a parachain or PDK such as cumulus.
 #[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(PartialEq))]
 pub struct AbridgedHostConfiguration {
@@ -1128,7 +1130,7 @@ pub struct AbridgedHostConfiguration {
 }
 
 /// Abridged version of `HrmpChannel` (from the `Hrmp` parachains host runtime module) meant to be
-/// used by a parachain or PDK such as forests.
+/// used by a parachain or PDK such as cumulus.
 #[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(PartialEq))]
 pub struct AbridgedHrmpChannel {
@@ -1187,7 +1189,7 @@ pub enum UpgradeGoAhead {
 }
 
 /// Consensus engine id for selendra v1 consensus engine.
-pub const SELENDRA_ENGINE_ID: sp_runtime::ConsensusEngineId = *b"POL1";
+pub const SELENDRA_ENGINE_ID: runtime_primitives::ConsensusEngineId = *b"POL1";
 
 /// A consensus log item for selendra validation. To be used with [`SELENDRA_ENGINE_ID`].
 #[derive(Decode, Encode, Clone, PartialEq, Eq)]
@@ -1217,18 +1219,18 @@ pub enum ConsensusLog {
 impl ConsensusLog {
 	/// Attempt to convert a reference to a generic digest item into a consensus log.
 	pub fn from_digest_item(
-		digest_item: &sp_runtime::DigestItem,
+		digest_item: &runtime_primitives::DigestItem,
 	) -> Result<Option<Self>, parity_scale_codec::Error> {
 		match digest_item {
-			sp_runtime::DigestItem::Consensus(id, encoded) if id == &SELENDRA_ENGINE_ID =>
+			runtime_primitives::DigestItem::Consensus(id, encoded) if id == &SELENDRA_ENGINE_ID =>
 				Ok(Some(Self::decode(&mut &encoded[..])?)),
 			_ => Ok(None),
 		}
 	}
 }
 
-impl From<ConsensusLog> for sp_runtime::DigestItem {
-	fn from(c: ConsensusLog) -> sp_runtime::DigestItem {
+impl From<ConsensusLog> for runtime_primitives::DigestItem {
+	fn from(c: ConsensusLog) -> runtime_primitives::DigestItem {
 		Self::Consensus(SELENDRA_ENGINE_ID, c.encode())
 	}
 }
@@ -1692,6 +1694,8 @@ pub struct SessionInfo {
 	/// Validators in canonical ordering.
 	///
 	/// NOTE: There might be more authorities in the current session, than `validators` participating
+	/// in parachain consensus. See
+	/// [`max_validators`](https://github.com/paritytech/polkadot/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/parachains/src/configuration.rs#L148).
 	///
 	/// `SessionInfo::validators` will be limited to to `max_validators` when set.
 	pub validators: IndexedVec<ValidatorIndex, ValidatorId>,
@@ -1700,11 +1704,14 @@ pub struct SessionInfo {
 	/// NOTE: The first `validators.len()` entries will match the corresponding validators in
 	/// `validators`, afterwards any remaining authorities can be found. This is any authorities not
 	/// participating in parachain consensus - see
+	/// [`max_validators`](https://github.com/paritytech/polkadot/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/parachains/src/configuration.rs#L148)
 	#[cfg_attr(feature = "std", ignore_malloc_size_of = "outside type")]
 	pub discovery_keys: Vec<AuthorityDiscoveryId>,
 	/// The assignment keys for validators.
 	///
 	/// NOTE: There might be more authorities in the current session, than validators participating
+	/// in parachain consensus. See
+	/// [`max_validators`](https://github.com/paritytech/polkadot/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/parachains/src/configuration.rs#L148).
 	///
 	/// Therefore:
 	/// ```ignore
@@ -1763,6 +1770,8 @@ pub struct OldV1SessionInfo {
 	/// Validators in canonical ordering.
 	///
 	/// NOTE: There might be more authorities in the current session, than `validators` participating
+	/// in parachain consensus. See
+	/// [`max_validators`](https://github.com/paritytech/polkadot/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/parachains/src/configuration.rs#L148).
 	///
 	/// `SessionInfo::validators` will be limited to to `max_validators` when set.
 	pub validators: IndexedVec<ValidatorIndex, ValidatorId>,
@@ -1770,11 +1779,15 @@ pub struct OldV1SessionInfo {
 	///
 	/// NOTE: The first `validators.len()` entries will match the corresponding validators in
 	/// `validators`, afterwards any remaining authorities can be found. This is any authorities not
+	/// participating in parachain consensus - see
+	/// [`max_validators`](https://github.com/paritytech/polkadot/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/parachains/src/configuration.rs#L148)
 	#[cfg_attr(feature = "std", ignore_malloc_size_of = "outside type")]
 	pub discovery_keys: Vec<AuthorityDiscoveryId>,
 	/// The assignment keys for validators.
 	///
 	/// NOTE: There might be more authorities in the current session, than validators participating
+	/// in parachain consensus. See
+	/// [`max_validators`](https://github.com/paritytech/polkadot/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/parachains/src/configuration.rs#L148).
 	///
 	/// Therefore:
 	/// ```ignore

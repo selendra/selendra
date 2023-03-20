@@ -1,5 +1,5 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
 // Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,20 +23,20 @@ mod grandpa_support;
 mod parachains_db;
 mod relay_chain_selection;
 
-#[cfg(test)]
-mod tests;
-
 #[cfg(feature = "full-node")]
 pub mod overseer;
 
 #[cfg(feature = "full-node")]
 pub use self::overseer::{OverseerGen, OverseerGenArgs, RealOverseerGen};
 
+#[cfg(test)]
+mod tests;
+
 #[cfg(feature = "full-node")]
 use {
+	grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider},
 	gum::info,
 	sc_client_api::BlockBackend,
-	sc_finality_grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider},
 	selendra_node_core_approval_voting::{
 		self as approval_voting_subsystem, Config as ApprovalVotingConfig,
 	},
@@ -75,34 +75,33 @@ use std::{sync::Arc, time::Duration};
 
 use prometheus_endpoint::Registry;
 #[cfg(feature = "full-node")]
-use sc_service::KeystoreContainer;
-use sc_service::RpcHandlers;
-use sc_telemetry::TelemetryWorker;
+use service::KeystoreContainer;
+use service::RpcHandlers;
+use telemetry::TelemetryWorker;
 #[cfg(feature = "full-node")]
-use sc_telemetry::{Telemetry, TelemetryWorkerHandle};
+use telemetry::{Telemetry, TelemetryWorkerHandle};
 
 #[cfg(feature = "selendra-native")]
 pub use selendra_client::SelendraExecutorDispatch;
 
 pub use chain_spec::SelendraChainSpec;
-
+pub use consensus_common::{block_validation::Chain, Proposal, SelectChain};
 pub use sc_client_api::{Backend, CallExecutor, ExecutionStrategy};
 pub use sc_consensus::{BlockImport, LongestChain};
 use sc_executor::NativeElseWasmExecutor;
 pub use sc_executor::NativeExecutionDispatch;
-pub use sc_service::{
-	config::{DatabaseSource, PrometheusConfig},
-	ChainSpec, Configuration, Error as SubstrateServiceError, PruningMode, Role, RuntimeGenesis,
-	TFullBackend, TFullCallExecutor, TFullClient, TaskManager, TransactionPoolOptions,
-};
 #[cfg(feature = "full-node")]
 pub use selendra_client::{
 	AbstractClient, Client, ClientHandle, ExecuteWithClient, FullBackend, FullClient,
 	RuntimeApiCollection,
 };
 pub use selendra_primitives::v2::{Block, BlockId, BlockNumber, CollatorPair, Hash, Id as ParaId};
+pub use service::{
+	config::{DatabaseSource, PrometheusConfig},
+	ChainSpec, Configuration, Error as SubstrateServiceError, PruningMode, Role, RuntimeGenesis,
+	TFullBackend, TFullCallExecutor, TFullClient, TaskManager, TransactionPoolOptions,
+};
 pub use sp_api::{ApiRef, ConstructRuntimeApi, Core as CoreApi, ProvideRuntimeApi, StateBackend};
-pub use sp_consensus::{block_validation::Chain, Proposal, SelectChain};
 pub use sp_runtime::{
 	generic,
 	traits::{
@@ -199,7 +198,7 @@ pub enum Error {
 	Blockchain(#[from] sp_blockchain::Error),
 
 	#[error(transparent)]
-	Consensus(#[from] sp_consensus::Error),
+	Consensus(#[from] consensus_common::Error),
 
 	#[error("Failed to create an overseer")]
 	Overseer(#[from] selendra_overseer::SubsystemError),
@@ -208,7 +207,7 @@ pub enum Error {
 	Prometheus(#[from] prometheus_endpoint::PrometheusError),
 
 	#[error(transparent)]
-	Telemetry(#[from] sc_telemetry::Error),
+	Telemetry(#[from] telemetry::Error),
 
 	#[error(transparent)]
 	Jaeger(#[from] selendra_node_subsystem::jaeger::JaegerError),
@@ -225,7 +224,7 @@ pub enum Error {
 	DatabasePathRequired,
 
 	#[cfg(feature = "full-node")]
-	#[error("Expected at least one of selendra, runtime feature")]
+	#[error("Expected at least one of selendra runtime feature")]
 	NoRuntime,
 }
 
@@ -301,13 +300,12 @@ fn jaeger_launch_collector_with_agent(
 type FullSelectChain = relay_chain_selection::SelectRelayChain<FullBackend>;
 #[cfg(feature = "full-node")]
 type FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch, ChainSelection = FullSelectChain> =
-	sc_finality_grandpa::GrandpaBlockImport<
+	grandpa::GrandpaBlockImport<
 		FullBackend,
 		Block,
 		FullClient<RuntimeApi, ExecutorDispatch>,
 		ChainSelection,
 	>;
-
 #[cfg(feature = "full-node")]
 type FullBeefyBlockImport<RuntimeApi, ExecutorDispatch, InnerBlockImport> =
 	beefy_gadget::import::BeefyBlockImport<
@@ -354,7 +352,7 @@ where
 		.telemetry_endpoints
 		.clone()
 		.filter(|x| !x.is_empty())
-		.map(move |endpoints| -> Result<_, sc_telemetry::Error> {
+		.map(move |endpoints| -> Result<_, telemetry::Error> {
 			let (worker, mut worker_handle) = if let Some(worker_handle) = telemetry_worker_handle {
 				(None, worker_handle)
 			} else {
@@ -375,7 +373,7 @@ where
 	);
 
 	let (client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts::<Block, RuntimeApi, _>(
+		service::new_full_parts::<Block, RuntimeApi, _>(
 			&config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 			executor,
@@ -407,7 +405,7 @@ fn new_partial<RuntimeApi, ExecutorDispatch, ChainSelection>(
 	>,
 	select_chain: ChainSelection,
 ) -> Result<
-	sc_service::PartialComponents<
+	service::PartialComponents<
 		FullClient<RuntimeApi, ExecutorDispatch>,
 		FullBackend,
 		ChainSelection,
@@ -419,7 +417,7 @@ fn new_partial<RuntimeApi, ExecutorDispatch, ChainSelection>(
 				selendra_rpc::SubscriptionTaskExecutor,
 			) -> Result<selendra_rpc::RpcExtension, SubstrateServiceError>,
 			(
-				sc_consensus_babe::BabeBlockImport<
+				babe::BabeBlockImport<
 					Block,
 					FullClient<RuntimeApi, ExecutorDispatch>,
 					FullBeefyBlockImport<
@@ -428,15 +426,11 @@ fn new_partial<RuntimeApi, ExecutorDispatch, ChainSelection>(
 						FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch, ChainSelection>,
 					>,
 				>,
-				sc_finality_grandpa::LinkHalf<
-					Block,
-					FullClient<RuntimeApi, ExecutorDispatch>,
-					ChainSelection,
-				>,
-				sc_consensus_babe::BabeLink<Block>,
+				grandpa::LinkHalf<Block, FullClient<RuntimeApi, ExecutorDispatch>, ChainSelection>,
+				babe::BabeLink<Block>,
 				beefy_gadget::BeefyVoterLinks<Block>,
 			),
-			sc_finality_grandpa::SharedVoterState,
+			grandpa::SharedVoterState,
 			sp_consensus_babe::SlotDuration,
 			Option<Telemetry>,
 		),
@@ -461,15 +455,13 @@ where
 		client.clone(),
 	);
 
-	let (grandpa_block_import, grandpa_link) =
-		sc_finality_grandpa::block_import_with_authority_set_hard_forks(
-			client.clone(),
-			&(client.clone() as Arc<_>),
-			select_chain.clone(),
-			Vec::new(),
-			telemetry.as_ref().map(|x| x.handle()),
-		)?;
-
+	let (grandpa_block_import, grandpa_link) = grandpa::block_import_with_authority_set_hard_forks(
+		client.clone(),
+		&(client.clone() as Arc<_>),
+		select_chain.clone(),
+		Vec::new(),
+		telemetry.as_ref().map(|x| x.handle()),
+	)?;
 	let justification_import = grandpa_block_import.clone();
 
 	let (beefy_block_import, beefy_voter_links, beefy_rpc_links) =
@@ -479,12 +471,12 @@ where
 			client.clone(),
 		);
 
-	let babe_config = sc_consensus_babe::configuration(&*client)?;
+	let babe_config = babe::configuration(&*client)?;
 	let (block_import, babe_link) =
-		sc_consensus_babe::block_import(babe_config.clone(), beefy_block_import, client.clone())?;
+		babe::block_import(babe_config.clone(), beefy_block_import, client.clone())?;
 
 	let slot_duration = babe_link.config().slot_duration();
-	let import_queue = sc_consensus_babe::import_queue(
+	let import_queue = babe::import_queue(
 		babe_link.clone(),
 		block_import.clone(),
 		Some(Box::new(justification_import)),
@@ -494,7 +486,7 @@ where
 			let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
 			let slot =
-			sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+				sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
 					*timestamp,
 					slot_duration,
 				);
@@ -508,7 +500,7 @@ where
 
 	let justification_stream = grandpa_link.justification_stream();
 	let shared_authority_set = grandpa_link.shared_authority_set().clone();
-	let shared_voter_state = sc_finality_grandpa::SharedVoterState::empty();
+	let shared_voter_state = grandpa::SharedVoterState::empty();
 	let finality_proof_provider = GrandpaFinalityProofProvider::new_for_service(
 		backend.clone(),
 		Some(shared_authority_set.clone()),
@@ -530,7 +522,7 @@ where
 
 		move |deny_unsafe,
 		      subscription_executor: selendra_rpc::SubscriptionTaskExecutor|
-		      -> Result<selendra_rpc::RpcExtension, sc_service::Error> {
+		      -> Result<selendra_rpc::RpcExtension, service::Error> {
 			let deps = selendra_rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
@@ -560,7 +552,7 @@ where
 		}
 	};
 
-	Ok(sc_service::PartialComponents {
+	Ok(service::PartialComponents {
 		client,
 		backend,
 		task_manager,
@@ -723,7 +715,7 @@ where
 		Some(backoff)
 	};
 
-	// If not on a known mainnet, warn the user that BEEFY is still experimental.
+	// If not on a known test network, warn the user that BEEFY is still experimental.
 	if enable_beefy && config.chain_spec.is_selendra() {
 		gum::warn!("BEEFY is still experimental, usage on a production network is discouraged.");
 	}
@@ -741,6 +733,8 @@ where
 
 	let overseer_connector = OverseerConnector::default();
 	let overseer_handle = Handle::new(overseer_connector.handle());
+
+	let _chain_spec = config.chain_spec.cloned_box();
 
 	let local_keystore = basics.keystore_container.local_keystore();
 	let auth_or_collator = role.is_authority() || is_collator.is_collator();
@@ -761,7 +755,7 @@ where
 		SelectRelayChain::new_longest_chain(basics.backend.clone())
 	};
 
-	let sc_service::PartialComponents::<_, _, SelectRelayChain<_>, _, _, _> {
+	let service::PartialComponents::<_, _, SelectRelayChain<_>, _, _, _> {
 		client,
 		backend,
 		mut task_manager,
@@ -784,12 +778,11 @@ where
 	// Note: GrandPa is pushed before the Selendra-specific protocols. This doesn't change
 	// anything in terms of behaviour, but makes the logs more consistent with the other
 	// Substrate nodes.
-	let grandpa_protocol_name =
-		sc_finality_grandpa::protocol_standard_name(&genesis_hash, &config.chain_spec);
+	let grandpa_protocol_name = grandpa::protocol_standard_name(&genesis_hash, &config.chain_spec);
 	config
 		.network
 		.extra_sets
-		.push(sc_finality_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
+		.push(grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
 
 	let beefy_gossip_proto_name =
 		beefy_gadget::gossip_protocol_name(&genesis_hash, config.chain_spec.fork_id());
@@ -801,7 +794,6 @@ where
 			config.chain_spec.fork_id(),
 			client.clone(),
 		);
-
 	if enable_beefy {
 		config
 			.network
@@ -825,6 +817,7 @@ where
 	}
 
 	let req_protocol_names = ReqProtocolNames::new(&genesis_hash, config.chain_spec.fork_id());
+
 	let (pov_req_receiver, cfg) = IncomingRequest::get_config_receiver(&req_protocol_names);
 	config.network.request_response_protocols.push(cfg);
 	let (chunk_req_receiver, cfg) = IncomingRequest::get_config_receiver(&req_protocol_names);
@@ -839,14 +832,14 @@ where
 	let (dispute_req_receiver, cfg) = IncomingRequest::get_config_receiver(&req_protocol_names);
 	config.network.request_response_protocols.push(cfg);
 
-	let warp_sync = Arc::new(sc_finality_grandpa::warp_proof::NetworkProvider::new(
+	let warp_sync = Arc::new(grandpa::warp_proof::NetworkProvider::new(
 		backend.clone(),
 		import_setup.1.shared_authority_set().clone(),
 		Vec::new(),
 	));
 
 	let (network, system_rpc_tx, tx_handler_controller, network_starter) =
-		sc_service::build_network(sc_service::BuildNetworkParams {
+		service::build_network(service::BuildNetworkParams {
 			config: &config,
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
@@ -907,7 +900,7 @@ where
 		col_session_data: parachains_db::REAL_COLUMNS.col_session_window_data,
 	};
 
-	let rpc_handlers = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
+	let rpc_handlers = service::spawn_tasks(service::SpawnTasksParams {
 		config,
 		backend: backend.clone(),
 		client: client.clone(),
@@ -951,7 +944,7 @@ where
 		let authority_discovery_role = if role.is_authority() {
 			sc_authority_discovery::Role::PublishAndDiscover(keystore_container.keystore())
 		} else {
-			// don't publish our addresses when we're not an authority (collator, forests, ..)
+			// don't publish our addresses when we're not an authority (collator, cumulus, ..)
 			sc_authority_discovery::Role::Discover
 		};
 		let dht_event_stream =
@@ -994,7 +987,7 @@ where
 
 	let overseer_handle = if let Some((authority_discovery_service, keystore)) = maybe_params {
 		let (overseer, overseer_handle) = overseer_gen
-			.generate::<sc_service::SpawnTaskHandle, FullClient<RuntimeApi, ExecutorDispatch>>(
+			.generate::<service::SpawnTaskHandle, FullClient<RuntimeApi, ExecutorDispatch>>(
 				overseer_connector,
 				OverseerGenArgs {
 					leaves: active_leaves,
@@ -1075,7 +1068,7 @@ where
 		let overseer_handle =
 			overseer_handle.as_ref().ok_or(Error::AuthoritiesRequireRealOverseer)?.clone();
 		let slot_duration = babe_link.config().slot_duration();
-		let babe_config = sc_consensus_babe::BabeParams {
+		let babe_config = babe::BabeParams {
 			keystore: keystore_container.sync_keystore(),
 			client: client.clone(),
 			select_chain,
@@ -1108,12 +1101,12 @@ where
 			force_authoring,
 			backoff_authoring_blocks,
 			babe_link,
-			block_proposal_slot_portion: sc_consensus_babe::SlotProportion::new(2f32 / 3f32),
+			block_proposal_slot_portion: babe::SlotProportion::new(2f32 / 3f32),
 			max_block_proposal_slot_portion: None,
 			telemetry: telemetry.as_ref().map(|x| x.handle()),
 		};
 
-		let babe = sc_consensus_babe::start_babe(babe_config)?;
+		let babe = babe::start_babe(babe_config)?;
 		task_manager.spawn_essential_handle().spawn_blocking("babe", None, babe);
 	}
 
@@ -1145,13 +1138,15 @@ where
 		};
 
 		let gadget = beefy_gadget::start_beefy_gadget::<_, _, _, _, _, _>(beefy_params);
-
 		task_manager.spawn_handle().spawn_blocking("beefy-gadget", None, gadget);
 	}
 
+	// Reduce grandpa load on Selendra and test networks. This will slow down finality by
+	// approximately one slot duration, but will reduce load. We would like to see the impact on
+	// Selendra, see: https://github.com/paritytech/polkadot/issues/5464
 	let gossip_duration = Duration::from_millis(1000);
 
-	let config = sc_finality_grandpa::Config {
+	let config = grandpa::Config {
 		// FIXME substrate#1578 make this available through chainspec
 		gossip_duration,
 		justification_period: 512,
@@ -1175,14 +1170,14 @@ where
 		// add a custom voting rule to temporarily stop voting for new blocks
 		// after the given pause block is finalized and restarting after the
 		// given delay.
-		let mut builder = sc_finality_grandpa::VotingRulesBuilder::default();
+		let mut builder = grandpa::VotingRulesBuilder::default();
 
 		#[cfg(not(feature = "malus"))]
 		let _malus_finality_delay = None;
 
 		if let Some(delay) = _malus_finality_delay {
 			info!(?delay, "Enabling malus finality delay",);
-			builder = builder.add(sc_finality_grandpa::BeforeBestBlockBy(delay));
+			builder = builder.add(grandpa::BeforeBestBlockBy(delay));
 		};
 
 		let voting_rule = match grandpa_pause {
@@ -1200,7 +1195,7 @@ where
 			None => builder.build(),
 		};
 
-		let grandpa_config = sc_finality_grandpa::GrandpaParams {
+		let grandpa_config = grandpa::GrandpaParams {
 			config,
 			link: link_half,
 			network: network.clone(),
@@ -1213,7 +1208,7 @@ where
 		task_manager.spawn_essential_handle().spawn_blocking(
 			"grandpa-voter",
 			None,
-			sc_finality_grandpa::run_grandpa_voter(grandpa_config)?,
+			grandpa::run_grandpa_voter(grandpa_config)?,
 		);
 	}
 
@@ -1238,7 +1233,7 @@ macro_rules! chain_ops {
 		// use the longest chain selection, since there is no overseer available
 		let chain_selection = LongestChain::new(basics.backend.clone());
 
-		let sc_service::PartialComponents { client, backend, import_queue, task_manager, .. } =
+		let service::PartialComponents { client, backend, import_queue, task_manager, .. } =
 			new_partial::<$scope::RuntimeApi, $executor, LongestChain<_, Block>>(
 				&mut config,
 				basics,
@@ -1262,7 +1257,7 @@ pub fn new_chain_ops(
 	),
 	Error,
 > {
-	config.keystore = sc_service::config::KeystoreConfig::InMemory;
+	config.keystore = service::config::KeystoreConfig::InMemory;
 
 	let telemetry_worker_handle = None;
 
@@ -1276,7 +1271,7 @@ pub fn new_chain_ops(
 
 /// Build a full node.
 ///
-/// The actual "flavor", aka if it will use `Selendra`, `Rococo` or `Kusama` is determined based on
+/// The actual "flavor", aka if it will use `Selendra` is determined based on
 /// [`IdentifyVariant`] using the chain spec.
 ///
 /// `overseer_enable_anyways` always enables the overseer, based on the provided `OverseerGenerator`,
@@ -1387,7 +1382,7 @@ fn revert_approval_voting(db: Arc<dyn Database>, hash: Hash) -> sp_blockchain::R
 		config,
 		db,
 		Arc::new(sc_keystore::LocalKeystore::in_memory()),
-		Box::new(sp_consensus::NoNetwork),
+		Box::new(consensus_common::NoNetwork),
 		approval_voting_subsystem::Metrics::default(),
 	);
 
@@ -1414,8 +1409,8 @@ impl ExecuteWithClient for RevertConsensus {
 	{
 		// Revert consensus-related components.
 		// The operations are not correlated, thus call order is not relevant.
-		sc_consensus_babe::revert(client.clone(), self.backend, self.blocks)?;
-		sc_finality_grandpa::revert(client, self.blocks)?;
+		babe::revert(client.clone(), self.backend, self.blocks)?;
+		grandpa::revert(client, self.blocks)?;
 		Ok(())
 	}
 }

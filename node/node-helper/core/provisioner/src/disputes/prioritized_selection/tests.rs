@@ -1,18 +1,18 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::super::{
 	super::{tests::common::test_harness, *},
@@ -20,11 +20,11 @@ use super::super::{
 };
 use bitvec::prelude::*;
 use futures::channel::mpsc;
-use node_subsystem_test_helpers::TestSubsystemSender;
 use selendra_node_primitives::{CandidateVotes, DisputeStatus, ACTIVE_DURATION_SECS};
 use selendra_node_subsystem::messages::{
 	AllMessages, DisputeCoordinatorMessage, RuntimeApiMessage, RuntimeApiRequest,
 };
+use selendra_node_subsystem_test_helpers::TestSubsystemSender;
 use selendra_primitives::v2::{
 	CandidateHash, DisputeState, InvalidDisputeStatementKind, SessionIndex,
 	ValidDisputeStatementKind, ValidatorSignature,
@@ -241,6 +241,7 @@ fn partitioning_happy_case() {
 // without the 'help' of a double vote (a validator voting for and against at the same time). This makes the test
 // a bit pointless but anyway I'm leaving it here to make this decision explicit and have the test code ready in
 // case this behavior needs to be further tested in the future.
+// Link to the PR with the discussions: https://github.com/paritytech/polkadot/pull/5567
 #[test]
 fn partitioning_doubled_onchain_vote() {
 	let mut input = Vec::<(SessionIndex, CandidateHash, DisputeStatus)>::new();

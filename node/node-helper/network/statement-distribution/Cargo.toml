@@ -7,25 +7,23 @@ edition = "2021"
 
 [dependencies]
 futures = "0.3.21"
-thiserror = "1.0.37"
-fatality = "0.0.6"
-arrayvec = "0.5.2"
-indexmap = "1.9.2"
-parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
-
-sp-staking = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.33" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-
+gum = { package = "tracing-gum", path = "../../gum" }
 selendra-primitives = { path = "../../../../primitives" }
+sp-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 selendra-node-subsystem = {path = "../../subsystem" }
 selendra-node-primitives = { path = "../../primitives" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 selendra-node-network-protocol = { path = "../../network/protocol" }
-gum = { package = "tracing-gum", path = "../../gum" }
+arrayvec = "0.5.2"
+indexmap = "1.9.1"
+parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
+thiserror = "1.0.31"
+fatality = "0.0.6"
 
 [dev-dependencies]
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
 assert_matches = "1.4.0"
-futures-timer = "3.0.2"
 sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
@@ -34,6 +32,5 @@ sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polka
 sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-
-node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
-primitives-test-helpers = { path = "../../../../tests/test-helpers/primitive" }
+futures-timer = "3.0.2"
+selendra-primitives-test-helpers = { path = "../../../../primitives/test-helpers" }

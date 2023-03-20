@@ -1,29 +1,26 @@
-
 [package]
 name = "selendra-node-network-protocol"
 version = "0.2.7"
 authors = ["Selendra <info@selendra.org>"]
-description = "Primitives types for the Node-side"
 edition = "2021"
+description = "Primitives types for the Node-side"
 
 [dependencies]
-async-trait = "0.1.60"
-futures = "0.3.21"
-thiserror = "1.0.37"
-fatality = "0.0.6"
-rand = "0.8"
+async-trait = "0.1.57"
 hex = "0.4.3"
-derive_more = "0.99"
-strum = { version = "0.24", features = ["derive"] }
-bitvec = { version = "1.0.1", default-features = false, features = ["alloc"] }
+selendra-primitives = { path = "../../../../primitives" }
+selendra-node-primitives = { path = "../../primitives" }
+selendra-node-jaeger = { path = "../../jaeger" }
 parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-
-selendra-primitives = { path = "../../../../primitives" }
-selendra-node-primitives = { path = "../../primitives" }
-selendra-node-jaeger = { path = "../../jaeger" }
+strum = { version = "0.24", features = ["derive"] }
+futures = "0.3.21"
+thiserror = "1.0.31"
+fatality = "0.0.6"
+rand = "0.8"
+derive_more = "0.99"
 gum = { package = "tracing-gum", path = "../../gum" }
 
 [dev-dependencies]

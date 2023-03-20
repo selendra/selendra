@@ -1,30 +1,30 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
 #[cfg(feature = "std")]
-use sp_application_crypto::AppKey;
+use application_crypto::AppKey;
 #[cfg(feature = "std")]
 use sp_keystore::{CryptoStore, Error as KeystoreError, SyncCryptoStorePtr};
 use sp_std::prelude::Vec;
 
-use sp_core::RuntimeDebug;
-use sp_runtime::traits::AppVerify;
+use primitives::RuntimeDebug;
+use runtime_primitives::traits::AppVerify;
 
 use super::{SigningContext, ValidatorId, ValidatorIndex, ValidatorSignature};
 
@@ -292,7 +292,7 @@ impl<Payload: EncodeAs<RealPayload>, RealPayload: Encode> UncheckedSigned<Payloa
 		context: &SigningContext<H>,
 		validator_index: ValidatorIndex,
 	) -> Self {
-		use sp_application_crypto::RuntimeAppPublic;
+		use application_crypto::RuntimeAppPublic;
 		let data = Self::payload_data(&payload, context);
 		let signature = public.sign(&data).unwrap();
 

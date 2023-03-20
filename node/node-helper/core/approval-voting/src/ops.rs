@@ -1,18 +1,18 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Middleware interface that leverages low-level database operations
 //! to provide a clean API for processing block and candidate imports.
@@ -172,6 +172,7 @@ pub fn canonicalize(
 
 	// due to the fork pruning, this range actually might go too far above where our actual highest block is,
 	// if a relatively short fork is canonicalized.
+	// TODO https://github.com/paritytech/polkadot/issues/3389
 	let new_range = StoredBlockRange(canon_number + 1, std::cmp::max(range.1, canon_number + 2));
 
 	overlay_db.write_stored_block_range(new_range);

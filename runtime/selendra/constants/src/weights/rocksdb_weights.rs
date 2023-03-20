@@ -1,6 +1,6 @@
 // This file is part of Substrate.
 
-// Copyright (C) 2021-2022 Selendra.
+// Copyright (C) 2022 Smallworld Selendra
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,6 @@
 //   --weight-path=runtime/selendra/constants/src/weights/
 
 /// Storage DB weights for the `Selendra` runtime and `RocksDb`.
-
 pub mod constants {
 	use frame_support::{
 		parameter_types,
@@ -44,8 +43,35 @@ pub mod constants {
 		/// By default, Substrate uses `RocksDB`, so this will be the weight used throughout
 		/// the runtime.
 		pub const RocksDbWeight: RuntimeDbWeight = RuntimeDbWeight {
-			read: 25_000 * constants::WEIGHT_PER_NANOS.ref_time(),
-			write: 100_000 * constants::WEIGHT_PER_NANOS.ref_time(),
+			/// Time to read one storage item.
+			/// Calculated by multiplying the *Average* of all values with `1.1` and adding `0`.
+			///
+			/// Stats [NS]:
+			///   Min, Max: 5_015, 1_441_022
+			///   Average:  18_635
+			///   Median:   17_795
+			///   Std-Dev:  4829.75
+			///
+			/// Percentiles [NS]:
+			///   99th: 32_074
+			///   95th: 26_658
+			///   75th: 19_363
+			read: 20_499 * constants::WEIGHT_PER_NANOS.ref_time(),
+
+			/// Time to write one storage item.
+			/// Calculated by multiplying the *Average* of all values with `1.1` and adding `0`.
+			///
+			/// Stats [NS]:
+			///   Min, Max: 16_368, 34_500_937
+			///   Average:  75_882
+			///   Median:   74_236
+			///   Std-Dev:  64706.41
+			///
+			/// Percentiles [NS]:
+			///   99th: 111_151
+			///   95th: 92_666
+			///   75th: 80_297
+			write: 83_471 * constants::WEIGHT_PER_NANOS.ref_time(),
 		};
 	}
 
@@ -58,7 +84,7 @@ pub mod constants {
 		// NOTE: If this test fails but you are sure that the generated values are fine,
 		// you can delete it.
 		#[test]
-		fn sane() {
+		fn bound() {
 			// At least 1 µs.
 			assert!(
 				W::get().reads(1).ref_time() >= constants::WEIGHT_PER_MICROS.ref_time(),

@@ -1,18 +1,18 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 mod mock;
 
@@ -195,12 +195,12 @@ fn query_holding_works() {
 ///
 /// Asserts that the balances are updated accordingly and the correct XCM is sent.
 #[test]
-fn teleport_to_indranet_works() {
+fn teleport_to_statemine_works() {
 	use xcm::opaque::latest::prelude::*;
 	let para_acc: AccountId = ParaId::from(PARA_ID).into_account_truncating();
 	let balances = vec![(ALICE, INITIAL_BALANCE), (para_acc.clone(), INITIAL_BALANCE)];
 	selendra_like_with_balances(balances).execute_with(|| {
-		let indranet_id = 1000;
+		let statemine_id = 1000;
 		let other_para_id = 3000;
 		let amount = REGISTER_AMOUNT;
 		let teleport_effects = vec![
@@ -239,7 +239,7 @@ fn teleport_to_indranet_works() {
 			)]
 		);
 
-		// teleports are allowed from indranet to selendra.
+		// teleports are allowed from Indranet to Selendra.
 		let r = XcmExecutor::<XcmConfig>::execute_xcm(
 			Parachain(PARA_ID).into(),
 			Xcm(vec![
@@ -247,7 +247,7 @@ fn teleport_to_indranet_works() {
 				buy_execution(),
 				InitiateTeleport {
 					assets: All.into(),
-					dest: Parachain(indranet_id).into(),
+					dest: Parachain(statemine_id).into(),
 					xcm: Xcm(teleport_effects.clone()),
 				},
 			]),
@@ -267,7 +267,7 @@ fn teleport_to_indranet_works() {
 						.collect()),
 				),
 				(
-					Parachain(indranet_id).into(),
+					Parachain(statemine_id).into(),
 					Xcm(vec![ReceiveTeleportedAsset((Parent, amount).into()), ClearOrigin,]
 						.into_iter()
 						.chain(teleport_effects.clone().into_iter())

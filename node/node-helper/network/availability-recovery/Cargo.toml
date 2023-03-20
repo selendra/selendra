@@ -9,9 +9,8 @@ futures = "0.3.21"
 lru = "0.8.0"
 rand = "0.8.5"
 fatality = "0.0.6"
-thiserror = "1.0.37"
-parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+thiserror = "1.0.31"
+gum = { package = "tracing-gum", path = "../../gum" }
 
 selendra-erasure-coding = { path = "../../erasure-coding" }
 selendra-primitives = { path = "../../../../primitives" }
@@ -19,7 +18,8 @@ selendra-node-primitives = { path = "../../primitives" }
 selendra-node-subsystem = {path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 selendra-node-network-protocol = { path = "../../network/protocol" }
-gum = { package = "tracing-gum", path = "../../gum" }
+parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 
 [dev-dependencies]
 assert_matches = "1.4.0"
@@ -31,5 +31,6 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
-primitives-test-helpers = { path = "../../../../tests/test-helpers/primitive" }
+
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
+selendra-primitives-test-helpers = { path = "../../../../primitives/test-helpers" }

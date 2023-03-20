@@ -1,18 +1,18 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Version 0 of the Cross-Consensus Message format data structures.
 
@@ -59,21 +59,21 @@ pub mod prelude {
 #[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, Debug, TypeInfo)]
 pub enum OriginKind {
 	/// Origin should just be the native dispatch origin representation for the sender in the
-	/// local runtime framework. For Forests/Frame chains this is the `Parachain` or `Relay` origin
+	/// local runtime framework. For Cumulus/Frame chains this is the `Parachain` or `Relay` origin
 	/// if coming from a chain, though there may be others if the `MultiLocation` XCM origin has a
 	/// primary/native dispatch origin form.
 	Native,
 
 	/// Origin should just be the standard account-based origin with the sovereign account of
-	/// the sender. For Forests/Frame chains, this is the `Signed` origin.
+	/// the sender. For Cumulus/Frame chains, this is the `Signed` origin.
 	SovereignAccount,
 
-	/// Origin should be the super-user. For Forests/Frame chains, this is the `Root` origin.
+	/// Origin should be the super-user. For Cumulus/Frame chains, this is the `Root` origin.
 	/// This will not usually be an available option.
 	Superuser,
 
 	/// Origin should be interpreted as an XCM native origin and the `MultiLocation` should be
-	/// encoded directly in the dispatch origin unchanged. For Forests/Frame chains, this will be
+	/// encoded directly in the dispatch origin unchanged. For Cumulus/Frame chains, this will be
 	/// the `pallet_xcm::Origin::Xcm` type.
 	Xcm,
 }

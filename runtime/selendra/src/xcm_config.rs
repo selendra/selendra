@@ -1,30 +1,30 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! XCM configuration for Selendra.
 
 use super::{
-	parachains_origin, AccountId, Balances, CouncilInstance, ParaId, Runtime, RuntimeCall,
+	parachains_origin, AccountId, Balances, CouncilCollective, ParaId, Runtime, RuntimeCall,
 	RuntimeEvent, RuntimeOrigin, WeightToFee, XcmPallet,
 };
 use frame_support::{
 	match_types, parameter_types,
 	traits::{Everything, Nothing},
 };
-use runtime_common::{impls::ToAuthor, xcm_sender};
+use runtime_common::{xcm_sender, ToAuthor};
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
@@ -82,7 +82,7 @@ type LocalOriginConverter = (
 	// by the `SovereignAccountOf` converter.
 	SovereignSignedViaLocation<SovereignAccountOf, RuntimeOrigin>,
 	// If the origin kind is `Native` and the XCM origin is a child parachain, then we can express
-	// it with the special `parachains_origin::RuntimeOrigin` origin variant.
+	// it with the special `parachains_origin::Origin` origin variant.
 	ChildParachainAsNative<parachains_origin::Origin, RuntimeOrigin>,
 	// If the origin kind is `Native` and the XCM origin is the `AccountId32` location, then it can
 	// be expressed using the `Signed` origin variant.
@@ -106,11 +106,11 @@ pub type XcmRouter = (
 
 parameter_types! {
 	pub const Selendra: MultiAssetFilter = Wild(AllOf { fun: WildFungible, id: Concrete(SelLocation::get()) });
-	pub const SelendraForIndranet: (MultiAssetFilter, MultiLocation) = (Selendra::get(), Parachain(1000).into());
+	pub const SelendraIndranet: (MultiAssetFilter, MultiLocation) = (Selendra::get(), Parachain(1000).into());
 }
 
-/// Selendra Relay recognizes/respects the Statemint chain as a teleporter.
-pub type TrustedTeleporters = (xcm_builder::Case<SelendraForIndranet>,);
+/// Selendra Relay recognizes/respects the Indranet chain as a teleporter.
+pub type TrustedTeleporters = (xcm_builder::Case<SelendraIndranet>,);
 
 match_types! {
 	pub type OnlyParachains: impl Contains<MultiLocation> = {
@@ -159,7 +159,7 @@ parameter_types! {
 /// Type to convert a council origin to a Plurality `MultiLocation` value.
 pub type CouncilToPlurality = BackingToPlurality<
 	RuntimeOrigin,
-	pallet_collective::Origin<Runtime, CouncilInstance>,
+	pallet_collective::Origin<Runtime, CouncilCollective>,
 	CouncilBodyId,
 >;
 

@@ -5,41 +5,37 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
-hex-literal = "0.3.4"
 bitvec = { version = "1.0.0", default-features = false, features = ["alloc"] }
-serde = { version = "1.0.140", optional = true, features = ["derive"] }
-scale-info = { version = "2.3.0", default-features = false, features = ["bit-vec", "derive"] }
+hex-literal = "0.3.4"
 parity-scale-codec = { version = "3.1.5", default-features = false, features = ["bit-vec", "derive"] }
 parity-util-mem = { version = "0.12.0", default-features = false, optional = true }
+scale-info = { version = "2.1.2", default-features = false, features = ["bit-vec", "derive"] }
+serde = { version = "1.0.137", optional = true, features = ["derive"] }
 
-sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
-sp-inherents = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
-sp-consensus-slots = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
+application-crypto = { package = "sp-application-crypto", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
+inherents = { package = "sp-inherents", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
+primitives = { package = "sp-core", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
+runtime_primitives = { package = "sp-runtime", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
+sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
+sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
+sp-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", optional = true }
-sp-api = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
-sp-std = { package = "sp-std", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
-sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
-sp-staking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
-sp-arithmetic = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
-sp-authority-discovery = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
+sp-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
+sp-std = { package = "sp-std", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
 
-selendra-core-primitives = { path = "core", default-features = false }
-selendra-parachain = { path = "../parachain/core", default-features = false }
+selendra-core-primitives = { path = "../primitives/core", default-features = false }
+selendra-parachain = { path = "../parachain", default-features = false }
 
 [features]
 default = ["std"]
 std = [
-	"parity-util-mem",
-	"bitvec/std",
-	"serde/std",
-	"scale-info/std",
+	"application-crypto/std",
 	"parity-scale-codec/std",
-
-	"sp-application-crypto/std",
-	"sp-core/std",
-	"sp-inherents/std",
+	"scale-info/std",
+	"primitives/std",
+	"inherents/std",
 	"sp-api/std",
 	"sp-authority-discovery/std",
 	"sp-consensus-slots/std",
@@ -48,10 +44,11 @@ std = [
 	"sp-io/std",
 	"sp-staking/std",
 	"sp-arithmetic/std",
-	"sp-runtime/std",
-
-    "selendra-core-primitives/std",
-	"selendra-parachain/std"
+	"runtime_primitives/std",
+	"serde",
+	"parity-util-mem",
+	"selendra-parachain/std",
+	"selendra-core-primitives/std",
+	"bitvec/std",
 ]
-
 runtime-benchmarks = []

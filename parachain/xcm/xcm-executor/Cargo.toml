@@ -1,26 +1,22 @@
-
 [package]
-name = "xcm-executor"
-version = "0.2.7"
 authors = ["Selendra <info@selendra.org>"]
-description = "An abstract and configurable XCM message executor."
 edition = "2021"
+name = "xcm-executor"
+description = "An abstract and configurable XCM message executor."
+version = "0.2.7"
 
 [dependencies]
 impl-trait-for-tuples = "0.2.2"
-log = { version = "0.4.17", default-features = false }
 parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
-
+xcm = { path = "..", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
 sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
-
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false, optional = true }
-
-xcm = { path = "..", default-features = false }
+log = { version = "0.4.17", default-features = false }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, optional = true , branch = "polkadot-v0.9.33" }
 
 [features]
 default = ["std"]
@@ -29,12 +25,12 @@ runtime-benchmarks = [
 ]
 std = [
 	"parity-scale-codec/std",
-	"log/std",
+	"xcm/std",
 	"sp-std/std",
 	"sp-io/std",
 	"sp-arithmetic/std",
 	"sp-core/std",
 	"sp-runtime/std",
 	"frame-support/std",
-	"xcm/std",
+	"log/std",
 ]

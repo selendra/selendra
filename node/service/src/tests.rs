@@ -1,26 +1,27 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::{relay_chain_selection::*, *};
 
 use futures::channel::oneshot::Receiver;
-use node_subsystem_test_helpers as test_helpers;
 use selendra_node_primitives::approval::{VRFOutput, VRFProof};
 use selendra_node_subsystem::messages::{AllMessages, BlockDescription};
+use selendra_node_subsystem_test_helpers as test_helpers;
 use selendra_node_subsystem_util::TimeoutExt;
+use selendra_test_client::Sr25519Keyring;
 use sp_consensus_babe::{
 	digests::{CompatibleDigestItem, PreDigest, SecondaryVRFPreDigest},
 	Transcript,
@@ -30,7 +31,6 @@ use std::{
 	collections::{BTreeMap, HashMap, HashSet},
 	iter::IntoIterator,
 };
-use test_client::Sr25519Keyring;
 
 use assert_matches::assert_matches;
 use std::{sync::Arc, time::Duration};
@@ -42,7 +42,7 @@ use selendra_node_subsystem::messages::{
 };
 use selendra_primitives::v2::{Block, BlockNumber, Hash, Header};
 
-use node_subsystem_test_helpers::TestSubsystemSender;
+use selendra_node_subsystem_test_helpers::TestSubsystemSender;
 use selendra_overseer::{SubsystemContext, SubsystemSender};
 
 type VirtualOverseer = test_helpers::TestSubsystemContextHandle<ApprovalVotingMessage>;

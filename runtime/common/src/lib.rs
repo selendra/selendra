@@ -1,24 +1,26 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Common runtime code for Selendra.
+//! Common runtime code for Selendra and Selendra.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod assigned_slots;
+pub mod elections;
+pub mod impls;
 pub mod paras_registrar;
 pub mod paras_sudo_wrapper;
 pub mod slot_range;
@@ -26,28 +28,34 @@ pub mod slots;
 pub mod traits;
 pub mod xcm_sender;
 
-pub mod elections;
-pub mod impls;
-pub mod origin;
-
-pub use origin::*;
-
 #[cfg(test)]
 mod mock;
 
-use static_assertions::const_assert;
-
 use frame_support::{
 	parameter_types,
-	traits::{ConstU32, EitherOfDiverse},
+	traits::{ConstU32, Currency, OneSessionHandler},
 	weights::{constants::WEIGHT_PER_SECOND, Weight},
 };
-use frame_system::{limits, EnsureRoot};
+use frame_system::limits;
+use primitives::v2::{AssignmentId, Balance, BlockNumber, ValidatorId, MAX_POV_SIZE};
+use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
+use static_assertions::const_assert;
+
+pub use pallet_balances::Call as BalancesCall;
+#[cfg(feature = "std")]
+pub use pallet_staking::StakerStatus;
+pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 pub use sp_runtime::traits::Bounded;
-use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
 
-use primitives::v2::{AccountId, BlockNumber, MAX_POV_SIZE};
+/// Implementations of some helper traits passed into runtime modules as associated types.
+pub use impls::ToAuthor;
+
+pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
+	<T as frame_system::Config>::AccountId,
+>>::NegativeImbalance;
 
 /// We assume that an on-initialize consumes 1% of the weight on average, hence a single extrinsic
 /// will not be allowed to consume more than `AvailableBlockRatio - 1%`.
@@ -61,31 +69,15 @@ pub const MAXIMUM_BLOCK_WEIGHT: Weight =
 
 const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct());
 
-/// Parameterized slow adjusting fee updated based on
-/// https://research.web3.foundation/en/latest/polkadot/overview/2-token-economics.html#-2.-slow-adjusting-mechanism
-pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
-	R,
-	TargetBlockFullness,
-	AdjustmentVariable,
-	MinimumMultiplier,
-	MaximumMultiplier,
->;
-
-/// The type used for currency conversion.
-///
-/// This must only be used as long as the balance type is `u128`.
-pub type CurrencyToVote = frame_support::traits::U128CurrencyToVote;
-static_assertions::assert_eq_size!(primitives::v2::Balance, u128);
-
 // Common constants used in all runtimes.
 parameter_types! {
-	pub const BlockHashCount: BlockNumber = 2400;
+	pub const BlockHashCount: BlockNumber = 4096;
 	/// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
 	/// than this will decrease the weight and more will increase.
 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
 	/// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
 	/// change the fees more rapidly.
-	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(3, 100_000);
+	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(75, 1000_000);
 	/// Minimum amount of the multiplier. This value cannot be too low. A test case should ensure
 	/// that combined with `AdjustmentVariable`, we can recover from the minimum.
 	/// See `multiplier_can_grow_from_zero`.
@@ -93,8 +85,19 @@ parameter_types! {
 	/// The maximum amount of the multiplier.
 	pub MaximumMultiplier: Multiplier = Bounded::max_value();
 	/// Maximum length of block. Up to 5MB.
-	pub BlockLength: limits::BlockLength = limits::BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+	pub BlockLength: limits::BlockLength =
+	limits::BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 }
+
+/// Parameterized slow adjusting fee updated based on
+/// https://research.web3.foundation/en/latest/selendra/overview/2-token-economics.html#-2.-slow-adjusting-mechanism
+pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
+	R,
+	TargetBlockFullness,
+	AdjustmentVariable,
+	MinimumMultiplier,
+	MaximumMultiplier,
+>;
 
 /// Implements the weight types for a runtime.
 /// It expects the passed runtime constants to contain a `weights` module.
@@ -144,6 +147,94 @@ macro_rules! impl_runtime_weights {
 	};
 }
 
+/// The type used for currency conversion.
+///
+/// This must only be used as long as the balance type is `u128`.
+pub type CurrencyToVote = frame_support::traits::U128CurrencyToVote;
+static_assertions::assert_eq_size!(primitives::v2::Balance, u128);
+
+/// A placeholder since there is currently no provided session key handler for parachain validator
+/// keys.
+pub struct ParachainSessionKeyPlaceholder<T>(sp_std::marker::PhantomData<T>);
+impl<T> sp_runtime::BoundToRuntimeAppPublic for ParachainSessionKeyPlaceholder<T> {
+	type Public = ValidatorId;
+}
+
+impl<T: pallet_session::Config> OneSessionHandler<T::AccountId>
+	for ParachainSessionKeyPlaceholder<T>
+{
+	type Key = ValidatorId;
+
+	fn on_genesis_session<'a, I: 'a>(_validators: I)
+	where
+		I: Iterator<Item = (&'a T::AccountId, ValidatorId)>,
+		T::AccountId: 'a,
+	{
+	}
+
+	fn on_new_session<'a, I: 'a>(_changed: bool, _v: I, _q: I)
+	where
+		I: Iterator<Item = (&'a T::AccountId, ValidatorId)>,
+		T::AccountId: 'a,
+	{
+	}
+
+	fn on_disabled(_: u32) {}
+}
+
+/// A placeholder since there is currently no provided session key handler for parachain validator
+/// keys.
+pub struct AssignmentSessionKeyPlaceholder<T>(sp_std::marker::PhantomData<T>);
+impl<T> sp_runtime::BoundToRuntimeAppPublic for AssignmentSessionKeyPlaceholder<T> {
+	type Public = AssignmentId;
+}
+
+impl<T: pallet_session::Config> OneSessionHandler<T::AccountId>
+	for AssignmentSessionKeyPlaceholder<T>
+{
+	type Key = AssignmentId;
+
+	fn on_genesis_session<'a, I: 'a>(_validators: I)
+	where
+		I: Iterator<Item = (&'a T::AccountId, AssignmentId)>,
+		T::AccountId: 'a,
+	{
+	}
+
+	fn on_new_session<'a, I: 'a>(_changed: bool, _v: I, _q: I)
+	where
+		I: Iterator<Item = (&'a T::AccountId, AssignmentId)>,
+		T::AccountId: 'a,
+	{
+	}
+
+	fn on_disabled(_: u32) {}
+}
+
+/// A reasonable benchmarking config for staking pallet.
+pub struct StakingBenchmarkingConfig;
+impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
+	type MaxValidators = ConstU32<1000>;
+	type MaxNominators = ConstU32<1000>;
+}
+
+/// Convert a balance to an unsigned 256-bit number, use in nomination pools.
+pub struct BalanceToU256;
+impl sp_runtime::traits::Convert<Balance, sp_core::U256> for BalanceToU256 {
+	fn convert(n: Balance) -> sp_core::U256 {
+		n.into()
+	}
+}
+
+/// Convert an unsigned 256-bit number to balance, use in nomination pools.
+pub struct U256ToBalance;
+impl sp_runtime::traits::Convert<sp_core::U256, Balance> for U256ToBalance {
+	fn convert(n: sp_core::U256) -> Balance {
+		use frame_support::traits::Defensive;
+		n.try_into().defensive_unwrap_or(Balance::MAX)
+	}
+}
+
 /// Macro to set a value (e.g. when using the `parameter_types` macro) to either a production value
 /// or to an environment variable or testing value (in case the `fast-runtime` feature is selected).
 /// Note that the environment variable is evaluated _at compile time_.
@@ -172,11 +263,4 @@ macro_rules! prod_or_fast {
 			$prod
 		}
 	};
-}
-
-/// A reasonable benchmarking config for staking pallet.
-pub struct StakingBenchmarkingConfig;
-impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
-	type MaxValidators = ConstU32<1000>;
-	type MaxNominators = ConstU32<1000>;
 }

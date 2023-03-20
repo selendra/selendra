@@ -6,35 +6,31 @@ edition = "2021"
 
 [dependencies]
 futures = "0.3.21"
-indexmap = "1.9.1"
 futures-timer = "3.0.2"
+gum = { package = "tracing-gum", path = "../../gum" }
 derive_more = "0.99.17"
-thiserror = "1.0.37"
-fatality = "0.0.6"
-lru = "0.8.0"
 parity-scale-codec = { version = "3.1.5", features = ["std"] }
-
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-
 selendra-primitives = { path = "../../../../primitives" }
 selendra-erasure-coding = { path = "../../erasure-coding" }
 selendra-node-subsystem = {path = "../../subsystem" }
 selendra-node-network-protocol = { path = "../../network/protocol" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 selendra-node-primitives = { path = "../../primitives" }
-gum = { package = "tracing-gum", path = "../../gum" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+thiserror = "1.0.31"
+fatality = "0.0.6"
+lru = "0.8.0"
+indexmap = "1.9.1"
 
 [dev-dependencies]
-async-trait = "0.1.60"
-futures-timer = "3.0.2"
-assert_matches = "1.4.0"
-lazy_static = "1.4.0"
-
+async-trait = "0.1.57"
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-
-node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
-primitives-test-helpers = { path = "../../../../tests/test-helpers/primitive" }
+futures-timer = "3.0.2"
+assert_matches = "1.4.0"
+lazy_static = "1.4.0"
+selendra-primitives-test-helpers = { path = "../../../../primitives/test-helpers" }

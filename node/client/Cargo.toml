@@ -5,13 +5,12 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 
 sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
@@ -29,21 +28,22 @@ sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = 
 sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sp-offchain = { package = "sp-offchain", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-mmr-primitives = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.33" }
+sp-mmr-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
 
 sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sc-service = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.33" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
 
 beefy-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 
-# Selendra depenency
+# Selendra Runtimes
 selendra-runtime = { path = "../../runtime/selendra", optional = true }
-selendra-runtime-common = { path = "../../runtime/common" }
+
 selendra-core-primitives = { path = "../../primitives/core" }
 selendra-primitives = { path = "../../primitives" }
 selendra-node-core-parachains-inherent = { path = "../node-helper/core/parachains-inherent" }
+selendra-runtime-common = { path = "../../runtime/common" }
 
 [features]
 default = ["selendra"]

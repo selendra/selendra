@@ -6,11 +6,10 @@ edition = "2021"
 
 [dependencies]
 always-assert = "0.1.2"
+bitvec = { version = "1.0.1", default-features = false, features = ["alloc"] }
 futures = "0.3.21"
 futures-timer = "3"
-fatality = "0.0.6"
-thiserror = "1.0.37"
-bitvec = { version = "1.0.1", default-features = false, features = ["alloc"] }
+gum = { package = "tracing-gum", path = "../../gum" }
 
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
@@ -21,7 +20,8 @@ selendra-node-network-protocol = { path = "../../network/protocol" }
 selendra-node-primitives = { path = "../../primitives" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 selendra-node-subsystem = {path = "../../subsystem" }
-gum = { package = "tracing-gum", path = "../../gum" }
+fatality = "0.0.6"
+thiserror = "1.0.31"
 
 [dev-dependencies]
 log = "0.4.17"
@@ -33,5 +33,5 @@ sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 parity-scale-codec = { version = "3.1.5", features = ["std"] }
 
-node-subsystem-test-helpers = { path = "../../../../tests/test-helpers/subsystem" }
-primitives-test-helpers = { path = "../../../../tests/test-helpers/primitive" }
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
+selendra-primitives-test-helpers = { path = "../../../../primitives/test-helpers" }

@@ -1,34 +1,32 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::cli::{Cli, Subcommand};
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::future::TryFutureExt;
-
 use sc_cli::{RuntimeVersion, SubstrateCli};
 use selendra_client::benchmarking::{
 	benchmark_inherent_data, ExistentialDepositProvider, RemarkBuilder, TransferKeepAliveBuilder,
 };
 use service::{self, HeaderBackend, IdentifyVariant};
-use sp_core::crypto::Ss58AddressFormat;
 use sp_keyring::Sr25519Keyring;
 use std::net::ToSocketAddrs;
 
 pub use crate::{error::Error, service::BlockId};
-pub use performance_test::PerfCheckError;
+pub use selendra_performance_test::PerfCheckError;
 
 impl From<String> for Error {
 	fn from(s: String) -> Self {
@@ -67,7 +65,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn copyright_start_year() -> i32 {
-		2021
+		2022
 	}
 
 	fn executable_name() -> String {
@@ -87,7 +85,6 @@ impl SubstrateCli for Cli {
 		};
 		Ok(match id {
 			"selendra" => Box::new(service::chain_spec::selendra_config()?),
-			"testnet" => Box::new(service::chain_spec::testnet_config()?),
 			#[cfg(feature = "selendra-native")]
 			"selendra-dev" | "dev" => Box::new(service::chain_spec::selendra_development_config()?),
 			#[cfg(feature = "selendra-native")]
@@ -96,7 +93,6 @@ impl SubstrateCli for Cli {
 			"selendra-staging" => Box::new(service::chain_spec::selendra_staging_testnet_config()?),
 			path => {
 				let path = std::path::PathBuf::from(path);
-
 				let chain_spec = Box::new(service::SelendraChainSpec::from_json_file(path.clone())?)
 					as Box<dyn service::ChainSpec>;
 
@@ -112,18 +108,17 @@ impl SubstrateCli for Cli {
 		}
 
 		#[cfg(not(feature = "selendra-native"))]
-		panic!("No runtime feature (selendra, etc) is enabled")
+		panic!("No runtime feature selendra is enabled")
 	}
 }
 
 fn set_default_ss58_version(_spec: &Box<dyn service::ChainSpec>) {
-	let ss58_version = Ss58AddressFormat::custom(204);
-
+	let ss58_version = sp_core::crypto::Ss58AddressFormat::custom(204);
 	sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
 const DEV_ONLY_ERROR_PATTERN: &'static str =
-	"can only use subcommand with --chain [selendra-dev, etc], got ";
+	"can only use subcommand with --chain [selendra-dev], got ";
 
 fn ensure_dev(spec: &Box<dyn service::ChainSpec>) -> std::result::Result<(), String> {
 	if spec.is_dev() {
@@ -542,7 +537,7 @@ pub fn run() -> Result<()> {
 				})
 			}
 			#[cfg(not(feature = "selendra-native"))]
-			panic!("No runtime feature (selendra, etc) is enabled")
+			panic!("No runtime feature selendra is enabled")
 		},
 		#[cfg(not(feature = "try-runtime"))]
 		Some(Subcommand::TryRuntime) => Err(Error::Other(

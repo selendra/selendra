@@ -1,18 +1,18 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::*;
 use crate::{inclusion, ParaId};
@@ -93,13 +93,13 @@ benchmarks! {
 		// candidate is not rejected. Also, we cannot have more validity votes than validators in
 		// the group.
 
-		// Do not use this range for Rococo because it only has 1 validator per backing group,
+		// Do not use this range for testnet because it only has 1 validator per backing group,
 		// which causes issues when trying to create slopes with the benchmarking analysis. Instead
-		// use v = 1 for running Rococo benchmarks
+		// use v = 1 for running testnet benchmarks
 		let v in (BenchBuilder::<T>::fallback_min_validity_votes())
 			..(BenchBuilder::<T>::fallback_max_validators());
 
-		// Comment in for running rococo benchmarks
+		// Comment in for running testnet benchmarks
 		// let v = 1;
 
 		let cores_with_backed: BTreeMap<_, _>

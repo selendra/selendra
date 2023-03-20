@@ -2,25 +2,26 @@
 name = "selendra-node-subsystem-types"
 version = "0.2.7"
 authors = ["Selendra <info@selendra.org>"]
-description = "Subsystem traits and message definitions"
 edition = "2021"
+description = "Subsystem traits and message definitions"
 
 [dependencies]
 derive_more = "0.99.17"
 futures = "0.3.21"
-smallvec = "1.10.0"
-thiserror = "1.0.37"
-async-trait = "0.1.60"
 orchestra = "0.0.2"
+thiserror = "1.0.31"
+async-trait = "0.1.57"
+smallvec = "1.8.0"
 
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 
 selendra-primitives = { path = "../../../primitives" }
 selendra-node-primitives = { path = "../primitives" }
 selendra-node-network-protocol = { path = "../network/protocol" }
 selendra-statement-table = { path = "../statement-table" }
 selendra-node-jaeger = { path = "../jaeger" }
+

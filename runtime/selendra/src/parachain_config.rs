@@ -17,12 +17,12 @@
 ///! Parachain configuration for Selendra.
 use super::{
 	deposit, parameter_types, weights, xcm_config, Babe, Balances, EnsureRoot, Historical,
-	ParasDisputes, Registrar, Runtime, RuntimeEvent, RuntimeOrigin, Slots, TransactionPriority,
-	DOLLARS, WEEKS,
+	MoreThanHalfCouncil, ParasDisputes, Registrar, Runtime, RuntimeEvent, RuntimeOrigin, Slots,
+	TransactionPriority, DOLLARS, WEEKS,
 };
 
 use primitives::v2::{AccountId, Balance, BlockNumber};
-use runtime_common::{paras_registrar, prod_or_fast, slots, EnsureRootOrThreeFourthsCouncil};
+use runtime_common::{paras_registrar, prod_or_fast, slots};
 
 use runtime_parachains::{
 	configuration as parachains_configuration, disputes as parachains_disputes,
@@ -78,10 +78,10 @@ impl parachains_ump::Config for Runtime {
 impl parachains_dmp::Config for Runtime {}
 
 impl parachains_hrmp::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
-	type WeightInfo = weights::runtime_parachains_hrmp::WeightInfo<Runtime>;
+	type WeightInfo = weights::runtime_parachains_hrmp::WeightInfo<Self>;
 }
 
 impl parachains_paras_inherent::Config for Runtime {
@@ -111,8 +111,8 @@ parameter_types! {
 }
 
 impl paras_registrar::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type OnSwap = Slots;
 	type ParaDeposit = ParaDeposit;
@@ -132,6 +132,6 @@ impl slots::Config for Runtime {
 	type Registrar = Registrar;
 	type LeasePeriod = LeasePeriod;
 	type LeaseOffset = LeaseOffset;
-	type ForceOrigin = EnsureRootOrThreeFourthsCouncil;
+	type ForceOrigin = MoreThanHalfCouncil;
 	type WeightInfo = weights::runtime_common_slots::WeightInfo<Runtime>;
 }

@@ -1,18 +1,18 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Selendra-specific GRANDPA integration utilities.
 
@@ -63,7 +63,7 @@ where
 #[derive(Clone)]
 pub(crate) struct PauseAfterBlockFor<N>(pub(crate) N, pub(crate) N);
 
-impl<Block, B> sc_finality_grandpa::VotingRule<Block, B> for PauseAfterBlockFor<NumberFor<Block>>
+impl<Block, B> grandpa::VotingRule<Block, B> for PauseAfterBlockFor<NumberFor<Block>>
 where
 	Block: BlockT,
 	B: sp_blockchain::HeaderBackend<Block> + 'static,
@@ -74,7 +74,7 @@ where
 		base: &Block::Header,
 		best_target: &Block::Header,
 		current_target: &Block::Header,
-	) -> sc_finality_grandpa::VotingRuleResult<Block> {
+	) -> grandpa::VotingRuleResult<Block> {
 		let aux = || {
 			// only restrict votes targeting a block higher than the block
 			// we've set for the pause
@@ -107,15 +107,15 @@ where
 
 #[cfg(test)]
 mod tests {
-	use sc_finality_grandpa::VotingRule;
-	use sp_blockchain::HeaderBackend;
-	use sp_consensus::BlockOrigin;
-	use sp_runtime::{generic::BlockId, traits::Header};
-	use std::sync::Arc;
-	use test_client::{
+	use consensus_common::BlockOrigin;
+	use grandpa::VotingRule;
+	use selendra_test_client::{
 		ClientBlockImportExt, DefaultTestClientBuilderExt, InitSelendraBlockBuilder,
 		TestClientBuilder, TestClientBuilderExt,
 	};
+	use sp_blockchain::HeaderBackend;
+	use sp_runtime::{generic::BlockId, traits::Header};
+	use std::sync::Arc;
 
 	#[test]
 	fn grandpa_pause_voting_rule_works() {

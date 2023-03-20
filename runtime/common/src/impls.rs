@@ -1,24 +1,23 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
+//! Auxiliary `struct`/`enum`s for selendra runtime.
+
+use crate::NegativeImbalance;
 use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
-
-pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
-	<T as frame_system::Config>::AccountId,
->>::NegativeImbalance;
 
 /// Logic for the author to get a portion of fees.
 pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);
@@ -71,7 +70,7 @@ mod tests {
 	use sp_runtime::{
 		testing::Header,
 		traits::{BlakeTwo256, IdentityLookup},
-		Perbill,
+		Perbill, Perquintill,
 	};
 
 	type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -182,5 +181,25 @@ mod tests {
 			// Author gets 30% of tip and 30% of fee = 9
 			assert_eq!(Balances::free_balance(TEST_ACCOUNT), 9);
 		});
+	}
+
+	#[test]
+	fn compute_inflation_should_give_sensible_results() {
+		assert_eq!(
+			pallet_staking_reward_fn::compute_inflation(
+				Perquintill::from_percent(50),
+				Perquintill::from_percent(50),
+				Perquintill::from_percent(5),
+			),
+			Perquintill::one()
+		);
+		assert_eq!(
+			pallet_staking_reward_fn::compute_inflation(
+				Perquintill::from_percent(80),
+				Perquintill::from_percent(75),
+				Perquintill::from_percent(5),
+			),
+			Perquintill::from_rational(1u64, 2u64)
+		);
 	}
 }

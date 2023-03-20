@@ -1,18 +1,18 @@
-// Copyright (C) 2021-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+// Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
 
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::{
 	collections::HashMap,
@@ -49,13 +49,13 @@ use sp_keyring::Sr25519Keyring;
 use sp_keystore::{SyncCryptoStore, SyncCryptoStorePtr};
 
 use ::test_helpers::{dummy_candidate_receipt_bad_sig, dummy_digest, dummy_hash};
-use node_subsystem_test_helpers::{make_subsystem_context, TestSubsystemContextHandle};
 use selendra_node_primitives::{Timestamp, ACTIVE_DURATION_SECS};
 use selendra_node_subsystem::{
 	jaeger,
 	messages::{AllMessages, BlockDescription, RuntimeApiMessage, RuntimeApiRequest},
 	ActivatedLeaf, ActiveLeavesUpdate, LeafStatus,
 };
+use selendra_node_subsystem_test_helpers::{make_subsystem_context, TestSubsystemContextHandle};
 use selendra_primitives::v2::{
 	ApprovalVote, BlockNumber, CandidateCommitments, CandidateHash, CandidateReceipt,
 	DisputeStatement, GroupIndex, Hash, Header, IndexedVec, MultiDisputeStatementSet,
@@ -141,7 +141,7 @@ struct TestState {
 impl Default for TestState {
 	fn default() -> TestState {
 		let p1 = Pair::from_string("//Selen", None).unwrap();
-		let p2 = Pair::from_string("//Dra", None).unwrap();
+		let p2 = Pair::from_string("//Sel", None).unwrap();
 		let p3 = Pair::from_string("//Selendra", None).unwrap();
 		let validators = vec![
 			(Sr25519Keyring::Alice.pair(), Sr25519Keyring::Alice.to_seed()),
@@ -153,7 +153,7 @@ impl Default for TestState {
 			(Sr25519Keyring::Ferdie.pair(), Sr25519Keyring::Ferdie.to_seed()),
 			// Two more keys needed so disputes are not confirmed already with only 3 statements.
 			(p1, "//Selen".into()),
-			(p2, "//Dra".into()),
+			(p2, "//Sel".into()),
 			(p3, "//Selendra".into()),
 		];
 
