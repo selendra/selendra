@@ -72,6 +72,10 @@ pub fn selendra_config() -> Result<SelendraChainSpec, String> {
 	SelendraChainSpec::from_json_bytes(&include_bytes!("../chain-specs/selendra.json")[..])
 }
 
+pub fn selendra_testnet_config() -> Result<SelendraChainSpec, String> {
+	SelendraChainSpec::from_json_bytes(&include_bytes!("../chain-specs/testnet.json")[..])
+}
+
 /// The default parachains host configuration.
 #[cfg(any(feature = "selendra-native"))]
 fn default_parachains_host_configuration(
