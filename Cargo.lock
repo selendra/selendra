@@ -5362,7 +5362,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-xcm"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5384,7 +5384,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-xcm-benchmarks"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7740,7 +7740,7 @@ dependencies = [
 
 [[package]]
 name = "selendra"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_cmd",
  "color-eyre",
@@ -7755,7 +7755,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-approval-distribution"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "env_logger 0.9.3",
@@ -7779,7 +7779,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-availability-bitfield-distribution"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "bitvec",
@@ -7804,7 +7804,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-availability-distribution"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "derive_more",
@@ -7833,7 +7833,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-availability-recovery"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "env_logger 0.9.3",
@@ -7862,7 +7862,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-cli"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "clap",
  "frame-benchmarking-cli",
@@ -7888,7 +7888,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-client"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "beefy-primitives",
  "frame-benchmarking",
@@ -7927,7 +7927,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-collator-protocol"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "always-assert",
  "assert_matches",
@@ -7956,7 +7956,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-core-primitives"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "parity-scale-codec",
  "parity-util-mem",
@@ -7968,7 +7968,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-dispute-distribution"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "async-trait",
@@ -8000,7 +8000,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-erasure-coding"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "parity-scale-codec",
  "reed-solomon-novelpoly",
@@ -8013,7 +8013,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-gossip-support"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "async-trait",
@@ -8040,7 +8040,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-network-bridge"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "always-assert",
  "assert_matches",
@@ -8069,7 +8069,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-collation-generation"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "futures",
  "parity-scale-codec",
@@ -8088,7 +8088,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-approval-voting"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "async-trait",
@@ -8127,7 +8127,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-av-store"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "bitvec",
@@ -8155,7 +8155,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-backing"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "bitvec",
@@ -8181,7 +8181,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-bitfield-signing"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "futures",
  "selendra-node-subsystem",
@@ -8197,7 +8197,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-candidate-validation"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "async-trait",
@@ -8220,7 +8220,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-chain-api"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "futures",
  "maplit",
@@ -8239,7 +8239,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-chain-selection"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "futures",
@@ -8260,7 +8260,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-dispute-coordinator"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "fatality",
@@ -8287,7 +8287,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-parachains-inherent"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "futures",
@@ -8303,7 +8303,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-provisioner"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "bitvec",
  "fatality",
@@ -8324,7 +8324,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-pvf"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "always-assert",
  "assert_matches",
@@ -8358,7 +8358,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-pvf-checker"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "futures",
  "futures-timer",
@@ -8381,7 +8381,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-runtime-api"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "futures",
  "memory-lru",
@@ -8403,7 +8403,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-jaeger"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "async-std",
  "lazy_static",
@@ -8420,7 +8420,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-metrics"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_cmd",
  "bs58",
@@ -8448,7 +8448,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-network-protocol"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -8471,7 +8471,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-primitives"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "bounded-vec",
  "futures",
@@ -8493,7 +8493,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-subsystem"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "selendra-node-jaeger",
  "selendra-node-subsystem-types",
@@ -8502,7 +8502,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-subsystem-test-helpers"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "futures",
@@ -8520,7 +8520,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-subsystem-types"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -8542,7 +8542,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-subsystem-util"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "async-trait",
@@ -8583,7 +8583,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-overseer"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "async-trait",
@@ -8609,7 +8609,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-parachain"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "derive_more",
  "frame-support",
@@ -8625,7 +8625,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-performance-test"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "env_logger 0.9.3",
  "log",
@@ -8639,7 +8639,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-primitives"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "bitvec",
  "hex-literal",
@@ -8665,7 +8665,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-primitives-test-helpers"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "rand 0.8.5",
  "selendra-primitives",
@@ -8677,7 +8677,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-rpc"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "beefy-gadget",
  "beefy-gadget-rpc",
@@ -8708,7 +8708,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "beefy-primitives",
  "bitvec",
@@ -8806,7 +8806,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime-common"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "beefy-primitives",
  "bitvec",
@@ -8858,7 +8858,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime-constants"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "frame-support",
  "selendra-primitives",
@@ -8871,7 +8871,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime-metrics"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "bs58",
  "parity-scale-codec",
@@ -8882,7 +8882,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime-parachains"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "bitflags",
@@ -8934,7 +8934,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-service"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "async-trait",
@@ -9040,7 +9040,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-statement-distribution"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "arrayvec 0.5.2",
  "assert_matches",
@@ -9071,7 +9071,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-statement-table"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "parity-scale-codec",
  "selendra-primitives",
@@ -9080,7 +9080,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-test-client"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "futures",
  "parity-scale-codec",
@@ -9106,7 +9106,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-test-runtime"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "beefy-primitives",
  "bitvec",
@@ -9171,7 +9171,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-test-service"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "frame-benchmarking",
  "frame-system",
@@ -9464,7 +9464,7 @@ checksum = "03b634d87b960ab1a38c4fe143b508576f075e7c978bfad18217645ebfdfa2ec"
 
 [[package]]
 name = "slot-range-helper"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "enumn",
  "parity-scale-codec",
@@ -10654,7 +10654,7 @@ checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
 
 [[package]]
 name = "test-parachain-adder"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "dlmalloc",
  "parity-scale-codec",
@@ -10667,7 +10667,7 @@ dependencies = [
 
 [[package]]
 name = "test-parachain-adder-collator"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "clap",
  "futures",
@@ -10693,14 +10693,14 @@ dependencies = [
 
 [[package]]
 name = "test-parachain-halt"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "substrate-wasm-builder",
 ]
 
 [[package]]
 name = "test-parachain-undying"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "dlmalloc",
  "log",
@@ -10714,7 +10714,7 @@ dependencies = [
 
 [[package]]
 name = "test-parachain-undying-collator"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "clap",
  "futures",
@@ -10740,7 +10740,7 @@ dependencies = [
 
 [[package]]
 name = "test-parachains"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "parity-scale-codec",
  "sp-core",
@@ -10751,7 +10751,7 @@ dependencies = [
 
 [[package]]
 name = "test-runtime-constants"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "frame-support",
  "selendra-primitives",
@@ -11055,7 +11055,7 @@ dependencies = [
 
 [[package]]
 name = "tracing-gum"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "selendra-node-jaeger",
  "selendra-primitives",
@@ -11065,7 +11065,7 @@ dependencies = [
 
 [[package]]
 name = "tracing-gum-proc-macro"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "expander 0.0.6",
@@ -12099,7 +12099,7 @@ dependencies = [
 
 [[package]]
 name = "xcm"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "derivative",
  "impl-trait-for-tuples",
@@ -12112,7 +12112,7 @@ dependencies = [
 
 [[package]]
 name = "xcm-builder"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -12135,7 +12135,7 @@ dependencies = [
 
 [[package]]
 name = "xcm-executor"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -12152,7 +12152,7 @@ dependencies = [
 
 [[package]]
 name = "xcm-executor-integration-tests"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -12172,7 +12172,7 @@ dependencies = [
 
 [[package]]
 name = "xcm-procedural"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "Inflector",
  "proc-macro2",
@@ -12182,7 +12182,7 @@ dependencies = [
 
 [[package]]
 name = "xcm-simulator"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -12198,7 +12198,7 @@ dependencies = [
 
 [[package]]
 name = "xcm-simulator-example"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -12221,7 +12221,7 @@ dependencies = [
 
 [[package]]
 name = "xcm-simulator-fuzzer"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -12286,7 +12286,7 @@ dependencies = [
 
 [[package]]
 name = "zombienet-backchannel"
-version = "0.2.7"
+version = "0.3.0"
 dependencies = [
  "futures-util",
  "lazy_static",
