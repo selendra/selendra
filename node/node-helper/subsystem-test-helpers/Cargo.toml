@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-subsystem-test-helpers"
-version = "0.2.7"
+version = "0.3.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 description = "Subsystem traits and message definitions"

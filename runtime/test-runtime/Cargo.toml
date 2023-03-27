@@ -1,6 +1,6 @@
 [package]
 name = "selendra-test-runtime"
-version = "0.2.7"
+version = "0.3.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 build = "build.rs"

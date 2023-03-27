@@ -1,6 +1,6 @@
 [package]
 name = "test-parachain-undying-collator"
-version = "0.2.7"
+version = "0.3.0"
 authors = ["Selendra <info@selendra.org>"]
 description = "Collator for the undying test parachain"
 edition = "2021"
