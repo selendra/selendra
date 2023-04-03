@@ -43,8 +43,8 @@ use frame_election_provider_support::{
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, EitherOfDiverse, KeyOwnerProofSystem, LockIdentifier,
-		PrivilegeCmp, WithdrawReasons,
+		ConstU32, EitherOfDiverse, KeyOwnerProofSystem, LockIdentifier, PrivilegeCmp,
+		WithdrawReasons,
 	},
 	weights::ConstantMultiplier,
 	PalletId, RuntimeDebug,
@@ -96,9 +96,9 @@ pub use sp_runtime::BuildStorage;
 use selendra_runtime_constants::{currency::*, fee::*, time::*};
 
 // Weights used in the runtime.
-mod weights;
 #[cfg(test)]
 mod test;
+mod weights;
 
 mod bag_thresholds;
 
@@ -130,7 +130,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 
 /// The BABE epoch configuration at genesis.
 pub const BABE_GENESIS_EPOCH_CONFIG: babe_primitives::BabeEpochConfiguration =
-babe_primitives::BabeEpochConfiguration {
+	babe_primitives::BabeEpochConfiguration {
 		c: PRIMARY_PROBABILITY,
 		allowed_slots: babe_primitives::AllowedSlots::PrimaryAndSecondaryVRFSlots,
 	};
