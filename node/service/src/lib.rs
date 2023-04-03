@@ -1141,14 +1141,11 @@ where
 		task_manager.spawn_handle().spawn_blocking("beefy-gadget", None, gadget);
 	}
 
-	// Reduce grandpa load on Selendra and test networks. This will slow down finality by
-	// approximately one slot duration, but will reduce load. We would like to see the impact on
-	// Selendra, see: https://github.com/paritytech/polkadot/issues/5464
-	let gossip_duration = Duration::from_millis(1000);
-
 	let config = grandpa::Config {
 		// FIXME substrate#1578 make this available through chainspec
-		gossip_duration,
+		// Grandpa performance can be improved a bit by tuning this parameter, see:
+		// https://github.com/paritytech/polkadot/issues/5464
+		gossip_duration: Duration::from_millis(1000),
 		justification_period: 512,
 		name: Some(name),
 		observer_enabled: false,
