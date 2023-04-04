@@ -9,9 +9,9 @@ description = "Test kit to simulate cross-chain message passing and XCM executio
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 paste = "1.0.7"
 
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 
 xcm = { path = "../" }
 xcm-executor = { path = "../xcm-executor" }

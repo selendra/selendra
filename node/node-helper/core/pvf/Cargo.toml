@@ -21,15 +21,15 @@ rand = "0.8.5"
 tempfile = "3.3.0"
 rayon = "1.5.1"
 parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
-sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sc-executor-wasmtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sc-executor-wasmtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 
 gum = { package = "tracing-gum", path = "../../gum" }
 selendra-parachain = { path = "../../../../parachain" }

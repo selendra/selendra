@@ -27,9 +27,9 @@ selendra-service = { path = "../../../../node/service", features = ["selendra-na
 selendra-node-primitives = { path = "../../../../node/node-helper/primitives" }
 selendra-node-subsystem = { path = "../../../../node/node-helper/subsystem" }
 
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 
 # This one is tricky. Even though it is not used directly by the collator, we still need it for the
 # `puppet_worker` binary, which is required for the integration test. However, this shouldn't be
@@ -40,8 +40,8 @@ selendra-node-core-pvf = { path = "../../../../node/node-helper/core/pvf" }
 selendra-parachain = { path = "../../.." }
 selendra-test-service = { path = "../../../../node/test/service" }
 
-substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 
 tokio = { version = "1.19.2", features = ["macros"] }

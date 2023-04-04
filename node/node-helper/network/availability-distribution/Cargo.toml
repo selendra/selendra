@@ -14,8 +14,8 @@ selendra-node-network-protocol = { path = "../../network/protocol" }
 selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 selendra-node-primitives = { path = "../../primitives" }
-sp-core = { git = "https://github.com/paritytech/substrate", features = ["std"] , branch = "polkadot-v0.9.33" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-core = { git = "https://github.com/paritytech/substrate", features = ["std"] , branch = "polkadot-v0.9.34" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 thiserror = "1.0.31"
 rand = "0.8.5"
 derive_more = "0.99.17"
@@ -25,10 +25,10 @@ fatality = "0.0.6"
 [dev-dependencies]
 futures-timer = "3.0.2"
 assert_matches = "1.4.0"
-sp-core = { git = "https://github.com/paritytech/substrate", features = ["std"] , branch = "polkadot-v0.9.33" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-core = { git = "https://github.com/paritytech/substrate", features = ["std"] , branch = "polkadot-v0.9.34" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
 selendra-primitives-test-helpers = { path = "../../../../primitives/test-helpers" }

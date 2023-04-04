@@ -8,7 +8,7 @@ edition = "2021"
 futures = "0.3.21"
 memory-lru = "0.1.1"
 parity-util-mem = { version = "0.12.0", default-features = false }
-sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 
 gum = { package = "tracing-gum", path = "../../gum" }
 selendra-primitives = { path = "../../../../primitives" }
@@ -18,10 +18,10 @@ selendra-node-subsystem-util = { path = "../../subsystem-util" }
 
 [dev-dependencies]
 futures = { version = "0.3.21", features = ["thread-pool"] }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
 selendra-node-primitives = { path = "../../primitives" }
 test-helpers = { package = "selendra-primitives-test-helpers", path = "../../../../primitives/test-helpers" }
