@@ -50,7 +50,6 @@ members = [
 	"node/node-helper/metrics",
 	"node/node-helper/erasure-coding",
 	"node/node-helper/statement-table",
-	"node/node-helper/zombienet-backchannel",
 	"node/test/client",
 	"node/test/performance-test",
 	"node/test/service",
