@@ -5,6 +5,9 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
+async-trait = "0.1.57"
+futures = "0.3.21"
+
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
@@ -35,7 +38,7 @@ sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polka
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34", default-features = false }
 
-beefy-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+beefy-primitives = { git = "https://github.com/paritytech/substrate", package = "sp-beefy", branch = "polkadot-v0.9.34" }
 
 # Selendra Runtimes
 selendra-runtime = { path = "../../runtime/selendra", optional = true }
