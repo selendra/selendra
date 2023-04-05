@@ -529,7 +529,7 @@ impl<T: Config> Pallet<T> {
 			ensure!(caller_id == id, Error::<T>::NotOwner);
 		} else {
 			// Check if root...
-			ensure_root(origin.clone())?;
+			ensure_root(origin)?;
 		}
 		Ok(())
 	}
@@ -599,7 +599,7 @@ impl<T: Config> Pallet<T> {
 		runtime_parachains::schedule_para_cleanup::<T>(id)
 			.map_err(|_| Error::<T>::CannotDeregister)?;
 
-		if let Some(info) = Paras::<T>::take(&id) {
+		if let Some(info) = Paras::<T>::take(id) {
 			<T as Config>::Currency::unreserve(&info.manager, info.deposit);
 		}
 
@@ -617,7 +617,7 @@ impl<T: Config> Pallet<T> {
 		para_kind: ParaKind,
 	) -> Result<(ParaGenesisArgs, BalanceOf<T>), sp_runtime::DispatchError> {
 		let config = configuration::Pallet::<T>::config();
-		ensure!(validation_code.0.len() > 0, Error::<T>::EmptyCode);
+		ensure!(!validation_code.0.is_empty(), Error::<T>::EmptyCode);
 		ensure!(validation_code.0.len() <= config.max_code_size as usize, Error::<T>::CodeTooLarge);
 		ensure!(
 			genesis_head.0.len() <= config.max_head_data_size as usize,
@@ -787,8 +787,8 @@ mod tests {
 		GenesisBuild::<Test>::assimilate_storage(
 			&configuration::GenesisConfig {
 				config: configuration::HostConfiguration {
-					max_code_size: 2 * 1024 * 1024,      // 2 MB
-					max_head_data_size: 1 * 1024 * 1024, // 1 MB
+					max_code_size: 2 * 1024 * 1024,  // 2 MB
+					max_head_data_size: 1024 * 1024, // 1 MB
 					..Default::default()
 				},
 			},
@@ -853,7 +853,7 @@ mod tests {
 	}
 
 	fn test_validation_code(size: usize) -> ValidationCode {
-		let validation_code = vec![0u8; size as usize];
+		let validation_code = vec![0u8; size];
 		ValidationCode(validation_code)
 	}
 
@@ -872,8 +872,8 @@ mod tests {
 	#[test]
 	fn basic_setup_works() {
 		new_test_ext().execute_with(|| {
-			assert_eq!(PendingSwap::<Test>::get(&ParaId::from(0u32)), None);
-			assert_eq!(Paras::<Test>::get(&ParaId::from(0u32)), None);
+			assert_eq!(PendingSwap::<Test>::get(ParaId::from(0u32)), None);
+			assert_eq!(Paras::<Test>::get(ParaId::from(0u32)), None);
 		});
 	}
 

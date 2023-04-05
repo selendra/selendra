@@ -149,10 +149,10 @@ impl<T: Config> Pallet<T> {
 		// avoid a potentially heavy loop when introduced on a live chain
 		if old_earliest_stored_session != 0 || Sessions::<T>::get(0).is_some() {
 			for idx in old_earliest_stored_session..new_earliest_stored_session {
-				Sessions::<T>::remove(&idx);
+				Sessions::<T>::remove(idx);
 				// Idx will be missing for a few sessions after the runtime upgrade.
 				// But it shouldn'be be a problem.
-				AccountKeys::<T>::remove(&idx);
+				AccountKeys::<T>::remove(idx);
 			}
 			// update `EarliestStoredSession` based on `config.dispute_period`
 			EarliestStoredSession::<T>::set(new_earliest_stored_session);
@@ -165,7 +165,7 @@ impl<T: Config> Pallet<T> {
 		// because we delay `on_new_session` till the end of the block.
 		let account_ids = T::ValidatorSet::validators();
 		let active_account_ids = take_active_subset(&active_set, &account_ids);
-		AccountKeys::<T>::insert(&new_session_index, &active_account_ids);
+		AccountKeys::<T>::insert(new_session_index, &active_account_ids);
 
 		// create a new entry in `Sessions` with information about the current session
 		let new_session_info = SessionInfo {
@@ -183,7 +183,7 @@ impl<T: Config> Pallet<T> {
 			random_seed,
 			dispute_period,
 		};
-		Sessions::<T>::insert(&new_session_index, &new_session_info);
+		Sessions::<T>::insert(new_session_index, &new_session_info);
 	}
 
 	/// Called by the initializer to initialize the session info pallet.

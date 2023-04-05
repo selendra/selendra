@@ -96,10 +96,10 @@ impl pallet_balances::Config for Test {
 
 parameter_types! {
 	pub const AssetDeposit: u64 = 100 * ExistentialDeposit::get();
-	pub const ApprovalDeposit: u64 = 1 * ExistentialDeposit::get();
+	pub const ApprovalDeposit: u64 = ExistentialDeposit::get();
 	pub const StringLimit: u32 = 50;
 	pub const MetadataDepositBase: u64 = 10 * ExistentialDeposit::get();
-	pub const MetadataDepositPerByte: u64 = 1 * ExistentialDeposit::get();
+	pub const MetadataDepositPerByte: u64 = ExistentialDeposit::get();
 }
 
 pub struct MatchAnyFungible;

@@ -74,7 +74,7 @@ const LOG_TARGET: &str = "runtime::parachains::slashing";
 // via `HostConfiguration` in the future.
 const SLASH_FOR_INVALID: Perbill = Perbill::from_percent(100);
 const SLASH_AGAINST_VALID: Perbill = Perbill::from_perthousand(1);
-const DEFENSIVE_PROOF: &'static str = "disputes module should bail on old session";
+const DEFENSIVE_PROOF: &str = "disputes module should bail on old session";
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
@@ -524,7 +524,7 @@ pub mod pallet {
 				Ok(())
 			};
 
-			<UnappliedSlashes<T>>::try_mutate_exists(&session_index, &candidate_hash, try_remove)?;
+			<UnappliedSlashes<T>>::try_mutate_exists(session_index, candidate_hash, try_remove)?;
 
 			let offence = SlashingOffence::new(
 				session_index,

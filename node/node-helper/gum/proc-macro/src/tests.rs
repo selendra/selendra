@@ -111,7 +111,7 @@ mod roundtrip {
 
 	#[test]
 	fn sample_w_candidate_hash_aliased() {
-		dbg!(impl_gum2(
+		impl_gum2(
 			quote! {
 				target: "bar",
 				a = a,
@@ -120,10 +120,10 @@ mod roundtrip {
 				c = ?a,
 				"xxx"
 			},
-			Level::Info
+			Level::Info,
 		)
 		.unwrap()
-		.to_string());
+		.to_string();
 	}
 
 	#[test]
@@ -142,7 +142,7 @@ mod roundtrip {
 			},
 			Level::Info
 		), Ok(x) => {
-			dbg!(x.to_string())
+			x.to_string()
 		});
 	}
 
@@ -159,7 +159,7 @@ mod roundtrip {
 			},
 			Level::Trace
 		), Ok(x) => {
-			dbg!(x.to_string())
+			x.to_string()
 		});
 	}
 
@@ -175,7 +175,7 @@ mod roundtrip {
 			},
 			Level::Trace
 		), Ok(x) => {
-			dbg!(x.to_string())
+			x.to_string()
 		});
 	}
 
@@ -188,7 +188,7 @@ mod roundtrip {
 			},
 			Level::Info
 		), Ok(x) => {
-			dbg!(x.to_string())
+			x.to_string()
 		});
 	}
 
@@ -201,7 +201,7 @@ mod roundtrip {
 			},
 			Level::Info
 		), Ok(x) => {
-			dbg!(x.to_string())
+			x.to_string()
 		});
 	}
 }

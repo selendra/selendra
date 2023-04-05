@@ -266,12 +266,12 @@ pub mod pallet {
 		};
 
 		// Schedule paras again, given freed cores, and reasons for freeing.
-		let freed = freed_concluded
+
+		freed_concluded
 			.into_iter()
 			.map(|(c, _hash)| (c, FreedReason::Concluded))
 			.chain(freed_timeout.into_iter().map(|c| (c, FreedReason::TimedOut)))
-			.collect::<BTreeMap<CoreIndex, FreedReason>>();
-		freed
+			.collect::<BTreeMap<CoreIndex, FreedReason>>()
 	}
 
 	#[pallet::call]
@@ -384,7 +384,7 @@ impl<T: Config> Pallet<T> {
 			}
 
 			let entropy = compute_entropy::<T>(parent_hash);
-			let mut rng = rand_chacha::ChaChaRng::from_seed(entropy.into());
+			let mut rng = rand_chacha::ChaChaRng::from_seed(entropy);
 
 			let (checked_disputes, checked_disputes_weight) = limit_and_sanitize_disputes::<T, _>(
 				disputes,
@@ -513,7 +513,7 @@ impl<T: Config> Pallet<T> {
 		METRICS.on_candidates_sanitized(backed_candidates.len() as u64);
 
 		// Process backed candidates according to scheduled cores.
-		let parent_storage_root = parent_header.state_root().clone();
+		let parent_storage_root = *parent_header.state_root();
 		let inclusion::ProcessedCandidates::<<T::Header as HeaderT>::Hash> {
 			core_indices: occupied,
 			candidate_receipt_with_backing_validator_indices,
@@ -586,10 +586,10 @@ impl<T: Config> Pallet<T> {
 		let max_block_weight = <T as frame_system::Config>::BlockWeights::get().max_block;
 
 		let entropy = compute_entropy::<T>(parent_hash);
-		let mut rng = rand_chacha::ChaChaRng::from_seed(entropy.into());
+		let mut rng = rand_chacha::ChaChaRng::from_seed(entropy);
 
 		// Filter out duplicates and continue.
-		if let Err(_) = T::DisputesHandler::deduplicate_and_sort_dispute_data(&mut disputes) {
+		if T::DisputesHandler::deduplicate_and_sort_dispute_data(&mut disputes).is_err() {
 			log::debug!(target: LOG_TARGET, "Found duplicate statement sets, retaining the first");
 		}
 
@@ -711,7 +711,7 @@ impl<T: Config> Pallet<T> {
 			let scheduled = <scheduler::Pallet<T>>::scheduled();
 
 			let relay_parent_number = now - One::one();
-			let parent_storage_root = parent_header.state_root().clone();
+			let parent_storage_root = *parent_header.state_root();
 
 			let check_ctx = CandidateCheckContext::<T>::new(now, relay_parent_number);
 			let backed_candidates = sanitize_backed_candidates::<T, _>(
@@ -1122,7 +1122,7 @@ fn sanitize_backed_candidates<
 	});
 
 	let scheduled_paras_to_core_idx = scheduled
-		.into_iter()
+		.iter()
 		.map(|core_assignment| (core_assignment.para_id, core_assignment.core))
 		.collect::<BTreeMap<ParaId, CoreIndex>>();
 
@@ -1176,7 +1176,7 @@ pub(crate) fn assure_sanity_backed_candidates<
 	}
 
 	let scheduled_paras_to_core_idx = scheduled
-		.into_iter()
+		.iter()
 		.map(|core_assignment| (core_assignment.para_id, core_assignment.core))
 		.collect::<BTreeMap<ParaId, CoreIndex>>();
 
@@ -1201,7 +1201,7 @@ fn compute_entropy<T: Config>(parent_hash: T::Hash) -> [u8; 32] {
 	// known 2 epochs ago. it is marginally better than using the parent block
 	// hash since it's harder to influence the VRF output than the block hash.
 	let vrf_random = ParentBlockRandomness::<T>::random(&CANDIDATE_SEED_SUBJECT[..]).0;
-	let mut entropy: [u8; 32] = CANDIDATE_SEED_SUBJECT.clone();
+	let mut entropy: [u8; 32] = CANDIDATE_SEED_SUBJECT;
 	if let Some(vrf_random) = vrf_random {
 		entropy.as_mut().copy_from_slice(vrf_random.as_ref());
 	} else {
@@ -1315,7 +1315,7 @@ fn limit_and_sanitize_disputes<
 		// Go through all of them, and just apply the filter, they would all fit
 		let checked = disputes
 			.into_iter()
-			.filter_map(|dss| dispute_statement_set_valid(dss))
+			.filter_map(dispute_statement_set_valid)
 			.collect::<Vec<CheckedDisputeStatementSet>>();
 		// some might have been filtered out, so re-calc the weight
 		let checked_disputes_weight = multi_dispute_statement_sets_weight::<T, _, _>(&checked);

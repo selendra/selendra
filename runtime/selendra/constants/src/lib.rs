@@ -44,7 +44,7 @@ pub mod time {
 	use runtime_common::prod_or_fast;
 	pub const MILLISECS_PER_BLOCK: Moment = 6000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-	pub const EPOCH_DURATION_IN_SLOTS: BlockNumber = prod_or_fast!(4 * HOURS, 1 * MINUTES);
+	pub const EPOCH_DURATION_IN_SLOTS: BlockNumber = prod_or_fast!(4 * HOURS, MINUTES);
 
 	// These time units are defined in number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
@@ -114,7 +114,7 @@ mod tests {
 	fn full_block_fee_is_correct() {
 		// A full block should cost between 1 and 10 CENTS.
 		let full_block = WeightToFee::weight_to_fee(&MAXIMUM_BLOCK_WEIGHT);
-		assert!(full_block >= 1 * CENTS);
+		assert!(full_block >= CENTS);
 		assert!(full_block <= 100 * CENTS);
 	}
 

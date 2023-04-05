@@ -192,7 +192,7 @@ pub fn peer_sets_info(
 	peerset_protocol_names: &PeerSetProtocolNames,
 ) -> Vec<sc_network_common::config::NonDefaultSetConfig> {
 	PeerSet::iter()
-		.map(|s| s.get_info(is_authority, &peerset_protocol_names))
+		.map(|s| s.get_info(is_authority, peerset_protocol_names))
 		.collect()
 }
 

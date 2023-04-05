@@ -128,7 +128,7 @@ pub(crate) async fn back_candidate(
 		*validator_indices.get_mut(idx_in_group).unwrap() = true;
 
 		let signature = SignedStatement::sign(
-			&keystore,
+			keystore,
 			Statement::Valid(candidate_hash),
 			signing_context,
 			*val_idx,
@@ -140,7 +140,7 @@ pub(crate) async fn back_candidate(
 		.signature()
 		.clone();
 
-		validity_votes.push(ValidityAttestation::Explicit(signature).into());
+		validity_votes.push(ValidityAttestation::Explicit(signature));
 	}
 
 	let backed = BackedCandidate { candidate, validity_votes, validator_indices };
@@ -230,9 +230,9 @@ pub(crate) async fn sign_bitfield(
 	signing_context: &SigningContext,
 ) -> SignedAvailabilityBitfield {
 	SignedAvailabilityBitfield::sign(
-		&keystore,
+		keystore,
 		bitfield,
-		&signing_context,
+		signing_context,
 		validator_index,
 		&key.public().into(),
 	)
@@ -265,7 +265,7 @@ impl std::default::Default for TestCandidateBuilder {
 			persisted_validation_data_hash: zeros,
 			new_validation_code: None,
 			validation_code: dummy_validation_code(),
-			hrmp_watermark: 0u32.into(),
+			hrmp_watermark: 0u32,
 		}
 	}
 }
@@ -336,7 +336,7 @@ fn collect_pending_cleans_up_pending() {
 		);
 
 		<PendingAvailability<Test>>::insert(
-			&chain_b,
+			chain_b,
 			CandidatePendingAvailability {
 				core: CoreIndex::from(1),
 				hash: default_candidate.hash(),
@@ -352,17 +352,17 @@ fn collect_pending_cleans_up_pending() {
 
 		run_to_block(5, |_| None);
 
-		assert!(<PendingAvailability<Test>>::get(&chain_a).is_some());
-		assert!(<PendingAvailability<Test>>::get(&chain_b).is_some());
-		assert!(<PendingAvailabilityCommitments<Test>>::get(&chain_a).is_some());
-		assert!(<PendingAvailabilityCommitments<Test>>::get(&chain_b).is_some());
+		assert!(<PendingAvailability<Test>>::get(chain_a).is_some());
+		assert!(<PendingAvailability<Test>>::get(chain_b).is_some());
+		assert!(<PendingAvailabilityCommitments<Test>>::get(chain_a).is_some());
+		assert!(<PendingAvailabilityCommitments<Test>>::get(chain_b).is_some());
 
 		ParaInclusion::collect_pending(|core, _since| core == CoreIndex::from(0));
 
-		assert!(<PendingAvailability<Test>>::get(&chain_a).is_none());
-		assert!(<PendingAvailability<Test>>::get(&chain_b).is_some());
-		assert!(<PendingAvailabilityCommitments<Test>>::get(&chain_a).is_none());
-		assert!(<PendingAvailabilityCommitments<Test>>::get(&chain_b).is_some());
+		assert!(<PendingAvailability<Test>>::get(chain_a).is_none());
+		assert!(<PendingAvailability<Test>>::get(chain_b).is_some());
+		assert!(<PendingAvailabilityCommitments<Test>>::get(chain_a).is_none());
+		assert!(<PendingAvailabilityCommitments<Test>>::get(chain_b).is_some());
 	});
 }
 
@@ -422,8 +422,8 @@ fn bitfield_checks() {
 						hash: receipt.hash(),
 						descriptor: receipt.descriptor,
 						backers: BitVec::default(),
-						relay_parent_number: BlockNumber::from(0_u32),
-						backed_in_number: BlockNumber::from(0_u32),
+						relay_parent_number: 0_u32,
+						backed_in_number: 0_u32,
 						backing_group: GroupIndex(0),
 					},
 				)
@@ -447,7 +447,7 @@ fn bitfield_checks() {
 					expected_bits(),
 					vec![signed.into()],
 					DisputedBitfield::zeros(expected_bits()),
-					&core_lookup,
+					core_lookup,
 					FullCheck::Yes,
 				),
 				Err(Error::<Test>::WrongBitfieldSize)
@@ -470,7 +470,7 @@ fn bitfield_checks() {
 					expected_bits() + 1,
 					vec![signed.into()],
 					DisputedBitfield::zeros(expected_bits()),
-					&core_lookup,
+					core_lookup,
 					FullCheck::Yes,
 				),
 				Err(Error::<Test>::WrongBitfieldSize)
@@ -509,7 +509,7 @@ fn bitfield_checks() {
 					expected_bits(),
 					vec![signed.clone(), signed],
 					DisputedBitfield::zeros(expected_bits()),
-					&core_lookup,
+					core_lookup,
 					FullCheck::Yes,
 				),
 				Err(Error::<Test>::UnsortedOrDuplicateValidatorIndices)
@@ -530,7 +530,7 @@ fn bitfield_checks() {
 
 		// out of order.
 		{
-			set_pending_av.clone()();
+			set_pending_av();
 			let back_core_0_bitfield = {
 				let mut b = default_bitfield();
 				b.0.set(0, true);
@@ -569,7 +569,7 @@ fn bitfield_checks() {
 					expected_bits(),
 					vec![signed_1, signed_0],
 					DisputedBitfield::zeros(expected_bits()),
-					&core_lookup,
+					core_lookup,
 					FullCheck::Yes,
 				),
 				Err(Error::<Test>::UnsortedOrDuplicateValidatorIndices)
@@ -603,7 +603,7 @@ fn bitfield_checks() {
 				expected_bits(),
 				vec![signed.into()],
 				DisputedBitfield::zeros(expected_bits()),
-				&core_lookup,
+				core_lookup,
 				FullCheck::Yes,
 			), Ok(x) => { assert!(x.is_empty())});
 		}
@@ -623,7 +623,7 @@ fn bitfield_checks() {
 				expected_bits(),
 				vec![signed.into()],
 				DisputedBitfield::zeros(expected_bits()),
-				&core_lookup,
+				core_lookup,
 				FullCheck::Yes,
 			), Ok(x) => { assert!(x.is_empty())});
 		}
@@ -663,7 +663,7 @@ fn bitfield_checks() {
 				expected_bits(),
 				vec![signed.into()],
 				DisputedBitfield::zeros(expected_bits()),
-				&core_lookup,
+				core_lookup,
 				FullCheck::Yes,
 			), Ok(v) => { assert!(v.is_empty())} );
 
@@ -706,7 +706,7 @@ fn bitfield_checks() {
 				expected_bits(),
 				vec![signed.into()],
 				DisputedBitfield::zeros(expected_bits()),
-				&core_lookup,
+				core_lookup,
 				FullCheck::Yes,
 			), Ok(v) => { assert!(v.is_empty()) });
 		}
@@ -854,7 +854,7 @@ fn supermajority_bitfields_trigger_availability() {
 				expected_bits(),
 				signed_bitfields,
 				DisputedBitfield::zeros(expected_bits()),
-				&core_lookup,
+				core_lookup,
 				FullCheck::Yes,
 			),
 			Ok(v) => {
@@ -864,10 +864,10 @@ fn supermajority_bitfields_trigger_availability() {
 
 		// chain A had 4 signing off, which is >= threshold.
 		// chain B has 3 signing off, which is < threshold.
-		assert!(<PendingAvailability<Test>>::get(&chain_a).is_none());
-		assert!(<PendingAvailabilityCommitments<Test>>::get(&chain_a).is_none());
-		assert!(<PendingAvailabilityCommitments<Test>>::get(&chain_b).is_some());
-		assert_eq!(<PendingAvailability<Test>>::get(&chain_b).unwrap().availability_votes, {
+		assert!(<PendingAvailability<Test>>::get(chain_a).is_none());
+		assert!(<PendingAvailabilityCommitments<Test>>::get(chain_a).is_none());
+		assert!(<PendingAvailabilityCommitments<Test>>::get(chain_b).is_some());
+		assert_eq!(<PendingAvailability<Test>>::get(chain_b).unwrap().availability_votes, {
 			// check that votes from first 3 were tracked.
 
 			let mut votes = default_availability_votes();
@@ -879,7 +879,7 @@ fn supermajority_bitfields_trigger_availability() {
 		});
 
 		// and check that chain head was enacted.
-		assert_eq!(Paras::para_head(&chain_a), Some(vec![1, 2, 3, 4].into()));
+		assert_eq!(Paras::para_head(chain_a), Some(vec![1, 2, 3, 4].into()));
 
 		// Check that rewards are applied.
 		{
@@ -1003,7 +1003,7 @@ fn candidate_checks() {
 					Default::default(),
 					vec![backed],
 					vec![chain_b_assignment.clone()],
-					&group_validators,
+					group_validators,
 				),
 				Error::<Test>::UnscheduledCandidate
 			);
@@ -1058,7 +1058,7 @@ fn candidate_checks() {
 					Default::default(),
 					vec![backed_b, backed_a],
 					vec![chain_a_assignment.clone(), chain_b_assignment.clone()],
-					&group_validators,
+					group_validators,
 				),
 				Error::<Test>::UnscheduledCandidate
 			);
@@ -1091,7 +1091,7 @@ fn candidate_checks() {
 					Default::default(),
 					vec![backed],
 					vec![chain_a_assignment.clone()],
-					&group_validators,
+					group_validators,
 				),
 				Error::<Test>::InsufficientBacking
 			);
@@ -1126,7 +1126,7 @@ fn candidate_checks() {
 					Default::default(),
 					vec![backed],
 					vec![chain_a_assignment.clone()],
-					&group_validators,
+					group_validators,
 				),
 				Error::<Test>::CandidateNotInParentContext
 			);
@@ -1162,10 +1162,10 @@ fn candidate_checks() {
 					vec![backed],
 					vec![
 						chain_a_assignment.clone(),
-						chain_b_assignment.clone(),
+						chain_b_assignment,
 						thread_a_assignment.clone(),
 					],
-					&group_validators,
+					group_validators,
 				),
 				Error::<Test>::WrongCollator,
 			);
@@ -1202,8 +1202,8 @@ fn candidate_checks() {
 				ParaInclusion::process_candidates(
 					Default::default(),
 					vec![backed],
-					vec![thread_a_assignment.clone()],
-					&group_validators,
+					vec![thread_a_assignment],
+					group_validators,
 				),
 				Error::<Test>::NotCollatorSigned
 			);
@@ -1234,7 +1234,7 @@ fn candidate_checks() {
 
 			let candidate = TestCandidateBuilder::default().build();
 			<PendingAvailability<Test>>::insert(
-				&chain_a,
+				chain_a,
 				CandidatePendingAvailability {
 					core: CoreIndex::from(0),
 					hash: candidate.hash(),
@@ -1246,20 +1246,20 @@ fn candidate_checks() {
 					backing_group: GroupIndex::from(0),
 				},
 			);
-			<PendingAvailabilityCommitments<Test>>::insert(&chain_a, candidate.commitments);
+			<PendingAvailabilityCommitments<Test>>::insert(chain_a, candidate.commitments);
 
 			assert_noop!(
 				ParaInclusion::process_candidates(
 					Default::default(),
 					vec![backed],
 					vec![chain_a_assignment.clone()],
-					&group_validators,
+					group_validators,
 				),
 				Error::<Test>::CandidateScheduledBeforeParaFree
 			);
 
-			<PendingAvailability<Test>>::remove(&chain_a);
-			<PendingAvailabilityCommitments<Test>>::remove(&chain_a);
+			<PendingAvailability<Test>>::remove(chain_a);
+			<PendingAvailabilityCommitments<Test>>::remove(chain_a);
 		}
 
 		// messed up commitments storage - do not panic - reject.
@@ -1277,7 +1277,7 @@ fn candidate_checks() {
 			collator_sign_candidate(Sr25519Keyring::One, &mut candidate);
 
 			// this is not supposed to happen
-			<PendingAvailabilityCommitments<Test>>::insert(&chain_a, candidate.commitments.clone());
+			<PendingAvailabilityCommitments<Test>>::insert(chain_a, candidate.commitments.clone());
 
 			let backed = block_on(back_candidate(
 				candidate,
@@ -1293,12 +1293,12 @@ fn candidate_checks() {
 					Default::default(),
 					vec![backed],
 					vec![chain_a_assignment.clone()],
-					&group_validators,
+					group_validators,
 				),
 				Error::<Test>::CandidateScheduledBeforeParaFree
 			);
 
-			<PendingAvailabilityCommitments<Test>>::remove(&chain_a);
+			<PendingAvailabilityCommitments<Test>>::remove(chain_a);
 		}
 
 		// interfering code upgrade - reject
@@ -1337,7 +1337,7 @@ fn candidate_checks() {
 					Default::default(),
 					vec![backed],
 					vec![chain_a_assignment.clone()],
-					&group_validators,
+					group_validators,
 				),
 				Error::<Test>::PrematureCodeUpgrade
 			);
@@ -1371,7 +1371,7 @@ fn candidate_checks() {
 					Default::default(),
 					vec![backed],
 					vec![chain_a_assignment.clone()],
-					&group_validators,
+					group_validators,
 				),
 				Err(Error::<Test>::ValidationDataHashMismatch.into()),
 			);
@@ -1406,7 +1406,7 @@ fn candidate_checks() {
 					Default::default(),
 					vec![backed],
 					vec![chain_a_assignment.clone()],
-					&group_validators,
+					group_validators,
 				),
 				Error::<Test>::InvalidValidationCodeHash
 			);
@@ -1440,8 +1440,8 @@ fn candidate_checks() {
 				ParaInclusion::process_candidates(
 					Default::default(),
 					vec![backed],
-					vec![chain_a_assignment.clone()],
-					&group_validators,
+					vec![chain_a_assignment],
+					group_validators,
 				),
 				Error::<Test>::ParaHeadMismatch
 			);
@@ -1519,7 +1519,7 @@ fn backing_works() {
 		let thread_a_assignment = CoreAssignment {
 			core: CoreIndex::from(2),
 			para_id: thread_a,
-			kind: AssignmentKind::Parathread(thread_collator.clone(), 0),
+			kind: AssignmentKind::Parathread(thread_collator, 0),
 			group_idx: GroupIndex::from(2),
 		};
 
@@ -1609,12 +1609,8 @@ fn backing_works() {
 		} = ParaInclusion::process_candidates(
 			Default::default(),
 			backed_candidates.clone(),
-			vec![
-				chain_a_assignment.clone(),
-				chain_b_assignment.clone(),
-				thread_a_assignment.clone(),
-			],
-			&group_validators,
+			vec![chain_a_assignment, chain_b_assignment, thread_a_assignment],
+			group_validators,
 		)
 		.expect("candidates scheduled, in order, and backed");
 
@@ -1676,7 +1672,7 @@ fn backing_works() {
 			backing_bitfield(&(0..num_backers).collect::<Vec<_>>())
 		};
 		assert_eq!(
-			<PendingAvailability<Test>>::get(&chain_a),
+			<PendingAvailability<Test>>::get(chain_a),
 			Some(CandidatePendingAvailability {
 				core: CoreIndex::from(0),
 				hash: candidate_a.hash(),
@@ -1689,7 +1685,7 @@ fn backing_works() {
 			})
 		);
 		assert_eq!(
-			<PendingAvailabilityCommitments<Test>>::get(&chain_a),
+			<PendingAvailabilityCommitments<Test>>::get(chain_a),
 			Some(candidate_a.commitments),
 		);
 
@@ -1698,7 +1694,7 @@ fn backing_works() {
 			backing_bitfield(&(0..num_backers).map(|v| v + 2).collect::<Vec<_>>())
 		};
 		assert_eq!(
-			<PendingAvailability<Test>>::get(&chain_b),
+			<PendingAvailability<Test>>::get(chain_b),
 			Some(CandidatePendingAvailability {
 				core: CoreIndex::from(1),
 				hash: candidate_b.hash(),
@@ -1711,12 +1707,12 @@ fn backing_works() {
 			})
 		);
 		assert_eq!(
-			<PendingAvailabilityCommitments<Test>>::get(&chain_b),
+			<PendingAvailabilityCommitments<Test>>::get(chain_b),
 			Some(candidate_b.commitments),
 		);
 
 		assert_eq!(
-			<PendingAvailability<Test>>::get(&thread_a),
+			<PendingAvailability<Test>>::get(thread_a),
 			Some(CandidatePendingAvailability {
 				core: CoreIndex::from(2),
 				hash: candidate_c.hash(),
@@ -1729,7 +1725,7 @@ fn backing_works() {
 			})
 		);
 		assert_eq!(
-			<PendingAvailabilityCommitments<Test>>::get(&thread_a),
+			<PendingAvailabilityCommitments<Test>>::get(thread_a),
 			Some(candidate_c.commitments),
 		);
 	});
@@ -1810,8 +1806,8 @@ fn can_include_candidate_with_ok_code_upgrade() {
 			ParaInclusion::process_candidates(
 				Default::default(),
 				vec![backed_a],
-				vec![chain_a_assignment.clone()],
-				&group_validators,
+				vec![chain_a_assignment],
+				group_validators,
 			)
 			.expect("candidates scheduled, in order, and backed");
 
@@ -1822,7 +1818,7 @@ fn can_include_candidate_with_ok_code_upgrade() {
 			backing_bitfield(&(0..num_backers).collect::<Vec<_>>())
 		};
 		assert_eq!(
-			<PendingAvailability<Test>>::get(&chain_a),
+			<PendingAvailability<Test>>::get(chain_a),
 			Some(CandidatePendingAvailability {
 				core: CoreIndex::from(0),
 				hash: candidate_a.hash(),
@@ -1835,7 +1831,7 @@ fn can_include_candidate_with_ok_code_upgrade() {
 			})
 		);
 		assert_eq!(
-			<PendingAvailabilityCommitments<Test>>::get(&chain_a),
+			<PendingAvailabilityCommitments<Test>>::get(chain_a),
 			Some(candidate_a.commitments),
 		);
 	});
@@ -1882,23 +1878,23 @@ fn session_change_wipes() {
 		run_to_block(10, |_| None);
 
 		<AvailabilityBitfields<Test>>::insert(
-			&ValidatorIndex(0),
+			ValidatorIndex(0),
 			AvailabilityBitfieldRecord { bitfield: default_bitfield(), submitted_at: 9 },
 		);
 
 		<AvailabilityBitfields<Test>>::insert(
-			&ValidatorIndex(1),
+			ValidatorIndex(1),
 			AvailabilityBitfieldRecord { bitfield: default_bitfield(), submitted_at: 9 },
 		);
 
 		<AvailabilityBitfields<Test>>::insert(
-			&ValidatorIndex(4),
+			ValidatorIndex(4),
 			AvailabilityBitfieldRecord { bitfield: default_bitfield(), submitted_at: 9 },
 		);
 
 		let candidate = TestCandidateBuilder::default().build();
 		<PendingAvailability<Test>>::insert(
-			&chain_a,
+			chain_a,
 			CandidatePendingAvailability {
 				core: CoreIndex::from(0),
 				hash: candidate.hash(),
@@ -1910,10 +1906,10 @@ fn session_change_wipes() {
 				backing_group: GroupIndex::from(0),
 			},
 		);
-		<PendingAvailabilityCommitments<Test>>::insert(&chain_a, candidate.commitments.clone());
+		<PendingAvailabilityCommitments<Test>>::insert(chain_a, candidate.commitments.clone());
 
 		<PendingAvailability<Test>>::insert(
-			&chain_b,
+			chain_b,
 			CandidatePendingAvailability {
 				core: CoreIndex::from(1),
 				hash: candidate.hash(),
@@ -1925,20 +1921,20 @@ fn session_change_wipes() {
 				backing_group: GroupIndex::from(1),
 			},
 		);
-		<PendingAvailabilityCommitments<Test>>::insert(&chain_b, candidate.commitments);
+		<PendingAvailabilityCommitments<Test>>::insert(chain_b, candidate.commitments);
 
 		run_to_block(11, |_| None);
 
 		assert_eq!(shared::Pallet::<Test>::session_index(), 5);
 
-		assert!(<AvailabilityBitfields<Test>>::get(&ValidatorIndex(0)).is_some());
-		assert!(<AvailabilityBitfields<Test>>::get(&ValidatorIndex(1)).is_some());
-		assert!(<AvailabilityBitfields<Test>>::get(&ValidatorIndex(4)).is_some());
+		assert!(<AvailabilityBitfields<Test>>::get(ValidatorIndex(0)).is_some());
+		assert!(<AvailabilityBitfields<Test>>::get(ValidatorIndex(1)).is_some());
+		assert!(<AvailabilityBitfields<Test>>::get(ValidatorIndex(4)).is_some());
 
-		assert!(<PendingAvailability<Test>>::get(&chain_a).is_some());
-		assert!(<PendingAvailability<Test>>::get(&chain_b).is_some());
-		assert!(<PendingAvailabilityCommitments<Test>>::get(&chain_a).is_some());
-		assert!(<PendingAvailabilityCommitments<Test>>::get(&chain_b).is_some());
+		assert!(<PendingAvailability<Test>>::get(chain_a).is_some());
+		assert!(<PendingAvailability<Test>>::get(chain_b).is_some());
+		assert!(<PendingAvailabilityCommitments<Test>>::get(chain_a).is_some());
+		assert!(<PendingAvailabilityCommitments<Test>>::get(chain_b).is_some());
 
 		run_to_block(12, |n| match n {
 			12 => Some(SessionChangeNotification {
@@ -1954,14 +1950,14 @@ fn session_change_wipes() {
 
 		assert_eq!(shared::Pallet::<Test>::session_index(), 6);
 
-		assert!(<AvailabilityBitfields<Test>>::get(&ValidatorIndex(0)).is_none());
-		assert!(<AvailabilityBitfields<Test>>::get(&ValidatorIndex(1)).is_none());
-		assert!(<AvailabilityBitfields<Test>>::get(&ValidatorIndex(4)).is_none());
+		assert!(<AvailabilityBitfields<Test>>::get(ValidatorIndex(0)).is_none());
+		assert!(<AvailabilityBitfields<Test>>::get(ValidatorIndex(1)).is_none());
+		assert!(<AvailabilityBitfields<Test>>::get(ValidatorIndex(4)).is_none());
 
-		assert!(<PendingAvailability<Test>>::get(&chain_a).is_none());
-		assert!(<PendingAvailability<Test>>::get(&chain_b).is_none());
-		assert!(<PendingAvailabilityCommitments<Test>>::get(&chain_a).is_none());
-		assert!(<PendingAvailabilityCommitments<Test>>::get(&chain_b).is_none());
+		assert!(<PendingAvailability<Test>>::get(chain_a).is_none());
+		assert!(<PendingAvailability<Test>>::get(chain_b).is_none());
+		assert!(<PendingAvailabilityCommitments<Test>>::get(chain_a).is_none());
+		assert!(<PendingAvailabilityCommitments<Test>>::get(chain_b).is_none());
 
 		assert!(<AvailabilityBitfields<Test>>::iter().collect::<Vec<_>>().is_empty());
 		assert!(<PendingAvailability<Test>>::iter().collect::<Vec<_>>().is_empty());

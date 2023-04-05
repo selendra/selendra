@@ -378,7 +378,7 @@ pub const MAX_CODE_SIZE: u32 = 3 * 1024 * 1024;
 /// * initial genesis for the Parachains configuration
 /// * checking updates to this stored runtime configuration do not exceed this limit
 // NOTE: This value is used in the runtime so be careful when changing it.
-pub const MAX_HEAD_DATA_SIZE: u32 = 1 * 1024 * 1024;
+pub const MAX_HEAD_DATA_SIZE: u32 = 1024 * 1024;
 
 /// Maximum PoV size we support right now.
 ///
@@ -766,7 +766,7 @@ pub fn check_candidate_backing<H: AsRef<[u8]> + Clone + Encode>(
 		.zip(backed.validity_votes.iter())
 	{
 		let validator_id = validator_lookup(val_in_group_idx).ok_or(())?;
-		let payload = attestation.signed_payload(hash.clone(), signing_context);
+		let payload = attestation.signed_payload(hash, signing_context);
 		let sig = attestation.signature();
 
 		if sig.verify(&payload[..], &validator_id) {
@@ -1283,7 +1283,7 @@ impl DisputeStatement {
 	) -> Result<(), ()> {
 		let payload = self.payload_data(candidate_hash, session);
 
-		if validator_signature.verify(&payload[..], &validator_public) {
+		if validator_signature.verify(&payload[..], validator_public) {
 			Ok(())
 		} else {
 			Err(())
@@ -1385,7 +1385,7 @@ impl From<CheckedDisputeStatementSet> for DisputeStatementSet {
 
 impl AsRef<DisputeStatementSet> for DisputeStatementSet {
 	fn as_ref(&self) -> &DisputeStatementSet {
-		&self
+		self
 	}
 }
 

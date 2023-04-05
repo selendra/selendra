@@ -107,7 +107,7 @@ pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::Hash, T:
 						<inclusion::Pallet<T>>::pending_availability(para_id)
 							.expect("Occupied core always has pending availability; qed");
 
-					let backed_in_number = pending_availability.backed_in_number().clone();
+					let backed_in_number = *pending_availability.backed_in_number();
 					OccupiedCore {
 						next_up_on_available: <scheduler::Pallet<T>>::next_up_on_available(
 							CoreIndex(i as u32),
@@ -135,7 +135,7 @@ pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::Hash, T:
 						<inclusion::Pallet<T>>::pending_availability(para_id)
 							.expect("Occupied core always has pending availability; qed");
 
-					let backed_in_number = pending_availability.backed_in_number().clone();
+					let backed_in_number = *pending_availability.backed_in_number();
 					OccupiedCore {
 						next_up_on_available: <scheduler::Pallet<T>>::next_up_on_available(
 							CoreIndex(i as u32),
@@ -166,7 +166,7 @@ pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::Hash, T:
 	for scheduled in <scheduler::Pallet<T>>::scheduled() {
 		core_states[scheduled.core.0 as usize] = CoreState::Scheduled(ScheduledCore {
 			para_id: scheduled.para_id,
-			collator: scheduled.required_collator().map(|c| c.clone()),
+			collator: scheduled.required_collator().cloned(),
 		});
 	}
 
@@ -250,7 +250,7 @@ pub fn assumed_validation_data<T: initializer::Config>(
 		})
 	});
 	// If we were successful, also query current validation code hash.
-	persisted_validation_data.zip(<paras::Pallet<T>>::current_code_hash(&para_id))
+	persisted_validation_data.zip(<paras::Pallet<T>>::current_code_hash(para_id))
 }
 
 /// Implementation for the `check_validation_outputs` function of the runtime API.
@@ -396,6 +396,6 @@ where
 	T: inclusion::Config,
 {
 	with_assumption::<T, _, _>(para_id, assumption, || {
-		<paras::Pallet<T>>::current_code_hash(&para_id)
+		<paras::Pallet<T>>::current_code_hash(para_id)
 	})
 }

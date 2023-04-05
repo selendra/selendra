@@ -104,11 +104,7 @@ fn scheduled_cleanup_performed() {
 			},
 		},
 		paras: crate::paras::GenesisConfig {
-			paras: vec![
-				(a, mock_genesis.clone()),
-				(b, mock_genesis.clone()),
-				(c, mock_genesis.clone()),
-			],
+			paras: vec![(a, mock_genesis.clone()), (b, mock_genesis.clone()), (c, mock_genesis)],
 			..Default::default()
 		},
 		..Default::default()

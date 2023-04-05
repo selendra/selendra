@@ -218,7 +218,7 @@ pub fn start(config: Config, metrics: Metrics) -> (ValidationHost, impl Future<O
 	);
 
 	let (to_execute_queue_tx, run_execute_queue) = execute::start(
-		metrics.clone(),
+		metrics,
 		config.execute_worker_program_path.to_owned(),
 		config.execute_workers_max_num,
 		config.execute_worker_spawn_timeout,
@@ -563,7 +563,7 @@ async fn handle_execute_pvf(
 		awaiting_prepare.add(artifact_id, execution_timeout, params, result_tx);
 	}
 
-	return Ok(())
+	Ok(())
 }
 
 async fn handle_heads_up(
@@ -705,7 +705,7 @@ async fn handle_prepare_done(
 		Err(error) => ArtifactState::FailedToProcess {
 			last_time_failed: SystemTime::now(),
 			num_failures: *num_failures + 1,
-			error: error.clone(),
+			error,
 		},
 	};
 
@@ -814,7 +814,7 @@ mod tests {
 
 		for _ in 0usize..5usize {
 			let start = std::time::Instant::now();
-			let _ = pulse.next().await.unwrap();
+			pulse.next().await.unwrap();
 
 			let el = start.elapsed().as_millis();
 			assert!(el > 50 && el < 150, "{}", el);
@@ -827,7 +827,7 @@ mod tests {
 	}
 
 	fn artifact_path(descriminator: u32) -> PathBuf {
-		artifact_id(descriminator).path(&PathBuf::from(std::env::temp_dir())).to_owned()
+		artifact_id(descriminator).path(&PathBuf::from(std::env::temp_dir()))
 	}
 
 	struct Builder {

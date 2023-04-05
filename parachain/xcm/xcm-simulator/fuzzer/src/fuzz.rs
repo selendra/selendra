@@ -152,7 +152,7 @@ fn main() {
 				.unwrap()
 				.map(|x| x.unwrap().path().to_str().unwrap().to_string())
 				.collect::<Vec<String>>(),
-			false => (&args[1..]).to_vec(),
+			false => args[1..].to_vec(),
 		};
 		println!("All_files {:?}", all_files);
 		for argument in all_files {
@@ -160,7 +160,7 @@ fn main() {
 			let mut buffer: Vec<u8> = Vec::new();
 			let mut f = File::open(argument).unwrap();
 			f.read_to_end(&mut buffer).unwrap();
-			run_one_input(&buffer.as_slice());
+			run_one_input(buffer.as_slice());
 		}
 	}
 }

@@ -118,11 +118,11 @@ fn pending_next_session_but_we_upgrade_once_more() {
 	new_test_ext(Default::default()).execute_with(|| {
 		let initial_config = Configuration::config();
 		let intermediate_config =
-			HostConfiguration { validation_upgrade_delay: 100, ..initial_config.clone() };
+			HostConfiguration { validation_upgrade_delay: 100, ..initial_config };
 		let final_config = HostConfiguration {
 			validation_upgrade_delay: 100,
 			validation_upgrade_cooldown: 99,
-			..initial_config.clone()
+			..initial_config
 		};
 
 		assert_ok!(Configuration::set_validation_upgrade_delay(RuntimeOrigin::root(), 100));
@@ -165,12 +165,12 @@ fn scheduled_session_config_update_while_next_session_pending() {
 	new_test_ext(Default::default()).execute_with(|| {
 		let initial_config = Configuration::config();
 		let intermediate_config =
-			HostConfiguration { validation_upgrade_delay: 100, ..initial_config.clone() };
+			HostConfiguration { validation_upgrade_delay: 100, ..initial_config };
 		let final_config = HostConfiguration {
 			validation_upgrade_delay: 100,
 			validation_upgrade_cooldown: 99,
 			code_retention_period: 98,
-			..initial_config.clone()
+			..initial_config
 		};
 
 		assert_ok!(Configuration::set_validation_upgrade_delay(RuntimeOrigin::root(), 100));

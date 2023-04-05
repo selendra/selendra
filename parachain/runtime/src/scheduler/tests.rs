@@ -150,7 +150,7 @@ fn add_parathread_claim_works() {
 		// due to the index, completing claims are not allowed.
 		{
 			let collator2 = CollatorId::from(Sr25519Keyring::Bob.public());
-			Scheduler::add_parathread_claim(ParathreadClaim(thread_id, collator2.clone()));
+			Scheduler::add_parathread_claim(ParathreadClaim(thread_id, collator2));
 			let queue = ParathreadQueue::<Test>::get();
 			assert_eq!(queue.next_core_offset, 1);
 			assert_eq!(queue.queue.len(), 1);
@@ -876,7 +876,7 @@ fn schedule_rotates_groups() {
 		let assert_groups_rotated = |rotations: u32| {
 			let scheduled = Scheduler::scheduled();
 			assert_eq!(scheduled.len(), 2);
-			assert_eq!(scheduled[0].group_idx, GroupIndex((0u32 + rotations) % parathread_cores));
+			assert_eq!(scheduled[0].group_idx, GroupIndex(rotations % parathread_cores));
 			assert_eq!(scheduled[1].group_idx, GroupIndex((1u32 + rotations) % parathread_cores));
 		};
 

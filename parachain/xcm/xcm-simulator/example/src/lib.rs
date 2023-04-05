@@ -248,7 +248,7 @@ mod tests {
 				},
 			]);
 			// Send withdraw and deposit
-			assert_ok!(ParachainPalletXcm::send_xcm(Here, Parent, message.clone()));
+			assert_ok!(ParachainPalletXcm::send_xcm(Here, Parent, message));
 		});
 
 		Relay::execute_with(|| {
@@ -290,7 +290,7 @@ mod tests {
 				},
 			]);
 			// Send withdraw and deposit with query holding
-			assert_ok!(ParachainPalletXcm::send_xcm(Here, Parent, message.clone(),));
+			assert_ok!(ParachainPalletXcm::send_xcm(Here, Parent, message,));
 		});
 
 		// Check that transfer was executed

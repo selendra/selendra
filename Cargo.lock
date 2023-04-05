@@ -3840,15 +3840,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "memory-lru"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce95ae042940bad7e312857b929ee3d11b8f799a80cb7b9c7ec5125516906395"
-dependencies = [
- "lru",
-]
-
-[[package]]
 name = "memory_units"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3909,6 +3900,26 @@ dependencies = [
  "log",
  "wasi 0.11.0+wasi-snapshot-preview1",
  "windows-sys 0.42.0",
+]
+
+[[package]]
+name = "mmr-gadget"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.34#1cc97dd30537997ff4c9827beb2ef0cac9c49063"
+dependencies = [
+ "futures",
+ "log",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-offchain",
+ "sp-api",
+ "sp-beefy",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-io",
+ "sp-mmr-primitives",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -8172,8 +8183,6 @@ name = "selendra-node-core-runtime-api"
 version = "0.3.0"
 dependencies = [
  "futures",
- "memory-lru",
- "parity-util-mem",
  "selendra-node-primitives",
  "selendra-node-subsystem",
  "selendra-node-subsystem-test-helpers",
@@ -8736,6 +8745,7 @@ dependencies = [
  "kvdb-rocksdb",
  "log",
  "lru",
+ "mmr-gadget",
  "pallet-babe",
  "pallet-im-online",
  "pallet-staking",
@@ -8812,6 +8822,7 @@ dependencies = [
  "sp-inherents",
  "sp-io",
  "sp-keystore",
+ "sp-mmr-primitives",
  "sp-offchain",
  "sp-runtime",
  "sp-session",

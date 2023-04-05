@@ -150,14 +150,14 @@ fn session_pruning_is_based_on_dispute_period() {
 fn session_info_is_based_on_config() {
 	new_test_ext(genesis_config()).execute_with(|| {
 		run_to_block(1, new_session_every_block);
-		let session = Sessions::<Test>::get(&1).unwrap();
+		let session = Sessions::<Test>::get(1).unwrap();
 		assert_eq!(session.needed_approvals, 3);
 
 		// change some param
 		Configuration::set_needed_approvals(RuntimeOrigin::root(), 42).unwrap();
 		// 2 sessions later
 		run_to_block(3, new_session_every_block);
-		let session = Sessions::<Test>::get(&3).unwrap();
+		let session = Sessions::<Test>::get(3).unwrap();
 		assert_eq!(session.needed_approvals, 42);
 	})
 }
@@ -199,7 +199,7 @@ fn session_info_active_subsets() {
 			validators: validators.clone(),
 			..Default::default()
 		});
-		let session = Sessions::<Test>::get(&1).unwrap();
+		let session = Sessions::<Test>::get(1).unwrap();
 
 		assert_eq!(session.validators.to_vec(), validators);
 		assert_eq!(

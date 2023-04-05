@@ -72,8 +72,7 @@ impl Dispatchable for TestCall {
 			TestCall::OnlyParachain(_, maybe_actual, _) |
 			TestCall::Any(_, maybe_actual) => maybe_actual,
 		};
-		post_info.actual_weight =
-			maybe_actual.map(|x| frame_support::weights::Weight::from_ref_time(x));
+		post_info.actual_weight = maybe_actual.map(frame_support::weights::Weight::from_ref_time);
 		if match (&origin, &self) {
 			(TestOrigin::Parachain(i), TestCall::OnlyParachain(_, _, Some(j))) => i == j,
 			(TestOrigin::Signed(i), TestCall::OnlySigned(_, _, Some(j))) => i == j,
@@ -126,7 +125,7 @@ pub fn assets(who: u64) -> Vec<MultiAsset> {
 	ASSETS.with(|a| a.borrow().get(&who).map_or(vec![], |a| a.clone().into()))
 }
 pub fn add_asset<AssetArg: Into<MultiAsset>>(who: u64, what: AssetArg) {
-	ASSETS.with(|a| a.borrow_mut().entry(who).or_insert(Assets::new()).subsume(what.into()));
+	ASSETS.with(|a| a.borrow_mut().entry(who).or_default().subsume(what.into()));
 }
 
 pub struct TestAssetTransactor;

@@ -108,7 +108,8 @@ pub fn dummy_candidate_descriptor_bad_sig(relay_parent: Hash) -> CandidateDescri
 pub fn dummy_candidate_descriptor<H: AsRef<[u8]>>(relay_parent: H) -> CandidateDescriptor<H> {
 	let collator = sp_keyring::Sr25519Keyring::Ferdie;
 	let invalid = Hash::zero();
-	let descriptor = make_valid_candidate_descriptor(
+
+	make_valid_candidate_descriptor(
 		1.into(),
 		relay_parent,
 		invalid,
@@ -117,8 +118,7 @@ pub fn dummy_candidate_descriptor<H: AsRef<[u8]>>(relay_parent: H) -> CandidateD
 		invalid,
 		invalid,
 		collator,
-	);
-	descriptor
+	)
 }
 
 /// Create meaningless validation code.
@@ -228,13 +228,9 @@ impl TestCandidateBuilder {
 
 /// A special `Rng` that always returns zero for testing something that implied
 /// to be random but should not be random in the tests
+#[derive(Default)]
 pub struct AlwaysZeroRng;
 
-impl Default for AlwaysZeroRng {
-	fn default() -> Self {
-		Self {}
-	}
-}
 impl rand::RngCore for AlwaysZeroRng {
 	fn next_u32(&mut self) -> u32 {
 		0_u32

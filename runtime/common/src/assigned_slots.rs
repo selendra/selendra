@@ -513,7 +513,7 @@ impl<T: Config> Pallet<T> {
 	/// Returns current lease period index.
 	fn current_lease_period_index() -> LeasePeriodOf<T> {
 		T::Leaser::lease_period_index(frame_system::Pallet::<T>::block_number())
-			.and_then(|x| Some(x.0))
+			.map(|x| x.0)
 			.unwrap()
 	}
 

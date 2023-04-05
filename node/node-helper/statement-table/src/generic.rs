@@ -409,7 +409,7 @@ impl<Ctx: Context> Table<Ctx> {
 
 						return Err(Misbehavior::MultipleCandidates(MultipleCandidates {
 							first: (old_candidate, old_sig.clone()),
-							second: (candidate, signature.clone()),
+							second: (candidate, signature),
 						}))
 					}
 
@@ -473,10 +473,10 @@ impl<Ctx: Context> Table<Ctx> {
 		}
 
 		// check for double votes.
-		match votes.validity_votes.entry(from.clone()) {
+		match votes.validity_votes.entry(from) {
 			Entry::Occupied(occ) => {
-				let make_vdv = |v| Misbehavior::ValidityDoubleVote(v);
-				let make_ds = |ds| Misbehavior::DoubleSign(ds);
+				let make_vdv = Misbehavior::ValidityDoubleVote;
+				let make_ds = Misbehavior::DoubleSign;
 				return if occ.get() != &vote {
 					Err(match (occ.get().clone(), vote) {
 						// valid vote conflicting with candidate statement
@@ -722,7 +722,7 @@ mod tests {
 
 		// authority 2 votes for validity on 1's candidate.
 		let bad_validity_vote = SignedStatement {
-			statement: Statement::Valid(candidate_a_digest.clone()),
+			statement: Statement::Valid(candidate_a_digest),
 			signature: Signature(2),
 			sender: AuthorityId(2),
 		};
@@ -793,7 +793,7 @@ mod tests {
 		assert!(!table.detected_misbehavior.contains_key(&AuthorityId(1)));
 
 		let extra_vote = SignedStatement {
-			statement: Statement::Valid(candidate_digest.clone()),
+			statement: Statement::Valid(candidate_digest),
 			signature: Signature(1),
 			sender: AuthorityId(1),
 		};
@@ -863,7 +863,7 @@ mod tests {
 		assert!(table.attested_candidate(&candidate_digest, &context).is_none());
 
 		let vote = SignedStatement {
-			statement: Statement::Valid(candidate_digest.clone()),
+			statement: Statement::Valid(candidate_digest),
 			signature: Signature(2),
 			sender: AuthorityId(2),
 		};
@@ -922,7 +922,7 @@ mod tests {
 		assert!(!table.detected_misbehavior.contains_key(&AuthorityId(1)));
 
 		let vote = SignedStatement {
-			statement: Statement::Valid(candidate_digest.clone()),
+			statement: Statement::Valid(candidate_digest),
 			signature: Signature(2),
 			sender: AuthorityId(2),
 		};

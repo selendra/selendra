@@ -102,7 +102,7 @@ fn code_params(n_validators: usize) -> Result<CodeParams, Error> {
 	let n_wanted = n_validators;
 	let k_wanted = recovery_threshold(n_wanted)?;
 
-	if n_wanted > MAX_VALIDATORS as usize {
+	if n_wanted > MAX_VALIDATORS {
 		return Err(Error::TooManyValidators)
 	}
 
@@ -172,7 +172,7 @@ where
 			return Err(Error::ChunkIndexOutOfBounds { chunk_index: chunk_idx, n_validators })
 		}
 
-		let shard_len = shard_len.get_or_insert_with(|| chunk_data.len());
+		let shard_len = shard_len.get_or_insert(chunk_data.len());
 
 		if *shard_len % 2 != 0 {
 			return Err(Error::UnevenLength)
@@ -201,7 +201,7 @@ where
 		Ok(payload_bytes) => payload_bytes,
 	};
 
-	Decode::decode(&mut &payload_bytes[..]).or_else(|_e| Err(Error::BadPayload))
+	Decode::decode(&mut &payload_bytes[..]).map_err(|_e| Error::BadPayload)
 }
 
 /// An iterator that yields merkle branches and chunk data for all chunks to
@@ -216,7 +216,7 @@ pub struct Branches<'a, I> {
 impl<'a, I: AsRef<[u8]>> Branches<'a, I> {
 	/// Get the trie root.
 	pub fn root(&self) -> H256 {
-		self.root.clone()
+		self.root
 	}
 }
 
@@ -281,7 +281,7 @@ pub fn branch_hash(root: &H256, branch_nodes: &Proof, index: usize) -> Result<H2
 		(&mut trie_storage as &mut sp_trie::HashDB<_>).insert(EMPTY_PREFIX, node);
 	}
 
-	let trie = TrieDBBuilder::new(&trie_storage, &root).build();
+	let trie = TrieDBBuilder::new(&trie_storage, root).build();
 	let res = (index as u32).using_encoded(|key| {
 		trie.get_with(key, |raw_hash: &[u8]| H256::decode(&mut &raw_hash[..]))
 	});

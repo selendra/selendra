@@ -270,7 +270,7 @@ fn teleport_to_statemine_works() {
 					Parachain(statemine_id).into(),
 					Xcm(vec![ReceiveTeleportedAsset((Parent, amount).into()), ClearOrigin,]
 						.into_iter()
-						.chain(teleport_effects.clone().into_iter())
+						.chain(teleport_effects.into_iter())
 						.collect()),
 				)
 			]

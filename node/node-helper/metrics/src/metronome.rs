@@ -38,7 +38,7 @@ pub struct Metronome {
 impl Metronome {
 	/// Create a new metronome source with a defined cycle duration.
 	pub fn new(cycle: Duration) -> Self {
-		let period = cycle.into();
+		let period = cycle;
 		Self { period, delay: Delay::new(period), state: MetronomeState::Snooze }
 	}
 }
@@ -49,7 +49,7 @@ impl futures::Stream for Metronome {
 		loop {
 			match self.state {
 				MetronomeState::SetAlarm => {
-					let val = self.period.clone();
+					let val = self.period;
 					self.delay.reset(val);
 					self.state = MetronomeState::Snooze;
 				},

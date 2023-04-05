@@ -88,7 +88,7 @@ mod enter {
 			// candidates are also created for cores 0 & 1, so once the pending available
 			// become fully available those cores are marked as free and scheduled for the backed
 			// candidates.
-			let expected_para_inherent_data = scenario.data.clone();
+			let expected_para_inherent_data = scenario.data;
 
 			// Check the para inherent data is as expected:
 			// * 1 bitfield per validator (2 validators)
@@ -162,43 +162,31 @@ mod enter {
 			let generate_votes = |session: u32, candidate_hash: CandidateHash| {
 				// v0 votes for 3
 				vec![DisputeStatementSet {
-					candidate_hash: candidate_hash.clone(),
+					candidate_hash,
 					session,
 					statements: vec![
 						(
 							DisputeStatement::Invalid(InvalidDisputeStatementKind::Explicit),
 							ValidatorIndex(0),
 							v0.sign(
-								&ExplicitDisputeStatement {
-									valid: false,
-									candidate_hash: candidate_hash.clone(),
-									session,
-								}
-								.signing_payload(),
+								&ExplicitDisputeStatement { valid: false, candidate_hash, session }
+									.signing_payload(),
 							),
 						),
 						(
 							DisputeStatement::Invalid(InvalidDisputeStatementKind::Explicit),
 							ValidatorIndex(1),
 							v1.sign(
-								&ExplicitDisputeStatement {
-									valid: false,
-									candidate_hash: candidate_hash.clone(),
-									session,
-								}
-								.signing_payload(),
+								&ExplicitDisputeStatement { valid: false, candidate_hash, session }
+									.signing_payload(),
 							),
 						),
 						(
 							DisputeStatement::Valid(ValidDisputeStatementKind::Explicit),
 							ValidatorIndex(1),
 							v1.sign(
-								&ExplicitDisputeStatement {
-									valid: true,
-									candidate_hash: candidate_hash.clone(),
-									session,
-								}
-								.signing_payload(),
+								&ExplicitDisputeStatement { valid: true, candidate_hash, session }
+									.signing_payload(),
 							),
 						),
 					],
@@ -209,7 +197,7 @@ mod enter {
 			};
 
 			let candidate_hash = CandidateHash(sp_core::H256::repeat_byte(1));
-			let statements = generate_votes(3, candidate_hash.clone());
+			let statements = generate_votes(3, candidate_hash);
 			set_scrapable_on_chain_disputes::<Test>(3, statements);
 			assert_matches!(pallet::Pallet::<Test>::on_chain_votes(), Some(ScrapedOnChainVotes {
 				session,
@@ -228,7 +216,7 @@ mod enter {
 			});
 
 			let candidate_hash = CandidateHash(sp_core::H256::repeat_byte(2));
-			let statements = generate_votes(7, candidate_hash.clone());
+			let statements = generate_votes(7, candidate_hash);
 			set_scrapable_on_chain_disputes::<Test>(7, statements);
 			assert_matches!(pallet::Pallet::<Test>::on_chain_votes(), Some(ScrapedOnChainVotes {
 				session,
@@ -256,7 +244,7 @@ mod enter {
 				code_upgrade: None,
 			});
 
-			let expected_para_inherent_data = scenario.data.clone();
+			let expected_para_inherent_data = scenario.data;
 
 			// Check the para inherent data is as expected:
 			// * 1 bitfield per validator (5 validators per core, 3 disputes => 3 cores, 15 validators)
@@ -330,7 +318,7 @@ mod enter {
 				code_upgrade: None,
 			});
 
-			let expected_para_inherent_data = scenario.data.clone();
+			let expected_para_inherent_data = scenario.data;
 
 			// Check the para inherent data is as expected:
 			// * 1 bitfield per validator (6 validators per core, 3 disputes => 18 validators)
@@ -400,7 +388,7 @@ mod enter {
 				code_upgrade: None,
 			});
 
-			let expected_para_inherent_data = scenario.data.clone();
+			let expected_para_inherent_data = scenario.data;
 
 			// Check the para inherent data is as expected:
 			// * 1 bitfield per validator (6 validators per core, 3 disputes => 18 validators)
@@ -449,7 +437,7 @@ mod enter {
 				code_upgrade: None,
 			});
 
-			let expected_para_inherent_data = scenario.data.clone();
+			let expected_para_inherent_data = scenario.data;
 
 			// Check the para inherent data is as expected:
 			// * 1 bitfield per validator (4 validators per core, 2 backed candidates, 3 disputes => 4*5 = 20)
@@ -530,7 +518,7 @@ mod enter {
 				code_upgrade: None,
 			});
 
-			let expected_para_inherent_data = scenario.data.clone();
+			let expected_para_inherent_data = scenario.data;
 
 			// Check the para inherent data is as expected:
 			// * 1 bitfield per validator (4 validators per core, 2 backed candidates, 3 disputes => 4*5 = 20)
@@ -586,7 +574,7 @@ mod enter {
 				code_upgrade: None,
 			});
 
-			let expected_para_inherent_data = scenario.data.clone();
+			let expected_para_inherent_data = scenario.data;
 
 			// Check the para inherent data is as expected:
 			// * 1 bitfield per validator (5 validators per core, 2 backed candidates, 3 disputes => 4*5 = 20),
@@ -672,7 +660,7 @@ mod enter {
 				code_upgrade: None,
 			});
 
-			let expected_para_inherent_data = scenario.data.clone();
+			let expected_para_inherent_data = scenario.data;
 
 			// Check the para inherent data is as expected:
 			// * 1 bitfield per validator (5 validators per core, 2 backed candidates, 3 disputes => 5*5 = 25)
@@ -757,7 +745,7 @@ mod enter {
 				code_upgrade: None,
 			});
 
-			let expected_para_inherent_data = scenario.data.clone();
+			let expected_para_inherent_data = scenario.data;
 			assert!(max_block_weight().any_lt(inherent_data_weight(&expected_para_inherent_data)));
 
 			// Check the para inherent data is as expected:
@@ -838,7 +826,7 @@ mod enter {
 				code_upgrade: None,
 			});
 
-			let expected_para_inherent_data = scenario.data.clone();
+			let expected_para_inherent_data = scenario.data;
 
 			// Check the para inherent data is as expected:
 			// * 1 bitfield per validator (5 validators per core, 2 backed candidates, 3 disputes => 5*5 = 25)
@@ -900,7 +888,7 @@ mod sanitizers {
 		let parent_hash = header.hash();
 		// 2 cores means two bits
 		let expected_bits = 2;
-		let session_index = SessionIndex::from(0_u32);
+		let session_index = 0_u32;
 
 		let crypto_store = LocalKeystore::in_memory();
 		let crypto_store = Arc::new(crypto_store) as SyncCryptoStorePtr;
@@ -961,7 +949,7 @@ mod sanitizers {
 					&validator_public[..],
 					FullCheck::Skip,
 				),
-				unchecked_bitfields.clone()
+				unchecked_bitfields
 			);
 			assert_eq!(
 				sanitize_bitfields::<Test>(
@@ -973,7 +961,7 @@ mod sanitizers {
 					&validator_public[..],
 					FullCheck::Yes
 				),
-				unchecked_bitfields.clone()
+				unchecked_bitfields
 			);
 		}
 
@@ -1098,13 +1086,16 @@ mod sanitizers {
 
 		// check the validators signature
 		{
-			let mut unchecked_bitfields = unchecked_bitfields.clone();
+			let mut unchecked_bitfields = unchecked_bitfields;
 
 			// insert a bad signature for the last bitfield
 			let last_bit_idx = unchecked_bitfields.len() - 1;
 			unchecked_bitfields
 				.get_mut(last_bit_idx)
-				.and_then(|u| Some(u.set_signature(UncheckedFrom::unchecked_from([1u8; 64]))))
+				.map(|u| {
+					u.set_signature(UncheckedFrom::unchecked_from([1u8; 64]));
+					()
+				})
 				.expect("we are accessing a valid index");
 			assert_eq!(
 				&sanitize_bitfields::<Test>(
@@ -1121,7 +1112,7 @@ mod sanitizers {
 			assert_eq!(
 				&sanitize_bitfields::<Test>(
 					unchecked_bitfields.clone(),
-					disputed_bitfield.clone(),
+					disputed_bitfield,
 					expected_bits,
 					parent_hash,
 					session_index,
@@ -1139,7 +1130,7 @@ mod sanitizers {
 
 		let header = default_header();
 		let relay_parent = header.hash();
-		let session_index = SessionIndex::from(0_u32);
+		let session_index = 0_u32;
 
 		let keystore = LocalKeystore::in_memory();
 		let keystore = Arc::new(keystore) as SyncCryptoStorePtr;
@@ -1165,14 +1156,11 @@ mod sanitizers {
 
 		let scheduled = (0_usize..2)
 			.into_iter()
-			.map(|idx| {
-				let ca = CoreAssignment {
-					kind: scheduler::AssignmentKind::Parachain,
-					group_idx: GroupIndex::from(idx as u32),
-					para_id: ParaId::from(1_u32 + idx as u32),
-					core: CoreIndex::from(idx as u32),
-				};
-				ca
+			.map(|idx| CoreAssignment {
+				kind: scheduler::AssignmentKind::Parachain,
+				group_idx: GroupIndex::from(idx as u32),
+				para_id: ParaId::from(1_u32 + idx as u32),
+				core: CoreIndex::from(idx as u32),
 			})
 			.collect::<Vec<_>>();
 		let scheduled = &scheduled[..];
@@ -1256,7 +1244,7 @@ mod sanitizers {
 				let mut set = std::collections::HashSet::new();
 				for (idx, backed_candidate) in backed_candidates.iter().enumerate() {
 					if idx & 0x01 == 0 {
-						set.insert(backed_candidate.hash().clone());
+						set.insert(backed_candidate.hash());
 					}
 				}
 				set

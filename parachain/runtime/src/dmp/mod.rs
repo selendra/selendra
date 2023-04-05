@@ -211,14 +211,14 @@ impl<T: Config> Pallet<T> {
 	/// associated with it.
 	#[cfg(test)]
 	fn dmq_mqc_head(para: ParaId) -> Hash {
-		<Self as Store>::DownwardMessageQueueHeads::get(&para)
+		<Self as Store>::DownwardMessageQueueHeads::get(para)
 	}
 
 	/// Returns the number of pending downward messages addressed to the given para.
 	///
 	/// Returns 0 if the para doesn't have an associated downward message queue.
 	pub(crate) fn dmq_length(para: ParaId) -> u32 {
-		<Self as Store>::DownwardMessageQueues::decode_len(&para)
+		<Self as Store>::DownwardMessageQueues::decode_len(para)
 			.unwrap_or(0)
 			.saturated_into::<u32>()
 	}
@@ -227,6 +227,6 @@ impl<T: Config> Pallet<T> {
 	///
 	/// The most recent messages are the latest in the vector.
 	pub(crate) fn dmq_contents(recipient: ParaId) -> Vec<InboundDownwardMessage<T::BlockNumber>> {
-		<Self as Store>::DownwardMessageQueues::get(&recipient)
+		<Self as Store>::DownwardMessageQueues::get(recipient)
 	}
 }

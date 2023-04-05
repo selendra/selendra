@@ -507,6 +507,5 @@ pub fn maybe_compress_pov(pov: PoV) -> PoV {
 	let PoV { block_data: BlockData(raw) } = pov;
 	let raw = sp_maybe_compressed_blob::compress(&raw, POV_BOMB_LIMIT).unwrap_or(raw);
 
-	let pov = PoV { block_data: BlockData(raw) };
-	pov
+	PoV { block_data: BlockData(raw) }
 }

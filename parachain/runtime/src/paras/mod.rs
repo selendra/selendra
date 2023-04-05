@@ -255,7 +255,7 @@ impl<N: Ord + Copy + PartialEq> ParaPastCodeMeta<N> {
 	// of the para.
 	#[cfg(test)]
 	fn most_recent_change(&self) -> Option<N> {
-		self.upgrade_times.last().map(|x| x.expected_at.clone())
+		self.upgrade_times.last().map(|x| x.expected_at)
 	}
 
 	// prunes all code upgrade logs occurring at or before `max`.
@@ -760,17 +760,12 @@ pub mod pallet {
 		StorageMap<_, Identity, ValidationCodeHash, ValidationCode>;
 
 	#[pallet::genesis_config]
+	#[derive(Default)]
 	pub struct GenesisConfig {
 		pub paras: Vec<(ParaId, ParaGenesisArgs)>,
 	}
 
 	#[cfg(feature = "std")]
-	impl Default for GenesisConfig {
-		fn default() -> Self {
-			GenesisConfig { paras: Default::default() }
-		}
-	}
-
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
@@ -795,10 +790,10 @@ pub mod pallet {
 			new_code: ValidationCode,
 		) -> DispatchResult {
 			ensure_root(origin)?;
-			let maybe_prior_code_hash = <Self as Store>::CurrentCodeHash::get(&para);
+			let maybe_prior_code_hash = <Self as Store>::CurrentCodeHash::get(para);
 			let new_code_hash = new_code.hash();
 			Self::increase_code_ref(&new_code_hash, &new_code);
-			<Self as Store>::CurrentCodeHash::insert(&para, new_code_hash);
+			<Self as Store>::CurrentCodeHash::insert(para, new_code_hash);
 
 			let now = frame_system::Pallet::<T>::block_number();
 			if let Some(prior_code_hash) = maybe_prior_code_hash {
@@ -892,9 +887,9 @@ pub mod pallet {
 			ensure_root(origin)?;
 			let code_hash = validation_code.hash();
 
-			if let Some(vote) = <Self as Store>::PvfActiveVoteMap::get(&code_hash) {
+			if let Some(vote) = <Self as Store>::PvfActiveVoteMap::get(code_hash) {
 				// Remove the existing vote.
-				PvfActiveVoteMap::<T>::remove(&code_hash);
+				PvfActiveVoteMap::<T>::remove(code_hash);
 				PvfActiveVoteList::<T>::mutate(|l| {
 					if let Ok(i) = l.binary_search(&code_hash) {
 						l.remove(i);
@@ -912,7 +907,7 @@ pub mod pallet {
 				return Ok(())
 			}
 
-			if <Self as Store>::CodeByHash::contains_key(&code_hash) {
+			if <Self as Store>::CodeByHash::contains_key(code_hash) {
 				// There is no vote, but the code exists. Nothing to do here.
 				return Ok(())
 			}
@@ -938,8 +933,8 @@ pub mod pallet {
 			validation_code_hash: ValidationCodeHash,
 		) -> DispatchResult {
 			ensure_root(origin)?;
-			if <Self as Store>::CodeByHashRefs::get(&validation_code_hash) == 0 {
-				<Self as Store>::CodeByHash::remove(&validation_code_hash);
+			if <Self as Store>::CodeByHashRefs::get(validation_code_hash) == 0 {
+				<Self as Store>::CodeByHash::remove(validation_code_hash);
 			}
 			Ok(())
 		}
@@ -980,11 +975,11 @@ pub mod pallet {
 
 			let signing_payload = stmt.signing_payload();
 			ensure!(
-				signature.verify(&signing_payload[..], &validator_public),
+				signature.verify(&signing_payload[..], validator_public),
 				Error::<T>::PvfCheckInvalidSignature,
 			);
 
-			let mut active_vote = PvfActiveVoteMap::<T>::get(&stmt.subject)
+			let mut active_vote = PvfActiveVoteMap::<T>::get(stmt.subject)
 				.ok_or(Error::<T>::PvfCheckSubjectInvalid)?;
 
 			// Ensure that the validator submitting this statement hasn't voted already.
@@ -1007,7 +1002,7 @@ pub mod pallet {
 				//
 				// Remove the PVF vote from the active map and finalize the PVF checking according
 				// to the outcome.
-				PvfActiveVoteMap::<T>::remove(&stmt.subject);
+				PvfActiveVoteMap::<T>::remove(stmt.subject);
 				PvfActiveVoteList::<T>::mutate(|l| {
 					if let Ok(i) = l.binary_search(&stmt.subject) {
 						l.remove(i);
@@ -1036,7 +1031,7 @@ pub mod pallet {
 				//
 				// - So just store the updated state back into the storage.
 				// - Only charge weight for simple vote inclusion.
-				PvfActiveVoteMap::<T>::insert(&stmt.subject, active_vote);
+				PvfActiveVoteMap::<T>::insert(stmt.subject, active_vote);
 				Ok(Some(<T as Config>::WeightInfo::include_pvf_check_statement()).into())
 			}
 		}
@@ -1071,11 +1066,11 @@ pub mod pallet {
 			};
 
 			let signing_payload = stmt.signing_payload();
-			if !signature.verify(&signing_payload[..], &validator_public) {
+			if !signature.verify(&signing_payload[..], validator_public) {
 				return InvalidTransaction::BadProof.into()
 			}
 
-			let active_vote = match PvfActiveVoteMap::<T>::get(&stmt.subject) {
+			let active_vote = match PvfActiveVoteMap::<T>::get(stmt.subject) {
 				Some(v) => v,
 				None => return InvalidTransaction::Custom(INVALID_TX_BAD_SUBJECT).into(),
 			};
@@ -1140,7 +1135,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Set the current head of a parachain.
 	pub(crate) fn set_current_head(para: ParaId, new_head: HeadData) {
-		<Self as Store>::Heads::insert(&para, new_head);
+		<Self as Store>::Heads::insert(para, new_head);
 		Self::deposit_event(Event::CurrentHeadUpdated(para));
 	}
 
@@ -1169,7 +1164,7 @@ impl<T: Config> Pallet<T> {
 	/// The validation code of live para.
 	pub(crate) fn current_code(para_id: &ParaId) -> Option<ValidationCode> {
 		Self::current_code_hash(para_id).and_then(|code_hash| {
-			let code = CodeByHash::<T>::get(&code_hash);
+			let code = CodeByHash::<T>::get(code_hash);
 			if code.is_none() {
 				log::error!(
 					"Pallet paras storage is inconsistent, code not found for hash {}",
@@ -1196,41 +1191,41 @@ impl<T: Config> Pallet<T> {
 		let mut outgoing = Vec::new();
 
 		for para in actions {
-			let lifecycle = ParaLifecycles::<T>::get(&para);
+			let lifecycle = ParaLifecycles::<T>::get(para);
 			match lifecycle {
 				None | Some(ParaLifecycle::Parathread) | Some(ParaLifecycle::Parachain) => { /* Nothing to do... */
 				},
 				Some(ParaLifecycle::Onboarding) => {
-					if let Some(genesis_data) = <Self as Store>::UpcomingParasGenesis::take(&para) {
+					if let Some(genesis_data) = <Self as Store>::UpcomingParasGenesis::take(para) {
 						Self::initialize_para_now(&mut parachains, para, &genesis_data);
 					}
 				},
 				// Upgrade a parathread to a parachain
 				Some(ParaLifecycle::UpgradingParathread) => {
 					parachains.add(para);
-					ParaLifecycles::<T>::insert(&para, ParaLifecycle::Parachain);
+					ParaLifecycles::<T>::insert(para, ParaLifecycle::Parachain);
 				},
 				// Downgrade a parachain to a parathread
 				Some(ParaLifecycle::DowngradingParachain) => {
 					parachains.remove(para);
-					ParaLifecycles::<T>::insert(&para, ParaLifecycle::Parathread);
+					ParaLifecycles::<T>::insert(para, ParaLifecycle::Parathread);
 				},
 				// Offboard a parathread or parachain from the system
 				Some(ParaLifecycle::OffboardingParachain) |
 				Some(ParaLifecycle::OffboardingParathread) => {
 					parachains.remove(para);
 
-					<Self as Store>::Heads::remove(&para);
-					<Self as Store>::FutureCodeUpgrades::remove(&para);
-					<Self as Store>::UpgradeGoAheadSignal::remove(&para);
-					<Self as Store>::UpgradeRestrictionSignal::remove(&para);
-					ParaLifecycles::<T>::remove(&para);
-					let removed_future_code_hash = <Self as Store>::FutureCodeHash::take(&para);
+					<Self as Store>::Heads::remove(para);
+					<Self as Store>::FutureCodeUpgrades::remove(para);
+					<Self as Store>::UpgradeGoAheadSignal::remove(para);
+					<Self as Store>::UpgradeRestrictionSignal::remove(para);
+					ParaLifecycles::<T>::remove(para);
+					let removed_future_code_hash = <Self as Store>::FutureCodeHash::take(para);
 					if let Some(removed_future_code_hash) = removed_future_code_hash {
 						Self::decrease_code_ref(&removed_future_code_hash);
 					}
 
-					let removed_code_hash = <Self as Store>::CurrentCodeHash::take(&para);
+					let removed_code_hash = <Self as Store>::CurrentCodeHash::take(para);
 					if let Some(removed_code_hash) = removed_code_hash {
 						Self::note_past_code(para, now, now, removed_code_hash);
 					}
@@ -1264,7 +1259,7 @@ impl<T: Config> Pallet<T> {
 		// Persist parachains into the storage explicitly.
 		drop(parachains);
 
-		return outgoing
+		outgoing
 	}
 
 	// note replacement of the code of para with given `id`, which occured in the
@@ -1279,11 +1274,11 @@ impl<T: Config> Pallet<T> {
 		now: T::BlockNumber,
 		old_code_hash: ValidationCodeHash,
 	) -> Weight {
-		<Self as Store>::PastCodeMeta::mutate(&id, |past_meta| {
+		<Self as Store>::PastCodeMeta::mutate(id, |past_meta| {
 			past_meta.note_replacement(at, now);
 		});
 
-		<Self as Store>::PastCodeHash::insert(&(id, at), old_code_hash);
+		<Self as Store>::PastCodeHash::insert((id, at), old_code_hash);
 
 		// Schedule pruning for this past-code to be removed as soon as it
 		// exits the slashing window.
@@ -1319,10 +1314,10 @@ impl<T: Config> Pallet<T> {
 				};
 
 				for (para_id, _) in pruning_tasks_to_do {
-					let full_deactivate = <Self as Store>::PastCodeMeta::mutate(&para_id, |meta| {
+					let full_deactivate = <Self as Store>::PastCodeMeta::mutate(para_id, |meta| {
 						for pruned_repl_at in meta.prune_up_to(pruning_height) {
 							let removed_code_hash =
-								<Self as Store>::PastCodeHash::take(&(para_id, pruned_repl_at));
+								<Self as Store>::PastCodeHash::take((para_id, pruned_repl_at));
 
 							if let Some(removed_code_hash) = removed_code_hash {
 								Self::decrease_code_ref(&removed_code_hash);
@@ -1335,13 +1330,13 @@ impl<T: Config> Pallet<T> {
 							}
 						}
 
-						meta.is_empty() && Self::para_head(&para_id).is_none()
+						meta.is_empty() && Self::para_head(para_id).is_none()
 					});
 
 					// This parachain has been removed and now the vestigial code
 					// has been removed from the state. clean up meta as well.
 					if full_deactivate {
-						<Self as Store>::PastCodeMeta::remove(&para_id);
+						<Self as Store>::PastCodeMeta::remove(para_id);
 					}
 				}
 
@@ -1366,7 +1361,7 @@ impl<T: Config> Pallet<T> {
 			|upcoming_upgrades: &mut Vec<(ParaId, T::BlockNumber)>| {
 				let num = upcoming_upgrades.iter().take_while(|&(_, at)| at <= &now).count();
 				for (para, _) in upcoming_upgrades.drain(..num) {
-					<Self as Store>::UpgradeGoAheadSignal::insert(&para, UpgradeGoAhead::GoAhead);
+					<Self as Store>::UpgradeGoAheadSignal::insert(para, UpgradeGoAhead::GoAhead);
 				}
 				num
 			},
@@ -1396,7 +1391,7 @@ impl<T: Config> Pallet<T> {
 		<Self as Store>::UpgradeCooldowns::mutate(
 			|upgrade_cooldowns: &mut Vec<(ParaId, T::BlockNumber)>| {
 				for &(para, _) in upgrade_cooldowns.iter().take_while(|&(_, at)| at <= &now) {
-					<Self as Store>::UpgradeRestrictionSignal::remove(&para);
+					<Self as Store>::UpgradeRestrictionSignal::remove(para);
 				}
 			},
 		);
@@ -1419,7 +1414,7 @@ impl<T: Config> Pallet<T> {
 		let mut actually_active_votes = Vec::with_capacity(potentially_active_votes.len());
 
 		for vote_subject in potentially_active_votes {
-			let mut vote_state = match PvfActiveVoteMap::<T>::take(&vote_subject) {
+			let mut vote_state = match PvfActiveVoteMap::<T>::take(vote_subject) {
 				Some(v) => v,
 				None => {
 					// This branch should never be reached. This is due to the fact that the set of
@@ -1438,7 +1433,7 @@ impl<T: Config> Pallet<T> {
 			if vote_state.age < cfg.pvf_voting_ttl {
 				weight += T::DbWeight::get().writes(1);
 				vote_state.reinitialize_ballots(new_n_validators);
-				PvfActiveVoteMap::<T>::insert(&vote_subject, vote_state);
+				PvfActiveVoteMap::<T>::insert(vote_subject, vote_state);
 
 				// push maintaining the original order.
 				actually_active_votes.push(vote_subject);
@@ -1526,7 +1521,7 @@ impl<T: Config> Pallet<T> {
 		);
 
 		weight += T::DbWeight::get().reads_writes(1, 4);
-		FutureCodeUpgrades::<T>::insert(&id, expected_at);
+		FutureCodeUpgrades::<T>::insert(id, expected_at);
 
 		<Self as Store>::UpcomingUpgrades::mutate(|upcoming_upgrades| {
 			let insert_idx = upcoming_upgrades
@@ -1563,14 +1558,14 @@ impl<T: Config> Pallet<T> {
 					// actual onboarding the parachain did not have a chance to reach to upgrades.
 					// Therefore we can skip all the upgrade related storage items here.
 					weight += T::DbWeight::get().writes(3);
-					UpcomingParasGenesis::<T>::remove(&id);
-					CurrentCodeHash::<T>::remove(&id);
-					ParaLifecycles::<T>::remove(&id);
+					UpcomingParasGenesis::<T>::remove(id);
+					CurrentCodeHash::<T>::remove(id);
+					ParaLifecycles::<T>::remove(id);
 				},
 				PvfCheckCause::Upgrade { id, .. } => {
 					weight += T::DbWeight::get().writes(2);
-					UpgradeGoAheadSignal::<T>::insert(&id, UpgradeGoAhead::Abort);
-					FutureCodeHash::<T>::remove(&id);
+					UpgradeGoAheadSignal::<T>::insert(id, UpgradeGoAhead::Abort);
+					FutureCodeHash::<T>::remove(id);
 				},
 			}
 		}
@@ -1603,7 +1598,7 @@ impl<T: Config> Pallet<T> {
 		// valid.
 		ensure!(Self::can_schedule_para_initialize(&id), Error::<T>::CannotOnboard);
 		ensure!(!genesis_data.validation_code.0.is_empty(), Error::<T>::CannotOnboard);
-		ParaLifecycles::<T>::insert(&id, ParaLifecycle::Onboarding);
+		ParaLifecycles::<T>::insert(id, ParaLifecycle::Onboarding);
 
 		// HACK: here we are doing something nasty.
 		//
@@ -1640,9 +1635,9 @@ impl<T: Config> Pallet<T> {
 		// [soaking issue]: https://github.com/paritytech/polkadot/issues/3918
 		let validation_code =
 			mem::replace(&mut genesis_data.validation_code, ValidationCode(Vec::new()));
-		UpcomingParasGenesis::<T>::insert(&id, genesis_data);
+		UpcomingParasGenesis::<T>::insert(id, genesis_data);
 		let validation_code_hash = validation_code.hash();
-		<Self as Store>::CurrentCodeHash::insert(&id, validation_code_hash);
+		<Self as Store>::CurrentCodeHash::insert(id, validation_code_hash);
 
 		let cfg = configuration::Pallet::<T>::config();
 		Self::kick_off_pvf_check(
@@ -1674,22 +1669,22 @@ impl<T: Config> Pallet<T> {
 		// with a new para head, so if a para never progresses we still should be able to offboard it.
 		//
 		// This implicitly assumes that the given para exists, i.e. it's lifecycle != None.
-		if let Some(future_code_hash) = FutureCodeHash::<T>::get(&id) {
+		if let Some(future_code_hash) = FutureCodeHash::<T>::get(id) {
 			let active_prechecking = PvfActiveVoteList::<T>::get();
 			if active_prechecking.contains(&future_code_hash) {
 				return Err(Error::<T>::CannotOffboard.into())
 			}
 		}
 
-		let lifecycle = ParaLifecycles::<T>::get(&id);
+		let lifecycle = ParaLifecycles::<T>::get(id);
 		match lifecycle {
 			// If para is not registered, nothing to do!
 			None => return Ok(()),
 			Some(ParaLifecycle::Parathread) => {
-				ParaLifecycles::<T>::insert(&id, ParaLifecycle::OffboardingParathread);
+				ParaLifecycles::<T>::insert(id, ParaLifecycle::OffboardingParathread);
 			},
 			Some(ParaLifecycle::Parachain) => {
-				ParaLifecycles::<T>::insert(&id, ParaLifecycle::OffboardingParachain);
+				ParaLifecycles::<T>::insert(id, ParaLifecycle::OffboardingParachain);
 			},
 			_ => return Err(Error::<T>::CannotOffboard)?,
 		}
@@ -1709,11 +1704,11 @@ impl<T: Config> Pallet<T> {
 	/// Will return error if `ParaLifecycle` is not `Parathread`.
 	pub(crate) fn schedule_parathread_upgrade(id: ParaId) -> DispatchResult {
 		let scheduled_session = Self::scheduled_session();
-		let lifecycle = ParaLifecycles::<T>::get(&id).ok_or(Error::<T>::NotRegistered)?;
+		let lifecycle = ParaLifecycles::<T>::get(id).ok_or(Error::<T>::NotRegistered)?;
 
 		ensure!(lifecycle == ParaLifecycle::Parathread, Error::<T>::CannotUpgrade);
 
-		ParaLifecycles::<T>::insert(&id, ParaLifecycle::UpgradingParathread);
+		ParaLifecycles::<T>::insert(id, ParaLifecycle::UpgradingParathread);
 		ActionsQueue::<T>::mutate(scheduled_session, |v| {
 			if let Err(i) = v.binary_search(&id) {
 				v.insert(i, id);
@@ -1728,11 +1723,11 @@ impl<T: Config> Pallet<T> {
 	/// Noop if `ParaLifecycle` is not `Parachain`.
 	pub(crate) fn schedule_parachain_downgrade(id: ParaId) -> DispatchResult {
 		let scheduled_session = Self::scheduled_session();
-		let lifecycle = ParaLifecycles::<T>::get(&id).ok_or(Error::<T>::NotRegistered)?;
+		let lifecycle = ParaLifecycles::<T>::get(id).ok_or(Error::<T>::NotRegistered)?;
 
 		ensure!(lifecycle == ParaLifecycle::Parachain, Error::<T>::CannotDowngrade);
 
-		ParaLifecycles::<T>::insert(&id, ParaLifecycle::DowngradingParachain);
+		ParaLifecycles::<T>::insert(id, ParaLifecycle::DowngradingParachain);
 		ActionsQueue::<T>::mutate(scheduled_session, |v| {
 			if let Err(i) = v.binary_search(&id) {
 				v.insert(i, id);
@@ -1766,7 +1761,7 @@ impl<T: Config> Pallet<T> {
 		let mut weight = T::DbWeight::get().reads(1);
 
 		// Enacting this should be prevented by the `can_schedule_upgrade`
-		if FutureCodeHash::<T>::contains_key(&id) {
+		if FutureCodeHash::<T>::contains_key(id) {
 			// This branch should never be reached. Signalling an upgrade is disallowed for a para
 			// that already has one upgrade scheduled.
 			//
@@ -1786,7 +1781,7 @@ impl<T: Config> Pallet<T> {
 		//
 		// We do not want to allow this since it will mess with the code reference counting.
 		weight += T::DbWeight::get().reads(1);
-		if CurrentCodeHash::<T>::get(&id) == Some(code_hash) {
+		if CurrentCodeHash::<T>::get(id) == Some(code_hash) {
 			// NOTE: we cannot set `UpgradeGoAheadSignal` signal here since this will be reset by
 			//       the following call `note_new_head`
 			log::warn!(
@@ -1798,8 +1793,8 @@ impl<T: Config> Pallet<T> {
 
 		// This is the start of the upgrade process. Prevent any further attempts at upgrading.
 		weight += T::DbWeight::get().writes(2);
-		FutureCodeHash::<T>::insert(&id, &code_hash);
-		UpgradeRestrictionSignal::<T>::insert(&id, UpgradeRestriction::Present);
+		FutureCodeHash::<T>::insert(id, code_hash);
+		UpgradeRestrictionSignal::<T>::insert(id, UpgradeRestriction::Present);
 
 		weight += T::DbWeight::get().reads_writes(1, 1);
 		let next_possible_upgrade_at = relay_parent_number + cfg.validation_upgrade_cooldown;
@@ -1847,11 +1842,11 @@ impl<T: Config> Pallet<T> {
 		Self::deposit_event(Event::PvfCheckStarted(code_hash, cause.para_id()));
 
 		weight += T::DbWeight::get().reads(1);
-		match PvfActiveVoteMap::<T>::get(&code_hash) {
+		match PvfActiveVoteMap::<T>::get(code_hash) {
 			None => {
 				// We deliberately are using `CodeByHash` here instead of the `CodeByHashRefs`. This
 				// is because the code may have been added by `add_trusted_validation_code`.
-				let known_code = CodeByHash::<T>::contains_key(&code_hash);
+				let known_code = CodeByHash::<T>::contains_key(code_hash);
 				weight += T::DbWeight::get().reads(1);
 
 				if !cfg.pvf_checking_enabled || known_code {
@@ -1870,7 +1865,7 @@ impl<T: Config> Pallet<T> {
 					let now = <frame_system::Pallet<T>>::block_number();
 					let n_validators = shared::Pallet::<T>::active_validator_keys().len();
 					PvfActiveVoteMap::<T>::insert(
-						&code_hash,
+						code_hash,
 						PvfCheckActiveVoteState::new(now, n_validators, cause),
 					);
 					PvfActiveVoteList::<T>::mutate(|l| {
@@ -1885,7 +1880,7 @@ impl<T: Config> Pallet<T> {
 				// on it.
 				weight += T::DbWeight::get().writes(1);
 				vote_state.causes.push(cause);
-				PvfActiveVoteMap::<T>::insert(&code_hash, vote_state);
+				PvfActiveVoteMap::<T>::insert(code_hash, vote_state);
 			},
 		}
 
@@ -1913,22 +1908,22 @@ impl<T: Config> Pallet<T> {
 		new_head: HeadData,
 		execution_context: T::BlockNumber,
 	) -> Weight {
-		Heads::<T>::insert(&id, new_head);
+		Heads::<T>::insert(id, new_head);
 
-		if let Some(expected_at) = <Self as Store>::FutureCodeUpgrades::get(&id) {
+		if let Some(expected_at) = <Self as Store>::FutureCodeUpgrades::get(id) {
 			if expected_at <= execution_context {
-				<Self as Store>::FutureCodeUpgrades::remove(&id);
-				<Self as Store>::UpgradeGoAheadSignal::remove(&id);
+				<Self as Store>::FutureCodeUpgrades::remove(id);
+				<Self as Store>::UpgradeGoAheadSignal::remove(id);
 
 				// Both should always be `Some` in this case, since a code upgrade is scheduled.
-				let new_code_hash = if let Some(new_code_hash) = FutureCodeHash::<T>::take(&id) {
+				let new_code_hash = if let Some(new_code_hash) = FutureCodeHash::<T>::take(id) {
 					new_code_hash
 				} else {
 					log::error!(target: LOG_TARGET, "Missing future code hash for {:?}", &id);
 					return T::DbWeight::get().reads_writes(3, 1 + 3)
 				};
-				let maybe_prior_code_hash = CurrentCodeHash::<T>::get(&id);
-				CurrentCodeHash::<T>::insert(&id, &new_code_hash);
+				let maybe_prior_code_hash = CurrentCodeHash::<T>::get(id);
+				CurrentCodeHash::<T>::insert(id, new_code_hash);
 
 				let log = ConsensusLog::ParaUpgradeCode(id, new_code_hash);
 				<frame_system::Pallet<T>>::deposit_log(log.into());
@@ -1946,14 +1941,14 @@ impl<T: Config> Pallet<T> {
 				// add 1 to writes due to heads update.
 				weight + T::DbWeight::get().reads_writes(3, 1 + 3)
 			} else {
-				T::DbWeight::get().reads_writes(1, 1 + 0)
+				T::DbWeight::get().reads_writes(1, 1)
 			}
 		} else {
 			// This means there is no upgrade scheduled.
 			//
 			// In case the upgrade was aborted by the relay-chain we should reset
 			// the `Abort` signal.
-			UpgradeGoAheadSignal::<T>::remove(&id);
+			UpgradeGoAheadSignal::<T>::remove(id);
 			T::DbWeight::get().reads_writes(1, 2)
 		}
 	}
@@ -1985,14 +1980,14 @@ impl<T: Config> Pallet<T> {
 
 	/// Returns the current lifecycle state of the para.
 	pub fn lifecycle(id: ParaId) -> Option<ParaLifecycle> {
-		ParaLifecycles::<T>::get(&id)
+		ParaLifecycles::<T>::get(id)
 	}
 
 	/// Returns whether the given ID refers to a valid para.
 	///
 	/// Paras that are onboarding or offboarding are not included.
 	pub fn is_valid_para(id: ParaId) -> bool {
-		if let Some(state) = ParaLifecycles::<T>::get(&id) {
+		if let Some(state) = ParaLifecycles::<T>::get(id) {
 			!state.is_onboarding() && !state.is_offboarding()
 		} else {
 			false
@@ -2003,7 +1998,7 @@ impl<T: Config> Pallet<T> {
 	///
 	/// Includes parachains which will downgrade to a parathread in the future.
 	pub fn is_parachain(id: ParaId) -> bool {
-		if let Some(state) = ParaLifecycles::<T>::get(&id) {
+		if let Some(state) = ParaLifecycles::<T>::get(id) {
 			state.is_parachain()
 		} else {
 			false
@@ -2014,7 +2009,7 @@ impl<T: Config> Pallet<T> {
 	///
 	/// Includes parathreads which will upgrade to parachains in the future.
 	pub fn is_parathread(id: ParaId) -> bool {
-		if let Some(state) = ParaLifecycles::<T>::get(&id) {
+		if let Some(state) = ParaLifecycles::<T>::get(id) {
 			state.is_parathread()
 		} else {
 			false
@@ -2024,7 +2019,7 @@ impl<T: Config> Pallet<T> {
 	/// If a candidate from the specified parachain were submitted at the current block, this
 	/// function returns if that candidate passes the acceptance criteria.
 	pub(crate) fn can_upgrade_validation_code(id: ParaId) -> bool {
-		FutureCodeHash::<T>::get(&id).is_none() && UpgradeRestrictionSignal::<T>::get(&id).is_none()
+		FutureCodeHash::<T>::get(id).is_none() && UpgradeRestrictionSignal::<T>::get(id).is_none()
 	}
 
 	/// Return the session index that should be used for any future scheduled changes.
@@ -2092,9 +2087,9 @@ impl<T: Config> Pallet<T> {
 		match genesis_data.para_kind {
 			ParaKind::Parachain => {
 				parachains.add(id);
-				ParaLifecycles::<T>::insert(&id, ParaLifecycle::Parachain);
+				ParaLifecycles::<T>::insert(id, ParaLifecycle::Parachain);
 			},
-			ParaKind::Parathread => ParaLifecycles::<T>::insert(&id, ParaLifecycle::Parathread),
+			ParaKind::Parathread => ParaLifecycles::<T>::insert(id, ParaLifecycle::Parathread),
 		}
 
 		// HACK: see the notice in `schedule_para_initialize`.
@@ -2105,10 +2100,10 @@ impl<T: Config> Pallet<T> {
 		if !genesis_data.validation_code.0.is_empty() {
 			let code_hash = genesis_data.validation_code.hash();
 			Self::increase_code_ref(&code_hash, &genesis_data.validation_code);
-			CurrentCodeHash::<T>::insert(&id, code_hash);
+			CurrentCodeHash::<T>::insert(id, code_hash);
 		}
 
-		Heads::<T>::insert(&id, &genesis_data.genesis_head);
+		Heads::<T>::insert(id, &genesis_data.genesis_head);
 	}
 }
 
@@ -2126,7 +2121,7 @@ impl<T: Config> ParachainsCache<T> {
 	}
 
 	fn ensure_initialized(&mut self) -> &mut Vec<ParaId> {
-		self.parachains.get_or_insert_with(|| Parachains::<T>::get())
+		self.parachains.get_or_insert_with(Parachains::<T>::get)
 	}
 
 	/// Adds the given para id to the list.

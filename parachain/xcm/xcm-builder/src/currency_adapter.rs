@@ -145,7 +145,7 @@ impl<
 	fn deposit_asset(what: &MultiAsset, who: &MultiLocation) -> Result {
 		log::trace!(target: "xcm::currency_adapter", "deposit_asset what: {:?}, who: {:?}", what, who);
 		// Check we handle this asset.
-		let amount = Matcher::matches_fungible(&what).ok_or(Error::AssetNotFound)?;
+		let amount = Matcher::matches_fungible(what).ok_or(Error::AssetNotFound)?;
 		let who =
 			AccountIdConverter::convert_ref(who).map_err(|()| Error::AccountIdConversionFailed)?;
 		let _imbalance = Currency::deposit_creating(&who, amount);

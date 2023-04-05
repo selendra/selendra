@@ -162,7 +162,7 @@ impl Protocol {
 				name,
 				fallback_names,
 				max_request_size: 1_000,
-				max_response_size: POV_RESPONSE_SIZE as u64 * 3,
+				max_response_size: POV_RESPONSE_SIZE * 3,
 				// We are connected to all validators:
 				request_timeout: CHUNK_REQUEST_TIMEOUT,
 				inbound_queue: tx,

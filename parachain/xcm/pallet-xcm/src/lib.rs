@@ -1242,7 +1242,6 @@ pub mod pallet {
 						"Could not determine a version to wrap XCM for destination: {:?}",
 						dest,
 					);
-					()
 				})
 				.and_then(|v| xcm.into().into_version(v.min(XCM_VERSION)))
 		}
@@ -1323,7 +1322,7 @@ pub mod pallet {
 				n => AssetTraps::<T>::insert(hash, n - 1),
 			}
 			Self::deposit_event(Event::AssetsClaimed(hash, origin.clone(), versioned));
-			return true
+			true
 		}
 	}
 
@@ -1407,7 +1406,7 @@ pub mod pallet {
 						));
 						return 0
 					}
-					return match maybe_notify {
+					match maybe_notify {
 						Some((pallet_index, call_index)) => {
 							// This is a bit horrible, but we happen to know that the `Call` will
 							// be built by `(pallet_index: u8, call_index: u8, QueryId, Response)`.
@@ -1470,7 +1469,7 @@ pub mod pallet {
 				},
 				_ => {
 					Self::deposit_event(Event::UnexpectedResponse(origin.clone(), query_id));
-					return 0
+					0
 				},
 			}
 		}

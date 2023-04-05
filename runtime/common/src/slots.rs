@@ -244,7 +244,7 @@ impl<T: Config> Pallet<T> {
 				//
 				// Unreserve whatever is left.
 				if let Some((who, value)) = &lease_periods[0] {
-					T::Currency::unreserve(&who, *value);
+					T::Currency::unreserve(who, *value);
 				}
 
 				// Remove the now-empty lease list.
@@ -370,7 +370,7 @@ impl<T: Config> Leaser<T::BlockNumber> for Pallet<T> {
 				if d.len() > i {
 					// Already exists but it's `None`. That means a later slot was already leased.
 					// No problem.
-					if d[i] == None {
+					if d[i].is_none() {
 						d[i] = Some((leaser.clone(), amount));
 					} else {
 						// The chain tried to lease the same period twice. This might be a griefing
@@ -390,10 +390,9 @@ impl<T: Config> Leaser<T::BlockNumber> for Pallet<T> {
 
 			// Figure out whether we already have some funds of `leaser` held in reserve for `para_id`.
 			//  If so, then we can deduct those from the amount that we need to reserve.
-			let maybe_additional = amount.checked_sub(&Self::deposit_held(para, &leaser));
+			let maybe_additional = amount.checked_sub(&Self::deposit_held(para, leaser));
 			if let Some(ref additional) = maybe_additional {
-				T::Currency::reserve(&leaser, *additional)
-					.map_err(|_| LeaseError::ReserveFailed)?;
+				T::Currency::reserve(leaser, *additional).map_err(|_| LeaseError::ReserveFailed)?;
 			}
 
 			let reserved = maybe_additional.unwrap_or_default();

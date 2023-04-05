@@ -435,17 +435,12 @@ pub mod pallet {
 	///    configuration pallet.
 	/// 2. `sender` and `recipient` must be valid paras.
 	#[pallet::genesis_config]
+	#[derive(Default)]
 	pub struct GenesisConfig {
 		preopen_hrmp_channels: Vec<(ParaId, ParaId, u32, u32)>,
 	}
 
 	#[cfg(feature = "std")]
-	impl Default for GenesisConfig {
-		fn default() -> Self {
-			GenesisConfig { preopen_hrmp_channels: Default::default() }
-		}
-	}
-
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
@@ -751,10 +746,10 @@ impl<T: Config> Pallet<T> {
 
 		let ingress = <Self as Store>::HrmpIngressChannelsIndex::take(outgoing_para)
 			.into_iter()
-			.map(|sender| HrmpChannelId { sender, recipient: outgoing_para.clone() });
+			.map(|sender| HrmpChannelId { sender, recipient: *outgoing_para });
 		let egress = <Self as Store>::HrmpEgressChannelsIndex::take(outgoing_para)
 			.into_iter()
-			.map(|recipient| HrmpChannelId { sender: outgoing_para.clone(), recipient });
+			.map(|recipient| HrmpChannelId { sender: *outgoing_para, recipient });
 		let mut to_close = ingress.chain(egress).collect::<Vec<_>>();
 		to_close.sort();
 		to_close.dedup();
@@ -807,12 +802,12 @@ impl<T: Config> Pallet<T> {
 						},
 					);
 
-					<Self as Store>::HrmpIngressChannelsIndex::mutate(&channel_id.recipient, |v| {
+					<Self as Store>::HrmpIngressChannelsIndex::mutate(channel_id.recipient, |v| {
 						if let Err(i) = v.binary_search(&channel_id.sender) {
 							v.insert(i, channel_id.sender);
 						}
 					});
-					<Self as Store>::HrmpEgressChannelsIndex::mutate(&channel_id.sender, |v| {
+					<Self as Store>::HrmpEgressChannelsIndex::mutate(channel_id.sender, |v| {
 						if let Err(i) = v.binary_search(&channel_id.recipient) {
 							v.insert(i, channel_id.recipient);
 						}
@@ -861,12 +856,12 @@ impl<T: Config> Pallet<T> {
 
 		<Self as Store>::HrmpChannelContents::remove(channel_id);
 
-		<Self as Store>::HrmpEgressChannelsIndex::mutate(&channel_id.sender, |v| {
+		<Self as Store>::HrmpEgressChannelsIndex::mutate(channel_id.sender, |v| {
 			if let Ok(i) = v.binary_search(&channel_id.recipient) {
 				v.remove(i);
 			}
 		});
-		<Self as Store>::HrmpIngressChannelsIndex::mutate(&channel_id.recipient, |v| {
+		<Self as Store>::HrmpIngressChannelsIndex::mutate(channel_id.recipient, |v| {
 			if let Ok(i) = v.binary_search(&channel_id.sender) {
 				v.remove(i);
 			}
@@ -886,7 +881,7 @@ impl<T: Config> Pallet<T> {
 		//
 		// (b) However, a parachain cannot read into "the future", therefore the watermark should
 		//     not be greater than the relay-chain context block which the parablock refers to.
-		if let Some(last_watermark) = <Self as Store>::HrmpWatermarks::get(&recipient) {
+		if let Some(last_watermark) = <Self as Store>::HrmpWatermarks::get(recipient) {
 			if new_hrmp_watermark <= last_watermark {
 				return Err(HrmpWatermarkAcceptanceErr::AdvancementRule {
 					new_watermark: new_hrmp_watermark,
@@ -908,10 +903,10 @@ impl<T: Config> Pallet<T> {
 		if new_hrmp_watermark == relay_chain_parent_number {
 			Ok(())
 		} else {
-			let digest = <Self as Store>::HrmpChannelDigests::get(&recipient);
-			if !digest
+			let digest = <Self as Store>::HrmpChannelDigests::get(recipient);
+			if digest
 				.binary_search_by_key(&new_hrmp_watermark, |(block_no, _)| *block_no)
-				.is_ok()
+				.is_err()
 			{
 				return Err(HrmpWatermarkAcceptanceErr::LandsOnBlockWithNoMessages {
 					new_watermark: new_hrmp_watermark,
@@ -990,10 +985,10 @@ impl<T: Config> Pallet<T> {
 
 		// sift through the incoming messages digest to collect the paras that sent at least one
 		// message to this parachain between the old and new watermarks.
-		let senders = <Self as Store>::HrmpChannelDigests::mutate(&recipient, |digest| {
+		let senders = <Self as Store>::HrmpChannelDigests::mutate(recipient, |digest| {
 			let mut senders = BTreeSet::new();
 			let mut leftover = Vec::with_capacity(digest.len());
-			for (block_no, paras_sent_msg) in mem::replace(digest, Vec::new()) {
+			for (block_no, paras_sent_msg) in mem::take(digest) {
 				if block_no <= new_hrmp_watermark {
 					senders.extend(paras_sent_msg);
 				} else {
@@ -1040,7 +1035,7 @@ impl<T: Config> Pallet<T> {
 			weight += T::DbWeight::get().reads_writes(2, 2);
 		}
 
-		<Self as Store>::HrmpWatermarks::insert(&recipient, new_hrmp_watermark);
+		<Self as Store>::HrmpWatermarks::insert(recipient, new_hrmp_watermark);
 		weight += T::DbWeight::get().reads_writes(0, 1);
 
 		weight
@@ -1075,7 +1070,7 @@ impl<T: Config> Pallet<T> {
 			channel.total_size += inbound.data.len() as u32;
 
 			// compute the new MQC head of the channel
-			let prev_head = channel.mqc_head.clone().unwrap_or(Default::default());
+			let prev_head = channel.mqc_head.unwrap_or_default();
 			let new_head = BlakeTwo256::hash_of(&(
 				prev_head,
 				inbound.sent_at,
@@ -1099,7 +1094,7 @@ impl<T: Config> Pallet<T> {
 			// Note that having the latest entry greater than the current block number is a logical
 			// error.
 			let mut recipient_digest =
-				<Self as Store>::HrmpChannelDigests::get(&channel_id.recipient);
+				<Self as Store>::HrmpChannelDigests::get(channel_id.recipient);
 			if let Some(cur_block_digest) = recipient_digest
 				.last_mut()
 				.filter(|(block_no, _)| *block_no == now)
@@ -1109,7 +1104,7 @@ impl<T: Config> Pallet<T> {
 			} else {
 				recipient_digest.push((now, vec![sender]));
 			}
-			<Self as Store>::HrmpChannelDigests::insert(&channel_id.recipient, recipient_digest);
+			<Self as Store>::HrmpChannelDigests::insert(channel_id.recipient, recipient_digest);
 
 			weight += T::DbWeight::get().reads_writes(2, 2);
 		}
@@ -1157,8 +1152,8 @@ impl<T: Config> Pallet<T> {
 		);
 
 		let egress_cnt =
-			<Self as Store>::HrmpEgressChannelsIndex::decode_len(&origin).unwrap_or(0) as u32;
-		let open_req_cnt = <Self as Store>::HrmpOpenChannelRequestCount::get(&origin);
+			<Self as Store>::HrmpEgressChannelsIndex::decode_len(origin).unwrap_or(0) as u32;
+		let open_req_cnt = <Self as Store>::HrmpOpenChannelRequestCount::get(origin);
 		let channel_num_limit = if <paras::Pallet<T>>::is_parathread(origin) {
 			config.hrmp_max_parathread_outbound_channels
 		} else {
@@ -1176,7 +1171,7 @@ impl<T: Config> Pallet<T> {
 
 		// mutating storage directly now -- shall not bail henceforth.
 
-		<Self as Store>::HrmpOpenChannelRequestCount::insert(&origin, open_req_cnt + 1);
+		<Self as Store>::HrmpOpenChannelRequestCount::insert(origin, open_req_cnt + 1);
 		<Self as Store>::HrmpOpenChannelRequests::insert(
 			&channel_id,
 			HrmpOpenChannelRequest {
@@ -1235,8 +1230,8 @@ impl<T: Config> Pallet<T> {
 			config.hrmp_max_parachain_inbound_channels
 		};
 		let ingress_cnt =
-			<Self as Store>::HrmpIngressChannelsIndex::decode_len(&origin).unwrap_or(0) as u32;
-		let accepted_cnt = <Self as Store>::HrmpAcceptedChannelRequestCount::get(&origin);
+			<Self as Store>::HrmpIngressChannelsIndex::decode_len(origin).unwrap_or(0) as u32;
+		let accepted_cnt = <Self as Store>::HrmpAcceptedChannelRequestCount::get(origin);
 		ensure!(
 			ingress_cnt + accepted_cnt < channel_num_limit,
 			Error::<T>::AcceptHrmpChannelLimitExceeded,
@@ -1251,7 +1246,7 @@ impl<T: Config> Pallet<T> {
 		// channels.
 		channel_req.confirmed = true;
 		<Self as Store>::HrmpOpenChannelRequests::insert(&channel_id, channel_req);
-		<Self as Store>::HrmpAcceptedChannelRequestCount::insert(&origin, accepted_cnt + 1);
+		<Self as Store>::HrmpAcceptedChannelRequestCount::insert(origin, accepted_cnt + 1);
 
 		let notification_bytes = {
 			use parity_scale_codec::Encode as _;
@@ -1357,16 +1352,15 @@ impl<T: Config> Pallet<T> {
 	/// multiple entries with the same sender.
 	#[cfg(test)]
 	fn hrmp_mqc_heads(recipient: ParaId) -> Vec<(ParaId, Hash)> {
-		let sender_set = <Self as Store>::HrmpIngressChannelsIndex::get(&recipient);
+		let sender_set = <Self as Store>::HrmpIngressChannelsIndex::get(recipient);
 
 		// The ingress channels vector is sorted, thus `mqc_heads` is sorted as well.
 		let mut mqc_heads = Vec::with_capacity(sender_set.len());
 		for sender in sender_set {
 			let channel_metadata =
 				<Self as Store>::HrmpChannels::get(&HrmpChannelId { sender, recipient });
-			let mqc_head = channel_metadata
-				.and_then(|metadata| metadata.mqc_head)
-				.unwrap_or(Hash::default());
+			let mqc_head =
+				channel_metadata.and_then(|metadata| metadata.mqc_head).unwrap_or_default();
 			mqc_heads.push((sender, mqc_head));
 		}
 
@@ -1378,7 +1372,7 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn inbound_hrmp_channels_contents(
 		recipient: ParaId,
 	) -> BTreeMap<ParaId, Vec<InboundHrmpMessage<T::BlockNumber>>> {
-		let sender_set = <Self as Store>::HrmpIngressChannelsIndex::get(&recipient);
+		let sender_set = <Self as Store>::HrmpIngressChannelsIndex::get(recipient);
 
 		let mut inbound_hrmp_channels_contents = BTreeMap::new();
 		for sender in sender_set {
@@ -1395,7 +1389,7 @@ impl<T: Config> Pallet<T> {
 	/// Decreases the open channel request count for the given sender. If the value reaches zero
 	/// it is removed completely.
 	fn decrease_open_channel_request_count(sender: ParaId) {
-		<Self as Store>::HrmpOpenChannelRequestCount::mutate_exists(&sender, |opt_rc| {
+		<Self as Store>::HrmpOpenChannelRequestCount::mutate_exists(sender, |opt_rc| {
 			*opt_rc = opt_rc.and_then(|rc| match rc.saturating_sub(1) {
 				0 => None,
 				n => Some(n),
@@ -1406,7 +1400,7 @@ impl<T: Config> Pallet<T> {
 	/// Decreases the accepted channel request count for the given sender. If the value reaches
 	/// zero it is removed completely.
 	fn decrease_accepted_channel_request_count(recipient: ParaId) {
-		<Self as Store>::HrmpAcceptedChannelRequestCount::mutate_exists(&recipient, |opt_rc| {
+		<Self as Store>::HrmpAcceptedChannelRequestCount::mutate_exists(recipient, |opt_rc| {
 			*opt_rc = opt_rc.and_then(|rc| match rc.saturating_sub(1) {
 				0 => None,
 				n => Some(n),

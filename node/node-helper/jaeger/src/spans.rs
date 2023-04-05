@@ -237,7 +237,7 @@ impl LazyIdent for CandidateHash {
 	}
 
 	fn extra_tags(&self, span: &mut Span) {
-		span.add_string_fmt_debug_tag("candidate-hash", &self.0);
+		span.add_string_fmt_debug_tag("candidate-hash", self.0);
 		// A convenience for usage with the grafana tempo UI,
 		// not a technical requirement. It merely provides an easy anchor
 		// where the true trace identifier of the span is not based on
@@ -299,7 +299,7 @@ impl Span {
 	/// Attach a candidate hash to the span.
 	#[inline(always)]
 	pub fn with_candidate(self, candidate_hash: CandidateHash) -> Self {
-		self.with_string_fmt_debug_tag("candidate-hash", &candidate_hash.0)
+		self.with_string_fmt_debug_tag("candidate-hash", candidate_hash.0)
 	}
 
 	/// Attach a para-id to the span.
@@ -317,7 +317,7 @@ impl Span {
 
 	#[inline(always)]
 	pub fn with_validator_index(self, validator: ValidatorIndex) -> Self {
-		self.with_string_tag("validator-index", &validator.0)
+		self.with_string_tag("validator-index", validator.0)
 	}
 
 	#[inline(always)]
@@ -332,7 +332,7 @@ impl Span {
 
 	#[inline(always)]
 	pub fn with_claimed_validator_index(self, claimed_validator_index: ValidatorIndex) -> Self {
-		self.with_string_tag("claimed-validator", &claimed_validator_index.0)
+		self.with_string_tag("claimed-validator", claimed_validator_index.0)
 	}
 
 	#[inline(always)]
@@ -367,7 +367,7 @@ impl Span {
 	pub fn add_follows_from(&mut self, other: &Self) {
 		match (self, other) {
 			(Self::Enabled(ref mut inner), Self::Enabled(ref other_inner)) =>
-				inner.add_follows_from(&other_inner),
+				inner.add_follows_from(other_inner),
 			_ => {},
 		}
 	}

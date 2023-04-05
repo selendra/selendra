@@ -384,7 +384,7 @@ fn check_sent_messages() {
 		let msgs = vec![OutboundHrmpMessage { recipient: para_b, data: b"knock".to_vec() }];
 		let config = Configuration::config();
 		assert!(Hrmp::check_outbound_hrmp(&config, para_a, &msgs).is_ok());
-		let _ = Hrmp::queue_outbound_hrmp(para_a, msgs.clone());
+		let _ = Hrmp::queue_outbound_hrmp(para_a, msgs);
 
 		// Verify that the sent messages are there and that also the empty channels are present.
 		let mqc_heads = Hrmp::hrmp_mqc_heads(para_b);

@@ -88,7 +88,7 @@ impl frame_system::Config for Runtime {
 }
 
 parameter_types! {
-	pub ExistentialDeposit: Balance = 1 * CENTS;
+	pub ExistentialDeposit: Balance = CENTS;
 	pub const MaxLocks: u32 = 50;
 	pub const MaxReserves: u32 = 50;
 }

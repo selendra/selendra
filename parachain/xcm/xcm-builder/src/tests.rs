@@ -497,7 +497,7 @@ fn version_subscription_instruction_should_work() {
 	let weight_limit = 20;
 	let r = XcmExecutor::<TestConfig>::execute_xcm_in_credit(
 		origin.clone(),
-		message.clone(),
+		message,
 		weight_limit,
 		weight_limit,
 	);
@@ -509,7 +509,7 @@ fn version_subscription_instruction_should_work() {
 	]);
 	let r = XcmExecutor::<TestConfig>::execute_xcm_in_credit(
 		origin,
-		message.clone(),
+		message,
 		weight_limit,
 		weight_limit,
 	);
@@ -553,7 +553,7 @@ fn version_unsubscription_instruction_should_work() {
 	let weight_limit = 20;
 	let r = XcmExecutor::<TestConfig>::execute_xcm_in_credit(
 		origin.clone(),
-		message.clone(),
+		message,
 		weight_limit,
 		weight_limit,
 	);
@@ -563,7 +563,7 @@ fn version_unsubscription_instruction_should_work() {
 	let message = Xcm::<TestCall>(vec![SetAppendix(Xcm(vec![])), UnsubscribeVersion]);
 	let r = XcmExecutor::<TestConfig>::execute_xcm_in_credit(
 		origin,
-		message.clone(),
+		message,
 		weight_limit,
 		weight_limit,
 	);
@@ -634,7 +634,7 @@ fn paid_transacting_should_refund_payment_for_unused_weight() {
 			call: TestCall::Any(50, Some(10)).encode().into(),
 		},
 		RefundSurplus,
-		DepositAsset { assets: All.into(), max_assets: 1, beneficiary: one.clone() },
+		DepositAsset { assets: All.into(), max_assets: 1, beneficiary: one },
 	]);
 	let weight_limit = 100;
 	let r = XcmExecutor::<TestConfig>::execute_xcm(origin, message, weight_limit);
@@ -662,7 +662,7 @@ fn prepaid_result_of_query_should_get_free_execution() {
 	assert_eq!(response(query_id).unwrap(), the_response);
 
 	// Second time it doesn't, since we're not.
-	let r = XcmExecutor::<TestConfig>::execute_xcm(Parent, message.clone(), weight_limit);
+	let r = XcmExecutor::<TestConfig>::execute_xcm(Parent, message, weight_limit);
 	assert_eq!(r, Outcome::Error(XcmError::Barrier));
 }
 

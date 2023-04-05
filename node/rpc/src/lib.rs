@@ -139,7 +139,7 @@ where
 	} = grandpa;
 
 	io.merge(StateMigration::new(client.clone(), backend, deny_unsafe).into_rpc())?;
-	io.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
+	io.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
 	io.merge(TransactionPayment::new(client.clone()).into_rpc())?;
 	io.merge(Mmr::new(client.clone()).into_rpc())?;
 	io.merge(

@@ -159,7 +159,7 @@ pub(crate) fn impl_gum2(orig: TokenStream, level: Level) -> Result<TokenStream> 
 
 /// Extract the support crate path.
 fn support_crate() -> TokenStream {
-	let support_crate_name = if cfg!(test) {
+	if cfg!(test) {
 		quote! {crate}
 	} else {
 		use proc_macro_crate::{crate_name, FoundCrate};
@@ -169,6 +169,5 @@ fn support_crate() -> TokenStream {
 			FoundCrate::Itself => quote! {crate},
 			FoundCrate::Name(name) => Ident::new(&name, Span::call_site()).to_token_stream(),
 		}
-	};
-	support_crate_name
+	}
 }

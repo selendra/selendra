@@ -107,7 +107,7 @@ impl<XcmExecutor: xcm::latest::ExecuteXcm<C::RuntimeCall>, C: Config> UmpSink
 			VersionedXcm,
 		};
 
-		let id = upward_message_id(&data[..]);
+		let id = upward_message_id(data);
 		let maybe_msg_and_weight = VersionedXcm::<C::RuntimeCall>::decode_all_with_depth_limit(
 			xcm::MAX_XCM_DECODE_DEPTH,
 			&mut data,
@@ -433,9 +433,9 @@ impl<T: Config> Pallet<T> {
 		}
 
 		let (mut para_queue_count, mut para_queue_size) =
-			<Self as Store>::RelayDispatchQueueSize::get(&para);
+			<Self as Store>::RelayDispatchQueueSize::get(para);
 
-		for (idx, msg) in upward_messages.into_iter().enumerate() {
+		for (idx, msg) in upward_messages.iter().enumerate() {
 			let msg_size = msg.len() as u32;
 			if msg_size > config.max_upward_message_size {
 				return Err(AcceptanceCheckErr::MessageSize {
@@ -478,17 +478,14 @@ impl<T: Config> Pallet<T> {
 				.iter()
 				.fold((0, 0), |(cnt, size), d| (cnt + 1, size + d.len() as u32));
 
-			<Self as Store>::RelayDispatchQueues::mutate(&para, |v| {
+			<Self as Store>::RelayDispatchQueues::mutate(para, |v| {
 				v.extend(upward_messages.into_iter())
 			});
 
-			<Self as Store>::RelayDispatchQueueSize::mutate(
-				&para,
-				|(ref mut cnt, ref mut size)| {
-					*cnt += extra_count;
-					*size += extra_size;
-				},
-			);
+			<Self as Store>::RelayDispatchQueueSize::mutate(para, |(ref mut cnt, ref mut size)| {
+				*cnt += extra_count;
+				*size += extra_size;
+			});
 
 			<Self as Store>::NeedsDispatch::mutate(|v| {
 				if let Err(i) = v.binary_search(&para) {
@@ -626,8 +623,8 @@ impl QueueCache {
 
 	fn ensure_cached<T: Config>(&mut self, para: ParaId) -> &mut QueueCacheEntry {
 		self.0.entry(para).or_insert_with(|| {
-			let queue = RelayDispatchQueues::<T>::get(&para);
-			let (_, total_size) = RelayDispatchQueueSize::<T>::get(&para);
+			let queue = RelayDispatchQueues::<T>::get(para);
+			let (_, total_size) = RelayDispatchQueueSize::<T>::get(para);
 			QueueCacheEntry { queue, total_size, consumed_count: 0, consumed_size: 0 }
 		})
 	}
@@ -674,13 +671,13 @@ impl QueueCache {
 		for (para, entry) in self.0 {
 			if entry.consumed_count >= entry.queue.len() {
 				// remove the entries altogether.
-				RelayDispatchQueues::<T>::remove(&para);
-				RelayDispatchQueueSize::<T>::remove(&para);
+				RelayDispatchQueues::<T>::remove(para);
+				RelayDispatchQueueSize::<T>::remove(para);
 			} else if entry.consumed_count > 0 {
-				RelayDispatchQueues::<T>::insert(&para, &entry.queue[entry.consumed_count..]);
+				RelayDispatchQueues::<T>::insert(para, &entry.queue[entry.consumed_count..]);
 				let count = (entry.queue.len() - entry.consumed_count) as u32;
 				let size = entry.total_size.saturating_sub(entry.consumed_size as u32);
-				RelayDispatchQueueSize::<T>::insert(&para, (count, size));
+				RelayDispatchQueueSize::<T>::insert(para, (count, size));
 			}
 		}
 	}

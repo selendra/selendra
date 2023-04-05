@@ -73,9 +73,9 @@ fn clean_dmp_works() {
 		let outgoing_paras = vec![a, b];
 		Dmp::initializer_on_new_session(&notification, &outgoing_paras);
 
-		assert!(<Dmp as Store>::DownwardMessageQueues::get(&a).is_empty());
-		assert!(<Dmp as Store>::DownwardMessageQueues::get(&b).is_empty());
-		assert!(!<Dmp as Store>::DownwardMessageQueues::get(&c).is_empty());
+		assert!(<Dmp as Store>::DownwardMessageQueues::get(a).is_empty());
+		assert!(<Dmp as Store>::DownwardMessageQueues::get(b).is_empty());
+		assert!(!<Dmp as Store>::DownwardMessageQueues::get(c).is_empty());
 	});
 }
 
@@ -129,13 +129,13 @@ fn check_processed_downward_messages() {
 		queue_downward_message(a, vec![7, 8, 9]).unwrap();
 
 		// 0 doesn't pass if the DMQ has msgs.
-		assert!(!Dmp::check_processed_downward_messages(a, 0).is_ok());
+		assert!(Dmp::check_processed_downward_messages(a, 0).is_err());
 		// a candidate can consume up to 3 messages
 		assert!(Dmp::check_processed_downward_messages(a, 1).is_ok());
 		assert!(Dmp::check_processed_downward_messages(a, 2).is_ok());
 		assert!(Dmp::check_processed_downward_messages(a, 3).is_ok());
 		// there is no 4 messages in the queue
-		assert!(!Dmp::check_processed_downward_messages(a, 4).is_ok());
+		assert!(Dmp::check_processed_downward_messages(a, 4).is_err());
 	});
 }
 

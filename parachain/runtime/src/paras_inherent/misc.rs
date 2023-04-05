@@ -63,8 +63,8 @@ where
 			// empty is always sorted
 			return true
 		};
-		while let Some(cursor) = iter.next() {
-			match cmp(&previous, &cursor) {
+		for cursor in iter {
+			match cmp(previous, cursor) {
 				Ordering::Greater => return false,
 				_ => {
 					// ordering is ok

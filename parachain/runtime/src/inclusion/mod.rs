@@ -102,7 +102,7 @@ impl<H, N> CandidatePendingAvailability<H, N> {
 
 	/// Get the core index.
 	pub(crate) fn core_occupied(&self) -> CoreIndex {
-		self.core.clone()
+		self.core
 	}
 
 	/// Get the candidate hash.
@@ -336,7 +336,7 @@ impl<T: Config> Pallet<T> {
 		let mut assigned_paras_record = (0..expected_bits)
 			.map(|bit_index| core_lookup(CoreIndex::from(bit_index as u32)))
 			.map(|opt_para_id| {
-				opt_para_id.map(|para_id| (para_id, PendingAvailability::<T>::get(&para_id)))
+				opt_para_id.map(|para_id| (para_id, PendingAvailability::<T>::get(para_id)))
 			})
 			.collect::<Vec<_>>();
 
@@ -375,7 +375,7 @@ impl<T: Config> Pallet<T> {
 			let record =
 				AvailabilityBitfieldRecord { bitfield: checked_bitfield, submitted_at: now };
 
-			<AvailabilityBitfields<T>>::insert(&validator_index, record);
+			<AvailabilityBitfields<T>>::insert(validator_index, record);
 		}
 
 		let threshold = availability_threshold(validators.len());
@@ -383,12 +383,12 @@ impl<T: Config> Pallet<T> {
 		let mut freed_cores = Vec::with_capacity(expected_bits);
 		for (para_id, pending_availability) in assigned_paras_record
 			.into_iter()
-			.filter_map(|x| x)
+			.flatten()
 			.filter_map(|(id, p)| p.map(|p| (id, p)))
 		{
 			if pending_availability.availability_votes.count_ones() >= threshold {
-				<PendingAvailability<T>>::remove(&para_id);
-				let commitments = match PendingAvailabilityCommitments::<T>::take(&para_id) {
+				<PendingAvailability<T>>::remove(para_id);
+				let commitments = match PendingAvailabilityCommitments::<T>::take(para_id) {
 					Some(commitments) => commitments,
 					None => {
 						log::warn!(
@@ -417,7 +417,7 @@ impl<T: Config> Pallet<T> {
 
 				freed_cores.push((pending_availability.core, pending_availability.hash));
 			} else {
-				<PendingAvailability<T>>::insert(&para_id, &pending_availability);
+				<PendingAvailability<T>>::insert(para_id, &pending_availability);
 			}
 		}
 
@@ -561,8 +561,8 @@ impl<T: Config> Pallet<T> {
 						}
 
 						ensure!(
-							<PendingAvailability<T>>::get(&para_id).is_none() &&
-								<PendingAvailabilityCommitments<T>>::get(&para_id).is_none(),
+							<PendingAvailability<T>>::get(para_id).is_none() &&
+								<PendingAvailabilityCommitments<T>>::get(para_id).is_none(),
 							Error::<T>::CandidateScheduledBeforeParaFree,
 						);
 
@@ -570,19 +570,19 @@ impl<T: Config> Pallet<T> {
 						skip = i + skip + 1;
 
 						let group_vals = group_validators(assignment.group_idx)
-							.ok_or_else(|| Error::<T>::InvalidGroupIndex)?;
+							.ok_or(Error::<T>::InvalidGroupIndex)?;
 
 						// check the signatures in the backing and that it is a majority.
 						{
 							let maybe_amount_validated = primitives::v2::check_candidate_backing(
-								&backed_candidate,
+								backed_candidate,
 								&signing_context,
 								group_vals.len(),
 								|intra_group_vi| {
 									group_vals
 										.get(intra_group_vi)
 										.and_then(|vi| validators.get(vi.0 as usize))
-										.map(|v| v.clone())
+										.cloned()
 								},
 							);
 
@@ -644,8 +644,7 @@ impl<T: Config> Pallet<T> {
 		};
 
 		// one more sweep for actually writing to storage.
-		let core_indices =
-			core_indices_and_backers.iter().map(|&(ref c, _, _)| c.clone()).collect();
+		let core_indices = core_indices_and_backers.iter().map(|&(ref c, _, _)| *c).collect();
 		for (candidate, (core, backers, group)) in
 			candidates.into_iter().zip(core_indices_and_backers)
 		{
@@ -668,7 +667,7 @@ impl<T: Config> Pallet<T> {
 				(candidate.candidate.descriptor, candidate.candidate.commitments);
 
 			<PendingAvailability<T>>::insert(
-				&para_id,
+				para_id,
 				CandidatePendingAvailability {
 					core,
 					hash: candidate_hash,
@@ -680,7 +679,7 @@ impl<T: Config> Pallet<T> {
 					backing_group: group,
 				},
 			);
-			<PendingAvailabilityCommitments<T>>::insert(&para_id, commitments);
+			<PendingAvailabilityCommitments<T>>::insert(para_id, commitments);
 		}
 
 		Ok(ProcessedCandidates::<T::Hash> {
@@ -813,8 +812,8 @@ impl<T: Config> Pallet<T> {
 		}
 
 		for para_id in cleaned_up_ids {
-			let pending = <PendingAvailability<T>>::take(&para_id);
-			let commitments = <PendingAvailabilityCommitments<T>>::take(&para_id);
+			let pending = <PendingAvailability<T>>::take(para_id);
+			let commitments = <PendingAvailabilityCommitments<T>>::take(para_id);
 
 			if let (Some(pending), Some(commitments)) = (pending, commitments) {
 				// defensive: this should always be true.
@@ -849,8 +848,8 @@ impl<T: Config> Pallet<T> {
 		}
 
 		for para_id in cleaned_up_ids {
-			let _ = <PendingAvailability<T>>::take(&para_id);
-			let _ = <PendingAvailabilityCommitments<T>>::take(&para_id);
+			let _ = <PendingAvailability<T>>::take(para_id);
+			let _ = <PendingAvailabilityCommitments<T>>::take(para_id);
 		}
 
 		cleaned_up_cores
@@ -863,8 +862,8 @@ impl<T: Config> Pallet<T> {
 	/// This should generally not be used but it is useful during execution of Runtime APIs,
 	/// where the changes to the state are expected to be discarded directly after.
 	pub(crate) fn force_enact(para: ParaId) {
-		let pending = <PendingAvailability<T>>::take(&para);
-		let commitments = <PendingAvailabilityCommitments<T>>::take(&para);
+		let pending = <PendingAvailability<T>>::take(para);
+		let commitments = <PendingAvailabilityCommitments<T>>::take(para);
 
 		if let (Some(pending), Some(commitments)) = (pending, commitments) {
 			let candidate =
@@ -885,9 +884,9 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn candidate_pending_availability(
 		para: ParaId,
 	) -> Option<CommittedCandidateReceipt<T::Hash>> {
-		<PendingAvailability<T>>::get(&para)
+		<PendingAvailability<T>>::get(para)
 			.map(|p| p.descriptor)
-			.and_then(|d| <PendingAvailabilityCommitments<T>>::get(&para).map(move |c| (d, c)))
+			.and_then(|d| <PendingAvailabilityCommitments<T>>::get(para).map(move |c| (d, c)))
 			.map(|(d, c)| CommittedCandidateReceipt { descriptor: d, commitments: c })
 	}
 
@@ -896,7 +895,7 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn pending_availability(
 		para: ParaId,
 	) -> Option<CandidatePendingAvailability<T::Hash, T::BlockNumber>> {
-		<PendingAvailability<T>>::get(&para)
+		<PendingAvailability<T>>::get(para)
 	}
 }
 
@@ -999,7 +998,7 @@ impl<T: Config> CandidateCheckContext<T> {
 
 		let validation_code_hash = <paras::Pallet<T>>::current_code_hash(para_id)
 			// A candidate for a parachain without current validation code is not scheduled.
-			.ok_or_else(|| Error::<T>::UnscheduledCandidate)?;
+			.ok_or(Error::<T>::UnscheduledCandidate)?;
 		ensure!(
 			backed_candidate.descriptor().validation_code_hash == validation_code_hash,
 			Error::<T>::InvalidValidationCodeHash,

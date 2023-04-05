@@ -20,7 +20,7 @@
 //! The runtime metrics must be registered with the registry in the client, otherwise
 //! they will not be published.
 
-const TRACING_TARGET: &'static str = "metrics";
+const TRACING_TARGET: &str = "metrics";
 
 use parity_scale_codec::Encode;
 use primitives::v2::{

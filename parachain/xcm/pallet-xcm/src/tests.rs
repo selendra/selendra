@@ -209,13 +209,13 @@ fn send_fails_when_xcm_router_blocks() {
 		let message = Xcm(vec![
 			ReserveAssetDeposited((Parent, SEND_AMOUNT).into()),
 			buy_execution((Parent, SEND_AMOUNT)),
-			DepositAsset { assets: All.into(), max_assets: 1, beneficiary: sender.clone() },
+			DepositAsset { assets: All.into(), max_assets: 1, beneficiary: sender },
 		]);
 		assert_noop!(
 			XcmPallet::send(
 				RuntimeOrigin::signed(ALICE),
 				Box::new(MultiLocation::ancestor(8).into()),
-				Box::new(VersionedXcm::from(message.clone())),
+				Box::new(VersionedXcm::from(message)),
 			),
 			crate::Error::<Test>::SendFailure
 		);
@@ -247,7 +247,7 @@ fn teleport_assets_works() {
 		assert_eq!(
 			sent_xcm(),
 			vec![(
-				RelayLocation::get().into(),
+				RelayLocation::get(),
 				Xcm(vec![
 					ReceiveTeleportedAsset((Here, SEND_AMOUNT).into()),
 					ClearOrigin,
@@ -291,7 +291,7 @@ fn limited_teleport_assets_works() {
 		assert_eq!(
 			sent_xcm(),
 			vec![(
-				RelayLocation::get().into(),
+				RelayLocation::get(),
 				Xcm(vec![
 					ReceiveTeleportedAsset((Here, SEND_AMOUNT).into()),
 					ClearOrigin,
@@ -335,7 +335,7 @@ fn unlimited_teleport_assets_works() {
 		assert_eq!(
 			sent_xcm(),
 			vec![(
-				RelayLocation::get().into(),
+				RelayLocation::get(),
 				Xcm(vec![
 					ReceiveTeleportedAsset((Here, SEND_AMOUNT).into()),
 					ClearOrigin,
@@ -559,7 +559,7 @@ fn trapped_assets_can_be_claimed() {
 		assert_eq!(
 			last_events(2),
 			vec![
-				RuntimeEvent::XcmPallet(crate::Event::AssetsTrapped(hash.clone(), source, vma)),
+				RuntimeEvent::XcmPallet(crate::Event::AssetsTrapped(hash, source, vma)),
 				RuntimeEvent::XcmPallet(crate::Event::Attempted(Outcome::Complete(
 					5 * BaseXcmWeight::get()
 				)))
@@ -675,14 +675,8 @@ fn subscriptions_increment_id() {
 		assert_eq!(
 			take_sent_xcm(),
 			vec![
-				(
-					remote.clone(),
-					Xcm(vec![SubscribeVersion { query_id: 0, max_response_weight: 0 }]),
-				),
-				(
-					remote2.clone(),
-					Xcm(vec![SubscribeVersion { query_id: 1, max_response_weight: 0 }]),
-				),
+				(remote, Xcm(vec![SubscribeVersion { query_id: 0, max_response_weight: 0 }]),),
+				(remote2, Xcm(vec![SubscribeVersion { query_id: 1, max_response_weight: 0 }]),),
 			]
 		);
 	});
@@ -699,7 +693,7 @@ fn double_subscription_fails() {
 		assert_noop!(
 			XcmPallet::force_subscribe_version_notify(
 				RuntimeOrigin::root(),
-				Box::new(remote.clone().into())
+				Box::new(remote.into())
 			),
 			Error::<Test>::AlreadySubscribed,
 		);
@@ -733,7 +727,7 @@ fn unsubscribe_works() {
 					remote.clone(),
 					Xcm(vec![SubscribeVersion { query_id: 0, max_response_weight: 0 }]),
 				),
-				(remote.clone(), Xcm(vec![UnsubscribeVersion]),),
+				(remote, Xcm(vec![UnsubscribeVersion]),),
 			]
 		);
 	});
@@ -766,7 +760,7 @@ fn subscription_side_works() {
 		XcmPallet::on_runtime_upgrade();
 		XcmPallet::on_initialize(2);
 		let instr = QueryResponse { query_id: 0, max_weight: 0, response: Response::Version(2) };
-		assert_eq!(take_sent_xcm(), vec![(remote.clone(), Xcm(vec![instr]))]);
+		assert_eq!(take_sent_xcm(), vec![(remote, Xcm(vec![instr]))]);
 	});
 }
 
@@ -964,7 +958,7 @@ fn auto_subscription_works() {
 
 		// v2 messages cannot be sent to remote1...
 		assert_eq!(XcmPallet::wrap_version(&remote1, v1_msg.clone()), Ok(VersionedXcm::V1(v1_msg)));
-		assert_eq!(XcmPallet::wrap_version(&remote1, v2_msg.clone()), Err(()));
+		assert_eq!(XcmPallet::wrap_version(&remote1, v2_msg), Err(()));
 	})
 }
 

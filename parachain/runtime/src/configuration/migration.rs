@@ -91,7 +91,7 @@ pub mod v3 {
 				group_rotation_frequency: 1u32.into(),
 				chain_availability_period: 1u32.into(),
 				thread_availability_period: 1u32.into(),
-				no_show_slots: 1u32.into(),
+				no_show_slots: 1u32,
 				validation_upgrade_cooldown: Default::default(),
 				validation_upgrade_delay: Default::default(),
 				code_retention_period: Default::default(),
@@ -131,7 +131,7 @@ pub mod v3 {
 					frame_support::weights::constants::WEIGHT_PER_MILLIS.ref_time() * 20,
 				),
 				pvf_checking_enabled: false,
-				pvf_voting_ttl: 2u32.into(),
+				pvf_voting_ttl: 2u32,
 				minimum_validation_upgrade_delay: 2.into(),
 			}
 		}
@@ -213,7 +213,7 @@ ump_max_individual_weight: Weight::from_ref_time(pre.ump_max_individual_weight.0
 		}
 	};
 
-	if let Err(_) = <Pallet<T> as Store>::ActiveConfig::translate(|pre| pre.map(translate)) {
+	if <Pallet<T> as Store>::ActiveConfig::translate(|pre| pre.map(translate)).is_err() {
 		// `Err` is returned when the pre-migration type cannot be deserialized. This
 		// cannot happen if the migration runs correctly, i.e. against the expected version.
 		//

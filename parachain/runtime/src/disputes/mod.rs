@@ -193,14 +193,14 @@ fn contains_duplicates_in_sorted_iter<
 ) -> bool {
 	let mut iter = iter.into_iter();
 	if let Some(mut previous) = iter.next() {
-		while let Some(current) = iter.next() {
+		for current in iter {
 			if check_equal(previous, current) {
 				return true
 			}
 			previous = current;
 		}
 	}
-	return false
+	false
 }
 
 /// Hook into disputes handling.
@@ -830,7 +830,7 @@ impl<T: Config> Pallet<T> {
 				dispute.concluded_at = Some(now);
 				<Disputes<T>>::insert(session_index, candidate_hash, &dispute);
 
-				if <Included<T>>::contains_key(&session_index, &candidate_hash) {
+				if <Included<T>>::contains_key(session_index, candidate_hash) {
 					// Local disputes don't count towards spam.
 
 					weight += T::DbWeight::get().reads_writes(1, 1);
@@ -960,7 +960,7 @@ impl<T: Config> Pallet<T> {
 
 		// Check for ancient.
 		let (first_votes, dispute_state) = {
-			if let Some(dispute_state) = <Disputes<T>>::get(&set.session, &set.candidate_hash) {
+			if let Some(dispute_state) = <Disputes<T>>::get(set.session, set.candidate_hash) {
 				if dispute_state.concluded_at.as_ref().map_or(false, |c| c < &oldest_accepted) {
 					return StatementSetFilter::RemoveAll
 				}
@@ -1015,7 +1015,7 @@ impl<T: Config> Pallet<T> {
 					// This is only really important until the post-conclusion acceptance threshold
 					// is reached, and then no part of this loop will be hit.
 					if let Err(()) = check_signature(
-						&validator_public,
+						validator_public,
 						set.candidate_hash,
 						set.session,
 						statement,
@@ -1039,10 +1039,10 @@ impl<T: Config> Pallet<T> {
 		}
 
 		// Apply spam slot changes. Bail early if too many occupied.
-		let is_local = <Included<T>>::contains_key(&set.session, &set.candidate_hash);
+		let is_local = <Included<T>>::contains_key(set.session, set.candidate_hash);
 		if !is_local {
 			let mut spam_slots: Vec<u32> =
-				SpamSlots::<T>::get(&set.session).unwrap_or_else(|| vec![0; n_validators]);
+				SpamSlots::<T>::get(set.session).unwrap_or_else(|| vec![0; n_validators]);
 			let mut spam_filter_struck = false;
 			for (validator_index, spam_slot_change) in summary.spam_slot_changes {
 				let spam_slot = spam_slots
@@ -1100,7 +1100,7 @@ impl<T: Config> Pallet<T> {
 			//
 			// However, 3 sequential calls, where the first increments,
 			// the second decrements, and the third increments would be allowed.
-			SpamSlots::<T>::insert(&set.session, spam_slots);
+			SpamSlots::<T>::insert(set.session, spam_slots);
 
 			// This is only relevant in cases where it's the first vote and the state
 			// would hence hold a onesided dispute. If a onesided dispute can never be
@@ -1112,7 +1112,7 @@ impl<T: Config> Pallet<T> {
 				// it's sufficient to count the votes in the statement set after they
 				set.statements.iter().for_each(|(statement, v_i, _signature)| {
 					if Some(true) ==
-						summary.new_participants.get(v_i.0 as usize).map(|b| b.as_ref().clone())
+						summary.new_participants.get(v_i.0 as usize).map(|b| *b.as_ref())
 					{
 						match statement {
 							// `summary.new_flags` contains the spam free votes.
@@ -1161,7 +1161,7 @@ impl<T: Config> Pallet<T> {
 
 		// Check for ancient.
 		let (fresh, dispute_state) = {
-			if let Some(dispute_state) = <Disputes<T>>::get(&set.session, &set.candidate_hash) {
+			if let Some(dispute_state) = <Disputes<T>>::get(set.session, set.candidate_hash) {
 				ensure!(
 					dispute_state.concluded_at.as_ref().map_or(true, |c| c >= &oldest_accepted),
 					Error::<T>::AncientDisputeStatement,
@@ -1208,7 +1208,7 @@ impl<T: Config> Pallet<T> {
 		// always called before calling this `fn`.
 
 		if fresh {
-			let is_local = <Included<T>>::contains_key(&session, &candidate_hash);
+			let is_local = <Included<T>>::contains_key(session, candidate_hash);
 
 			Self::deposit_event(Event::DisputeInitiated(
 				candidate_hash,
@@ -1252,11 +1252,11 @@ impl<T: Config> Pallet<T> {
 			T::SlashingHandler::punish_for_invalid(session, candidate_hash, summary.slash_for);
 		}
 
-		<Disputes<T>>::insert(&session, &candidate_hash, &summary.state);
+		<Disputes<T>>::insert(session, candidate_hash, &summary.state);
 
 		// Freeze if just concluded against some local candidate
 		if summary.new_flags.contains(DisputeStateFlags::AGAINST_SUPERMAJORITY) {
-			if let Some(revert_to) = <Included<T>>::get(&session, &candidate_hash) {
+			if let Some(revert_to) = <Included<T>>::get(session, candidate_hash) {
 				Self::revert_and_freeze(revert_to);
 			}
 		}
@@ -1280,12 +1280,12 @@ impl<T: Config> Pallet<T> {
 
 		let revert_to = included_in - One::one();
 
-		<Included<T>>::insert(&session, &candidate_hash, revert_to);
+		<Included<T>>::insert(session, candidate_hash, revert_to);
 
 		// If we just included a block locally which has a live dispute, decrement spam slots
 		// for any involved validators, if the dispute is not already confirmed by f + 1.
-		if let Some(state) = <Disputes<T>>::get(&session, candidate_hash) {
-			SpamSlots::<T>::mutate(&session, |spam_slots| {
+		if let Some(state) = <Disputes<T>>::get(session, candidate_hash) {
+			SpamSlots::<T>::mutate(session, |spam_slots| {
 				if let Some(ref mut spam_slots) = *spam_slots {
 					decrement_spam(spam_slots, &state);
 				}
@@ -1305,7 +1305,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn concluded_invalid(session: SessionIndex, candidate_hash: CandidateHash) -> bool {
-		<Disputes<T>>::get(&session, &candidate_hash).map_or(false, |dispute| {
+		<Disputes<T>>::get(session, candidate_hash).map_or(false, |dispute| {
 			// A dispute that has concluded with supermajority-against.
 			has_supermajority_against(&dispute)
 		})
@@ -1350,7 +1350,7 @@ fn decrement_spam<BlockNumber>(
 	let decrement_spam = participating.count_ones() <= byzantine_threshold;
 	for validator_index in participating.iter_ones() {
 		if decrement_spam {
-			if let Some(occupied) = spam_slots.get_mut(validator_index as usize) {
+			if let Some(occupied) = spam_slots.get_mut(validator_index) {
 				*occupied = occupied.saturating_sub(1);
 			}
 		}
@@ -1385,7 +1385,7 @@ fn check_signature(
 			ExplicitDisputeStatement { valid: false, candidate_hash, session }.signing_payload(),
 	};
 
-	if validator_signature.verify(&payload[..], &validator_public) {
+	if validator_signature.verify(&payload[..], validator_public) {
 		Ok(())
 	} else {
 		Err(())

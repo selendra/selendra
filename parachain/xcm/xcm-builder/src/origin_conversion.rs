@@ -46,7 +46,7 @@ where
 		);
 		if let OriginKind::SovereignAccount = kind {
 			let location = LocationConverter::convert(origin)?;
-			Ok(RuntimeOrigin::signed(location).into())
+			Ok(RuntimeOrigin::signed(location))
 		} else {
 			Err(origin)
 		}

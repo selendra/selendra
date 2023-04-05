@@ -62,6 +62,7 @@ pub struct QueuedParathread {
 /// The queue of all parathread claims.
 #[derive(Encode, Decode, TypeInfo)]
 #[cfg_attr(test, derive(PartialEq, Debug))]
+#[derive(Default)]
 pub struct ParathreadClaimQueue {
 	queue: Vec<QueuedParathread>,
 	// this value is between 0 and config.parathread_cores
@@ -89,12 +90,6 @@ impl ParathreadClaimQueue {
 	fn get_next_on_core(&self, core_offset: u32) -> Option<&ParathreadEntry> {
 		let pos = self.queue.iter().position(|queued| queued.core_offset == core_offset);
 		pos.map(|i| &self.queue[i].claim)
-	}
-}
-
-impl Default for ParathreadClaimQueue {
-	fn default() -> Self {
-		Self { queue: vec![], next_core_offset: 0 }
 	}
 }
 
@@ -443,7 +438,7 @@ impl<T: Config> Pallet<T> {
 			let mut scheduled_updates: Vec<(usize, CoreAssignment)> = Vec::new();
 
 			// single-sweep O(n) in the number of cores.
-			for (core_index, _core) in cores.iter().enumerate().filter(|(_, ref c)| c.is_none()) {
+			for (core_index, _core) in cores.iter().enumerate().filter(|(_, c)| c.is_none()) {
 				let schedule_and_insert_at = {
 					// advance the iterator until just before the core index we are looking at now.
 					while prev_scheduled_in_order
@@ -483,7 +478,7 @@ impl<T: Config> Pallet<T> {
 					Some(CoreAssignment {
 						kind: AssignmentKind::Parachain,
 						para_id: parachains[core_index],
-						core: core.clone(),
+						core,
 						group_idx: Self::group_assigned_to_core(core, now).expect(
 							"core is not out of bounds and we are guaranteed \
 									to be after the most recent session start; qed",
@@ -496,7 +491,7 @@ impl<T: Config> Pallet<T> {
 					parathread_queue.take_next_on_core(core_offset).map(|entry| CoreAssignment {
 						kind: AssignmentKind::Parathread(entry.claim.1, entry.retries),
 						para_id: entry.claim.0,
-						core: core.clone(),
+						core,
 						group_idx: Self::group_assigned_to_core(core, now).expect(
 							"core is not out of bounds and we are guaranteed \
 									to be after the most recent session start; qed",
@@ -584,7 +579,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Get the validators in the given group, if the group index is valid for this session.
 	pub(crate) fn group_validators(group_index: GroupIndex) -> Option<Vec<ValidatorIndex>> {
-		ValidatorGroups::<T>::get().get(group_index.0 as usize).map(|g| g.clone())
+		ValidatorGroups::<T>::get().get(group_index.0 as usize).cloned()
 	}
 
 	/// Get the group assigned to a specific core by index at the current block number. Result undefined if the core index is unknown
@@ -607,14 +602,10 @@ impl<T: Config> Pallet<T> {
 		}
 
 		let rotations_since_session_start: T::BlockNumber =
-			(at - session_start_block) / config.group_rotation_frequency.into();
+			(at - session_start_block) / config.group_rotation_frequency;
 
 		let rotations_since_session_start =
-			match <T::BlockNumber as TryInto<u32>>::try_into(rotations_since_session_start) {
-				Ok(i) => i,
-				Err(_) => 0, // can only happen if rotations occur only once every u32::max(),
-				             // so functionally no difference in behavior.
-			};
+			<T::BlockNumber as TryInto<u32>>::try_into(rotations_since_session_start).unwrap_or(0);
 
 		let group_idx =
 			(core.0 as usize + rotations_since_session_start as usize) % validator_groups.len();

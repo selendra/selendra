@@ -149,7 +149,7 @@ pub fn execute(
 	}
 
 	// We need to clone the block data as the fn will mutate it's state.
-	let new_state = execute_transaction(block_data.clone());
+	let new_state = execute_transaction(block_data);
 
 	Ok((
 		HeadData {
