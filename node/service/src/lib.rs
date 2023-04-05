@@ -1083,10 +1083,10 @@ where
 				async move {
 					let parachain =
 						selendra_node_core_parachains_inherent::ParachainsInherentDataProvider::new(
-						client_clone,
-						overseer_handle,
-						parent,
-					);
+							client_clone,
+							overseer_handle,
+							parent,
+						);
 
 					let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 

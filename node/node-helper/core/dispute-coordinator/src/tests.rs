@@ -43,8 +43,8 @@ use selendra_node_subsystem::{
 	OverseerSignal,
 };
 
-use selendra_node_subsystem_util::TimeoutExt;
 use sc_keystore::LocalKeystore;
+use selendra_node_subsystem_util::TimeoutExt;
 use sp_application_crypto::AppKey;
 use sp_core::{sr25519::Pair, testing::TaskExecutor, Pair as PairT};
 use sp_keyring::Sr25519Keyring;

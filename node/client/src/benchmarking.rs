@@ -203,7 +203,7 @@ pub fn benchmark_inherent_data(
 		disputes: Vec::new(),
 		parent_header: header,
 	};
-	
+
 	inherent_data.put_data(selendra_primitives::v2::PARACHAINS_INHERENT_IDENTIFIER, &para_data)?;
 
 	Ok(inherent_data)
