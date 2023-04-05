@@ -8183,6 +8183,7 @@ name = "selendra-node-core-runtime-api"
 version = "0.3.0"
 dependencies = [
  "futures",
+ "lru",
  "selendra-node-primitives",
  "selendra-node-subsystem",
  "selendra-node-subsystem-test-helpers",

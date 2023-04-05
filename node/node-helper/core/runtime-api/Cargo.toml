@@ -6,6 +6,7 @@ edition = "2021"
 
 [dependencies]
 futures = "0.3.21"
+lru = "0.8"
 sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 
 gum = { package = "tracing-gum", path = "../../gum" }

@@ -108,6 +108,7 @@ pub use sp_runtime::{
 		self as runtime_traits, BlakeTwo256, Block as BlockT, HashFor, Header as HeaderT, NumberFor,
 	},
 };
+use mmr_gadget::MmrGadget;
 
 #[cfg(feature = "selendra-native")]
 pub use selendra_runtime;
