@@ -64,6 +64,8 @@ sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+mmr-gadget = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
+sp-mmr-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 
 # Substrate Pallets
 pallet-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }

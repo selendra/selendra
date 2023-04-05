@@ -708,6 +708,8 @@ where
 {
 	use selendra_node_network_protocol::request_response::IncomingRequest;
 
+	let is_offchain_indexing_enabled = config.offchain_worker.indexing_enabled;
+
 	let role = config.role.clone();
 	let force_authoring = config.force_authoring;
 	let backoff_authoring_blocks = {
@@ -1140,6 +1142,18 @@ where
 
 		let gadget = beefy_gadget::start_beefy_gadget::<_, _, _, _, _, _>(beefy_params);
 		task_manager.spawn_handle().spawn_blocking("beefy-gadget", None, gadget);
+
+		if is_offchain_indexing_enabled {
+			task_manager.spawn_handle().spawn_blocking(
+				"mmr-gadget",
+				None,
+				MmrGadget::start(
+					client.clone(),
+					backend.clone(),
+					sp_mmr_primitives::INDEXING_PREFIX.to_vec(),
+				),
+			);
+		}
 	}
 
 	let config = grandpa::Config {
