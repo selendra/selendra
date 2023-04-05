@@ -128,16 +128,36 @@ pub const DISPUTE_REQUEST_TIMEOUT: Duration = Duration::from_secs(12);
 impl Protocol {
 	/// Get a configuration for a given Request response protocol.
 	///
+	/// Returns a `ProtocolConfig` for this protocol.
+	/// Use this if you plan only to send requests for this protocol.
+	pub fn get_outbound_only_config(
+		self,
+		req_protocol_names: &ReqProtocolNames,
+	) -> RequestResponseConfig {
+		self.create_config(req_protocol_names, None)
+	}
+
+	/// Get a configuration for a given Request response protocol.
+	///
 	/// Returns a receiver for messages received on this protocol and the requested
 	/// `ProtocolConfig`.
 	pub fn get_config(
 		self,
 		req_protocol_names: &ReqProtocolNames,
 	) -> (mpsc::Receiver<network::IncomingRequest>, RequestResponseConfig) {
+		let (tx, rx) = mpsc::channel(self.get_channel_size());
+		let cfg = self.create_config(req_protocol_names, Some(tx));
+		(rx, cfg)
+	}
+
+	fn create_config(
+		self,
+		req_protocol_names: &ReqProtocolNames,
+		tx: Option<mpsc::Sender<network::IncomingRequest>>,
+	) -> RequestResponseConfig {
 		let name = req_protocol_names.get_name(self);
 		let fallback_names = self.get_fallback_names();
-		let (tx, rx) = mpsc::channel(self.get_channel_size());
-		let cfg = match self {
+		match self {
 			Protocol::ChunkFetchingV1 => RequestResponseConfig {
 				name,
 				fallback_names,
@@ -145,7 +165,7 @@ impl Protocol {
 				max_response_size: POV_RESPONSE_SIZE as u64 * 3,
 				// We are connected to all validators:
 				request_timeout: CHUNK_REQUEST_TIMEOUT,
-				inbound_queue: Some(tx),
+				inbound_queue: tx,
 			},
 			Protocol::CollationFetchingV1 => RequestResponseConfig {
 				name,
@@ -154,7 +174,7 @@ impl Protocol {
 				max_response_size: POV_RESPONSE_SIZE,
 				// Taken from initial implementation in collator protocol:
 				request_timeout: POV_REQUEST_TIMEOUT_CONNECTED,
-				inbound_queue: Some(tx),
+				inbound_queue: tx,
 			},
 			Protocol::PoVFetchingV1 => RequestResponseConfig {
 				name,
@@ -162,7 +182,7 @@ impl Protocol {
 				max_request_size: 1_000,
 				max_response_size: POV_RESPONSE_SIZE,
 				request_timeout: POV_REQUEST_TIMEOUT_CONNECTED,
-				inbound_queue: Some(tx),
+				inbound_queue: tx,
 			},
 			Protocol::AvailableDataFetchingV1 => RequestResponseConfig {
 				name,
@@ -171,7 +191,7 @@ impl Protocol {
 				// Available data size is dominated by the PoV size.
 				max_response_size: POV_RESPONSE_SIZE,
 				request_timeout: POV_REQUEST_TIMEOUT_CONNECTED,
-				inbound_queue: Some(tx),
+				inbound_queue: tx,
 			},
 			Protocol::StatementFetchingV1 => RequestResponseConfig {
 				name,
@@ -181,14 +201,15 @@ impl Protocol {
 				max_response_size: STATEMENT_RESPONSE_SIZE,
 				// We need statement fetching to be fast and will try our best at the responding
 				// side to answer requests within that timeout, assuming a bandwidth of 500Mbit/s
-				// - which is the recommended minimum bandwidth for nodes on Selendra
+				// - which is the recommended minimum bandwidth for nodes on Kusama as of April
+				// 2021.
 				// Responders will reject requests, if it is unlikely they can serve them within
 				// the timeout, so the requester can immediately try another node, instead of
 				// waiting for timeout on an overloaded node.  Fetches from slow nodes will likely
 				// fail, but this is desired, so we can quickly move on to a faster one - we should
 				// also decrease its reputation.
 				request_timeout: Duration::from_secs(1),
-				inbound_queue: Some(tx),
+				inbound_queue: tx,
 			},
 			Protocol::DisputeSendingV1 => RequestResponseConfig {
 				name,
@@ -198,10 +219,9 @@ impl Protocol {
 				/// plenty.
 				max_response_size: 100,
 				request_timeout: DISPUTE_REQUEST_TIMEOUT,
-				inbound_queue: Some(tx),
+				inbound_queue: tx,
 			},
-		};
-		(rx, cfg)
+		}
 	}
 
 	// Channel sizes for the supported protocols.
