@@ -86,6 +86,7 @@ pub use selendra_client::SelendraExecutorDispatch;
 
 pub use chain_spec::SelendraChainSpec;
 pub use consensus_common::{block_validation::Chain, Proposal, SelectChain};
+use mmr_gadget::MmrGadget;
 pub use sc_client_api::{Backend, CallExecutor, ExecutionStrategy};
 pub use sc_consensus::{BlockImport, LongestChain};
 use sc_executor::NativeElseWasmExecutor;
@@ -108,7 +109,6 @@ pub use sp_runtime::{
 		self as runtime_traits, BlakeTwo256, Block as BlockT, HashFor, Header as HeaderT, NumberFor,
 	},
 };
-use mmr_gadget::MmrGadget;
 
 #[cfg(feature = "selendra-native")]
 pub use selendra_runtime;
