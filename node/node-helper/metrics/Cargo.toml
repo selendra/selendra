@@ -28,7 +28,7 @@ prometheus-parse = {version = "0.2.2"}
 assert_cmd = "2.0.4"
 nix = "0.24.1"
 tempfile = "3.2.0"
-tokio = "1.19.2"
+tokio = "1.22.0"
 substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }

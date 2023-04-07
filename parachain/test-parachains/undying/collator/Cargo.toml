@@ -44,4 +44,4 @@ substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch
 sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34" }
 
-tokio = { version = "1.19", features = ["macros"] }
+tokio = { version = "1.22.0", features = ["macros"] }
