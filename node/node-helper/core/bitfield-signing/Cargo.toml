@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-core-bitfield-signing"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 

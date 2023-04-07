@@ -1,6 +1,6 @@
 [package]
 name = "xcm-simulator-fuzzer"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Selendra <info@selendra.org>"]
 description = "Examples of xcm-simulator usage."
 edition = "2021"

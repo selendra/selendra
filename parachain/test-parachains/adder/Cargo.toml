@@ -1,6 +1,6 @@
 [package]
 name = "test-parachain-adder"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Selendra <info@selendra.org>"]
 description = "Test parachain which adds to a number as its state transition"
 edition = "2021"
