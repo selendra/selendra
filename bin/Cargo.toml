@@ -3,7 +3,7 @@ name = "selendra"
 version = "0.3.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
-rust-version = "1.57.0" # custom profiles
+rust-version = "1.64.0" # custom profiles
 description = "Implementation of a `https://selendra.network` node in Rust based on the Substrate framework."
 
 [[bin]]
