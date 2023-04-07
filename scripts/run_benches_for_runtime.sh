@@ -6,7 +6,7 @@ set -e
 # Should be run on a reference machine to gain accurate benchmarks
 # current reference machine: https://github.com/paritytech/substrate/pull/5848
 
-runtime="$1"
+runtime="selendra"
 
 echo "[+] Running all benchmarks for $runtime"
 
