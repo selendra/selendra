@@ -16,7 +16,7 @@
 
 use sp_runtime::Perbill;
 
-use crate::{TOKEN, Balance};
+use crate::{Balance, TOKEN};
 
 pub const MIN_VALIDATOR_BOND: u128 = 25_000 * TOKEN;
 pub const MIN_NOMINATOR_BOND: u128 = 100 * TOKEN;
@@ -25,15 +25,15 @@ pub const YEARLY_INFLATION: Balance = 10_000_000 * TOKEN;
 pub const VALIDATOR_REWARD: Perbill = Perbill::from_percent(90);
 
 pub fn era_payout(miliseconds_per_era: u64) -> (Balance, Balance) {
-    // Milliseconds per year for the Julian year (365.25 days).
-    const MILLISECONDS_PER_YEAR: u64 = 1000 * 3600 * 24 * 36525 / 100;
+	// Milliseconds per year for the Julian year (365.25 days).
+	const MILLISECONDS_PER_YEAR: u64 = 1000 * 3600 * 24 * 36525 / 100;
 
-    let portion = Perbill::from_rational(miliseconds_per_era, MILLISECONDS_PER_YEAR);
-    let total_payout = portion * YEARLY_INFLATION;
-    let validators_payout = VALIDATOR_REWARD * total_payout;
-    let rest = total_payout - validators_payout;
+	let portion = Perbill::from_rational(miliseconds_per_era, MILLISECONDS_PER_YEAR);
+	let total_payout = portion * YEARLY_INFLATION;
+	let validators_payout = VALIDATOR_REWARD * total_payout;
+	let rest = total_payout - validators_payout;
 
-    (validators_payout, rest)
+	(validators_payout, rest)
 }
 
 /// Macro for making a default implementation of non-self methods from given class.
