@@ -1,80 +1,7 @@
 [workspace]
 members = [
-    "bin",
-	"node/cli",
-	"node/rpc",
-	"node/service",
-	"node/client",
-	"primitives",
-	"primitives/core",
-	"primitives/test-helpers",
-	"runtime/common",
-	"runtime/common/slot_range_helper",
-	"runtime/selendra",
-	"runtime/selendra/constants",
-	"runtime/test-runtime",
-	"runtime/test-runtime/constants",
-	"node/node-helper/collation-generation",
-	"node/node-helper/core/approval-voting",
-	"node/node-helper/core/av-store",
-	"node/node-helper/core/backing",
-	"node/node-helper/core/bitfield-signing",
-	"node/node-helper/core/candidate-validation",
-	"node/node-helper/core/chain-api",
-	"node/node-helper/core/chain-selection",
-	"node/node-helper/core/dispute-coordinator",
-	"node/node-helper/core/parachains-inherent",
-	"node/node-helper/core/provisioner",
-	"node/node-helper/core/pvf",
-	"node/node-helper/core/pvf-checker",
-	"node/node-helper/core/runtime-api",
-	"node/node-helper/network/approval-distribution",
-	"node/node-helper/network/bridge",
-	"node/node-helper/network/protocol",
-	"node/node-helper/network/statement-distribution",
-	"node/node-helper/network/bitfield-distribution",
-	"node/node-helper/network/availability-distribution",
-	"node/node-helper/network/availability-recovery",
-	"node/node-helper/network/collator-protocol",
-	"node/node-helper/network/gossip-support",
-	"node/node-helper/network/dispute-distribution",
-	"node/node-helper/overseer",
-	"node/node-helper/primitives",
-	"node/node-helper/subsystem",
-	"node/node-helper/subsystem-types",
-	"node/node-helper/subsystem-test-helpers",
-	"node/node-helper/subsystem-util",
-	"node/node-helper/jaeger",
-	"node/node-helper/gum",
-	"node/node-helper/gum/proc-macro",
-	"node/node-helper/metrics",
-	"node/node-helper/erasure-coding",
-	"node/node-helper/statement-table",
-	"node/test/client",
-	"node/test/performance-test",
-	"node/test/service",
-	"parachain",
-	"parachain/metrics",
-	"parachain/xcm",
-	"parachain/runtime",
-	"parachain/xcm",
-	"parachain/xcm/xcm-builder",
-	"parachain/xcm/xcm-executor",
-	"parachain/xcm/xcm-executor/integration-tests",
-	"parachain/xcm/xcm-simulator",
-	"parachain/xcm/xcm-simulator/example",
-	"parachain/xcm/xcm-simulator/fuzzer",
-	"parachain/xcm/pallet-xcm",
-	"parachain/xcm/pallet-xcm-benchmarks",
-	"parachain/xcm/procedural",
-	"parachain/test-parachains",
-	"parachain/test-parachains/adder",
-	"parachain/test-parachains/adder/collator",
-	"parachain/test-parachains/halt",
-	"parachain/test-parachains/undying",
-	"parachain/test-parachains/undying/collator",
-	# "utils/staking-miner",
-	# "utils/generate-bags",
+    "primitives",
+	"runtime/common"
 ]
 
 [profile.release]
@@ -108,47 +35,47 @@ overflow-checks = true
 # probably concerns this list.
 #
 # This list is ordered alphabetically.
-[profile.dev.package]
-blake2 = { opt-level = 3 }
-blake2b_simd = { opt-level = 3 }
-chacha20poly1305 = { opt-level = 3 }
-cranelift-codegen = { opt-level = 3 }
-cranelift-wasm = { opt-level = 3 }
-crc32fast = { opt-level = 3 }
-crossbeam-deque = { opt-level = 3 }
-crypto-mac = { opt-level = 3 }
-curve25519-dalek = { opt-level = 3 }
-ed25519-dalek = { opt-level = 3 }
-flate2 = { opt-level = 3 }
-futures-channel = { opt-level = 3 }
-hash-db = { opt-level = 3 }
-hashbrown = { opt-level = 3 }
-hmac = { opt-level = 3 }
-httparse = { opt-level = 3 }
-integer-sqrt = { opt-level = 3 }
-keccak = { opt-level = 3 }
-libm = { opt-level = 3 }
-librocksdb-sys = { opt-level = 3 }
-libsecp256k1 = { opt-level = 3 }
-libz-sys = { opt-level = 3 }
-mio = { opt-level = 3 }
-nalgebra = { opt-level = 3 }
-num-bigint = { opt-level = 3 }
-parking_lot = { opt-level = 3 }
-parking_lot_core = { opt-level = 3 }
-percent-encoding = { opt-level = 3 }
-primitive-types = { opt-level = 3 }
-reed-solomon-novelpoly = { opt-level = 3 }
-ring = { opt-level = 3 }
-rustls = { opt-level = 3 }
-sha2 = { opt-level = 3 }
-sha3 = { opt-level = 3 }
-smallvec = { opt-level = 3 }
-snow = { opt-level = 3 }
-substrate-bip39 = {opt-level = 3}
-twox-hash = { opt-level = 3 }
-uint = { opt-level = 3 }
-wasmi = { opt-level = 3 }
-x25519-dalek = { opt-level = 3 }
-yamux = { opt-level = 3 }
-zeroize = { opt-level = 3 }
+# [profile.dev.package]
+# blake2 = { opt-level = 3 }
+# blake2b_simd = { opt-level = 3 }
+# chacha20poly1305 = { opt-level = 3 }
+# cranelift-codegen = { opt-level = 3 }
+# cranelift-wasm = { opt-level = 3 }
+# crc32fast = { opt-level = 3 }
+# crossbeam-deque = { opt-level = 3 }
+# crypto-mac = { opt-level = 3 }
+# curve25519-dalek = { opt-level = 3 }
+# ed25519-dalek = { opt-level = 3 }
+# flate2 = { opt-level = 3 }
+# futures-channel = { opt-level = 3 }
+# hash-db = { opt-level = 3 }
+# hashbrown = { opt-level = 3 }
+# hmac = { opt-level = 3 }
+# httparse = { opt-level = 3 }
+# integer-sqrt = { opt-level = 3 }
+# keccak = { opt-level = 3 }
+# libm = { opt-level = 3 }
+# librocksdb-sys = { opt-level = 3 }
+# libsecp256k1 = { opt-level = 3 }
+# libz-sys = { opt-level = 3 }
+# mio = { opt-level = 3 }
+# nalgebra = { opt-level = 3 }
+# num-bigint = { opt-level = 3 }
+# parking_lot = { opt-level = 3 }
+# parking_lot_core = { opt-level = 3 }
+# percent-encoding = { opt-level = 3 }
+# primitive-types = { opt-level = 3 }
+# reed-solomon-novelpoly = { opt-level = 3 }
+# ring = { opt-level = 3 }
+# rustls = { opt-level = 3 }
+# sha2 = { opt-level = 3 }
+# sha3 = { opt-level = 3 }
+# smallvec = { opt-level = 3 }
+# snow = { opt-level = 3 }
+# substrate-bip39 = {opt-level = 3}
+# twox-hash = { opt-level = 3 }
+# uint = { opt-level = 3 }
+# wasmi = { opt-level = 3 }
+# x25519-dalek = { opt-level = 3 }
+# yamux = { opt-level = 3 }
+# zeroize = { opt-level = 3 }

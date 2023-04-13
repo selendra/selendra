@@ -18,26 +18,19 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod assigned_slots;
 pub mod elections;
 pub mod impls;
-pub mod paras_registrar;
-pub mod paras_sudo_wrapper;
-pub mod slot_range;
-pub mod slots;
-pub mod traits;
-pub mod xcm_sender;
 
 #[cfg(test)]
 mod mock;
 
 use frame_support::{
 	parameter_types,
-	traits::{ConstU32, Currency, OneSessionHandler},
+	traits::{ConstU32, Currency},
 	weights::{constants::WEIGHT_PER_SECOND, Weight},
 };
 use frame_system::limits;
-use primitives::v2::{AssignmentId, Balance, BlockNumber, ValidatorId, MAX_POV_SIZE};
+use primitives::{Balance, BlockNumber, MAX_POV_SIZE};
 use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
 use static_assertions::const_assert;
 
@@ -151,65 +144,7 @@ macro_rules! impl_runtime_weights {
 ///
 /// This must only be used as long as the balance type is `u128`.
 pub type CurrencyToVote = frame_support::traits::U128CurrencyToVote;
-static_assertions::assert_eq_size!(primitives::v2::Balance, u128);
-
-/// A placeholder since there is currently no provided session key handler for parachain validator
-/// keys.
-pub struct ParachainSessionKeyPlaceholder<T>(sp_std::marker::PhantomData<T>);
-impl<T> sp_runtime::BoundToRuntimeAppPublic for ParachainSessionKeyPlaceholder<T> {
-	type Public = ValidatorId;
-}
-
-impl<T: pallet_session::Config> OneSessionHandler<T::AccountId>
-	for ParachainSessionKeyPlaceholder<T>
-{
-	type Key = ValidatorId;
-
-	fn on_genesis_session<'a, I: 'a>(_validators: I)
-	where
-		I: Iterator<Item = (&'a T::AccountId, ValidatorId)>,
-		T::AccountId: 'a,
-	{
-	}
-
-	fn on_new_session<'a, I: 'a>(_changed: bool, _v: I, _q: I)
-	where
-		I: Iterator<Item = (&'a T::AccountId, ValidatorId)>,
-		T::AccountId: 'a,
-	{
-	}
-
-	fn on_disabled(_: u32) {}
-}
-
-/// A placeholder since there is currently no provided session key handler for parachain validator
-/// keys.
-pub struct AssignmentSessionKeyPlaceholder<T>(sp_std::marker::PhantomData<T>);
-impl<T> sp_runtime::BoundToRuntimeAppPublic for AssignmentSessionKeyPlaceholder<T> {
-	type Public = AssignmentId;
-}
-
-impl<T: pallet_session::Config> OneSessionHandler<T::AccountId>
-	for AssignmentSessionKeyPlaceholder<T>
-{
-	type Key = AssignmentId;
-
-	fn on_genesis_session<'a, I: 'a>(_validators: I)
-	where
-		I: Iterator<Item = (&'a T::AccountId, AssignmentId)>,
-		T::AccountId: 'a,
-	{
-	}
-
-	fn on_new_session<'a, I: 'a>(_changed: bool, _v: I, _q: I)
-	where
-		I: Iterator<Item = (&'a T::AccountId, AssignmentId)>,
-		T::AccountId: 'a,
-	{
-	}
-
-	fn on_disabled(_: u32) {}
-}
+static_assertions::assert_eq_size!(primitives::Balance, u128);
 
 /// A reasonable benchmarking config for staking pallet.
 pub struct StakingBenchmarkingConfig;
