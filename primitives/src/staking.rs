@@ -21,7 +21,7 @@ use crate::{TOKEN, Balance};
 pub const MIN_VALIDATOR_BOND: u128 = 25_000 * TOKEN;
 pub const MIN_NOMINATOR_BOND: u128 = 100 * TOKEN;
 pub const MAX_NOMINATORS_REWARDED_PER_VALIDATOR: u32 = 1024;
-pub const YEARLY_INFLATION: Balance = 1_000_000 * TOKEN;
+pub const YEARLY_INFLATION: Balance = 10_000_000 * TOKEN;
 pub const VALIDATOR_REWARD: Perbill = Perbill::from_percent(90);
 
 pub fn era_payout(miliseconds_per_era: u64) -> (Balance, Balance) {
