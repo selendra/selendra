@@ -1,6 +1,10 @@
 [workspace]
 members = [
     "primitives",
+    "pallets/support",
+    "pallets/elections",
+    "pallets/indra",
+    "runtime"
 ]
 
 [profile.release]

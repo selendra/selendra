@@ -1,3 +1,19 @@
+// Copyright 2023 Smallworld Selendra
+// This file is part of Selendra.
+
+// Selendra is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Selendra is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
+
 #![cfg(test)]
 
 use frame_support::{
@@ -5,7 +21,7 @@ use frame_support::{
     traits::{OnFinalize, OnInitialize},
     weights::{RuntimeDbWeight, Weight},
 };
-use primitives::AuthorityId;
+use selendra_primitives::AuthorityId;
 use sp_api_hidden_includes_construct_runtime::hidden_include::traits::GenesisBuild;
 use sp_core::H256;
 use sp_runtime::{
