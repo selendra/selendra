@@ -52,7 +52,7 @@ pub type BlockCount = u32;
 pub const TOKEN_DECIMALS: u32 = 18;
 pub const TOKEN: u128 = 10u128.pow(TOKEN_DECIMALS);
 
-pub const MILLISECS_PER_BLOCK: u64 = 1000;
+
 // We agreed to 5MB as the block size limit.
 pub const MAX_BLOCK_SIZE: u32 = 5 * 1024 * 1024;
 

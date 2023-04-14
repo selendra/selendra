@@ -54,22 +54,11 @@ use selendra_primitives::{
 	ApiError as IndraApiError,
 	AuthorityId as IndraId, SessionAuthorityData, Version as FinalityVersion, ADDRESSES_ENCODING,
 	DEFAULT_BAN_REASON_LENGTH, DEFAULT_MAX_WINNERS, DEFAULT_SESSIONS_PER_ERA,
-	DEFAULT_SESSION_PERIOD, MAX_BLOCK_SIZE, MILLISECS_PER_BLOCK, opaque, TOKEN
+	DEFAULT_SESSION_PERIOD, MAX_BLOCK_SIZE, opaque, TOKEN
 };
 use selendra_runtime_common::{staking::{era_payout, MAX_NOMINATORS_REWARDED_PER_VALIDATOR}, wrap_methods};
 
-use constants::{currency::*};
-
-pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("indra-node"),
-	impl_name: create_runtime_str!("indra-node"),
-	authoring_version: 1,
-	spec_version: 59,
-	impl_version: 1,
-	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 16,
-	state_version: 0,
-};
+use constants::{currency::*, time::*};
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -77,7 +66,16 @@ pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
-pub const BLOCKS_PER_HOUR: u32 = 60 * 60 * 1000 / (MILLISECS_PER_BLOCK as u32);
+pub const VERSION: RuntimeVersion = RuntimeVersion {
+	spec_name: create_runtime_str!("selendra"),
+	impl_name: create_runtime_str!("selendra-node"),
+	authoring_version: 1,
+	spec_version: 59,
+	impl_version: 1,
+	apis: RUNTIME_API_VERSIONS,
+	transaction_version: 16,
+	state_version: 0,
+};
 
 // 75% block weight is dedicated to normal extrinsics
 pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
@@ -87,9 +85,9 @@ pub const MAX_BLOCK_WEIGHT: Weight =
 	Weight::from_ref_time(WEIGHT_REF_TIME_PER_MILLIS.saturating_mul(400));
 
 // The storage deposit is roughly 1 TOKEN per 1kB -- this is the legacy value, used for pallet Identity and Multisig.
-pub const LEGACY_DEPOSIT_PER_BYTE: Balance = MILLI_AZERO;
+pub const LEGACY_DEPOSIT_PER_BYTE: Balance = MILLI_CENT;
 
-// The storage per one byte of contract storage: 4*10^{-5} AZERO per byte.
+// The storage per one byte of contract storage: 4*10^{-5} Selendra per byte.
 pub const CONTRACT_DEPOSIT_PER_BYTE: Balance = 4 * (TOKEN / 100_000);
 
 parameter_types! {
@@ -176,7 +174,7 @@ impl pallet_authorship::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 500 * PICO_AZERO;
+	pub const ExistentialDeposit: u128 = 500 * PICO_CENT;
 	pub const MaxLocks: u32 = 50;
 }
 
@@ -479,7 +477,7 @@ where
 }
 
 parameter_types! {
-	pub const MinVestedTransfer: Balance = MICRO_AZERO;
+	pub const MinVestedTransfer: Balance = MICRO_CENT;
 	pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons = WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
 }
 
