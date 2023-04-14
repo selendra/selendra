@@ -19,7 +19,6 @@
 //! These core Selendra types are used by the relay chain and the Parachains.
 
 use sp_runtime::{
-	generic,
 	traits::{IdentifyAccount, Verify},
 	MultiSignature,
 };
@@ -55,7 +54,7 @@ pub type ChainId = u32;
 pub type Hash = sp_core::H256;
 
 /// Index of a transaction in the relay chain. 32-bit should be plenty.
-pub type Nonce = u32;
+pub type Index = u32;
 
 /// The balance of an account.
 /// 128-bits (or 38 significant decimal figures) will allow for 10 m currency (`10^7`) at a resolution
@@ -66,12 +65,18 @@ pub type Nonce = u32;
 /// that 32 bits may be multiplied with a balance in 128 bits without worrying about overflow.
 pub type Balance = u128;
 
-/// Header type.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-/// Block type.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-/// Block ID.
-pub type BlockId = generic::BlockId<Block>;
+/// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
+/// the specifics of the runtime. They can then be made to be agnostic over specific formats
+/// of data like extrinsics, allowing for them to continue syncing the network through upgrades
+/// to even the core data structures.
+pub mod opaque {
+	use super::*;
+	pub use sp_runtime::{generic, OpaqueExtrinsic as UncheckedExtrinsic};
 
-/// Opaque, encoded, unchecked extrinsic.
-pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+	/// Opaque block header type.
+	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+	/// Opaque block type.
+	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+	/// Opaque block identifier type.
+	pub type BlockId = generic::BlockId<Block>;
+}

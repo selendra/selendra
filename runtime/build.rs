@@ -14,5 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod v0_to_v1;
-pub mod v1_to_v2;
+fn main() {
+	#[cfg(feature = "std")]
+	{
+		substrate_wasm_builder::WasmBuilder::new()
+			.with_current_project()
+			.export_heap_base()
+			.import_memory()
+			.build();
+	}
+}

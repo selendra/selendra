@@ -15,8 +15,7 @@
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use sp_runtime::Perbill;
-
-use crate::{Balance, TOKEN};
+use selendra_primitives::{Balance, TOKEN};
 
 pub const MIN_VALIDATOR_BOND: u128 = 25_000 * TOKEN;
 pub const MIN_NOMINATOR_BOND: u128 = 100 * TOKEN;

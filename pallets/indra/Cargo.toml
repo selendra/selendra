@@ -10,32 +10,35 @@ serde = "1.0.160"
 codec = { package = "parity-scale-codec", version = "3.4.0", default-features = false, features = ["derive"] }
 scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
 
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
 pallet-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
 
 pallets-support = { path = "../support", default-features = false }
 selendra-primitives = { path = "../../primitives", default-features = false }
 
 [dev-dependencies]
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
 
 [features]
 default = ["std"]
 std = [
     "codec/std",
+    "scale-info/std",
+    "sp-std/std",
+    "sp-io/std",
     "frame-support/std",
     "frame-system/std",
-    "sp-std/std",
-    "selendra-primitives/std",
     "pallet-balances/std",
     "pallet-session/std",
     "pallets-support/std",
+    "selendra-primitives/std",
 ]
 try-runtime = [
     "frame-support/try-runtime",

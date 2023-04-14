@@ -34,7 +34,6 @@ use sp_std::vec::Vec;
 
 pub mod app;
 pub mod primitive_core;
-pub mod staking;
 
 pub use primitive_core::*;
 
@@ -60,8 +59,9 @@ pub const MAX_BLOCK_SIZE: u32 = 5 * 1024 * 1024;
 pub const DEFAULT_SESSION_PERIOD: u32 = 900;
 pub const DEFAULT_SESSIONS_PER_ERA: SessionIndex = 96;
 
-pub const ADDRESSES_ENCODING: u8 = 42;
+pub const ADDRESSES_ENCODING: u8 = 204;
 pub const DEFAULT_UNIT_CREATION_DELAY: u64 = 300;
+pub const HEAP_PAGES: u64 = 4096;
 
 pub const DEFAULT_COMMITTEE_SIZE: u32 = 4;
 
