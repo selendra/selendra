@@ -16,4 +16,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod staking;
+mod migration;
+
+pub use migration::{ensure_storage_version, StorageMigration};

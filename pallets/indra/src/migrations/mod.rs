@@ -14,6 +14,5 @@
 // You should have received a copy of the GNU General Public License
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
-pub mod staking;
+pub mod v0_to_v1;
+pub mod v1_to_v2;

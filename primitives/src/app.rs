@@ -14,6 +14,5 @@
 // You should have received a copy of the GNU General Public License
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
-pub mod staking;
+use sp_application_crypto::{app_crypto, ed25519};
+app_crypto!(ed25519, crate::KEY_TYPE);

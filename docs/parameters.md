@@ -11,7 +11,7 @@ This is the initial parameter for Selendra. Though, the values can be updated vi
 
 | **Selendra**	| **Time**	    | **Slots***    | 
 |---------------|---------------|---------------|
-| Slot	        | 6 seconds	    | 1             | 
+| Slot	        | 1 seconds	    | 1             | 
 | Epoch	        | 4 hours	    | 2_400         | 
 | Session	    | 4 hours	    | 2_400         |
 | Era	        | 24 hours	    | 14_40         | 
