@@ -21,34 +21,32 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+pub mod config;
 pub mod constants;
 
 #[cfg(feature = "try-runtime")]
 use frame_try_runtime::UpgradeCheckSelect;
-use sp_api::impl_runtime_apis;
-use sp_consensus_aura::{sr25519::AuthorityId as AuraId, SlotDuration};
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, OpaqueKeys},
-	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedU128,
-};
-pub use sp_runtime::{FixedPointNumber, Perbill, Permill};
-use sp_staking::EraIndex;
-use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
+use sp_api::impl_runtime_apis;
+use sp_consensus_aura::{sr25519::AuthorityId as AuraId, SlotDuration};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_std::prelude::*;
+
+use sp_runtime::{
+	create_runtime_str, generic, impl_opaque_keys,
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, OpaqueKeys},
+	transaction_validity::{TransactionSource, TransactionValidity},
+	ApplyExtrinsicResult, FixedU128, Perbill, Permill,
+};
+
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{
-		ConstBool, ConstU32, EqualPrivilegeOnly, Nothing, SortedMembers, U128CurrencyToVote,
-		WithdrawReasons,
-	},
+	traits::{ConstBool, ConstU32, EqualPrivilegeOnly, Nothing, SortedMembers, WithdrawReasons},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	PalletId,
 };
@@ -61,15 +59,14 @@ use pallet_transaction_payment::CurrencyAdapter;
 use selendra_primitives::{
 	opaque, ApiError as IndraApiError, AuthorityId as IndraId, SessionAuthorityData,
 	Version as FinalityVersion, DEFAULT_BAN_REASON_LENGTH, DEFAULT_MAX_WINNERS,
-	DEFAULT_SESSIONS_PER_ERA, DEFAULT_SESSION_PERIOD, TOKEN,
+	DEFAULT_SESSION_PERIOD, TOKEN,
 };
 pub use selendra_primitives::{
 	AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, Signature,
 };
 use selendra_runtime_common::{
-	impls::DealWithFees,
-	staking::{era_payout, MAX_NOMINATORS_REWARDED_PER_VALIDATOR},
-	wrap_methods, BlockLength, BlockWeights, SlowAdjustingFeeUpdate,
+	impls::DealWithFees, BalanceToU256, BlockLength, BlockWeights, SlowAdjustingFeeUpdate,
+	U256ToBalance,
 };
 
 use constants::{
@@ -261,24 +258,6 @@ parameter_types! {
 	pub const MaxPointsToBalance: u8 = 10;
 }
 
-use sp_runtime::traits::Convert;
-
-pub struct BalanceToU256;
-
-impl Convert<Balance, sp_core::U256> for BalanceToU256 {
-	fn convert(balance: Balance) -> sp_core::U256 {
-		sp_core::U256::from(balance)
-	}
-}
-
-pub struct U256ToBalance;
-
-impl Convert<sp_core::U256, Balance> for U256ToBalance {
-	fn convert(n: sp_core::U256) -> Balance {
-		n.try_into().unwrap_or(Balance::max_value())
-	}
-}
-
 impl pallet_nomination_pools::Config for Runtime {
 	type WeightInfo = ();
 	type RuntimeEvent = RuntimeEvent;
@@ -292,105 +271,6 @@ impl pallet_nomination_pools::Config for Runtime {
 	type MaxUnbonding = ConstU32<8>;
 	type PalletId = NominationPoolsPalletId;
 	type MaxPointsToBalance = MaxPointsToBalance;
-}
-
-parameter_types! {
-	pub const BondingDuration: EraIndex = 14;
-	pub const SlashDeferDuration: EraIndex = 13;
-	// this is coupled with weights for payout_stakers() call
-	// see custom implementation of WeightInfo below
-	pub const MaxNominatorRewardedPerValidator: u32 = MAX_NOMINATORS_REWARDED_PER_VALIDATOR;
-	pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(33);
-	pub const SessionsPerEra: EraIndex = DEFAULT_SESSIONS_PER_ERA;
-	pub HistoryDepth: u32 = 84;
-}
-
-pub struct UniformEraPayout;
-
-impl pallet_staking::EraPayout<Balance> for UniformEraPayout {
-	fn era_payout(_: Balance, _: Balance, era_duration_millis: u64) -> (Balance, Balance) {
-		era_payout(era_duration_millis)
-	}
-}
-
-type SubstrateStakingWeights = pallet_staking::weights::SubstrateWeight<Runtime>;
-
-pub struct PayoutStakersDecreasedWeightInfo;
-
-impl pallet_staking::WeightInfo for PayoutStakersDecreasedWeightInfo {
-	// To make possible to change nominators per validator we need to decrease weight for payout_stakers
-	fn payout_stakers_alive_staked(n: u32) -> Weight {
-		SubstrateStakingWeights::payout_stakers_alive_staked(n) / 2
-	}
-	wrap_methods!(
-		(bond(), SubstrateStakingWeights, Weight),
-		(bond_extra(), SubstrateStakingWeights, Weight),
-		(unbond(), SubstrateStakingWeights, Weight),
-		(withdraw_unbonded_update(s: u32), SubstrateStakingWeights, Weight),
-		(withdraw_unbonded_kill(s: u32), SubstrateStakingWeights, Weight),
-		(validate(), SubstrateStakingWeights, Weight),
-		(kick(k: u32), SubstrateStakingWeights, Weight),
-		(nominate(n: u32), SubstrateStakingWeights, Weight),
-		(chill(), SubstrateStakingWeights, Weight),
-		(set_payee(), SubstrateStakingWeights, Weight),
-		(set_controller(), SubstrateStakingWeights, Weight),
-		(set_validator_count(), SubstrateStakingWeights, Weight),
-		(force_no_eras(), SubstrateStakingWeights, Weight),
-		(force_new_era(), SubstrateStakingWeights, Weight),
-		(force_new_era_always(), SubstrateStakingWeights, Weight),
-		(set_invulnerables(v: u32), SubstrateStakingWeights, Weight),
-		(force_unstake(s: u32), SubstrateStakingWeights, Weight),
-		(cancel_deferred_slash(s: u32), SubstrateStakingWeights, Weight),
-		(payout_stakers_dead_controller(n: u32), SubstrateStakingWeights, Weight),
-		(rebond(l: u32), SubstrateStakingWeights, Weight),
-		(reap_stash(s: u32), SubstrateStakingWeights, Weight),
-		(new_era(v: u32, n: u32), SubstrateStakingWeights, Weight),
-		(get_npos_voters(v: u32, n: u32), SubstrateStakingWeights, Weight),
-		(get_npos_targets(v: u32), SubstrateStakingWeights, Weight),
-		(chill_other(), SubstrateStakingWeights, Weight),
-		(set_staking_configs_all_set(), SubstrateStakingWeights, Weight),
-		(set_staking_configs_all_remove(), SubstrateStakingWeights, Weight),
-		(force_apply_min_commission(), SubstrateStakingWeights, Weight),
-		(set_min_commission(), SubstrateStakingWeights, Weight)
-	);
-}
-
-pub struct StakingBenchmarkingConfig;
-
-impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
-	type MaxValidators = ConstU32<1000>;
-	type MaxNominators = ConstU32<1000>;
-}
-
-impl pallet_staking::Config for Runtime {
-	// Do not change this!!! It guarantees that we have DPoS instead of NPoS.
-	type Currency = Balances;
-	type UnixTime = Timestamp;
-	type CurrencyToVote = U128CurrencyToVote;
-	type ElectionProvider = Elections;
-	type GenesisElectionProvider = Elections;
-	type MaxNominations = ConstU32<1>;
-	type RewardRemainder = Treasury;
-	type RuntimeEvent = RuntimeEvent;
-	type Slash = Treasury;
-	type Reward = ();
-	type SessionsPerEra = SessionsPerEra;
-	type BondingDuration = BondingDuration;
-	type SlashDeferDuration = SlashDeferDuration;
-	type SessionInterface = Self;
-	type EraPayout = UniformEraPayout;
-	type NextNewSession = Session;
-	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
-	type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
-	type VoterList = pallet_staking::UseNominatorsAndValidatorsMap<Runtime>;
-	type MaxUnlockingChunks = ConstU32<16>;
-	type BenchmarkingConfig = StakingBenchmarkingConfig;
-	type WeightInfo = PayoutStakersDecreasedWeightInfo;
-	type CurrencyBalance = Balance;
-	type OnStakerSlash = NominationPools;
-	type HistoryDepth = HistoryDepth;
-	type TargetList = pallet_staking::UseValidatorsMap<Self>;
-	type AdminOrigin = EnsureRoot<AccountId>;
 }
 
 parameter_types! {
@@ -425,8 +305,6 @@ impl pallet_vesting::Config for Runtime {
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = pallet_vesting::weights::SubstrateWeight<Runtime>;
 	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
-	// Maximum number of vesting schedules an account may have at a given moment
-	// follows polkadot https://github.com/paritytech/polkadot/blob/9ce5f7ef5abb1a4291454e8c9911b304d80679f9/runtime/polkadot/src/lib.rs#L980
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 

@@ -15,16 +15,20 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod impls;
+pub mod staking;
+
 use frame_support::{
 	parameter_types,
 	traits::Currency,
 	weights::{constants::WEIGHT_REF_TIME_PER_MILLIS, Weight},
 };
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
-pub use sp_runtime::{traits::Bounded, FixedPointNumber, Perbill, Permill, Perquintill};
-
-pub mod impls;
-pub mod staking;
+use selendra_primitives::Balance;
+use sp_runtime::{
+	traits::{Bounded, Convert},
+	FixedPointNumber, Perbill, Perquintill,
+};
 
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,
@@ -72,3 +76,19 @@ pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
 	MinimumMultiplier,
 	MaximumMultiplier,
 >;
+
+pub struct BalanceToU256;
+
+impl Convert<Balance, sp_core::U256> for BalanceToU256 {
+	fn convert(balance: Balance) -> sp_core::U256 {
+		sp_core::U256::from(balance)
+	}
+}
+
+pub struct U256ToBalance;
+
+impl Convert<sp_core::U256, Balance> for U256ToBalance {
+	fn convert(n: sp_core::U256) -> Balance {
+		n.try_into().unwrap_or(Balance::max_value())
+	}
+}
