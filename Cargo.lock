@@ -2651,6 +2651,10 @@ dependencies = [
 name = "selendra-runtime-common"
 version = "3.0.0"
 dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-authorship",
+ "pallet-balances",
  "parity-scale-codec",
  "scale-info",
  "selendra-primitives",

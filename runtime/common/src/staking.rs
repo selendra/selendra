@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-use sp_runtime::Perbill;
 use selendra_primitives::{Balance, TOKEN};
+use sp_runtime::Perbill;
 
 pub const MIN_VALIDATOR_BOND: u128 = 25_000 * TOKEN;
 pub const MIN_NOMINATOR_BOND: u128 = 100 * TOKEN;

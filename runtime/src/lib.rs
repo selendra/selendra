@@ -1,3 +1,18 @@
+// Copyright 2023 Smallworld Selendra
+// This file is part of Selendra.
+
+// Selendra is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Selendra is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -10,16 +25,15 @@ pub mod constants;
 
 #[cfg(feature = "try-runtime")]
 use frame_try_runtime::UpgradeCheckSelect;
+use sp_api::impl_runtime_apis;
+use sp_consensus_aura::{sr25519::AuthorityId as AuraId, SlotDuration};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, ConvertInto, One,
-		OpaqueKeys,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, ConvertInto, One, OpaqueKeys,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, FixedU128, Perquintill,
@@ -27,20 +41,17 @@ use sp_runtime::{
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill};
 use sp_staking::EraIndex;
 use sp_std::prelude::*;
-use sp_api::impl_runtime_apis;
-use sp_consensus_aura::{sr25519::AuthorityId as AuraId, SlotDuration};
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+#[cfg(feature = "std")]
+use sp_version::NativeVersion;
+use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstBool, ConstU32, Currency, EqualPrivilegeOnly, Nothing, OnUnbalanced, SortedMembers,
+		ConstBool, ConstU32, EqualPrivilegeOnly, Nothing, SortedMembers,
 		U128CurrencyToVote, WithdrawReasons,
 	},
-	weights::{
-		constants::{RocksDbWeight, WEIGHT_REF_TIME_PER_MILLIS},
-		IdentityFee, Weight,
-	},
+	weights::{constants::RocksDbWeight, IdentityFee, Weight},
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
@@ -49,16 +60,24 @@ pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::{CurrencyAdapter, Multiplier, TargetedFeeAdjustment};
 
-pub use selendra_primitives::{Balance, BlockNumber, Signature, AccountId, AccountIndex, Index, Hash};
 use selendra_primitives::{
-	ApiError as IndraApiError,
-	AuthorityId as IndraId, SessionAuthorityData, Version as FinalityVersion, ADDRESSES_ENCODING,
-	DEFAULT_BAN_REASON_LENGTH, DEFAULT_MAX_WINNERS, DEFAULT_SESSIONS_PER_ERA,
-	DEFAULT_SESSION_PERIOD, MAX_BLOCK_SIZE, opaque, TOKEN
+	opaque, ApiError as IndraApiError, AuthorityId as IndraId, SessionAuthorityData,
+	Version as FinalityVersion, DEFAULT_BAN_REASON_LENGTH, DEFAULT_MAX_WINNERS,
+	DEFAULT_SESSIONS_PER_ERA, DEFAULT_SESSION_PERIOD, TOKEN,
 };
-use selendra_runtime_common::{staking::{era_payout, MAX_NOMINATORS_REWARDED_PER_VALIDATOR}, wrap_methods};
+pub use selendra_primitives::{
+	AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, Signature,
+};
+use selendra_runtime_common::{
+	impls::DealWithFees,
+	staking::{era_payout, MAX_NOMINATORS_REWARDED_PER_VALIDATOR},
+	wrap_methods, BlockLength, BlockWeights,
+};
 
-use constants::{currency::*, time::*};
+use constants::{
+	currency::*, time::*, CONTRACTS_DEBUG_OUTPUT, CONTRACT_DEPOSIT_PER_BYTE,
+	LEGACY_DEPOSIT_PER_BYTE,
+};
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -70,91 +89,47 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
 	impl_name: create_runtime_str!("selendra-node"),
 	authoring_version: 1,
-	spec_version: 59,
-	impl_version: 1,
+	spec_version: 3000,
+	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 16,
+	transaction_version: 0,
 	state_version: 0,
 };
-
-// 75% block weight is dedicated to normal extrinsics
-pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
-// The whole process for a single block should take 1s, of which 400ms is for creation,
-// 200ms for propagation and 400ms for validation. Hence the block weight should be within 400ms.
-pub const MAX_BLOCK_WEIGHT: Weight =
-	Weight::from_ref_time(WEIGHT_REF_TIME_PER_MILLIS.saturating_mul(400));
-
-// The storage deposit is roughly 1 TOKEN per 1kB -- this is the legacy value, used for pallet Identity and Multisig.
-pub const LEGACY_DEPOSIT_PER_BYTE: Balance = MILLI_CENT;
-
-// The storage per one byte of contract storage: 4*10^{-5} Selendra per byte.
-pub const CONTRACT_DEPOSIT_PER_BYTE: Balance = 4 * (TOKEN / 100_000);
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const BlockHashCount: BlockNumber = 2400;
-	pub BlockWeights: frame_system::limits::BlockWeights = frame_system::limits::BlockWeights
-		::with_sensible_defaults(MAX_BLOCK_WEIGHT.set_proof_size(u64::MAX), NORMAL_DISPATCH_RATIO);
-	pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
-		::max_with_normal_ratio(MAX_BLOCK_SIZE, NORMAL_DISPATCH_RATIO);
-	pub const SS58Prefix: u8 = ADDRESSES_ENCODING;
+	pub const SS58Prefix: u8 = 204;
 }
 
-// Configure FRAME pallets to include in runtime.
-
 impl frame_system::Config for Runtime {
-	/// The basic call filter to use in dispatchable.
 	type BaseCallFilter = frame_support::traits::Everything;
-	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = BlockWeights;
-	/// The maximum length of a block (in bytes).
 	type BlockLength = BlockLength;
-	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
-	/// The aggregated dispatch type that is available for extrinsics.
 	type RuntimeCall = RuntimeCall;
-	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
 	type Lookup = AccountIdLookup<AccountId, ()>;
-	/// The index type for storing how many extrinsics an account has signed.
 	type Index = Index;
-	/// The index type for blocks.
 	type BlockNumber = BlockNumber;
-	/// The type for hashing blocks and tries.
 	type Hash = Hash;
-	/// The hashing algorithm used.
 	type Hashing = BlakeTwo256;
-	/// The header type.
 	type Header = generic::Header<BlockNumber, BlakeTwo256>;
-	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
-	/// The ubiquitous origin type.
 	type RuntimeOrigin = RuntimeOrigin;
-	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
-	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
-	/// Version of the runtime.
 	type Version = Version;
-	/// Converts a module to the index of the module in `construct_runtime!`.
-	///
-	/// This type is being generated by `construct_runtime!`.
 	type PalletInfo = PalletInfo;
-	/// What to do if a new account is created.
 	type OnNewAccount = ();
-	/// What to do if an account is fully reaped from the system.
 	type OnKilledAccount = ();
-	/// The data to be stored in an account.
 	type AccountData = pallet_balances::AccountData<Balance>;
-	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = ();
-	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
-	// https://github.com/paritytech/polkadot/blob/9ce5f7ef5abb1a4291454e8c9911b304d80679f9/runtime/polkadot/src/lib.rs#L784
 	pub const MaxAuthorities: u32 = 100_000;
 }
 
@@ -174,13 +149,14 @@ impl pallet_authorship::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 500 * PICO_CENT;
+	pub const ExistentialDeposit: u128 = 500 * MILLI_CENT;
 	pub const MaxLocks: u32 = 50;
+	pub const MaxReserves: u32 = 50;
 }
 
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
+	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = [u8; 8];
 	/// The type for recording an account's balance.
 	type Balance = Balance;
@@ -192,20 +168,6 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
 }
 
-type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
-
-pub struct EverythingToTheTreasury;
-
-impl OnUnbalanced<NegativeImbalance> for EverythingToTheTreasury {
-	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance>) {
-		if let Some(fees) = fees_then_tips.next() {
-			Treasury::on_unbalanced(fees);
-			if let Some(tips) = fees_then_tips.next() {
-				Treasury::on_unbalanced(tips);
-			}
-		}
-	}
-}
 
 parameter_types! {
 	// This value increases the priority of `Operational` transactions by adding
@@ -225,7 +187,7 @@ parameter_types! {
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = CurrencyAdapter<Balances, EverythingToTheTreasury>;
+	type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees<Runtime>>;
 	type LengthToFee = IdentityFee<Balance>;
 	type WeightToFee = IdentityFee<Balance>;
 	type FeeMultiplierUpdate = TargetedFeeAdjustment<
@@ -568,9 +530,6 @@ impl pallet_utility::Config for Runtime {
 	type WeightInfo = pallet_utility::weights::SubstrateWeight<Runtime>;
 	type PalletsOrigin = OriginCaller;
 }
-
-// Prints debug output of the `contracts` pallet to stdout if the node is started with `-lruntime::contracts=debug`.
-const CONTRACTS_DEBUG_OUTPUT: bool = true;
 
 parameter_types! {
 	// Refundable deposit per storage item
