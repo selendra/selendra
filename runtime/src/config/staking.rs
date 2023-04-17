@@ -4,16 +4,16 @@ use crate::{
 
 use frame_support::{
 	pallet_prelude::Weight,
-	parameter_types,
+	parameter_types, PalletId,
 	traits::{ConstU32, U128CurrencyToVote},
 };
-use sp_runtime::Perbill;
+use sp_runtime::{Perbill, FixedU128};
 use sp_staking::EraIndex;
 
 use selendra_primitives::{AccountId, Balance, DEFAULT_SESSIONS_PER_ERA};
 use selendra_runtime_common::{
 	staking::{era_payout, MAX_NOMINATORS_REWARDED_PER_VALIDATOR},
-	wrap_methods,
+	wrap_methods, BalanceToU256, U256ToBalance
 };
 
 parameter_types! {
@@ -113,4 +113,25 @@ pub struct StakingBenchmarkingConfig;
 impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
 	type MaxValidators = ConstU32<1000>;
 	type MaxNominators = ConstU32<1000>;
+}
+
+parameter_types! {
+	pub const PostUnbondPoolsWindow: u32 = 4;
+	pub const NominationPoolsPalletId: PalletId = PalletId(*b"py/nopls");
+	pub const MaxPointsToBalance: u8 = 10;
+}
+
+impl pallet_nomination_pools::Config for Runtime {
+	type WeightInfo = ();
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type RewardCounter = FixedU128;
+	type BalanceToU256 = BalanceToU256;
+	type U256ToBalance = U256ToBalance;
+	type Staking = pallet_staking::Pallet<Self>;
+	type PostUnbondingPoolsWindow = PostUnbondPoolsWindow;
+	type MaxMetadataLen = ConstU32<256>;
+	type MaxUnbonding = ConstU32<8>;
+	type PalletId = NominationPoolsPalletId;
+	type MaxPointsToBalance = MaxPointsToBalance;
 }
