@@ -157,9 +157,49 @@ impl_opaque_keys! {
 }
 
 parameter_types! {
+	pub const SessionPeriod: u32 = DEFAULT_SESSION_PERIOD;
+	pub const MaximumBanReasonLength: u32 = DEFAULT_BAN_REASON_LENGTH;
+	pub const MaxWinners: u32 = DEFAULT_MAX_WINNERS;
+}
+
+impl pallet_elections::Config for Runtime {
+	type EraInfoProvider = Staking;
+	type RuntimeEvent = RuntimeEvent;
+	type DataProvider = Staking;
+	type SessionInfoProvider = Session;
+	type SessionPeriod = SessionPeriod;
+	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Runtime, Staking>;
+	type ValidatorRewardsHandler = Staking;
+	type ValidatorExtractor = Staking;
+	type MaximumBanReasonLength = MaximumBanReasonLength;
+	type MaxWinners = MaxWinners;
+}
+
+parameter_types! {
 	pub const ExistentialDeposit: u128 = 500 * MILLI_CENT;
 	pub const MaxLocks: u32 = 50;
 	pub const MaxReserves: u32 = 50;
+}
+
+parameter_types! {
+	pub const Offset: u32 = 0;
+}
+
+impl pallet_session::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type ValidatorId = <Self as frame_system::Config>::AccountId;
+	type ValidatorIdOf = pallet_staking::StashOf<Self>;
+	type ShouldEndSession = pallet_session::PeriodicSessions<SessionPeriod, Offset>;
+	type NextSessionRotation = pallet_session::PeriodicSessions<SessionPeriod, Offset>;
+	type SessionManager = Indra;
+	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
+	type Keys = SessionKeys;
+	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
+}
+
+impl pallet_session::historical::Config for Runtime {
+	type FullIdentification = pallet_staking::Exposure<AccountId, Balance>;
+	type FullIdentificationOf = pallet_staking::ExposureOf<Runtime>;
 }
 
 impl pallet_balances::Config for Runtime {
@@ -209,46 +249,6 @@ impl pallet_scheduler::Config for Runtime {
 	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type Preimages = ();
-}
-
-parameter_types! {
-	pub const SessionPeriod: u32 = DEFAULT_SESSION_PERIOD;
-	pub const MaximumBanReasonLength: u32 = DEFAULT_BAN_REASON_LENGTH;
-	pub const MaxWinners: u32 = DEFAULT_MAX_WINNERS;
-}
-
-impl pallet_elections::Config for Runtime {
-	type EraInfoProvider = Staking;
-	type RuntimeEvent = RuntimeEvent;
-	type DataProvider = Staking;
-	type SessionInfoProvider = Session;
-	type SessionPeriod = SessionPeriod;
-	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Runtime, Staking>;
-	type ValidatorRewardsHandler = Staking;
-	type ValidatorExtractor = Staking;
-	type MaximumBanReasonLength = MaximumBanReasonLength;
-	type MaxWinners = MaxWinners;
-}
-
-parameter_types! {
-	pub const Offset: u32 = 0;
-}
-
-impl pallet_session::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type ValidatorId = <Self as frame_system::Config>::AccountId;
-	type ValidatorIdOf = pallet_staking::StashOf<Self>;
-	type ShouldEndSession = pallet_session::PeriodicSessions<SessionPeriod, Offset>;
-	type NextSessionRotation = pallet_session::PeriodicSessions<SessionPeriod, Offset>;
-	type SessionManager = Indra;
-	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
-	type Keys = SessionKeys;
-	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
-}
-
-impl pallet_session::historical::Config for Runtime {
-	type FullIdentification = pallet_staking::Exposure<AccountId, Balance>;
-	type FullIdentificationOf = pallet_staking::ExposureOf<Runtime>;
 }
 
 parameter_types! {
