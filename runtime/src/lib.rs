@@ -32,11 +32,9 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 pub use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, ConvertInto, One, OpaqueKeys,
-	},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, OpaqueKeys},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedU128, Perquintill,
+	ApplyExtrinsicResult, FixedU128,
 };
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill};
 use sp_staking::EraIndex;
@@ -48,17 +46,17 @@ use sp_version::RuntimeVersion;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstBool, ConstU32, EqualPrivilegeOnly, Nothing, SortedMembers,
-		U128CurrencyToVote, WithdrawReasons,
+		ConstBool, ConstU32, EqualPrivilegeOnly, Nothing, SortedMembers, U128CurrencyToVote,
+		WithdrawReasons,
 	},
-	weights::{constants::RocksDbWeight, IdentityFee, Weight},
+	weights::{constants::RocksDbWeight, Weight, ConstantMultiplier},
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
 
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
-use pallet_transaction_payment::{CurrencyAdapter, Multiplier, TargetedFeeAdjustment};
+use pallet_transaction_payment::CurrencyAdapter;
 
 use selendra_primitives::{
 	opaque, ApiError as IndraApiError, AuthorityId as IndraId, SessionAuthorityData,
@@ -71,11 +69,11 @@ pub use selendra_primitives::{
 use selendra_runtime_common::{
 	impls::DealWithFees,
 	staking::{era_payout, MAX_NOMINATORS_REWARDED_PER_VALIDATOR},
-	wrap_methods, BlockLength, BlockWeights,
+	wrap_methods, BlockLength, BlockWeights, SlowAdjustingFeeUpdate,
 };
 
 use constants::{
-	currency::*, time::*, CONTRACTS_DEBUG_OUTPUT, CONTRACT_DEPOSIT_PER_BYTE,
+	currency::*, fee::WeightToFee, time::*, CONTRACTS_DEBUG_OUTPUT, CONTRACT_DEPOSIT_PER_BYTE,
 	LEGACY_DEPOSIT_PER_BYTE,
 };
 
@@ -168,35 +166,20 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
 }
 
-
 parameter_types! {
+	pub const TransactionByteFee: Balance = 100 * MICRO_CENT;
 	// This value increases the priority of `Operational` transactions by adding
-	// a "virtual tip" that's equal to the `OperationalFeeMultiplier * final_fee`.
-	// follows polkadot : https://github.com/paritytech/polkadot/blob/9ce5f7ef5abb1a4291454e8c9911b304d80679f9/runtime/polkadot/src/lib.rs#L369
+	/// a "virtual tip" that's equal to the `OperationalFeeMultiplier * final_fee`
 	pub const OperationalFeeMultiplier: u8 = 5;
-	// We expect that on average 25% of the normal capacity will be occupied with normal txs.
-	pub const TargetSaturationLevel: Perquintill = Perquintill::from_percent(25);
-	// During 20 blocks the fee may not change more than by 100%. This, together with the
-	// `TargetSaturationLevel` value, results in variability ~0.067. For the corresponding
-	// formulas please refer to Substrate code at `frame/transaction-payment/src/lib.rs`.
-	pub FeeVariability: Multiplier = Multiplier::saturating_from_rational(67, 1000);
-	// Fee should never be lower than the computational cost.
-	pub MinimumMultiplier: Multiplier = Multiplier::one();
-	pub MaximumMultiplier: Multiplier = Bounded::max_value();
+
 }
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type LengthToFee = IdentityFee<Balance>;
-	type WeightToFee = IdentityFee<Balance>;
-	type FeeMultiplierUpdate = TargetedFeeAdjustment<
-		Self,
-		TargetSaturationLevel,
-		FeeVariability,
-		MinimumMultiplier,
-		MaximumMultiplier,
-	>;
+	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
+	type WeightToFee = WeightToFee;
+	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
 
