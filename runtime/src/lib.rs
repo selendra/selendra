@@ -49,7 +49,7 @@ use frame_support::{
 		ConstBool, ConstU32, EqualPrivilegeOnly, Nothing, SortedMembers, U128CurrencyToVote,
 		WithdrawReasons,
 	},
-	weights::{constants::RocksDbWeight, Weight, ConstantMultiplier},
+	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
@@ -74,7 +74,6 @@ use selendra_runtime_common::{
 
 use constants::{
 	currency::*, fee::WeightToFee, time::*, CONTRACTS_DEBUG_OUTPUT, CONTRACT_DEPOSIT_PER_BYTE,
-	LEGACY_DEPOSIT_PER_BYTE,
 };
 
 /// The version information used to identify this runtime when compiled natively.
@@ -146,6 +145,21 @@ impl pallet_authorship::Config for Runtime {
 	type EventHandler = (Elections,);
 }
 
+impl pallet_indra::Config for Runtime {
+	type AuthorityId = IndraId;
+	type RuntimeEvent = RuntimeEvent;
+	type SessionInfoProvider = Session;
+	type SessionManager = Elections;
+	type NextSessionAuthorityProvider = Session;
+}
+
+impl_opaque_keys! {
+	pub struct SessionKeys {
+		pub aura: Aura,
+		pub indra: Indra,
+	}
+}
+
 parameter_types! {
 	pub const ExistentialDeposit: u128 = 500 * MILLI_CENT;
 	pub const MaxLocks: u32 = 50;
@@ -201,26 +215,6 @@ impl pallet_scheduler::Config for Runtime {
 	type Preimages = ();
 }
 
-impl pallet_sudo::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeCall = RuntimeCall;
-}
-
-impl pallet_indra::Config for Runtime {
-	type AuthorityId = IndraId;
-	type RuntimeEvent = RuntimeEvent;
-	type SessionInfoProvider = Session;
-	type SessionManager = Elections;
-	type NextSessionAuthorityProvider = Session;
-}
-
-impl_opaque_keys! {
-	pub struct SessionKeys {
-		pub aura: Aura,
-		pub indra: Indra,
-	}
-}
-
 parameter_types! {
 	pub const SessionPeriod: u32 = DEFAULT_SESSION_PERIOD;
 	pub const MaximumBanReasonLength: u32 = DEFAULT_BAN_REASON_LENGTH;
@@ -239,8 +233,6 @@ impl pallet_elections::Config for Runtime {
 	type MaximumBanReasonLength = MaximumBanReasonLength;
 	type MaxWinners = MaxWinners;
 }
-
-impl pallet_randomness_collective_flip::Config for Runtime {}
 
 parameter_types! {
 	pub const Offset: u32 = 0;
@@ -440,9 +432,9 @@ impl pallet_vesting::Config for Runtime {
 
 parameter_types! {
 	// One storage item; key size is 32+32; value is size 4+4+16+32 bytes = 56 bytes.
-	pub const DepositBase: Balance = 120 * LEGACY_DEPOSIT_PER_BYTE;
+	pub const DepositBase: Balance = 120 * MILLI_CENT;
 	// Additional storage item size of 32 bytes.
-	pub const DepositFactor: Balance = 32 * LEGACY_DEPOSIT_PER_BYTE;
+	pub const DepositFactor: Balance = 32 * MILLI_CENT;
 	pub const MaxSignatories: u16 = 100;
 }
 
@@ -456,16 +448,11 @@ impl pallet_multisig::Config for Runtime {
 	type WeightInfo = pallet_multisig::weights::SubstrateWeight<Runtime>;
 }
 
-#[cfg(not(feature = "enable_treasury_proposals"))]
-// This value effectively disables treasury.
-pub const TREASURY_PROPOSAL_BOND: Balance = 100_000_000_000 * TOKEN;
-
-#[cfg(feature = "enable_treasury_proposals")]
 pub const TREASURY_PROPOSAL_BOND: Balance = 100 * TOKEN;
 
 parameter_types! {
-	// We do not burn any money within treasury.
-	pub const Burn: Permill = Permill::from_percent(0);
+	// We do burn 5% money within treasury.
+	pub const Burn: Permill = Permill::from_percent(5);
 	// The fraction of the proposal that the proposer should deposit.
 	// We agreed on non-progressive deposit.
 	pub const ProposalBond: Permill = Permill::from_percent(0);
@@ -552,10 +539,9 @@ impl pallet_contracts::Config for Runtime {
 
 parameter_types! {
 	// bytes count taken from:
-	// https://github.com/paritytech/polkadot/blob/016dc7297101710db0483ab6ef199e244dff711d/runtime/kusama/src/lib.rs#L995
-	pub const BasicDeposit: Balance = 258 * LEGACY_DEPOSIT_PER_BYTE;
-	pub const FieldDeposit: Balance = 66 * LEGACY_DEPOSIT_PER_BYTE;
-	pub const SubAccountDeposit: Balance = 53 * LEGACY_DEPOSIT_PER_BYTE;
+	pub const BasicDeposit: Balance = 258 * MILLI_CENT;
+	pub const FieldDeposit: Balance = 66 * MILLI_CENT;
+	pub const SubAccountDeposit: Balance = 53 * MILLI_CENT;
 	pub const MaxSubAccounts: u32 = 100;
 	pub const MaxAdditionalFields: u32 = 100;
 	pub const MaxRegistrars: u32 = 20;
@@ -574,6 +560,13 @@ impl pallet_identity::Config for Runtime {
 	type ForceOrigin = EnsureRoot<AccountId>;
 	type RegistrarOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = pallet_identity::weights::SubstrateWeight<Self>;
+}
+
+impl pallet_randomness_collective_flip::Config for Runtime {}
+
+impl pallet_sudo::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

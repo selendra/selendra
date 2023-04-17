@@ -13,7 +13,6 @@
 
 // You should have received a copy of the GNU General Public License
 
-use currency::MILLI_CENT;
 use selendra_primitives::{Balance, TOKEN};
 
 // Prints debug output of the `contracts` pallet to stdout if the node is started with `-lruntime::contracts=debug`.
@@ -21,9 +20,6 @@ pub const CONTRACTS_DEBUG_OUTPUT: bool = true;
 
 // The storage per one byte of contract storage: 4*10^{-5} Selendra per byte.
 pub const CONTRACT_DEPOSIT_PER_BYTE: Balance = 4 * (TOKEN / 100_000);
-
-// The storage deposit is roughly 1 TOKEN per 1kB -- this is the legacy value, used for pallet Identity and Multisig.
-pub const LEGACY_DEPOSIT_PER_BYTE: Balance = MILLI_CENT;
 
 pub mod currency {
 	use selendra_primitives::{Balance, TOKEN};

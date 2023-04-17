@@ -15,4 +15,5 @@
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use sp_application_crypto::{app_crypto, ed25519};
+
 app_crypto!(ed25519, crate::KEY_TYPE);

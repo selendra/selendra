@@ -26,54 +26,84 @@ use serde::{Deserialize, Serialize};
 use sp_core::crypto::KeyTypeId;
 pub use sp_runtime::{
 	generic::Header as GenericHeader,
-	traits::{BlakeTwo256, ConstU32, Header as HeaderT},
-	BoundedVec, ConsensusEngineId, Perbill,
+	traits::{BlakeTwo256, ConstU32, Hash as HashT, Header as HeaderT, IdentifyAccount, Verify},
+	BoundedVec, ConsensusEngineId, MultiSignature, Perbill,
 };
 pub use sp_staking::{EraIndex, SessionIndex};
 use sp_std::vec::Vec;
 
 pub mod app;
-pub mod primitive_core;
+pub mod constants;
 
-pub use primitive_core::*;
+pub use constants::*;
 
-pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"sel3");
-pub const SELENDRA_ENGINE_ID: ConsensusEngineId = *b"FRNK";
+/// The block number type used by Selendra.
+/// 32-bits will allow for 136 years of blocks assuming 1 block per second.
+pub type BlockNumber = u32;
+
+/// An instant or duration in time.
+pub type Moment = u64;
+
+/// Alias to type for a signature for a transaction on the relay chain. This allows one of several
+/// kinds of underlying crypto to be used, so isn't a fixed size when encoded.
+pub type Signature = MultiSignature;
+
+/// Alias to the public key used for this chain, actually a `MultiSigner`. Like the signature, this
+/// also isn't a fixed size when encoded, as different cryptos have different size public keys.
+pub type AccountPublic = <Signature as Verify>::Signer;
+
+/// Alias to the opaque account ID type for this chain, actually a `AccountId32`. This is always
+/// 32 bytes.
+pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
+
+/// The type for looking up accounts. We don't expect more than 4 billion of them.
+pub type AccountIndex = u32;
+
+/// Identifier for a chain. 32-bit should be plenty.
+pub type ChainId = u32;
+
+/// A hash of some data used by the relay chain.
+pub type Hash = sp_core::H256;
+
+/// Index of a transaction in the relay chain. 32-bit should be plenty.
+pub type Index = u32;
+
+/// The balance of an account.
+/// 128-bits (or 38 significant decimal figures) will allow for 10 m currency (`10^7`) at a resolution
+/// to all for one second's worth of an annualised 50% reward be paid to a unit holder (`10^11` unit
+/// denomination), or `10^18` total atomic units, to grow at 50%/year for 51 years (`10^9` multiplier)
+/// for an eventual total of `10^27` units (27 significant decimal figures).
+/// We round denomination to `10^12` (12 SDF), and leave the other redundancy at the upper end so
+/// that 32 bits may be multiplied with a balance in 128 bits without worrying about overflow.
+pub type Balance = u128;
+
+/// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
+/// the specifics of the runtime. They can then be made to be agnostic over specific formats
+/// of data like extrinsics, allowing for them to continue syncing the network through upgrades
+/// to even the core data structures.
+pub mod opaque {
+	use super::*;
+	pub use sp_runtime::{generic, OpaqueExtrinsic as UncheckedExtrinsic};
+
+	/// Opaque block header type.
+	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+	/// Opaque block type.
+	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+	/// Opaque block identifier type.
+	pub type BlockId = generic::BlockId<Block>;
+}
 
 sp_application_crypto::with_pair! {
 	pub type AuthorityPair = app::Pair;
 }
 
 pub type AuthoritySignature = app::Signature;
+
 pub type AuthorityId = app::Public;
+
 pub type SessionCount = u32;
+
 pub type BlockCount = u32;
-
-pub const TOKEN_DECIMALS: u32 = 18;
-pub const TOKEN: u128 = 10u128.pow(TOKEN_DECIMALS);
-
-pub const DEFAULT_SESSION_PERIOD: u32 = 900;
-pub const DEFAULT_SESSIONS_PER_ERA: SessionIndex = 96;
-
-pub const DEFAULT_UNIT_CREATION_DELAY: u64 = 300;
-pub const HEAP_PAGES: u64 = 4096;
-
-pub const DEFAULT_COMMITTEE_SIZE: u32 = 4;
-
-pub const DEFAULT_BAN_MINIMAL_EXPECTED_PERFORMANCE: Perbill = Perbill::from_percent(0);
-pub const DEFAULT_BAN_SESSION_COUNT_THRESHOLD: SessionCount = 3;
-pub const DEFAULT_BAN_REASON_LENGTH: u32 = 300;
-pub const DEFAULT_MAX_WINNERS: u32 = u32::MAX;
-
-pub const DEFAULT_CLEAN_SESSION_COUNTER_DELAY: SessionCount = 960;
-pub const DEFAULT_BAN_PERIOD: EraIndex = 10;
-
-/// Version returned when no version has been set.
-pub const DEFAULT_FINALITY_VERSION: Version = 0;
-/// Current version of abft.
-pub const CURRENT_FINALITY_VERSION: u16 = LEGACY_FINALITY_VERSION + 1;
-/// Legacy version of abft.
-pub const LEGACY_FINALITY_VERSION: u16 = 1;
 
 /// Openness of the process of the elections
 #[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq)]
