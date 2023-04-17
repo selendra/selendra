@@ -39,18 +39,18 @@ use sp_std::prelude::*;
 
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, OpaqueKeys},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, OpaqueKeys},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, Perbill, Permill,
 };
 
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstBool, ConstU32, EqualPrivilegeOnly, Nothing, SortedMembers, WithdrawReasons},
+	traits::{ConstBool, ConstU32, EqualPrivilegeOnly, Nothing, SortedMembers},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	PalletId,
 };
-use frame_system::{EnsureRoot, EnsureSignedBy};
+use frame_system::EnsureSignedBy;
 
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -271,39 +271,6 @@ where
 	type OverarchingCall = RuntimeCall;
 }
 
-parameter_types! {
-	pub const MinVestedTransfer: Balance = MICRO_CENT;
-	pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons = WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
-}
-
-impl pallet_vesting::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type BlockNumberToBalance = ConvertInto;
-	type MinVestedTransfer = MinVestedTransfer;
-	type WeightInfo = pallet_vesting::weights::SubstrateWeight<Runtime>;
-	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
-	const MAX_VESTING_SCHEDULES: u32 = 28;
-}
-
-parameter_types! {
-	// One storage item; key size is 32+32; value is size 4+4+16+32 bytes = 56 bytes.
-	pub const DepositBase: Balance = 120 * MILLI_CENT;
-	// Additional storage item size of 32 bytes.
-	pub const DepositFactor: Balance = 32 * MILLI_CENT;
-	pub const MaxSignatories: u16 = 100;
-}
-
-impl pallet_multisig::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeCall = RuntimeCall;
-	type Currency = Balances;
-	type DepositBase = DepositBase;
-	type DepositFactor = DepositFactor;
-	type MaxSignatories = MaxSignatories;
-	type WeightInfo = pallet_multisig::weights::SubstrateWeight<Runtime>;
-}
-
 pub const TREASURY_PROPOSAL_BOND: Balance = 100 * TOKEN;
 
 parameter_types! {
@@ -350,13 +317,6 @@ impl pallet_treasury::Config for Runtime {
 	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
 }
 
-impl pallet_utility::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeCall = RuntimeCall;
-	type WeightInfo = pallet_utility::weights::SubstrateWeight<Runtime>;
-	type PalletsOrigin = OriginCaller;
-}
-
 parameter_types! {
 	// Refundable deposit per storage item
 	pub const DepositPerItem: Balance = 32 * CONTRACT_DEPOSIT_PER_BYTE;
@@ -391,31 +351,6 @@ impl pallet_contracts::Config for Runtime {
 	type MaxStorageKeyLen = ConstU32<128>;
 	type UnsafeUnstableInterface = ConstBool<false>;
 	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
-}
-
-parameter_types! {
-	// bytes count taken from:
-	pub const BasicDeposit: Balance = 258 * MILLI_CENT;
-	pub const FieldDeposit: Balance = 66 * MILLI_CENT;
-	pub const SubAccountDeposit: Balance = 53 * MILLI_CENT;
-	pub const MaxSubAccounts: u32 = 100;
-	pub const MaxAdditionalFields: u32 = 100;
-	pub const MaxRegistrars: u32 = 20;
-}
-
-impl pallet_identity::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type BasicDeposit = BasicDeposit;
-	type FieldDeposit = FieldDeposit;
-	type SubAccountDeposit = SubAccountDeposit;
-	type MaxSubAccounts = MaxSubAccounts;
-	type MaxAdditionalFields = MaxAdditionalFields;
-	type MaxRegistrars = MaxRegistrars;
-	type Slashed = Treasury;
-	type ForceOrigin = EnsureRoot<AccountId>;
-	type RegistrarOrigin = EnsureRoot<AccountId>;
-	type WeightInfo = pallet_identity::weights::SubstrateWeight<Self>;
 }
 
 impl pallet_randomness_collective_flip::Config for Runtime {}

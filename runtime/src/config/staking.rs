@@ -2,18 +2,20 @@ use crate::{
 	Balances, Elections, NominationPools, Runtime, RuntimeEvent, Session, Timestamp, Treasury,
 };
 
+use sp_runtime::{FixedU128, Perbill};
+use sp_staking::EraIndex;
+
 use frame_support::{
 	pallet_prelude::Weight,
-	parameter_types, PalletId,
+	parameter_types,
 	traits::{ConstU32, U128CurrencyToVote},
+	PalletId,
 };
-use sp_runtime::{Perbill, FixedU128};
-use sp_staking::EraIndex;
 
 use selendra_primitives::{AccountId, Balance, DEFAULT_SESSIONS_PER_ERA};
 use selendra_runtime_common::{
 	staking::{era_payout, MAX_NOMINATORS_REWARDED_PER_VALIDATOR},
-	wrap_methods, BalanceToU256, U256ToBalance
+	wrap_methods, BalanceToU256, U256ToBalance,
 };
 
 parameter_types! {
