@@ -1,14 +1,14 @@
 //! A set of abstractions for dealing with `ReliableMulticast` in a more testable
 //! and modular way.
 //!
-//! We expose the `Multicast` trait, mimicking the interface of `aleph_bft::ReliableMulticast`
+//! We expose the `Multicast` trait, mimicking the interface of `selendra_bft::ReliableMulticast`
 
 use std::{
 	fmt::{Debug, Display},
 	hash::Hash as StdHash,
 };
 
-use aleph_bft_rmc::{MultiKeychain, ReliableMulticast, Signable, Signature};
+use selendra_bft_rmc::{MultiKeychain, ReliableMulticast, Signable, Signature};
 use codec::{Codec, Decode, Encode};
 
 /// A convenience trait for gathering all of the desired hash characteristics.
@@ -39,10 +39,10 @@ impl<H: Hash> Signable for SignableHash<H> {
 	}
 }
 
-/// Anything that exposes the same interface as `aleph_bft::ReliableMulticast`.
+/// Anything that exposes the same interface as `selendra_bft::ReliableMulticast`.
 ///
 /// The trait defines an associated type: `Signed`. For `ReliableMulticast`, this is simply
-/// `aleph_bft::Multisigned` but the mocks are free to use the simplest matching implementation.
+/// `selendra_bft::Multisigned` but the mocks are free to use the simplest matching implementation.
 #[async_trait::async_trait]
 pub trait Multicast<H: Hash, PMS>: Send + Sync {
 	async fn start_multicast(&mut self, signable: SignableHash<H>);

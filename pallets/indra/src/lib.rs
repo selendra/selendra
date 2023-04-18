@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-//! This pallet is the runtime companion of the Aleph finality gadget.
+//! This pallet is the runtime companion of the Selendra finality gadget.
 //!
 //! Currently, it only provides support for changing sessions but in the future
-//! it will allow reporting equivocation in AlephBFT.
+//! it will allow reporting equivocation in SelendraBFT.
 //!
 //! This pallet relies on an extension of the `SelendraSessionApi` Runtime API to handle the finality
 //! version. The scheduled version change is persisted as `FinalityScheduledVersionChange`. This
@@ -105,8 +105,8 @@ pub mod pallet {
 							migrations::v1_to_v2::Migration::<T, Self>::migrate(),
 					_ => {
 						log::warn!(
-							target: "pallet_aleph",
-							"On chain storage version of pallet aleph is {:?} but it should not be bigger than 2",
+							target: "pallet_indra",
+							"On chain storage version of pallet indra is {:?} but it should not be bigger than 2",
 							on_chain
 						);
 						Weight::zero()
@@ -167,7 +167,7 @@ pub mod pallet {
 		) {
 			if !authorities.is_empty() {
 				if !<Authorities<T>>::get().is_empty() {
-					log::error!(target: "pallet_aleph","Authorities are already initialized!");
+					log::error!(target: "pallet_indra","Authorities are already initialized!");
 				} else {
 					<Authorities<T>>::put(authorities);
 				}
