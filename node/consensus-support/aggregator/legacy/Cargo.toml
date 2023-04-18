@@ -1,0 +1,17 @@
+[package]
+name = "legacy-aggregator"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+license = "Apache 2.0"
+
+
+[dependencies]
+aleph-bft-rmc = "0.5.2"
+aleph-bft-types = "0.7.2"
+
+async-trait = "0.1.68"
+futures = "0.3.28"
+codec = { package = "parity-scale-codec", version = "3.0", default-features = false, features = ["derive"] }
+tokio = { version = "1.17", features = [ "sync", "macros", "time", "rt-multi-thread" ] }
+log = "0.4.17"
