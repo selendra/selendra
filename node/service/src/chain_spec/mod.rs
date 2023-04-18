@@ -6,12 +6,39 @@ use std::{collections::HashSet, str::FromStr};
 
 use pallet_staking::StakerStatus;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_core::{sr25519, Pair, Public};
 
 use selendra_primitives::{
-	AccountId, AuthorityId as SelendraId, Balance, MIN_VALIDATOR_BOND, TOKEN,
+	AccountId, AccountPublic, AuthorityId as SelendraId, Balance, IdentifyAccount,
+	MIN_VALIDATOR_BOND, TOKEN,
 };
-use selendra_runtime::SessionKeys;
+use selendra_runtime::{GenesisConfig, SessionKeys};
 
+/// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
+pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+
+// total issuance of 300M (for devnet/tests/local runs only)
+const TOTAL_ISSUANCE: Balance = 300_000_000 * TOKEN;
+
+/// Calculate initial endowments such that total issuance is kept approximately constant.
+fn calculate_initial_endowment(accounts: &[AccountId]) -> Balance {
+	TOTAL_ISSUANCE / (accounts.len() as Balance)
+}
+
+/// Helper function to generate a crypto pair from seed
+pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
+	TPublic::Pair::from_string(&format!("//{}", seed), None)
+		.expect("static values are valid; qed")
+		.public()
+}
+
+/// Helper function to generate an account ID from seed
+pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
+where
+	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
+{
+	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
+}
 
 fn to_account_ids(authorities: &[AuthorityKeys]) -> impl Iterator<Item = AccountId> + '_ {
 	authorities.iter().map(|auth| auth.account_id.clone())
@@ -23,12 +50,24 @@ fn deduplicate(accounts: Vec<AccountId>) -> Vec<AccountId> {
 	set.into_iter().collect()
 }
 
-// total issuance of 300M (for devnet/tests/local runs only)
-const TOTAL_ISSUANCE: Balance = 300_000_000 * TOKEN;
+/// Generate an account ID from seed.
+pub fn account_id_from_string(seed: &str) -> AccountId {
+    AccountId::from(
+        sr25519::Pair::from_string(seed, None)
+            .expect("Can't create pair from seed value")
+            .public(),
+    )
+}
 
-/// Calculate initial endowments such that total issuance is kept approximately constant.
-fn calculate_initial_endowment(accounts: &[AccountId]) -> Balance {
-    TOTAL_ISSUANCE / (accounts.len() as Balance)
+/// Returns the properties for the [`SelendraChainSpec`].
+pub fn selendra_chain_spec_properties() -> serde_json::map::Map<String, serde_json::Value> {
+	serde_json::json!({
+		"tokenSymbol": "SEL",
+		"tokenDecimals": 18,
+	})
+	.as_object()
+	.expect("Map given; qed")
+	.clone()
 }
 
 #[derive(Clone)]
