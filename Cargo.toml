@@ -1,6 +1,17 @@
 [workspace]
 members = [
-    "runtime"
+    "runtime",
+
+    "primitives",
+    "pallets/elections",
+    "pallets/indra",
+    "pallets/support",
+
+    "node/rpc",
+
+    "node/consensus-support/aggregator",
+    "node/consensus-support/aggregator/legacy",
+    "node/consensus-support/finality-selendra",
 ]
 
 [profile.release]
