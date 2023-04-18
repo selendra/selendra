@@ -1,10 +1,10 @@
 use std::{collections::HashMap, marker::PhantomData, sync::Arc};
 
-use selendra_primitives::{SelendraSessionApi, SessionAuthorityData};
 use futures::StreamExt;
 use log::{debug, error, trace};
 use sc_client_api::{Backend, FinalityNotification};
 use sc_utils::mpsc::TracingUnboundedReceiver;
+use selendra_primitives::{SelendraSessionApi, SessionAuthorityData};
 use sp_runtime::{
 	generic::BlockId,
 	traits::{Block, Header, NumberFor},

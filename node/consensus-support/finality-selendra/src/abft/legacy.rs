@@ -1,13 +1,13 @@
-pub use selendra_primitives::LEGACY_FINALITY_VERSION as VERSION;
 use legacy_selendra_bft::{default_config, Config, LocalIO, Terminator};
 use log::debug;
+pub use selendra_primitives::LEGACY_FINALITY_VERSION as VERSION;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block;
 
 use super::common::{unit_creation_delay_fn, MAX_ROUNDS};
 use crate::{
 	abft::{NetworkWrapper, SpawnHandleT},
-	data_io::{SelendraData, OrderedDataInterpreter},
+	data_io::{OrderedDataInterpreter, SelendraData},
 	network::data::Network,
 	oneshot,
 	party::{

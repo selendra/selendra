@@ -1,6 +1,6 @@
-pub use selendra_primitives::CURRENT_FINALITY_VERSION as VERSION;
-use selendra_bft::{default_config, Config, LocalIO, Terminator};
 use log::debug;
+use selendra_bft::{default_config, Config, LocalIO, Terminator};
+pub use selendra_primitives::CURRENT_FINALITY_VERSION as VERSION;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block;
 
@@ -10,7 +10,7 @@ use crate::{
 		NetworkWrapper, SpawnHandleT,
 	},
 	crypto::Signature,
-	data_io::{SelendraData, OrderedDataInterpreter},
+	data_io::{OrderedDataInterpreter, SelendraData},
 	network::data::Network,
 	oneshot,
 	party::{

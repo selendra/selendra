@@ -17,7 +17,9 @@ use substrate_test_runtime_client::{
 use tokio::time::timeout;
 
 use crate::{
-	data_io::{SelendraData, SelendraNetworkMessage, DataStore, DataStoreConfig, MAX_DATA_BRANCH_LEN},
+	data_io::{
+		DataStore, DataStoreConfig, SelendraData, SelendraNetworkMessage, MAX_DATA_BRANCH_LEN,
+	},
 	network::{
 		data::{component::Network as ComponentNetwork, Network as DataNetwork},
 		Data, RequestBlocks,

@@ -3,7 +3,9 @@ use substrate_test_runtime_client::runtime::{Block, Header};
 
 use crate::data_io::{SelendraData, UnvalidatedSelendraProposal};
 
-pub fn unvalidated_proposal_from_headers(headers: Vec<Header>) -> UnvalidatedSelendraProposal<Block> {
+pub fn unvalidated_proposal_from_headers(
+	headers: Vec<Header>,
+) -> UnvalidatedSelendraProposal<Block> {
 	let num = headers.last().unwrap().number;
 	let hashes = headers.into_iter().map(|header| header.hash()).collect();
 	UnvalidatedSelendraProposal::new(hashes, num)

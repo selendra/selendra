@@ -1,8 +1,8 @@
 use std::{sync::Arc, time::Duration};
 
-use selendra_primitives::KEY_TYPE;
 use codec::{Decode, Encode, Output};
 use futures::{channel::mpsc, StreamExt};
+use selendra_primitives::KEY_TYPE;
 use sp_keystore::{testing::KeyStore, CryptoStore};
 use tokio::time::timeout;
 

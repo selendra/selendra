@@ -1,10 +1,10 @@
 use std::{collections::HashSet, marker::PhantomData, sync::Arc};
 
-use selendra_primitives::{SelendraSessionApi, KEY_TYPE};
 use async_trait::async_trait;
 use futures::channel::oneshot;
 use log::{debug, info, trace, warn};
 use sc_client_api::Backend;
+use selendra_primitives::{SelendraSessionApi, KEY_TYPE};
 use sp_consensus::SelectChain;
 use sp_keystore::CryptoStore;
 use sp_runtime::{
@@ -226,8 +226,12 @@ where
 			chain_tracker,
 			..
 		} = params;
-		let consensus_config =
-			current_create_selendra_config(n_members, node_id, session_id, self.unit_creation_delay);
+		let consensus_config = current_create_selendra_config(
+			n_members,
+			node_id,
+			session_id,
+			self.unit_creation_delay,
+		);
 		let data_network = data_network.map();
 
 		let (unfiltered_selendra_network, rmc_network) =

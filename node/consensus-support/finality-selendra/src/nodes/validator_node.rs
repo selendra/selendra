@@ -24,7 +24,7 @@ use crate::{
 		ConsensusParty, ConsensusPartyParams,
 	},
 	session_map::{AuthorityProviderImpl, FinalityNotificatorImpl, SessionMapUpdater},
-	SelendraConfig, BlockchainBackend,
+	BlockchainBackend, SelendraConfig,
 };
 
 pub async fn new_pen(mnemonic: &str, keystore: Arc<dyn CryptoStore>) -> AuthorityPen {
@@ -37,8 +37,9 @@ pub async fn new_pen(mnemonic: &str, keystore: Arc<dyn CryptoStore>) -> Authorit
 		.expect("we just generated this key so everything should work")
 }
 
-pub async fn run_validator_node<B, H, C, BB, BE, SC>(selendra_config: SelendraConfig<B, H, C, SC, BB>)
-where
+pub async fn run_validator_node<B, H, C, BB, BE, SC>(
+	selendra_config: SelendraConfig<B, H, C, SC, BB>,
+) where
 	B: Block,
 	H: ExHashT,
 	C: crate::ClientForSelendra<B, BE> + Send + Sync + 'static,

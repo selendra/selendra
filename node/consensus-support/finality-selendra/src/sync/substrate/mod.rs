@@ -1,7 +1,7 @@
 use std::hash::{Hash, Hasher};
 
-use selendra_primitives::BlockNumber;
 use codec::{Decode, Encode};
+use selendra_primitives::BlockNumber;
 use sp_runtime::traits::{CheckedSub, Header as SubstrateHeader, One};
 
 use crate::{

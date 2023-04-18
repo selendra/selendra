@@ -219,7 +219,7 @@ impl<B: Block, H: ExHashT> EventStream<PeerId> for NetworkEventStream<B, H> {
 							None => continue,
 						}
 					},
-					NotificationsReceived { messages, remote } => {
+					NotificationsReceived { messages, remote } =>
 						return Some(Messages(
 							remote,
 							messages
@@ -230,8 +230,7 @@ impl<B: Block, H: ExHashT> EventStream<PeerId> for NetworkEventStream<B, H> {
 										.map(|protocol| (protocol, data))
 								})
 								.collect(),
-						))
-					},
+						)),
 					Dht(_) => continue,
 				},
 				None => return None,

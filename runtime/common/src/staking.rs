@@ -14,14 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-use selendra_primitives::{Balance, TOKEN};
+use selendra_primitives::{Balance, VALIDATOR_REWARD, YEARLY_INFLATION};
 use sp_runtime::Perbill;
-
-pub const MIN_VALIDATOR_BOND: u128 = 25_000 * TOKEN;
-pub const MIN_NOMINATOR_BOND: u128 = 100 * TOKEN;
-pub const MAX_NOMINATORS_REWARDED_PER_VALIDATOR: u32 = 1024;
-pub const YEARLY_INFLATION: Balance = 10_000_000 * TOKEN;
-pub const VALIDATOR_REWARD: Perbill = Perbill::from_percent(90);
 
 pub fn era_payout(miliseconds_per_era: u64) -> (Balance, Balance) {
 	// Milliseconds per year for the Julian year (365.25 days).

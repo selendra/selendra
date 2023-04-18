@@ -16,7 +16,6 @@ mod types;
 
 use std::fmt::Debug;
 
-use selendra_bft_crypto::{PartialMultisignature, Signature};
 use codec::{Decode, Encode};
 pub use crypto::Keychain;
 pub use current::{
@@ -28,6 +27,7 @@ pub use legacy::{
 	VERSION as LEGACY_VERSION,
 };
 pub use network::{CurrentNetworkData, LegacyNetworkData, NetworkWrapper};
+use selendra_bft_crypto::{PartialMultisignature, Signature};
 pub use traits::{Hash, SpawnHandle, SpawnHandleT, Wrapper as HashWrapper};
 pub use types::{NodeCount, NodeIndex, Recipient};
 
@@ -72,7 +72,9 @@ impl<S: 'static> IntoIterator for SignatureSet<S> {
 	}
 }
 
-impl<S: legacy_selendra_bft::Signature> legacy_selendra_bft::PartialMultisignature for SignatureSet<S> {
+impl<S: legacy_selendra_bft::Signature> legacy_selendra_bft::PartialMultisignature
+	for SignatureSet<S>
+{
 	type Signature = S;
 
 	fn add_signature(
@@ -87,11 +89,7 @@ impl<S: legacy_selendra_bft::Signature> legacy_selendra_bft::PartialMultisignatu
 impl<S: legacy_selendra_bft::Signature> selendra_bft::PartialMultisignature for SignatureSet<S> {
 	type Signature = S;
 
-	fn add_signature(
-		self,
-		signature: &Self::Signature,
-		index: selendra_bft::NodeIndex,
-	) -> Self {
+	fn add_signature(self, signature: &Self::Signature, index: selendra_bft::NodeIndex) -> Self {
 		SignatureSet::add_signature(self, signature, index.into())
 	}
 }

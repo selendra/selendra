@@ -4,9 +4,9 @@ use std::{
 	sync::Arc,
 };
 
-use selendra_primitives::BlockNumber;
 use codec::Encode;
 use sc_client_api::HeaderBackend;
+use selendra_primitives::BlockNumber;
 use sp_runtime::traits::{Block as BlockT, Header as SubstrateHeader};
 
 use crate::{

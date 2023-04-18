@@ -3,8 +3,8 @@ use std::{
 	marker::PhantomData,
 };
 
-use selendra_primitives::{BlockNumber, SELENDRA_ENGINE_ID};
 use log::warn;
+use selendra_primitives::{BlockNumber, SELENDRA_ENGINE_ID};
 use sp_blockchain::{Backend, Error as ClientError};
 use sp_runtime::traits::{Block as BlockT, Header as SubstrateHeader};
 

@@ -10,7 +10,7 @@ use tokio::{task::JoinHandle, time::timeout};
 use AcceptancePolicy::*;
 
 use crate::{
-	justification::{SelendraJustification, JustificationHandler, JustificationHandlerConfig},
+	justification::{JustificationHandler, JustificationHandlerConfig, SelendraJustification},
 	testing::mocks::{
 		create_block, AcceptancePolicy, Backend, JustificationRequestSchedulerImpl,
 		MockedBlockFinalizer, MockedBlockRequester, SessionInfoProviderImpl, TBlock,

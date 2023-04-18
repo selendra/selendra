@@ -401,8 +401,9 @@ mod tests {
 				chain_builder.finalize_block(&blocks[height - 1].header.hash());
 				sleep_enough().await;
 				let data = data_provider.get_data().await.unwrap();
-				let expected_data =
-					selendra_data_from_blocks(blocks[height..(MAX_DATA_BRANCH_LEN + height)].to_vec());
+				let expected_data = selendra_data_from_blocks(
+					blocks[height..(MAX_DATA_BRANCH_LEN + height)].to_vec(),
+				);
 				assert_eq!(data, expected_data);
 			}
 			chain_builder.finalize_block(&blocks.last().unwrap().header.hash());

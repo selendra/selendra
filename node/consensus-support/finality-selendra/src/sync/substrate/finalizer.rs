@@ -1,10 +1,10 @@
-use selendra_primitives::{BlockNumber, SELENDRA_ENGINE_ID};
 use sc_client_api::{Backend, Finalizer as SubstrateFinalizer, HeaderBackend, LockImportRun};
+use selendra_primitives::{BlockNumber, SELENDRA_ENGINE_ID};
 use sp_blockchain::Error as ClientError;
 use sp_runtime::traits::{Block as BlockT, Header as SubstrateHeader};
 
 use crate::{
-	finalization::{SelendraFinalizer, BlockFinalizer},
+	finalization::{BlockFinalizer, SelendraFinalizer},
 	justification::versioned_encode,
 	sync::{substrate::Justification, Finalizer},
 };

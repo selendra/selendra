@@ -1,8 +1,8 @@
 use std::{collections::HashSet, marker::PhantomData, mem::size_of};
 
-use selendra_primitives::MAX_BLOCK_SIZE;
 use codec::{Decode, Encode, Error as CodecError, Input as CodecInput};
 use log::warn;
+use selendra_primitives::MAX_BLOCK_SIZE;
 
 use crate::{
 	network::GossipNetwork,

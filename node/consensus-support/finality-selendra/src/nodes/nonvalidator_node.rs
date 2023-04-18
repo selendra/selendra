@@ -7,11 +7,12 @@ use sp_runtime::traits::Block;
 use crate::{
 	nodes::{setup_justification_handler, JustificationParams},
 	session_map::{AuthorityProviderImpl, FinalityNotificatorImpl, SessionMapUpdater},
-	SelendraConfig, BlockchainBackend,
+	BlockchainBackend, SelendraConfig,
 };
 
-pub async fn run_nonvalidator_node<B, H, C, BB, BE, SC>(selendra_config: SelendraConfig<B, H, C, SC, BB>)
-where
+pub async fn run_nonvalidator_node<B, H, C, BB, BE, SC>(
+	selendra_config: SelendraConfig<B, H, C, SC, BB>,
+) where
 	B: Block,
 	H: ExHashT,
 	C: crate::ClientForSelendra<B, BE> + Send + Sync + 'static,

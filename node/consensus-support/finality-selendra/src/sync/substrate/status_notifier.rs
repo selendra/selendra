@@ -1,8 +1,8 @@
 use std::fmt::{Display, Error as FmtError, Formatter};
 
-use selendra_primitives::BlockNumber;
 use futures::StreamExt;
 use sc_client_api::client::{FinalityNotifications, ImportNotifications};
+use selendra_primitives::BlockNumber;
 use sp_runtime::traits::{Block as BlockT, Header as SubstrateHeader};
 use tokio::select;
 

@@ -1,8 +1,8 @@
 use std::fmt::{Display, Error as FmtError, Formatter};
 
-use selendra_primitives::SessionAuthorityData;
 use codec::Encode;
 use log::warn;
+use selendra_primitives::SessionAuthorityData;
 use sp_runtime::{traits::Block as BlockT, RuntimeAppPublic};
 
 use crate::{

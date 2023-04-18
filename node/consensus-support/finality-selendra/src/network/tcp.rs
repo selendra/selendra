@@ -1,8 +1,8 @@
 use std::{io::Error as IoError, iter, net::ToSocketAddrs as _};
 
-use selendra_primitives::AuthorityId;
 use codec::{Decode, Encode};
 use log::info;
+use selendra_primitives::AuthorityId;
 use sp_core::crypto::KeyTypeId;
 use tokio::net::{
 	tcp::{OwnedReadHalf, OwnedWriteHalf},

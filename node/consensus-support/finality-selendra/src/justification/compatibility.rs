@@ -199,13 +199,13 @@ pub fn versioned_encode(justification: SelendraJustification) -> Vec<u8> {
 
 #[cfg(test)]
 mod test {
-	use selendra_primitives::{AuthorityPair, AuthoritySignature};
 	use codec::{Decode, Encode};
+	use selendra_primitives::{AuthorityPair, AuthoritySignature};
 	use sp_core::Pair;
 
 	use super::{
-		backwards_compatible_decode, versioned_encode, SelendraJustificationV1, SelendraJustificationV2,
-		VersionedSelendraJustification,
+		backwards_compatible_decode, versioned_encode, SelendraJustificationV1,
+		SelendraJustificationV2, VersionedSelendraJustification,
 	};
 	use crate::{
 		crypto::{Signature, SignatureV1},

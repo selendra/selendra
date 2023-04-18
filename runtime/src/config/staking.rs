@@ -27,11 +27,10 @@ use frame_support::{
 	PalletId,
 };
 
-use selendra_primitives::{AccountId, Balance, DEFAULT_SESSIONS_PER_ERA};
-use selendra_runtime_common::{
-	staking::{era_payout, MAX_NOMINATORS_REWARDED_PER_VALIDATOR},
-	wrap_methods, BalanceToU256, U256ToBalance,
+use selendra_primitives::{
+	AccountId, Balance, DEFAULT_SESSIONS_PER_ERA, MAX_NOMINATORS_REWARDED_PER_VALIDATOR,
 };
+use selendra_runtime_common::{staking::era_payout, wrap_methods, BalanceToU256, U256ToBalance};
 
 parameter_types! {
 	pub const BondingDuration: EraIndex = 14;

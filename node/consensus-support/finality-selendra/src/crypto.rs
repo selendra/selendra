@@ -1,7 +1,7 @@
 use std::{convert::TryInto, sync::Arc};
 
-use selendra_primitives::{AuthorityId, AuthoritySignature, KEY_TYPE};
 use codec::{Decode, Encode};
+use selendra_primitives::{AuthorityId, AuthoritySignature, KEY_TYPE};
 use sp_core::crypto::KeyTypeId;
 use sp_keystore::{CryptoStore, Error as KeystoreError};
 use sp_runtime::RuntimeAppPublic;

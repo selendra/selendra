@@ -9,7 +9,7 @@ use crate::{
 	data_io::{
 		chain_info::{AuxFinalizationChainInfoProvider, CachedChainInfoProvider},
 		status_provider::get_proposal_status,
-		SelendraData, ChainInfoProvider,
+		ChainInfoProvider, SelendraData,
 	},
 	mpsc::TrySendError,
 	BlockHashNum, SessionBoundaries,
@@ -82,7 +82,10 @@ impl<B: BlockT, C: HeaderBackend<B>> OrderedDataInterpreter<B, C> {
 		self.blocks_to_finalize_tx.unbounded_send(block)
 	}
 
-	pub fn blocks_to_finalize_from_data(&mut self, new_data: SelendraData<B>) -> Vec<BlockHashNum<B>> {
+	pub fn blocks_to_finalize_from_data(
+		&mut self,
+		new_data: SelendraData<B>,
+	) -> Vec<BlockHashNum<B>> {
 		let unvalidated_proposal = new_data.head_proposal;
 		let proposal = match unvalidated_proposal.validate_bounds(&self.session_boundaries) {
 			Ok(proposal) => proposal,

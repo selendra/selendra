@@ -8,8 +8,8 @@ use std::{
 	hash::Hash as StdHash,
 };
 
-use selendra_bft_rmc::{MultiKeychain, ReliableMulticast, Signable, Signature};
 use codec::{Codec, Decode, Encode};
+use selendra_bft_rmc::{MultiKeychain, ReliableMulticast, Signable, Signature};
 
 /// A convenience trait for gathering all of the desired hash characteristics.
 pub trait Hash: AsRef<[u8]> + StdHash + Eq + Clone + Codec + Debug + Display + Send + Sync {}

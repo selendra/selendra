@@ -113,9 +113,8 @@ where
 	) -> Self {
 		let (messages_for_rmc, messages_from_network) = mpsc::unbounded();
 		let (messages_for_network, messages_from_rmc) = mpsc::unbounded();
-		let scheduler = selendra_bft_rmc::DoublingDelayScheduler::new(
-			tokio::time::Duration::from_millis(500),
-		);
+		let scheduler =
+			selendra_bft_rmc::DoublingDelayScheduler::new(tokio::time::Duration::from_millis(500));
 		let rmc = selendra_bft_rmc::ReliableMulticast::new(
 			messages_from_network,
 			messages_for_network,
@@ -210,11 +209,7 @@ where
 		self.0.next().await
 	}
 
-	fn send(
-		&self,
-		data: D,
-		recipient: selendra_bft::Recipient,
-	) -> Result<(), CurrentNetworkError> {
+	fn send(&self, data: D, recipient: selendra_bft::Recipient) -> Result<(), CurrentNetworkError> {
 		self.0.send(data, recipient.into()).map_err(|e| match e {
 			SendError::SendFailed => CurrentNetworkError::SendFail,
 		})

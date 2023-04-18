@@ -13,7 +13,7 @@ use crate::{
 	abft::SignatureSet,
 	aggregation::Aggregator,
 	crypto::Signature,
-	justification::{SelendraJustification, JustificationNotification},
+	justification::{JustificationNotification, SelendraJustification},
 	metrics::Checkpoint,
 	network::data::Network,
 	party::{

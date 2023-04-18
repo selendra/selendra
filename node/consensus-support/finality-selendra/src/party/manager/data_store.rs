@@ -8,7 +8,7 @@ use sp_runtime::traits::Block;
 
 use crate::{
 	abft::SpawnHandleT,
-	data_io::{SelendraNetworkMessage, DataStore},
+	data_io::{DataStore, SelendraNetworkMessage},
 	network::{data::component::Receiver, RequestBlocks},
 	party::{AuthoritySubtaskCommon, Task},
 };

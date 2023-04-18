@@ -4,10 +4,10 @@ use std::{
 	time::Instant,
 };
 
-use selendra_bft_types::Recipient;
 use codec::Codec;
 use futures::{channel::mpsc, StreamExt};
 use log::{debug, error, info, trace, warn};
+use selendra_bft_types::Recipient;
 
 use crate::{
 	multicast::{Hash, Multicast, SignableHash},
@@ -189,9 +189,7 @@ impl<
 		loop {
 			trace!(target: "selendra-aggregator", "Entering next_multisigned_hash loop.");
 			match self.aggregator.try_pop_hash() {
-				Ok(res) => {
-					return Some(res)
-				},
+				Ok(res) => return Some(res),
 				Err(AggregatorError::NoHashFound) => { /* ignored */ },
 				Err(AggregatorError::DuplicateHash) => {
 					warn!(

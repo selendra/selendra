@@ -6,7 +6,7 @@ use sp_runtime::{
 
 use crate::data_io::{
 	chain_info::ChainInfoProvider,
-	proposal::{SelendraProposal, ProposalStatus},
+	proposal::{ProposalStatus, SelendraProposal},
 };
 
 pub fn get_proposal_status<B, CIP>(
@@ -103,7 +103,10 @@ where
 	false
 }
 
-fn is_ancestor_finalized<B, CIP>(chain_info_provider: &mut CIP, proposal: &SelendraProposal<B>) -> bool
+fn is_ancestor_finalized<B, CIP>(
+	chain_info_provider: &mut CIP,
+	proposal: &SelendraProposal<B>,
+) -> bool
 where
 	B: BlockT,
 	CIP: ChainInfoProvider<B>,
@@ -141,9 +144,7 @@ where
 				if parent_hash != proposal[i - 1] {
 					return false
 				},
-			Err(()) => {
-				return false
-			},
+			Err(()) => return false,
 		}
 	}
 	true
@@ -163,9 +164,9 @@ mod tests {
 		data_io::{
 			chain_info::{AuxFinalizationChainInfoProvider, CachedChainInfoProvider},
 			proposal::{
-				SelendraProposal,
 				PendingProposalStatus::*,
 				ProposalStatus::{self, *},
+				SelendraProposal,
 			},
 			status_provider::get_proposal_status,
 			ChainInfoCacheConfig, MAX_DATA_BRANCH_LEN,

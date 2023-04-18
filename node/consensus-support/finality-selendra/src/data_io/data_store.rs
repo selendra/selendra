@@ -22,7 +22,7 @@ use sp_runtime::traits::{Block as BlockT, Header as HeaderT, NumberFor, One};
 use crate::{
 	data_io::{
 		chain_info::{CachedChainInfoProvider, ChainInfoProvider},
-		proposal::{SelendraProposal, ProposalStatus},
+		proposal::{ProposalStatus, SelendraProposal},
 		status_provider::get_proposal_status,
 		SelendraNetworkMessage,
 	},
@@ -542,7 +542,11 @@ where
 
 	// This is called upon a proposal being available -- we remove it from the set of
 	// proposals a message waits for.
-	fn remove_proposal_from_pending_message(&mut self, proposal: &SelendraProposal<B>, id: MessageId) {
+	fn remove_proposal_from_pending_message(
+		&mut self,
+		proposal: &SelendraProposal<B>,
+		id: MessageId,
+	) {
 		let mut message_info = match self.pending_messages.remove(&id) {
 			Some(message_info) => message_info,
 			None => {

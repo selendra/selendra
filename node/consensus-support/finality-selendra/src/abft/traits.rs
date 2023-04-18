@@ -9,7 +9,7 @@ use sp_api::BlockT;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Hash as SpHash;
 
-use crate::data_io::{SelendraData, DataProvider, OrderedDataInterpreter};
+use crate::data_io::{DataProvider, OrderedDataInterpreter, SelendraData};
 
 /// A convenience trait for gathering all of the desired hash characteristics.
 pub trait Hash: AsRef<[u8]> + StdHash + Eq + Clone + Codec + Debug + Send + Sync {}

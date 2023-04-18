@@ -51,11 +51,11 @@ mod sync;
 pub mod testing;
 
 pub use abft::{Keychain, NodeCount, NodeIndex, Recipient, SignatureSet, SpawnHandle};
-pub use selendra_primitives::{AuthorityId, AuthorityPair, AuthoritySignature};
 pub use import::SelendraBlockImport;
-pub use justification::{SelendraJustification, JustificationNotification};
+pub use justification::{JustificationNotification, SelendraJustification};
 pub use network::{Protocol, ProtocolNaming};
 pub use nodes::{run_nonvalidator_node, run_validator_node};
+pub use selendra_primitives::{AuthorityId, AuthorityPair, AuthoritySignature};
 pub use session::SessionPeriod;
 
 use crate::compatibility::{Version, Versioned};

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use selendra_primitives::AuthoritySignature;
 use codec::{Decode, Encode};
+use selendra_primitives::AuthoritySignature;
 use sp_api::{BlockT, NumberFor};
 
 use crate::{crypto::Signature, SessionId};
