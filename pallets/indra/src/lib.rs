@@ -19,7 +19,7 @@
 //! Currently, it only provides support for changing sessions but in the future
 //! it will allow reporting equivocation in AlephBFT.
 //!
-//! This pallet relies on an extension of the `AlephSessionApi` Runtime API to handle the finality
+//! This pallet relies on an extension of the `SelendraSessionApi` Runtime API to handle the finality
 //! version. The scheduled version change is persisted as `FinalityScheduledVersionChange`. This
 //! value stores the information about a scheduled finality version change, where `version_incoming`
 //! is the version to be set and `session` is the session on which the new version will be set.

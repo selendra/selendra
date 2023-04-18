@@ -24,7 +24,7 @@ use frame_support::{
 	weights::{constants::WEIGHT_REF_TIME_PER_MILLIS, Weight},
 };
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
-use selendra_primitives::Balance;
+use selendra_primitives::{Balance, MAX_BLOCK_SIZE};
 use sp_runtime::{
 	traits::{Bounded, Convert},
 	FixedPointNumber, Perbill, Perquintill,
@@ -33,9 +33,6 @@ use sp_runtime::{
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::NegativeImbalance;
-
-// We agreed to 5MB as the block size limit.
-pub const MAX_BLOCK_SIZE: u32 = 5 * 1024 * 1024;
 
 // 75% block weight is dedicated to normal extrinsics
 pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
@@ -64,7 +61,7 @@ parameter_types! {
 
 	/// Maximum length of block. Up to 5MB.
 	pub BlockLength: frame_system::limits::BlockLength =
-		frame_system::limits::BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+		frame_system::limits::BlockLength::max_with_normal_ratio(MAX_BLOCK_SIZE, NORMAL_DISPATCH_RATIO);
 }
 
 /// Parameterized slow adjusting fee updated based on

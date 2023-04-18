@@ -6,6 +6,9 @@ pub const TOKEN: u128 = 10u128.pow(TOKEN_DECIMALS);
 pub const DEFAULT_SESSION_PERIOD: u32 = 900;
 pub const DEFAULT_SESSIONS_PER_ERA: SessionIndex = 96;
 
+// We agreed to 5MB as the block size limit.
+pub const MAX_BLOCK_SIZE: u32 = 5 * 1024 * 1024;
+
 pub const DEFAULT_UNIT_CREATION_DELAY: u64 = 300;
 pub const HEAP_PAGES: u64 = 4096;
 
