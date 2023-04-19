@@ -16,7 +16,9 @@ hex-literal = "0.3"
 libp2p = "0.49.0"
 thiserror = "1.0"
 
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
 sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
 sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }

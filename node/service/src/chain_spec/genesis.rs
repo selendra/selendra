@@ -1,7 +1,7 @@
 use super::{
-	calculate_initial_endowment, configure_chain_spec_fields, deduplicate,
+	account_id_from_string, calculate_initial_endowment, configure_chain_spec_fields, deduplicate,
 	get_account_id_from_seed, selendra_chain_spec_properties, to_account_ids, AuthorityKeys,
-	ChainSpec, account_id_from_string
+	ChainSpec,
 };
 
 use pallet_staking::Forcing;
@@ -28,7 +28,7 @@ pub fn testnet_config(authorities: Vec<AuthorityKeys>) -> Result<ChainSpec, Stri
 			account_id_from_string(format!("//{}//Controller", index).as_str())
 		})
 		.collect();
-    testnet_chain_spec_config(authorities, controller_accounts)
+	testnet_chain_spec_config(authorities, controller_accounts)
 }
 
 fn testnet_chain_spec_config(

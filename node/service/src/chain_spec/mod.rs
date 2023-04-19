@@ -20,6 +20,8 @@ pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 // total issuance of 300M (for devnet/tests/local runs only)
 const TOTAL_ISSUANCE: Balance = 300_000_000 * TOKEN;
 
+pub const DEFAULT_BACKUP_FOLDER: &str = "backup-stash";
+
 /// Calculate initial endowments such that total issuance is kept approximately constant.
 fn calculate_initial_endowment(accounts: &[AccountId]) -> Balance {
 	TOTAL_ISSUANCE / (accounts.len() as Balance)
@@ -52,11 +54,11 @@ fn deduplicate(accounts: Vec<AccountId>) -> Vec<AccountId> {
 
 /// Generate an account ID from seed.
 pub fn account_id_from_string(seed: &str) -> AccountId {
-    AccountId::from(
-        sr25519::Pair::from_string(seed, None)
-            .expect("Can't create pair from seed value")
-            .public(),
-    )
+	AccountId::from(
+		sr25519::Pair::from_string(seed, None)
+			.expect("Can't create pair from seed value")
+			.public(),
+	)
 }
 
 /// Returns the properties for the [`SelendraChainSpec`].
