@@ -129,8 +129,8 @@ pub struct ChainParams {
 	#[arg(long, default_value = "Selendra Zero Development")]
 	chain_name: String,
 
-	/// Token symbol. Default is DZERO
-	#[arg(long, default_value = "DZERO")]
+	/// Token symbol. Default is SEL
+	#[arg(long, default_value = "SEL")]
 	token_symbol: String,
 
 	/// AccountIds of authorities forming the committee at the genesis (comma delimited)
