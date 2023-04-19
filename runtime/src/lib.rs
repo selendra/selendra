@@ -92,7 +92,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const BlockHashCount: BlockNumber = 2400;
-	pub const SS58Prefix: u8 = 204;
+	pub const SS58Prefix: u8 = 42;
 }
 
 impl frame_system::Config for Runtime {

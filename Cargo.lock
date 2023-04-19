@@ -7109,6 +7109,57 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-node"
+version = "3.0.0"
+dependencies = [
+ "finality-selendra",
+ "futures",
+ "hex",
+ "hex-literal",
+ "libp2p 0.49.0",
+ "log",
+ "pallet-staking",
+ "parity-scale-codec",
+ "sc-basic-authorship",
+ "sc-block-builder",
+ "sc-chain-spec",
+ "sc-cli",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-aura",
+ "sc-consensus-slots",
+ "sc-executor",
+ "sc-keystore",
+ "sc-network",
+ "sc-service",
+ "sc-telemetry",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "selendra-primitives",
+ "selendra-rpc",
+ "selendra-runtime",
+ "selendra-runtime-common",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-timestamp",
+ "sp-transaction-pool",
+ "substrate-build-script-utils",
+ "thiserror",
+ "try-runtime-cli",
+]
+
+[[package]]
 name = "selendra-primitives"
 version = "3.0.0"
 dependencies = [
@@ -7224,57 +7275,6 @@ dependencies = [
  "sp-runtime",
  "sp-staking",
  "sp-std",
-]
-
-[[package]]
-name = "selendra-service"
-version = "0.3.0"
-dependencies = [
- "finality-selendra",
- "futures",
- "hex",
- "hex-literal",
- "libp2p 0.49.0",
- "log",
- "pallet-staking",
- "parity-scale-codec",
- "sc-basic-authorship",
- "sc-block-builder",
- "sc-chain-spec",
- "sc-cli",
- "sc-client-api",
- "sc-consensus",
- "sc-consensus-aura",
- "sc-consensus-slots",
- "sc-executor",
- "sc-keystore",
- "sc-network",
- "sc-service",
- "sc-telemetry",
- "sc-transaction-pool",
- "sc-transaction-pool-api",
- "selendra-primitives",
- "selendra-rpc",
- "selendra-runtime",
- "selendra-runtime-common",
- "serde",
- "serde_json",
- "sp-api",
- "sp-application-crypto",
- "sp-arithmetic",
- "sp-blockchain",
- "sp-consensus",
- "sp-consensus-aura",
- "sp-core",
- "sp-inherents",
- "sp-io",
- "sp-keystore",
- "sp-runtime",
- "sp-timestamp",
- "sp-transaction-pool",
- "substrate-build-script-utils",
- "thiserror",
- "try-runtime-cli",
 ]
 
 [[package]]

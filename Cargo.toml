@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "runtime",
+    "node",
 
     "primitives",
     "pallets/elections",
@@ -8,7 +9,6 @@ members = [
     "pallets/support",
 
     "node/rpc",
-    "node/service",
     "node/consensus-support/aggregator",
     "node/consensus-support/aggregator/legacy",
     "node/consensus-support/finality-selendra",
