@@ -30,7 +30,7 @@ use frame_support::{
 use selendra_primitives::{
 	AccountId, Balance, DEFAULT_SESSIONS_PER_ERA, MAX_NOMINATORS_REWARDED_PER_VALIDATOR,
 };
-use selendra_runtime_common::{staking::era_payout, wrap_methods, BalanceToU256, U256ToBalance};
+use selendra_runtime_common::{staking::era_payout, wrap_methods, BalanceToU256, U256ToBalance, prod_or_fast};
 
 parameter_types! {
 	pub const BondingDuration: EraIndex = 14;
@@ -39,7 +39,7 @@ parameter_types! {
 	// see custom implementation of WeightInfo below
 	pub const MaxNominatorRewardedPerValidator: u32 = MAX_NOMINATORS_REWARDED_PER_VALIDATOR;
 	pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(33);
-	pub const SessionsPerEra: EraIndex = DEFAULT_SESSIONS_PER_ERA;
+	pub SessionsPerEra: EraIndex = prod_or_fast!(DEFAULT_SESSIONS_PER_ERA, 3);
 	pub HistoryDepth: u32 = 84;
 }
 

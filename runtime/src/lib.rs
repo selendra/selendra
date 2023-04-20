@@ -65,7 +65,7 @@ pub use selendra_primitives::{
 	AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, Signature,
 };
 use selendra_runtime_common::{
-	impls::DealWithFees, BlockLength, BlockWeights, SlowAdjustingFeeUpdate,
+	impls::DealWithFees, BlockLength, BlockWeights, SlowAdjustingFeeUpdate, prod_or_fast
 };
 
 use constants::{
@@ -157,7 +157,7 @@ impl_opaque_keys! {
 }
 
 parameter_types! {
-	pub const SessionPeriod: u32 = DEFAULT_SESSION_PERIOD;
+	pub SessionPeriod: u32 = prod_or_fast!(DEFAULT_SESSION_PERIOD, 96);
 	pub const MaximumBanReasonLength: u32 = DEFAULT_BAN_REASON_LENGTH;
 	pub const MaxWinners: u32 = DEFAULT_MAX_WINNERS;
 }

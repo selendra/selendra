@@ -23,3 +23,5 @@ selendra_pallets
 open-runtime-module-library
 
 v0.*
+
+node-*.log
