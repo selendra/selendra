@@ -1,4 +1,4 @@
-// Copyright 2022 Smallworld Selendra
+// Copyright 2022 Selendra by SmallWorld Cambodia
 // This file is part of Selendra.
 
 // Selendra is free software: you can redistribute it and/or modify
