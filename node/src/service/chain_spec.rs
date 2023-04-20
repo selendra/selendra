@@ -29,7 +29,7 @@ pub const CHAINTYPE_DEV: &str = "dev";
 pub const CHAINTYPE_LOCAL: &str = "local";
 pub const CHAINTYPE_LIVE: &str = "live";
 
-pub const DEFAULT_CHAIN_ID: &str = "a0dnet1";
+pub const DEFAULT_CHAIN_ID: &str = "selendra_network";
 
 // Alice is the default sudo holder.
 pub const DEFAULT_SUDO_ACCOUNT: &str = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
@@ -125,8 +125,8 @@ pub struct ChainParams {
 	#[arg(long, value_name = "TYPE", value_parser = parse_chaintype, default_value = CHAINTYPE_LIVE)]
 	chain_type: ChainType,
 
-	/// Chain name. Default is "Selendra Zero Development"
-	#[arg(long, default_value = "Selendra Zero Development")]
+	/// Chain name. Default is "Selendra Development"
+	#[arg(long, default_value = "Selendra Development")]
 	chain_name: String,
 
 	/// Token symbol. Default is SEL
