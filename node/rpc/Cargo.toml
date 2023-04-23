@@ -30,4 +30,4 @@ pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrat
 substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
 
 selendra-primitives = { path = "../../primitives" }
-finality-selendra = { path = "../../consensus-support/finality-selendra"}
+finality-selendra = { path = "../../consensus/finality-selendra"}

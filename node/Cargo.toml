@@ -59,7 +59,7 @@ try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "p
 selendra-primitives = { path = "../primitives" }
 selendra-runtime = { path = "../runtime" }
 selendra-runtime-common = { path = "../runtime/common" }
-finality-selendra = { path = "../consensus-support/finality-selendra" }
+finality-selendra = { path = "../consensus/finality-selendra" }
 selendra-rpc = { path = "rpc" }
 
 [build-dependencies]

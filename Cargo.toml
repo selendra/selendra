@@ -7,9 +7,9 @@ members = [
     "pallets/selendra",
     "pallets/support",
     "node/rpc",
-    "consensus-support/aggregator",
-    "consensus-support/aggregator/legacy",
-    "consensus-support/finality-selendra",
+    "consensus/aggregator",
+    "consensus/aggregator/legacy",
+    "consensus/finality-selendra",
 ]
 
 [profile.release]
