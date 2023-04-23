@@ -4744,26 +4744,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-indra"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-session",
- "pallet-timestamp",
- "pallets-support",
- "parity-scale-codec",
- "scale-info",
- "selendra-primitives",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-multisig"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.38#18bb7c7c841b101c19a8d1881b893ae8e37de460"
@@ -4834,6 +4814,26 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sp-weights",
+]
+
+[[package]]
+name = "pallet-selendra"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-session",
+ "pallet-timestamp",
+ "pallets-support",
+ "parity-scale-codec",
+ "scale-info",
+ "selendra-primitives",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7109,7 +7109,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "selendra-node"
+name = "selendra"
 version = "3.0.0"
 dependencies = [
  "finality-selendra",
@@ -7219,12 +7219,12 @@ dependencies = [
  "pallet-contracts-primitives",
  "pallet-elections",
  "pallet-identity",
- "pallet-indra",
  "pallet-multisig",
  "pallet-nomination-pools",
  "pallet-nomination-pools-runtime-api",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
+ "pallet-selendra",
  "pallet-session",
  "pallet-staking",
  "pallet-sudo",

@@ -1,5 +1,5 @@
 [package]
-name = "selendra-node"
+name = "selendra"
 version = "3.0.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
@@ -10,7 +10,7 @@ license = "GPL-3.0-or-later"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [[bin]]
-name = "selendra-node"
+name = "selendra"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
@@ -59,7 +59,7 @@ try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "p
 selendra-primitives = { path = "../primitives" }
 selendra-runtime = { path = "../runtime" }
 selendra-runtime-common = { path = "../runtime/common" }
-finality-selendra = { path = "consensus-support/finality-selendra" }
+finality-selendra = { path = "../consensus-support/finality-selendra" }
 selendra-rpc = { path = "rpc" }
 
 [build-dependencies]

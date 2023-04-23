@@ -105,8 +105,8 @@ pub mod pallet {
 							migrations::v1_to_v2::Migration::<T, Self>::migrate(),
 					_ => {
 						log::warn!(
-							target: "pallet_indra",
-							"On chain storage version of pallet indra is {:?} but it should not be bigger than 2",
+							target: "pallet_selendra",
+							"On chain storage version of pallet selendra is {:?} but it should not be bigger than 2",
 							on_chain
 						);
 						Weight::zero()
@@ -167,7 +167,7 @@ pub mod pallet {
 		) {
 			if !authorities.is_empty() {
 				if !<Authorities<T>>::get().is_empty() {
-					log::error!(target: "pallet_indra","Authorities are already initialized!");
+					log::error!(target: "pallet_selendra","Authorities are already initialized!");
 				} else {
 					<Authorities<T>>::put(authorities);
 				}

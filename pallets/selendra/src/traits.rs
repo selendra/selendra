@@ -54,7 +54,7 @@ where
 			.collect();
 
 		next.unwrap_or_else(|| {
-			log::error!(target: "pallet_indra", "Missing next session keys");
+			log::error!(target: "pallet_selendra", "Missing next session keys");
 			vec![]
 		})
 	}

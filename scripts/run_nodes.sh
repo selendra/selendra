@@ -12,10 +12,6 @@ N_NON_VALIDATORS=0
 N_LISTENERES=0
 BUILD_SELENDRA_NODE='true'
 BASE_PATH="$PWD/local"
-MEMONIC_0="auction praise leg remember critic amazing nurse couple motor seed spoon blame"
-MEMONIC_1="collect text boring shy misery refuse pipe junk two extend donate beef"
-MEMONIC_2="label cloud current air festival better anxiety witness judge dragon athlete barrel"
-MEMONIC_3="doll clump glue trap napkin double oval orbit kitchen inside syrup saddle"
 
 while getopts "v:n:b:p:l:" flag
 do

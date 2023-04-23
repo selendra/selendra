@@ -33,10 +33,10 @@ use crate::Config;
 type Accounts<T> = Vec<<T as frame_system::Config>::AccountId>;
 
 #[storage_alias]
-type SessionForValidatorsChange = StorageValue<Indra, SessionIndex>;
+type SessionForValidatorsChange = StorageValue<Selendra, SessionIndex>;
 
 #[storage_alias]
-type Validators<T> = StorageValue<Indra, Accounts<T>>;
+type Validators<T> = StorageValue<Selendra, Accounts<T>>;
 
 /// Flattening double `Option<>` storage.
 pub struct Migration<T, P>(sp_std::marker::PhantomData<(T, P)>);
@@ -50,13 +50,13 @@ struct MigrationChecksState<T: Config> {
 
 impl<T: Config, P: PalletInfoAccess> OnRuntimeUpgrade for Migration<T, P> {
 	fn on_runtime_upgrade() -> Weight {
-		log::info!(target: "pallet_indra", "Running migration from STORAGE_VERSION 0 to 1");
+		log::info!(target: "pallet_selendra", "Running migration from STORAGE_VERSION 0 to 1");
 
 		let mut writes = 0;
 
 		match SessionForValidatorsChange::translate(
 			|old: Option<Option<SessionIndex>>| -> Option<SessionIndex> {
-				log::info!(target: "pallet_indra", "Current storage value for SessionForValidatorsChange {:?}", old);
+				log::info!(target: "pallet_selendra", "Current storage value for SessionForValidatorsChange {:?}", old);
 				match old {
 					Some(Some(x)) => Some(x),
 					_ => None,
@@ -65,16 +65,16 @@ impl<T: Config, P: PalletInfoAccess> OnRuntimeUpgrade for Migration<T, P> {
 		) {
 			Ok(_) => {
 				writes += 1;
-				log::info!(target: "pallet_indra", "Successfully migrated storage for SessionForValidatorsChange");
+				log::info!(target: "pallet_selendra", "Successfully migrated storage for SessionForValidatorsChange");
 			},
 			Err(why) => {
-				log::error!(target: "pallet_indra", "Something went wrong during the migration of SessionForValidatorsChange {:?}", why);
+				log::error!(target: "pallet_selendra", "Something went wrong during the migration of SessionForValidatorsChange {:?}", why);
 			},
 		};
 
 		match Validators::<T>::translate(
 			|old: Option<Option<Vec<T::AccountId>>>| -> Option<Vec<T::AccountId>> {
-				log::info!(target: "pallet_indra", "Current storage value for Validators {:?}", old);
+				log::info!(target: "pallet_selendra", "Current storage value for Validators {:?}", old);
 				match old {
 					Some(Some(x)) => Some(x),
 					_ => None,
@@ -83,10 +83,10 @@ impl<T: Config, P: PalletInfoAccess> OnRuntimeUpgrade for Migration<T, P> {
 		) {
 			Ok(_) => {
 				writes += 1;
-				log::info!(target: "pallet_indra", "Successfully migrated storage for Validators");
+				log::info!(target: "pallet_selendra", "Successfully migrated storage for Validators");
 			},
 			Err(why) => {
-				log::error!(target: "pallet_indra", "Something went wrong during the migration of Validators storage {:?}", why);
+				log::error!(target: "pallet_selendra", "Something went wrong during the migration of Validators storage {:?}", why);
 			},
 		};
 
@@ -100,9 +100,9 @@ impl<T: Config, P: PalletInfoAccess> OnRuntimeUpgrade for Migration<T, P> {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
 		#[storage_alias]
-		type SessionForValidatorsChange = StorageValue<Indra, Option<SessionIndex>>;
+		type SessionForValidatorsChange = StorageValue<Selendra, Option<SessionIndex>>;
 		#[storage_alias]
-		type Validators<T> = StorageValue<Indra, Option<Accounts<T>>>;
+		type Validators<T> = StorageValue<Selendra, Option<Accounts<T>>>;
 
 		ensure_storage_version::<P>(0)?;
 

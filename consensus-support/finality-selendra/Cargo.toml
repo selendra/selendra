@@ -30,7 +30,7 @@ selendra-bft-rmc = { package = "aleph-bft-rmc", version = "0.6.1" }
 legacy-selendra-bft = { package = "aleph-bft", version = "0.19.3" }
 legacy-selendra-bft-rmc = { package = "aleph-bft-rmc", version = "0.5.2" }
 
-selendra-primitives = { path = "../../../primitives" }
+selendra-primitives = { path = "../../primitives" }
 aggregator = { path = "../aggregator" }
 legacy-aggregator = { path = "../aggregator/legacy" }
 

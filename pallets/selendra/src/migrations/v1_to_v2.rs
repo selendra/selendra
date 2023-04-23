@@ -25,16 +25,16 @@ use {frame_support::ensure, pallets_support::ensure_storage_version, sp_std::vec
 use crate::Config;
 
 #[storage_alias]
-type SessionForValidatorsChange = StorageValue<Indra, ()>;
+type SessionForValidatorsChange = StorageValue<Selendra, ()>;
 
 #[storage_alias]
-type MillisecsPerBlock = StorageValue<Indra, ()>;
+type MillisecsPerBlock = StorageValue<Selendra, ()>;
 
 #[storage_alias]
-type SessionPeriod = StorageValue<Indra, ()>;
+type SessionPeriod = StorageValue<Selendra, ()>;
 
 #[storage_alias]
-type Validators = StorageValue<Indra, ()>;
+type Validators = StorageValue<Selendra, ()>;
 
 /// Removes:
 ///   - SessionForValidatorsChange
@@ -47,10 +47,10 @@ impl<T: Config, P: PalletInfoAccess> OnRuntimeUpgrade for Migration<T, P> {
 	fn on_runtime_upgrade() -> Weight {
 		let mut writes = 0;
 		let mut reads = 0;
-		log::info!(target: "pallet_indra", "Running migration from STORAGE_VERSION 1 to 2");
+		log::info!(target: "pallet_selendra", "Running migration from STORAGE_VERSION 1 to 2");
 
 		if !SessionForValidatorsChange::exists() {
-			log::info!(target: "pallet_indra", "Storage item SessionForValidatorsChange does not exist!");
+			log::info!(target: "pallet_selendra", "Storage item SessionForValidatorsChange does not exist!");
 		} else {
 			writes += 1;
 		}
@@ -58,7 +58,7 @@ impl<T: Config, P: PalletInfoAccess> OnRuntimeUpgrade for Migration<T, P> {
 		reads += 1;
 
 		if !MillisecsPerBlock::exists() {
-			log::info!(target: "pallet_indra", "Storage item MillisecsPerBlock does not exist!");
+			log::info!(target: "pallet_selendra", "Storage item MillisecsPerBlock does not exist!");
 		} else {
 			writes += 1;
 		}
@@ -66,7 +66,7 @@ impl<T: Config, P: PalletInfoAccess> OnRuntimeUpgrade for Migration<T, P> {
 		reads += 1;
 
 		if !SessionPeriod::exists() {
-			log::info!(target: "pallet_indra", "Storage item SessionPeriod does not exist!");
+			log::info!(target: "pallet_selendra", "Storage item SessionPeriod does not exist!");
 		} else {
 			writes += 1;
 		}
@@ -74,7 +74,7 @@ impl<T: Config, P: PalletInfoAccess> OnRuntimeUpgrade for Migration<T, P> {
 		reads += 1;
 
 		if !Validators::exists() {
-			log::info!(target: "pallet_indra", "Storage item Validators does not exist!");
+			log::info!(target: "pallet_selendra", "Storage item Validators does not exist!");
 		} else {
 			writes += 1;
 		}

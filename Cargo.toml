@@ -4,12 +4,12 @@ members = [
     "node",
     "primitives",
     "pallets/elections",
-    "pallets/indra",
+    "pallets/selendra",
     "pallets/support",
     "node/rpc",
-    "node/consensus-support/aggregator",
-    "node/consensus-support/aggregator/legacy",
-    "node/consensus-support/finality-selendra",
+    "consensus-support/aggregator",
+    "consensus-support/aggregator/legacy",
+    "consensus-support/finality-selendra",
 ]
 
 [profile.release]

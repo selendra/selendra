@@ -31,7 +31,7 @@ pub const CURRENT_FINALITY_VERSION: u16 = LEGACY_FINALITY_VERSION + 1;
 /// Legacy version of abft.
 pub const LEGACY_FINALITY_VERSION: u16 = 1;
 
-pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"indr");
+pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"sel3");
 
 pub const SELENDRA_ENGINE_ID: ConsensusEngineId = *b"FRNK";
 

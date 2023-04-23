@@ -58,7 +58,7 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 # local Dependency
 selendra-primitives = { path = "../primitives", default-features = false }
 selendra-runtime-common = { path = "common", default-features = false }
-pallet-indra = { path = "../pallets/indra", default-features = false }
+pallet-selendra = { path = "../pallets/selendra", default-features = false }
 pallet-elections = { path = "../pallets/elections", default-features = false }
 
 [build-dependencies]

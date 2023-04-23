@@ -30,7 +30,9 @@ use frame_support::{
 use selendra_primitives::{
 	AccountId, Balance, DEFAULT_SESSIONS_PER_ERA, MAX_NOMINATORS_REWARDED_PER_VALIDATOR,
 };
-use selendra_runtime_common::{staking::era_payout, wrap_methods, BalanceToU256, U256ToBalance, prod_or_fast};
+use selendra_runtime_common::{
+	prod_or_fast, staking::era_payout, wrap_methods, BalanceToU256, U256ToBalance,
+};
 
 parameter_types! {
 	pub const BondingDuration: EraIndex = 14;

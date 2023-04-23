@@ -21,7 +21,7 @@ use selendra_primitives::{
 	MIN_NOMINATOR_BOND, MIN_VALIDATOR_BOND, TOKEN, TOKEN_DECIMALS,
 };
 use selendra_runtime::{
-	AuraConfig, BalancesConfig, ElectionsConfig, GenesisConfig, IndraConfig, SessionConfig,
+	AuraConfig, BalancesConfig, ElectionsConfig, GenesisConfig, SelendraConfig, SessionConfig,
 	SessionKeys, StakingConfig, SudoConfig, SystemConfig, VestingConfig, WASM_BINARY,
 };
 
@@ -305,7 +305,7 @@ fn configure_chain_spec_fields(
 			(
 				auth.account_id.clone(),
 				auth.account_id.clone(),
-				SessionKeys { aura: auth.aura_key.clone(), indra: auth.selendra_key.clone() },
+				SessionKeys { aura: auth.aura_key.clone(), selendra: auth.selendra_key.clone() },
 			)
 		})
 		.collect();
@@ -394,7 +394,7 @@ fn generate_genesis_config(
 			min_nominator_bond: MIN_NOMINATOR_BOND,
 			..Default::default()
 		},
-		indra: IndraConfig { finality_version, ..Default::default() },
+		selendra: SelendraConfig { finality_version, ..Default::default() },
 		treasury: Default::default(),
 		vesting: VestingConfig { vesting: vec![] },
 		nomination_pools: Default::default(),

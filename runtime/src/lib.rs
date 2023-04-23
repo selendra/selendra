@@ -57,7 +57,7 @@ pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
 
 use selendra_primitives::{
-	opaque, ApiError as IndraApiError, AuthorityId as IndraId, SessionAuthorityData,
+	opaque, ApiError as SelendraApiError, AuthorityId as SelendraId, SessionAuthorityData,
 	Version as FinalityVersion, DEFAULT_BAN_REASON_LENGTH, DEFAULT_MAX_WINNERS,
 	DEFAULT_SESSION_PERIOD, TOKEN,
 };
@@ -65,7 +65,7 @@ pub use selendra_primitives::{
 	AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, Signature,
 };
 use selendra_runtime_common::{
-	impls::DealWithFees, BlockLength, BlockWeights, SlowAdjustingFeeUpdate, prod_or_fast
+	impls::DealWithFees, prod_or_fast, BlockLength, BlockWeights, SlowAdjustingFeeUpdate,
 };
 
 use constants::{
@@ -141,8 +141,8 @@ impl pallet_authorship::Config for Runtime {
 	type EventHandler = (Elections,);
 }
 
-impl pallet_indra::Config for Runtime {
-	type AuthorityId = IndraId;
+impl pallet_selendra::Config for Runtime {
+	type AuthorityId = SelendraId;
 	type RuntimeEvent = RuntimeEvent;
 	type SessionInfoProvider = Session;
 	type SessionManager = Elections;
@@ -152,7 +152,7 @@ impl pallet_indra::Config for Runtime {
 impl_opaque_keys! {
 	pub struct SessionKeys {
 		pub aura: Aura,
-		pub indra: Indra,
+		pub selendra: Selendra,
 	}
 }
 
@@ -191,7 +191,7 @@ impl pallet_session::Config for Runtime {
 	type ValidatorIdOf = pallet_staking::StashOf<Self>;
 	type ShouldEndSession = pallet_session::PeriodicSessions<SessionPeriod, Offset>;
 	type NextSessionRotation = pallet_session::PeriodicSessions<SessionPeriod, Offset>;
-	type SessionManager = Indra;
+	type SessionManager = Selendra;
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
 	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
@@ -378,7 +378,7 @@ construct_runtime!(
 		Staking: pallet_staking,
 		History: pallet_session::historical,
 		Session: pallet_session,
-		Indra: pallet_indra,
+		Selendra: pallet_selendra,
 		Elections: pallet_elections,
 		Treasury: pallet_treasury,
 		Vesting: pallet_vesting,
@@ -543,36 +543,36 @@ impl_runtime_apis! {
 			SessionPeriod::get()
 		}
 
-		fn authorities() -> Vec<IndraId> {
-			Indra::authorities()
+		fn authorities() -> Vec<SelendraId> {
+			Selendra::authorities()
 		}
 
-		fn next_session_authorities() -> Result<Vec<IndraId>, IndraApiError> {
-			let next_authorities = Indra::next_authorities();
+		fn next_session_authorities() -> Result<Vec<SelendraId>, SelendraApiError> {
+			let next_authorities = Selendra::next_authorities();
 			if next_authorities.is_empty() {
-				return Err(IndraApiError::DecodeKey)
+				return Err(SelendraApiError::DecodeKey)
 			}
 
 			Ok(next_authorities)
 		}
 
 		fn authority_data() -> SessionAuthorityData {
-			SessionAuthorityData::new(Indra::authorities(), Indra::emergency_finalizer())
+			SessionAuthorityData::new(Selendra::authorities(), Selendra::emergency_finalizer())
 		}
 
-		fn next_session_authority_data() -> Result<SessionAuthorityData, IndraApiError> {
+		fn next_session_authority_data() -> Result<SessionAuthorityData, SelendraApiError> {
 			Ok(SessionAuthorityData::new(
 				Self::next_session_authorities()?,
-				Indra::queued_emergency_finalizer(),
+				Selendra::queued_emergency_finalizer(),
 			))
 		}
 
 		fn finality_version() -> FinalityVersion {
-			Indra::finality_version()
+			Selendra::finality_version()
 		}
 
 		fn next_session_finality_version() -> FinalityVersion {
-			Indra::next_session_finality_version()
+			Selendra::next_session_finality_version()
 		}
 	}
 
