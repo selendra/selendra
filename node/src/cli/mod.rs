@@ -71,6 +71,9 @@ pub enum Subcommand {
 	#[command(subcommand)]
 	Key(sc_cli::KeySubcommand),
 
+	/// Build a chain specification.
+	BuildSpec(sc_cli::BuildSpecCmd),
+
 	/// Populate authorities keystore and generate chainspec in JSON format (printed to stdout)
 	/// Use `--raw` to produce the so called raw chainspec
 	BootstrapChain(BootstrapChainCmd),

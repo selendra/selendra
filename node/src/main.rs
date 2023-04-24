@@ -49,6 +49,10 @@ fn main() -> sc_cli::Result<()> {
 		Some(Subcommand::BootstrapNode(cmd)) => cmd.run(),
 		Some(Subcommand::ConvertChainspecToRaw(cmd)) => cmd.run(),
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
+		Some(Subcommand::BuildSpec(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
+		},
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
