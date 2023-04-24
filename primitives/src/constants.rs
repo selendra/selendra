@@ -36,7 +36,7 @@ pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"sel3");
 pub const SELENDRA_ENGINE_ID: ConsensusEngineId = *b"FRNK";
 
 // staking
-pub const MIN_VALIDATOR_BOND: u128 = 25_000 * TOKEN;
+pub const MIN_VALIDATOR_BOND: u128 = 1000 * TOKEN;
 pub const MIN_NOMINATOR_BOND: u128 = 100 * TOKEN;
 pub const MAX_NOMINATORS_REWARDED_PER_VALIDATOR: u32 = 1024;
 pub const YEARLY_INFLATION: Balance = 10_000_000 * TOKEN;
