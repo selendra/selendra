@@ -27,7 +27,7 @@ declare -a mnemonics=(
 
 declare -a account_ids
 for i in $(seq 0 "$(( N_VALIDATORS + N_NON_VALIDATORS - 1 ))"); do
-  account_ids+=($(./target/release/selendra-node key inspect "${mnemonics[$i]}" | grep "SS58 Address:" | awk '{print $3;}')) 
+  account_ids+=($(./target/release/selendra key inspect "${mnemonics[$i]}" | grep "SS58 Address:" | awk '{print $3;}')) 
 done
 validator_ids=("${account_ids[@]::N_VALIDATORS}")
 # space separated ids
@@ -36,4 +36,4 @@ validator_ids_string="${validator_ids[*]}"
 validator_ids_string="${validator_ids_string//${IFS:0:1}/,}"
 
 echo "Bootstrapping chain for nodes 0..$((N_VALIDATORS - 1))"
-./target/release/selendra-node bootstrap-chain --raw --base-path "$BASE_PATH" --account-ids "$validator_ids_string" --chain-type local > "$BASE_PATH/chainspec.json"
+./target/release/selendra bootstrap-chain --raw --base-path "$BASE_PATH" --account-ids "$validator_ids_string" --chain-type local > "$BASE_PATH/chainspec.json"

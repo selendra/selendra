@@ -30,7 +30,7 @@ done
 
 shift $((OPTIND-1))
 
-killall -9 selendra-node
+killall -9 selendra
 
 set -e
 
@@ -51,7 +51,7 @@ declare -a mnemonics=(
 
 declare -a account_ids
 for i in $(seq 0 "$(( N_VALIDATORS + N_NON_VALIDATORS - 1 ))"); do
-  account_ids+=($(./target/release/selendra-node key inspect "${mnemonics[$i]}" | grep "SS58 Address:" | awk '{print $3;}')) 
+  account_ids+=($(./target/release/selendra key inspect "${mnemonics[$i]}" | grep "SS58 Address:" | awk '{print $3;}')) 
 done
 validator_ids=("${account_ids[@]::N_VALIDATORS}")
 # space separated ids
@@ -60,17 +60,17 @@ validator_ids_string="${validator_ids[*]}"
 validator_ids_string="${validator_ids_string//${IFS:0:1}/,}"
 
 echo "Bootstrapping chain for nodes 0..$((N_VALIDATORS - 1))"
-./target/release/selendra-node bootstrap-chain --raw --base-path "$BASE_PATH" --account-ids "$validator_ids_string" --chain-type local > "$BASE_PATH/chainspec.json"
+./target/release/selendra bootstrap-chain --raw --base-path "$BASE_PATH" --account-ids "$validator_ids_string" --chain-type local > "$BASE_PATH/chainspec.json"
 
 for i in $(seq "$N_VALIDATORS" "$(( N_VALIDATORS + N_NON_VALIDATORS - 1 ))"); do
   echo "Bootstrapping node $i"
   account_id=${account_ids[$i]}
-  ./target/release/selendra-node bootstrap-node --base-path "$BASE_PATH/$account_id" --account-id "$account_id" --chain-type local
+  ./target/release/selendra bootstrap-node --base-path "$BASE_PATH/$account_id" --account-id "$account_id" --chain-type local
 done
 
 addresses=()
 for i in $(seq 0 "$(( N_VALIDATORS + N_NON_VALIDATORS - 1 ))"); do
-    pk=$(./target/release/selendra-node key inspect-node-key --file $BASE_PATH/${account_ids[$i]}/p2p_secret)
+    pk=$(./target/release/selendra key inspect-node-key --file $BASE_PATH/${account_ids[$i]}/p2p_secret)
     addresses+=("/dns4/localhost/tcp/$((30334+i))/p2p/$pk")
 done
 
@@ -88,8 +88,8 @@ run_node() {
 
   [[ $is_validator = true ]] && validator=--validator || validator=""
 
-  ./target/release/selendra-node purge-chain --base-path $BASE_PATH/$account_id --chain $BASE_PATH/chainspec.json -y
-  ./target/release/selendra-node \
+  ./target/release/selendra purge-chain --base-path $BASE_PATH/$account_id --chain $BASE_PATH/chainspec.json -y
+  ./target/release/selendra \
     $validator \
     --chain $BASE_PATH/chainspec.json \
     --base-path $BASE_PATH/$account_id \
