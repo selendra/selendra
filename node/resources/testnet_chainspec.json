@@ -8,7 +8,12 @@
     "/ip4/20.120.37.69/tcp/30334/p2p/12D3KooWGEKpgnt9mcHwFMTaAZuoJH1Ykk2Rsi5xMbfJdH7Bktio",
     "/ip4/20.212.162.192/tcp/30334/p2p/12D3KooWBCCyVh84NpbNs72PAPpQLEmwrNZ355WFAouW9bD1GSv9"
   ],
-  "telemetryEndpoints": null,
+  "telemetryEndpoints": [
+    [
+      "wss://telemetry.polkadot.io/submit/",
+      0
+    ]
+  ],
   "protocolId": null,
   "properties": {
     "tokenDecimals": 18,
