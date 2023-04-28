@@ -1,207 +1,287 @@
+// Copyright 2023 Smallworld Selendra
 // This file is part of Selendra.
 
-// Copyright (C) 2020-2022 Selendra.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
-
-// This program is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// This program is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
+// You should have received a copy of the GNU General Public License
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
-#![allow(clippy::unnecessary_cast)]
-#![allow(clippy::upper_case_acronyms)]
+#![allow(clippy::too_many_arguments, clippy::unnecessary_mut_passed)]
 
-pub mod accounts;
-pub mod currency;
-pub mod evm;
-pub mod nft;
-pub mod signature;
-pub mod task;
-pub mod testing;
-pub mod unchecked_extrinsic;
-
-pub use testing::*;
-
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, Encode};
 use scale_info::TypeInfo;
-use sp_core::U256;
-use sp_runtime::{
-	generic,
-	traits::{BlakeTwo256, IdentifyAccount, Verify},
-	FixedU128, RuntimeDebug,
-};
-use sp_std::prelude::*;
-
-pub use currency::{CurrencyId, DexShare, TokenSymbol};
-pub use evm::{convert_decimals_from_evm, convert_decimals_to_evm};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-#[cfg(test)]
-mod tests;
+use sp_core::crypto::KeyTypeId;
+pub use sp_runtime::{
+	generic::Header as GenericHeader,
+	traits::{BlakeTwo256, ConstU32, Hash as HashT, Header as HeaderT, IdentifyAccount, Verify},
+	BoundedVec, ConsensusEngineId, MultiSignature, Perbill,
+};
+pub use sp_staking::{EraIndex, SessionIndex};
+use sp_std::vec::Vec;
 
-/// An index to a block.
+pub mod app;
+pub mod constants;
+
+pub use constants::*;
+
+/// The block number type used by Selendra.
+/// 32-bits will allow for 136 years of blocks assuming 1 block per second.
 pub type BlockNumber = u32;
-
-/// Alias to 512-bit hash when used in the context of a transaction signature on
-/// the chain.
-pub type Signature = signature::SelendraMultiSignature;
-
-/// Alias to the public key used for this chain, actually a `MultiSigner`. Like
-/// the signature, this also isn't a fixed size when encoded, as different
-/// cryptos have different size public keys.
-pub type AccountPublic = <Signature as Verify>::Signer;
-
-/// Alias to the opaque account ID type for this chain, actually a
-/// `AccountId32`. This is always 32 bytes.
-pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
-
-/// The type for looking up accounts. We don't expect more than 4 billion of
-/// them.
-pub type AccountIndex = u32;
-
-/// The address format for describing accounts.
-pub type Address = sp_runtime::MultiAddress<AccountId, AccountIndex>;
-
-/// Index of a transaction in the chain. 32-bit should be plenty.
-pub type Nonce = u32;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
 
 /// An instant or duration in time.
 pub type Moment = u64;
 
-/// Balance of an account.
+/// Alias to type for a signature for a transaction on the relay chain. This allows one of several
+/// kinds of underlying crypto to be used, so isn't a fixed size when encoded.
+pub type Signature = MultiSignature;
+
+/// Alias to the public key used for this chain, actually a `MultiSigner`. Like the signature, this
+/// also isn't a fixed size when encoded, as different cryptos have different size public keys.
+pub type AccountPublic = <Signature as Verify>::Signer;
+
+/// Alias to the opaque account ID type for this chain, actually a `AccountId32`. This is always
+/// 32 bytes.
+pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
+
+/// The type for looking up accounts. We don't expect more than 4 billion of them.
+pub type AccountIndex = u32;
+
+/// Identifier for a chain. 32-bit should be plenty.
+pub type ChainId = u32;
+
+/// A hash of some data used by the relay chain.
+pub type Hash = sp_core::H256;
+
+/// Index of a transaction in the relay chain. 32-bit should be plenty.
+pub type Index = u32;
+
+/// The balance of an account.
+/// 128-bits (or 38 significant decimal figures) will allow for 10 m currency (`10^7`) at a resolution
+/// to all for one second's worth of an annualised 50% reward be paid to a unit holder (`10^11` unit
+/// denomination), or `10^18` total atomic units, to grow at 50%/year for 51 years (`10^9` multiplier)
+/// for an eventual total of `10^27` units (27 significant decimal figures).
+/// We round denomination to `10^12` (12 SDF), and leave the other redundancy at the upper end so
+/// that 32 bits may be multiplied with a balance in 128 bits without worrying about overflow.
 pub type Balance = u128;
 
-/// Signed version of Balance
-pub type Amount = i128;
+/// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
+/// the specifics of the runtime. They can then be made to be agnostic over specific formats
+/// of data like extrinsics, allowing for them to continue syncing the network through upgrades
+/// to even the core data structures.
+pub mod opaque {
+	use super::*;
+	pub use sp_runtime::{generic, OpaqueExtrinsic as UncheckedExtrinsic};
 
-// /// Share type
-// pub type Share = u128;
-
-/// Header type.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-
-/// Block type.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-
-/// Block ID.
-pub type BlockId = generic::BlockId<Block>;
-
-/// Opaque, encoded, unchecked extrinsic.
-pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-
-/// Fee multiplier.
-pub type Multiplier = FixedU128;
-
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum AuthoritysOriginId {
-	Root,
-	Treasury,
-	TreasuryReserve,
+	/// Opaque block header type.
+	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+	/// Opaque block type.
+	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+	/// Opaque block identifier type.
+	pub type BlockId = generic::BlockId<Block>;
 }
 
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum DataProviderId {
-	Aggregated = 0,
-	Selendra = 1,
+sp_application_crypto::with_pair! {
+	pub type AuthorityPair = app::Pair;
 }
 
-#[derive(
-	Encode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo, MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct TradingPair(CurrencyId, CurrencyId);
+pub type AuthoritySignature = app::Signature;
 
-impl TradingPair {
-	pub fn from_currency_ids(currency_id_a: CurrencyId, currency_id_b: CurrencyId) -> Option<Self> {
-		if currency_id_a.is_trading_pair_currency_id() &&
-			currency_id_b.is_trading_pair_currency_id() &&
-			currency_id_a != currency_id_b
-		{
-			if currency_id_a > currency_id_b {
-				Some(TradingPair(currency_id_b, currency_id_a))
-			} else {
-				Some(TradingPair(currency_id_a, currency_id_b))
-			}
-		} else {
-			None
+pub type AuthorityId = app::Public;
+
+pub type SessionCount = u32;
+
+pub type BlockCount = u32;
+
+/// Openness of the process of the elections
+#[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq)]
+pub enum ElectionOpenness {
+	Permissioned,
+	Permissionless,
+}
+
+/// Represent desirable size of a committee in a session
+#[derive(Decode, Encode, TypeInfo, Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct CommitteeSeats {
+	/// Size of reserved validators in a session
+	pub reserved_seats: u32,
+	/// Size of non reserved valiadtors in a session
+	pub non_reserved_seats: u32,
+}
+
+impl CommitteeSeats {
+	pub fn size(&self) -> u32 {
+		self.reserved_seats.saturating_add(self.non_reserved_seats)
+	}
+}
+
+impl Default for CommitteeSeats {
+	fn default() -> Self {
+		CommitteeSeats { reserved_seats: DEFAULT_COMMITTEE_SIZE, non_reserved_seats: 0 }
+	}
+}
+
+pub trait FinalityCommitteeManager<T> {
+	/// `committee` is the set elected for finality committee for the next session
+	fn on_next_session_finality_committee(committee: Vec<T>);
+}
+
+/// Configurable parameters for ban validator mechanism
+#[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct BanConfig {
+	/// performance ratio threshold in a session
+	/// calculated as ratio of number of blocks produced to expected number of blocks for a single validator
+	pub minimal_expected_performance: Perbill,
+	/// how many bad uptime sessions force validator to be removed from the committee
+	pub underperformed_session_count_threshold: SessionCount,
+	/// underperformed session counter is cleared every subsequent `clean_session_counter_delay` sessions
+	pub clean_session_counter_delay: SessionCount,
+	/// how many eras a validator is banned for
+	pub ban_period: EraIndex,
+}
+
+impl Default for BanConfig {
+	fn default() -> Self {
+		BanConfig {
+			minimal_expected_performance: DEFAULT_BAN_MINIMAL_EXPECTED_PERFORMANCE,
+			underperformed_session_count_threshold: DEFAULT_BAN_SESSION_COUNT_THRESHOLD,
+			clean_session_counter_delay: DEFAULT_CLEAN_SESSION_COUNTER_DELAY,
+			ban_period: DEFAULT_BAN_PERIOD,
 		}
 	}
+}
 
-	pub fn first(&self) -> CurrencyId {
-		self.0
-	}
+/// Represent any possible reason a validator can be removed from the committee due to
+#[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, Debug)]
+pub enum BanReason {
+	/// Validator has been removed from the committee due to insufficient uptime in a given number
+	/// of sessions
+	InsufficientUptime(u32),
 
-	pub fn second(&self) -> CurrencyId {
-		self.1
-	}
+	/// Any arbitrary reason
+	OtherReason(BoundedVec<u8, ConstU32<DEFAULT_BAN_REASON_LENGTH>>),
+}
 
-	pub fn dex_share_currency_id(&self) -> CurrencyId {
-		CurrencyId::join_dex_share_currency_id(self.first(), self.second())
-			.expect("shouldn't be invalid! guaranteed by construction")
+/// Details of why and for how long a validator is removed from the committee
+#[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, Debug)]
+pub struct BanInfo {
+	/// reason for banning a validator
+	pub reason: BanReason,
+	/// index of the first era when a ban starts
+	pub start: EraIndex,
+}
+
+/// Represent committee, ie set of nodes that produce and finalize blocks in the session
+#[derive(Eq, PartialEq, Decode, Encode, TypeInfo)]
+pub struct EraValidators<AccountId> {
+	/// Validators that are chosen to be in committee every single session.
+	pub reserved: Vec<AccountId>,
+	/// Validators that can be banned out from the committee, under the circumstances
+	pub non_reserved: Vec<AccountId>,
+}
+
+impl<AccountId> Default for EraValidators<AccountId> {
+	fn default() -> Self {
+		Self { reserved: Vec::new(), non_reserved: Vec::new() }
 	}
 }
 
-impl Decode for TradingPair {
-	fn decode<I: codec::Input>(input: &mut I) -> sp_std::result::Result<Self, codec::Error> {
-		let (first, second): (CurrencyId, CurrencyId) = Decode::decode(input)?;
-		TradingPair::from_currency_ids(first, second)
-			.ok_or_else(|| codec::Error::from("invalid currency id"))
+#[derive(Encode, Decode, PartialEq, Eq, Debug)]
+pub enum ApiError {
+	DecodeKey,
+}
+
+/// All the data needed to verify block finalization justifications.
+#[derive(Clone, Debug, Encode, Decode, PartialEq, Eq)]
+pub struct SessionAuthorityData {
+	authorities: Vec<AuthorityId>,
+	emergency_finalizer: Option<AuthorityId>,
+}
+
+impl SessionAuthorityData {
+	pub fn new(authorities: Vec<AuthorityId>, emergency_finalizer: Option<AuthorityId>) -> Self {
+		SessionAuthorityData { authorities, emergency_finalizer }
+	}
+
+	pub fn authorities(&self) -> &Vec<AuthorityId> {
+		&self.authorities
+	}
+
+	pub fn emergency_finalizer(&self) -> &Option<AuthorityId> {
+		&self.emergency_finalizer
 	}
 }
 
-#[derive(
-	Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, MaxEncodedLen, TypeInfo,
-)]
-pub struct Position {
-	/// The amount of collateral.
-	pub collateral: Balance,
-	/// The amount of debit.
-	pub debit: Balance,
+pub type Version = u32;
+
+#[derive(Clone, Debug, Decode, Encode, PartialEq, Eq, TypeInfo)]
+pub struct VersionChange {
+	pub version_incoming: Version,
+	pub session: SessionIndex,
 }
 
-#[derive(
-	Encode,
-	Decode,
-	Eq,
-	PartialEq,
-	Copy,
-	Clone,
-	RuntimeDebug,
-	PartialOrd,
-	Ord,
-	MaxEncodedLen,
-	TypeInfo,
-)]
-#[repr(u8)]
-pub enum ReserveIdentifier {
-	CollatorSelection,
-	EvmStorageDeposit,
-	EvmDeveloperDeposit,
-	Funan,
-	Nft,
-	TransactionPayment,
-	TransactionPaymentDeposit,
-
-	// always the last, indicate number of variants
-	Count,
+sp_api::decl_runtime_apis! {
+	pub trait SelendraSessionApi
+	{
+		fn next_session_authorities() -> Result<Vec<AuthorityId>, ApiError>;
+		fn authorities() -> Vec<AuthorityId>;
+		fn next_session_authority_data() -> Result<SessionAuthorityData, ApiError>;
+		fn authority_data() -> SessionAuthorityData;
+		fn session_period() -> u32;
+		fn millisecs_per_block() -> u64;
+		fn finality_version() -> Version;
+		fn next_session_finality_version() -> Version;
+	}
 }
 
-pub type CashYieldIndex = u128;
+pub trait BanHandler {
+	type AccountId;
+	/// returns whether the account can be banned
+	fn can_ban(who: &Self::AccountId) -> bool;
+}
 
-/// Convert any type that implements Into<U256> into byte representation ([u8, 32])
-pub fn to_bytes<T: Into<U256>>(value: T) -> [u8; 32] {
-	Into::<[u8; 32]>::into(value.into())
+pub trait ValidatorProvider {
+	type AccountId;
+	/// returns validators for the current era if present.
+	fn current_era_validators() -> Option<EraValidators<Self::AccountId>>;
+	/// returns committe seats for the current era if present.
+	fn current_era_committee_size() -> Option<CommitteeSeats>;
+}
+
+#[derive(Decode, Encode, TypeInfo, Clone)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct SessionValidators<T> {
+	pub committee: Vec<T>,
+	pub non_committee: Vec<T>,
+}
+
+impl<T> Default for SessionValidators<T> {
+	fn default() -> Self {
+		Self { committee: Vec::new(), non_committee: Vec::new() }
+	}
+}
+
+pub trait BannedValidators {
+	type AccountId;
+	/// returns currently banned validators
+	fn banned() -> Vec<Self::AccountId>;
+}
+
+pub trait EraManager {
+	/// new era has been planned
+	fn on_new_era(era: EraIndex);
 }

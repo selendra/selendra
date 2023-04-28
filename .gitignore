@@ -11,6 +11,7 @@
 
 # The cache for chain data in container
 .local
+local
 
 # direnv cache
 .direnv
@@ -20,3 +21,7 @@ selendra_pallets
 
 # Open runtime floder (https://github.com/open-web3-stack/open-runtime-module-library)
 open-runtime-module-library
+
+v0.*
+
+node-*.log

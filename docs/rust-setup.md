@@ -22,7 +22,7 @@ Use a terminal shell to execute the following commands:
 ```bash
 sudo apt update
 # May prompt for location information
-sudo apt install -y git clang curl libssl-dev llvm libudev-dev pkg-config make
+sudo apt install -y git clang curl libssl-dev llvm libudev-dev pkg-config make cmake
 ```
 
 ### Arch Linux
@@ -30,7 +30,7 @@ sudo apt install -y git clang curl libssl-dev llvm libudev-dev pkg-config make
 Run these commands from a terminal:
 
 ```bash
-pacman -Syu --needed --noconfirm curl git clang make
+pacman -Syu --needed --noconfirm curl git clang make cmake
 ```
 
 ### Fedora
@@ -39,7 +39,7 @@ Run these commands from a terminal:
 
 ```bash
 sudo dnf update
-sudo dnf install clang curl git openssl-devel make
+sudo dnf install clang curl git openssl-devel make cmake
 ```
 
 ### OpenSUSE
@@ -68,7 +68,7 @@ brew install openssl
 ### Windows
 
 > Native development of Substrate is _not_ very well supported!
-> It is _highly_ recommend to
+> It is _highly_ recommended to
 use [Windows Subsystem Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10) (WSL)
 and follow the instructions for [Ubuntu/Debian](#ubuntudebian).
 

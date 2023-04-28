@@ -6,11 +6,11 @@ set -e
 # Should be run on a reference machine to gain accurate benchmarks
 # current reference machine: https://github.com/paritytech/substrate/pull/5848
 
-runtime="$1"
+runtime="selendra"
 
 echo "[+] Running all benchmarks for $runtime"
 
-cargo +nightly build --profile production --locked --features=runtime-benchmarks
+cargo build --profile production --locked --features=runtime-benchmarks
 
 ./target/production/selendra benchmark pallet \
     --chain "${runtime}-dev" \

@@ -1,38 +1,33 @@
 [package]
 name = "selendra-rpc"
-version = "0.1.0"
+version = "3.0.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
-jsonrpsee = { version = "0.13.0", features = ["server", "macros"] }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+jsonrpsee = { version = "0.16.2", features = ["server"] }
+log = "0.4"
+serde = "1.0"
+serde_json = "1.0"
+futures = "0.3"
+hex = "0.4"
+hex-literal = "0.3"
+libp2p = "0.49.0"
+thiserror = "1.0"
 
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sp-consensus = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sp-consensus-babe = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sp-keystore = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sc-transaction-pool-api = { package = "sc-transaction-pool-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
 
-sc-chain-spec = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sc-consensus-babe = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sc-consensus-babe-rpc = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sc-consensus-epochs = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sc-finality-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sc-finality-grandpa-rpc = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sc-sync-state-rpc = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
 
-substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-substrate-state-trie-migration-rpc = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
+pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
 
-pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-primitives = { package = "selendra-primitives", path = "../../primitives" }
-orml-oracle-rpc = { path = "../../orml/oracle/rpc" }
-runtime-common = { path = "../../runtime/common" }
-evm-rpc = { path = "../../modules/evm/rpc" }
-orml-tokens-rpc = {path = "../../orml/tokens/rpc" }
+selendra-primitives = { path = "../../primitives" }
+finality-selendra = { path = "../../consensus/finality-selendra"}

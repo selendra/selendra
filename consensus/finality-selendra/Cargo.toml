@@ -1,0 +1,62 @@
+[package]
+name = "finality-selendra"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+license = "Apache 2.0"
+
+[dependencies]
+async-trait = "0.1"
+bytes = "1.0"
+codec = { package = "parity-scale-codec", version = "3.1", default-features = false, features = ["derive"] }
+derive_more = "0.99"
+env_logger = "0.9"
+futures = "0.3"
+futures-timer = "3.0"
+hash-db = { version = "0.15.2", default-features = false }
+ip_network = "0.4"
+log = "0.4"
+lru = "0.7"
+parking_lot = "0.12"
+rand = "0.8"
+serde = "1.0"
+tiny-bip39 = "1.0"
+tokio = { version = "1.17", features = [ "sync", "macros", "time", "rt-multi-thread" ] }
+
+# fixed version to 'freeze' some types used in abft, mainly `SignatureSet` used in justification and signature aggregation
+selendra-bft-crypto = { package = "aleph-bft-crypto",  version = "0.5.2" }
+selendra-bft = { package = "aleph-bft", version = "0.20.5" }
+selendra-bft-rmc = { package = "aleph-bft-rmc", version = "0.6.1" }
+legacy-selendra-bft = { package = "aleph-bft", version = "0.19.3" }
+legacy-selendra-bft-rmc = { package = "aleph-bft-rmc", version = "0.5.2" }
+
+selendra-primitives = { path = "../../primitives" }
+aggregator = { path = "../aggregator" }
+legacy-aggregator = { path = "../aggregator/legacy" }
+
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sc-utils = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+
+[dev-dependencies]
+substrate-test-runtime-client = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+substrate-test-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+sc-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+
+[features]
+only_legacy = []

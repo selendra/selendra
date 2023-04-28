@@ -1,56 +1,31 @@
 [package]
 name = "selendra-primitives"
-version = "0.1.0"
+version = "3.0.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
-paste = "1.0"
-hex-literal = "0.3.1"
-bstringify = "0.1.2"
-enumflags2 = { version = "0.6.3" }
-serde = { version = "1.0.136", optional = true }
-num_enum = { version = "0.5.1", default-features = false }
-scale-info = { version = "2.1", default-features = false, features = ["derive"] }
-parity-util-mem = { version = "0.11", default-features = false, features = ["primitive-types"] }
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["max-encoded-len"] }
+codec = { package = "parity-scale-codec", version = "3.4.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
+serde = { version = "1.0.160", features = ["derive"] }
 
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-orml-traits = { path = "../orml/traits", default-features = false }
-
-module-evm-utility = { path = "../modules/evm-utility", default-features = false }
-module-evm-utility-macro = { path = "../modules/evm-utility/macro" }
-module-stable-asset = { version = "0.1.0", default-features = false, path = "../modules/stable-asset" }
-
-[dev-dependencies]
-serde_json = { version = "1.0.68" }
-
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+sp-staking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38", default-features = false }
 
 [features]
-default = ["std"]
+default = [ "std" ]
 std = [
-	"serde",
 	"codec/std",
-	"num_enum/std",
-	"parity-util-mem/std",
-	"scale-info/std",
-	"enumflags2/serde",
-	"sp-runtime/std",
-	"sp-core/std",
-	"sp-std/std",
-	"sp-io/std",
+    "serde/std",
+
 	"sp-api/std",
-
-	"frame-support/std",
-
-	"orml-traits/std",
-	"module-evm-utility/std",
-	"module-stable-asset/std",
+	"sp-application-crypto/std",
+	"sp-core/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"sp-staking/std",
 ]
-evm-tests = []
