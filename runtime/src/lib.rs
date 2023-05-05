@@ -388,6 +388,7 @@ construct_runtime!(
 		Contracts: pallet_contracts,
 		NominationPools: pallet_nomination_pools,
 		Identity: pallet_identity,
+		IdleScheduler: pallet_idle_scheduler,
 	}
 );
 

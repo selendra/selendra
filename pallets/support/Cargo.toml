@@ -5,13 +5,18 @@ edition = "2021"
 
 [dependencies]
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+
+selendra-primitives = { path = "../../primitives", default-features = false }
 
 [features]
 default = ["std"]
 std = [
     "frame-support/std",
-    "sp-std/std"
+    "sp-runtime/std",
+    "sp-std/std",
+    "selendra-primitives/std"
 ]
 try-runtime = [
     "frame-support/try-runtime",

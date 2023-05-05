@@ -4744,6 +4744,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-idle-scheduler"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallets-support",
+ "parity-scale-codec",
+ "scale-info",
+ "selendra-primitives",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-multisig"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.38#18bb7c7c841b101c19a8d1881b893ae8e37de460"
@@ -5008,6 +5024,8 @@ name = "pallets-support"
 version = "0.1.0"
 dependencies = [
  "frame-support",
+ "selendra-primitives",
+ "sp-runtime",
  "sp-std",
 ]
 
@@ -6938,9 +6956,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info"
-version = "2.1.2"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c46be926081c9f4dd5dd9b6f1d3e3229f2360bc6502dd8836f84a93b7c75e99a"
+checksum = "dfdef77228a4c05dc94211441595746732131ad7f6530c6c18f045da7b7ab937"
 dependencies = [
  "bitvec",
  "cfg-if",
@@ -6952,9 +6970,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info-derive"
-version = "2.1.2"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50e334bb10a245e28e5fd755cabcafd96cfcd167c99ae63a46924ca8d8703a3c"
+checksum = "53012eae69e5aa5c14671942a5dd47de59d4cdcff8532a6dd0e081faf1119482"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -7163,6 +7181,7 @@ dependencies = [
 name = "selendra-primitives"
 version = "3.0.0"
 dependencies = [
+ "frame-support",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -7219,6 +7238,7 @@ dependencies = [
  "pallet-contracts-primitives",
  "pallet-elections",
  "pallet-identity",
+ "pallet-idle-scheduler",
  "pallet-multisig",
  "pallet-nomination-pools",
  "pallet-nomination-pools-runtime-api",

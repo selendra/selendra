@@ -15,3 +15,4 @@
 
 pub mod staking;
 pub mod utility;
+pub mod idle_scheduler;

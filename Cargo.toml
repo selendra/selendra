@@ -2,14 +2,16 @@
 members = [
     "runtime",
     "node",
-    "primitives",
-    "pallets/elections",
-    "pallets/selendra",
-    "pallets/support",
     "node/rpc",
+    "primitives",
     "consensus/aggregator",
     "consensus/aggregator/legacy",
     "consensus/finality-selendra",
+
+    "pallets/elections",
+    "pallets/selendra",
+    "pallets/support",
+    "pallets/idle-scheduler"
 ]
 
 [profile.release]

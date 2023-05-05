@@ -60,6 +60,7 @@ selendra-primitives = { path = "../primitives", default-features = false }
 selendra-runtime-common = { path = "common", default-features = false }
 pallet-selendra = { path = "../pallets/selendra", default-features = false }
 pallet-elections = { path = "../pallets/elections", default-features = false }
+pallet-idle-scheduler = { path = "../pallets/idle-scheduler", default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
@@ -100,6 +101,7 @@ std = [
     "pallet-utility/std",
 	"pallet-nomination-pools/std",
 	"pallet-nomination-pools-runtime-api/std",
+    "pallet-idle-scheduler/std",
     
     "sp-api/std",
     "sp-block-builder/std",
