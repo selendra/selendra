@@ -1,20 +1,15 @@
-use crate::{RuntimeEvent, Runtime, System};
+use crate::{Runtime, RuntimeEvent, System};
 
-use scale_info::TypeInfo;
 use codec::{Decode, Encode};
+use scale_info::TypeInfo;
 
+use frame_support::{pallet_prelude::Weight, parameter_types};
+use pallet_idle_scheduler::DispatchableTask;
 use sp_core::ConstU32;
 use sp_runtime::traits::BlockNumberProvider;
-use frame_support::{
-	pallet_prelude::Weight,
-	parameter_types,
-};
-use pallet_idle_scheduler::DispatchableTask;
 
-use selendra_primitives::{define_combined_task, task::TaskResult,};
-use selendra_runtime_common::{
-	BlockWeights
-};
+use selendra_primitives::{define_combined_task, task::TaskResult};
+use selendra_runtime_common::BlockWeights;
 
 pub const BASE_WEIGHT: Weight = Weight::from_ref_time(1_000_000);
 
@@ -42,17 +37,15 @@ define_combined_task! {
 	}
 }
 
-
 pub struct MockBlockNumberProvider;
 
 impl BlockNumberProvider for MockBlockNumberProvider {
 	type BlockNumber = u32;
 
-    fn current_block_number() -> Self::BlockNumber {
-        System::block_number().try_into().unwrap()
-    }
+	fn current_block_number() -> Self::BlockNumber {
+		System::block_number().try_into().unwrap()
+	}
 }
-
 
 parameter_types!(
 	// At least 2% of max block weight should remain before idle tasks are dispatched.

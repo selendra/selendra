@@ -21,9 +21,9 @@ use frame_support::{log, pallet_prelude::*};
 use frame_system::pallet_prelude::*;
 pub use pallets_support::scheduler::{DispatchableTask, IdleScheduler};
 
-mod weights;
 mod mock;
 mod tests;
+mod weights;
 
 pub use weights::WeightInfo;
 
@@ -103,7 +103,8 @@ pub mod pallet {
 			// scheduled tasks
 			let current_block_number: BlockNumber = T::BlockNumberProvider::current_block_number();
 			let previous_block_number = PreviousBlockNumber::<T>::take();
-			if current_block_number.saturating_sub(previous_block_number) >= T::DisableBlockThreshold::get()
+			if current_block_number.saturating_sub(previous_block_number) >=
+				T::DisableBlockThreshold::get()
 			{
 				log::debug!(
 					target: "idle-scheduler",
@@ -159,7 +160,7 @@ impl<T: Config> Pallet<T> {
 		let mut weight_remaining = total_weight.saturating_sub(T::WeightInfo::on_idle_base());
 		if weight_remaining.ref_time() <= T::MinimumWeightRemainInBlock::get().ref_time() {
 			// return total weight so no `on_idle` hook will execute after IdleScheduler
-			return total_weight;
+			return total_weight
 		}
 
 		let mut completed_tasks: Vec<(Index, TaskResult)> = vec![];
@@ -174,7 +175,7 @@ impl<T: Config> Pallet<T> {
 
 			// If remaining weight falls below the minimmum, break from the loop.
 			if weight_remaining.ref_time() <= T::MinimumWeightRemainInBlock::get().ref_time() {
-				break;
+				break
 			}
 		}
 
@@ -187,10 +188,7 @@ impl<T: Config> Pallet<T> {
 	pub fn remove_completed_tasks(completed_tasks: Vec<(Index, TaskResult)>) {
 		// Deposit event and remove completed tasks.
 		for (id, result) in completed_tasks {
-			Self::deposit_event(Event::<T>::TaskDispatched {
-				task_id: id,
-				result: result.result,
-			});
+			Self::deposit_event(Event::<T>::TaskDispatched { task_id: id, result: result.result });
 			Tasks::<T>::remove(id);
 		}
 	}

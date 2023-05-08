@@ -3,13 +3,13 @@
 #![cfg(test)]
 
 use crate as pallet_idle_scheduler;
-use selendra_primitives::{define_combined_task, task::TaskResult};
-use frame_support::weights::Weight;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{ConstU32, ConstU64, Everything},
+	weights::Weight,
 };
 use pallets_support::scheduler::DispatchableTask;
+use selendra_primitives::{define_combined_task, task::TaskResult};
 pub use sp_runtime::offchain::storage::StorageValueRef;
 
 use super::*;
@@ -97,7 +97,6 @@ impl DispatchableTask for BalancesTask {
 	}
 }
 
-
 define_combined_task! {
 	#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
 	pub enum ScheduledTasks {
@@ -123,9 +122,7 @@ construct_runtime!(
 pub struct ExtBuilder;
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let t = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
-			.unwrap();
+		let t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));

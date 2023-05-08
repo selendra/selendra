@@ -1,4 +1,3 @@
-
 //! Unit tests for idle-scheduler module.
 
 #![cfg(test)]

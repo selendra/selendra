@@ -1,5 +1,5 @@
-use selendra_primitives::{Index, task::TaskResult};
 use frame_support::pallet_prelude::Weight;
+use selendra_primitives::{task::TaskResult, Index};
 use sp_runtime::DispatchError;
 
 /// Dispatchable tasks

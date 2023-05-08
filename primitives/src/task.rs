@@ -1,7 +1,7 @@
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 use frame_support::weights::Weight;
 use sp_runtime::{DispatchResult, RuntimeDebug};
