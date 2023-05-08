@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+impl-trait-for-tuples = "0.2.2"
 codec = { package = "parity-scale-codec", version = "3.4.0", default-features = false, features = ["derive"] }
 
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }

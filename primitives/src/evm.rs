@@ -1,8 +1,9 @@
+use core::ops::Range;
 use hex_literal::hex;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
 use ethereum::Log;
@@ -22,6 +23,32 @@ const GAS_LIMIT_CHUNK: u64 = 30_000u64;
 pub const MIRRORED_NFT_ADDRESS_START: u64 = 0x2000000;
 pub const MIRRORED_TOKENS_ADDRESS_START: EvmAddress =
 	H160(hex!("0000000000000000000100000000000000000000"));
+
+/// System contract address prefix
+pub const SYSTEM_CONTRACT_ADDRESS_PREFIX: [u8; 9] = [0u8; 9];
+
+pub const H160_POSITION_CURRENCY_ID_TYPE: usize = 9;
+pub const H160_POSITION_TOKEN: usize = 19;
+pub const H160_POSITION_TOKEN_NFT: Range<usize> = 16..20;
+
+#[derive(
+	Encode,
+	Decode,
+	Eq,
+	PartialEq,
+	Copy,
+	Clone,
+	RuntimeDebug,
+	PartialOrd,
+	Ord,
+	MaxEncodedLen,
+	TypeInfo,
+)]
+#[repr(u8)]
+pub enum ReserveIdentifier {
+	EvmStorageDeposit,
+	EvmDeveloperDeposit,
+}
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]

@@ -11,7 +11,10 @@ members = [
     "pallets/elections",
     "pallets/selendra",
     "pallets/support",
-    "pallets/idle-scheduler"
+    "pallets/idle-scheduler",
+    "pallets/evm-utility/macro",
+    "pallets/evm-utility",
+    "pallets/evm",
 ]
 
 [profile.release]

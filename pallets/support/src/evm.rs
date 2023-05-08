@@ -1,6 +1,9 @@
 use codec::{Decode, Encode};
 
-use frame_support::pallet_prelude::{DispatchClass, Pays, Weight};
+use frame_support::{
+	pallet_prelude::{DispatchClass, Pays, Weight},
+	transactional,
+};
 use sp_core::H160;
 use sp_runtime::{
 	transaction_validity::TransactionValidityError, DispatchError, DispatchResult, RuntimeDebug,
@@ -10,7 +13,7 @@ use sp_std::{
 	prelude::*,
 };
 
-use selendra_primitives::{evm::EvmAddress, Multiplier};
+use selendra_primitives::{evm::{ReserveIdentifier, EvmAddress}, Multiplier};
 
 /// Return true if the call of EVM precompile contract is allowed.
 pub trait PrecompileCallerFilter {
@@ -41,8 +44,8 @@ pub struct InvokeContext {
 }
 
 pub trait TransactionPayment<AccountId, Balance, NegativeImbalance> {
-	fn reserve_fee(who: &AccountId, fee: Balance) -> Result<Balance, DispatchError>;
-	fn unreserve_fee(who: &AccountId, fee: Balance) -> Balance;
+	fn reserve_fee(who: &AccountId, fee: Balance, named: Option<ReserveIdentifier>) -> Result<Balance, DispatchError>;
+	fn unreserve_fee(who: &AccountId, fee: Balance, named: Option<ReserveIdentifier>) -> Balance;
 	fn unreserve_and_charge_fee(
 		who: &AccountId,
 		weight: Weight,
@@ -62,6 +65,21 @@ pub trait TransactionPayment<AccountId, Balance, NegativeImbalance> {
 	) -> Result<(), TransactionValidityError>;
 	fn weight_to_fee(weight: Weight) -> Balance;
 	fn apply_multiplier_to_fee(fee: Balance, multiplier: Option<Multiplier>) -> Balance;
+}
+
+pub trait TransferAll<AccountId> {
+	fn transfer_all(source: &AccountId, dest: &AccountId) -> DispatchResult;
+}
+
+#[impl_trait_for_tuples::impl_for_tuples(5)]
+impl<AccountId> TransferAll<AccountId> for Tuple {
+	#[transactional]
+	fn transfer_all(source: &AccountId, dest: &AccountId) -> DispatchResult {
+		for_tuples!( #( {
+			Tuple::transfer_all(source, dest)?;
+		} )* );
+		Ok(())
+	}
 }
 
 /// An abstraction of EVMManager
