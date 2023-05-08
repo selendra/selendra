@@ -27,7 +27,7 @@ use sp_core::crypto::KeyTypeId;
 pub use sp_runtime::{
 	generic::Header as GenericHeader,
 	traits::{BlakeTwo256, ConstU32, Hash as HashT, Header as HeaderT, IdentifyAccount, Verify},
-	BoundedVec, ConsensusEngineId, MultiSignature, Perbill,
+	BoundedVec, ConsensusEngineId, FixedU128, MultiSignature, Perbill,
 };
 pub use sp_staking::{EraIndex, SessionIndex};
 use sp_std::vec::Vec;
@@ -69,6 +69,9 @@ pub type Hash = sp_core::H256;
 
 /// Index of a transaction in the relay chain. 32-bit should be plenty.
 pub type Index = u32;
+
+/// Fee multiplier.
+pub type Multiplier = FixedU128;
 
 /// The balance of an account.
 /// 128-bits (or 38 significant decimal figures) will allow for 10 m currency (`10^7`) at a resolution
