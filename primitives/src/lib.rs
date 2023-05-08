@@ -34,6 +34,7 @@ use sp_std::vec::Vec;
 
 pub mod app;
 pub mod constants;
+pub mod evm;
 pub mod task;
 
 pub use constants::*;
