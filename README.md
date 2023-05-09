@@ -9,9 +9,9 @@ Open opportunities for individuals, businesses, and communities by making access
 
 ## Acknowledgement
 
-Selendra project is inspired by the excellent work of many growing projects from the Ethereum and Polkadot ecosystem and many other blockchain developers around the world. Our progress in the past, the present and the future is only possible thanks to the open sources software community, framework such as Substrate, and many other tools. Thank you! Much grateful.
+The Selendra project takes inspiration from the great work of various growing blockchain projects, such as Ethereum, Polkadot, Aleph Zero, and others from around the world. We owe much of our progress to the open-source software community and frameworks like Substrate and AlephBFT. We are thankful for their contributions.
 
-This is a work in progress, we will update more information as we progress further. Please refer to the token economy working paper for more details.
+We are continuously working on the project and will provide more information as we make progress.
 
 ## License
 Selendra project make use of [AlephBFT](https://crates.io/crates/aleph-bft) consensus under [GPL 3.0 licensed](LICENSE).
