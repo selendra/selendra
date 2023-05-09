@@ -1,3 +1,5 @@
+use crate::Balance;
+
 use core::ops::Range;
 use hex_literal::hex;
 #[cfg(feature = "std")]
@@ -6,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
-use ethereum::Log;
+pub use ethereum::{AccessListItem, Log};
 use evm::ExitReason;
 
 use sp_core::{H160, U256};
@@ -66,6 +68,34 @@ pub struct Vicinity {
 	pub block_difficulty: Option<U256>,
 	/// Environmental base fee per gas.
 	pub block_base_fee_per_gas: Option<U256>,
+}
+
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct BlockLimits {
+	/// Max gas limit
+	pub max_gas_limit: u64,
+	/// Max storage limit
+	pub max_storage_limit: u32,
+}
+
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct EstimateResourcesRequest {
+	/// From
+	pub from: Option<H160>,
+	/// To
+	pub to: Option<H160>,
+	/// Gas Limit
+	pub gas_limit: Option<u64>,
+	/// Storage Limit
+	pub storage_limit: Option<u32>,
+	/// Value
+	pub value: Option<Balance>,
+	/// Data
+	pub data: Option<Vec<u8>>,
+	/// AccessList
+	pub access_list: Option<Vec<AccessListItem>>,
 }
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]

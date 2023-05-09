@@ -1320,7 +1320,6 @@ pub mod module {
 		// 	// transfer all free to dest
 		// 	T::NativeCurrency::transfer(source, dest, T::NativeCurrency::free_balance(source))
 		// }
-
 	}
 }
 

@@ -4301,38 +4301,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "module-evm"
-version = "2.16.0"
-dependencies = [
- "env_logger 0.9.3",
- "frame-support",
- "frame-system",
- "hex",
- "hex-literal",
- "num",
- "pallet-balances",
- "pallet-evm-utility",
- "pallet-idle-scheduler",
- "pallet-timestamp",
- "pallet-utility",
- "pallets-support",
- "parity-scale-codec",
- "ripemd160",
- "rlp",
- "scale-info",
- "selendra-primitives",
- "serde",
- "serde_json",
- "sha3 0.9.1",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "substrate-bn",
- "tiny-keccak",
-]
-
-[[package]]
 name = "multiaddr"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4912,6 +4880,72 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-evm"
+version = "2.16.0"
+dependencies = [
+ "env_logger 0.9.3",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "hex-literal",
+ "num",
+ "pallet-balances",
+ "pallet-evm-utility",
+ "pallet-idle-scheduler",
+ "pallet-timestamp",
+ "pallet-utility",
+ "pallets-support",
+ "parity-scale-codec",
+ "ripemd160",
+ "rlp",
+ "scale-info",
+ "selendra-primitives",
+ "serde",
+ "serde_json",
+ "sha3 0.9.1",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "substrate-bn",
+ "tiny-keccak",
+]
+
+[[package]]
+name = "pallet-evm-rpc"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "jsonrpsee",
+ "pallet-evm",
+ "pallet-evm-rpc-runtime-api",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "rustc-hex",
+ "sc-rpc-api",
+ "selendra-primitives",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-io",
+ "sp-rpc",
+ "sp-runtime",
+ "sp-storage",
+]
+
+[[package]]
+name = "pallet-evm-rpc-runtime-api"
+version = "0.1.0"
+dependencies = [
+ "selendra-primitives",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
  "sp-std",
 ]
 
@@ -7487,6 +7521,8 @@ dependencies = [
  "pallet-contracts",
  "pallet-contracts-primitives",
  "pallet-elections",
+ "pallet-evm",
+ "pallet-evm-rpc-runtime-api",
  "pallet-identity",
  "pallet-idle-scheduler",
  "pallet-multisig",

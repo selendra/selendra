@@ -23,9 +23,7 @@ use pallet_evm_utility::{
 	evm::{self, backend::Backend as BackendT, ExitError, ExitReason, Transfer},
 };
 use pallet_support::evm::AddressMapping;
-pub use primitives::{
-	evm::{EvmAddress, Vicinity, MIRRORED_NFT_ADDRESS_START, ReserveIdentifier},
-};
+pub use primitives::evm::{EvmAddress, ReserveIdentifier, Vicinity, MIRRORED_NFT_ADDRESS_START};
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::{UniqueSaturatedInto, Zero};
 use sp_std::{
@@ -762,7 +760,8 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 		}
 		let source = T::AddressMapping::get_account_id(&transfer.source);
 		let target = T::AddressMapping::get_account_id(&transfer.target);
-		let amount = TryInto::<BalanceOf<T>>::try_into(transfer.value).map_err(|_| ExitError::OutOfFund)?;
+		let amount =
+			TryInto::<BalanceOf<T>>::try_into(transfer.value).map_err(|_| ExitError::OutOfFund)?;
 
 		log::debug!(
 			target: "evm",

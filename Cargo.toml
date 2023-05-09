@@ -15,6 +15,7 @@ members = [
     "pallets/evm-utility/macro",
     "pallets/evm-utility",
     "pallets/evm",
+    "pallets/evm/rpc"
 ]
 
 [profile.release]

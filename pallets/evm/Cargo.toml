@@ -1,7 +1,7 @@
 [package]
-name = "module-evm"
+name = "pallet-evm"
 version = "2.16.0"
-authors = ["Acala Developers"]
+authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]

@@ -59,7 +59,7 @@ use pallet_transaction_payment::CurrencyAdapter;
 use selendra_primitives::{
 	opaque, ApiError as SelendraApiError, AuthorityId as SelendraId, SessionAuthorityData,
 	Version as FinalityVersion, DEFAULT_BAN_REASON_LENGTH, DEFAULT_MAX_WINNERS,
-	DEFAULT_SESSION_PERIOD, TOKEN,
+	DEFAULT_SESSION_PERIOD, TOKEN, evm::ReserveIdentifier
 };
 pub use selendra_primitives::{
 	AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, Signature,
@@ -205,7 +205,7 @@ impl pallet_session::historical::Config for Runtime {
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
 	type MaxReserves = MaxReserves;
-	type ReserveIdentifier = [u8; 8];
+	type ReserveIdentifier = ReserveIdentifier;
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// The ubiquitous event type.

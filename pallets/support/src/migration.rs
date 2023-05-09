@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
 use frame_support::{
 	pallet_prelude::{PalletInfoAccess, StorageVersion, Weight},
 	traits::OnRuntimeUpgrade,

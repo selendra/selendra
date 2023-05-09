@@ -13,7 +13,10 @@ use sp_std::{
 	prelude::*,
 };
 
-use selendra_primitives::{evm::{ReserveIdentifier, EvmAddress}, Multiplier};
+use selendra_primitives::{
+	evm::{EvmAddress, ReserveIdentifier},
+	Multiplier,
+};
 
 /// Return true if the call of EVM precompile contract is allowed.
 pub trait PrecompileCallerFilter {
@@ -44,7 +47,11 @@ pub struct InvokeContext {
 }
 
 pub trait TransactionPayment<AccountId, Balance, NegativeImbalance> {
-	fn reserve_fee(who: &AccountId, fee: Balance, named: Option<ReserveIdentifier>) -> Result<Balance, DispatchError>;
+	fn reserve_fee(
+		who: &AccountId,
+		fee: Balance,
+		named: Option<ReserveIdentifier>,
+	) -> Result<Balance, DispatchError>;
 	fn unreserve_fee(who: &AccountId, fee: Balance, named: Option<ReserveIdentifier>) -> Balance;
 	fn unreserve_and_charge_fee(
 		who: &AccountId,

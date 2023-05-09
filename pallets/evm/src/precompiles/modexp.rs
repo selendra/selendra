@@ -1,7 +1,7 @@
 use super::Precompile;
 use crate::runner::state::{PrecompileFailure, PrecompileOutput, PrecompileResult};
-use pallet_evm_utility::evm::{Context, ExitError, ExitSucceed};
 use num::{BigUint, One, Zero};
+use pallet_evm_utility::evm::{Context, ExitError, ExitSucceed};
 use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_std::{
@@ -16,11 +16,7 @@ struct ModexpPricer;
 
 impl ModexpPricer {
 	fn adjusted_exp_len(len: u64, exp_low: U256) -> u64 {
-		let bit_index = if exp_low.is_zero() {
-			0
-		} else {
-			(255 - exp_low.leading_zeros()) as u64
-		};
+		let bit_index = if exp_low.is_zero() { 0 } else { (255 - exp_low.leading_zeros()) as u64 };
 		if len <= 32 {
 			bit_index
 		} else {
@@ -50,7 +46,7 @@ impl ModexpPricer {
 	fn read_exp(input: &[u8], base_len: U256, exp_len: U256) -> U256 {
 		let input_len = input.len();
 		let base_len = if base_len > U256::from(u32::MAX) {
-			return U256::zero();
+			return U256::zero()
 		} else {
 			UniqueSaturatedInto::<u64>::unique_saturated_into(base_len)
 		};
@@ -83,12 +79,12 @@ impl ModexpPricer {
 		let (base_len, exp_len, mod_len) = Self::read_lengths(input);
 
 		if mod_len.is_zero() && base_len.is_zero() {
-			return U256::zero();
+			return U256::zero()
 		}
 
 		let max_len = U256::from(MAX_LENGTH - 96);
 		if base_len > max_len || mod_len > max_len || exp_len > max_len {
-			return U256::max_value();
+			return U256::max_value()
 		}
 
 		// read fist 32-byte word of the exponent.
@@ -106,7 +102,7 @@ impl ModexpPricer {
 
 		let (gas, overflow) = Self::mult_complexity(m).overflowing_mul(max(adjusted_exp_len, 1));
 		if overflow {
-			return U256::max_value();
+			return U256::max_value()
 		}
 
 		(gas / divisor).into()
@@ -200,7 +196,7 @@ pub trait ModexpImpl {
 		} else {
 			let total_len = 96 + base_len + exp_len + mod_len;
 			if total_len > MAX_LENGTH {
-				return [0u8; 1].to_vec();
+				return [0u8; 1].to_vec()
 			}
 			let mut reader = Vec::from(input);
 			if reader.len() < total_len as usize {
@@ -251,18 +247,19 @@ impl ModexpImpl for Modexp {
 }
 
 impl Precompile for IstanbulModexp {
-	fn execute(input: &[u8], target_gas: Option<u64>, _context: &Context, _is_static: bool) -> PrecompileResult {
+	fn execute(
+		input: &[u8],
+		target_gas: Option<u64>,
+		_context: &Context,
+		_is_static: bool,
+	) -> PrecompileResult {
 		if input.len() as u64 > MAX_LENGTH {
-			return Err(PrecompileFailure::Error {
-				exit_status: ExitError::OutOfGas,
-			});
+			return Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 		}
 		let cost = ModexpPricer::cost(Self::DIVISOR, input);
 		if let Some(target_gas) = target_gas {
 			if cost > U256::from(u64::MAX) || target_gas < cost.as_u64() {
-				return Err(PrecompileFailure::Error {
-					exit_status: ExitError::OutOfGas,
-				});
+				return Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 			}
 		}
 
@@ -276,29 +273,29 @@ impl Precompile for IstanbulModexp {
 }
 
 impl Precompile for Modexp {
-	fn execute(input: &[u8], target_gas: Option<u64>, _context: &Context, _is_static: bool) -> PrecompileResult {
+	fn execute(
+		input: &[u8],
+		target_gas: Option<u64>,
+		_context: &Context,
+		_is_static: bool,
+	) -> PrecompileResult {
 		if input.len() as u64 > MAX_LENGTH {
-			return Err(PrecompileFailure::Error {
-				exit_status: ExitError::OutOfGas,
-			});
+			return Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 		}
 
 		if let Some(target_gas) = target_gas {
 			if target_gas < MIN_GAS_COST {
-				return Err(PrecompileFailure::Error {
-					exit_status: ExitError::OutOfGas,
-				});
+				return Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 			}
 		}
 
 		let (base_len, exp_len, mod_len) = ModexpPricer::read_lengths(input);
 		let exp = ModexpPricer::read_exp(input, base_len, exp_len);
-		let cost = ModexpPricer::eip_2565_cost(U256::from(Self::DIVISOR), base_len, mod_len, exp_len, exp);
+		let cost =
+			ModexpPricer::eip_2565_cost(U256::from(Self::DIVISOR), base_len, mod_len, exp_len, exp);
 		if let Some(target_gas) = target_gas {
 			if cost > U256::from(u64::MAX) || target_gas < cost.as_u64() {
-				return Err(PrecompileFailure::Error {
-					exit_status: ExitError::OutOfGas,
-				});
+				return Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 			}
 		}
 
@@ -328,9 +325,7 @@ mod tests {
 	fn handle_min_gas() {
 		assert_eq!(
 			Modexp::execute(&[], Some(199), &get_context(), false),
-			Err(PrecompileFailure::Error {
-				exit_status: ExitError::OutOfGas
-			})
+			Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 		);
 
 		assert_eq!(
@@ -386,9 +381,7 @@ mod tests {
 
 		assert_eq!(
 			Modexp::execute(&input, Some(100_000), &get_context(), false),
-			Err(PrecompileFailure::Error {
-				exit_status: ExitError::OutOfGas,
-			})
+			Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 		);
 	}
 
@@ -402,9 +395,7 @@ mod tests {
 
 		assert_eq!(
 			Modexp::execute(&input, Some(100_000), &get_context(), false),
-			Err(PrecompileFailure::Error {
-				exit_status: ExitError::OutOfGas,
-			})
+			Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 		);
 	}
 
@@ -417,9 +408,7 @@ mod tests {
 		"};
 		assert_eq!(
 			Modexp::execute(&input, Some(100_000), &get_context(), false),
-			Err(PrecompileFailure::Error {
-				exit_status: ExitError::OutOfGas,
-			})
+			Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 		);
 	}
 
@@ -585,10 +574,11 @@ mod tests {
 		// TODO: cite security advisory
 
 		let input = vec![
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 33, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
 		];
 
 		assert_eq!(
@@ -628,16 +618,12 @@ mod tests {
 
 		assert_eq!(
 			IstanbulModexp::execute(&input, Some(100_000), &get_context(), false),
-			Err(PrecompileFailure::Error {
-				exit_status: ExitError::OutOfGas,
-			})
+			Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 		);
 
 		assert_eq!(
 			Modexp::execute(&input, Some(100_000), &get_context(), false),
-			Err(PrecompileFailure::Error {
-				exit_status: ExitError::OutOfGas,
-			})
+			Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 		);
 	}
 }
