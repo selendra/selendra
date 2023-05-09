@@ -12,10 +12,11 @@ members = [
     "pallets/selendra",
     "pallets/support",
     "pallets/idle-scheduler",
-    "pallets/evm-utility/macro",
-    "pallets/evm-utility",
+    "pallets/evm-accounts",
     "pallets/evm",
-    "pallets/evm/rpc"
+    "pallets/evm/rpc",
+    "pallets/evm/utility/macro",
+    "pallets/evm/utility",
 ]
 
 [profile.release]

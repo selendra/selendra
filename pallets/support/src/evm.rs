@@ -4,7 +4,7 @@ use frame_support::{
 	pallet_prelude::{DispatchClass, Pays, Weight},
 	transactional,
 };
-use sp_core::H160;
+use sp_core::{H160, U256};
 use sp_runtime::{
 	transaction_validity::TransactionValidityError, DispatchError, DispatchResult, RuntimeDebug,
 };
@@ -143,6 +143,11 @@ pub trait AddressMapping<AccountId> {
 	/// Returns true if a given AccountId is associated with a given EvmAddress
 	/// and false if is not.
 	fn is_linked(account_id: &AccountId, evm: &EvmAddress) -> bool;
+}
+
+/// Convert any type that implements Into<U256> into byte representation ([u8, 32])
+pub fn to_bytes<T: Into<U256>>(value: T) -> [u8; 32] {
+	Into::<[u8; 32]>::into(value.into())
 }
 
 pub mod limits {

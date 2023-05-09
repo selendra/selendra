@@ -4916,6 +4916,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-accounts"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "libsecp256k1",
+ "pallet-balances",
+ "pallet-evm-utility-macro",
+ "pallets-support",
+ "parity-scale-codec",
+ "scale-info",
+ "selendra-primitives",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-evm-rpc"
 version = "0.1.0"
 dependencies = [

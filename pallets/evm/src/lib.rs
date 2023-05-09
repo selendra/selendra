@@ -166,8 +166,8 @@ pub mod module {
 			Balance = Balance,
 		>;
 
-		// /// Merge free balance from source to dest.
-		// type TransferAll: TransferAll<Self::AccountId>;
+		/// Merge free balance from source to dest.
+		type TransferAll: TransferAll<Self::AccountId>;
 
 		/// Charge extra bytes for creating a contract, would be reserved until
 		/// the contract deleted.
@@ -1873,11 +1873,11 @@ impl<T: Config> Pallet<T> {
 		)?;
 		debug_assert!(val.is_zero());
 
-		// // transfer to treasury if maintainer is contract itself
-		// let dest =
-		// 	if contract_acc == maintainer_acc { T::TreasuryAccount::get() } else { maintainer_acc };
+		// transfer to treasury if maintainer is contract itself
+		let dest =
+			if contract_acc == maintainer_acc { T::TreasuryAccount::get() } else { maintainer_acc };
 
-		// T::TransferAll::transfer_all(&contract_acc, &dest)?;
+		T::TransferAll::transfer_all(&contract_acc, &dest)?;
 
 		Ok(())
 	}

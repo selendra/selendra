@@ -26,9 +26,7 @@ impl LinearCostPrecompile for ECRecover {
 
 		sig[64] = match input[63] {
 			v if v > 26 && input[32..63] == [0; 31] => v - 27,
-			_ => {
-				return Ok((ExitSucceed::Returned, [0u8; 0].to_vec()))
-			},
+			_ => return Ok((ExitSucceed::Returned, [0u8; 0].to_vec())),
 		};
 
 		let result = match sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg) {

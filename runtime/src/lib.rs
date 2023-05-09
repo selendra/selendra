@@ -57,9 +57,9 @@ pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
 
 use selendra_primitives::{
-	opaque, ApiError as SelendraApiError, AuthorityId as SelendraId, SessionAuthorityData,
-	Version as FinalityVersion, DEFAULT_BAN_REASON_LENGTH, DEFAULT_MAX_WINNERS,
-	DEFAULT_SESSION_PERIOD, TOKEN, evm::ReserveIdentifier
+	evm::ReserveIdentifier, opaque, ApiError as SelendraApiError, AuthorityId as SelendraId,
+	SessionAuthorityData, Version as FinalityVersion, DEFAULT_BAN_REASON_LENGTH,
+	DEFAULT_MAX_WINNERS, DEFAULT_SESSION_PERIOD, TOKEN,
 };
 pub use selendra_primitives::{
 	AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, Signature,
