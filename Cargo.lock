@@ -4897,6 +4897,7 @@ dependencies = [
  "pallet-evm-utility",
  "pallet-idle-scheduler",
  "pallet-timestamp",
+ "pallet-transaction-payment",
  "pallet-utility",
  "pallets-support",
  "parity-scale-codec",
@@ -5291,6 +5292,7 @@ dependencies = [
  "parity-scale-codec",
  "selendra-primitives",
  "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]

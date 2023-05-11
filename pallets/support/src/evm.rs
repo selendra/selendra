@@ -1,12 +1,12 @@
 use codec::{Decode, Encode};
 
 use frame_support::{
-	pallet_prelude::{DispatchClass, Pays, Weight},
 	transactional,
 };
 use sp_core::{H160, U256};
 use sp_runtime::{
-	transaction_validity::TransactionValidityError, DispatchError, DispatchResult, RuntimeDebug,
+	traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize},
+	DispatchError, DispatchResult, RuntimeDebug,
 };
 use sp_std::{
 	cmp::{Eq, PartialEq},
@@ -14,8 +14,7 @@ use sp_std::{
 };
 
 use selendra_primitives::{
-	evm::{EvmAddress, ReserveIdentifier},
-	Multiplier,
+	evm::{CallInfo, EvmAddress}
 };
 
 /// Return true if the call of EVM precompile contract is allowed.
@@ -46,33 +45,33 @@ pub struct InvokeContext {
 	pub origin: EvmAddress,
 }
 
-pub trait TransactionPayment<AccountId, Balance, NegativeImbalance> {
-	fn reserve_fee(
-		who: &AccountId,
-		fee: Balance,
-		named: Option<ReserveIdentifier>,
-	) -> Result<Balance, DispatchError>;
-	fn unreserve_fee(who: &AccountId, fee: Balance, named: Option<ReserveIdentifier>) -> Balance;
-	fn unreserve_and_charge_fee(
-		who: &AccountId,
-		weight: Weight,
-	) -> Result<(Balance, NegativeImbalance), TransactionValidityError>;
-	fn refund_fee(
-		who: &AccountId,
-		weight: Weight,
-		payed: NegativeImbalance,
-	) -> Result<(), TransactionValidityError>;
-	fn charge_fee(
-		who: &AccountId,
-		len: u32,
-		weight: Weight,
-		tip: Balance,
-		pays_fee: Pays,
-		class: DispatchClass,
-	) -> Result<(), TransactionValidityError>;
-	fn weight_to_fee(weight: Weight) -> Balance;
-	fn apply_multiplier_to_fee(fee: Balance, multiplier: Option<Multiplier>) -> Balance;
-}
+// pub trait TransactionPayment<AccountId, Balance, NegativeImbalance> {
+// 	fn reserve_fee(
+// 		who: &AccountId,
+// 		fee: Balance,
+// 		named: Option<ReserveIdentifier>,
+// 	) -> Result<Balance, DispatchError>;
+// 	fn unreserve_fee(who: &AccountId, fee: Balance, named: Option<ReserveIdentifier>) -> Balance;
+// 	fn unreserve_and_charge_fee(
+// 		who: &AccountId,
+// 		weight: Weight,
+// 	) -> Result<(Balance, NegativeImbalance), TransactionValidityError>;
+// 	fn refund_fee(
+// 		who: &AccountId,
+// 		weight: Weight,
+// 		payed: NegativeImbalance,
+// 	) -> Result<(), TransactionValidityError>;
+// 	fn charge_fee(
+// 		who: &AccountId,
+// 		len: u32,
+// 		weight: Weight,
+// 		tip: Balance,
+// 		pays_fee: Pays,
+// 		class: DispatchClass,
+// 	) -> Result<(), TransactionValidityError>;
+// 	fn weight_to_fee(weight: Weight) -> Balance;
+// 	fn apply_multiplier_to_fee(fee: Balance, multiplier: Option<Multiplier>) -> Balance;
+// }
 
 pub trait TransferAll<AccountId> {
 	fn transfer_all(source: &AccountId, dest: &AccountId) -> DispatchResult;
@@ -143,6 +142,29 @@ pub trait AddressMapping<AccountId> {
 	/// Returns true if a given AccountId is associated with a given EvmAddress
 	/// and false if is not.
 	fn is_linked(account_id: &AccountId, evm: &EvmAddress) -> bool;
+}
+
+/// An abstraction of EVM for EVMBridge
+pub trait EVM<AccountId> {
+	type Balance: AtLeast32BitUnsigned + Copy + MaybeSerializeDeserialize + Default;
+
+	fn execute(
+		context: InvokeContext,
+		input: Vec<u8>,
+		value: Self::Balance,
+		gas_limit: u64,
+		storage_limit: u32,
+		mode: ExecutionMode,
+	) -> Result<CallInfo, sp_runtime::DispatchError>;
+
+	/// Get the real origin account and charge storage rent from the origin.
+	fn get_origin() -> Option<AccountId>;
+	/// Set the EVM origin
+	fn set_origin(origin: AccountId);
+	/// Kill the EVM origin
+	fn kill_origin();
+	/// Get the real origin account or xcm origin and charge storage rent from the origin.
+	fn get_real_origin() -> Option<AccountId>;
 }
 
 /// Convert any type that implements Into<U256> into byte representation ([u8, 32])

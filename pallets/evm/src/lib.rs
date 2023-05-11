@@ -23,9 +23,12 @@ use frame_support::{
 	parameter_types,
 	traits::{
 		BalanceStatus, Currency, EitherOfDiverse, EnsureOrigin, ExistenceRequirement, FindAuthor,
-		Get, NamedReservableCurrency, OnKilledAccount,
+		Get, Imbalance, NamedReservableCurrency, OnKilledAccount, OnUnbalanced, SameOrOther,
+		WithdrawReasons,
 	},
-	transactional, BoundedVec, RuntimeDebug,
+	transactional,
+	weights::WeightToFee,
+	BoundedVec, RuntimeDebug,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::*, EnsureRoot, EnsureSigned};
 use hex_literal::hex;
@@ -38,9 +41,7 @@ pub use pallet_evm_utility::{
 	Account,
 };
 pub use pallet_support::{
-	evm::{
-		AddressMapping, EVMManager, ExecutionMode, InvokeContext, TransactionPayment, TransferAll,
-	},
+	evm::{AddressMapping, EVMManager, ExecutionMode, InvokeContext, TransferAll, EVM as EVMTrait},
 	scheduler::{DispatchableTask, IdleScheduler},
 };
 pub use primitives::{
@@ -62,17 +63,18 @@ use sp_runtime::{
 		Zero,
 	},
 	transaction_validity::TransactionValidityError,
-	Either, SaturatedConversion,
+	Either, SaturatedConversion, TransactionOutcome,
 };
 use sp_std::{cmp, collections::btree_map::BTreeMap, fmt::Debug, marker::PhantomData, prelude::*};
 
 pub mod precompiles;
 pub mod runner;
-
 pub mod weights;
-
 pub use module::*;
 pub use weights::WeightInfo;
+
+mod mock;
+mod tests;
 
 /// Storage key size and storage value size.
 pub const STORAGE_SIZE: u32 = 64;
@@ -81,14 +83,17 @@ pub const REMOVE_LIMIT: u32 = 100;
 /// Immediate remove contract item limit 50 DB writes
 pub const IMMEDIATE_REMOVE_LIMIT: u32 = 50;
 
+pub const RESERVE_ID_STORAGE_DEPOSIT: ReserveIdentifier = ReserveIdentifier::EvmStorageDeposit;
+pub const RESERVE_ID_DEVELOPER_DEPOSIT: ReserveIdentifier = ReserveIdentifier::EvmDeveloperDeposit;
+pub const RESERVE_ID: ReserveIdentifier = ReserveIdentifier::TransactionPayment;
+pub const DEPOSIT_ID: ReserveIdentifier = ReserveIdentifier::TransactionPaymentDeposit;
+
 /// Type alias for currency balance.
 pub type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 pub type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::NegativeImbalance;
-pub const RESERVE_ID_STORAGE_DEPOSIT: ReserveIdentifier = ReserveIdentifier::EvmStorageDeposit;
-pub const RESERVE_ID_DEVELOPER_DEPOSIT: ReserveIdentifier = ReserveIdentifier::EvmDeveloperDeposit;
 
 // Initially based on London hard fork configuration.
 static SELENDRA_CONFIG: EvmConfig = EvmConfig {
@@ -193,13 +198,6 @@ pub mod module {
 		/// Convert gas to weight.
 		type GasToWeight: Convert<u64, Weight>;
 
-		/// ChargeTransactionPayment convert weight to fee.
-		type ChargeTransactionPayment: TransactionPayment<
-			Self::AccountId,
-			BalanceOf<Self>,
-			NegativeImbalanceOf<Self>,
-		>;
-
 		/// EVM config used in the pallet.
 		fn config() -> &'static EvmConfig {
 			&SELENDRA_CONFIG
@@ -242,6 +240,15 @@ pub mod module {
 
 		/// Idle scheduler for the evm task.
 		type IdleScheduler: IdleScheduler<Self::Task>;
+
+		/// Handler for the unbalanced reduction when taking transaction fees.
+		/// This is either one or two separate imbalances, the first is the
+		/// transaction fee paid, the second is the tip paid, if any.
+		type OnTransactionPayment: OnUnbalanced<NegativeImbalanceOf<Self>>;
+
+		/// Convert a weight value into a deductible fee based on the currency
+		/// type.
+		type WeightToFee: WeightToFee<Balance = BalanceOf<Self>>;
 
 		/// Weight information for the extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -700,9 +707,8 @@ pub mod module {
 			{
 				// unreserve the transaction fee for gas_limit
 				let weight = T::GasToWeight::convert(gas_limit);
-				let (_, imbalance) =
-					T::ChargeTransactionPayment::unreserve_and_charge_fee(&_from_account, weight)
-						.map_err(|_| Error::<T>::ChargeFeeFailed)?;
+				let (_, imbalance) = Pallet::<T>::unreserve_and_charge_fee(&_from_account, weight)
+					.map_err(|_| Error::<T>::ChargeFeeFailed)?;
 				_payed = imbalance;
 			}
 
@@ -762,7 +768,7 @@ pub mod module {
 						if !refund_gas.is_zero() {
 							// ignore the result to continue. if it fails, just the user will not
 							// be refunded, there will not increase user balance.
-							let res = T::ChargeTransactionPayment::refund_fee(
+							let res = Pallet::<T>::refund_fee(
 								&_from_account,
 								T::GasToWeight::convert(refund_gas),
 								_payed,
@@ -1777,7 +1783,7 @@ impl<T: Config> Pallet<T> {
 			caller, user, limit, amount
 		);
 
-		T::ChargeTransactionPayment::reserve_fee(&user, amount, Some(RESERVE_ID_STORAGE_DEPOSIT))?;
+		Pallet::<T>::reserve_fee(&user, amount, Some(RESERVE_ID_STORAGE_DEPOSIT))?;
 		Ok(())
 	}
 
@@ -1799,11 +1805,8 @@ impl<T: Config> Pallet<T> {
 
 		// should always be able to unreserve the amount
 		// but otherwise we will just ignore the issue here.
-		let err_amount = T::ChargeTransactionPayment::unreserve_fee(
-			&user,
-			amount,
-			Some(RESERVE_ID_STORAGE_DEPOSIT),
-		);
+		let err_amount =
+			Pallet::<T>::unreserve_fee(&user, amount, Some(RESERVE_ID_STORAGE_DEPOSIT));
 		debug_assert!(err_amount.is_zero());
 		Ok(())
 	}
@@ -1880,6 +1883,149 @@ impl<T: Config> Pallet<T> {
 		T::TransferAll::transfer_all(&contract_acc, &dest)?;
 
 		Ok(())
+	}
+
+	fn unreserve_fee(
+		who: &T::AccountId,
+		fee: BalanceOf<T>,
+		named: Option<ReserveIdentifier>,
+	) -> BalanceOf<T> {
+		<T as Config>::Currency::unreserve_named(&named.unwrap_or(RESERVE_ID), who, fee)
+	}
+
+	fn reserve_fee(
+		who: &T::AccountId,
+		fee: BalanceOf<T>,
+		named: Option<ReserveIdentifier>,
+	) -> Result<BalanceOf<T>, DispatchError> {
+		T::Currency::reserve_named(&named.unwrap_or(RESERVE_ID), who, fee)?;
+		Ok(fee)
+	}
+
+	fn refund_fee(
+		who: &T::AccountId,
+		refund_weight: Weight,
+		payed: NegativeImbalanceOf<T>,
+	) -> Result<(), TransactionValidityError> {
+		let refund = T::WeightToFee::weight_to_fee(&refund_weight);
+		let actual_payment = match <T as Config>::Currency::deposit_into_existing(who, refund) {
+			Ok(refund_imbalance) => {
+				// The refund cannot be larger than the up front payed max weight.
+				match payed.offset(refund_imbalance) {
+					SameOrOther::Same(actual_payment) => actual_payment,
+					SameOrOther::None => Default::default(),
+					_ => return Err(InvalidTransaction::Payment.into()),
+				}
+			},
+			// We do not recreate the account using the refund. The up front payment
+			// is gone in that case.
+			Err(_) => payed,
+		};
+
+		// distribute fee
+		<T as Config>::OnTransactionPayment::on_unbalanced(actual_payment);
+
+		Ok(())
+	}
+
+	fn unreserve_and_charge_fee(
+		who: &T::AccountId,
+		weight: Weight,
+	) -> Result<(BalanceOf<T>, NegativeImbalanceOf<T>), TransactionValidityError> {
+		let fee = T::WeightToFee::weight_to_fee(&weight);
+
+		<T as Config>::Currency::unreserve_named(&RESERVE_ID, who, fee);
+
+		match <T as Config>::Currency::withdraw(
+			who,
+			fee,
+			WithdrawReasons::TRANSACTION_PAYMENT,
+			ExistenceRequirement::KeepAlive,
+		) {
+			Ok(imbalance) => Ok((fee, imbalance)),
+			Err(_) => Err(InvalidTransaction::Payment.into()),
+		}
+	}
+}
+
+impl<T: Config> EVMTrait<T::AccountId> for Pallet<T> {
+	type Balance = BalanceOf<T>;
+	fn execute(
+		context: InvokeContext,
+		input: Vec<u8>,
+		value: BalanceOf<T>,
+		gas_limit: u64,
+		storage_limit: u32,
+		mode: ExecutionMode,
+	) -> Result<CallInfo, DispatchError> {
+		let mut config = T::config().clone();
+		if let ExecutionMode::EstimateGas = mode {
+			config.estimate = true;
+		}
+
+		frame_support::storage::with_transaction(|| {
+			let result = T::Runner::call(
+				context.sender,
+				context.origin,
+				context.contract,
+				input,
+				value,
+				gas_limit,
+				storage_limit,
+				vec![],
+				&config,
+			);
+
+			match result {
+				Ok(info) => match mode {
+					ExecutionMode::Execute =>
+						if info.exit_reason.is_succeed() {
+							Pallet::<T>::deposit_event(Event::<T>::Executed {
+								from: context.sender,
+								contract: context.contract,
+								logs: info.logs.clone(),
+								used_gas: info.used_gas.unique_saturated_into(),
+								used_storage: info.used_storage,
+							});
+							TransactionOutcome::Commit(Ok(info))
+						} else {
+							Pallet::<T>::deposit_event(Event::<T>::ExecutedFailed {
+								from: context.sender,
+								contract: context.contract,
+								exit_reason: info.exit_reason.clone(),
+								output: info.value.clone(),
+								logs: info.logs.clone(),
+								used_gas: info.used_gas.unique_saturated_into(),
+								used_storage: Default::default(),
+							});
+							TransactionOutcome::Rollback(Ok(info))
+						},
+					ExecutionMode::View | ExecutionMode::EstimateGas =>
+						TransactionOutcome::Rollback(Ok(info)),
+				},
+				Err(e) => TransactionOutcome::Rollback(Err(e)),
+			}
+		})
+	}
+
+	/// Get the real origin account and charge storage rent from the origin.
+	fn get_origin() -> Option<T::AccountId> {
+		ExtrinsicOrigin::<T>::get()
+	}
+
+	/// Set the EVM origin
+	fn set_origin(origin: T::AccountId) {
+		ExtrinsicOrigin::<T>::set(Some(origin));
+	}
+
+	// Kill the EVM origin
+	fn kill_origin() {
+		ExtrinsicOrigin::<T>::kill();
+	}
+
+	// Get the real origin account and charge storage rent from the origin.
+	fn get_real_origin() -> Option<T::AccountId> {
+		ExtrinsicOrigin::<T>::get()
 	}
 }
 

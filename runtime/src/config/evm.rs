@@ -3,7 +3,7 @@ parameter_types! {
 	pub NetworkContractSource: H160 = H160::from_low_u64_be(0);
 	pub DeveloperDeposit: Balance = 50 * dollar(ACA);
 	pub PublicationFee: Balance = 10 * dollar(ACA);
-	pub PrecompilesValue: AllPrecompiles<Runtime> = AllPrecompiles::<_, _>::selendra();
+	pub PrecompilesValue: AllPrecompiles<Runtime, module_transaction_pause::PausedPrecompileFilter<Runtime>> = AllPrecompiles::<_, _>::acala();
 }
 
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
@@ -52,7 +52,7 @@ impl module_evm::Config for Runtime {
 	type NetworkContractSource = NetworkContractSource;
 	type DeveloperDeposit = DeveloperDeposit;
 	type PublicationFee = PublicationFee;
-	type TreasuryAccount = SelendraTreasuryAccount;
+	type TreasuryAccount = AcalaTreasuryAccount;
 	type FreePublicationOrigin = EnsureRootOrHalfGeneralCouncil;
 	type Runner = module_evm::runner::stack::Runner<Self>;
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;

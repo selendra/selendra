@@ -50,6 +50,8 @@ pub const H160_POSITION_TOKEN_NFT: Range<usize> = 16..20;
 pub enum ReserveIdentifier {
 	EvmStorageDeposit,
 	EvmDeveloperDeposit,
+	TransactionPayment,
+	TransactionPaymentDeposit,
 }
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
