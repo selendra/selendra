@@ -18,6 +18,7 @@ members = [
     "pallets/evm/utility/macro",
     "pallets/evm/utility",
     "pallets/offchain-rollup",
+    "pallets/web-contract",
 ]
 
 [profile.release]
