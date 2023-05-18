@@ -61,6 +61,15 @@ selendra-runtime-common = { path = "common", default-features = false }
 pallet-selendra = { path = "../pallets/selendra", default-features = false }
 pallet-elections = { path = "../pallets/elections", default-features = false }
 
+## Web Contract
+# pallets-web-contract = { path = "../pallets/web-contract", default-features = false }
+# pallet-mq-runtime-api = { path = "../pallets/web-contract/mq-runtime-api", default-features = false }
+# offchain-rollup = { path = "../pallets/offchain-rollup", default-features = false }
+
+### RMRK dependencies
+# pallet-rmrk-core = { path = "../pallets/rmrk-core", default-features = false }
+# rmrk-traits = { git = "https://github.com/Phala-Network/rmrk-substrate", branch = "polkadot-v0.9.38", default-features = false }
+
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
 
@@ -100,7 +109,12 @@ std = [
     "pallet-utility/std",
 	"pallet-nomination-pools/std",
 	"pallet-nomination-pools-runtime-api/std",
-    
+    # "pallets-web-contract/std",
+    # "pallet-mq-runtime-api/std",
+    # "offchain-rollup/std",
+    # "pallet-rmrk-core/std",
+    # "rmrk-traits/std",
+
     "sp-api/std",
     "sp-block-builder/std",
     "sp-consensus-aura/std",

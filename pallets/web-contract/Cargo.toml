@@ -1,5 +1,5 @@
 [package]
-name = "web-contract-pallets"
+name = "pallets-web-contract"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
@@ -31,12 +31,14 @@ sp-application-crypto = { git = "https://github.com/paritytech/substrate", branc
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false, optional = true }
-pallet-randomness-collective-flip = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+pallet-democracy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+pallet-assets = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+pallet-uniques = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
 
 # RMRK dependencies
-pallet-rmrk-core = { git = "https://github.com/Phala-Network/rmrk-substrate", branch = "polkadot-v0.9.38", default-features = false }
-rmrk-traits = { git = "https://github.com/Phala-Network/rmrk-substrate", branch = "polkadot-v0.9.38", default-features = false }
+pallet-rmrk-core = { path = "../rmrk-core", default-features = false }
+rmrk-traits = { path = '../support/webcontract/traits', default-features = false }
 
 webcontract-types = { path = "../support/webcontract/type", default-features = false }
 
@@ -44,14 +46,16 @@ webcontract-types = { path = "../support/webcontract/type", default-features = f
 webpki = { version = "0.22", default-features = false, features = ["alloc"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-webpki_wasm = { package = "webpki", git = "https://github.com/Phala-Network/phala-blockchain", rev = "63919255d26cce893da611fadfcb069d7cf07e70", default-features = false, features = ["alloc"] }
+webpki_wasm = { package = "webpki", git = "https://github.com/Phala-Network/phala-blockchain", rev = "040a9c440623b5249d20832c7631bd0525a1951a", default-features = false, features = ["alloc"] }
 
 [dev-dependencies]
 rand = "0.8.5"
 insta = "1"
-frame-support-test = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
 assert_matches = "1.4.0"
+frame-support-test = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+pallet-preimage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+pallet-scheduler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
 
 [features]
 default = ["std"]
@@ -70,8 +74,10 @@ std = [
 	"frame-system/std",
 	"frame-benchmarking/std",
 	"pallet-balances/std",
-	"pallet-randomness-collective-flip/std",
 	"pallet-rmrk-core/std",
+	"pallet-democracy/std",
+	"pallet-assets/std",
+	"pallet-uniques/std",
 	"rmrk-traits/std",	
 	"webcontract-types/enable_serde",
 ]

@@ -15,7 +15,6 @@ frame-support = { git = "https://github.com/paritytech/substrate", branch = "pol
 
 selendra-primitives = { path = "../../primitives", default-features = false }
 
-
 [features]
 default = ["std"]
 std = [

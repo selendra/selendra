@@ -7,18 +7,19 @@ members = [
     "consensus/aggregator",
     "consensus/aggregator/legacy",
     "consensus/finality-selendra",
-
     "pallets/elections",
     "pallets/selendra",
     "pallets/support",
-    "pallets/idle-scheduler",
-    "pallets/evm-accounts",
-    "pallets/evm",
-    "pallets/evm/rpc",
-    "pallets/evm/utility/macro",
-    "pallets/evm/utility",
+    # "pallets/idle-scheduler",
+    # "pallets/evm-accounts",
+    # "pallets/evm",
+    # "pallets/evm/rpc",
+    # "pallets/evm/utility/macro",
+    # "pallets/evm/utility",
     "pallets/offchain-rollup",
     "pallets/web-contract",
+    "pallets/web-contract/mq-runtime-api",
+    "pallets/rmrk-core",
 ]
 
 [profile.release]
