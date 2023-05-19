@@ -57,7 +57,7 @@ pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
 
 use selendra_primitives::{
-	evm::ReserveIdentifier, opaque, ApiError as SelendraApiError, AuthorityId as SelendraId,
+	opaque, ApiError as SelendraApiError, AuthorityId as SelendraId,
 	SessionAuthorityData, Version as FinalityVersion, DEFAULT_BAN_REASON_LENGTH,
 	DEFAULT_MAX_WINNERS, DEFAULT_SESSION_PERIOD, TOKEN,
 };
@@ -205,7 +205,7 @@ impl pallet_session::historical::Config for Runtime {
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
 	type MaxReserves = MaxReserves;
-	type ReserveIdentifier = ReserveIdentifier;
+	type ReserveIdentifier = [u8; 8];
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// The ubiquitous event type.
@@ -388,7 +388,6 @@ construct_runtime!(
 		Contracts: pallet_contracts,
 		NominationPools: pallet_nomination_pools,
 		Identity: pallet_identity,
-		IdleScheduler: pallet_idle_scheduler,
 	}
 );
 

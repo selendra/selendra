@@ -13,6 +13,5 @@
 
 // You should have received a copy of the GNU General Public License
 
-pub mod idle_scheduler;
 pub mod staking;
 pub mod utility;
