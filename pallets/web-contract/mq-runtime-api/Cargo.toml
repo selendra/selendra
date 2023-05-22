@@ -1,0 +1,15 @@
+[package]
+name = "pallet-mq-runtime-api"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+web-contract-mq = { path = "../../support/web-contract/mq", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+	"sp-api/std",
+]

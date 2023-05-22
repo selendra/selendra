@@ -1,0 +1,90 @@
+[package]
+name = "pallets-web-contract"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+license = "Apache 2.0"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+fixed-macro = "1.2"
+hex-literal = "0.4.1"
+log = { version = "0.4.14", default-features = false }
+untrusted = { version = "0.9.0" }
+hex = { version = "0.4", default-features = false }
+fixed = { version = "1.16.1", default-features = false }
+chrono = { version = "0.4.22", default-features = false }
+fixed-sqrt = { version = "0.2", default-features = false }
+base64 = { version = "0.13.0", default-features = false, features = ["alloc"] }
+scale-info = { version = "2.3", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0.41", default-features = false, features = ["alloc"] }
+codec = { package = "parity-scale-codec", version = "3.3", default-features = false, features = ["derive"] }
+primitive-types = { version = "0.12.1", default-features = false, features = ["codec", "byteorder"] }
+
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false, optional = true }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+pallet-democracy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+pallet-assets = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+pallet-uniques = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+
+# RMRK dependencies
+pallet-rmrk-core = { git = "https://github.com/Phala-Network/rmrk-substrate", branch = "polkadot-v0.9.38", default-features = false }
+rmrk-traits = { git = "https://github.com/Phala-Network/rmrk-substrate", branch = "polkadot-v0.9.38", default-features = false }
+
+web-contract-types = { path = "../support/web-contract/type", default-features = false }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+webpki = { version = "0.22", default-features = false, features = ["alloc"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+webpki_wasm = { package = "webpki", git = "https://github.com/Phala-Network/phala-blockchain", rev = "040a9c440623b5249d20832c7631bd0525a1951a", default-features = false, features = ["alloc"] }
+
+[dev-dependencies]
+rand = "0.8.5"
+insta = "1"
+assert_matches = "1.4.0"
+frame-support-test = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+pallet-preimage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+pallet-scheduler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+
+[features]
+default = ["std"]
+std = [
+	"codec/std",
+	"scale-info/std",
+	"sp-runtime/std",
+	"sp-io/std",
+	"sp-std/std",
+	"sp-core/std",
+	"log/std",
+	"sp-application-crypto/std",
+	"frame-support/std",
+	"frame-system/std",
+	"frame-support/std",
+	"frame-system/std",
+	"frame-benchmarking/std",
+	"pallet-balances/std",
+	"pallet-rmrk-core/std",
+	"pallet-democracy/std",
+	"pallet-assets/std",
+	"pallet-uniques/std",
+	"rmrk-traits/std",	
+	"web-contract-types/enable_serde",
+]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks"
+]
+try-runtime = ["frame-support/try-runtime"]
+native = [
+	"sp-application-crypto/full_crypto",
+]

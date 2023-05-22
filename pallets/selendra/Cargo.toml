@@ -6,7 +6,7 @@ edition = "2021"
 license = "Apache 2.0"
 
 [dependencies]
-serde = "1.0.160"
+serde = { version = "1.0.111", default-features = false, features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "3.4.0", default-features = false, features = ["derive"] }
 scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
 
@@ -29,6 +29,7 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 [features]
 default = ["std"]
 std = [
+    "serde/std",
     "codec/std",
     "scale-info/std",
     "sp-std/std",
