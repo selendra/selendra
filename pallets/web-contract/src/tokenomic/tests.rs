@@ -35,34 +35,34 @@ fn prapare() {
 	MinStake::<Test>::put(DOLLARS);
 }
 
-// #[test]
-// fn should_be_happy_to_stake() {
-// 	mock::new_test_ext().execute_with(|| {
-// 		prapare();
-// 		assert_ok!(stake!(ALICE, DOLLARS));
-// 		assert_eq!(stake_of_user(&ALICE), DOLLARS);
-// 		assert_eq!(stake_of_user(&BOB), 0);
-// 		assert_eq!(stake_of_contract(), DOLLARS);
-// 		assert_eq!(balance_of_user(&ALICE), 99 * DOLLARS);
+#[test]
+fn should_be_happy_to_stake() {
+	mock::new_test_ext().execute_with(|| {
+		prapare();
+		assert_ok!(stake!(ALICE, DOLLARS));
+		assert_eq!(stake_of_user(&ALICE), DOLLARS);
+		assert_eq!(stake_of_user(&BOB), 0);
+		assert_eq!(stake_of_contract(), DOLLARS);
+		assert_eq!(balance_of_user(&ALICE), 99 * DOLLARS);
 
-// 		assert_ok!(stake!(BOB, 2 * DOLLARS));
-// 		assert_eq!(stake_of_user(&ALICE), DOLLARS);
-// 		assert_eq!(stake_of_user(&BOB), 2 * DOLLARS);
-// 		assert_eq!(stake_of_contract(), 3 * DOLLARS);
-// 		assert_eq!(balance_of_user(&BOB), 98 * DOLLARS);
+		assert_ok!(stake!(BOB, 2 * DOLLARS));
+		assert_eq!(stake_of_user(&ALICE), DOLLARS);
+		assert_eq!(stake_of_user(&BOB), 2 * DOLLARS);
+		assert_eq!(stake_of_contract(), 3 * DOLLARS);
+		assert_eq!(balance_of_user(&BOB), 98 * DOLLARS);
 
-// 		assert_ok!(stake!(BOB, 0));
-// 		assert_ok!(stake!(ALICE, 0));
-// 		assert_eq!(stake_of_user(&ALICE), 0);
-// 		assert_eq!(stake_of_user(&BOB), 0);
-// 		assert_eq!(stake_of_contract(), 0);
-// 		assert_eq!(balance_of_user(&ALICE), 100 * DOLLARS);
-// 		assert_eq!(balance_of_user(&BOB), 100 * DOLLARS);
+		assert_ok!(stake!(BOB, 0));
+		assert_ok!(stake!(ALICE, 0));
+		assert_eq!(stake_of_user(&ALICE), 0);
+		assert_eq!(stake_of_user(&BOB), 0);
+		assert_eq!(stake_of_contract(), 0);
+		assert_eq!(balance_of_user(&ALICE), 100 * DOLLARS);
+		assert_eq!(balance_of_user(&BOB), 100 * DOLLARS);
 
-// 		let events = mock::take_events();
-// 		insta::assert_debug_snapshot!(events);
-// 	});
-// }
+		// 		let events = mock::take_events();
+		// 		insta::assert_debug_snapshot!(events);
+	});
+}
 
 #[test]
 fn can_not_stake_less_than_minstake() {
@@ -85,10 +85,10 @@ fn can_restake_without_any_changes() {
 		// let events = mock::take_events();
 		// insta::assert_debug_snapshot!(events);
 
-		// assert_ok!(stake!(ALICE, DOLLARS));
-		// assert_eq!(stake_of_user(&ALICE), DOLLARS);
-		// assert_eq!(stake_of_contract(), DOLLARS);
-		// assert_eq!(balance_of_user(&ALICE), 99 * DOLLARS);
+		assert_ok!(stake!(ALICE, DOLLARS));
+		assert_eq!(stake_of_user(&ALICE), DOLLARS);
+		assert_eq!(stake_of_contract(), DOLLARS);
+		assert_eq!(balance_of_user(&ALICE), 99 * DOLLARS);
 
 		// let events = mock::take_events();
 		// insta::assert_debug_snapshot!(events);

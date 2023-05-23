@@ -1,6 +1,6 @@
 ---
 source: pallets/web-contract/src/tokenomic/tests.rs
-assertion_line: 64
+assertion_line: 63
 expression: events
 ---
 [
@@ -42,30 +42,30 @@ expression: events
     ),
     RuntimeEvent::System(
         Event::NewAccount {
-            account: 6d6f646c706861742f746f6b0000000000000000000000000000000000000000 (5EYCAe5i...),
+            account: 6d6f646c776562632f746f6b0000000000000000000000000000000000000000 (5EYCAe5k...),
         },
     ),
     RuntimeEvent::Balances(
         Event::Endowed {
-            account: 6d6f646c706861742f746f6b0000000000000000000000000000000000000000 (5EYCAe5i...),
+            account: 6d6f646c776562632f746f6b0000000000000000000000000000000000000000 (5EYCAe5k...),
             free_balance: 1000000000000,
         },
     ),
     RuntimeEvent::Balances(
         Event::Transfer {
             from: 0101010101010101010101010101010101010101010101010101010101010101 (5C62Ck4U...),
-            to: 6d6f646c706861742f746f6b0000000000000000000000000000000000000000 (5EYCAe5i...),
+            to: 6d6f646c776562632f746f6b0000000000000000000000000000000000000000 (5EYCAe5k...),
             amount: 1000000000000,
         },
     ),
-    RuntimeEvent::PhatTokenomic(
+    RuntimeEvent::WebTokenomic(
         Event::ContractDepositChanged {
             cluster: None,
             contract: 0x2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a,
             deposit: 1000000000000,
         },
     ),
-    RuntimeEvent::PhatTokenomic(
+    RuntimeEvent::WebTokenomic(
         Event::UserStakeChanged {
             cluster: None,
             account: 0101010101010101010101010101010101010101010101010101010101010101 (5C62Ck4U...),
@@ -76,18 +76,18 @@ expression: events
     RuntimeEvent::Balances(
         Event::Transfer {
             from: 0202020202020202020202020202020202020202020202020202020202020202 (5C7LYpP2...),
-            to: 6d6f646c706861742f746f6b0000000000000000000000000000000000000000 (5EYCAe5i...),
+            to: 6d6f646c776562632f746f6b0000000000000000000000000000000000000000 (5EYCAe5k...),
             amount: 2000000000000,
         },
     ),
-    RuntimeEvent::PhatTokenomic(
+    RuntimeEvent::WebTokenomic(
         Event::ContractDepositChanged {
             cluster: None,
             contract: 0x2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a,
             deposit: 3000000000000,
         },
     ),
-    RuntimeEvent::PhatTokenomic(
+    RuntimeEvent::WebTokenomic(
         Event::UserStakeChanged {
             cluster: None,
             account: 0202020202020202020202020202020202020202020202020202020202020202 (5C7LYpP2...),
@@ -97,19 +97,19 @@ expression: events
     ),
     RuntimeEvent::Balances(
         Event::Transfer {
-            from: 6d6f646c706861742f746f6b0000000000000000000000000000000000000000 (5EYCAe5i...),
+            from: 6d6f646c776562632f746f6b0000000000000000000000000000000000000000 (5EYCAe5k...),
             to: 0202020202020202020202020202020202020202020202020202020202020202 (5C7LYpP2...),
             amount: 2000000000000,
         },
     ),
-    RuntimeEvent::PhatTokenomic(
+    RuntimeEvent::WebTokenomic(
         Event::ContractDepositChanged {
             cluster: None,
             contract: 0x2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a,
             deposit: 1000000000000,
         },
     ),
-    RuntimeEvent::PhatTokenomic(
+    RuntimeEvent::WebTokenomic(
         Event::UserStakeChanged {
             cluster: None,
             account: 0202020202020202020202020202020202020202020202020202020202020202 (5C7LYpP2...),
@@ -119,24 +119,24 @@ expression: events
     ),
     RuntimeEvent::System(
         Event::KilledAccount {
-            account: 6d6f646c706861742f746f6b0000000000000000000000000000000000000000 (5EYCAe5i...),
+            account: 6d6f646c776562632f746f6b0000000000000000000000000000000000000000 (5EYCAe5k...),
         },
     ),
     RuntimeEvent::Balances(
         Event::Transfer {
-            from: 6d6f646c706861742f746f6b0000000000000000000000000000000000000000 (5EYCAe5i...),
+            from: 6d6f646c776562632f746f6b0000000000000000000000000000000000000000 (5EYCAe5k...),
             to: 0101010101010101010101010101010101010101010101010101010101010101 (5C62Ck4U...),
             amount: 1000000000000,
         },
     ),
-    RuntimeEvent::PhatTokenomic(
+    RuntimeEvent::WebTokenomic(
         Event::ContractDepositChanged {
             cluster: None,
             contract: 0x2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a,
             deposit: 0,
         },
     ),
-    RuntimeEvent::PhatTokenomic(
+    RuntimeEvent::WebTokenomic(
         Event::UserStakeChanged {
             cluster: None,
             account: 0101010101010101010101010101010101010101010101010101010101010101 (5C62Ck4U...),

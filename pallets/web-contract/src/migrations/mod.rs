@@ -16,12 +16,12 @@ use log;
 
 use crate::{
 	compute::{base_pool, computation, stake_pool_v2, vault, wrapped_balances},
-	mq, phat, registry,
+	mq, web_contract, registry,
 };
 
 /// Alias for the runtime that implements all WebContract Pallets
 pub trait WebContractPallets:
-	phat::Config
+web_contract::Config
 	+ frame_system::Config
 	+ computation::Config
 	+ mq::Config
@@ -33,7 +33,7 @@ pub trait WebContractPallets:
 {
 }
 impl<T> WebContractPallets for T where
-	T: phat::Config
+	T: web_contract::Config
 		+ frame_system::Config
 		+ computation::Config
 		+ mq::Config
@@ -51,7 +51,7 @@ type Versions = (StorageVersion, StorageVersion, StorageVersion, StorageVersion,
 #[allow(dead_code)]
 fn get_versions<T: WebContractPallets>() -> Versions {
 	(
-		StorageVersion::get::<phat::Pallet<T>>(),
+		StorageVersion::get::<web_contract::Pallet<T>>(),
 		StorageVersion::get::<computation::Pallet<T>>(),
 		StorageVersion::get::<mq::Pallet<T>>(),
 		StorageVersion::get::<registry::Pallet<T>>(),
@@ -72,7 +72,7 @@ fn unified_versions<T: WebContractPallets>(version: u16) -> Versions {
 
 #[allow(dead_code)]
 fn set_unified_version<T: WebContractPallets>(version: u16) {
-	StorageVersion::new(version).put::<phat::Pallet<T>>();
+	StorageVersion::new(version).put::<web_contract::Pallet<T>>();
 	StorageVersion::new(version).put::<computation::Pallet<T>>();
 	StorageVersion::new(version).put::<mq::Pallet<T>>();
 	StorageVersion::new(version).put::<registry::Pallet<T>>();

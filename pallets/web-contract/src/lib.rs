@@ -18,7 +18,7 @@ pub mod utils;
 
 pub mod compute;
 pub mod mq;
-pub mod phat;
+pub mod web_contract;
 pub mod puppets;
 pub mod registry;
 pub mod stake_pool;
@@ -47,7 +47,7 @@ pub use compute::{
 	wrapped_balances as pallet_wrapped_balances,
 };
 pub use mq as pallet_mq;
-pub use phat as pallet_phat;
+pub use web_contract as pallet_web;
 pub use registry as pallet_registry;
 pub use stake_pool as pallet_stake_pool;
 pub use tokenomic as pallet_tokenomic;

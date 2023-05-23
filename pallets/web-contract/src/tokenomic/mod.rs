@@ -1,4 +1,4 @@
-//! The Phat Contract tokenomic module
+//! The Wev Contract tokenomic module
 
 pub use self::pallet::*;
 
@@ -18,7 +18,7 @@ pub mod pallet {
 	type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-	const PALLET_ID: PalletId = PalletId(*b"phat/tok");
+	const PALLET_ID: PalletId = PalletId(*b"webc/tok");
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -78,11 +78,11 @@ pub mod pallet {
 	impl<T: Config> Pallet<T>
 	where
 		T: crate::mq::Config,
-		T: crate::phat::Config,
+		T: crate::web_contract::Config,
 	{
 		/// Adjust stake to given contract.
 		///
-		/// Phat contracts accept depoits from accounts. The deposit info would be sent the cluster's
+		/// Web contracts accept depoits from accounts. The deposit info would be sent the cluster's
 		/// system contract. Then the system contract would invoke the driver contract (if installed)
 		/// to process the deposit info. A public good cluster usually would set the contracts' scheduling
 		/// weights according to the total depoit on contracts. More weights means it would get more
@@ -119,7 +119,7 @@ pub mod pallet {
 			ContractUserStakes::<T>::insert(&user, contract, amount);
 			ContractTotalStakes::<T>::insert(contract, total);
 
-			let cluster = crate::phat::Pallet::<T>::get_contract_info(&contract).map(|x| x.cluster);
+			let cluster = crate::web_contract::Pallet::<T>::get_contract_info(&contract).map(|x| x.cluster);
 
 			Self::deposit_event(Event::ContractDepositChanged {
 				cluster,
@@ -135,7 +135,7 @@ pub mod pallet {
 			});
 
 			if let Some(the_system_contract) =
-				crate::phat::Pallet::<T>::get_system_contract(&contract)
+				crate::web_contract::Pallet::<T>::get_system_contract(&contract)
 			{
 				let selector: u32 = 0xa24bcb44; // ContractDeposit::change_deposit()
 				let message = (selector.to_be_bytes(), contract, total).encode();

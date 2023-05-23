@@ -1,4 +1,4 @@
-use crate::{mq, phat, registry, tokenomic};
+use crate::{mq, web_contract, registry, tokenomic};
 
 use crate::mock::{MockValidator, NoneAttestationEnabled};
 use frame_support::{pallet_prelude::ConstU32, parameter_types, traits::GenesisBuild};
@@ -28,8 +28,8 @@ frame_support::construct_runtime!(
 		// WebContract pallets
 		WebContractMq: mq::{Pallet, Call},
 		WebContractRegistry: registry::{Pallet, Event<T>, Storage, Config<T>},
-		PhatContracts: phat,
-		PhatTokenomic: tokenomic,
+		WebContracts: web_contract,
+		WebTokenomic: tokenomic,
 	}
 );
 
@@ -116,7 +116,7 @@ impl registry::Config for Test {
 	type ParachainId = ConstU32<0>;
 }
 
-impl phat::Config for Test {
+impl web_contract::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type InkCodeSizeLimit = ConstU32<{ 1024 * 1024 }>;
 	type SidevmCodeSizeLimit = ConstU32<{ 1024 * 1024 }>;

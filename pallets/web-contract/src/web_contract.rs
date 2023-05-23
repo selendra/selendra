@@ -1,4 +1,4 @@
-//! The Phat Contract registry
+//! The Web Contract registry
 
 pub use self::pallet::*;
 
