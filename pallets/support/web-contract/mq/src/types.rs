@@ -37,7 +37,7 @@ pub enum MessageOrigin {
 	#[display(fmt = "AccountId({})", "hex::encode(_0)")]
 	#[serde(with = "more::scale_bytes")]
 	AccountId(AccountId),
-	/// A remote location (parachain, etc.)
+	/// A remote location
 	#[display(fmt = "MultiLocation({})", "hex::encode(_0)")]
 	#[serde(with = "more::scale_bytes")]
 	MultiLocation(Vec<u8>),

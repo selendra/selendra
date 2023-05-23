@@ -19,7 +19,6 @@ pub mod utils;
 pub mod compute;
 pub mod mq;
 pub mod web_contract;
-pub mod puppets;
 pub mod registry;
 pub mod stake_pool;
 

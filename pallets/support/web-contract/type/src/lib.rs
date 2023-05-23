@@ -526,7 +526,6 @@ pub struct WorkerRegistrationInfoV2<AccountId> {
 	pub genesis_block_hash: H256,
 	pub features: Vec<u32>,
 	pub operator: Option<AccountId>,
-	pub para_id: u32,
 	pub max_consensus_version: u32,
 }
 

@@ -113,7 +113,6 @@ impl registry::Config for Test {
 	type VerifyPRuntime = VerifyPRuntime;
 	type VerifyRelaychainGenesisBlockHash = VerifyRelaychainGenesisBlockHash;
 	type GovernanceOrigin = frame_system::EnsureRoot<Self::AccountId>;
-	type ParachainId = ConstU32<0>;
 }
 
 impl web_contract::Config for Test {

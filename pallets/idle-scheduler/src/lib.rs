@@ -108,7 +108,7 @@ pub mod pallet {
 			{
 				log::debug!(
 					target: "idle-scheduler",
-					"Produced blocks without finalizing parachain blocks. Idle-scheduler will not execute.\ncurrent number: {:?}\nprevious block number: {:?}",
+					"Produced blocks without finalizing blocks. Idle-scheduler will not execute.\ncurrent number: {:?}\nprevious block number: {:?}",
 					current_block_number,
 					previous_block_number
 				);
