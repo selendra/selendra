@@ -2,15 +2,15 @@ use super::{Call, CallMatcher, Config, IntoH256, OffchainIngress};
 
 use codec::{Decode, Encode};
 use frame_support::dispatch::DispatchInfo;
-use web_contract_types::messaging::MessageOrigin;
 use scale_info::TypeInfo;
-use sp_runtime::traits::{DispatchInfoOf, Dispatchable, SignedExtension};
-use sp_runtime::transaction_validity::{
-	InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
+use sp_runtime::{
+	traits::{DispatchInfoOf, Dispatchable, SignedExtension},
+	transaction_validity::{
+		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
+	},
 };
-use sp_std::marker::PhantomData;
-use sp_std::vec;
-use sp_std::vec::Vec;
+use sp_std::{marker::PhantomData, vec, vec::Vec};
+use web_contract_types::messaging::MessageOrigin;
 
 /// Requires a message queue message must has correct sequence id.
 ///
@@ -88,7 +88,7 @@ where
 			} else {
 				InvalidTransaction::Future
 			}
-			.into());
+			.into())
 		}
 		Ok(())
 	}
@@ -109,22 +109,15 @@ where
 		let expected_seq = OffchainIngress::<T>::get(sender).unwrap_or(0);
 		// Drop the stale message immediately
 		if sequence < expected_seq {
-			return InvalidTransaction::Stale.into();
+			return InvalidTransaction::Stale.into()
 		}
 
 		// Otherwise build a dependency graph based on (sender, sequence), hoping that it can be
 		// included later
 		let provides = vec![tag(sender, sequence)];
-		let requires = if sequence > expected_seq {
-			vec![tag(sender, sequence - 1)]
-		} else {
-			vec![]
-		};
-		Ok(ValidTransaction {
-			provides,
-			requires,
-			..Default::default()
-		})
+		let requires =
+			if sequence > expected_seq { vec![tag(sender, sequence - 1)] } else { vec![] };
+		Ok(ValidTransaction { provides, requires, ..Default::default() })
 	}
 }
 

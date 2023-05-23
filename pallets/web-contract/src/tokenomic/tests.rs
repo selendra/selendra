@@ -2,8 +2,7 @@ use super::*;
 use frame_support::{assert_err, assert_ok};
 use mock::{RuntimeOrigin as Origin, Test, DOLLARS};
 
-use sp_core::crypto::AccountId32;
-use sp_core::H256;
+use sp_core::{crypto::AccountId32, H256};
 
 mod mock;
 
@@ -69,10 +68,7 @@ fn prapare() {
 fn can_not_stake_less_than_minstake() {
 	mock::new_test_ext().execute_with(|| {
 		prapare();
-		assert_err!(
-			stake!(ALICE, DOLLARS - 1),
-			Error::<Test>::InvalidAmountOfStake
-		);
+		assert_err!(stake!(ALICE, DOLLARS - 1), Error::<Test>::InvalidAmountOfStake);
 	});
 }
 

@@ -1,8 +1,6 @@
 use codec::{Decode, Encode};
 
-use frame_support::{
-	transactional,
-};
+use frame_support::transactional;
 use sp_core::{H160, U256};
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize},
@@ -13,9 +11,7 @@ use sp_std::{
 	prelude::*,
 };
 
-use selendra_primitives::{
-	evm::{CallInfo, EvmAddress}
-};
+use selendra_primitives::evm::{CallInfo, EvmAddress};
 
 /// Return true if the call of EVM precompile contract is allowed.
 pub trait PrecompileCallerFilter {

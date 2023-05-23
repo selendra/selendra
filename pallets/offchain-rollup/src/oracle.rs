@@ -78,7 +78,7 @@ pub mod pallet {
 			let resp: ResponseRecord =
 				Decode::decode(&mut &data[..]).or(Err(Error::<T>::FailedToDecodeResponse))?;
 			if resp.contract_id != name {
-				return Err(Error::<T>::FailedToAuthenticateResponse.into());
+				return Err(Error::<T>::FailedToAuthenticateResponse.into())
 			}
 			// TODO: is timestamp newer?
 			PriceFeeds::<T>::insert(

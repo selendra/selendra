@@ -54,18 +54,14 @@ impl IasFields {
 		let report_data = &quote_body[368..432];
 
 		// Extract report time
-		let raw_report_timestamp = parsed_report["timestamp"]
-			.as_str()
-			.unwrap_or("UNKNOWN")
-			.to_owned() + "Z";
+		let raw_report_timestamp =
+			parsed_report["timestamp"].as_str().unwrap_or("UNKNOWN").to_owned() + "Z";
 		let report_timestamp = chrono::DateTime::parse_from_rfc3339(&raw_report_timestamp)
 			.or(Err(Error::BadIASReport))?
 			.timestamp();
 
 		// Filter valid `isvEnclaveQuoteStatus`
-		let quote_status = &parsed_report["isvEnclaveQuoteStatus"]
-			.as_str()
-			.unwrap_or("UNKNOWN");
+		let quote_status = &parsed_report["isvEnclaveQuoteStatus"].as_str().unwrap_or("UNKNOWN");
 		let mut confidence_level: u8 = 128;
 		if IAS_QUOTE_STATUS_LEVEL_1.contains(quote_status) {
 			confidence_level = 1;
@@ -77,7 +73,7 @@ impl IasFields {
 			confidence_level = 5;
 		}
 		if confidence_level == 128 {
-			return Err(Error::InvalidQuoteStatus);
+			return Err(Error::InvalidQuoteStatus)
 		}
 		// CL 1 means there is no known issue of the CPU
 		// CL 2 means the worker's firmware up to date, and the worker has well configured to prevent known issues
@@ -128,20 +124,17 @@ pub fn validate(
 	opt_out_enabled: bool,
 ) -> Result<ConfidentialReport, Error> {
 	match attestation {
-		Some(AttestationReport::SgxIas {
-			ra_report,
-			signature,
-			raw_signing_cert,
-		}) => validate_ias_report(
-			user_data_hash,
-			ra_report.as_slice(),
-			signature.as_slice(),
-			raw_signing_cert.as_slice(),
-			now,
-			verify_pruntime_hash,
-			pruntime_allowlist,
-		),
-		None => {
+		Some(AttestationReport::SgxIas { ra_report, signature, raw_signing_cert }) =>
+			validate_ias_report(
+				user_data_hash,
+				ra_report.as_slice(),
+				signature.as_slice(),
+				raw_signing_cert.as_slice(),
+				now,
+				verify_pruntime_hash,
+				pruntime_allowlist,
+			),
+		None =>
 			if opt_out_enabled {
 				Ok(ConfidentialReport {
 					provider: None,
@@ -150,8 +143,7 @@ pub fn validate(
 				})
 			} else {
 				Err(Error::NoneAttestationDisabled)
-			}
-		}
+			},
 	}
 }
 
@@ -186,17 +178,17 @@ pub fn validate_ias_report(
 	// Validate PRuntime
 	let pruntime_hash = ias_fields.extend_mrenclave();
 	if verify_pruntime_hash && !pruntime_allowlist.contains(&pruntime_hash) {
-		return Err(Error::PRuntimeRejected);
+		return Err(Error::PRuntimeRejected)
 	}
 
 	// Validate time
 	if (now as i64 - report_timestamp) >= 7200 {
-		return Err(Error::OutdatedIASReport);
+		return Err(Error::OutdatedIASReport)
 	}
 
 	let commit = &ias_fields.report_data[..32];
 	if commit != user_data_hash {
-		return Err(Error::InvalidUserDataHash);
+		return Err(Error::InvalidUserDataHash)
 	}
 
 	// Check the following fields

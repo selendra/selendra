@@ -13,8 +13,7 @@ pub mod pallet {
 		traits::{Currency, ExistenceRequirement, StorageVersion},
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_core::crypto::UncheckedFrom;
-	use sp_core::H256;
+	use sp_core::{crypto::UncheckedFrom, H256};
 	use sp_runtime::{
 		traits::{UniqueSaturatedInto, Zero},
 		AccountId32,
@@ -49,20 +48,13 @@ pub mod pallet {
 	bind_topic!(ClusterRegistryEvent, b"^web-contract/registry/cluster");
 	#[derive(Encode, Decode, Clone, Debug)]
 	pub enum ClusterRegistryEvent {
-		PubkeyAvailable {
-			cluster: ContractClusterId,
-			pubkey: ClusterPublicKey,
-		},
+		PubkeyAvailable { cluster: ContractClusterId, pubkey: ClusterPublicKey },
 	}
 
 	bind_topic!(ContractRegistryEvent, b"^web-contract/registry/contract");
 	#[derive(Encode, Decode, Clone, Debug)]
 	pub enum ContractRegistryEvent {
-		PubkeyAvailable {
-			contract: ContractId,
-			pubkey: ContractPublicKey,
-			deployer: ContractId,
-		},
+		PubkeyAvailable { contract: ContractId, pubkey: ContractPublicKey, deployer: ContractId },
 	}
 
 	#[pallet::config]
@@ -252,10 +244,7 @@ pub mod pallet {
 			let cluster = ContractClusterId::from_low_u64_be(cluster_id);
 
 			for worker in &deploy_workers {
-				ensure!(
-					ClusterByWorkers::<T>::get(worker).is_none(),
-					Error::<T>::WorkerIsBusy
-				);
+				ensure!(ClusterByWorkers::<T>::get(worker).is_none(), Error::<T>::WorkerIsBusy);
 				ClusterByWorkers::<T>::insert(worker, cluster);
 			}
 
@@ -283,10 +272,7 @@ pub mod pallet {
 			};
 
 			Clusters::<T>::insert(cluster, &cluster_info);
-			Self::deposit_event(Event::ClusterCreated {
-				cluster,
-				system_contract,
-			});
+			Self::deposit_event(Event::ClusterCreated { cluster, system_contract });
 			<T as Config>::Currency::transfer(
 				&owner,
 				&cluster_account(&cluster),
@@ -326,10 +312,7 @@ pub mod pallet {
 				ResourceType::SidevmCode => T::SidevmCodeSizeLimit::get(),
 				ResourceType::IndeterministicInkCode => T::InkCodeSizeLimit::get(),
 			} as usize;
-			ensure!(
-				resource_data.len() <= size_limit,
-				Error::<T>::PayloadTooLarge
-			);
+			ensure!(resource_data.len() <= size_limit, Error::<T>::PayloadTooLarge);
 
 			Self::push_message(ClusterOperation::UploadResource {
 				origin,
@@ -411,18 +394,10 @@ pub mod pallet {
 				Self::transfer_to_cluster(origin.clone(), deposit, cluster_id, deployer.clone())?;
 			}
 
-			let contract_info = ContractInfo {
-				deployer,
-				code_index,
-				salt,
-				cluster_id,
-				instantiate_data: data,
-			};
+			let contract_info =
+				ContractInfo { deployer, code_index, salt, cluster_id, instantiate_data: data };
 			let contract_id = contract_info.contract_id(crate::hashing::blake2_256);
-			ensure!(
-				!Contracts::<T>::contains_key(contract_id),
-				Error::<T>::DuplicatedContract
-			);
+			ensure!(!Contracts::<T>::contains_key(contract_id), Error::<T>::DuplicatedContract);
 			Contracts::<T>::insert(
 				contract_id,
 				&BasicContractInfo {
@@ -489,18 +464,12 @@ pub mod pallet {
 		) -> DispatchResult {
 			let origin = ensure_signed(origin)?;
 			let cluster_info = Clusters::<T>::get(cluster_id).ok_or(Error::<T>::ClusterNotFound)?;
-			ensure!(
-				cluster_info.owner == origin,
-				Error::<T>::ClusterPermissionDenied
-			);
+			ensure!(cluster_info.owner == origin, Error::<T>::ClusterPermissionDenied);
 			ensure!(
 				registry::Workers::<T>::get(worker_pubkey).is_some(),
 				Error::<T>::WorkerNotFound
 			);
-			ensure!(
-				ClusterByWorkers::<T>::get(worker_pubkey).is_none(),
-				Error::<T>::WorkerIsBusy
-			);
+			ensure!(ClusterByWorkers::<T>::get(worker_pubkey).is_none(), Error::<T>::WorkerIsBusy);
 			// TODO: Do we need to check whether the worker agree to join the cluster?
 			ClusterByWorkers::<T>::insert(worker_pubkey, cluster_id);
 			ClusterWorkers::<T>::append(cluster_id, worker_pubkey);
@@ -521,10 +490,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let origin = ensure_signed(origin)?;
 			let cluster_info = Clusters::<T>::get(cluster_id).ok_or(Error::<T>::ClusterNotFound)?;
-			ensure!(
-				cluster_info.owner == origin,
-				Error::<T>::ClusterPermissionDenied
-			);
+			ensure!(cluster_info.owner == origin, Error::<T>::ClusterPermissionDenied);
 			ensure!(
 				ClusterByWorkers::<T>::get(worker_pubkey) == Some(cluster_id),
 				Error::<T>::WorkerNotFound
@@ -553,16 +519,13 @@ pub mod pallet {
 		pub fn on_cluster_message_received(
 			message: DecodedMessage<ClusterRegistryEvent>,
 		) -> DispatchResult {
-			ensure!(
-				message.sender == MessageOrigin::Gatekeeper,
-				Error::<T>::InvalidSender
-			);
+			ensure!(message.sender == MessageOrigin::Gatekeeper, Error::<T>::InvalidSender);
 			match message.payload {
 				ClusterRegistryEvent::PubkeyAvailable { cluster, pubkey } => {
 					// The cluster key can be over-written with the latest value by Gatekeeper
 					registry::ClusterKeys::<T>::insert(cluster, pubkey);
 					Self::deposit_event(Event::ClusterPubkeyAvailable { cluster, pubkey });
-				}
+				},
 			}
 			Ok(())
 		}
@@ -575,11 +538,7 @@ pub mod pallet {
 				_ => return Err(Error::<T>::InvalidSender.into()),
 			};
 			match message.payload {
-				ContractRegistryEvent::PubkeyAvailable {
-					contract,
-					pubkey,
-					deployer,
-				} => {
+				ContractRegistryEvent::PubkeyAvailable { contract, pubkey, deployer } => {
 					registry::ContractKeys::<T>::insert(contract, pubkey);
 					Self::deposit_event(Event::ContractPubkeyAvailable {
 						contract,
@@ -596,12 +555,8 @@ pub mod pallet {
 							});
 						}
 					});
-					Self::deposit_event(Event::Instantiated {
-						contract,
-						cluster,
-						deployer,
-					});
-				}
+					Self::deposit_event(Event::Instantiated { contract, cluster, deployer });
+				},
 			}
 			Ok(())
 		}
@@ -622,13 +577,13 @@ pub mod pallet {
 						pubkey,
 						worker: worker_pubkey,
 					});
-				}
+				},
 				WorkerClusterReport::ClusterDeploymentFailed { id } => {
 					Self::deposit_event(Event::ClusterDeploymentFailed {
 						cluster: id,
 						worker: worker_pubkey,
 					});
-				}
+				},
 			}
 			Ok(())
 		}

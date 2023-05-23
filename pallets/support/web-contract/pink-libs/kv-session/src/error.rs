@@ -1,7 +1,7 @@
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
-    FailedToGetStorage,
-    FailedToDecode,
+	FailedToGetStorage,
+	FailedToDecode,
 }
 
 pub type Result<T> = core::result::Result<T, Error>;

@@ -1,10 +1,8 @@
-use crate::base_pool;
-use crate::vault;
-use crate::wrapped_balances;
-use web_contract_types::WorkerPublicKey;
+use crate::{base_pool, vault, wrapped_balances};
 use scale_info::TypeInfo;
 use sp_runtime::Permill;
 use sp_std::vec::Vec;
+use web_contract_types::WorkerPublicKey;
 
 use crate::BalanceOf;
 

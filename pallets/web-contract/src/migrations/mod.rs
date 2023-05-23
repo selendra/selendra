@@ -14,10 +14,10 @@ use frame_support::{
 #[allow(unused_imports)]
 use log;
 
-use crate::compute::{base_pool, computation, stake_pool_v2, vault, wrapped_balances};
-use crate::mq;
-use crate::phat;
-use crate::registry;
+use crate::{
+	compute::{base_pool, computation, stake_pool_v2, vault, wrapped_balances},
+	mq, phat, registry,
+};
 
 /// Alias for the runtime that implements all WebContract Pallets
 pub trait WebContractPallets:
@@ -46,13 +46,7 @@ impl<T> WebContractPallets for T where
 {
 }
 
-type Versions = (
-	StorageVersion,
-	StorageVersion,
-	StorageVersion,
-	StorageVersion,
-	StorageVersion,
-);
+type Versions = (StorageVersion, StorageVersion, StorageVersion, StorageVersion, StorageVersion);
 
 #[allow(dead_code)]
 fn get_versions<T: WebContractPallets>() -> Versions {

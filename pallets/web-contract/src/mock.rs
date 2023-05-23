@@ -16,12 +16,12 @@ use frame_support::{
 };
 use frame_support_test::TestRandomness;
 use frame_system::{self as system, EnsureRoot, EnsureSigned, EnsureSignedBy};
-use web_contract_types::messaging::Message;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
+use web_contract_types::messaging::Message;
 
 pub(crate) type Balance = u128;
 
@@ -428,9 +428,7 @@ impl AttestationValidator for MockValidator {
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
+	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	// Inject genesis storage
 	let zero_pubkey = sp_core::sr25519::Public::from_raw([0u8; 32]);
 	let zero_ecdh_pubkey = Vec::from(&[0u8; 32][..]);
@@ -464,10 +462,7 @@ pub fn set_block_1() {
 }
 
 pub fn take_events() -> Vec<RuntimeEvent> {
-	let evt = System::events()
-		.into_iter()
-		.map(|evt| evt.event)
-		.collect::<Vec<_>>();
+	let evt = System::events().into_iter().map(|evt| evt.event).collect::<Vec<_>>();
 	println!("event(): {evt:?}");
 	System::reset_events();
 	evt

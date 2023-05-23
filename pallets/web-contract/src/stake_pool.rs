@@ -6,9 +6,11 @@ use crate::BalanceOf;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::compute::{base_pool, computation};
-	use crate::registry;
-	use crate::utils::fixed_point::CodecFixedPoint;
+	use crate::{
+		compute::{base_pool, computation},
+		registry,
+		utils::fixed_point::CodecFixedPoint,
+	};
 
 	use super::BalanceOf;
 	use frame_support::{

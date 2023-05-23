@@ -35,21 +35,22 @@ type BalanceOf<T> = <<T as WebContractConfig>::Currency as frame_support::traits
 	<T as frame_system::Config>::AccountId,
 >>::Balance;
 /// The unified type ImBalance of pallets from the runtime T.
-type NegativeImbalanceOf<T> = <<T as WebContractConfig>::Currency as frame_support::traits::Currency<
-	<T as frame_system::Config>::AccountId,
->>::NegativeImbalance;
+type NegativeImbalanceOf<T> =
+	<<T as WebContractConfig>::Currency as frame_support::traits::Currency<
+		<T as frame_system::Config>::AccountId,
+	>>::NegativeImbalance;
 
 // Alias
-pub use compute::base_pool as pallet_base_pool;
-pub use compute::computation as pallet_computation;
-pub use compute::stake_pool_v2 as pallet_stake_pool_v2;
-pub use compute::vault as pallet_vault;
-pub use compute::wrapped_balances as pallet_wrapped_balances;
+pub use compute::{
+	base_pool as pallet_base_pool, computation as pallet_computation,
+	stake_pool_v2 as pallet_stake_pool_v2, vault as pallet_vault,
+	wrapped_balances as pallet_wrapped_balances,
+};
 pub use mq as pallet_mq;
 pub use phat as pallet_phat;
-pub use tokenomic as pallet_tokenomic;
 pub use registry as pallet_registry;
 pub use stake_pool as pallet_stake_pool;
+pub use tokenomic as pallet_tokenomic;
 pub mod tokenomic;
 
 #[cfg(feature = "native")]

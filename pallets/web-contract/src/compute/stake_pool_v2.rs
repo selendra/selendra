@@ -9,14 +9,12 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	use std::format;
 
-	use crate::balance_convert::FixedPointConvert;
-	use crate::base_pool;
-	use crate::computation;
-	use crate::pool_proxy::{ensure_stake_pool, ensure_vault, PoolProxy, StakePool};
-	use crate::registry;
-	use crate::stake_pool;
-	use crate::vault;
-	use crate::wrapped_balances;
+	use crate::{
+		balance_convert::FixedPointConvert,
+		base_pool, computation,
+		pool_proxy::{ensure_stake_pool, ensure_vault, PoolProxy, StakePool},
+		registry, stake_pool, vault, wrapped_balances,
+	};
 
 	use fixed::types::U64F64 as FixedPoint;
 
@@ -138,11 +136,7 @@ pub mod pallet {
 		/// - the worker in the [`WorkerAssignments`] is pointed to `pid`
 		/// - the worker-session binding is updated in `computation` pallet ([`WorkerBindings`](computation::pallet::WorkerBindings),
 		///   [`SessionBindings`](computation::pallet::SessionBindings))
-		PoolWorkerAdded {
-			pid: u64,
-			worker: WorkerPublicKey,
-			session: T::AccountId,
-		},
+		PoolWorkerAdded { pid: u64, worker: WorkerPublicKey, session: T::AccountId },
 
 		/// Someone contributed to a pool
 		///
@@ -165,11 +159,7 @@ pub mod pallet {
 		/// Affected states:
 		/// - the stake related fields in [`Pools`]
 		/// - the owner asset account
-		OwnerRewardsWithdrawn {
-			pid: u64,
-			user: T::AccountId,
-			amount: BalanceOf<T>,
-		},
+		OwnerRewardsWithdrawn { pid: u64, user: T::AccountId, amount: BalanceOf<T> },
 
 		/// The pool received a slash event from one of its workers (currently disabled)
 		///
@@ -177,19 +167,12 @@ pub mod pallet {
 		PoolSlashed { pid: u64, amount: BalanceOf<T> },
 
 		/// Some slash is actually settled to a contributor (currently disabled)
-		SlashSettled {
-			pid: u64,
-			user: T::AccountId,
-			amount: BalanceOf<T>,
-		},
+		SlashSettled { pid: u64, user: T::AccountId, amount: BalanceOf<T> },
 
 		/// Some reward is dismissed because the worker is no longer bound to a pool
 		///
 		/// There's no affected state.
-		RewardDismissedNotInPool {
-			worker: WorkerPublicKey,
-			amount: BalanceOf<T>,
-		},
+		RewardDismissedNotInPool { worker: WorkerPublicKey, amount: BalanceOf<T> },
 
 		/// Some reward is dismissed because the pool doesn't have any share
 		///
@@ -212,18 +195,10 @@ pub mod pallet {
 		WorkerReclaimed { pid: u64, worker: WorkerPublicKey },
 
 		/// The amount of reward that distributed to owner and stakers
-		RewardReceived {
-			pid: u64,
-			to_owner: BalanceOf<T>,
-			to_stakers: BalanceOf<T>,
-		},
+		RewardReceived { pid: u64, to_owner: BalanceOf<T>, to_stakers: BalanceOf<T> },
 
 		/// The amount of stakes for a worker to start computing
-		WorkingStarted {
-			pid: u64,
-			worker: WorkerPublicKey,
-			amount: BalanceOf<T>,
-		},
+		WorkingStarted { pid: u64, worker: WorkerPublicKey, amount: BalanceOf<T> },
 	}
 
 	#[pallet::error]
@@ -386,22 +361,13 @@ pub mod pallet {
 				registry::Workers::<T>::get(pubkey).ok_or(Error::<T>::WorkerNotRegistered)?;
 
 			// check wheather the owner was bound as operator
-			ensure!(
-				worker_info.operator == Some(owner.clone()),
-				Error::<T>::UnauthorizedOperator
-			);
+			ensure!(worker_info.operator == Some(owner.clone()), Error::<T>::UnauthorizedOperator);
 			// check the worker has finished the benchmark
-			ensure!(
-				worker_info.initial_score.is_some(),
-				Error::<T>::BenchmarkMissing
-			);
+			ensure!(worker_info.initial_score.is_some(), Error::<T>::BenchmarkMissing);
 
 			// origin must be the owner of the pool
 			let mut pool_info = ensure_stake_pool::<T>(pid)?;
-			ensure!(
-				pool_info.basepool.owner == owner,
-				Error::<T>::UnauthorizedPoolOwner
-			);
+			ensure!(pool_info.basepool.owner == owner, Error::<T>::UnauthorizedPoolOwner);
 			// make sure worker has not been not added
 			let workers = &mut pool_info.workers;
 			ensure!(!workers.contains(&pubkey), Error::<T>::WorkerExists);
@@ -428,11 +394,7 @@ pub mod pallet {
 			workers.push(pubkey);
 			base_pool::pallet::Pools::<T>::insert(pid, PoolProxy::StakePool(pool_info));
 			WorkerAssignments::<T>::insert(pubkey, pid);
-			Self::deposit_event(Event::<T>::PoolWorkerAdded {
-				pid,
-				worker: pubkey,
-				session,
-			});
+			Self::deposit_event(Event::<T>::PoolWorkerAdded { pid, worker: pubkey, session });
 
 			Ok(())
 		}
@@ -453,10 +415,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			// The sender is the pool owner
 			let pool = ensure_stake_pool::<T>(pid)?;
-			ensure!(
-				pool.basepool.owner == who,
-				Error::<T>::UnauthorizedPoolOwner
-			);
+			ensure!(pool.basepool.owner == who, Error::<T>::UnauthorizedPoolOwner);
 			// The worker is in this pool. It implies:
 			// - The worker is already in `PoolInfo::worker` list
 			let lookup_pid =
@@ -466,10 +425,7 @@ pub mod pallet {
 			let sub_account: T::AccountId = pool_sub_account(pid, &worker);
 			let session = computation::pallet::Pallet::<T>::sessions(&sub_account)
 				.ok_or(Error::<T>::SessionDoesNotExist)?;
-			ensure!(
-				session.state == computation::WorkerState::Ready,
-				Error::<T>::WorkerIsNotReady
-			);
+			ensure!(session.state == computation::WorkerState::Ready, Error::<T>::WorkerIsNotReady);
 			computation::pallet::Pallet::<T>::unbind_session(&sub_account, false)?;
 			// Manually clean up the worker, including the pool worker list, and the assignment
 			// indices. (Theoretically we can enable the unbinding notification, and follow the
@@ -490,15 +446,9 @@ pub mod pallet {
 			let mut pool_info = ensure_stake_pool::<T>(pid)?;
 
 			// origin must be owner of pool
-			ensure!(
-				pool_info.basepool.owner == owner,
-				Error::<T>::UnauthorizedPoolOwner
-			);
+			ensure!(pool_info.basepool.owner == owner, Error::<T>::UnauthorizedPoolOwner);
 			// check cap
-			ensure!(
-				pool_info.basepool.total_value <= cap,
-				Error::<T>::InadequateCapacity
-			);
+			ensure!(pool_info.basepool.total_value <= cap, Error::<T>::InadequateCapacity);
 
 			pool_info.cap = Some(cap);
 			base_pool::pallet::Pools::<T>::insert(pid, PoolProxy::StakePool(pool_info));
@@ -521,10 +471,7 @@ pub mod pallet {
 			let owner = ensure_signed(origin)?;
 			let mut pool_info = ensure_stake_pool::<T>(pid)?;
 			// origin must be owner of pool
-			ensure!(
-				pool_info.basepool.owner == owner,
-				Error::<T>::UnauthorizedPoolOwner
-			);
+			ensure!(pool_info.basepool.owner == owner, Error::<T>::UnauthorizedPoolOwner);
 			pool_info.payout_commission = payout_commission;
 			base_pool::pallet::Pools::<T>::insert(pid, PoolProxy::StakePool(pool_info));
 
@@ -584,10 +531,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let pool_info = ensure_stake_pool::<T>(pid)?;
 			// Add pool owner's reward if applicable
-			ensure!(
-				who == pool_info.basepool.owner,
-				Error::<T>::UnauthorizedPoolOwner
-			);
+			ensure!(who == pool_info.basepool.owner, Error::<T>::UnauthorizedPoolOwner);
 			let rewards = pool_info.get_owner_stakes::<T>();
 			ensure!(rewards > Zero::zero(), Error::<T>::NoRewardToClaim);
 			<pallet_assets::pallet::Pallet<T> as Transfer<T::AccountId>>::transfer(
@@ -616,9 +560,7 @@ pub mod pallet {
 		#[frame_support::transactional]
 		pub fn check_and_maybe_force_withdraw(origin: OriginFor<T>, pid: u64) -> DispatchResult {
 			ensure_signed(origin)?;
-			let now = <T as registry::Config>::UnixTime::now()
-				.as_secs()
-				.saturated_into::<u64>();
+			let now = <T as registry::Config>::UnixTime::now().as_secs().saturated_into::<u64>();
 			let mut pool = ensure_stake_pool::<T>(pid)?;
 			base_pool::Pallet::<T>::try_process_withdraw_queue(&mut pool.basepool);
 			let grace_period = T::GracePeriod::get();
@@ -645,7 +587,7 @@ pub mod pallet {
 						None => continue, // Skip non-existing workers
 					};
 					if !worker_info.state.is_computing() {
-						continue;
+						continue
 					}
 					if !pool.cd_workers.contains(worker) {
 						Self::do_stop_computing(&pool.basepool.owner, pid, *worker)?;
@@ -678,20 +620,14 @@ pub mod pallet {
 					!vault::pallet::VaultLocks::<T>::contains_key(vault_pid),
 					Error::<T>::VaultIsLocked
 				);
-				ensure!(
-					who == vault_info.basepool.owner,
-					Error::<T>::UnauthorizedPoolOwner
-				);
+				ensure!(who == vault_info.basepool.owner, Error::<T>::UnauthorizedPoolOwner);
 				who = vault_info.basepool.pool_account_id.clone();
 				maybe_vault = Some((vault_pid, vault_info));
 			}
 			let mut pool_info = ensure_stake_pool::<T>(pid)?;
 			let a = amount; // Alias to reduce confusion in the code below
 				// If the pool has a contribution whitelist in storages, check if the origin is authorized to contribute
-			ensure!(
-				a >= T::MinContribution::get(),
-				Error::<T>::InsufficientContribution
-			);
+			ensure!(a >= T::MinContribution::get(), Error::<T>::InsufficientContribution);
 			let free = match &maybe_vault {
 				Some((_, vault_info)) => vault_info.basepool.get_free_stakes::<T>(),
 				_ => pallet_assets::Pallet::<T>::balance(
@@ -721,10 +657,7 @@ pub mod pallet {
 
 			// Post-check to ensure the total stake doesn't exceed the cap
 			if let Some(cap) = pool_info.cap {
-				ensure!(
-					pool_info.basepool.total_value <= cap,
-					Error::<T>::StakeExceedsCapacity
-				);
+				ensure!(pool_info.basepool.total_value <= cap, Error::<T>::StakeExceedsCapacity);
 			}
 			// Persist
 			base_pool::pallet::Pools::<T>::insert(pid, PoolProxy::StakePool(pool_info.clone()));
@@ -774,10 +707,7 @@ pub mod pallet {
 					!vault::pallet::VaultLocks::<T>::contains_key(vault_pid),
 					Error::<T>::VaultIsLocked
 				);
-				ensure!(
-					who == vault_info.basepool.owner,
-					Error::<T>::UnauthorizedPoolOwner
-				);
+				ensure!(who == vault_info.basepool.owner, Error::<T>::UnauthorizedPoolOwner);
 				who = vault_info.basepool.pool_account_id;
 			}
 			let mut pool_info = ensure_stake_pool::<T>(pid)?;
@@ -806,7 +736,7 @@ pub mod pallet {
 					)
 					.expect("get nftattr should always success; qed.");
 					withdraw_nft_guard.attr.shares
-				}
+				},
 				None => Zero::zero(),
 			};
 			ensure!(
@@ -856,7 +786,7 @@ pub mod pallet {
 				Some(pid) => {
 					let key: Vec<u8> = base_pool::pallet::Pools::<T>::hashed_key_for(pid);
 					base_pool::pallet::Pools::<T>::iter_from(key)
-				}
+				},
 				None => base_pool::pallet::Pools::<T>::iter(),
 			};
 			let asset_id = <T as wrapped_balances::Config>::WPhaAssetId::get();
@@ -887,13 +817,13 @@ pub mod pallet {
 								total_lock - curr_lock,
 							)?;
 						}
-					}
+					},
 					PoolProxy::Vault(_) => (),
 				}
 				i += 1;
 				last_pid = Some(pid);
 				if i >= max_iterations {
-					break;
+					break
 				}
 			}
 			StakepoolIterateStartPos::<T>::put(last_pid);
@@ -991,20 +921,14 @@ pub mod pallet {
 		) -> DispatchResult {
 			let pool_info = ensure_stake_pool::<T>(pid)?;
 			// origin must be owner of pool
-			ensure!(
-				&pool_info.basepool.owner == owner,
-				Error::<T>::UnauthorizedPoolOwner
-			);
+			ensure!(&pool_info.basepool.owner == owner, Error::<T>::UnauthorizedPoolOwner);
 			// check free stake
 			ensure!(
 				pool_info.basepool.get_free_stakes::<T>() >= stake,
 				Error::<T>::InsufficientFreeStake
 			);
 			// check wheather we have add this worker
-			ensure!(
-				pool_info.workers.contains(&worker),
-				Error::<T>::WorkerDoesNotExist
-			);
+			ensure!(pool_info.workers.contains(&worker), Error::<T>::WorkerDoesNotExist);
 			let session: T::AccountId = pool_sub_account(pid, &worker);
 			computation::pallet::Pallet::<T>::start_computing(session, stake)?;
 			<pallet_assets::pallet::Pallet<T> as Transfer<T::AccountId>>::transfer(
@@ -1015,11 +939,7 @@ pub mod pallet {
 				false,
 			)?;
 			base_pool::pallet::Pools::<T>::insert(pid, PoolProxy::StakePool(pool_info));
-			Self::deposit_event(Event::<T>::WorkingStarted {
-				pid,
-				worker,
-				amount: stake,
-			});
+			Self::deposit_event(Event::<T>::WorkingStarted { pid, worker, amount: stake });
 
 			Ok(())
 		}
@@ -1030,19 +950,10 @@ pub mod pallet {
 		) -> DispatchResult {
 			let mut pool_info = ensure_stake_pool::<T>(pid)?;
 			// origin must be owner of pool
-			ensure!(
-				&pool_info.basepool.owner == owner,
-				Error::<T>::UnauthorizedPoolOwner
-			);
+			ensure!(&pool_info.basepool.owner == owner, Error::<T>::UnauthorizedPoolOwner);
 			// check whether we have add this worker
-			ensure!(
-				pool_info.workers.contains(&worker),
-				Error::<T>::WorkerDoesNotExist
-			);
-			ensure!(
-				!pool_info.cd_workers.contains(&worker),
-				Error::<T>::WorkerAlreadyStopped
-			);
+			ensure!(pool_info.workers.contains(&worker), Error::<T>::WorkerDoesNotExist);
+			ensure!(!pool_info.cd_workers.contains(&worker), Error::<T>::WorkerAlreadyStopped);
 			let session: T::AccountId = pool_sub_account(pid, &worker);
 			// Computation::stop_computing will notify us how much it will release by `on_stopped`
 			<computation::pallet::Pallet<T>>::stop_computing(session)?;
@@ -1082,7 +993,7 @@ pub mod pallet {
 						pid: pool_info.basepool.pid,
 						amount: rewards,
 					});
-					return;
+					return
 				}
 				let commission = pool_info.payout_commission.unwrap_or_default() * rewards;
 
@@ -1133,10 +1044,7 @@ pub mod pallet {
 				// slash to individuals is settled.
 				pool_info.basepool.slash(slashed);
 				//TODO(mingxuan): Burn the WPHA and transfer the amount to treasury when slash is active
-				Self::deposit_event(Event::<T>::PoolSlashed {
-					pid,
-					amount: slashed,
-				});
+				Self::deposit_event(Event::<T>::PoolSlashed { pid, amount: slashed });
 			}
 
 			// With the worker being cleaned, those stake now are free
@@ -1161,10 +1069,7 @@ pub mod pallet {
 			base_pool::pallet::Pools::<T>::mutate(pid, |value| {
 				if let Some(PoolProxy::StakePool(pool)) = value {
 					pool.remove_worker(worker);
-					Self::deposit_event(Event::<T>::PoolWorkerRemoved {
-						pid,
-						worker: *worker,
-					});
+					Self::deposit_event(Event::<T>::PoolWorkerRemoved { pid, worker: *worker });
 				}
 			});
 		}
@@ -1192,8 +1097,8 @@ pub mod pallet {
 							worker: info.pubkey,
 							amount: reward,
 						});
-						return;
-					}
+						return
+					},
 				};
 				let mut pool_info =
 					ensure_stake_pool::<T>(pid).expect("Stake pool must exist; qed.");

@@ -112,9 +112,7 @@ pub const CENTS: Balance = DOLLARS / 100;
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
+	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	// Inject genesis storage
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
@@ -134,10 +132,7 @@ pub fn set_block_1() {
 }
 
 pub fn take_events() -> Vec<RuntimeEvent> {
-	let evt = System::events()
-		.into_iter()
-		.map(|evt| evt.event)
-		.collect::<Vec<_>>();
+	let evt = System::events().into_iter().map(|evt| evt.event).collect::<Vec<_>>();
 	println!("event(): {evt:?}");
 	System::reset_events();
 	evt

@@ -12,9 +12,8 @@ pub mod pallet {
 		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use web_contract_types::messaging::ContractClusterId;
-	use web_contract_types::messaging::ContractId;
 	use sp_runtime::traits::{AccountIdConversion, Zero};
+	use web_contract_types::messaging::{ContractClusterId, ContractId};
 
 	type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;

@@ -17,8 +17,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod evm;
-pub mod scheduler;
 pub mod mock;
+pub mod scheduler;
 
 mod migration;
 pub use migration::{ensure_storage_version, StorageMigration};

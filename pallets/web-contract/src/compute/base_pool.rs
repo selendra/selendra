@@ -4,12 +4,7 @@ use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::computation;
-	use crate::pool_proxy::*;
-	use crate::registry;
-	use crate::vault;
-	use crate::wrapped_balances;
-	use crate::BalanceOf;
+	use crate::{computation, pool_proxy::*, registry, vault, wrapped_balances, BalanceOf};
 	#[cfg(not(feature = "std"))]
 	use alloc::format;
 	#[cfg(feature = "std")]
@@ -25,8 +20,8 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
-			tokens::fungibles::Transfer, tokens::nonfungibles::InspectEnumerable, StorageVersion,
-			UnixTime,
+			tokens::{fungibles::Transfer, nonfungibles::InspectEnumerable},
+			StorageVersion, UnixTime,
 		},
 	};
 
@@ -162,12 +157,7 @@ pub mod pallet {
 		/// Affected states:
 		/// - the stake related fields in [`Pools`]
 		/// - the user staking asset account
-		Withdrawal {
-			pid: u64,
-			user: T::AccountId,
-			amount: BalanceOf<T>,
-			shares: BalanceOf<T>,
-		},
+		Withdrawal { pid: u64, user: T::AccountId, amount: BalanceOf<T>, shares: BalanceOf<T> },
 		/// A pool contribution whitelist is added
 		///
 		/// - lazy operated when the first staker is added to the whitelist
@@ -308,9 +298,7 @@ pub mod pallet {
 		Balance: sp_runtime::traits::AtLeast32BitUnsigned + Copy + FixedPointConvert + Display,
 	{
 		pub fn share_price(&self) -> Option<FixedPoint> {
-			self.total_value
-				.to_fixed()
-				.checked_div(self.total_shares.to_fixed())
+			self.total_value.to_fixed().checked_div(self.total_shares.to_fixed())
 		}
 		pub fn slash(&mut self, amount: Balance) {
 			debug_assert!(
@@ -446,10 +434,7 @@ pub mod pallet {
 			};
 			ensure!(pool_info.owner == owner, Error::<T>::UnauthorizedPoolOwner);
 			if let Some(mut whitelist) = PoolContributionWhitelists::<T>::get(pid) {
-				ensure!(
-					!whitelist.contains(&staker),
-					Error::<T>::AlreadyInContributeWhitelist
-				);
+				ensure!(!whitelist.contains(&staker), Error::<T>::AlreadyInContributeWhitelist);
 				ensure!(
 					(whitelist.len() as u32) < MAX_WHITELIST_LEN,
 					Error::<T>::ExceedWhitelistMaxLen
@@ -509,20 +494,20 @@ pub mod pallet {
 				Some(pos) => {
 					let key: Vec<u8> = pallet_rmrk_core::pallet::Lock::<T>::hashed_key_for(pos);
 					pallet_rmrk_core::pallet::Lock::<T>::iter_from(key)
-				}
+				},
 				None => pallet_rmrk_core::pallet::Lock::<T>::iter(),
 			};
 			let mut record_vec = vec![];
 			let mut i = 0;
 			for ((cid, nft_id), _) in iter.by_ref() {
-				if cid >= RESERVE_CID_START
-					&& !pallet_rmrk_core::pallet::Nfts::<T>::contains_key(cid, nft_id)
+				if cid >= RESERVE_CID_START &&
+					!pallet_rmrk_core::pallet::Nfts::<T>::contains_key(cid, nft_id)
 				{
 					record_vec.push((cid, nft_id));
 				}
 				i += 1;
 				if i > max_iterations {
-					break;
+					break
 				}
 			}
 			if let Some(((cid, nft_id), _)) = iter.next() {
@@ -559,10 +544,7 @@ pub mod pallet {
 			ensure!(pool_info.owner == owner, Error::<T>::UnauthorizedPoolOwner);
 			let mut whitelist =
 				PoolContributionWhitelists::<T>::get(pid).ok_or(Error::<T>::NoWhitelistCreated)?;
-			ensure!(
-				whitelist.contains(&staker),
-				Error::<T>::NotInContributeWhitelist
-			);
+			ensure!(whitelist.contains(&staker), Error::<T>::NotInContributeWhitelist);
 			whitelist.retain(|accountid| accountid != &staker);
 			if whitelist.is_empty() {
 				PoolContributionWhitelists::<T>::remove(pid);
@@ -602,11 +584,7 @@ pub mod pallet {
 				Err(Error::<T>::AttrLocked)?;
 			}
 			NftLocks::<T>::insert((cid, nftid), ());
-			let guard = NftGuard {
-				cid,
-				nftid,
-				attr: nft,
-			};
+			let guard = NftGuard { cid, nftid, attr: nft };
 			Ok(guard)
 		}
 
@@ -658,11 +636,9 @@ pub mod pallet {
 			shares: BalanceOf<T>,
 		) -> DispatchResult {
 			if pool.share_price().is_none() {
-				nft.shares = nft
-					.shares
-					.checked_sub(&shares)
-					.ok_or(Error::<T>::InvalidShareToWithdraw)?;
-				return Ok(());
+				nft.shares =
+					nft.shares.checked_sub(&shares).ok_or(Error::<T>::InvalidShareToWithdraw)?;
+				return Ok(())
 			}
 
 			// Remove the existing withdraw request in the queue if there is any.
@@ -685,14 +661,10 @@ pub mod pallet {
 
 			let split_nft_id = Self::mint_nft(pool.cid, pallet_id(), shares, pool.pid)
 				.expect("mint nft should always success");
-			nft.shares = nft
-				.shares
-				.checked_sub(&shares)
-				.ok_or(Error::<T>::InvalidShareToWithdraw)?;
+			nft.shares =
+				nft.shares.checked_sub(&shares).ok_or(Error::<T>::InvalidShareToWithdraw)?;
 			// Push the request
-			let now = <T as registry::Config>::UnixTime::now()
-				.as_secs()
-				.saturated_into::<u64>();
+			let now = <T as registry::Config>::UnixTime::now().as_secs().saturated_into::<u64>();
 			pool.withdraw_queue.push_back(WithdrawInfo {
 				user: account_id,
 				start_time: now,
@@ -723,10 +695,7 @@ pub mod pallet {
 		}
 
 		pub fn ensure_migration_root(user: T::AccountId) -> DispatchResult {
-			ensure!(
-				user == T::MigrationAccountId::get(),
-				Error::<T>::NotMigrationRoot
-			);
+			ensure!(user == T::MigrationAccountId::get(), Error::<T>::NotMigrationRoot);
 			Ok(())
 		}
 
@@ -750,7 +719,7 @@ pub mod pallet {
 			for request in &pool.withdraw_queue {
 				if let Some(vault_period) = maybe_vault_queue_period {
 					if now - request.start_time > vault_period {
-						return true;
+						return true
 					}
 				}
 				let nft_guard = Self::get_nft_attr_guard(pool.cid, request.nft_id)
@@ -760,7 +729,7 @@ pub mod pallet {
 				let amount = bmul(withdraw_nft.shares, &price);
 				if amount > budget {
 					// Run out of budget, let's check if the request is still in the grace period
-					return now - request.start_time > grace_period;
+					return now - request.start_time > grace_period
 				} else {
 					// Otherwise we allocate some budget to virtually fulfill the request
 					budget -= amount;
@@ -959,9 +928,7 @@ pub mod pallet {
 				.try_into()
 				.expect("str coverts to bvec should never fail; qed.");
 
-			let now = <T as registry::Config>::UnixTime::now()
-				.as_secs()
-				.saturated_into::<u64>();
+			let now = <T as registry::Config>::UnixTime::now().as_secs().saturated_into::<u64>();
 			let value: BoundedVec<u8, <T as pallet_uniques::Config>::ValueLimit> = format!("{now}")
 				.as_bytes()
 				.to_vec()
@@ -1032,7 +999,7 @@ pub mod pallet {
 			};
 			let current_balance = bmul(nft.shares, &price);
 			if current_balance > T::WPhaMinBalance::get() {
-				return false;
+				return false
 			}
 			pool_info.total_shares -= nft.shares;
 			true
@@ -1078,7 +1045,7 @@ pub mod pallet {
 						pool_info.withdraw_queue.pop_front();
 						Self::burn_nft(&pallet_id(), pool_info.cid, withdraw.nft_id)
 							.expect("burn nft should always success");
-						continue;
+						continue
 					}
 					// Try to fulfill the withdraw requests as much as possible
 					let free_shares = if price == fp!(0) {
@@ -1103,13 +1070,11 @@ pub mod pallet {
 						withdraw.user.clone(),
 					);
 					withdraw_nft_guard.attr = withdraw_nft.clone();
-					withdraw_nft_guard
-						.save()
-						.expect("save nft should always success");
+					withdraw_nft_guard.save().expect("save nft should always success");
 					// Update if the withdraw is partially fulfilled, otherwise pop it out of the
 					// queue
-					if withdraw_nft.shares == Zero::zero()
-						|| Self::maybe_remove_dust(pool_info, &withdraw_nft)
+					if withdraw_nft.shares == Zero::zero() ||
+						Self::maybe_remove_dust(pool_info, &withdraw_nft)
 					{
 						pool_info.withdraw_queue.pop_front();
 						Self::burn_nft(&pallet_id(), pool_info.cid, withdraw.nft_id)
@@ -1121,7 +1086,7 @@ pub mod pallet {
 							.expect("front exists as just checked; qed.") = withdraw;
 					}
 				} else {
-					break;
+					break
 				}
 			}
 		}

@@ -7,13 +7,12 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	use std::format;
 
-	use crate::balance_convert::{div as bdiv, mul as bmul, FixedPointConvert};
-	use crate::base_pool;
-	use crate::computation;
-	use crate::pool_proxy::{ensure_stake_pool, ensure_vault, PoolProxy, Vault};
-	use crate::registry;
-	use crate::stake_pool_v2;
-	use crate::wrapped_balances;
+	use crate::{
+		balance_convert::{div as bdiv, mul as bmul, FixedPointConvert},
+		base_pool, computation,
+		pool_proxy::{ensure_stake_pool, ensure_vault, PoolProxy, Vault},
+		registry, stake_pool_v2, wrapped_balances,
+	};
 
 	use crate::BalanceOf;
 	use frame_support::{
@@ -88,22 +87,14 @@ pub mod pallet {
 		/// Affected states:
 		/// - the shares related fields in [`Pools`]
 		/// - the nft related storages in rmrk and pallet unique
-		OwnerSharesClaimed {
-			pid: u64,
-			user: T::AccountId,
-			shares: BalanceOf<T>,
-		},
+		OwnerSharesClaimed { pid: u64, user: T::AccountId, shares: BalanceOf<T> },
 
 		/// Additional owner shares are mint into the pool
 		///
 		/// Affected states:
 		/// - the shares related fields in [`Pools`]
 		/// - last_share_price_checkpoint in [`Pools`]
-		OwnerSharesGained {
-			pid: u64,
-			shares: BalanceOf<T>,
-			checkout_price: BalanceOf<T>,
-		},
+		OwnerSharesGained { pid: u64, shares: BalanceOf<T>, checkout_price: BalanceOf<T> },
 
 		/// Someone contributed to a vault
 		///
@@ -113,12 +104,7 @@ pub mod pallet {
 		/// - the user recive ad share NFT once contribution succeeded
 		/// - when there was any request in the withdraw queue, the action may trigger withdrawals
 		///   ([`Withdrawal`](#variant.Withdrawal) event)
-		Contribution {
-			pid: u64,
-			user: T::AccountId,
-			amount: BalanceOf<T>,
-			shares: BalanceOf<T>,
-		},
+		Contribution { pid: u64, user: T::AccountId, amount: BalanceOf<T>, shares: BalanceOf<T> },
 	}
 
 	#[pallet::error]
@@ -216,10 +202,7 @@ pub mod pallet {
 			let owner = ensure_signed(origin)?;
 			let mut pool_info = ensure_vault::<T>(pid)?;
 			// origin must be owner of pool
-			ensure!(
-				pool_info.basepool.owner == owner,
-				Error::<T>::UnauthorizedPoolOwner
-			);
+			ensure!(pool_info.basepool.owner == owner, Error::<T>::UnauthorizedPoolOwner);
 
 			pool_info.commission = payout_commission;
 			base_pool::pallet::Pools::<T>::insert(pid, PoolProxy::Vault(pool_info));
@@ -247,14 +230,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin.clone())?;
 			let mut pool_info = ensure_vault::<T>(vault_pid)?;
-			ensure!(
-				who == pool_info.basepool.owner,
-				Error::<T>::UnauthorizedPoolOwner
-			);
-			ensure!(
-				pool_info.owner_shares >= shares,
-				Error::<T>::NoEnoughShareToClaim
-			);
+			ensure!(who == pool_info.basepool.owner, Error::<T>::UnauthorizedPoolOwner);
+			ensure!(pool_info.owner_shares >= shares, Error::<T>::NoEnoughShareToClaim);
 			ensure!(shares > Zero::zero(), Error::<T>::NoRewardToClaim);
 			let _nft_id = base_pool::Pallet::<T>::mint_nft(
 				pool_info.basepool.cid,
@@ -295,10 +272,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let mut pool_info = ensure_vault::<T>(vault_pid)?;
 			// Add pool owner's reward if applicable
-			ensure!(
-				who == pool_info.basepool.owner,
-				Error::<T>::UnauthorizedPoolOwner
-			);
+			ensure!(who == pool_info.basepool.owner, Error::<T>::UnauthorizedPoolOwner);
 			let current_price = match pool_info.basepool.share_price() {
 				Some(price) => BalanceOf::<T>::from_fixed(&price),
 				None => return Ok(()),
@@ -306,16 +280,16 @@ pub mod pallet {
 			if pool_info.last_share_price_checkpoint == Zero::zero() {
 				pool_info.last_share_price_checkpoint = current_price;
 				base_pool::pallet::Pools::<T>::insert(vault_pid, PoolProxy::Vault(pool_info));
-				return Ok(());
+				return Ok(())
 			}
 			if current_price <= pool_info.last_share_price_checkpoint {
-				return Ok(());
+				return Ok(())
 			}
-			let delta_price = pool_info.commission.unwrap_or_default()
-				* (current_price - pool_info.last_share_price_checkpoint);
+			let delta_price = pool_info.commission.unwrap_or_default() *
+				(current_price - pool_info.last_share_price_checkpoint);
 			let new_price = current_price - delta_price;
-			let adjust_shares = bdiv(pool_info.basepool.total_value, &new_price.to_fixed())
-				- pool_info.basepool.total_shares;
+			let adjust_shares = bdiv(pool_info.basepool.total_value, &new_price.to_fixed()) -
+				pool_info.basepool.total_shares;
 			pool_info.basepool.total_shares += adjust_shares;
 			pool_info.owner_shares += adjust_shares;
 			pool_info.last_share_price_checkpoint = new_price;
@@ -343,9 +317,7 @@ pub mod pallet {
 			vault_pid: u64,
 		) -> DispatchResult {
 			ensure_signed(origin.clone())?;
-			let now = <T as registry::Config>::UnixTime::now()
-				.as_secs()
-				.saturated_into::<u64>();
+			let now = <T as registry::Config>::UnixTime::now().as_secs().saturated_into::<u64>();
 			let mut vault = ensure_vault::<T>(vault_pid)?;
 			base_pool::Pallet::<T>::try_process_withdraw_queue(&mut vault.basepool);
 			let grace_period = T::GracePeriod::get();
@@ -364,10 +336,8 @@ pub mod pallet {
 						stake_pool.basepool.cid,
 						withdraw.nft_id,
 					)?;
-					let price = stake_pool
-						.basepool
-						.share_price()
-						.ok_or(Error::<T>::VaultBankrupt)?;
+					let price =
+						stake_pool.basepool.share_price().ok_or(Error::<T>::VaultBankrupt)?;
 					releasing_stake += bmul(nft_guard.attr.shares, &price);
 				}
 			}
@@ -438,10 +408,7 @@ pub mod pallet {
 			let mut pool_info = ensure_vault::<T>(pid)?;
 			let a = amount; // Alias to reduce confusion in the code below
 
-			ensure!(
-				a >= T::MinContribution::get(),
-				Error::<T>::InsufficientContribution
-			);
+			ensure!(a >= T::MinContribution::get(), Error::<T>::InsufficientContribution);
 			let free = pallet_assets::Pallet::<T>::maybe_balance(
 				<T as wrapped_balances::Config>::WPhaAssetId::get(),
 				&who,
@@ -470,12 +437,7 @@ pub mod pallet {
 				pool_info.basepool.cid,
 			)?;
 
-			Self::deposit_event(Event::<T>::Contribution {
-				pid,
-				user: who,
-				amount: a,
-				shares,
-			});
+			Self::deposit_event(Event::<T>::Contribution { pid, user: who, amount: a, shares });
 			Ok(())
 		}
 
@@ -515,7 +477,7 @@ pub mod pallet {
 					)
 					.expect("get nftattr should always success; qed.");
 					withdraw_nft_guard.attr.shares
-				}
+				},
 				None => Zero::zero(),
 			};
 			ensure!(

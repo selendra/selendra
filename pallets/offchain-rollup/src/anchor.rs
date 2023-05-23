@@ -111,11 +111,7 @@ pub mod pallet {
 		/// A name is claimed by a submitter
 		NameClaimed { submitter: T::AccountId, name: H256 },
 		/// A rollup transaction is executed
-		RollupExecuted {
-			submitter: T::AccountId,
-			name: H256,
-			nonce: u128,
-		},
+		RollupExecuted { submitter: T::AccountId, name: H256, nonce: u128 },
 	}
 
 	#[pallet::error]
@@ -147,15 +143,9 @@ pub mod pallet {
 		#[transactional]
 		pub fn claim_name(origin: OriginFor<T>, name: H256) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			ensure!(
-				SubmitterByNames::<T>::get(name).is_none(),
-				Error::<T>::NameAlreadyClaimed
-			);
+			ensure!(SubmitterByNames::<T>::get(name).is_none(), Error::<T>::NameAlreadyClaimed);
 			SubmitterByNames::<T>::insert(name, &who);
-			Self::deposit_event(Event::NameClaimed {
-				submitter: who,
-				name,
-			});
+			Self::deposit_event(Event::NameClaimed { submitter: who, name });
 			Ok(())
 		}
 
@@ -175,10 +165,7 @@ pub mod pallet {
 			// Check conditions
 			for cond in tx.conds {
 				let Cond::Eq(key, opt_value) = cond;
-				ensure!(
-					States::<T>::get(name, key) == opt_value,
-					Error::<T>::CondNotMet
-				);
+				ensure!(States::<T>::get(name, key) == opt_value, Error::<T>::CondNotMet);
 			}
 			// Apply updates
 			for (key, opt_value) in tx.updates {
@@ -193,19 +180,14 @@ pub mod pallet {
 				let act: Action =
 					Decode::decode(&mut &raw_act[..]).or(Err(Error::<T>::FailedToDecodeAction))?;
 				match act {
-					Action::Reply(data) => {
-						T::OnResponse::on_response(name, who.clone(), data.into())?
-					}
+					Action::Reply(data) =>
+						T::OnResponse::on_response(name, who.clone(), data.into())?,
 					Action::SetQueueHead(head) => {
 						Self::queue_head_set(&name, head)?;
-					}
+					},
 				}
 			}
-			Self::deposit_event(Event::RollupExecuted {
-				submitter: who,
-				name,
-				nonce,
-			});
+			Self::deposit_event(Event::RollupExecuted { submitter: who, name, nonce });
 			Ok(())
 		}
 	}
@@ -222,14 +204,8 @@ pub mod pallet {
 		///
 		/// Returns the index of the message if succeeded
 		pub fn push_message(name: &H256, data: ValueBytes) -> Result<u32, Error<T>> {
-			ensure!(
-				SubmitterByNames::<T>::contains_key(name),
-				Error::<T>::NameNotExist
-			);
-			ensure!(
-				Self::queue_len(name) < T::QueueCapacity::get(),
-				Error::<T>::QueueIsFull
-			);
+			ensure!(SubmitterByNames::<T>::contains_key(name), Error::<T>::NameNotExist);
+			ensure!(Self::queue_len(name) < T::QueueCapacity::get(), Error::<T>::QueueIsFull);
 			let end = Self::queue_tail(name);
 			Self::queue_set(name, &end, data);
 			Self::queue_tail_set(name, end + 1);
@@ -266,10 +242,7 @@ pub mod pallet {
 		}
 
 		fn queue_set_u32(name: &H256, index: &[u8; 5], value: u32) {
-			let value = value
-				.encode()
-				.try_into()
-				.expect("BUG: Failed to encode u32");
+			let value = value.encode().try_into().expect("BUG: Failed to encode u32");
 			Self::queue_set(name, index, value);
 		}
 
@@ -354,10 +327,7 @@ pub mod pallet {
 					},
 					2u128
 				));
-				assert_eq!(
-					Anchor::states(NAME1, bvec(b"key")),
-					Some(bvec(b"new-value"))
-				);
+				assert_eq!(Anchor::states(NAME1, bvec(b"key")), Some(bvec(b"new-value")));
 
 				// Reject conflicting tx
 				assert_noop!(
@@ -400,11 +370,7 @@ pub mod pallet {
 				assert_ok!(Anchor::rollup(
 					Origin::signed(1),
 					NAME1,
-					RollupTx {
-						conds: vec![],
-						actions: vec![bvec(&act.encode())],
-						updates: vec![],
-					},
+					RollupTx { conds: vec![], actions: vec![bvec(&act.encode())], updates: vec![] },
 					5u128
 				));
 				assert_eq!(
@@ -535,10 +501,10 @@ pub mod pallet {
 
 		#[test]
 		fn queue_e2e() {
-			use kv_session::traits::KvSession;
-			use kv_session::traits::KvSnapshot;
-			use kv_session::traits::QueueSession;
-			use kv_session::{Error, Result};
+			use kv_session::{
+				traits::{KvSession, KvSnapshot, QueueSession},
+				Error, Result,
+			};
 
 			struct ChainStorage {
 				name: H256,
@@ -563,7 +529,7 @@ pub mod pallet {
 						Some(v) => {
 							let ov = u32::decode(&mut &v[..]).or(Err(Error::FailedToDecode))?;
 							Ok((ov + 1).encode())
-						}
+						},
 						None => Ok(1_u32.encode()),
 					}
 				}
@@ -596,14 +562,12 @@ pub mod pallet {
 				let tx = kv_session::rollup::rollup(
 					&kvdb,
 					tx,
-					kv_session::rollup::VersionLayout::Standalone {
-						key_postfix: "_ver".into(),
-					},
+					kv_session::rollup::VersionLayout::Standalone { key_postfix: "_ver".into() },
 				)
 				.ok()?;
 				if !tx.has_updates() {
 					// We don't have to submit it if there are no updates
-					return None;
+					return None
 				}
 				let conds = tx
 					.conditions
@@ -619,11 +583,7 @@ pub mod pallet {
 				if let Some(head) = tx.queue_head {
 					actions.push(bvec(&Action::SetQueueHead(head).encode()));
 				}
-				Some(RollupTx {
-					conds,
-					actions,
-					updates,
-				})
+				Some(RollupTx { conds, actions, updates })
 			}
 
 			new_test_ext().execute_with(|| {
