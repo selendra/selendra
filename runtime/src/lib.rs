@@ -57,9 +57,9 @@ pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
 
 use selendra_primitives::{
-	opaque, ApiError as SelendraApiError, AuthorityId as SelendraId,
-	SessionAuthorityData, Version as FinalityVersion, DEFAULT_BAN_REASON_LENGTH,
-	DEFAULT_MAX_WINNERS, DEFAULT_SESSION_PERIOD, TOKEN,
+	opaque, ApiError as SelendraApiError, AuthorityId as SelendraId, SessionAuthorityData,
+	Version as FinalityVersion, DEFAULT_BAN_REASON_LENGTH, DEFAULT_MAX_WINNERS,
+	DEFAULT_SESSION_PERIOD, TOKEN,
 };
 pub use selendra_primitives::{
 	AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, Signature,
@@ -82,10 +82,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
 	impl_name: create_runtime_str!("selendra-node"),
 	authoring_version: 1,
-	spec_version: 3000,
+	spec_version: 3001,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 0,
+	transaction_version: 1,
 	state_version: 0,
 };
 
@@ -367,27 +367,41 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: frame_system,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
-		Scheduler: pallet_scheduler,
-		Aura: pallet_aura,
-		Timestamp: pallet_timestamp,
-		Balances: pallet_balances,
-		TransactionPayment: pallet_transaction_payment,
-		Authorship: pallet_authorship,
-		Staking: pallet_staking,
-		History: pallet_session::historical,
-		Session: pallet_session,
-		Selendra: pallet_selendra,
-		Elections: pallet_elections,
-		Treasury: pallet_treasury,
-		Vesting: pallet_vesting,
-		Utility: pallet_utility,
-		Multisig: pallet_multisig,
-		Sudo: pallet_sudo,
-		Contracts: pallet_contracts,
-		NominationPools: pallet_nomination_pools,
-		Identity: pallet_identity,
+		// Basic stuff; balances is uncallable initially.
+		System: frame_system = 0,
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip = 1,
+		Scheduler: pallet_scheduler = 2,
+		Aura: pallet_aura = 3,
+		Timestamp: pallet_timestamp = 4,
+
+		Balances: pallet_balances = 10,
+		TransactionPayment: pallet_transaction_payment = 11,
+
+		Treasury: pallet_treasury = 20,
+
+		// consensus sfuff
+		Authorship: pallet_authorship = 30,
+		Staking: pallet_staking = 31,
+		History: pallet_session::historical = 32,
+		Session: pallet_session = 33,
+		Selendra: pallet_selendra = 34,
+		Elections: pallet_elections = 35,
+
+		// Smart Contract
+		Contracts: pallet_contracts = 50,
+
+		// Asset and NFT
+		Assets: pallet_assets = 70,
+		Uniques: pallet_uniques = 71,
+
+		// Utility Suff
+		Vesting: pallet_vesting = 80,
+		Utility: pallet_utility = 81,
+		Multisig: pallet_multisig = 82,
+		Identity: pallet_identity = 83,
+
+		// Temporary
+		Sudo: pallet_sudo = 100,
 	}
 );
 
@@ -573,12 +587,6 @@ impl_runtime_apis! {
 
 		fn next_session_finality_version() -> FinalityVersion {
 			Selendra::next_session_finality_version()
-		}
-	}
-
-	impl pallet_nomination_pools_runtime_api::NominationPoolsApi<Block, AccountId, Balance> for Runtime {
-		fn pending_rewards(member_account: AccountId) -> Balance {
-			NominationPools::pending_rewards(member_account).unwrap_or_default()
 		}
 	}
 

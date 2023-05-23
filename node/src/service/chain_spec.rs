@@ -21,8 +21,9 @@ use selendra_primitives::{
 	MIN_NOMINATOR_BOND, MIN_VALIDATOR_BOND, TOKEN, TOKEN_DECIMALS,
 };
 use selendra_runtime::{
-	AuraConfig, BalancesConfig, ElectionsConfig, GenesisConfig, SelendraConfig, SessionConfig,
-	SessionKeys, StakingConfig, SudoConfig, SystemConfig, VestingConfig, WASM_BINARY,
+	AssetsConfig, AuraConfig, BalancesConfig, ElectionsConfig, GenesisConfig, SelendraConfig,
+	SessionConfig, SessionKeys, StakingConfig, SudoConfig, SystemConfig, VestingConfig,
+	WASM_BINARY,
 };
 
 pub const CHAINTYPE_DEV: &str = "dev";
@@ -396,6 +397,7 @@ fn generate_genesis_config(
 		},
 		selendra: SelendraConfig { finality_version, ..Default::default() },
 		treasury: Default::default(),
+		assets: AssetsConfig::default(),
 		vesting: VestingConfig { vesting: vec![] },
 		transaction_payment: Default::default(),
 	}

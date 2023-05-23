@@ -13,5 +13,6 @@
 
 // You should have received a copy of the GNU General Public License
 
+pub mod asset_nft;
 pub mod staking;
 pub mod utility;
