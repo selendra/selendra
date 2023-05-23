@@ -397,7 +397,6 @@ fn generate_genesis_config(
 		selendra: SelendraConfig { finality_version, ..Default::default() },
 		treasury: Default::default(),
 		vesting: VestingConfig { vesting: vec![] },
-		nomination_pools: Default::default(),
 		transaction_payment: Default::default(),
 	}
 }

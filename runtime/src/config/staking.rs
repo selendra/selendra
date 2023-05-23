@@ -13,26 +13,21 @@
 
 // You should have received a copy of the GNU General Public License
 
-use crate::{
-	Balances, Elections, NominationPools, Runtime, RuntimeEvent, Session, Timestamp, Treasury,
-};
+use crate::{Balances, Elections, Runtime, RuntimeEvent, Session, Timestamp, Treasury};
 
-use sp_runtime::{FixedU128, Perbill};
+use sp_runtime::Perbill;
 use sp_staking::EraIndex;
 
 use frame_support::{
 	pallet_prelude::Weight,
 	parameter_types,
 	traits::{ConstU32, U128CurrencyToVote},
-	PalletId,
 };
 
 use selendra_primitives::{
 	AccountId, Balance, DEFAULT_SESSIONS_PER_ERA, MAX_NOMINATORS_REWARDED_PER_VALIDATOR,
 };
-use selendra_runtime_common::{
-	prod_or_fast, staking::era_payout, wrap_methods, BalanceToU256, U256ToBalance,
-};
+use selendra_runtime_common::{prod_or_fast, staking::era_payout, wrap_methods};
 
 parameter_types! {
 	pub const BondingDuration: EraIndex = 14;
@@ -70,7 +65,7 @@ impl pallet_staking::Config for Runtime {
 	type BenchmarkingConfig = StakingBenchmarkingConfig;
 	type WeightInfo = PayoutStakersDecreasedWeightInfo;
 	type CurrencyBalance = Balance;
-	type OnStakerSlash = NominationPools;
+	type OnStakerSlash = ();
 	type HistoryDepth = HistoryDepth;
 	type TargetList = pallet_staking::UseValidatorsMap<Self>;
 	type AdminOrigin = frame_system::EnsureRoot<AccountId>;
@@ -131,25 +126,4 @@ pub struct StakingBenchmarkingConfig;
 impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
 	type MaxValidators = ConstU32<1000>;
 	type MaxNominators = ConstU32<1000>;
-}
-
-parameter_types! {
-	pub const PostUnbondPoolsWindow: u32 = 4;
-	pub const NominationPoolsPalletId: PalletId = PalletId(*b"py/nopls");
-	pub const MaxPointsToBalance: u8 = 10;
-}
-
-impl pallet_nomination_pools::Config for Runtime {
-	type WeightInfo = ();
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type RewardCounter = FixedU128;
-	type BalanceToU256 = BalanceToU256;
-	type U256ToBalance = U256ToBalance;
-	type Staking = pallet_staking::Pallet<Self>;
-	type PostUnbondingPoolsWindow = PostUnbondPoolsWindow;
-	type MaxMetadataLen = ConstU32<256>;
-	type MaxUnbonding = ConstU32<8>;
-	type PalletId = NominationPoolsPalletId;
-	type MaxPointsToBalance = MaxPointsToBalance;
 }
