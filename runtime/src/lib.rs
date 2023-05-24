@@ -56,6 +56,12 @@ pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
 
+pub use pallets_web_contract::{
+	pallet_base_pool, pallet_computation, pallet_mq, pallet_registry, pallet_stake_pool,
+	pallet_stake_pool_v2, pallet_tokenomic, pallet_vault, pallet_webc, pallet_wrapped_balances,
+};
+use pallets_offchain_rollup::{anchor as pallet_anchor, oracle as pallet_oracle};
+
 use selendra_primitives::{
 	opaque, ApiError as SelendraApiError, AuthorityId as SelendraId, SessionAuthorityData,
 	Version as FinalityVersion, DEFAULT_BAN_REASON_LENGTH, DEFAULT_MAX_WINNERS,
@@ -387,18 +393,37 @@ construct_runtime!(
 		Selendra: pallet_selendra = 34,
 		Elections: pallet_elections = 35,
 
+		Democracy: pallet_democracy = 40,
+
 		// Smart Contract
 		Contracts: pallet_contracts = 50,
 
+		// Web Contract
+		PhalaMq: pallet_mq = 60,
+		PhalaRegistry: pallet_registry = 61,
+		PhalaComputation: pallet_computation = 62,
+		PhalaStakePoolv2: pallet_stake_pool_v2 = 63,
+		PhalaStakePool: pallet_stake_pool = 64,
+		PhalaVault: pallet_vault = 65,
+		PhalaWrappedBalances: pallet_wrapped_balances = 66,
+		PhalaBasePool: pallet_base_pool = 67,
+		WebContracts: pallet_webc = 68,
+		PhalaPhatTokenomic: pallet_tokenomic = 69,
+
+		// Rollup and Oracles
+        PhatRollupAnchor: pallet_anchor = 70,
+        PhatOracle: pallet_oracle = 71,
+
 		// Asset and NFT
-		Assets: pallet_assets = 70,
-		Uniques: pallet_uniques = 71,
+		Assets: pallet_assets = 80,
+		Uniques: pallet_uniques = 81,
+		RmrkCore: pallet_rmrk_core = 82,
 
 		// Utility Suff
-		Vesting: pallet_vesting = 80,
-		Utility: pallet_utility = 81,
-		Multisig: pallet_multisig = 82,
-		Identity: pallet_identity = 83,
+		Vesting: pallet_vesting = 90,
+		Utility: pallet_utility = 91,
+		Multisig: pallet_multisig = 92,
+		Identity: pallet_identity = 93,
 
 		// Temporary
 		Sudo: pallet_sudo = 100,

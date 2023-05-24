@@ -16,12 +16,12 @@ use log;
 
 use crate::{
 	compute::{base_pool, computation, stake_pool_v2, vault, wrapped_balances},
-	mq, web_contract, registry,
+	mq, registry, web_contract,
 };
 
 /// Alias for the runtime that implements all WebContract Pallets
 pub trait WebContractPallets:
-web_contract::Config
+	web_contract::Config
 	+ frame_system::Config
 	+ computation::Config
 	+ mq::Config

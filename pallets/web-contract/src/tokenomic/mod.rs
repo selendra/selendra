@@ -119,7 +119,8 @@ pub mod pallet {
 			ContractUserStakes::<T>::insert(&user, contract, amount);
 			ContractTotalStakes::<T>::insert(contract, total);
 
-			let cluster = crate::web_contract::Pallet::<T>::get_contract_info(&contract).map(|x| x.cluster);
+			let cluster =
+				crate::web_contract::Pallet::<T>::get_contract_info(&contract).map(|x| x.cluster);
 
 			Self::deposit_event(Event::ContractDepositChanged {
 				cluster,

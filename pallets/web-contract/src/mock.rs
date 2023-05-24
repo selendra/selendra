@@ -172,7 +172,6 @@ impl registry::Config for Test {
 	type UnixTime = Timestamp;
 	type NoneAttestationEnabled = NoneAttestationEnabled;
 	type VerifyPRuntime = VerifyPRuntime;
-	type VerifyRelaychainGenesisBlockHash = VerifyRelaychainGenesisBlockHash;
 	type GovernanceOrigin = EnsureRoot<Self::AccountId>;
 }
 
@@ -487,15 +486,6 @@ pub fn ecdh_pubkey(i: u8) -> EcdhPublicKey {
 	raw[31] = i;
 	raw[30] = 1; // distinguish with the genesis config
 	EcdhPublicKey(raw)
-}
-
-pub fn setup_relaychain_genesis_allowlist() {
-	use frame_support::assert_ok;
-	let sample: H256 = H256::repeat_byte(1);
-	assert_ok!(WebContractRegistry::add_relaychain_genesis_block_hash(
-		RuntimeOrigin::root(),
-		sample
-	));
 }
 
 /// Sets up `n` workers starting from 1, registered and benchmarked. All owned by account1.

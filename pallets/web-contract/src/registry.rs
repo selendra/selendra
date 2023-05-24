@@ -12,7 +12,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
-	use sp_core::{sr25519, H256};
+	use sp_core::sr25519;
 	use sp_runtime::SaturatedConversion;
 	use sp_std::{convert::TryFrom, prelude::*, vec};
 
@@ -83,12 +83,6 @@ pub mod pallet {
 		/// SHOULD NOT SET TO FALSE ON PRODUCTION!!!
 		#[pallet::constant]
 		type VerifyPRuntime: Get<bool>;
-
-		/// Verify relaychain genesis
-		///
-		/// SHOULD NOT SET TO FALSE ON PRODUCTION!!!
-		#[pallet::constant]
-		type VerifyRelaychainGenesisBlockHash: Get<bool>;
 
 		/// Origin used to govern the pallet
 		type GovernanceOrigin: EnsureOrigin<Self::RuntimeOrigin>;
@@ -161,14 +155,6 @@ pub mod pallet {
 	/// The effective height of pRuntime binary
 	#[pallet::storage]
 	pub type PRuntimeAddedAt<T: Config> = StorageMap<_, Twox64Concat, Vec<u8>, T::BlockNumber>;
-
-	/// Allow list of relaychain genesis
-	///
-	/// Only genesis within the list can do register.
-	#[pallet::storage]
-	#[pallet::getter(fn relaychain_genesis_allowlist)]
-	pub type RelaychainGenesisBlockHashAllowList<T: Config> =
-		StorageValue<_, Vec<H256>, ValueQuery>;
 
 	/// Mapping from worker pubkey to WebContract Network identity
 	#[pallet::storage]
@@ -483,15 +469,6 @@ pub mod pallet {
 			)
 			.map_err(Into::<Error<T>>::into)?;
 
-			if T::VerifyRelaychainGenesisBlockHash::get() {
-				let genesis_block_hash = pruntime_info.genesis_block_hash;
-				let allowlist = RelaychainGenesisBlockHashAllowList::<T>::get();
-				ensure!(
-					allowlist.contains(&genesis_block_hash),
-					Error::<T>::GenesisBlockHashRejected
-				);
-			}
-
 			// Update the registry
 			let pubkey = pruntime_info.pubkey;
 			Workers::<T>::mutate(pubkey, |v| {
@@ -583,15 +560,6 @@ pub mod pallet {
 				T::NoneAttestationEnabled::get(),
 			)
 			.map_err(Into::<Error<T>>::into)?;
-
-			if T::VerifyRelaychainGenesisBlockHash::get() {
-				let genesis_block_hash = pruntime_info.genesis_block_hash;
-				let allowlist = RelaychainGenesisBlockHashAllowList::<T>::get();
-				ensure!(
-					allowlist.contains(&genesis_block_hash),
-					Error::<T>::GenesisBlockHashRejected
-				);
-			}
 
 			MaxKnownPRuntimeConsensusVersion::<T>::mutate(|info| {
 				use core::cmp::Ordering::*;
@@ -746,49 +714,6 @@ pub mod pallet {
 			PRuntimeAllowList::<T>::put(allowlist);
 
 			PRuntimeAddedAt::<T>::remove(&pruntime_hash);
-
-			Ok(())
-		}
-
-		/// Adds an entry in [`RelaychainGenesisBlockHashAllowList`]
-		///
-		/// Can only be called by `GovernanceOrigin`.
-		#[pallet::call_index(11)]
-		#[pallet::weight(0)]
-		pub fn add_relaychain_genesis_block_hash(
-			origin: OriginFor<T>,
-			genesis_block_hash: H256,
-		) -> DispatchResult {
-			T::GovernanceOrigin::ensure_origin(origin)?;
-
-			let mut allowlist = RelaychainGenesisBlockHashAllowList::<T>::get();
-			ensure!(
-				!allowlist.contains(&genesis_block_hash),
-				Error::<T>::GenesisBlockHashAlreadyExists
-			);
-
-			allowlist.push(genesis_block_hash);
-			RelaychainGenesisBlockHashAllowList::<T>::put(allowlist);
-
-			Ok(())
-		}
-
-		/// Deletes an entry in [`RelaychainGenesisBlockHashAllowList`]
-		///
-		/// Can only be called by `GovernanceOrigin`.
-		#[pallet::call_index(12)]
-		#[pallet::weight(0)]
-		pub fn remove_relaychain_genesis_block_hash(
-			origin: OriginFor<T>,
-			genesis_block_hash: H256,
-		) -> DispatchResult {
-			T::GovernanceOrigin::ensure_origin(origin)?;
-
-			let mut allowlist = RelaychainGenesisBlockHashAllowList::<T>::get();
-			ensure!(allowlist.contains(&genesis_block_hash), Error::<T>::GenesisBlockHashNotFound);
-
-			allowlist.retain(|h| *h != genesis_block_hash);
-			RelaychainGenesisBlockHashAllowList::<T>::put(allowlist);
 
 			Ok(())
 		}
@@ -1159,8 +1084,8 @@ pub mod pallet {
 
 		use super::*;
 		use crate::mock::{
-			ecdh_pubkey, elapse_seconds, new_test_ext, set_block_1,
-			setup_relaychain_genesis_allowlist, worker_pubkey, RuntimeOrigin as Origin, Test,
+			ecdh_pubkey, elapse_seconds, new_test_ext, set_block_1, worker_pubkey,
+			RuntimeOrigin as Origin, Test,
 		};
 		// Pallets
 		use crate::mock::WebContractRegistry;
@@ -1169,29 +1094,6 @@ pub mod pallet {
 		fn test_register_worker() {
 			new_test_ext().execute_with(|| {
 				set_block_1();
-				setup_relaychain_genesis_allowlist();
-
-				// New registration without valid genesis_block_hash
-				assert_noop!(
-					WebContractRegistry::register_worker(
-						Origin::signed(1),
-						WorkerRegistrationInfo::<u64> {
-							version: 1,
-							machine_id: Default::default(),
-							pubkey: worker_pubkey(1),
-							ecdh_pubkey: ecdh_pubkey(1),
-							genesis_block_hash: Default::default(),
-							features: vec![4, 1],
-							operator: Some(1),
-						},
-						Attestation::SgxIas {
-							ra_report: Vec::new(),
-							signature: Vec::new(),
-							raw_signing_cert: Vec::new(),
-						}
-					),
-					Error::<Test>::GenesisBlockHashRejected
-				);
 
 				// New registration
 				assert_ok!(WebContractRegistry::register_worker(
@@ -1201,7 +1103,6 @@ pub mod pallet {
 						machine_id: Default::default(),
 						pubkey: worker_pubkey(1),
 						ecdh_pubkey: ecdh_pubkey(1),
-						genesis_block_hash: H256::repeat_byte(1),
 						features: vec![4, 1],
 						operator: Some(1),
 					},
@@ -1222,7 +1123,6 @@ pub mod pallet {
 						machine_id: Default::default(),
 						pubkey: worker_pubkey(1),
 						ecdh_pubkey: ecdh_pubkey(1),
-						genesis_block_hash: H256::repeat_byte(1),
 						features: vec![4, 1],
 						operator: Some(2),
 					},
@@ -1242,26 +1142,6 @@ pub mod pallet {
 		fn test_register_worker_v2() {
 			new_test_ext().execute_with(|| {
 				set_block_1();
-				setup_relaychain_genesis_allowlist();
-
-				// New registration without valid genesis_block_hash
-				assert_noop!(
-					WebContractRegistry::register_worker_v2(
-						Origin::signed(1),
-						WorkerRegistrationInfoV2::<u64> {
-							version: 1,
-							machine_id: Default::default(),
-							pubkey: worker_pubkey(1),
-							ecdh_pubkey: ecdh_pubkey(1),
-							genesis_block_hash: Default::default(),
-							features: vec![4, 1],
-							operator: Some(1),
-							max_consensus_version: 0,
-						},
-						None
-					),
-					Error::<Test>::GenesisBlockHashRejected
-				);
 
 				// New registration
 				assert_ok!(WebContractRegistry::register_worker_v2(
@@ -1271,7 +1151,6 @@ pub mod pallet {
 						machine_id: Default::default(),
 						pubkey: worker_pubkey(1),
 						ecdh_pubkey: ecdh_pubkey(1),
-						genesis_block_hash: H256::repeat_byte(1),
 						features: vec![4, 1],
 						operator: Some(1),
 						max_consensus_version: 0,
@@ -1289,7 +1168,6 @@ pub mod pallet {
 						machine_id: Default::default(),
 						pubkey: worker_pubkey(1),
 						ecdh_pubkey: ecdh_pubkey(1),
-						genesis_block_hash: H256::repeat_byte(1),
 						features: vec![4, 1],
 						operator: Some(2),
 						max_consensus_version: 0,
@@ -1323,37 +1201,6 @@ pub mod pallet {
 				);
 				assert_eq!(PRuntimeAllowList::<Test>::get().len(), 0);
 				assert!(!PRuntimeAddedAt::<Test>::contains_key(&sample));
-			});
-		}
-
-		#[test]
-		fn test_relaychain_genesis_block_hash_allowlist_works() {
-			new_test_ext().execute_with(|| {
-				// Set block number to 1 to test the events
-				set_block_1();
-
-				let sample: H256 = H256::repeat_byte(1);
-				assert_ok!(WebContractRegistry::add_relaychain_genesis_block_hash(
-					Origin::root(),
-					sample
-				));
-				assert_noop!(
-					WebContractRegistry::add_relaychain_genesis_block_hash(Origin::root(), sample),
-					Error::<Test>::GenesisBlockHashAlreadyExists
-				);
-				assert_eq!(RelaychainGenesisBlockHashAllowList::<Test>::get().len(), 1);
-				assert_ok!(WebContractRegistry::remove_relaychain_genesis_block_hash(
-					Origin::root(),
-					sample
-				));
-				assert_noop!(
-					WebContractRegistry::remove_relaychain_genesis_block_hash(
-						Origin::root(),
-						sample
-					),
-					Error::<Test>::GenesisBlockHashNotFound
-				);
-				assert_eq!(RelaychainGenesisBlockHashAllowList::<Test>::get().len(), 0);
 			});
 		}
 	}

@@ -512,7 +512,6 @@ pub struct WorkerRegistrationInfo<AccountId> {
 	pub machine_id: MachineId,
 	pub pubkey: WorkerPublicKey,
 	pub ecdh_pubkey: EcdhPublicKey,
-	pub genesis_block_hash: H256,
 	pub features: Vec<u32>,
 	pub operator: Option<AccountId>,
 }
@@ -523,7 +522,6 @@ pub struct WorkerRegistrationInfoV2<AccountId> {
 	pub machine_id: MachineId,
 	pub pubkey: WorkerPublicKey,
 	pub ecdh_pubkey: EcdhPublicKey,
-	pub genesis_block_hash: H256,
 	pub features: Vec<u32>,
 	pub operator: Option<AccountId>,
 	pub max_consensus_version: u32,

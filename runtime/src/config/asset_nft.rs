@@ -1,4 +1,7 @@
-use crate::{deposit, Balances, Runtime, RuntimeEvent, MILLI_CENT};
+use crate::{
+	deposit, Balances, Runtime, RuntimeEvent, MILLI_CENT,
+	config::web_contract::WPhaMinBalance, PhalaWrappedBalances
+};
 
 use frame_support::{
 	parameter_types,
@@ -43,30 +46,57 @@ impl pallet_assets::Config for Runtime {
 }
 
 parameter_types! {
-    pub const CollectionDeposit: Balance = 0; // 1 UNIT deposit to create collection
-    pub const ItemDeposit: Balance = 0; // 1/100 UNIT deposit to create item
-    pub const StringLimit: u32 = 52100;
-    pub const KeyLimit: u32 = 32000; // Max 32 bytes per key
-    pub const ValueLimit: u32 = 512000; // Max 64 bytes per value
-    pub const UniquesMetadataDepositBase: Balance = 0;
-    pub const AttributeDepositBase: Balance = 0;
-    pub const DepositPerByte: Balance = 0;
+	pub const CollectionDeposit: Balance = 0; // 1 UNIT deposit to create collection
+	pub const ItemDeposit: Balance = 0; // 1/100 UNIT deposit to create item
+	pub const StringLimit: u32 = 52100;
+	pub const KeyLimit: u32 = 32000; // Max 32 bytes per key
+	pub const ValueLimit: u32 = 512000; // Max 64 bytes per value
+	pub const UniquesMetadataDepositBase: Balance = 0;
+	pub const AttributeDepositBase: Balance = 0;
+	pub const DepositPerByte: Balance = 0;
 }
 impl pallet_uniques::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type CollectionId = u32;
+	type ItemId = u32;
+	type Currency = Balances;
+	type ForceOrigin = EnsureRoot<AccountId>;
+	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
+	type Locker = (); // pallet_rmrk_core::Pallet<Runtime>;
+	type CollectionDeposit = CollectionDeposit;
+	type ItemDeposit = ItemDeposit;
+	type MetadataDepositBase = UniquesMetadataDepositBase;
+	type AttributeDepositBase = AttributeDepositBase;
+	type DepositPerByte = DepositPerByte;
+	type StringLimit = StringLimit;
+	type KeyLimit = KeyLimit;
+	type ValueLimit = ValueLimit;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+    pub ClassBondAmount: Balance = 100;
+    pub MaxMetadataLength: u32 = 256;
+    pub const ResourceSymbolLimit: u32 = 10;
+    pub const PartsLimit: u32 = 10;
+    pub const MaxPriorities: u32 = 3;
+    pub const PropertiesLimit: u32 = 15;
+    pub const CollectionSymbolLimit: u32 = 100;
+    pub const MaxResourcesOnMint: u32 = 100;
+}
+
+impl pallet_rmrk_core::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type CollectionId = u32;
-    type ItemId = u32;
-    type Currency = Balances;
-    type ForceOrigin = EnsureRoot<AccountId>;
-    type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
-    type Locker = (); // pallet_rmrk_core::Pallet<Runtime>;
-    type CollectionDeposit = CollectionDeposit;
-    type ItemDeposit = ItemDeposit;
-    type MetadataDepositBase = UniquesMetadataDepositBase;
-    type AttributeDepositBase = AttributeDepositBase;
-    type DepositPerByte = DepositPerByte;
-    type StringLimit = StringLimit;
-    type KeyLimit = KeyLimit;
-    type ValueLimit = ValueLimit;
-    type WeightInfo = ();
+    type ProtocolOrigin = EnsureRoot<AccountId>;
+    type NestingBudget = ConstU32<200>;
+    type ResourceSymbolLimit = ResourceSymbolLimit;
+    type PartsLimit = PartsLimit;
+    type MaxPriorities = MaxPriorities;
+    type PropertiesLimit = PropertiesLimit;
+    type CollectionSymbolLimit = CollectionSymbolLimit;
+    type MaxResourcesOnMint = MaxResourcesOnMint;
+    type TransferHooks = PhalaWrappedBalances;
+    type WeightInfo = pallet_rmrk_core::weights::SubstrateWeight<Runtime>;
+    #[cfg(feature = "runtime-benchmarks")]
+    type Helper = pallet_rmrk_core::RmrkBenchmark;
 }

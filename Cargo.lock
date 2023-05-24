@@ -7985,12 +7985,14 @@ dependencies = [
  "frame-system",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "hex-literal 0.4.1",
  "pallet-assets",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
  "pallet-contracts",
  "pallet-contracts-primitives",
+ "pallet-democracy",
  "pallet-elections",
  "pallet-evm",
  "pallet-evm-rpc-runtime-api",
@@ -8034,6 +8036,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+ "web-contract-types",
 ]
 
 [[package]]

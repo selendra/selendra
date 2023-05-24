@@ -1,4 +1,4 @@
-use crate::{mq, web_contract, registry, tokenomic};
+use crate::{mq, registry, tokenomic, web_contract};
 
 use crate::mock::{MockValidator, NoneAttestationEnabled};
 use frame_support::{pallet_prelude::ConstU32, parameter_types, traits::GenesisBuild};
@@ -111,7 +111,6 @@ impl registry::Config for Test {
 	type UnixTime = Timestamp;
 	type NoneAttestationEnabled = NoneAttestationEnabled;
 	type VerifyPRuntime = VerifyPRuntime;
-	type VerifyRelaychainGenesisBlockHash = VerifyRelaychainGenesisBlockHash;
 	type GovernanceOrigin = frame_system::EnsureRoot<Self::AccountId>;
 }
 
