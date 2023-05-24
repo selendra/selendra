@@ -407,7 +407,7 @@ construct_runtime!(
 		PhalaVault: pallet_vault = 65,
 		PhalaWrappedBalances: pallet_wrapped_balances = 66,
 		PhalaBasePool: pallet_base_pool = 67,
-		WebContracts: pallet_webc = 68,
+		PhalaPhatContracts: pallet_webc = 68,
 		PhalaPhatTokenomic: pallet_tokenomic = 69,
 
 		// Rollup and Oracles

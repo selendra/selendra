@@ -1,4 +1,4 @@
-use crate::{pallet_mq, PhalaComputation, WebContracts, PhalaRegistry};
+use crate::{pallet_mq, PhalaComputation, PhalaPhatContracts, PhalaRegistry};
 use codec::Decode;
 use frame_support::dispatch::{DispatchError, DispatchResult};
 use web_contract_types::messaging::{BindTopic, DecodedMessage, Message};
@@ -33,9 +33,9 @@ impl pallet_mq::QueueNotifyConfig for MessageRouteConfig {
 			PhalaRegistry::on_gk_message_received,
 			PhalaComputation::on_gk_message_received,
 			PhalaComputation::on_working_message_received,
-			WebContracts::on_worker_cluster_message_received,
-			WebContracts::on_cluster_message_received,
-			WebContracts::on_contract_message_received,
+			PhalaPhatContracts::on_worker_cluster_message_received,
+			PhalaPhatContracts::on_cluster_message_received,
+			PhalaPhatContracts::on_contract_message_received,
 			// BridgeTransfer::on_message_received,
 		};
 		Ok(())
