@@ -1,25 +1,23 @@
-pub mod msg_routing;
+mod msg_routing;
+mod offchain_rollup;
 
 use crate::{
-	deposit, pallet_base_pool, pallet_computation, pallet_mq, pallet_registry, pallet_stake_pool,
-	pallet_stake_pool_v2, pallet_tokenomic, pallet_vault, pallet_webc, pallet_wrapped_balances,
-	Balances, PhalaStakePoolv2, RandomnessCollectiveFlip, Runtime, RuntimeCall, RuntimeEvent,
-	Timestamp, Treasury, MICRO_CENT, MILLISECS_PER_BLOCK, MILLI_CENT, SecsPerBlock
+	origin::EnsureRootOrHalfCouncil, pallet_base_pool, pallet_computation, pallet_mq,
+	pallet_registry, pallet_stake_pool, pallet_stake_pool_v2, pallet_tokenomic, pallet_vault,
+	pallet_webc, pallet_wrapped_balances, Balances, PhalaStakePoolv2, RandomnessCollectiveFlip,
+	Runtime, RuntimeCall, RuntimeEvent, SecsPerBlock, Timestamp, Treasury, MICRO_CENT, MILLI_CENT,
 };
 
 use codec::{Decode, Encode};
-
-use sp_runtime::{traits::TrailingZeroInput, AccountId32};
-use sp_std::prelude::*;
-
 use frame_support::{
 	pallet_prelude::Get,
 	parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU128, ConstU32, SortedMembers},
+	traits::{ConstU32, SortedMembers},
 };
-use frame_system::{EnsureRoot, EnsureSignedBy};
-
-use selendra_primitives::{AccountId, Balance, Moment};
+use frame_system::EnsureSignedBy;
+use selendra_primitives::{AccountId, Balance};
+use sp_runtime::{traits::TrailingZeroInput, AccountId32};
+use sp_std::prelude::*;
 
 pub struct WrappedBalancesPalletAccount;
 
@@ -89,9 +87,9 @@ impl pallet_computation::Config for Runtime {
 	type OnUnbound = PhalaStakePoolv2;
 	type OnStopped = PhalaStakePoolv2;
 	type OnTreasurySettled = Treasury;
-	type UpdateTokenomicOrigin = EnsureRoot<AccountId>;
+	type UpdateTokenomicOrigin = EnsureRootOrHalfCouncil;
 	type SetBudgetOrigins = EnsureSignedBy<SetBudgetMembers, AccountId>;
-	type SetContractRootOrigins = EnsureRoot<AccountId>;
+	type SetContractRootOrigins = EnsureRootOrHalfCouncil;
 }
 
 impl pallet_mq::Config for Runtime {
@@ -153,9 +151,9 @@ impl pallet_registry::Config for Runtime {
 	type LegacyAttestationValidator = pallet_registry::IasValidator;
 	type NoneAttestationEnabled = NoneAttestationEnabled;
 	type VerifyPRuntime = VerifyPRuntime;
-	type GovernanceOrigin = EnsureRoot<AccountId>;
+	type GovernanceOrigin = EnsureRootOrHalfCouncil;
 }
 
 impl pallets_web_contract::WebContractConfig for Runtime {
-    type Currency = Balances;
+	type Currency = Balances;
 }

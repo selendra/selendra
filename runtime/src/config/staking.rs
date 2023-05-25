@@ -13,21 +13,22 @@
 
 // You should have received a copy of the GNU General Public License
 
-use crate::{Balances, Elections, Runtime, RuntimeEvent, Session, Timestamp, Treasury};
-
-use sp_runtime::Perbill;
-use sp_staking::EraIndex;
+use crate::{
+	origin::EnsureRootOrHalfCouncil, Balances, Elections, Runtime, RuntimeEvent, Session,
+	Timestamp, Treasury,
+};
 
 use frame_support::{
 	pallet_prelude::Weight,
 	parameter_types,
 	traits::{ConstU32, U128CurrencyToVote},
 };
-
 use selendra_primitives::{
-	AccountId, Balance, DEFAULT_SESSIONS_PER_ERA, MAX_NOMINATORS_REWARDED_PER_VALIDATOR,
+	Balance, DEFAULT_SESSIONS_PER_ERA, MAX_NOMINATORS_REWARDED_PER_VALIDATOR,
 };
 use selendra_runtime_common::{prod_or_fast, staking::era_payout, wrap_methods};
+use sp_runtime::Perbill;
+use sp_staking::EraIndex;
 
 parameter_types! {
 	pub const BondingDuration: EraIndex = 14;
@@ -68,7 +69,7 @@ impl pallet_staking::Config for Runtime {
 	type OnStakerSlash = ();
 	type HistoryDepth = HistoryDepth;
 	type TargetList = pallet_staking::UseValidatorsMap<Self>;
-	type AdminOrigin = frame_system::EnsureRoot<AccountId>;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
 }
 
 pub struct UniformEraPayout;

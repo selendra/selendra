@@ -42,15 +42,14 @@ pub mod time {
 	pub const BLOCKS_PER_HOUR: u32 = 60 * 60 * 1000 / (MILLISECS_PER_BLOCK as u32);
 
 	pub const MINUTES: BlockNumber = 60 / (SECS_PER_BLOCK as BlockNumber);
-    pub const HOURS: BlockNumber = MINUTES * 60;
-    pub const DAYS: BlockNumber = HOURS * 24;
+	pub const HOURS: BlockNumber = MINUTES * 60;
+	pub const DAYS: BlockNumber = HOURS * 24;
 
-	 // Storage
-	 frame_support::parameter_types! {
-        pub storage MillisecsPerBlock: Moment = MILLISECS_PER_BLOCK;
-        pub storage SecsPerBlock: Moment = MILLISECS_PER_BLOCK / 1000;
-    }
-	
+	// Storage
+	frame_support::parameter_types! {
+		pub storage MillisecsPerBlock: Moment = MILLISECS_PER_BLOCK;
+		pub storage SecsPerBlock: Moment = MILLISECS_PER_BLOCK / 1000;
+	}
 }
 
 /// Fee-related.

@@ -1,14 +1,10 @@
-use crate::{
-	deposit, Balances, Runtime, RuntimeEvent, MILLI_CENT,
-	config::web_contract::WPhaMinBalance, PhalaWrappedBalances
-};
+use crate::{deposit, Balances, PhalaWrappedBalances, Runtime, RuntimeEvent, MILLI_CENT};
 
 use frame_support::{
 	parameter_types,
 	traits::{AsEnsureOriginWithArg, ConstU128, ConstU32},
 };
 use frame_system::EnsureRoot;
-
 use selendra_primitives::{AccountId, Balance};
 
 parameter_types! {
@@ -28,7 +24,7 @@ impl pallet_assets::Config for Runtime {
 	type AssetId = u32;
 	type AssetIdParameter = codec::Compact<u32>;
 	type Currency = Balances;
-	type ForceOrigin = EnsureRoot<Self::AccountId>;
+	type ForceOrigin = EnsureRoot<AccountId>;
 	type AssetDeposit = AssetDeposit;
 	type AssetAccountDeposit = ConstU128<10>;
 	type MetadataDepositBase = MetadataDepositBase;
@@ -75,28 +71,28 @@ impl pallet_uniques::Config for Runtime {
 }
 
 parameter_types! {
-    pub ClassBondAmount: Balance = 100;
-    pub MaxMetadataLength: u32 = 256;
-    pub const ResourceSymbolLimit: u32 = 10;
-    pub const PartsLimit: u32 = 10;
-    pub const MaxPriorities: u32 = 3;
-    pub const PropertiesLimit: u32 = 15;
-    pub const CollectionSymbolLimit: u32 = 100;
-    pub const MaxResourcesOnMint: u32 = 100;
+	pub ClassBondAmount: Balance = 100;
+	pub MaxMetadataLength: u32 = 256;
+	pub const ResourceSymbolLimit: u32 = 10;
+	pub const PartsLimit: u32 = 10;
+	pub const MaxPriorities: u32 = 3;
+	pub const PropertiesLimit: u32 = 15;
+	pub const CollectionSymbolLimit: u32 = 100;
+	pub const MaxResourcesOnMint: u32 = 100;
 }
 
 impl pallet_rmrk_core::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type ProtocolOrigin = EnsureRoot<AccountId>;
-    type NestingBudget = ConstU32<200>;
-    type ResourceSymbolLimit = ResourceSymbolLimit;
-    type PartsLimit = PartsLimit;
-    type MaxPriorities = MaxPriorities;
-    type PropertiesLimit = PropertiesLimit;
-    type CollectionSymbolLimit = CollectionSymbolLimit;
-    type MaxResourcesOnMint = MaxResourcesOnMint;
-    type TransferHooks = PhalaWrappedBalances;
-    type WeightInfo = pallet_rmrk_core::weights::SubstrateWeight<Runtime>;
-    #[cfg(feature = "runtime-benchmarks")]
-    type Helper = pallet_rmrk_core::RmrkBenchmark;
+	type RuntimeEvent = RuntimeEvent;
+	type ProtocolOrigin = EnsureRoot<AccountId>;
+	type NestingBudget = ConstU32<200>;
+	type ResourceSymbolLimit = ResourceSymbolLimit;
+	type PartsLimit = PartsLimit;
+	type MaxPriorities = MaxPriorities;
+	type PropertiesLimit = PropertiesLimit;
+	type CollectionSymbolLimit = CollectionSymbolLimit;
+	type MaxResourcesOnMint = MaxResourcesOnMint;
+	type TransferHooks = PhalaWrappedBalances;
+	type WeightInfo = pallet_rmrk_core::weights::SubstrateWeight<Runtime>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type Helper = pallet_rmrk_core::RmrkBenchmark;
 }

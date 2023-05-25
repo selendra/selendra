@@ -14,15 +14,13 @@
 // You should have received a copy of the GNU General Public License
 
 use crate::{
-	Balances, OriginCaller, Runtime, RuntimeCall, RuntimeEvent, Treasury, MICRO_CENT, MILLI_CENT,
+	origin::EnsureRootOrHalfCouncil, Balances, OriginCaller, Runtime, RuntimeCall, RuntimeEvent,
+	Treasury, MICRO_CENT, MILLI_CENT,
 };
 
-use sp_runtime::traits::ConvertInto;
-
 use frame_support::{parameter_types, traits::WithdrawReasons};
-use frame_system::EnsureRoot;
-
-use selendra_primitives::{AccountId, Balance};
+use selendra_primitives::Balance;
+use sp_runtime::traits::ConvertInto;
 
 impl pallet_utility::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -66,8 +64,8 @@ impl pallet_identity::Config for Runtime {
 	type MaxAdditionalFields = MaxAdditionalFields;
 	type MaxRegistrars = MaxRegistrars;
 	type Slashed = Treasury;
-	type ForceOrigin = EnsureRoot<AccountId>;
-	type RegistrarOrigin = EnsureRoot<AccountId>;
+	type ForceOrigin = EnsureRootOrHalfCouncil;
+	type RegistrarOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = pallet_identity::weights::SubstrateWeight<Self>;
 }
 

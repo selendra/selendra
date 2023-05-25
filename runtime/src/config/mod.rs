@@ -13,9 +13,8 @@
 
 // You should have received a copy of the GNU General Public License
 
-pub mod asset_nft;
-pub mod governace;
-pub mod staking;
-pub mod utility;
-pub mod web_contract;
-pub mod offchain_rollup;
+mod asset_nft;
+mod governance;
+mod staking;
+mod utility;
+mod web_contract;

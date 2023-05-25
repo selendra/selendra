@@ -21,7 +21,6 @@ where
 impl pallet_mq::QueueNotifyConfig for MessageRouteConfig {
 	/// Handles an incoming message
 	fn on_message_received(message: &Message) -> DispatchResult {
-		use super::*;
 		macro_rules! route_handlers {
             ($($handler: path,)+) => {
                 $(try_dispatch($handler, message)?;)+

@@ -23,6 +23,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod config;
 pub mod constants;
+pub mod origin;
 
 #[cfg(feature = "try-runtime")]
 use frame_try_runtime::UpgradeCheckSelect;
@@ -56,11 +57,11 @@ pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
 
+use pallets_offchain_rollup::{anchor as pallet_anchor, oracle as pallet_oracle};
 pub use pallets_web_contract::{
 	pallet_base_pool, pallet_computation, pallet_mq, pallet_registry, pallet_stake_pool,
 	pallet_stake_pool_v2, pallet_tokenomic, pallet_vault, pallet_webc, pallet_wrapped_balances,
 };
-use pallets_offchain_rollup::{anchor as pallet_anchor, oracle as pallet_oracle};
 
 use selendra_primitives::{
 	opaque, ApiError as SelendraApiError, AuthorityId as SelendraId, SessionAuthorityData,
@@ -250,7 +251,7 @@ impl pallet_scheduler::Config for Runtime {
 	type PalletsOrigin = OriginCaller;
 	type RuntimeCall = RuntimeCall;
 	type MaximumWeight = MaximumSchedulerWeight;
-	type ScheduleOrigin = frame_system::EnsureRoot<AccountId>;
+	type ScheduleOrigin = origin::EnsureRootOrHalfCouncil;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
@@ -379,10 +380,8 @@ construct_runtime!(
 		Scheduler: pallet_scheduler = 2,
 		Aura: pallet_aura = 3,
 		Timestamp: pallet_timestamp = 4,
-
 		Balances: pallet_balances = 10,
 		TransactionPayment: pallet_transaction_payment = 11,
-
 		Treasury: pallet_treasury = 20,
 
 		// consensus sfuff
@@ -393,7 +392,11 @@ construct_runtime!(
 		Selendra: pallet_selendra = 34,
 		Elections: pallet_elections = 35,
 
+		// Governance
 		Democracy: pallet_democracy = 40,
+		Council: pallet_collective::<Instance1> = 41 ,
+		TechnicalCommittee: pallet_collective::<Instance2> = 42,
+		TechnicalMembership: pallet_membership::<Instance1> = 43,
 
 		// Smart Contract
 		Contracts: pallet_contracts = 50,
@@ -411,8 +414,8 @@ construct_runtime!(
 		PhalaPhatTokenomic: pallet_tokenomic = 69,
 
 		// Rollup and Oracles
-        PhatRollupAnchor: pallet_anchor = 70,
-        PhatOracle: pallet_oracle = 71,
+		PhatRollupAnchor: pallet_anchor = 70,
+		PhatOracle: pallet_oracle = 71,
 
 		// Asset and NFT
 		Assets: pallet_assets = 80,
