@@ -84,6 +84,7 @@ pallet-evm-rpc-runtime-api = { path = "../pallets/evm/rpc/runtime_api",  default
 # Web-Contract pallet
 web-contract-types = { path = "../pallets/support/web-contract/type", default-features = false }
 pallets-offchain-rollup = { path = "../pallets/offchain-rollup",  default-features = false }
+pallet-mq-runtime-api = { path = "../pallets/web-contract/mq-runtime-api", default-features = false }
 pallets-web-contract = { path = "../pallets/web-contract",  default-features = false }
 
 [build-dependencies]
@@ -152,6 +153,7 @@ std = [
     "pallets-offchain-rollup/std",
     "pallets-web-contract/std",
     "web-contract-types/std",
+    "pallet-mq-runtime-api/std",
 ]
 
 try-runtime = [

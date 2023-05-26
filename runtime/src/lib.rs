@@ -451,6 +451,7 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
+	pallet_mq::CheckMqSequence<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
@@ -682,6 +683,12 @@ impl_runtime_apis! {
 			Contracts::get_storage(address, key)
 		}
 	}
+
+	impl pallet_mq_runtime_api::MqApi<Block> for Runtime {
+        fn sender_sequence(sender: &web_contract_types::messaging::MessageOrigin) -> Option<u64> {
+            PhalaMq::offchain_ingress(sender)
+        }
+    }
 
 	#[cfg(feature = "try-runtime")]
 	 impl frame_try_runtime::TryRuntime<Block> for Runtime {
