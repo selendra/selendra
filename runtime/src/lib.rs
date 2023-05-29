@@ -685,10 +685,10 @@ impl_runtime_apis! {
 	}
 
 	impl pallet_mq_runtime_api::MqApi<Block> for Runtime {
-        fn sender_sequence(sender: &web_contract_types::messaging::MessageOrigin) -> Option<u64> {
-            PhalaMq::offchain_ingress(sender)
-        }
-    }
+		fn sender_sequence(sender: &web_contract_types::messaging::MessageOrigin) -> Option<u64> {
+			PhalaMq::offchain_ingress(sender)
+		}
+	}
 
 	#[cfg(feature = "try-runtime")]
 	 impl frame_try_runtime::TryRuntime<Block> for Runtime {
