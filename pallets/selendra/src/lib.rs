@@ -46,11 +46,13 @@ use frame_support::{
 	sp_runtime::BoundToRuntimeAppPublic,
 	traits::{OneSessionHandler, StorageVersion},
 };
-pub use pallet::*;
-use selendra_primitives::{
-	SessionIndex, Version, VersionChange, DEFAULT_FINALITY_VERSION, LEGACY_FINALITY_VERSION,
-};
 use sp_std::prelude::*;
+
+#[cfg(feature = "std")]
+use selendra_primitives::LEGACY_FINALITY_VERSION;
+use selendra_primitives::{SessionIndex, Version, VersionChange, DEFAULT_FINALITY_VERSION};
+
+pub use pallet::*;
 
 /// The current storage version.
 const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
@@ -64,6 +66,7 @@ pub mod pallet {
 	};
 	use pallet_session::SessionManager;
 	use pallets_support::StorageMigration;
+	#[cfg(feature = "std")]
 	use sp_std::marker::PhantomData;
 
 	use super::*;
