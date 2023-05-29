@@ -31,7 +31,7 @@ assert_matches = "1.4.0"
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
 frame-support-test = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-kv-session = { path = "../support/web-contract/pink-libs/kv-session", package = "pink-kv-session" }
+kv-session = { path = "../../support-crate/pink-libs/kv-session", package = "pink-kv-session" }
 
 
 [features]
