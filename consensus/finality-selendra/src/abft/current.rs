@@ -5,10 +5,7 @@ use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block;
 
 use crate::{
-	abft::{
-		common::{unit_creation_delay_fn, MAX_ROUNDS},
-		NetworkWrapper, SpawnHandleT,
-	},
+	abft::{common::unit_creation_delay_fn, NetworkWrapper, SpawnHandleT},
 	crypto::Signature,
 	data_io::{OrderedDataInterpreter, SelendraData},
 	network::data::Network,
@@ -70,6 +67,5 @@ pub fn create_selendra_config(
 ) -> Config {
 	let mut config = default_config(n_members.into(), node_id.into(), session_id.0 as u64);
 	config.delay_config.unit_creation_delay = unit_creation_delay_fn(unit_creation_delay);
-	config.max_round = MAX_ROUNDS;
 	config
 }

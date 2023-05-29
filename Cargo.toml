@@ -14,6 +14,8 @@ members = [
     "pallets/support",
 
     # WebContract
+    "pallets/offchain-rollup",
+    "pallets/web-contract",
 
     # Evm
     "pallets/idle-scheduler",
