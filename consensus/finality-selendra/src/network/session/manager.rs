@@ -359,6 +359,7 @@ impl<NI: NetworkIdentity, D: Data> Manager<NI, D> {
 
 #[cfg(test)]
 mod tests {
+	use network_clique::mock::{random_address, MockAddressingInformation};
 	use std::{iter, time::Duration};
 
 	use futures::StreamExt;
@@ -368,11 +369,7 @@ mod tests {
 		SendError,
 	};
 	use crate::{
-		network::{
-			clique::mock::{random_address, MockAddressingInformation},
-			mock::crypto_basics,
-			session::data::DataInSession,
-		},
+		network::{mock::crypto_basics, session::data::DataInSession},
 		Recipient, SessionId,
 	};
 

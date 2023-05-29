@@ -75,12 +75,12 @@ impl<A: AddressingInformation> Discovery<A> {
 
 #[cfg(test)]
 mod tests {
+	use network_clique::mock::{random_address, MockAddressingInformation};
 	use std::{thread::sleep, time::Duration};
 
 	use super::Discovery;
 	use crate::{
 		network::{
-			clique::mock::{random_address, MockAddressingInformation},
 			mock::crypto_basics,
 			session::{authentication, Authentication, SessionHandler},
 		},

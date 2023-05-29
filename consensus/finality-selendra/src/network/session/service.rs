@@ -1,21 +1,20 @@
-use std::{
-	cmp,
-	fmt::{Debug, Display, Error as FmtError, Formatter},
-	time::Duration,
-};
-
 use futures::{
 	channel::{mpsc, oneshot},
 	StreamExt,
 };
 use log::{debug, trace, warn};
+use network_clique::{Network as CliqueNetwork, PublicKey};
+use std::{
+	cmp,
+	fmt::{Debug, Display, Error as FmtError, Formatter},
+	time::Duration,
+};
 use tokio::time::{self, Instant};
 
 use crate::{
 	abft::Recipient,
 	crypto::{AuthorityPen, AuthorityVerifier},
 	network::{
-		clique::{Network as CliqueNetwork, PublicKey},
 		session::{
 			data::DataInSession,
 			manager::{
