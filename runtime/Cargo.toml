@@ -178,4 +178,9 @@ try-runtime = [
     "pallet-utility/try-runtime",
 ]
 
+runtime-benchmarks = [
+    "frame-system/runtime-benchmarks",
+    "frame-benchmarking/runtime-benchmarks",
+]
+
 fast-runtime = []
