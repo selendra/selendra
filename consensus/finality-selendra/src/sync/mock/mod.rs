@@ -110,6 +110,18 @@ impl MockJustification {
 	}
 }
 
+impl Header for MockJustification {
+	type Identifier = MockIdentifier;
+
+	fn id(&self) -> Self::Identifier {
+		self.header().id()
+	}
+
+	fn parent_id(&self) -> Option<Self::Identifier> {
+		self.header().parent_id()
+	}
+}
+
 impl JustificationT for MockJustification {
 	type Header = MockHeader;
 	type Unverified = Self;
