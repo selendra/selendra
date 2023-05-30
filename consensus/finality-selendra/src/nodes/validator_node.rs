@@ -6,9 +6,10 @@ use log::{debug, error};
 use network_clique::Service;
 use sc_client_api::Backend;
 use sc_network_common::ExHashT;
+use selendra_primitives::BlockNumber;
 use sp_consensus::SelectChain;
 use sp_keystore::CryptoStore;
-use sp_runtime::traits::Block;
+use sp_runtime::traits::{Block, Header};
 
 use crate::{
 	crypto::AuthorityPen,
@@ -41,6 +42,7 @@ pub async fn run_validator_node<B, H, C, BB, BE, SC>(
 	selendra_config: SelendraConfig<B, H, C, SC, BB>,
 ) where
 	B: Block,
+	B::Header: Header<Number = BlockNumber>,
 	H: ExHashT,
 	C: crate::ClientForSelendra<B, BE> + Send + Sync + 'static,
 	C::Api: selendra_primitives::SelendraSessionApi<B>,
@@ -152,7 +154,6 @@ pub async fn run_validator_node<B, H, C, BB, BE, SC>(
 			connection_manager,
 			keystore,
 		),
-		_phantom: PhantomData,
 		session_info: SessionInfoImpl::new(session_period),
 	});
 

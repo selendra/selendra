@@ -62,10 +62,6 @@ impl<B: BlockT> RequestBlocks<B> for TestBlockRequester<B> {
 	fn clear_justification_requests(&self) {
 		panic!("`clear_justification_requests` not implemented!")
 	}
-
-	fn is_major_syncing(&self) -> bool {
-		false
-	}
 }
 
 type TestData = Vec<SelendraData<Block>>;
