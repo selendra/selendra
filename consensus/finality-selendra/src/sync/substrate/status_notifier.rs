@@ -6,7 +6,7 @@ use selendra_primitives::BlockNumber;
 use sp_runtime::traits::{Block as BlockT, Header as SubstrateHeader};
 use tokio::select;
 
-use crate::sync::{substrate::BlockId, ChainStatusNotification, ChainStatusNotifier, Header};
+use crate::sync::{ChainStatusNotification, ChainStatusNotifier};
 
 /// What can go wrong when waiting for next chain status notification.
 #[derive(Debug)]
@@ -51,23 +51,23 @@ where
 }
 
 #[async_trait::async_trait]
-impl<B> ChainStatusNotifier<BlockId<B::Header>> for SubstrateChainStatusNotifier<B>
+impl<B> ChainStatusNotifier<B::Header> for SubstrateChainStatusNotifier<B>
 where
 	B: BlockT,
 	B::Header: SubstrateHeader<Number = BlockNumber>,
 {
 	type Error = Error;
 
-	async fn next(&mut self) -> Result<ChainStatusNotification<BlockId<B::Header>>, Self::Error> {
+	async fn next(&mut self) -> Result<ChainStatusNotification<B::Header>, Self::Error> {
 		select! {
 			maybe_block = self.finality_notifications.next() => {
 				maybe_block
-					.map(|block| ChainStatusNotification::BlockFinalized(block.header.id()))
+					.map(|block| ChainStatusNotification::BlockFinalized(block.header))
 					.ok_or(Error::JustificationStreamClosed)
 			},
 			maybe_block = self.import_notifications.next() => {
 				maybe_block
-				.map(|block| ChainStatusNotification::BlockImported(block.header.id()))
+				.map(|block| ChainStatusNotification::BlockImported(block.header))
 				.ok_or(Error::ImportStreamClosed)
 			}
 		}
