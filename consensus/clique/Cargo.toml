@@ -6,7 +6,7 @@ edition = "2021"
 license = "Apache 2.0"
 
 [dependencies]
-async-trait = "0.1"
+async-trait = "0.1.68"
 bytes = "1.0"
 ip_network = "0.4"
 log = "0.4"
@@ -17,9 +17,9 @@ serde = "1.0"
 tiny-bip39 = "1.0"
 derive_more = "0.99"
 env_logger = "0.10"
-futures = "0.3"
+futures = "0.3.28"
 futures-timer = "3.0"
 hash-db = { version = "0.15.2", default-features = false }
-codec = { package = "parity-scale-codec", version = "3.1", default-features = false, features = ["std", "derive"] }
+codec = { package = "parity-scale-codec", version = "3.5.0", default-features = false, features = ["std", "derive"] }
 tokio = { version = "1.25", features = [ "sync", "macros", "time", "rt-multi-thread", "io-util", "net" ] }
 sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }

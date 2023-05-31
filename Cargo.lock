@@ -1994,19 +1994,6 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
-version = "0.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a12e6657c4c97ebab115a42dcee77225f7f482cdd841cf7088c657a42e9e00e7"
-dependencies = [
- "atty",
- "humantime",
- "log",
- "regex",
- "termcolor",
-]
-
-[[package]]
-name = "env_logger"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85cdab6a89accf66733ad5a1693a4dcced6aeff64602b634530dd73c1f3ee9f0"
@@ -2226,7 +2213,7 @@ version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "84f2e425d9790201ba4af4630191feac6dcc98765b118d4d18e91d23c2353866"
 dependencies = [
- "env_logger 0.10.0",
+ "env_logger",
  "log",
 ]
 
@@ -2271,7 +2258,7 @@ dependencies = [
  "async-trait",
  "bytes",
  "derive_more",
- "env_logger 0.9.3",
+ "env_logger",
  "futures",
  "futures-timer",
  "hash-db",
@@ -3089,12 +3076,6 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
-
-[[package]]
-name = "hex-literal"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
 
 [[package]]
 name = "hex-literal"
@@ -4850,7 +4831,7 @@ dependencies = [
  "async-trait",
  "bytes",
  "derive_more",
- "env_logger 0.10.0",
+ "env_logger",
  "futures",
  "futures-timer",
  "hash-db",
@@ -5310,11 +5291,11 @@ dependencies = [
 name = "pallet-evm"
 version = "2.16.0"
 dependencies = [
- "env_logger 0.9.3",
+ "env_logger",
  "frame-support",
  "frame-system",
  "hex",
- "hex-literal 0.3.4",
+ "hex-literal",
  "num",
  "pallet-balances",
  "pallet-evm-utility",
@@ -5765,7 +5746,7 @@ dependencies = [
  "frame-support-test",
  "frame-system",
  "hex",
- "hex-literal 0.3.4",
+ "hex-literal",
  "log",
  "pallet-balances",
  "pallet-timestamp",
@@ -5809,7 +5790,7 @@ dependencies = [
  "frame-support-test",
  "frame-system",
  "hex",
- "hex-literal 0.4.1",
+ "hex-literal",
  "insta",
  "log",
  "pallet-assets",
@@ -5859,9 +5840,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec"
-version = "3.4.0"
+version = "3.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "637935964ff85a605d114591d4d2c13c5d1ba2806dae97cea6bf180238a749ac"
+checksum = "5ddb756ca205bd108aee3c62c6d3c994e1df84a59b9d6d4a5ea42ee1fd5a9a28"
 dependencies = [
  "arrayvec 0.7.2",
  "bitvec",
@@ -8090,7 +8071,7 @@ dependencies = [
  "frame-benchmarking-cli",
  "futures",
  "hex",
- "hex-literal 0.3.4",
+ "hex-literal",
  "libp2p 0.49.0",
  "log",
  "pallet-staking",
@@ -8141,7 +8122,7 @@ dependencies = [
  "ethereum",
  "evm",
  "frame-support",
- "hex-literal 0.3.4",
+ "hex-literal",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -8160,7 +8141,7 @@ dependencies = [
  "finality-selendra",
  "futures",
  "hex",
- "hex-literal 0.3.4",
+ "hex-literal",
  "jsonrpsee",
  "libp2p 0.49.0",
  "log",
@@ -8191,7 +8172,7 @@ dependencies = [
  "frame-system",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "hex-literal 0.4.1",
+ "hex-literal",
  "pallet-assets",
  "pallet-aura",
  "pallet-authorship",
