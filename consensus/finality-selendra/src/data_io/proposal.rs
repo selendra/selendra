@@ -5,12 +5,13 @@ use std::{
 };
 
 use codec::{Decode, Encode};
+use selendra_primitives::BlockNumber;
 use sp_runtime::{
-	traits::{Block as BlockT, NumberFor},
+	traits::{Block as BlockT, Header as HeaderT},
 	SaturatedConversion,
 };
 
-use crate::{data_io::MAX_DATA_BRANCH_LEN, BlockHashNum, SessionBoundaries};
+use crate::{data_io::MAX_DATA_BRANCH_LEN, IdentifierFor, SessionBoundaries};
 
 /// Represents a proposal we obtain from another node. Note that since the proposal might come from
 /// a malicious node there is no guarantee that the block hashes in the proposal correspond to real blocks
@@ -29,25 +30,25 @@ use crate::{data_io::MAX_DATA_BRANCH_LEN, BlockHashNum, SessionBoundaries};
 #[derive(Clone, Debug, Encode, Decode)]
 pub struct UnvalidatedSelendraProposal<B: BlockT> {
 	pub branch: Vec<B::Hash>,
-	pub number: NumberFor<B>,
+	pub number: BlockNumber,
 }
 
 /// Represents possible invalid states as described in [UnvalidatedSelendraProposal].
 #[derive(Debug, PartialEq, Eq)]
-pub enum ValidationError<B: BlockT> {
+pub enum ValidationError {
 	BranchEmpty,
 	BranchTooLong {
 		branch_size: usize,
 	},
 	BlockNumberOutOfBounds {
 		branch_size: usize,
-		block_number: NumberFor<B>,
+		block_number: BlockNumber,
 	},
 	BlockOutsideSessionBoundaries {
-		session_start: NumberFor<B>,
-		session_end: NumberFor<B>,
-		top_block: NumberFor<B>,
-		bottom_block: NumberFor<B>,
+		session_start: BlockNumber,
+		session_end: BlockNumber,
+		top_block: BlockNumber,
+		bottom_block: BlockNumber,
 	},
 }
 
@@ -68,15 +69,18 @@ impl<B: BlockT> PartialEq for UnvalidatedSelendraProposal<B> {
 
 impl<B: BlockT> Eq for UnvalidatedSelendraProposal<B> {}
 
-impl<B: BlockT> UnvalidatedSelendraProposal<B> {
-	pub(crate) fn new(branch: Vec<B::Hash>, block_number: NumberFor<B>) -> Self {
+impl<B: BlockT> UnvalidatedSelendraProposal<B>
+where
+	B::Header: HeaderT<Number = BlockNumber>,
+{
+	pub(crate) fn new(branch: Vec<B::Hash>, block_number: BlockNumber) -> Self {
 		UnvalidatedSelendraProposal { branch, number: block_number }
 	}
 
 	pub(crate) fn validate_bounds(
 		&self,
-		session_boundaries: &SessionBoundaries<B>,
-	) -> Result<SelendraProposal<B>, ValidationError<B>> {
+		session_boundaries: &SessionBoundaries,
+	) -> Result<SelendraProposal<B>, ValidationError> {
 		use ValidationError::*;
 
 		if self.branch.len() > MAX_DATA_BRANCH_LEN {
@@ -85,7 +89,7 @@ impl<B: BlockT> UnvalidatedSelendraProposal<B> {
 		if self.branch.is_empty() {
 			return Err(BranchEmpty)
 		}
-		if self.number < <NumberFor<B>>::saturated_from(self.branch.len()) {
+		if self.number < <BlockNumber>::saturated_from(self.branch.len()) {
 			// Note that this also excludes branches starting at the genesis (0th) block.
 			return Err(BlockNumberOutOfBounds {
 				branch_size: self.branch.len(),
@@ -93,7 +97,7 @@ impl<B: BlockT> UnvalidatedSelendraProposal<B> {
 			})
 		}
 
-		let bottom_block = self.number - <NumberFor<B>>::saturated_from(self.branch.len() - 1);
+		let bottom_block = self.number - <BlockNumber>::saturated_from(self.branch.len() - 1);
 		let top_block = self.number;
 		let session_start = session_boundaries.first_block();
 		let session_end = session_boundaries.last_block();
@@ -115,7 +119,7 @@ impl<B: BlockT> UnvalidatedSelendraProposal<B> {
 #[derive(Clone, Debug, Encode, Decode)]
 pub struct SelendraProposal<B: BlockT> {
 	branch: Vec<B::Hash>,
-	number: NumberFor<B>,
+	number: BlockNumber,
 }
 
 // Need to be implemented manually, as deriving does not work (`BlockT` is not `Hash`).
@@ -142,20 +146,24 @@ impl<B: BlockT> Index<usize> for SelendraProposal<B> {
 	}
 }
 
-impl<B: BlockT> SelendraProposal<B> {
+impl<B> SelendraProposal<B>
+where
+	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
+{
 	/// Outputs the length the branch.
 	pub fn len(&self) -> usize {
 		self.branch.len()
 	}
 
 	/// Outputs the highest block in the branch.
-	pub fn top_block(&self) -> BlockHashNum<B> {
+	pub fn top_block(&self) -> IdentifierFor<B> {
 		(*self.branch.last().expect("cannot be empty for correct data"), self.number_top_block())
 			.into()
 	}
 
 	/// Outputs the lowest block in the branch.
-	pub fn bottom_block(&self) -> BlockHashNum<B> {
+	pub fn bottom_block(&self) -> IdentifierFor<B> {
 		// Assumes that the data is within bounds
 		(
 			*self.branch.first().expect("cannot be empty for correct data"),
@@ -165,25 +173,25 @@ impl<B: BlockT> SelendraProposal<B> {
 	}
 
 	/// Outputs the number one below the lowest block in the branch.
-	pub fn number_below_branch(&self) -> NumberFor<B> {
+	pub fn number_below_branch(&self) -> BlockNumber {
 		// Assumes that data is within bounds
-		self.number - <NumberFor<B>>::saturated_from(self.branch.len())
+		self.number - <BlockNumber>::saturated_from(self.branch.len())
 	}
 
 	/// Outputs the number of the lowest block in the branch.
-	pub fn number_bottom_block(&self) -> NumberFor<B> {
+	pub fn number_bottom_block(&self) -> BlockNumber {
 		// Assumes that data is within bounds
-		self.number - <NumberFor<B>>::saturated_from(self.branch.len() - 1)
+		self.number - <BlockNumber>::saturated_from(self.branch.len() - 1)
 	}
 
 	/// Outputs the number of the highest block in the branch.
-	pub fn number_top_block(&self) -> NumberFor<B> {
+	pub fn number_top_block(&self) -> BlockNumber {
 		self.number
 	}
 
 	/// Outputs the block corresponding to the number in the proposed branch in case num is
 	/// between the lowest and highest block number of the branch. Otherwise returns None.
-	pub fn block_at_num(&self, num: NumberFor<B>) -> Option<BlockHashNum<B>> {
+	pub fn block_at_num(&self, num: BlockNumber) -> Option<IdentifierFor<B>> {
 		if self.number_bottom_block() <= num && num <= self.number_top_block() {
 			let ind: usize = (num - self.number_bottom_block()).saturated_into();
 			return Some((self.branch[ind], num).into())
@@ -193,14 +201,14 @@ impl<B: BlockT> SelendraProposal<B> {
 
 	/// Outputs an iterator over blocks starting at num. If num is too high, the iterator is
 	/// empty, if it's too low the whole branch is returned.
-	pub fn blocks_from_num(&self, num: NumberFor<B>) -> impl Iterator<Item = BlockHashNum<B>> + '_ {
+	pub fn blocks_from_num(&self, num: BlockNumber) -> impl Iterator<Item = IdentifierFor<B>> + '_ {
 		let num = max(num, self.number_bottom_block());
 		self.branch
 			.iter()
 			.skip((num - self.number_bottom_block()).saturated_into())
 			.cloned()
 			.zip(0u32..)
-			.map(move |(hash, index)| (hash, num + index.into()).into())
+			.map(move |(hash, index)| (hash, num + index).into())
 	}
 }
 
@@ -212,35 +220,45 @@ pub enum PendingProposalStatus {
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub enum ProposalStatus<B: BlockT> {
-	Finalize(Vec<BlockHashNum<B>>),
+pub enum ProposalStatus<B>
+where
+	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
+{
+	Finalize(Vec<IdentifierFor<B>>),
 	Ignore,
 	Pending(PendingProposalStatus),
 }
 
 #[cfg(test)]
 mod tests {
+	use selendra_primitives::BlockNumber;
 	use sp_core::hash::H256;
-	use substrate_test_runtime_client::runtime::Block;
 
 	use super::{UnvalidatedSelendraProposal, ValidationError::*};
-	use crate::{data_io::MAX_DATA_BRANCH_LEN, SessionBoundaries, SessionId, SessionPeriod};
+	use crate::{
+		data_io::MAX_DATA_BRANCH_LEN, testing::mocks::TBlock, SessionBoundaryInfo, SessionId,
+		SessionPeriod,
+	};
 
 	#[test]
 	fn proposal_with_empty_branch_is_invalid() {
-		let session_boundaries = SessionBoundaries::<Block>::new(SessionId(1), SessionPeriod(20));
+		let session_boundaries =
+			SessionBoundaryInfo::new(SessionPeriod(20)).boundaries_for_session(SessionId(1));
 		let branch = vec![];
-		let proposal = UnvalidatedSelendraProposal::new(branch, session_boundaries.first_block());
+		let proposal =
+			UnvalidatedSelendraProposal::<TBlock>::new(branch, session_boundaries.first_block());
 		assert_eq!(proposal.validate_bounds(&session_boundaries), Err(BranchEmpty));
 	}
 
 	#[test]
 	fn too_long_proposal_is_invalid() {
-		let session_boundaries = SessionBoundaries::<Block>::new(SessionId(1), SessionPeriod(20));
+		let session_boundaries =
+			SessionBoundaryInfo::new(SessionPeriod(20)).boundaries_for_session(SessionId(1));
 		let session_end = session_boundaries.last_block();
 		let branch = vec![H256::default(); MAX_DATA_BRANCH_LEN + 1];
 		let branch_size = branch.len();
-		let proposal = UnvalidatedSelendraProposal::new(branch, session_end);
+		let proposal = UnvalidatedSelendraProposal::<TBlock>::new(branch, session_end);
 		assert_eq!(
 			proposal.validate_bounds(&session_boundaries),
 			Err(BranchTooLong { branch_size })
@@ -249,12 +267,13 @@ mod tests {
 
 	#[test]
 	fn proposal_not_within_session_is_invalid() {
-		let session_boundaries = SessionBoundaries::<Block>::new(SessionId(1), SessionPeriod(20));
+		let session_boundaries =
+			SessionBoundaryInfo::new(SessionPeriod(20)).boundaries_for_session(SessionId(1));
 		let session_start = session_boundaries.first_block();
 		let session_end = session_boundaries.last_block();
 		let branch = vec![H256::default(); 2];
 
-		let proposal = UnvalidatedSelendraProposal::new(branch.clone(), session_start);
+		let proposal = UnvalidatedSelendraProposal::<TBlock>::new(branch.clone(), session_start);
 		assert_eq!(
 			proposal.validate_bounds(&session_boundaries),
 			Err(BlockOutsideSessionBoundaries {
@@ -265,7 +284,7 @@ mod tests {
 			})
 		);
 
-		let proposal = UnvalidatedSelendraProposal::new(branch, session_end + 1);
+		let proposal = UnvalidatedSelendraProposal::<TBlock>::new(branch, session_end + 1);
 		assert_eq!(
 			proposal.validate_bounds(&session_boundaries),
 			Err(BlockOutsideSessionBoundaries {
@@ -279,10 +298,11 @@ mod tests {
 
 	#[test]
 	fn proposal_starting_at_zero_block_is_invalid() {
-		let session_boundaries = SessionBoundaries::<Block>::new(SessionId(0), SessionPeriod(20));
+		let session_boundaries =
+			SessionBoundaryInfo::new(SessionPeriod(20)).boundaries_for_session(SessionId(0));
 		let branch = vec![H256::default(); 2];
 
-		let proposal = UnvalidatedSelendraProposal::new(branch, 1);
+		let proposal = UnvalidatedSelendraProposal::<TBlock>::new(branch, 1);
 		assert_eq!(
 			proposal.validate_bounds(&session_boundaries),
 			Err(BlockNumberOutOfBounds { branch_size: 2, block_number: 1 })
@@ -291,14 +311,21 @@ mod tests {
 
 	#[test]
 	fn valid_proposal_is_validated_positively() {
-		let session_boundaries = SessionBoundaries::<Block>::new(SessionId(0), SessionPeriod(20));
+		let session_boundaries =
+			SessionBoundaryInfo::new(SessionPeriod(20)).boundaries_for_session(SessionId(0));
 
 		let branch = vec![H256::default(); MAX_DATA_BRANCH_LEN];
-		let proposal = UnvalidatedSelendraProposal::new(branch, (MAX_DATA_BRANCH_LEN + 1) as u64);
+		let proposal = UnvalidatedSelendraProposal::<TBlock>::new(
+			branch,
+			(MAX_DATA_BRANCH_LEN + 1) as BlockNumber,
+		);
 		assert!(proposal.validate_bounds(&session_boundaries).is_ok());
 
 		let branch = vec![H256::default(); 1];
-		let proposal = UnvalidatedSelendraProposal::new(branch, (MAX_DATA_BRANCH_LEN + 1) as u64);
+		let proposal = UnvalidatedSelendraProposal::<TBlock>::new(
+			branch,
+			(MAX_DATA_BRANCH_LEN + 1) as BlockNumber,
+		);
 		assert!(proposal.validate_bounds(&session_boundaries).is_ok());
 	}
 }

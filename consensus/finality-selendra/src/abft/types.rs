@@ -40,18 +40,18 @@ impl From<legacy_selendra_bft::Recipient> for Recipient {
 	}
 }
 
-impl From<selendra_bft::Recipient> for Recipient {
-	fn from(recipient: selendra_bft::Recipient) -> Self {
+impl From<current_selendra_bft::Recipient> for Recipient {
+	fn from(recipient: current_selendra_bft::Recipient) -> Self {
 		match recipient {
-			selendra_bft::Recipient::Everyone => Recipient::Everyone,
-			selendra_bft::Recipient::Node(id) => Recipient::Node(id.into()),
+			current_selendra_bft::Recipient::Everyone => Recipient::Everyone,
+			current_selendra_bft::Recipient::Node(id) => Recipient::Node(id.into()),
 		}
 	}
 }
 
-impl From<NodeCount> for selendra_bft::NodeCount {
+impl From<NodeCount> for current_selendra_bft::NodeCount {
 	fn from(count: NodeCount) -> Self {
-		selendra_bft::NodeCount(count.0)
+		current_selendra_bft::NodeCount(count.0)
 	}
 }
 impl From<NodeCount> for legacy_selendra_bft::NodeCount {
@@ -66,15 +66,15 @@ impl From<legacy_selendra_bft::NodeCount> for NodeCount {
 	}
 }
 
-impl From<selendra_bft::NodeCount> for NodeCount {
-	fn from(count: selendra_bft::NodeCount) -> Self {
+impl From<current_selendra_bft::NodeCount> for NodeCount {
+	fn from(count: current_selendra_bft::NodeCount) -> Self {
 		Self(count.0)
 	}
 }
 
-impl From<NodeIndex> for selendra_bft::NodeIndex {
+impl From<NodeIndex> for current_selendra_bft::NodeIndex {
 	fn from(idx: NodeIndex) -> Self {
-		selendra_bft::NodeIndex(idx.0)
+		current_selendra_bft::NodeIndex(idx.0)
 	}
 }
 
@@ -90,17 +90,17 @@ impl From<legacy_selendra_bft::NodeIndex> for NodeIndex {
 	}
 }
 
-impl From<selendra_bft::NodeIndex> for NodeIndex {
-	fn from(idx: selendra_bft::NodeIndex) -> Self {
+impl From<current_selendra_bft::NodeIndex> for NodeIndex {
+	fn from(idx: current_selendra_bft::NodeIndex) -> Self {
 		Self(idx.0)
 	}
 }
 
-impl From<Recipient> for selendra_bft::Recipient {
+impl From<Recipient> for current_selendra_bft::Recipient {
 	fn from(recipient: Recipient) -> Self {
 		match recipient {
-			Recipient::Everyone => selendra_bft::Recipient::Everyone,
-			Recipient::Node(idx) => selendra_bft::Recipient::Node(idx.into()),
+			Recipient::Everyone => current_selendra_bft::Recipient::Everyone,
+			Recipient::Node(idx) => current_selendra_bft::Recipient::Node(idx.into()),
 		}
 	}
 }

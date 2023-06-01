@@ -3,7 +3,8 @@ use std::{default::Default, sync::Arc};
 use futures::channel::mpsc;
 use log::{debug, error, warn};
 use sc_client_api::HeaderBackend;
-use sp_runtime::traits::{Block as BlockT, NumberFor, One, Zero};
+use selendra_primitives::BlockNumber;
+use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 
 use crate::{
 	data_io::{
@@ -12,7 +13,7 @@ use crate::{
 		ChainInfoProvider, SelendraData,
 	},
 	mpsc::TrySendError,
-	BlockHashNum, SessionBoundaries,
+	IdentifierFor, SessionBoundaries,
 };
 
 type InterpretersChainInfoProvider<B, C> =
@@ -21,36 +22,49 @@ type InterpretersChainInfoProvider<B, C> =
 /// Takes as input ordered `SelendraData` from `SelendraBFT` and pushes blocks that should be finalized
 /// to an output channel. The other end of the channel is held by the aggregator whose goal is to
 /// create multisignatures under the finalized blocks.
-pub struct OrderedDataInterpreter<B: BlockT, C: HeaderBackend<B>> {
-	blocks_to_finalize_tx: mpsc::UnboundedSender<BlockHashNum<B>>,
+pub struct OrderedDataInterpreter<B, C>
+where
+	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
+	C: HeaderBackend<B>,
+{
+	blocks_to_finalize_tx: mpsc::UnboundedSender<IdentifierFor<B>>,
 	chain_info_provider: InterpretersChainInfoProvider<B, C>,
-	last_finalized_by_selendra: BlockHashNum<B>,
-	session_boundaries: SessionBoundaries<B>,
+	last_finalized_by_selendra: IdentifierFor<B>,
+	session_boundaries: SessionBoundaries,
 }
 
-fn get_last_block_prev_session<B: BlockT, C: HeaderBackend<B>>(
-	session_boundaries: SessionBoundaries<B>,
+fn get_last_block_prev_session<B, C>(
+	session_boundaries: SessionBoundaries,
 	mut client: Arc<C>,
-) -> BlockHashNum<B> {
-	if session_boundaries.first_block() > NumberFor::<B>::zero() {
+) -> IdentifierFor<B>
+where
+	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
+	C: HeaderBackend<B>,
+{
+	if session_boundaries.first_block() > 0 {
 		// We are in session > 0, we take the last block of previous session.
-		let last_prev_session_num = session_boundaries.first_block() - NumberFor::<B>::one();
+		let last_prev_session_num = session_boundaries.first_block() - 1;
 		client.get_finalized_at(last_prev_session_num).expect(
 			"Last block of previous session must have been finalized before starting the current",
 		)
 	} else {
 		// We are in session 0, we take the genesis block -- it is finalized by definition.
-		client
-			.get_finalized_at(NumberFor::<B>::zero())
-			.expect("Genesis block must be available")
+		client.get_finalized_at(0).expect("Genesis block must be available")
 	}
 }
 
-impl<B: BlockT, C: HeaderBackend<B>> OrderedDataInterpreter<B, C> {
+impl<B, C> OrderedDataInterpreter<B, C>
+where
+	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
+	C: HeaderBackend<B>,
+{
 	pub fn new(
-		blocks_to_finalize_tx: mpsc::UnboundedSender<BlockHashNum<B>>,
+		blocks_to_finalize_tx: mpsc::UnboundedSender<IdentifierFor<B>>,
 		client: Arc<C>,
-		session_boundaries: SessionBoundaries<B>,
+		session_boundaries: SessionBoundaries,
 	) -> Self {
 		let last_finalized_by_selendra =
 			get_last_block_prev_session(session_boundaries.clone(), client.clone());
@@ -67,7 +81,7 @@ impl<B: BlockT, C: HeaderBackend<B>> OrderedDataInterpreter<B, C> {
 		}
 	}
 
-	pub fn set_last_finalized(&mut self, block: BlockHashNum<B>) {
+	pub fn set_last_finalized(&mut self, block: IdentifierFor<B>) {
 		self.last_finalized_by_selendra = block;
 	}
 
@@ -77,15 +91,15 @@ impl<B: BlockT, C: HeaderBackend<B>> OrderedDataInterpreter<B, C> {
 
 	pub fn send_block_to_finalize(
 		&mut self,
-		block: BlockHashNum<B>,
-	) -> Result<(), TrySendError<BlockHashNum<B>>> {
+		block: IdentifierFor<B>,
+	) -> Result<(), TrySendError<IdentifierFor<B>>> {
 		self.blocks_to_finalize_tx.unbounded_send(block)
 	}
 
 	pub fn blocks_to_finalize_from_data(
 		&mut self,
 		new_data: SelendraData<B>,
-	) -> Vec<BlockHashNum<B>> {
+	) -> Vec<IdentifierFor<B>> {
 		let unvalidated_proposal = new_data.head_proposal;
 		let proposal = match unvalidated_proposal.validate_bounds(&self.session_boundaries) {
 			Ok(proposal) => proposal,

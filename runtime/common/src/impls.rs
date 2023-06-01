@@ -15,8 +15,9 @@
 
 //! Auxiliary `struct`/`enum`s for selendra runtime.
 
-use crate::NegativeImbalance;
 use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
+
+use crate::NegativeImbalance;
 
 /// Logic for the author to get a portion of fees.
 pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);

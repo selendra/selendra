@@ -1,18 +1,3 @@
-// Copyright 2023 Smallworld Selendra
-// This file is part of Selendra.
-
-// Selendra is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Selendra is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -21,53 +6,62 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-pub mod config;
-pub mod constants;
-
+pub use frame_support::{
+	construct_runtime, log, parameter_types,
+	traits::{
+		Currency, EstimateNextNewSession, Imbalance, KeyOwnerProofSystem, LockIdentifier, Nothing,
+		OnUnbalanced, Randomness, ValidatorSet,
+	},
+	weights::{
+		constants::{
+			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
+		},
+		ConstantMultiplier, IdentityFee, Weight,
+	},
+	StorageValue,
+};
+use frame_support::{
+	traits::{ConstBool, ConstU32, EqualPrivilegeOnly, SortedMembers},
+	PalletId,
+};
+use frame_system::EnsureSignedBy;
 #[cfg(feature = "try-runtime")]
 use frame_try_runtime::UpgradeCheckSelect;
+pub use pallet_balances::Call as BalancesCall;
+use pallet_committee_management::{PrefixMigration, SessionAndEraManager};
+use pallet_elections::{CommitteeSizeMigration, MigrateToV4};
+pub use pallet_timestamp::Call as TimestampCall;
+use pallet_transaction_payment::CurrencyAdapter;
+use primitives::{
+	opaque, ApiError as SelendraApiError, SessionAuthorityData, Version as FinalityVersion, TOKEN,
+	TREASURY_PROPOSAL_BOND,
+};
+pub use primitives::{AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, Signature};
+use selendra_runtime_common::{
+	impls::DealWithFees, BlockLength, BlockWeights, SlowAdjustingFeeUpdate,
+};
+use sp_api::impl_runtime_apis;
+use sp_consensus_aura::{sr25519::AuthorityId as AuraId, SlotDuration};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
+use sp_runtime::{
+	create_runtime_str, generic, impl_opaque_keys,
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT},
+	transaction_validity::{TransactionSource, TransactionValidity},
+	ApplyExtrinsicResult,
+};
+pub use sp_runtime::{FixedPointNumber, Perbill, Permill};
+use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
-use sp_api::impl_runtime_apis;
-use sp_consensus_aura::{sr25519::AuthorityId as AuraId, SlotDuration};
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_std::prelude::*;
+mod config;
+pub mod constants;
+mod origin;
 
-use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, OpaqueKeys},
-	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, Perbill, Permill,
-};
-
-use frame_support::{
-	construct_runtime, parameter_types,
-	traits::{ConstBool, ConstU32, EqualPrivilegeOnly, Nothing, SortedMembers},
-	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
-	PalletId,
-};
-use frame_system::EnsureSignedBy;
-
-pub use pallet_balances::Call as BalancesCall;
-pub use pallet_timestamp::Call as TimestampCall;
-use pallet_transaction_payment::CurrencyAdapter;
-
-use selendra_primitives::{
-	opaque, ApiError as SelendraApiError, AuthorityId as SelendraId, SessionAuthorityData,
-	Version as FinalityVersion, DEFAULT_BAN_REASON_LENGTH, DEFAULT_MAX_WINNERS,
-	DEFAULT_SESSION_PERIOD, TOKEN,
-};
-pub use selendra_primitives::{
-	AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, Signature,
-};
-use selendra_runtime_common::{
-	impls::DealWithFees, prod_or_fast, BlockLength, BlockWeights, SlowAdjustingFeeUpdate,
-};
-
+use config::consensus::{SelendraId, SessionPeriod};
 use constants::{
 	currency::*, fee::WeightToFee, time::*, CONTRACTS_DEBUG_OUTPUT, CONTRACT_DEPOSIT_PER_BYTE,
 };
@@ -82,12 +76,19 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
 	impl_name: create_runtime_str!("selendra-node"),
 	authoring_version: 1,
-	spec_version: 3000,
+	spec_version: 3001,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 0,
+	transaction_version: 1,
 	state_version: 0,
 };
+
+impl_opaque_keys! {
+	pub struct SessionKeys {
+		pub aura: Aura,
+		pub selendra: Selendra,
+	}
+}
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
@@ -133,78 +134,13 @@ impl pallet_aura::Config for Runtime {
 }
 
 parameter_types! {
-	pub const UncleGenerations: BlockNumber = 0;
-}
-
-impl pallet_authorship::Config for Runtime {
-	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
-	type EventHandler = (Elections,);
-}
-
-impl pallet_selendra::Config for Runtime {
-	type AuthorityId = SelendraId;
-	type RuntimeEvent = RuntimeEvent;
-	type SessionInfoProvider = Session;
-	type SessionManager = Elections;
-	type NextSessionAuthorityProvider = Session;
-}
-
-impl_opaque_keys! {
-	pub struct SessionKeys {
-		pub aura: Aura,
-		pub selendra: Selendra,
-	}
-}
-
-parameter_types! {
-	pub SessionPeriod: u32 = prod_or_fast!(DEFAULT_SESSION_PERIOD, 96);
-	pub const MaximumBanReasonLength: u32 = DEFAULT_BAN_REASON_LENGTH;
-	pub const MaxWinners: u32 = DEFAULT_MAX_WINNERS;
-}
-
-impl pallet_elections::Config for Runtime {
-	type EraInfoProvider = Staking;
-	type RuntimeEvent = RuntimeEvent;
-	type DataProvider = Staking;
-	type SessionInfoProvider = Session;
-	type SessionPeriod = SessionPeriod;
-	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Runtime, Staking>;
-	type ValidatorRewardsHandler = Staking;
-	type ValidatorExtractor = Staking;
-	type MaximumBanReasonLength = MaximumBanReasonLength;
-	type MaxWinners = MaxWinners;
-}
-
-parameter_types! {
-	pub const ExistentialDeposit: u128 = 500 * MILLI_CENT;
+	pub const ExistentialDeposit: u128 = 500 * PICO_CENT;
 	pub const MaxLocks: u32 = 50;
-	pub const MaxReserves: u32 = 50;
-}
-
-parameter_types! {
-	pub const Offset: u32 = 0;
-}
-
-impl pallet_session::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type ValidatorId = <Self as frame_system::Config>::AccountId;
-	type ValidatorIdOf = pallet_staking::StashOf<Self>;
-	type ShouldEndSession = pallet_session::PeriodicSessions<SessionPeriod, Offset>;
-	type NextSessionRotation = pallet_session::PeriodicSessions<SessionPeriod, Offset>;
-	type SessionManager = Selendra;
-	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
-	type Keys = SessionKeys;
-	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
-}
-
-impl pallet_session::historical::Config for Runtime {
-	type FullIdentification = pallet_staking::Exposure<AccountId, Balance>;
-	type FullIdentificationOf = pallet_staking::ExposureOf<Runtime>;
 }
 
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
-	type MaxReserves = MaxReserves;
+	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	/// The type for recording an account's balance.
 	type Balance = Balance;
@@ -221,7 +157,6 @@ parameter_types! {
 	// This value increases the priority of `Operational` transactions by adding
 	/// a "virtual tip" that's equal to the `OperationalFeeMultiplier * final_fee`
 	pub const OperationalFeeMultiplier: u8 = 5;
-
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -244,7 +179,7 @@ impl pallet_scheduler::Config for Runtime {
 	type PalletsOrigin = OriginCaller;
 	type RuntimeCall = RuntimeCall;
 	type MaximumWeight = MaximumSchedulerWeight;
-	type ScheduleOrigin = frame_system::EnsureRoot<AccountId>;
+	type ScheduleOrigin = origin::EnsureRootOrHalfCouncil;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
@@ -271,11 +206,9 @@ where
 	type OverarchingCall = RuntimeCall;
 }
 
-pub const TREASURY_PROPOSAL_BOND: Balance = 100 * TOKEN;
-
 parameter_types! {
-	// We do burn 5% money within treasury.
-	pub const Burn: Permill = Permill::from_percent(5);
+	// We do not burn any money within treasury.
+	pub const Burn: Permill = Permill::from_percent(0);
 	// The fraction of the proposal that the proposer should deposit.
 	// We agreed on non-progressive deposit.
 	pub const ProposalBond: Permill = Permill::from_percent(0);
@@ -353,13 +286,6 @@ impl pallet_contracts::Config for Runtime {
 	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
 }
 
-impl pallet_randomness_collective_flip::Config for Runtime {}
-
-impl pallet_sudo::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeCall = RuntimeCall;
-}
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -367,27 +293,64 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: frame_system,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
-		Scheduler: pallet_scheduler,
-		Aura: pallet_aura,
-		Timestamp: pallet_timestamp,
-		Balances: pallet_balances,
-		TransactionPayment: pallet_transaction_payment,
-		Authorship: pallet_authorship,
-		Staking: pallet_staking,
-		History: pallet_session::historical,
-		Session: pallet_session,
-		Selendra: pallet_selendra,
-		Elections: pallet_elections,
-		Treasury: pallet_treasury,
-		Vesting: pallet_vesting,
-		Utility: pallet_utility,
-		Multisig: pallet_multisig,
-		Sudo: pallet_sudo,
-		Contracts: pallet_contracts,
-		NominationPools: pallet_nomination_pools,
-		Identity: pallet_identity,
+		// Basic stuff; balances is uncallable initially.
+		System: frame_system = 0,
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip = 1,
+		Scheduler: pallet_scheduler = 2,
+		Aura: pallet_aura = 3,
+		Timestamp: pallet_timestamp = 4,
+		Balances: pallet_balances = 10,
+		TransactionPayment: pallet_transaction_payment = 11,
+		Treasury: pallet_treasury = 20,
+
+		// consensus sfuff
+		Authorship: pallet_authorship = 30,
+		Staking: pallet_staking = 31,
+		History: pallet_session::historical = 32,
+		Session: pallet_session = 33,
+		Selendra: pallet_selendra = 34,
+		Elections: pallet_elections = 35,
+		CommitteeManagement: pallet_committee_management = 36,
+		NominationPools: pallet_nomination_pools = 37,
+
+		// Governance
+		Democracy: pallet_democracy = 40,
+		Council: pallet_collective::<Instance1> = 41 ,
+		TechnicalCommittee: pallet_collective::<Instance2> = 42,
+		TechnicalMembership: pallet_membership::<Instance1> = 43,
+
+		// Smart Contract
+		Contracts: pallet_contracts = 50,
+
+		// // Web Contract
+		// PhalaMq: pallet_mq = 60,
+		// PhalaRegistry: pallet_registry = 61,
+		// PhalaComputation: pallet_computation = 62,
+		// PhalaStakePoolv2: pallet_stake_pool_v2 = 63,
+		// PhalaStakePool: pallet_stake_pool = 64,
+		// PhalaVault: pallet_vault = 65,
+		// PhalaWrappedBalances: pallet_wrapped_balances = 66,
+		// PhalaBasePool: pallet_base_pool = 67,
+		// PhalaPhatContracts: pallet_webc = 68,
+		// PhalaPhatTokenomic: pallet_tokenomic = 69,
+
+		// // Rollup and Oracles
+		// PhatRollupAnchor: pallet_anchor = 70,
+		// PhatOracle: pallet_oracle = 71,
+
+		// // Asset and NFT
+		// Assets: pallet_assets = 80,
+		// Uniques: pallet_uniques = 81,
+		// RmrkCore: pallet_rmrk_core = 82,
+
+		// Utility Suff
+		Vesting: pallet_vesting = 90,
+		Utility: pallet_utility = 91,
+		Multisig: pallet_multisig = 92,
+		Identity: pallet_identity = 93,
+
+		// Temporary
+		Sudo: pallet_sudo = 100,
 	}
 );
 
@@ -403,6 +366,7 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 pub type BlockId = generic::BlockId<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
+	frame_system::CheckNonZeroSender<Runtime>,
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
@@ -417,6 +381,9 @@ pub type UncheckedExtrinsic =
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra>;
 
+pub type Migrations =
+	(PrefixMigration<Runtime>, MigrateToV4<Runtime>, CommitteeSizeMigration<Runtime>);
+
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -424,8 +391,13 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(),
+	Migrations,
 >;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benches {
+	frame_benchmarking::define_benchmarks!([]);
+}
 
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
@@ -534,7 +506,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl selendra_primitives::SelendraSessionApi<Block> for Runtime {
+	impl primitives::SelendraSessionApi<Block> for Runtime {
 		fn millisecs_per_block() -> u64 {
 			MILLISECS_PER_BLOCK
 		}
@@ -648,19 +620,52 @@ impl_runtime_apis! {
 	}
 
 	#[cfg(feature = "try-runtime")]
-	 impl frame_try_runtime::TryRuntime<Block> for Runtime {
-		  fn on_runtime_upgrade(checks: UpgradeCheckSelect) -> (Weight, Weight) {
-			   let weight = Executive::try_runtime_upgrade(checks).unwrap();
-			   (weight, BlockWeights::get().max_block)
-		  }
+	impl frame_try_runtime::TryRuntime<Block> for Runtime {
+		fn on_runtime_upgrade(checks: UpgradeCheckSelect) -> (Weight, Weight) {
+			let weight = Executive::try_runtime_upgrade(checks).unwrap();
+			(weight, BlockWeights::get().max_block)
+		}
 
-		  fn execute_block(
-			   block: Block,
-			   state_root_check: bool,
-			   checks: bool,
-			   select: frame_try_runtime::TryStateSelect,
-		  ) -> Weight {
+		fn execute_block(
+			block: Block,
+			state_root_check: bool,
+			checks: bool,
+			select: frame_try_runtime::TryStateSelect,
+		) -> Weight {
 			Executive::try_execute_block(block, state_root_check, checks, select).unwrap()
+		}
+	 }
+
+	#[cfg(feature = "runtime-benchmarks")]
+	impl frame_benchmarking::Benchmark<Block> for Runtime {
+		fn benchmark_metadata(extra: bool) -> (
+			Vec<frame_benchmarking::BenchmarkList>,
+			Vec<frame_support::traits::StorageInfo>,
+		) {
+			use frame_benchmarking::{Benchmarking, BenchmarkList};
+			use frame_support::traits::StorageInfoTrait;
+
+			let mut list = Vec::<BenchmarkList>::new();
+			list_benchmarks!(list, extra);
+
+			let storage_info = AllPalletsWithSystem::storage_info();
+
+			(list, storage_info)
+		}
+
+		fn dispatch_benchmark(
+			config: frame_benchmarking::BenchmarkConfig
+		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
+			use frame_benchmarking::{Benchmarking, BenchmarkBatch, TrackedStorageKey};
+			use frame_support::traits::WhitelistedStorageKeys;
+
+			let whitelist: Vec<TrackedStorageKey> = AllPalletsWithSystem::whitelisted_storage_keys();
+
+			let params = (&config, &whitelist);
+			let mut batches = Vec::<BenchmarkBatch>::new();
+			add_benchmarks!(params, batches);
+
+			Ok(batches)
 		}
 	 }
 }
@@ -668,7 +673,7 @@ impl_runtime_apis! {
 #[cfg(test)]
 mod tests {
 	use frame_support::traits::Get;
-	use selendra_primitives::HEAP_PAGES;
+	use primitives::HEAP_PAGES;
 	use smallvec::Array;
 
 	use super::*;

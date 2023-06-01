@@ -6,31 +6,24 @@ use std::{
 };
 
 use async_trait::async_trait;
+use selendra_primitives::BlockNumber;
 
 use crate::{
 	oneshot,
 	party::{
 		backup::ABFTBackup,
 		manager::AuthorityTask,
-		traits::{Block, ChainState, NodeSessionManager, SessionInfo, SyncState},
+		traits::{ChainState, NodeSessionManager, SyncState},
 	},
-	session::{first_block_of_session, last_block_of_session, session_id_from_block_num},
-	AuthorityId, NodeIndex, SessionId, SessionPeriod,
+	AuthorityId, NodeIndex, SessionId,
 };
 
 type AMutex<T> = Arc<Mutex<T>>;
 
-pub struct SimpleBlock;
-
-impl Block for SimpleBlock {
-	type Number = u32;
-	type Hash = String;
-}
-
 #[derive(Clone, Debug)]
 pub struct MockChainState {
-	pub best_block: AMutex<u32>,
-	pub finalized_block: AMutex<u32>,
+	pub best_block: AMutex<BlockNumber>,
+	pub finalized_block: AMutex<BlockNumber>,
 }
 
 impl MockChainState {
@@ -38,21 +31,21 @@ impl MockChainState {
 		Self { best_block: Default::default(), finalized_block: Default::default() }
 	}
 
-	pub fn set_best_block(&self, best_block: u32) {
+	pub fn set_best_block(&self, best_block: BlockNumber) {
 		*self.best_block.lock().unwrap() = best_block;
 	}
 
-	pub fn set_finalized_block(&self, finalized_block: u32) {
+	pub fn set_finalized_block(&self, finalized_block: BlockNumber) {
 		*self.finalized_block.lock().unwrap() = finalized_block;
 	}
 }
 
-impl ChainState<SimpleBlock> for Arc<MockChainState> {
-	fn best_block_number(&self) -> u32 {
+impl ChainState for Arc<MockChainState> {
+	fn best_block_number(&self) -> BlockNumber {
 		*self.best_block.lock().unwrap()
 	}
 
-	fn finalized_number(&self) -> u32 {
+	fn finalized_number(&self) -> BlockNumber {
 		*self.finalized_block.lock().unwrap()
 	}
 }
@@ -72,7 +65,7 @@ impl MockSyncState {
 	}
 }
 
-impl SyncState<SimpleBlock> for Arc<MockSyncState> {
+impl SyncState for Arc<MockSyncState> {
 	fn is_major_syncing(&self) -> bool {
 		*self.is_syncing.lock().unwrap()
 	}
@@ -175,29 +168,5 @@ impl NodeSessionManager for Arc<MockNodeSessionManager> {
 		}
 
 		None
-	}
-}
-
-pub struct MockSessionInfo {
-	pub session_period: SessionPeriod,
-}
-
-impl MockSessionInfo {
-	pub fn new(session_period: u32) -> Self {
-		Self { session_period: SessionPeriod(session_period) }
-	}
-}
-
-impl SessionInfo<SimpleBlock> for MockSessionInfo {
-	fn session_id_from_block_num(&self, n: u32) -> SessionId {
-		session_id_from_block_num(n, self.session_period)
-	}
-
-	fn last_block_of_session(&self, session_id: SessionId) -> u32 {
-		last_block_of_session(session_id, self.session_period)
-	}
-
-	fn first_block_of_session(&self, session_id: SessionId) -> u32 {
-		first_block_of_session(session_id, self.session_period)
 	}
 }

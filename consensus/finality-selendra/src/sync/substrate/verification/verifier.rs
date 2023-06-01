@@ -1,15 +1,9 @@
 use std::fmt::{Display, Error as FmtError, Formatter};
 
-use codec::Encode;
-use log::warn;
 use selendra_primitives::SessionAuthorityData;
-use sp_runtime::{traits::Block as BlockT, RuntimeAppPublic};
+use sp_runtime::RuntimeAppPublic;
 
-use crate::{
-	crypto::AuthorityVerifier,
-	justification::{SelendraJustification, Verifier as LegacyVerifier},
-	AuthorityId,
-};
+use crate::{crypto::AuthorityVerifier, justification::SelendraJustification, AuthorityId};
 
 /// A justification verifier within a single session.
 #[derive(Clone, PartialEq, Debug)]
@@ -70,20 +64,6 @@ impl SessionVerifier {
 			{
 				true => Ok(()),
 				false => Err(BadEmergencySignature),
-			},
-		}
-	}
-}
-
-// This shouldn't be necessary after we remove the legacy justification sync. Then we can also
-// rewrite the implementation above and make it simpler.
-impl<B: BlockT> LegacyVerifier<B> for SessionVerifier {
-	fn verify(&self, justification: &SelendraJustification, hash: B::Hash) -> bool {
-		match self.verify_bytes(justification, hash.encode()) {
-			Ok(()) => true,
-			Err(e) => {
-				warn!(target: "selendra-justification", "Bad justification for block {:?}: {}", hash, e);
-				false
 			},
 		}
 	}

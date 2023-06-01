@@ -1,6 +1,7 @@
 use log::debug;
+use selendra_primitives::BlockNumber;
 use sp_runtime::{
-	traits::{Block as BlockT, NumberFor, One},
+	traits::{Block as BlockT, Header as HeaderT},
 	SaturatedConversion,
 };
 
@@ -16,11 +17,12 @@ pub fn get_proposal_status<B, CIP>(
 ) -> ProposalStatus<B>
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	CIP: ChainInfoProvider<B>,
 {
 	use crate::data_io::proposal::{PendingProposalStatus::*, ProposalStatus::*};
 
-	let current_highest_finalized = chain_info_provider.get_highest_finalized().num;
+	let current_highest_finalized = chain_info_provider.get_highest_finalized().number;
 
 	if current_highest_finalized >= proposal.number_top_block() {
 		return Ignore
@@ -44,11 +46,7 @@ where
 				// relation on the branch.
 				if is_branch_ancestry_correct(chain_info_provider, proposal) {
 					if is_ancestor_finalized(chain_info_provider, proposal) {
-						Finalize(
-							proposal
-								.blocks_from_num(current_highest_finalized + NumberFor::<B>::one())
-								.collect(),
-						)
+						Finalize(proposal.blocks_from_num(current_highest_finalized + 1).collect())
 					} else {
 						// This could also be a hopeless fork, but we have checked before that it isn't (yet).
 						Pending(TopBlockImportedButNotFinalizedAncestor)
@@ -64,11 +62,7 @@ where
 		},
 		Pending(TopBlockImportedButNotFinalizedAncestor) => {
 			if is_ancestor_finalized(chain_info_provider, proposal) {
-				Finalize(
-					proposal
-						.blocks_from_num(current_highest_finalized + NumberFor::<B>::one())
-						.collect(),
-				)
+				Finalize(proposal.blocks_from_num(current_highest_finalized + 1).collect())
 			} else {
 				// This could also be a hopeless fork, but we have checked before that it isn't (yet).
 				Pending(TopBlockImportedButNotFinalizedAncestor)
@@ -85,12 +79,13 @@ where
 fn is_hopeless_fork<B, CIP>(chain_info_provider: &mut CIP, proposal: &SelendraProposal<B>) -> bool
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	CIP: ChainInfoProvider<B>,
 {
 	let bottom_num = proposal.number_bottom_block();
 	for i in 0..proposal.len() {
 		if let Ok(finalized_block) =
-			chain_info_provider.get_finalized_at(bottom_num + <NumberFor<B>>::saturated_from(i))
+			chain_info_provider.get_finalized_at(bottom_num + <BlockNumber>::saturated_from(i))
 		{
 			if finalized_block.hash != proposal[i] {
 				return true
@@ -109,6 +104,7 @@ fn is_ancestor_finalized<B, CIP>(
 ) -> bool
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	CIP: ChainInfoProvider<B>,
 {
 	let bottom = proposal.bottom_block();
@@ -133,11 +129,12 @@ fn is_branch_ancestry_correct<B, CIP>(
 ) -> bool
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	CIP: ChainInfoProvider<B>,
 {
 	let bottom_num = proposal.number_bottom_block();
 	for i in 1..proposal.len() {
-		let curr_num = bottom_num + <NumberFor<B>>::saturated_from(i);
+		let curr_num = bottom_num + <BlockNumber>::saturated_from(i);
 		let curr_block = proposal.block_at_num(curr_num).expect("is within bounds");
 		match chain_info_provider.get_parent_hash(&curr_block) {
 			Ok(parent_hash) =>
@@ -155,10 +152,6 @@ mod tests {
 	use std::sync::Arc;
 
 	use sp_runtime::traits::Block as BlockT;
-	use substrate_test_runtime_client::{
-		runtime::{Block, Header},
-		DefaultTestClientBuilderExt, TestClient, TestClientBuilder, TestClientBuilderExt,
-	};
 
 	use crate::{
 		data_io::{
@@ -172,28 +165,32 @@ mod tests {
 			ChainInfoCacheConfig, MAX_DATA_BRANCH_LEN,
 		},
 		testing::{
-			client_chain_builder::ClientChainBuilder, mocks::unvalidated_proposal_from_headers,
+			client_chain_builder::ClientChainBuilder,
+			mocks::{
+				unvalidated_proposal_from_headers, TBlock, THeader, TestClient, TestClientBuilder,
+				TestClientBuilderExt,
+			},
 		},
-		SessionBoundaries, SessionId, SessionPeriod,
+		SessionBoundaryInfo, SessionId, SessionPeriod,
 	};
 
 	// A large number only for the purpose of creating `SelendraProposal`s
 	const DUMMY_SESSION_LEN: u32 = 1_000_000;
 
-	fn proposal_from_headers(headers: Vec<Header>) -> SelendraProposal<Block> {
+	fn proposal_from_headers(headers: Vec<THeader>) -> SelendraProposal<TBlock> {
 		let unvalidated = unvalidated_proposal_from_headers(headers);
-		let session_boundaries =
-			SessionBoundaries::new(SessionId(0), SessionPeriod(DUMMY_SESSION_LEN));
+		let session_boundaries = SessionBoundaryInfo::new(SessionPeriod(DUMMY_SESSION_LEN))
+			.boundaries_for_session(SessionId(0));
 		unvalidated.validate_bounds(&session_boundaries).unwrap()
 	}
 
-	fn proposal_from_blocks(blocks: Vec<Block>) -> SelendraProposal<Block> {
+	fn proposal_from_blocks(blocks: Vec<TBlock>) -> SelendraProposal<TBlock> {
 		let headers = blocks.into_iter().map(|b| b.header().clone()).collect();
 		proposal_from_headers(headers)
 	}
 
-	type TestCachedChainInfo = CachedChainInfoProvider<Block, Arc<TestClient>>;
-	type TestAuxChainInfo = AuxFinalizationChainInfoProvider<Block, Arc<TestClient>>;
+	type TestCachedChainInfo = CachedChainInfoProvider<TBlock, Arc<TestClient>>;
+	type TestAuxChainInfo = AuxFinalizationChainInfoProvider<TBlock, Arc<TestClient>>;
 
 	fn prepare_proposal_test() -> (ClientChainBuilder, TestCachedChainInfo, TestAuxChainInfo) {
 		let client = Arc::new(TestClientBuilder::new().build());
@@ -213,8 +210,8 @@ mod tests {
 	fn verify_proposal_status(
 		cached_cip: &mut TestCachedChainInfo,
 		aux_cip: &mut TestAuxChainInfo,
-		proposal: &SelendraProposal<Block>,
-		correct_status: ProposalStatus<Block>,
+		proposal: &SelendraProposal<TBlock>,
+		correct_status: ProposalStatus<TBlock>,
 	) {
 		let status_a = get_proposal_status(aux_cip, proposal, None);
 		assert_eq!(
@@ -231,7 +228,7 @@ mod tests {
 	}
 
 	fn verify_proposal_of_all_lens_finalizable(
-		blocks: Vec<Block>,
+		blocks: Vec<TBlock>,
 		cached_cip: &mut TestCachedChainInfo,
 		aux_cip: &mut TestAuxChainInfo,
 	) {

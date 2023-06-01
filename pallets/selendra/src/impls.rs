@@ -1,23 +1,9 @@
-// Copyright 2023 Smallworld Selendra
-// This file is part of Selendra.
-
-// Selendra is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Selendra is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
-
-use selendra_primitives::SessionIndex;
+use primitives::{FinalityCommitteeManager, SessionIndex};
 use sp_std::vec::Vec;
 
-use crate::{Config, Event, FinalityScheduledVersionChange, FinalityVersion, Pallet};
+use crate::{
+	Config, Event, FinalityScheduledVersionChange, FinalityVersion, NextFinalityCommittee, Pallet,
+};
 
 impl<T> pallet_session::SessionManager<T::AccountId> for Pallet<T>
 where
@@ -64,5 +50,11 @@ where
 				Self::deposit_event(Event::FinalityVersionChange(scheduled_version_change));
 			}
 		}
+	}
+}
+
+impl<T: Config> FinalityCommitteeManager<T::AccountId> for Pallet<T> {
+	fn on_next_session_finality_committee(committee: Vec<T::AccountId>) {
+		NextFinalityCommittee::<T>::put(committee);
 	}
 }

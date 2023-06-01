@@ -44,8 +44,8 @@ impl Keychain {
 	}
 }
 
-impl selendra_bft::Index for Keychain {
-	fn index(&self) -> selendra_bft::NodeIndex {
+impl current_selendra_bft::Index for Keychain {
+	fn index(&self) -> current_selendra_bft::NodeIndex {
 		Keychain::index(self).into()
 	}
 }
@@ -57,10 +57,10 @@ impl legacy_selendra_bft::Index for Keychain {
 }
 
 #[async_trait::async_trait]
-impl selendra_bft::Keychain for Keychain {
+impl current_selendra_bft::Keychain for Keychain {
 	type Signature = Signature;
 
-	fn node_count(&self) -> selendra_bft::NodeCount {
+	fn node_count(&self) -> current_selendra_bft::NodeCount {
 		Keychain::node_count(self).into()
 	}
 
@@ -68,7 +68,7 @@ impl selendra_bft::Keychain for Keychain {
 		Keychain::sign(self, msg).await
 	}
 
-	fn verify(&self, msg: &[u8], sgn: &Signature, index: selendra_bft::NodeIndex) -> bool {
+	fn verify(&self, msg: &[u8], sgn: &Signature, index: current_selendra_bft::NodeIndex) -> bool {
 		Keychain::verify(self, msg, sgn, index)
 	}
 }
@@ -90,7 +90,7 @@ impl legacy_selendra_bft::Keychain for Keychain {
 	}
 }
 
-impl selendra_bft::MultiKeychain for Keychain {
+impl current_selendra_bft::MultiKeychain for Keychain {
 	// Using `SignatureSet` is slow, but Substrate has not yet implemented aggregation.
 	// We probably should do this for them at some point.
 	type PartialMultisignature = SignatureSet<Signature>;
@@ -98,9 +98,9 @@ impl selendra_bft::MultiKeychain for Keychain {
 	fn bootstrap_multi(
 		&self,
 		signature: &Signature,
-		index: selendra_bft::NodeIndex,
+		index: current_selendra_bft::NodeIndex,
 	) -> Self::PartialMultisignature {
-		selendra_bft::PartialMultisignature::add_signature(
+		current_selendra_bft::PartialMultisignature::add_signature(
 			SignatureSet(legacy_selendra_bft::SignatureSet::with_size(
 				legacy_selendra_bft::Keychain::node_count(self),
 			)),

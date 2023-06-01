@@ -3,14 +3,16 @@ use std::fmt::Debug;
 use codec::Codec;
 use futures::channel::oneshot;
 use log::debug;
+use network_clique::SpawnHandleT;
 use sc_client_api::{BlockchainEvents, HeaderBackend};
-use sp_runtime::traits::Block;
+use selendra_primitives::BlockNumber;
+use sp_runtime::traits::{Block, Header};
 
 use crate::{
-	abft::SpawnHandleT,
 	data_io::{DataStore, SelendraNetworkMessage},
 	network::{data::component::Receiver, RequestBlocks},
 	party::{AuthoritySubtaskCommon, Task},
+	IdentifierFor,
 };
 
 /// Runs the data store within a single session.
@@ -20,8 +22,9 @@ pub fn task<B, C, RB, R, Message>(
 ) -> Task
 where
 	B: Block,
+	B::Header: Header<Number = BlockNumber>,
 	C: HeaderBackend<B> + BlockchainEvents<B> + Send + Sync + 'static,
-	RB: RequestBlocks<B> + 'static,
+	RB: RequestBlocks<IdentifierFor<B>> + 'static,
 	Message: SelendraNetworkMessage<B> + Debug + Send + Sync + Codec + 'static,
 	R: Receiver<Message> + 'static,
 {

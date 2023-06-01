@@ -17,7 +17,8 @@ use futures_timer::Delay;
 use log::{debug, error, info, trace, warn};
 use lru::LruCache;
 use sc_client_api::{BlockchainEvents, HeaderBackend};
-use sp_runtime::traits::{Block as BlockT, Header as HeaderT, NumberFor, One};
+use selendra_primitives::BlockNumber;
+use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 
 use crate::{
 	data_io::{
@@ -33,19 +34,27 @@ use crate::{
 		},
 		RequestBlocks,
 	},
-	BlockHashNum, SessionBoundaries,
+	IdentifierFor, SessionBoundaries,
 };
 
 type MessageId = u64;
 
 #[derive(Clone, Debug)]
-pub enum ChainEvent<B: BlockT> {
-	Imported(BlockHashNum<B>),
-	Finalized(NumberFor<B>),
+pub enum ChainEvent<B>
+where
+	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
+{
+	Imported(IdentifierFor<B>),
+	Finalized(BlockNumber),
 }
 
 // Need to be implemented manually, as deriving does not work (`BlockT` is not `Hash`).
-impl<B: BlockT> Hash for ChainEvent<B> {
+impl<B> Hash for ChainEvent<B>
+where
+	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
+{
 	fn hash<H: Hasher>(&self, state: &mut H) {
 		match self {
 			ChainEvent::Imported(block) => {
@@ -62,7 +71,11 @@ impl<B: BlockT> Hash for ChainEvent<B> {
 }
 
 // Clippy does not allow deriving PartialEq when implementing Hash manually
-impl<B: BlockT> PartialEq for ChainEvent<B> {
+impl<B> PartialEq for ChainEvent<B>
+where
+	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
+{
 	fn eq(&self, other: &Self) -> bool {
 		match (self, other) {
 			(ChainEvent::Imported(block1), ChainEvent::Imported(block2)) => block1.eq(block2),
@@ -71,10 +84,19 @@ impl<B: BlockT> PartialEq for ChainEvent<B> {
 		}
 	}
 }
-impl<B: BlockT> Eq for ChainEvent<B> {}
+impl<B> Eq for ChainEvent<B>
+where
+	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
+{
+}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct PendingProposalInfo<B: BlockT> {
+pub struct PendingProposalInfo<B>
+where
+	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
+{
 	// Which messages are being held because of a missing the data item.
 	messages: HashSet<MessageId>,
 	// When was the first message containing this data item encountered.
@@ -82,7 +104,11 @@ pub struct PendingProposalInfo<B: BlockT> {
 	status: ProposalStatus<B>,
 }
 
-impl<B: BlockT> PendingProposalInfo<B> {
+impl<B> PendingProposalInfo<B>
+where
+	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
+{
 	fn new(status: ProposalStatus<B>) -> Self {
 		PendingProposalInfo {
 			messages: HashSet::new(),
@@ -173,8 +199,9 @@ impl Default for DataStoreConfig {
 pub struct DataStore<B, C, RB, Message, R>
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	C: HeaderBackend<B> + BlockchainEvents<B> + Send + Sync + 'static,
-	RB: RequestBlocks<B> + 'static,
+	RB: RequestBlocks<IdentifierFor<B>> + 'static,
 	Message:
 		SelendraNetworkMessage<B> + std::fmt::Debug + Send + Sync + Clone + codec::Codec + 'static,
 	R: Receiver<Message>,
@@ -188,8 +215,8 @@ where
 	chain_info_provider: CachedChainInfoProvider<B, Arc<C>>,
 	available_proposals_cache: LruCache<SelendraProposal<B>, ProposalStatus<B>>,
 	num_triggers_registered_since_last_pruning: usize,
-	highest_finalized_num: NumberFor<B>,
-	session_boundaries: SessionBoundaries<B>,
+	highest_finalized_num: BlockNumber,
+	session_boundaries: SessionBoundaries,
 	client: Arc<C>,
 	block_requester: RB,
 	config: DataStoreConfig,
@@ -200,15 +227,16 @@ where
 impl<B, C, RB, Message, R> DataStore<B, C, RB, Message, R>
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	C: HeaderBackend<B> + BlockchainEvents<B> + Send + Sync + 'static,
-	RB: RequestBlocks<B> + 'static,
+	RB: RequestBlocks<IdentifierFor<B>> + 'static,
 	Message:
 		SelendraNetworkMessage<B> + std::fmt::Debug + Send + Sync + Clone + codec::Codec + 'static,
 	R: Receiver<Message>,
 {
 	/// Returns a struct to be run and a network that outputs messages filtered as appropriate
 	pub fn new<N: ComponentNetwork<Message, R = R>>(
-		session_boundaries: SessionBoundaries<B>,
+		session_boundaries: SessionBoundaries,
 		client: Arc<C>,
 		block_requester: RB,
 		config: DataStoreConfig,
@@ -314,7 +342,7 @@ where
 			let block = proposal.top_block();
 			if !self.chain_info_provider.is_block_imported(&block) {
 				debug!(target: "selendra-data-store", "Requesting a stale block {:?} after it has been missing for {:?} secs.", block, time_waiting.as_secs());
-				self.block_requester.request_stale_block(block.hash, block.num);
+				self.block_requester.request_stale_block(block);
 				continue
 			}
 			// The top block (thus the whole branch, in the honest case) has been imported. What's holding us
@@ -328,7 +356,7 @@ where
 					continue
 				},
 			};
-			let parent_num = bottom_block.num - NumberFor::<B>::one();
+			let parent_num = bottom_block.number - 1;
 			if let Ok(finalized_block) = self.chain_info_provider.get_finalized_at(parent_num) {
 				if parent_hash != finalized_block.hash {
 					warn!(target: "selendra-data-store", "The proposal {:?} is pending because the parent: \
@@ -340,7 +368,7 @@ where
 			} else {
 				debug!(target: "selendra-data-store", "Requesting a justification for block {:?} {:?} \
                         after it has been missing for {:?} secs.", parent_num, parent_hash, time_waiting.as_secs());
-				self.block_requester.request_justification(&parent_hash, parent_num);
+				self.block_requester.request_justification((parent_hash, parent_num).into());
 			}
 		}
 	}
@@ -348,7 +376,7 @@ where
 	fn register_block_import_trigger(
 		&mut self,
 		proposal: &SelendraProposal<B>,
-		block: &BlockHashNum<B>,
+		block: &IdentifierFor<B>,
 	) {
 		self.num_triggers_registered_since_last_pruning += 1;
 		self.event_triggers
@@ -357,7 +385,7 @@ where
 			.insert(proposal.clone());
 	}
 
-	fn register_finality_trigger(&mut self, proposal: &SelendraProposal<B>, number: NumberFor<B>) {
+	fn register_finality_trigger(&mut self, proposal: &SelendraProposal<B>, number: BlockNumber) {
 		self.num_triggers_registered_since_last_pruning += 1;
 		if number > self.highest_finalized_num {
 			self.event_triggers
@@ -371,22 +399,19 @@ where
 		if self.highest_finalized_num < proposal.number_below_branch() {
 			self.register_finality_trigger(proposal, proposal.number_below_branch());
 		} else if self.highest_finalized_num < proposal.number_top_block() {
-			self.register_finality_trigger(
-				proposal,
-				self.highest_finalized_num + NumberFor::<B>::one(),
-			);
+			self.register_finality_trigger(proposal, self.highest_finalized_num + 1);
 		}
 	}
 
-	fn on_block_finalized(&mut self, block: BlockHashNum<B>) {
-		if self.highest_finalized_num < block.num {
+	fn on_block_finalized(&mut self, block: IdentifierFor<B>) {
+		if self.highest_finalized_num < block.number {
 			// We don't assume block.num = self.highest_finalized_num + 1 as the finality import queue does
 			// not quite guarantee this.
 			let old_num = self.highest_finalized_num;
-			let new_num = block.num;
+			let new_num = block.number;
 			self.highest_finalized_num = new_num;
 			// We activate all finality triggers in [old_num + 1, block.num].
-			let mut num: NumberFor<B> = old_num + NumberFor::<B>::one();
+			let mut num = old_num + 1;
 			while num <= new_num {
 				if let Some(proposals_to_bump) =
 					self.event_triggers.remove(&ChainEvent::Finalized(num))
@@ -395,12 +420,12 @@ where
 						self.bump_proposal(&proposal);
 					}
 				}
-				num += NumberFor::<B>::one();
+				num += 1;
 			}
 		}
 	}
 
-	fn on_block_imported(&mut self, block: BlockHashNum<B>) {
+	fn on_block_imported(&mut self, block: IdentifierFor<B>) {
 		if let Some(proposals_to_bump) = self.event_triggers.remove(&ChainEvent::Imported(block)) {
 			for proposal in proposals_to_bump {
 				self.bump_proposal(&proposal);

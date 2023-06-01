@@ -26,14 +26,6 @@ pub struct Vertex<I: PeerId, J: Justification> {
 	know_most: HashSet<I>,
 }
 
-/// What can happen when we add a justification.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum JustificationAddResult {
-	Noop,
-	Required,
-	Finalizable,
-}
-
 impl<I: PeerId, J: Justification> Vertex<I, J> {
 	/// Create a new empty vertex.
 	pub fn new() -> Self {
@@ -59,6 +51,11 @@ impl<I: PeerId, J: Justification> Vertex<I, J> {
 			Header { importance: HeaderImportance::Imported, .. } |
 				Justification { imported: true, .. }
 		)
+	}
+
+	/// Whether the vertex represents imported justified block.
+	pub fn justified_block(&self) -> bool {
+		matches!(self.inner, InnerVertex::Justification { imported: true, .. })
 	}
 
 	/// Deconstructs the vertex into a justification if it is ready to be imported,
@@ -145,44 +142,36 @@ impl<I: PeerId, J: Justification> Vertex<I, J> {
 		}
 	}
 
-	/// Adds a justification to the vertex. Returns whether either the finalization is now possible
-	/// or the vertex became required.
+	/// Adds a justification to the vertex.
 	pub fn insert_justification(
 		&mut self,
 		parent: BlockIdFor<J>,
 		justification: J,
 		holder: Option<I>,
-	) -> JustificationAddResult {
+	) {
 		use InnerVertex::*;
 		match self.inner {
-			Justification { .. } => {
-				if let Some(holder) = holder {
-					self.know_most.insert(holder);
-				}
-				JustificationAddResult::Noop
-			},
-			Empty { required: true } | Header { importance: HeaderImportance::Required, .. } => {
+			Empty { .. } |
+			Header { importance: HeaderImportance::Required, .. } |
+			Header { importance: HeaderImportance::Auxiliary, .. } => {
 				self.inner = Justification { imported: false, parent, justification };
 				self.know_most = holder.into_iter().collect();
-				JustificationAddResult::Noop
-			},
-			Empty { required: false } | Header { importance: HeaderImportance::Auxiliary, .. } => {
-				self.inner = Justification { imported: false, parent, justification };
-				self.know_most = holder.into_iter().collect();
-				JustificationAddResult::Required
 			},
 			Header { importance: HeaderImportance::Imported, .. } => {
 				self.inner = Justification { imported: true, parent, justification };
-				// No need to modify know_most, as we now know everything we need.
-				JustificationAddResult::Finalizable
+				self.know_most = holder.into_iter().collect();
 			},
+			Justification { .. } =>
+				if let Some(holder) = holder {
+					self.know_most.insert(holder);
+				},
 		}
 	}
 }
 
 #[cfg(test)]
 mod tests {
-	use super::{JustificationAddResult, Vertex};
+	use super::Vertex;
 	use crate::sync::{
 		mock::{MockHeader, MockIdentifier, MockJustification, MockPeerId},
 		Header,
@@ -316,10 +305,7 @@ mod tests {
 		let parent = header.parent_id().expect("born of a parent");
 		let justification = MockJustification::for_header(header);
 		let peer_id = rand::random();
-		assert_eq!(
-			vertex.insert_justification(parent.clone(), justification, Some(peer_id)),
-			JustificationAddResult::Required
-		);
+		vertex.insert_justification(parent.clone(), justification, Some(peer_id));
 		assert!(vertex.required());
 		assert!(!vertex.imported());
 		assert_eq!(vertex.parent(), Some(&parent));
@@ -336,10 +322,7 @@ mod tests {
 		let justification = MockJustification::for_header(header);
 		let peer_id = rand::random();
 		vertex.insert_header(parent.clone(), Some(peer_id));
-		assert_eq!(
-			vertex.insert_justification(parent.clone(), justification, None),
-			JustificationAddResult::Required
-		);
+		vertex.insert_justification(parent.clone(), justification, None);
 		assert!(vertex.required());
 		assert!(!vertex.imported());
 		assert_eq!(vertex.parent(), Some(&parent));
@@ -355,10 +338,7 @@ mod tests {
 		let parent = header.parent_id().expect("born of a parent");
 		let justification = MockJustification::for_header(header);
 		assert!(!vertex.insert_body(parent.clone()));
-		assert_eq!(
-			vertex.insert_justification(parent.clone(), justification.clone(), None),
-			JustificationAddResult::Finalizable
-		);
+		vertex.insert_justification(parent.clone(), justification.clone(), None);
 		assert!(!vertex.required());
 		assert!(vertex.imported());
 		assert_eq!(vertex.parent(), Some(&parent));
@@ -373,10 +353,7 @@ mod tests {
 		let parent = header.parent_id().expect("born of a parent");
 		let justification = MockJustification::for_header(header);
 		let peer_id = rand::random();
-		assert_eq!(
-			vertex.insert_justification(parent, justification, Some(peer_id)),
-			JustificationAddResult::Required
-		);
+		vertex.insert_justification(parent, justification, Some(peer_id));
 		assert!(!vertex.set_required());
 		assert!(vertex.required());
 	}
@@ -390,10 +367,7 @@ mod tests {
 		let justification = MockJustification::for_header(header);
 		let peer_id = rand::random();
 		assert!(vertex.set_required());
-		assert_eq!(
-			vertex.insert_justification(parent, justification, Some(peer_id)),
-			JustificationAddResult::Noop
-		);
+		vertex.insert_justification(parent, justification, Some(peer_id));
 		assert!(vertex.required());
 	}
 
@@ -404,10 +378,7 @@ mod tests {
 		let header = parent_header.random_child();
 		let parent = header.parent_id().expect("born of a parent");
 		let justification = MockJustification::for_header(header);
-		assert_eq!(
-			vertex.insert_justification(parent.clone(), justification.clone(), None),
-			JustificationAddResult::Required
-		);
+		vertex.insert_justification(parent.clone(), justification.clone(), None);
 		assert!(vertex.insert_body(parent.clone()));
 		assert!(!vertex.required());
 		assert!(vertex.imported());

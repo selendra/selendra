@@ -1,10 +1,12 @@
+use finality_selendra::{BlockId, Justification, JustificationTranslator, SelendraJustification};
 use futures::channel::mpsc;
 use jsonrpsee::{
 	core::{error::Error as JsonRpseeError, RpcResult},
 	proc_macros::rpc,
 	types::error::{CallError, ErrorObject},
 };
-use serde::Serialize;
+use selendra_primitives::BlockNumber;
+use sp_runtime::traits::Header;
 
 /// System RPC errors.
 #[derive(Debug, thiserror::Error)]
@@ -15,14 +17,19 @@ pub enum Error {
 	/// Provided block range couldn't be resolved to a list of blocks.
 	#[error("Node is not fully functional: {}", .0)]
 	FailedJustificationSend(String),
+	/// Justification argument is malformatted.
+	#[error("Failed to translate jsutification into an internal one: {}", .0)]
+	FailedJustificationTranslation(String),
 }
 
 // Base code for all system errors.
 const BASE_ERROR: i32 = 2000;
 // Justification argument is malformatted.
 const MALFORMATTED_JUSTIFICATION_ARG_ERROR: i32 = BASE_ERROR + 1;
-// SelendraNodeApiServer is failed to send JustificationNotification.
+// SelendraNodeApiServer is failed to send translated justification.
 const FAILED_JUSTIFICATION_SEND_ERROR: i32 = BASE_ERROR + 2;
+// SelendraNodeApiServer failed to translate justification into internal representation.
+const FAILED_JUSTIFICATION_TRANSLATION_ERROR: i32 = BASE_ERROR + 3;
 
 impl From<Error> for JsonRpseeError {
 	fn from(e: Error) -> Self {
@@ -34,6 +41,11 @@ impl From<Error> for JsonRpseeError {
 			)),
 			Error::MalformattedJustificationArg(e) => CallError::Custom(ErrorObject::owned(
 				MALFORMATTED_JUSTIFICATION_ARG_ERROR,
+				e,
+				None::<()>,
+			)),
+			Error::FailedJustificationTranslation(e) => CallError::Custom(ErrorObject::owned(
+				FAILED_JUSTIFICATION_TRANSLATION_ERROR,
 				e,
 				None::<()>,
 			)),
@@ -55,44 +67,39 @@ pub trait SelendraNodeApi<Hash, Number> {
 	) -> RpcResult<()>;
 }
 
-use finality_selendra::{JustificationNotification, SelendraJustification};
-use sp_api::BlockT;
-use sp_runtime::traits::NumberFor;
-
 /// Selendra Node API implementation
-pub struct SelendraNode<B>
+pub struct SelendraNode<H, JT>
 where
-	B: BlockT,
-	B::Hash: Serialize + for<'de> serde::Deserialize<'de>,
-	NumberFor<B>: Serialize + for<'de> serde::Deserialize<'de>,
+	H: Header<Number = BlockNumber>,
+	JT: JustificationTranslator<H> + Send + Sync + Clone + 'static,
 {
-	import_justification_tx: mpsc::UnboundedSender<JustificationNotification<B>>,
+	import_justification_tx: mpsc::UnboundedSender<Justification<H>>,
+	justification_translator: JT,
 }
 
-impl<B> SelendraNode<B>
+impl<H, JT> SelendraNode<H, JT>
 where
-	B: BlockT,
-	B::Hash: Serialize + for<'de> serde::Deserialize<'de>,
-	NumberFor<B>: Serialize + for<'de> serde::Deserialize<'de>,
+	H: Header<Number = BlockNumber>,
+	JT: JustificationTranslator<H> + Send + Sync + Clone + 'static,
 {
 	pub fn new(
-		import_justification_tx: mpsc::UnboundedSender<JustificationNotification<B>>,
+		import_justification_tx: mpsc::UnboundedSender<Justification<H>>,
+		justification_translator: JT,
 	) -> Self {
-		SelendraNode { import_justification_tx }
+		SelendraNode { import_justification_tx, justification_translator }
 	}
 }
 
-impl<B> SelendraNodeApiServer<B::Hash, NumberFor<B>> for SelendraNode<B>
+impl<H, JT> SelendraNodeApiServer<H::Hash, BlockNumber> for SelendraNode<H, JT>
 where
-	B: BlockT,
-	B::Hash: Serialize + for<'de> serde::Deserialize<'de>,
-	NumberFor<B>: Serialize + for<'de> serde::Deserialize<'de>,
+	H: Header<Number = BlockNumber>,
+	JT: JustificationTranslator<H> + Send + Sync + Clone + 'static,
 {
 	fn selendra_node_emergency_finalize(
 		&self,
 		justification: Vec<u8>,
-		hash: B::Hash,
-		number: NumberFor<B>,
+		hash: H::Hash,
+		number: BlockNumber,
 	) -> RpcResult<()> {
 		let justification: SelendraJustification =
 			SelendraJustification::EmergencySignature(justification.try_into().map_err(|_| {
@@ -100,14 +107,16 @@ where
 					"Provided justification cannot be converted into correct type".into(),
 				)
 			})?);
-		self.import_justification_tx
-			.unbounded_send(JustificationNotification { justification, hash, number })
-			.map_err(|_| {
-				Error::FailedJustificationSend(
-					"SelendraNodeApiServer failed to send JustifictionNotification via its channel"
-						.into(),
-				)
-				.into()
-			})
+		let justification = self
+			.justification_translator
+			.translate(justification, BlockId::new(hash, number))
+			.map_err(|e| Error::FailedJustificationTranslation(format!("{}", e)))?;
+		self.import_justification_tx.unbounded_send(justification).map_err(|_| {
+			Error::FailedJustificationSend(
+				"SelendraNodeApiServer failed to send JustifictionNotification via its channel"
+					.into(),
+			)
+		})?;
+		Ok(())
 	}
 }

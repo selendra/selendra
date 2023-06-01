@@ -16,7 +16,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod impls;
-pub mod staking;
 
 use frame_support::{
 	parameter_types,

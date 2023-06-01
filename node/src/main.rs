@@ -1,19 +1,17 @@
 mod cli;
 mod service;
 
-#[cfg(feature = "try-runtime")]
-use selendra_primitives::Block;
-#[cfg(feature = "try-runtime")]
-use service::executor::ExecutorDispatch;
-
 use cli::{Cli, Subcommand};
-use selendra_primitives::HEAP_PAGES;
-use service::{new_authority, new_full, new_partial};
-
-use log::warn;
+use log::{info, warn};
 use sc_cli::{clap::Parser, CliConfiguration, DatabasePruningMode, PruningParams, SubstrateCli};
 use sc_network::config::Role;
 use sc_service::{Configuration, PartialComponents};
+#[cfg(any(feature = "try-runtime", feature = "runtime-benchmarks"))]
+use selendra_primitives::Block;
+use selendra_primitives::HEAP_PAGES;
+#[cfg(any(feature = "try-runtime", feature = "runtime-benchmarks"))]
+use service::ExecutorDispatch;
+use service::{new_authority, new_partial};
 
 fn default_state_pruning() -> Option<DatabasePruningMode> {
 	Some(DatabasePruningMode::Archive)
@@ -42,6 +40,10 @@ fn main() -> sc_cli::Result<()> {
 	if !cli.selendra.experimental_pruning() {
 		cli.run.import_params.pruning_params.state_pruning = default_state_pruning();
 		cli.run.import_params.pruning_params.blocks_pruning = default_blocks_pruning();
+	// We need to override state pruning to our default (archive), as substrate has 256 by default.
+	// 256 does not work with our code.
+	} else if cli.run.import_params.pruning_params.state_pruning.is_none() {
+		cli.run.import_params.pruning_params.state_pruning = default_state_pruning();
 	}
 
 	match &cli.subcommand {
@@ -117,6 +119,22 @@ fn main() -> sc_cli::Result<()> {
 		Some(Subcommand::TryRuntime) => Err("TryRuntime wasn't enabled when building the node. \
         You can enable it with `--features try-runtime`."
 			.into()),
+		#[cfg(feature = "runtime-benchmarks")]
+		Some(Subcommand::Benchmark(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|config| {
+				if let frame_benchmarking_cli::BenchmarkCmd::Pallet(cmd) = cmd {
+					cmd.run::<Block, ExecutorDispatch>(config)
+				} else {
+					Err(sc_cli::Error::Input("Wrong subcommand".to_string()))
+				}
+			})
+		},
+		#[cfg(not(feature = "runtime-benchmarks"))]
+		Some(Subcommand::Benchmark) =>
+			Err("Benchmarking wasn't enabled when building the node. You can enable it with \
+				     `--features runtime-benchmarks`."
+				.into()),
 		None => {
 			let runner = cli.create_runner(&cli.run)?;
 			if cli.selendra.experimental_pruning() {
@@ -128,16 +146,25 @@ fn main() -> sc_cli::Result<()> {
 				warn!("Pruning not supported. Switching to keeping all block bodies and states.");
 			}
 
-			let selendra_cli_config = cli.selendra;
+			let mut selendra_cli_config = cli.selendra;
 			runner.run_node_until_exit(|mut config| async move {
-				enforce_heap_pages(&mut config);
-
-				match config.role {
-					Role::Authority =>
-						new_authority(config, selendra_cli_config).map_err(sc_cli::Error::Service),
-					Role::Full =>
-						new_full(config, selendra_cli_config).map_err(sc_cli::Error::Service),
+				if matches!(config.role, Role::Full) {
+					if !selendra_cli_config.external_addresses().is_empty() {
+						panic!(
+							"A non-validator node cannot be run with external addresses specified."
+						);
+					}
+					// We ensure that external addresses for non-validator nodes are set, but to a
+					// value that is not routable. This will no longer be neccessary once we have
+					// proper support for non-validator nodes, but this requires a major
+					// refactor.
+					info!(
+						"Running as a non-validator node, setting dummy addressing configuration."
+					);
+					selendra_cli_config.set_dummy_external_addresses();
 				}
+				enforce_heap_pages(&mut config);
+				new_authority(config, selendra_cli_config).map_err(sc_cli::Error::Service)
 			})
 		},
 	}

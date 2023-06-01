@@ -4,8 +4,10 @@ use std::{cmp::Ordering, fmt::Debug, hash::Hash as StdHash, marker::PhantomData,
 
 use codec::{Codec, Decode, Encode};
 use futures::{channel::oneshot, Future, TryFutureExt};
+use network_clique::SpawnHandleT;
 use sc_service::SpawnTaskHandle;
-use sp_api::BlockT;
+use selendra_primitives::BlockNumber;
+use sp_api::{BlockT, HeaderT};
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Hash as SpHash;
 
@@ -17,7 +19,7 @@ pub trait Hash: AsRef<[u8]> + StdHash + Eq + Clone + Codec + Debug + Send + Sync
 impl<T: AsRef<[u8]> + StdHash + Eq + Clone + Codec + Debug + Send + Sync> Hash for T {}
 
 #[async_trait::async_trait]
-impl<B: BlockT> selendra_bft::DataProvider<SelendraData<B>> for DataProvider<B> {
+impl<B: BlockT> current_selendra_bft::DataProvider<SelendraData<B>> for DataProvider<B> {
 	async fn get_data(&mut self) -> Option<SelendraData<B>> {
 		DataProvider::get_data(self).await
 	}
@@ -30,16 +32,24 @@ impl<B: BlockT> legacy_selendra_bft::DataProvider<SelendraData<B>> for DataProvi
 	}
 }
 
-impl<B: BlockT, C: HeaderBackend<B> + Send + 'static>
-	selendra_bft::FinalizationHandler<SelendraData<B>> for OrderedDataInterpreter<B, C>
+impl<B, C> current_selendra_bft::FinalizationHandler<SelendraData<B>>
+	for OrderedDataInterpreter<B, C>
+where
+	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
+	C: HeaderBackend<B> + Send + 'static,
 {
 	fn data_finalized(&mut self, data: SelendraData<B>) {
 		OrderedDataInterpreter::data_finalized(self, data)
 	}
 }
 
-impl<B: BlockT, C: HeaderBackend<B> + Send + 'static>
-	legacy_selendra_bft::FinalizationHandler<SelendraData<B>> for OrderedDataInterpreter<B, C>
+impl<B, C> legacy_selendra_bft::FinalizationHandler<SelendraData<B>>
+	for OrderedDataInterpreter<B, C>
+where
+	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
+	C: HeaderBackend<B> + Send + 'static,
 {
 	fn data_finalized(&mut self, data: SelendraData<B>) {
 		OrderedDataInterpreter::data_finalized(self, data)
@@ -88,7 +98,7 @@ impl<H: SpHash> Wrapper<H> {
 	}
 }
 
-impl<H: SpHash> selendra_bft::Hasher for Wrapper<H> {
+impl<H: SpHash> current_selendra_bft::Hasher for Wrapper<H> {
 	type Hash = OrdForHash<H::Output>;
 
 	fn hash(s: &[u8]) -> Self::Hash {
@@ -138,19 +148,6 @@ impl From<SpawnTaskHandle> for SpawnHandle {
 	}
 }
 
-/// Trait abstracting spawning tasks
-pub trait SpawnHandleT {
-	/// Run task
-	fn spawn(&self, name: &'static str, task: impl Future<Output = ()> + Send + 'static);
-
-	/// Run an essential task
-	fn spawn_essential(
-		&self,
-		name: &'static str,
-		task: impl Future<Output = ()> + Send + 'static,
-	) -> Pin<Box<dyn Future<Output = Result<(), ()>> + Send>>;
-}
-
 impl SpawnHandleT for SpawnHandle {
 	fn spawn(&self, name: &'static str, task: impl Future<Output = ()> + Send + 'static) {
 		self.0.spawn(name, None, task)
@@ -170,7 +167,7 @@ impl SpawnHandleT for SpawnHandle {
 	}
 }
 
-impl selendra_bft::SpawnHandle for SpawnHandle {
+impl current_selendra_bft::SpawnHandle for SpawnHandle {
 	fn spawn(&self, name: &'static str, task: impl Future<Output = ()> + Send + 'static) {
 		SpawnHandleT::spawn(self, name, task)
 	}
@@ -179,7 +176,7 @@ impl selendra_bft::SpawnHandle for SpawnHandle {
 		&self,
 		name: &'static str,
 		task: impl Future<Output = ()> + Send + 'static,
-	) -> selendra_bft::TaskHandle {
+	) -> current_selendra_bft::TaskHandle {
 		SpawnHandleT::spawn_essential(self, name, task)
 	}
 }

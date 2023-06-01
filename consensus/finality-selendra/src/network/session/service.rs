@@ -9,13 +9,13 @@ use futures::{
 	StreamExt,
 };
 use log::{debug, trace, warn};
+use network_clique::{Network as CliqueNetwork, PublicKey};
 use tokio::time::{self, Instant};
 
 use crate::{
 	abft::Recipient,
 	crypto::{AuthorityPen, AuthorityVerifier},
 	network::{
-		clique::{Network as CliqueNetwork, PublicKey},
 		session::{
 			data::DataInSession,
 			manager::{
@@ -349,7 +349,7 @@ where
 							let manager_actions = self.manager.on_discovery_message(message);
 							self.handle_manager_actions(manager_actions)?
 						},
-						Err(e) => warn!(target: "selendra-network", "Error casting versioned authentication to discovery message: {:?}", e),
+						Err(e) => debug!(target: "selendra-network", "Could not cast versioned authentication in discovery message: {:?}", e),
 					}
 				},
 				_ = maintenance.tick() => {

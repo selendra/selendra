@@ -1,29 +1,40 @@
-use libp2p::PeerId;
-use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::{Number, Value};
 use std::{collections::HashSet, str::FromStr, string::ToString};
 
+use libp2p::PeerId;
 use pallet_staking::{Forcing, StakerStatus};
-
 use sc_cli::{
 	clap::{self, Args},
 	Error as CliError,
 };
 use sc_service::ChainType;
-
+use selendra_primitives::{
+	AccountId, AuthorityId as SelendraId, SessionValidators, Version as FinalityVersion,
+	LEGACY_FINALITY_VERSION, MIN_NOMINATOR_BOND, MIN_VALIDATOR_BOND, TOKEN, TOKEN_DECIMALS,
+};
+use selendra_runtime::{
+	AuraConfig,
+	BalancesConfig,
+	CommitteeManagementConfig,
+	CouncilConfig,
+	DemocracyConfig,
+	ElectionsConfig,
+	GenesisConfig,
+	SelendraConfig,
+	SessionConfig,
+	SessionKeys,
+	StakingConfig,
+	SudoConfig,
+	SystemConfig,
+	TechnicalCommitteeConfig, // AssetsConfig,
+	VestingConfig,
+	WASM_BINARY,
+};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use serde_json::{Number, Value};
 use sp_application_crypto::Ss58Codec;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair};
 use sp_runtime::Perbill;
-
-use selendra_primitives::{
-	AccountId, AuthorityId as SelendraId, Version as FinalityVersion, LEGACY_FINALITY_VERSION,
-	MIN_NOMINATOR_BOND, MIN_VALIDATOR_BOND, TOKEN, TOKEN_DECIMALS,
-};
-use selendra_runtime::{
-	AuraConfig, BalancesConfig, ElectionsConfig, GenesisConfig, SelendraConfig, SessionConfig,
-	SessionKeys, StakingConfig, SudoConfig, SystemConfig, VestingConfig, WASM_BINARY,
-};
 
 pub const CHAINTYPE_DEV: &str = "dev";
 pub const CHAINTYPE_LOCAL: &str = "local";
@@ -380,7 +391,6 @@ fn generate_genesis_config(
 			reserved_validators: accounts_config.members.clone(),
 			non_reserved_validators: vec![],
 			committee_seats: Default::default(),
-			committee_ban_config: Default::default(),
 		},
 		session: SessionConfig { keys: accounts_config.keys },
 		staking: StakingConfig {
@@ -396,9 +406,23 @@ fn generate_genesis_config(
 		},
 		selendra: SelendraConfig { finality_version, ..Default::default() },
 		treasury: Default::default(),
-		vesting: VestingConfig { vesting: vec![] },
 		nomination_pools: Default::default(),
+		vesting: VestingConfig { vesting: vec![] },
 		transaction_payment: Default::default(),
+		committee_management: CommitteeManagementConfig {
+			committee_ban_config: Default::default(),
+			session_validators: SessionValidators {
+				committee: accounts_config.members,
+				non_committee: vec![],
+			},
+		},
+		// assets: AssetsConfig::default(),
+		democracy: DemocracyConfig::default(),
+		council: CouncilConfig::default(),
+		technical_committee: TechnicalCommitteeConfig::default(),
+		technical_membership: Default::default(),
+		// phala_computation: Default::default(),
+		// phala_registry: Default::default(),
 	}
 }
 

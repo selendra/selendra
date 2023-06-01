@@ -1,25 +1,9 @@
-// Copyright 2023 Smallworld Selendra
-// This file is part of Selendra.
-
-// Selendra is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Selendra is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
-
 #![cfg(test)]
 
 use frame_support::{storage_alias, traits::OneSessionHandler};
-use selendra_primitives::VersionChange;
+use primitives::VersionChange;
 
-use crate::mock::*;
+use crate::{mock::*, NextFinalityCommittee};
 
 #[storage_alias]
 type SessionForValidatorsChange = StorageValue<Selendra, u32>;
@@ -27,53 +11,18 @@ type SessionForValidatorsChange = StorageValue<Selendra, u32>;
 #[storage_alias]
 type Validators<T> = StorageValue<Selendra, Vec<<T as frame_system::Config>::AccountId>>;
 
-#[cfg(feature = "try-runtime")]
-mod migration_tests {
-	use frame_support::{storage::migration::put_storage_value, traits::StorageVersion};
-	use pallets_support::StorageMigration;
-
-	use crate::{migrations, mock::*, Pallet};
-
-	const MODULE: &[u8] = b"Selendra";
-
-	#[test]
-	fn migration_from_v0_to_v1_works() {
-		new_test_ext(&[(1u64, 1u64), (2u64, 2u64)]).execute_with(|| {
-			StorageVersion::new(0).put::<Pallet<Test>>();
-
-			put_storage_value(MODULE, b"SessionForValidatorsChange", &[], Some(7u32));
-			put_storage_value(MODULE, b"Validators", &[], Some(vec![0u64, 1u64]));
-
-			let _weight = migrations::v0_to_v1::Migration::<Test, Selendra>::migrate();
-		})
-	}
-
-	#[test]
-	fn migration_from_v1_to_v2_works() {
-		new_test_ext(&[(1u64, 1u64), (2u64, 2u64)]).execute_with(|| {
-			StorageVersion::new(1).put::<Pallet<Test>>();
-
-			put_storage_value(MODULE, b"SessionForValidatorsChange", &[], ());
-			put_storage_value(MODULE, b"Validators", &[], ());
-			put_storage_value(MODULE, b"MillisecsPerBlock", &[], ());
-			put_storage_value(MODULE, b"SessionPeriod", &[], ());
-
-			let _weight = migrations::v1_to_v2::Migration::<Test, Selendra>::migrate();
-		})
-	}
-}
-
 #[test]
 fn test_update_authorities() {
 	new_test_ext(&[(1u64, 1u64), (2u64, 2u64)]).execute_with(|| {
 		initialize_session();
 		run_session(1);
 
-		let authorities = to_authorities(&[2, 3, 4]);
+		NextFinalityCommittee::<Test>::put(vec![2, 3, 4]);
+		let authorities = [2, 3, 4].iter().zip(to_authorities(&[2, 3, 4])).collect();
 
-		Selendra::update_authorities(authorities.as_slice(), authorities.as_slice());
+		Selendra::update_authorities(authorities);
 
-		assert_eq!(Selendra::authorities(), to_authorities(&[2, 3, 4]));
+		assert_eq!(Selendra::authorities(), to_authorities(&[1, 2]));
 		assert_eq!(Selendra::next_authorities(), to_authorities(&[2, 3, 4]));
 	});
 }
@@ -104,19 +53,20 @@ fn test_current_authorities() {
 
 		run_session(1);
 
-		let authorities = to_authorities(&[2, 3, 4]);
+		NextFinalityCommittee::<Test>::put(vec![2, 3, 4]);
+		let authorities = [2, 3, 4].iter().zip(to_authorities(&[2, 3, 4])).collect();
+		Selendra::update_authorities(authorities);
 
-		Selendra::update_authorities(&authorities, &authorities);
-
-		assert_eq!(Selendra::authorities(), to_authorities(&[2, 3, 4]));
+		assert_eq!(Selendra::authorities(), to_authorities(&[1, 2]));
 		assert_eq!(Selendra::next_authorities(), to_authorities(&[2, 3, 4]));
 
 		run_session(2);
 
-		let authorities = to_authorities(&[1, 2, 3]);
-		Selendra::update_authorities(&authorities, &authorities);
+		NextFinalityCommittee::<Test>::put(vec![1, 2, 3]);
+		let authorities = [1, 2, 3].iter().zip(to_authorities(&[1, 2, 3])).collect();
+		Selendra::update_authorities(authorities);
 
-		assert_eq!(Selendra::authorities(), to_authorities(&[1, 2, 3]));
+		assert_eq!(Selendra::authorities(), to_authorities(&[2, 3, 4]));
 		assert_eq!(Selendra::next_authorities(), to_authorities(&[1, 2, 3]));
 	})
 }
@@ -127,10 +77,11 @@ fn test_session_rotation() {
 		initialize_session();
 		run_session(1);
 
-		let new_validators = new_session_validators(&[3u64, 4u64]);
+		NextFinalityCommittee::<Test>::put(vec![5, 6]);
+		let new_validators = new_session_validators(&[1, 2]);
 		let queued_validators = new_session_validators(&[5, 6]);
 		Selendra::on_new_session(true, new_validators, queued_validators);
-		assert_eq!(Selendra::authorities(), to_authorities(&[3, 4]));
+		assert_eq!(Selendra::authorities(), to_authorities(&[1, 2]));
 		assert_eq!(Selendra::next_authorities(), to_authorities(&[5, 6]));
 	})
 }

@@ -1,11 +1,12 @@
 [package]
 name = "pallets-support"
-version = "0.1.0"
+version = "0.1.1"
+authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
 
 [features]
 default = ["std"]

@@ -1,6 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
-use crate::UnitCreationDelay;
+use crate::{NodeIndex, SessionId, UnitCreationDelay};
+
 pub const MAX_ROUNDS: u16 = 7000;
 
 fn exponential_slowdown(
@@ -24,10 +25,98 @@ fn exponential_slowdown(
 }
 
 pub type DelaySchedule = Arc<dyn Fn(usize) -> Duration + Sync + Send + 'static>;
+pub type RecipientCountSchedule = Arc<dyn Fn(usize) -> usize + Sync + Send + 'static>;
 
 pub fn unit_creation_delay_fn(unit_creation_delay: UnitCreationDelay) -> DelaySchedule {
 	Arc::new(move |t| match t {
 		0 => Duration::from_millis(2000),
 		_ => exponential_slowdown(t, unit_creation_delay.0 as f64, 5000, 1.005),
 	})
+}
+
+pub struct DelayConfig {
+	pub tick_interval: Duration,
+	pub requests_interval: Duration,
+	pub unit_rebroadcast_interval_min: Duration,
+	pub unit_rebroadcast_interval_max: Duration,
+	pub unit_creation_delay: DelaySchedule,
+	pub coord_request_delay: DelaySchedule,
+	pub coord_request_recipients: RecipientCountSchedule,
+	pub parent_request_delay: DelaySchedule,
+	pub parent_request_recipients: RecipientCountSchedule,
+	pub newest_request_delay: DelaySchedule,
+}
+
+pub struct SelendraConfig {
+	delay_config: DelayConfig,
+	n_members: usize,
+	node_id: NodeIndex,
+	session_id: SessionId,
+}
+
+impl SelendraConfig {
+	pub fn new(
+		delay_config: DelayConfig,
+		n_members: usize,
+		node_id: NodeIndex,
+		session_id: SessionId,
+	) -> SelendraConfig {
+		SelendraConfig { delay_config, n_members, node_id, session_id }
+	}
+}
+
+impl From<DelayConfig> for legacy_selendra_bft::DelayConfig {
+	fn from(cfg: DelayConfig) -> Self {
+		Self {
+			tick_interval: cfg.tick_interval,
+			requests_interval: cfg.requests_interval,
+			unit_rebroadcast_interval_max: cfg.unit_rebroadcast_interval_max,
+			unit_rebroadcast_interval_min: cfg.unit_rebroadcast_interval_min,
+			unit_creation_delay: cfg.unit_creation_delay,
+		}
+	}
+}
+
+impl From<DelayConfig> for current_selendra_bft::DelayConfig {
+	fn from(cfg: DelayConfig) -> Self {
+		Self {
+			tick_interval: cfg.tick_interval,
+			unit_rebroadcast_interval_max: cfg.unit_rebroadcast_interval_max,
+			unit_rebroadcast_interval_min: cfg.unit_rebroadcast_interval_min,
+			unit_creation_delay: cfg.unit_creation_delay,
+			coord_request_delay: cfg.coord_request_delay,
+			coord_request_recipients: cfg.coord_request_recipients,
+			parent_request_delay: cfg.parent_request_delay,
+			parent_request_recipients: cfg.parent_request_recipients,
+			newest_request_delay: cfg.newest_request_delay,
+		}
+	}
+}
+
+impl From<SelendraConfig> for current_selendra_bft::Config {
+	fn from(cfg: SelendraConfig) -> Self {
+		let mut selendra_config = current_selendra_bft::default_config(
+			cfg.n_members.into(),
+			cfg.node_id.into(),
+			cfg.session_id.0 as u64,
+		);
+		selendra_config.max_round = MAX_ROUNDS;
+		selendra_config.delay_config = cfg.delay_config.into();
+
+		selendra_config
+	}
+}
+
+impl From<SelendraConfig> for legacy_selendra_bft::Config {
+	fn from(cfg: SelendraConfig) -> Self {
+		let mut selendra_config = legacy_selendra_bft::default_config(
+			cfg.n_members.into(),
+			cfg.node_id.into(),
+			cfg.session_id.0 as u64,
+		);
+		selendra_config.max_round = MAX_ROUNDS;
+		selendra_config.delay_config = cfg.delay_config.into();
+
+		selendra_config
+	}
 }

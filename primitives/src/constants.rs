@@ -1,9 +1,13 @@
+use sp_runtime::Perquintill;
+
 use crate::{
 	Balance, ConsensusEngineId, EraIndex, KeyTypeId, Perbill, SessionCount, SessionIndex, Version,
 };
 
 pub const TOKEN_DECIMALS: u32 = 18;
 pub const TOKEN: u128 = 10u128.pow(TOKEN_DECIMALS);
+
+pub const TREASURY_PROPOSAL_BOND: Balance = 100 * TOKEN;
 
 pub const DEFAULT_SESSION_PERIOD: u32 = 900;
 pub const DEFAULT_SESSIONS_PER_ERA: SessionIndex = 96;
@@ -41,3 +45,5 @@ pub const MIN_NOMINATOR_BOND: u128 = 100 * TOKEN;
 pub const MAX_NOMINATORS_REWARDED_PER_VALIDATOR: u32 = 1024;
 pub const YEARLY_INFLATION: Balance = 10_000_000 * TOKEN;
 pub const VALIDATOR_REWARD: Perbill = Perbill::from_percent(90);
+
+pub const LENIENT_THRESHOLD: Perquintill = Perquintill::from_percent(90);

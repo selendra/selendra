@@ -14,8 +14,7 @@ use sc_service::{
 	config::{BasePath, KeystoreConfig},
 	DatabaseSource,
 };
-use selendra_primitives::AuthorityId as SelendraId;
-use selendra_runtime::AccountId;
+use selendra_primitives::{AccountId, AuthorityId as SelendraId};
 use sp_application_crypto::{key_types, Ss58Codec};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_keystore::SyncCryptoStore;

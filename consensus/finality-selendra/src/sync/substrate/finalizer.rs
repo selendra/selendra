@@ -1,12 +1,14 @@
 use sc_client_api::{Backend, Finalizer as SubstrateFinalizer, HeaderBackend, LockImportRun};
-use selendra_primitives::{BlockNumber, SELENDRA_ENGINE_ID};
+use selendra_primitives::BlockNumber;
 use sp_blockchain::Error as ClientError;
 use sp_runtime::traits::{Block as BlockT, Header as SubstrateHeader};
 
 use crate::{
 	finalization::{BlockFinalizer, SelendraFinalizer},
-	justification::versioned_encode,
-	sync::{substrate::Justification, Finalizer},
+	sync::{
+		substrate::{InnerJustification, Justification},
+		Finalizer,
+	},
 };
 
 impl<B, BE, C> Finalizer<Justification<B::Header>> for SelendraFinalizer<B, BE, C>
@@ -19,10 +21,16 @@ where
 	type Error = ClientError;
 
 	fn finalize(&self, justification: Justification<B::Header>) -> Result<(), Self::Error> {
-		self.finalize_block(
-			justification.header.hash(),
-			*justification.header.number(),
-			Some((SELENDRA_ENGINE_ID, versioned_encode(justification.raw_justification))),
-		)
+		match justification.inner_justification {
+			InnerJustification::SelendraJustification(selendra_justification) => self
+				.finalize_block(
+					(justification.header.hash(), *justification.header.number()).into(),
+					selendra_justification.into(),
+				),
+			_ => Err(Self::Error::BadJustification(
+				"Trying fo finalize the genesis block using virtual sync justification."
+					.to_string(),
+			)),
+		}
 	}
 }

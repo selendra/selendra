@@ -7,13 +7,9 @@ use futures::{
 	},
 	StreamExt,
 };
-use sp_api::NumberFor;
+use selendra_primitives::BlockNumber;
 use sp_core::hash::H256;
 use sp_runtime::traits::Block as BlockT;
-use substrate_test_runtime_client::{
-	runtime::{Block, Header},
-	DefaultTestClientBuilderExt, TestClientBuilder, TestClientBuilderExt,
-};
 use tokio::time::timeout;
 
 use crate::{
@@ -24,22 +20,27 @@ use crate::{
 		data::{component::Network as ComponentNetwork, Network as DataNetwork},
 		Data, RequestBlocks,
 	},
-	session::{SessionBoundaries, SessionId, SessionPeriod},
+	session::{SessionBoundaries, SessionBoundaryInfo, SessionId, SessionPeriod},
 	testing::{
 		client_chain_builder::ClientChainBuilder,
-		mocks::{selendra_data_from_blocks, selendra_data_from_headers},
+		mocks::{
+			selendra_data_from_blocks, selendra_data_from_headers, TBlock, THeader,
+			TestClientBuilder, TestClientBuilderExt,
+		},
 	},
-	BlockHashNum, Recipient,
+	IdentifierFor, Recipient,
 };
 
 #[derive(Clone)]
-struct TestBlockRequester<B: BlockT> {
-	blocks: UnboundedSender<BlockHashNum<B>>,
-	justifications: UnboundedSender<BlockHashNum<B>>,
+struct TestBlockRequester {
+	blocks: UnboundedSender<IdentifierFor<TBlock>>,
+	justifications: UnboundedSender<IdentifierFor<TBlock>>,
 }
 
-impl<B: BlockT> TestBlockRequester<B> {
-	fn new() -> (Self, UnboundedReceiver<BlockHashNum<B>>, UnboundedReceiver<BlockHashNum<B>>) {
+impl TestBlockRequester {
+	fn new(
+	) -> (Self, UnboundedReceiver<IdentifierFor<TBlock>>, UnboundedReceiver<IdentifierFor<TBlock>>)
+	{
 		let (blocks_tx, blocks_rx) = mpsc::unbounded();
 		let (justifications_tx, justifications_rx) = mpsc::unbounded();
 		(
@@ -50,28 +51,24 @@ impl<B: BlockT> TestBlockRequester<B> {
 	}
 }
 
-impl<B: BlockT> RequestBlocks<B> for TestBlockRequester<B> {
-	fn request_justification(&self, hash: &B::Hash, number: NumberFor<B>) {
-		self.justifications.unbounded_send((*hash, number).into()).unwrap();
+impl RequestBlocks<IdentifierFor<TBlock>> for TestBlockRequester {
+	fn request_justification(&self, block_id: IdentifierFor<TBlock>) {
+		self.justifications.unbounded_send(block_id).unwrap();
 	}
 
-	fn request_stale_block(&self, hash: B::Hash, number: NumberFor<B>) {
-		self.blocks.unbounded_send((hash, number).into()).unwrap();
+	fn request_stale_block(&self, block_id: IdentifierFor<TBlock>) {
+		self.blocks.unbounded_send(block_id).unwrap();
 	}
 
 	fn clear_justification_requests(&self) {
 		panic!("`clear_justification_requests` not implemented!")
 	}
-
-	fn is_major_syncing(&self) -> bool {
-		false
-	}
 }
 
-type TestData = Vec<SelendraData<Block>>;
+type TestData = Vec<SelendraData<TBlock>>;
 
-impl SelendraNetworkMessage<Block> for TestData {
-	fn included_data(&self) -> Vec<SelendraData<Block>> {
+impl SelendraNetworkMessage<TBlock> for TestData {
+	fn included_data(&self) -> Vec<SelendraData<TBlock>> {
 		self.clone()
 	}
 }
@@ -92,8 +89,8 @@ impl<D: Data> ComponentNetwork<D> for TestComponentNetwork<D, D> {
 
 struct TestHandler {
 	chain_builder: ClientChainBuilder,
-	block_requests_rx: UnboundedReceiver<BlockHashNum<Block>>,
-	justification_requests_rx: UnboundedReceiver<BlockHashNum<Block>>,
+	block_requests_rx: UnboundedReceiver<IdentifierFor<TBlock>>,
+	justification_requests_rx: UnboundedReceiver<IdentifierFor<TBlock>>,
 	network_tx: UnboundedSender<TestData>,
 	network: Box<dyn DataNetwork<TestData>>,
 }
@@ -108,31 +105,31 @@ impl TestHandler {
 		self.chain_builder.genesis_hash()
 	}
 
-	fn get_header_at(&self, num: u64) -> Header {
+	fn get_header_at(&self, num: BlockNumber) -> THeader {
 		self.chain_builder.get_header_at(num)
 	}
 
-	async fn build_block_above(&mut self, parent: &H256) -> Block {
+	async fn build_block_above(&mut self, parent: &H256) -> TBlock {
 		self.chain_builder.build_block_above(parent).await
 	}
 
 	/// Builds a sequence of blocks extending from `hash` of length `len`
-	async fn build_branch_above(&mut self, parent: &H256, len: usize) -> Vec<Block> {
+	async fn build_branch_above(&mut self, parent: &H256, len: usize) -> Vec<TBlock> {
 		self.chain_builder.build_branch_above(parent, len).await
 	}
 
 	/// imports a sequence of blocks, should be in correct order
-	async fn import_branch(&mut self, blocks: Vec<Block>) {
+	async fn import_branch(&mut self, blocks: Vec<TBlock>) {
 		self.chain_builder.import_branch(blocks).await;
 	}
 
 	/// Builds and imports a sequence of blocks extending from genesis of length `len`
-	async fn initialize_single_branch_and_import(&mut self, len: usize) -> Vec<Block> {
+	async fn initialize_single_branch_and_import(&mut self, len: usize) -> Vec<TBlock> {
 		self.chain_builder.initialize_single_branch_and_import(len).await
 	}
 
 	/// Builds a sequence of blocks extending from genesis of length `len`
-	async fn initialize_single_branch(&mut self, len: usize) -> Vec<Block> {
+	async fn initialize_single_branch(&mut self, len: usize) -> Vec<TBlock> {
 		self.chain_builder.initialize_single_branch(len).await
 	}
 
@@ -142,12 +139,12 @@ impl TestHandler {
 	}
 
 	/// Receive next block request from Data Store
-	async fn next_block_request(&mut self) -> BlockHashNum<Block> {
+	async fn next_block_request(&mut self) -> IdentifierFor<TBlock> {
 		self.block_requests_rx.next().await.unwrap()
 	}
 
 	/// Receive next justification request from Data Store
-	async fn next_justification_request(&mut self) -> BlockHashNum<Block> {
+	async fn next_justification_request(&mut self) -> IdentifierFor<TBlock> {
 		self.justification_requests_rx.next().await.unwrap()
 	}
 
@@ -165,7 +162,7 @@ impl TestHandler {
 }
 
 fn prepare_data_store(
-	session_boundaries: Option<SessionBoundaries<Block>>,
+	session_boundaries: Option<SessionBoundaries>,
 ) -> (impl Future<Output = ()>, oneshot::Sender<()>, TestHandler) {
 	let client = Arc::new(TestClientBuilder::new().build());
 
@@ -185,7 +182,7 @@ fn prepare_data_store(
 	let session_boundaries = if let Some(session_boundaries) = session_boundaries {
 		session_boundaries
 	} else {
-		SessionBoundaries::new(SessionId(0), SessionPeriod(900))
+		SessionBoundaryInfo::new(SessionPeriod(900)).boundaries_for_session(SessionId(0))
 	};
 	let (mut data_store, network) = DataStore::new(
 		session_boundaries,
@@ -279,7 +276,8 @@ async fn too_long_branch_message_does_not_go_through() {
 
 #[tokio::test]
 async fn branch_not_within_session_boundaries_does_not_go_through() {
-	let session_boundaries = SessionBoundaries::new(SessionId(1), SessionPeriod(20));
+	let session_boundaries =
+		SessionBoundaryInfo::new(SessionPeriod(20)).boundaries_for_session(SessionId(1));
 	let session_start = session_boundaries.first_block() as usize;
 	let session_end = session_boundaries.last_block() as usize;
 
@@ -358,7 +356,7 @@ async fn branch_with_not_finalized_ancestor_correctly_handled() {
 	.await;
 }
 
-fn send_proposals_of_each_len(blocks: Vec<Block>, test_handler: &mut TestHandler) {
+fn send_proposals_of_each_len(blocks: Vec<TBlock>, test_handler: &mut TestHandler) {
 	for i in 1..=MAX_DATA_BRANCH_LEN {
 		let blocks_branch = blocks[0..i].to_vec();
 		let test_data: TestData = vec![selendra_data_from_blocks(blocks_branch)];
@@ -493,7 +491,10 @@ async fn message_with_genesis_block_does_not_get_through() {
 
 		for i in 1..MAX_DATA_BRANCH_LEN {
 			let test_data: TestData = vec![selendra_data_from_headers(
-				(0..i).into_iter().map(|num| test_handler.get_header_at(num as u64)).collect(),
+				(0..i)
+					.into_iter()
+					.map(|num| test_handler.get_header_at(num as BlockNumber))
+					.collect(),
 			)];
 			test_handler.send_data(test_data.clone());
 		}

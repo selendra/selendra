@@ -7,10 +7,13 @@ use std::{
 use futures::channel::mpsc::{self, UnboundedSender};
 use parking_lot::Mutex;
 
-use crate::sync::{
-	mock::{MockHeader, MockIdentifier, MockJustification, MockNotification},
-	BlockIdentifier, BlockStatus, ChainStatus, ChainStatusNotifier, Finalizer, Header,
-	Justification as JustificationT,
+use crate::{
+	sync::{
+		mock::{MockHeader, MockIdentifier, MockJustification, MockNotification},
+		BlockStatus, ChainStatus, ChainStatusNotifier, Finalizer, Header,
+		Justification as JustificationT,
+	},
+	BlockIdentifier,
 };
 
 #[derive(Clone, Debug)]
@@ -35,10 +38,10 @@ impl MockBlock {
 
 #[derive(Clone, Debug)]
 struct BackendStorage {
+	session_period: u32,
 	blockchain: HashMap<MockIdentifier, MockBlock>,
 	finalized: Vec<MockIdentifier>,
 	best_block: MockIdentifier,
-	genesis_block: MockIdentifier,
 }
 
 #[derive(Clone, Debug)]
@@ -69,13 +72,13 @@ fn is_predecessor(
 }
 
 impl Backend {
-	pub fn setup() -> (Self, impl ChainStatusNotifier<MockIdentifier>) {
+	pub fn setup(session_period: usize) -> (Self, impl ChainStatusNotifier<MockHeader>) {
 		let (notification_sender, notification_receiver) = mpsc::unbounded();
 
-		(Backend::new(notification_sender), notification_receiver)
+		(Backend::new(notification_sender, session_period as u32), notification_receiver)
 	}
 
-	fn new(notification_sender: UnboundedSender<MockNotification>) -> Self {
+	fn new(notification_sender: UnboundedSender<MockNotification>, session_period: u32) -> Self {
 		let header = MockHeader::random_parentless(0);
 		let id = header.id();
 
@@ -85,24 +88,24 @@ impl Backend {
 		};
 
 		let storage = Arc::new(Mutex::new(BackendStorage {
+			session_period,
 			blockchain: HashMap::from([(id.clone(), block)]),
 			finalized: vec![id.clone()],
-			best_block: id.clone(),
-			genesis_block: id,
+			best_block: id,
 		}));
 
 		Self { inner: storage, notification_sender }
 	}
 
-	fn notify_imported(&self, id: MockIdentifier) {
+	fn notify_imported(&self, header: MockHeader) {
 		self.notification_sender
-			.unbounded_send(MockNotification::BlockImported(id))
+			.unbounded_send(MockNotification::BlockImported(header))
 			.expect("notification receiver is open");
 	}
 
-	fn notify_finalized(&self, id: MockIdentifier) {
+	fn notify_finalized(&self, header: MockHeader) {
 		self.notification_sender
-			.unbounded_send(MockNotification::BlockFinalized(id))
+			.unbounded_send(MockNotification::BlockFinalized(header))
 			.expect("notification receiver is open");
 	}
 
@@ -134,7 +137,7 @@ impl Backend {
 
 		storage.blockchain.insert(header.id(), MockBlock::new(header.clone()));
 
-		self.notify_imported(header.id());
+		self.notify_imported(header);
 	}
 }
 
@@ -160,33 +163,36 @@ impl Finalizer<MockJustification> for Backend {
 		let header = justification.header();
 		let parent_id = match justification.header().parent_id() {
 			Some(id) => id,
-			None => panic!("finalizing block without a parent: {:?}", header),
+			None => panic!("finalizing block without specified parent: {:?}", header),
 		};
 
-		let parent_block = match storage.blockchain.get(&parent_id) {
-			Some(block) => block,
-			None => panic!("finalizing block without an imported parent: {:?}", header),
-		};
-
-		if parent_block.justification.is_none() {
-			panic!("finalizing block without a finalized parent: {:?}", header);
+		if storage.blockchain.get(&parent_id).is_none() {
+			panic!("finalizing block without imported parent: {:?}", header)
 		}
 
-		if &parent_id != storage.finalized.last().expect("there is a top finalized") {
-			panic!(
-				"finalizing block whose parent is not top finalized: {:?}. Top is {:?}",
-				header,
-				storage.finalized.last().expect("there is a top finalized")
-			);
-		}
-
-		let id = justification.header().id();
+		let header = justification.header().clone();
+		let id = header.id();
 		let block = match storage.blockchain.get_mut(&id) {
 			Some(block) => block,
 			None => panic!("finalizing a not imported block: {:?}", header),
 		};
 
 		block.finalize(justification);
+
+		// Check if the previous block was finalized, or this is the last block of the current
+		// session
+		let allowed_numbers = match storage.finalized.last() {
+			Some(id) => [
+				id.number + 1,
+				id.number + storage.session_period -
+					(id.number + 1).rem_euclid(storage.session_period),
+			],
+			None => [0, storage.session_period - 1],
+		};
+		if !allowed_numbers.contains(&id.number) {
+			panic!("finalizing a block that is not a child of top finalized (round {:?}), nor the last of a session (round {:?}): round {:?}", allowed_numbers[0], allowed_numbers[1], id.number);
+		}
+
 		storage.finalized.push(id.clone());
 		// In case finalization changes best block, we set best block, to top finalized.
 		// Whenever a new import happens, best block will update anyway.
@@ -197,7 +203,7 @@ impl Finalizer<MockJustification> for Backend {
 		) {
 			storage.best_block = id.clone()
 		}
-		self.notify_finalized(id);
+		self.notify_finalized(header);
 
 		Ok(())
 	}
@@ -252,5 +258,20 @@ impl ChainStatus<MockJustification> for Backend {
 			.get(&id)
 			.and_then(|b| b.justification.clone())
 			.ok_or(StatusError)
+	}
+
+	fn children(&self, id: MockIdentifier) -> Result<Vec<MockHeader>, Self::Error> {
+		match self.status_of(id.clone())? {
+			BlockStatus::Unknown => Err(StatusError),
+			_ => {
+				let storage = self.inner.lock();
+				for (stored_id, block) in storage.blockchain.iter() {
+					if stored_id.number() == id.number + 1 {
+						return Ok(Vec::from([block.header()]))
+					}
+				}
+				Ok(Vec::new())
+			},
+		}
 	}
 }

@@ -1,33 +1,14 @@
-// Copyright 2023 Smallworld Selendra
-// This file is part of Selendra.
-
-// Selendra is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Selendra is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
-
-#![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments, clippy::unnecessary_mut_passed)]
-
+#![cfg_attr(not(feature = "std"), no_std)]
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
-
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-
 use sp_core::crypto::KeyTypeId;
 pub use sp_runtime::{
 	generic::Header as GenericHeader,
 	traits::{BlakeTwo256, ConstU32, Hash as HashT, Header as HeaderT, IdentifyAccount, Verify},
-	BoundedVec, ConsensusEngineId, MultiSignature, Perbill,
+	BoundedVec, ConsensusEngineId, FixedU128, MultiSignature, Perbill,
 };
 pub use sp_staking::{EraIndex, SessionIndex};
 use sp_std::vec::Vec;
@@ -68,6 +49,9 @@ pub type Hash = sp_core::H256;
 /// Index of a transaction in the relay chain. 32-bit should be plenty.
 pub type Index = u32;
 
+/// Fee multiplier.
+pub type Multiplier = FixedU128;
+
 /// The balance of an account.
 /// 128-bits (or 38 significant decimal figures) will allow for 10 m currency (`10^7`) at a resolution
 /// to all for one second's worth of an annualised 50% reward be paid to a unit holder (`10^11` unit
@@ -82,8 +66,9 @@ pub type Balance = u128;
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
 /// to even the core data structures.
 pub mod opaque {
-	use super::*;
 	pub use sp_runtime::{generic, OpaqueExtrinsic as UncheckedExtrinsic};
+
+	use super::*;
 
 	/// Opaque block header type.
 	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
@@ -118,8 +103,11 @@ pub enum ElectionOpenness {
 pub struct CommitteeSeats {
 	/// Size of reserved validators in a session
 	pub reserved_seats: u32,
-	/// Size of non reserved valiadtors in a session
+	/// Size of non reserved validators in a session
 	pub non_reserved_seats: u32,
+	/// Size of non reserved validators participating in the finality in a session.
+	/// A subset of the non reserved validators._
+	pub non_reserved_finality_seats: u32,
 }
 
 impl CommitteeSeats {
@@ -130,7 +118,11 @@ impl CommitteeSeats {
 
 impl Default for CommitteeSeats {
 	fn default() -> Self {
-		CommitteeSeats { reserved_seats: DEFAULT_COMMITTEE_SIZE, non_reserved_seats: 0 }
+		CommitteeSeats {
+			reserved_seats: DEFAULT_COMMITTEE_SIZE,
+			non_reserved_seats: 0,
+			non_reserved_finality_seats: 0,
+		}
 	}
 }
 
@@ -284,4 +276,58 @@ pub trait BannedValidators {
 pub trait EraManager {
 	/// new era has been planned
 	fn on_new_era(era: EraIndex);
+}
+
+pub mod staking {
+	use sp_runtime::Perbill;
+
+	use super::Balance;
+	use crate::TOKEN;
+
+	pub const MIN_VALIDATOR_BOND: u128 = 25_000 * TOKEN;
+	pub const MIN_NOMINATOR_BOND: u128 = 100 * TOKEN;
+	pub const MAX_NOMINATORS_REWARDED_PER_VALIDATOR: u32 = 1024;
+	pub const YEARLY_INFLATION: Balance = 30_000_000 * TOKEN;
+	pub const VALIDATOR_REWARD: Perbill = Perbill::from_percent(90);
+
+	pub fn era_payout(miliseconds_per_era: u64) -> (Balance, Balance) {
+		// Milliseconds per year for the Julian year (365.25 days).
+		const MILLISECONDS_PER_YEAR: u64 = 1000 * 3600 * 24 * 36525 / 100;
+
+		let portion = Perbill::from_rational(miliseconds_per_era, MILLISECONDS_PER_YEAR);
+		let total_payout = portion * YEARLY_INFLATION;
+		let validators_payout = VALIDATOR_REWARD * total_payout;
+		let rest = total_payout - validators_payout;
+
+		(validators_payout, rest)
+	}
+
+	/// Macro for making a default implementation of non-self methods from given class.
+	///
+	/// As an input it expects list of tuples of form
+	///
+	/// `(method_name(arg1: type1, arg2: type2, ...), class_name, return_type)`
+	///
+	/// where
+	///   * `method_name`is a wrapee method,
+	///   * `arg1: type1, arg2: type,...`is a list of arguments and will be passed as is, can be empty
+	///   * `class_name`is a class that has non-self `method-name`,ie symbol `class_name::method_name` exists,
+	///   * `return_type` is type returned from `method_name`
+	/// Example
+	/// ```ignore
+	/// wrap_methods!(
+	///     (bond(), SubstrateStakingWeights, Weight),
+	///     (bond_extra(), SubstrateStakingWeights, Weight)
+	/// );
+	/// ```
+	#[macro_export]
+	macro_rules! wrap_methods {
+        ($(($wrapped_method:ident( $($arg_name:ident: $argument_type:ty), *), $wrapped_class:ty, $return_type:ty)), *) => {
+            $(
+                fn $wrapped_method($($arg_name: $argument_type), *) -> $return_type {
+                    <$wrapped_class>::$wrapped_method($($arg_name), *)
+                }
+            )*
+        };
+    }
 }

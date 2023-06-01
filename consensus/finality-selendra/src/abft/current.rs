@@ -1,13 +1,14 @@
+use current_selendra_bft::{default_config, Config, LocalIO, Terminator};
 use log::debug;
-use selendra_bft::{default_config, Config, LocalIO, Terminator};
-pub use selendra_primitives::CURRENT_FINALITY_VERSION as VERSION;
+use network_clique::SpawnHandleT;
+pub use selendra_primitives::{BlockNumber, CURRENT_FINALITY_VERSION as VERSION};
 use sp_blockchain::HeaderBackend;
-use sp_runtime::traits::Block;
+use sp_runtime::traits::{Block, Header};
 
 use crate::{
 	abft::{
 		common::{unit_creation_delay_fn, MAX_ROUNDS},
-		NetworkWrapper, SpawnHandleT,
+		NetworkWrapper,
 	},
 	crypto::Signature,
 	data_io::{OrderedDataInterpreter, SelendraData},
@@ -20,22 +21,29 @@ use crate::{
 	CurrentNetworkData, Hasher, Keychain, NodeIndex, SessionId, SignatureSet, UnitCreationDelay,
 };
 
-pub fn run_member<
-	B: Block,
-	C: HeaderBackend<B> + Send + 'static,
-	ADN: Network<CurrentNetworkData<B>> + 'static,
->(
+pub fn run_member<B, C, ADN>(
 	subtask_common: SubtaskCommon,
 	multikeychain: Keychain,
 	config: Config,
 	network: NetworkWrapper<
-		selendra_bft::NetworkData<Hasher, SelendraData<B>, Signature, SignatureSet<Signature>>,
+		current_selendra_bft::NetworkData<
+			Hasher,
+			SelendraData<B>,
+			Signature,
+			SignatureSet<Signature>,
+		>,
 		ADN,
 	>,
-	data_provider: impl selendra_bft::DataProvider<SelendraData<B>> + Send + 'static,
+	data_provider: impl current_selendra_bft::DataProvider<SelendraData<B>> + Send + 'static,
 	ordered_data_interpreter: OrderedDataInterpreter<B, C>,
 	backup: ABFTBackup,
-) -> Task {
+) -> Task
+where
+	B: Block,
+	B::Header: Header<Number = BlockNumber>,
+	C: HeaderBackend<B> + Send + 'static,
+	ADN: Network<CurrentNetworkData<B>> + 'static,
+{
 	let SubtaskCommon { spawn_handle, session_id } = subtask_common;
 	let (stop, exit) = oneshot::channel();
 	let member_terminator = Terminator::create_root(exit, "member");
@@ -45,7 +53,7 @@ pub fn run_member<
 		let spawn_handle = spawn_handle.clone();
 		async move {
 			debug!(target: "selendra-party", "Running the member task for {:?}", session_id);
-			selendra_bft::run_session(
+			current_selendra_bft::run_session(
 				config,
 				local_io,
 				network,

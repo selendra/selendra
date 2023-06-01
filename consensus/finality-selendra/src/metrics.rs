@@ -20,6 +20,8 @@ const MAX_BLOCKS_PER_CHECKPOINT: usize = 5000;
 pub trait Key: Hash + Eq + Debug + Copy {}
 impl<T: Hash + Eq + Debug + Copy> Key for T {}
 
+const LOG_TARGET: &str = "selendra-metrics";
+
 struct Inner<H: Key> {
 	prev: HashMap<Checkpoint, Checkpoint>,
 	gauges: HashMap<Checkpoint, Gauge<U64>>,
@@ -28,7 +30,13 @@ struct Inner<H: Key> {
 
 impl<H: Key> Inner<H> {
 	fn report_block(&mut self, hash: H, checkpoint_time: Instant, checkpoint_type: Checkpoint) {
-		trace!(target: "selendra-metrics", "Reporting block stage: {:?} (hash: {:?}, at: {:?}", checkpoint_type, hash, checkpoint_time);
+		trace!(
+			target: LOG_TARGET,
+			"Reporting block stage: {:?} (hash: {:?}, at: {:?}",
+			checkpoint_type,
+			hash,
+			checkpoint_time
+		);
 
 		self.starts.entry(checkpoint_type).and_modify(|starts| {
 			starts.put(hash, checkpoint_time);
@@ -44,9 +52,15 @@ impl<H: Key> Inner<H> {
 				let duration = match checkpoint_time.checked_duration_since(*start) {
 					Some(duration) => duration,
 					None => {
-						warn!(target: "selendra-metrics", "Earlier metrics time {:?} is later that current one \
+						warn!(
+							target: LOG_TARGET,
+							"Earlier metrics time {:?} is later that current one \
                         {:?}. Checkpoint type {:?}, block: {:?}",
-                            *start, checkpoint_time, checkpoint_type, hash);
+							*start,
+							checkpoint_time,
+							checkpoint_type,
+							hash
+						);
 						Duration::new(0, 0)
 					},
 				};
@@ -71,11 +85,15 @@ pub(crate) enum Checkpoint {
 
 #[derive(Clone)]
 pub struct Metrics<H: Key> {
-	inner: Arc<Mutex<Inner<H>>>,
+	inner: Option<Arc<Mutex<Inner<H>>>>,
 }
 
 impl<H: Key> Metrics<H> {
-	pub fn register(registry: &Registry) -> Result<Self, PrometheusError> {
+	pub fn noop() -> Metrics<H> {
+		Metrics { inner: None }
+	}
+
+	pub fn new(registry: &Registry) -> Result<Metrics<H>, PrometheusError> {
 		use Checkpoint::*;
 		let keys = [Importing, Imported, Ordering, Ordered, Aggregating, Finalized];
 		let prev: HashMap<_, _> = keys[1..].iter().cloned().zip(keys.iter().cloned()).collect();
@@ -88,13 +106,13 @@ impl<H: Key> Metrics<H> {
 			);
 		}
 
-		let inner = Arc::new(Mutex::new(Inner {
+		let inner = Some(Arc::new(Mutex::new(Inner {
 			prev,
 			gauges,
 			starts: keys.iter().map(|k| (*k, LruCache::new(MAX_BLOCKS_PER_CHECKPOINT))).collect(),
-		}));
+		})));
 
-		Ok(Self { inner })
+		Ok(Metrics { inner })
 	}
 
 	pub(crate) fn report_block(
@@ -103,7 +121,9 @@ impl<H: Key> Metrics<H> {
 		checkpoint_time: Instant,
 		checkpoint_type: Checkpoint,
 	) {
-		self.inner.lock().report_block(hash, checkpoint_time, checkpoint_type);
+		if let Some(inner) = &self.inner {
+			inner.lock().report_block(hash, checkpoint_time, checkpoint_type);
+		}
 	}
 }
 
@@ -113,8 +133,19 @@ mod tests {
 
 	use super::*;
 
+	fn register_dummy_metrics() -> Metrics<usize> {
+		Metrics::<usize>::new(&Registry::new()).unwrap()
+	}
+
 	fn starts_for<H: Key>(m: &Metrics<H>, c: Checkpoint) -> usize {
-		m.inner.lock().starts.get(&c).unwrap().len()
+		m.inner
+			.as_ref()
+			.expect("There are some metrics")
+			.lock()
+			.starts
+			.get(&c)
+			.unwrap()
+			.len()
 	}
 
 	fn check_reporting_with_memory_excess(metrics: &Metrics<usize>, checkpoint: Checkpoint) {
@@ -125,21 +156,28 @@ mod tests {
 	}
 
 	#[test]
+	fn registration_with_no_register_creates_empty_metrics() {
+		let m = Metrics::<usize>::noop();
+		m.report_block(0, Instant::now(), Checkpoint::Ordered);
+		assert!(m.inner.is_none());
+	}
+
+	#[test]
 	fn should_keep_entries_up_to_defined_limit() {
-		let m = Metrics::<usize>::register(&Registry::new()).unwrap();
+		let m = register_dummy_metrics();
 		check_reporting_with_memory_excess(&m, Checkpoint::Ordered);
 	}
 
 	#[test]
 	fn should_manage_space_for_checkpoints_independently() {
-		let m = Metrics::<usize>::register(&Registry::new()).unwrap();
+		let m = register_dummy_metrics();
 		check_reporting_with_memory_excess(&m, Checkpoint::Ordered);
 		check_reporting_with_memory_excess(&m, Checkpoint::Imported);
 	}
 
 	#[test]
 	fn given_not_monotonic_clock_when_report_block_is_called_repeatedly_code_does_not_panic() {
-		let metrics = Metrics::<usize>::register(&Registry::new()).unwrap();
+		let metrics = register_dummy_metrics();
 		let earlier_timestamp = Instant::now();
 		let later_timestamp = earlier_timestamp + Duration::new(0, 5);
 		metrics.report_block(0, later_timestamp, Checkpoint::Ordering);

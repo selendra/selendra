@@ -1,43 +1,24 @@
-use std::hash::{Hash, Hasher};
+use std::fmt::{Debug, Display};
 
 use codec::{Decode, Encode};
 use selendra_primitives::BlockNumber;
 use sp_runtime::traits::{CheckedSub, Header as SubstrateHeader, One};
 
 use crate::{
-	sync::{BlockIdentifier, Header, Justification as JustificationT},
-	SelendraJustification,
+	sync::{Header, Justification as JustificationT},
+	BlockId, SelendraJustification,
 };
 
 mod chain_status;
 mod finalizer;
 mod status_notifier;
+mod translator;
 mod verification;
 
-pub use verification::SessionVerifier;
-
-#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode)]
-pub struct BlockId<H: SubstrateHeader<Number = BlockNumber>> {
-	hash: H::Hash,
-	number: H::Number,
-}
-
-/// An identifier uniquely specifying a block and its height.
-impl<SH: SubstrateHeader<Number = BlockNumber>> Hash for BlockId<SH> {
-	fn hash<H>(&self, state: &mut H)
-	where
-		H: Hasher,
-	{
-		self.hash.hash(state);
-		self.number.hash(state);
-	}
-}
-
-impl<H: SubstrateHeader<Number = BlockNumber>> BlockIdentifier for BlockId<H> {
-	fn number(&self) -> u32 {
-		self.number
-	}
-}
+pub use chain_status::SubstrateChainStatus;
+pub use status_notifier::SubstrateChainStatusNotifier;
+pub use translator::Error as TranslateError;
+pub use verification::{SessionVerifier, SubstrateFinalizationInfo, VerifierCache};
 
 impl<H: SubstrateHeader<Number = BlockNumber>> Header for H {
 	type Identifier = BlockId<H>;
@@ -52,11 +33,48 @@ impl<H: SubstrateHeader<Number = BlockNumber>> Header for H {
 	}
 }
 
+/// Proper `SelendraJustification` or a variant indicating virtual justification
+/// for the genesis block, which is the only block that can be the top finalized
+/// block with no proper justification.
+#[derive(Clone, Debug, Encode, Decode)]
+pub enum InnerJustification {
+	SelendraJustification(SelendraJustification),
+	Genesis,
+}
+
 /// A justification, including the related header.
 #[derive(Clone, Debug, Encode, Decode)]
 pub struct Justification<H: SubstrateHeader<Number = BlockNumber>> {
 	header: H,
-	raw_justification: SelendraJustification,
+	inner_justification: InnerJustification,
+}
+
+impl<H: SubstrateHeader<Number = BlockNumber>> Justification<H> {
+	pub fn selendra_justification(
+		header: H,
+		selendra_justification: SelendraJustification,
+	) -> Self {
+		Justification {
+			header,
+			inner_justification: InnerJustification::SelendraJustification(selendra_justification),
+		}
+	}
+
+	pub fn genesis_justification(header: H) -> Self {
+		Justification { header, inner_justification: InnerJustification::Genesis }
+	}
+}
+
+impl<H: SubstrateHeader<Number = BlockNumber>> Header for Justification<H> {
+	type Identifier = BlockId<H>;
+
+	fn id(&self) -> Self::Identifier {
+		self.header().id()
+	}
+
+	fn parent_id(&self) -> Option<Self::Identifier> {
+		self.header().parent_id()
+	}
 }
 
 impl<H: SubstrateHeader<Number = BlockNumber>> JustificationT for Justification<H> {
@@ -70,4 +88,15 @@ impl<H: SubstrateHeader<Number = BlockNumber>> JustificationT for Justification<
 	fn into_unverified(self) -> Self::Unverified {
 		self
 	}
+}
+
+/// Translates raw selendra justifications into ones acceptable to sync.
+pub trait JustificationTranslator<H: SubstrateHeader<Number = BlockNumber>>: Send + Sync {
+	type Error: Display + Debug;
+
+	fn translate(
+		&self,
+		raw_justification: SelendraJustification,
+		block_id: BlockId<H>,
+	) -> Result<Justification<H>, Self::Error>;
 }

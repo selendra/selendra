@@ -28,7 +28,7 @@ pub use legacy::{
 };
 pub use network::{CurrentNetworkData, LegacyNetworkData, NetworkWrapper};
 use selendra_bft_crypto::{PartialMultisignature, Signature};
-pub use traits::{Hash, SpawnHandle, SpawnHandleT, Wrapper as HashWrapper};
+pub use traits::{Hash, SpawnHandle, Wrapper as HashWrapper};
 pub use types::{NodeCount, NodeIndex, Recipient};
 
 /// Wrapper for `SignatureSet` to be able to implement both legacy and current `PartialMultisignature` trait.
@@ -86,10 +86,16 @@ impl<S: legacy_selendra_bft::Signature> legacy_selendra_bft::PartialMultisignatu
 	}
 }
 
-impl<S: legacy_selendra_bft::Signature> selendra_bft::PartialMultisignature for SignatureSet<S> {
+impl<S: legacy_selendra_bft::Signature> current_selendra_bft::PartialMultisignature
+	for SignatureSet<S>
+{
 	type Signature = S;
 
-	fn add_signature(self, signature: &Self::Signature, index: selendra_bft::NodeIndex) -> Self {
+	fn add_signature(
+		self,
+		signature: &Self::Signature,
+		index: current_selendra_bft::NodeIndex,
+	) -> Self {
 		SignatureSet::add_signature(self, signature, index.into())
 	}
 }

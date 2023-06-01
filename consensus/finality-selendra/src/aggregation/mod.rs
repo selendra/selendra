@@ -2,8 +2,8 @@
 
 use std::{fmt::Debug, hash::Hash, marker::PhantomData, time::Instant};
 
-use aggregator::NetworkError as CurrentNetworkError;
-use legacy_aggregator::NetworkError as LegacyNetworkError;
+use current_selendra_aggregator::NetworkError as CurrentNetworkError;
+use legacy_selendra_aggregator::NetworkError as LegacyNetworkError;
 use sp_runtime::traits::Block;
 
 use crate::{
@@ -18,15 +18,21 @@ use crate::{
 	Keychain, Metrics,
 };
 
-pub type LegacyRmcNetworkData<B> =
-	legacy_aggregator::RmcNetworkData<<B as Block>::Hash, Signature, SignatureSet<Signature>>;
-pub type CurrentRmcNetworkData<B> =
-	aggregator::RmcNetworkData<<B as Block>::Hash, Signature, SignatureSet<Signature>>;
+pub type LegacyRmcNetworkData<B> = legacy_selendra_aggregator::RmcNetworkData<
+	<B as Block>::Hash,
+	Signature,
+	SignatureSet<Signature>,
+>;
+pub type CurrentRmcNetworkData<B> = current_selendra_aggregator::RmcNetworkData<
+	<B as Block>::Hash,
+	Signature,
+	SignatureSet<Signature>,
+>;
 
-pub type LegacySignableBlockHash<B> = legacy_aggregator::SignableHash<<B as Block>::Hash>;
+pub type LegacySignableBlockHash<B> = legacy_selendra_aggregator::SignableHash<<B as Block>::Hash>;
 pub type LegacyRmc<'a, B> =
 	legacy_selendra_bft_rmc::ReliableMulticast<'a, LegacySignableBlockHash<B>, Keychain>;
-pub type LegacyAggregator<'a, B, N> = legacy_aggregator::IO<
+pub type LegacyAggregator<'a, B, N> = legacy_selendra_aggregator::IO<
 	<B as Block>::Hash,
 	LegacyRmcNetworkData<B>,
 	NetworkWrapper<LegacyRmcNetworkData<B>, N>,
@@ -35,10 +41,11 @@ pub type LegacyAggregator<'a, B, N> = legacy_aggregator::IO<
 	Metrics<<B as Block>::Hash>,
 >;
 
-pub type CurrentSignableBlockHash<B> = aggregator::SignableHash<<B as Block>::Hash>;
+pub type CurrentSignableBlockHash<B> =
+	current_selendra_aggregator::SignableHash<<B as Block>::Hash>;
 pub type CurrentRmc<'a, B> =
-	selendra_bft_rmc::ReliableMulticast<'a, CurrentSignableBlockHash<B>, Keychain>;
-pub type CurrentAggregator<'a, B, N> = aggregator::IO<
+	current_selendra_bft_rmc::ReliableMulticast<'a, CurrentSignableBlockHash<B>, Keychain>;
+pub type CurrentAggregator<'a, B, N> = current_selendra_aggregator::IO<
 	<B as Block>::Hash,
 	CurrentRmcNetworkData<B>,
 	NetworkWrapper<CurrentRmcNetworkData<B>, N>,
@@ -80,7 +87,7 @@ where
 	pub fn new_legacy(
 		multikeychain: &'a Keychain,
 		rmc_network: LN,
-		metrics: Option<Metrics<<B as Block>::Hash>>,
+		metrics: Metrics<<B as Block>::Hash>,
 	) -> Self {
 		let (messages_for_rmc, messages_from_network) = mpsc::unbounded();
 		let (messages_for_network, messages_from_rmc) = mpsc::unbounded();
@@ -94,7 +101,8 @@ where
 			legacy_selendra_bft::Keychain::node_count(multikeychain),
 			scheduler,
 		);
-		let aggregator = legacy_aggregator::BlockSignatureAggregator::new(metrics);
+		// For the compatibility with the legacy aggregator we need extra `Some` layer
+		let aggregator = legacy_selendra_aggregator::BlockSignatureAggregator::new(Some(metrics));
 		let aggregator_io = LegacyAggregator::<B, LN>::new(
 			messages_for_rmc,
 			messages_from_rmc,
@@ -109,20 +117,21 @@ where
 	pub fn new_current(
 		multikeychain: &'a Keychain,
 		rmc_network: CN,
-		metrics: Option<Metrics<<B as Block>::Hash>>,
+		metrics: Metrics<<B as Block>::Hash>,
 	) -> Self {
 		let (messages_for_rmc, messages_from_network) = mpsc::unbounded();
 		let (messages_for_network, messages_from_rmc) = mpsc::unbounded();
-		let scheduler =
-			selendra_bft_rmc::DoublingDelayScheduler::new(tokio::time::Duration::from_millis(500));
-		let rmc = selendra_bft_rmc::ReliableMulticast::new(
+		let scheduler = current_selendra_bft_rmc::DoublingDelayScheduler::new(
+			tokio::time::Duration::from_millis(500),
+		);
+		let rmc = current_selendra_bft_rmc::ReliableMulticast::new(
 			messages_from_network,
 			messages_for_network,
 			multikeychain,
-			selendra_bft::Keychain::node_count(multikeychain),
+			current_selendra_bft::Keychain::node_count(multikeychain),
 			scheduler,
 		);
-		let aggregator = aggregator::BlockSignatureAggregator::new(metrics);
+		let aggregator = current_selendra_aggregator::BlockSignatureAggregator::new(metrics);
 		let aggregator_io = CurrentAggregator::<B, CN>::new(
 			messages_for_rmc,
 			messages_from_rmc,
@@ -166,20 +175,20 @@ impl<D: Data, N: Network<D>> NetworkWrapper<D, N> {
 	}
 }
 
-impl<H: Debug + Hash + Eq + Debug + Copy> legacy_aggregator::Metrics<H> for Metrics<H> {
+impl<H: Debug + Hash + Eq + Debug + Copy> legacy_selendra_aggregator::Metrics<H> for Metrics<H> {
 	fn report_aggregation_complete(&mut self, h: H) {
 		self.report_block(h, Instant::now(), Checkpoint::Aggregating);
 	}
 }
 
-impl<H: Debug + Hash + Eq + Debug + Copy> aggregator::Metrics<H> for Metrics<H> {
+impl<H: Debug + Hash + Eq + Debug + Copy> current_selendra_aggregator::Metrics<H> for Metrics<H> {
 	fn report_aggregation_complete(&mut self, h: H) {
 		self.report_block(h, Instant::now(), Checkpoint::Aggregating);
 	}
 }
 
 #[async_trait::async_trait]
-impl<T, D> legacy_aggregator::ProtocolSink<D> for NetworkWrapper<D, T>
+impl<T, D> legacy_selendra_aggregator::ProtocolSink<D> for NetworkWrapper<D, T>
 where
 	T: Network<D>,
 	D: Data,
@@ -200,7 +209,7 @@ where
 }
 
 #[async_trait::async_trait]
-impl<T, D> aggregator::ProtocolSink<D> for NetworkWrapper<D, T>
+impl<T, D> current_selendra_aggregator::ProtocolSink<D> for NetworkWrapper<D, T>
 where
 	T: Network<D>,
 	D: Data,
@@ -209,7 +218,11 @@ where
 		self.0.next().await
 	}
 
-	fn send(&self, data: D, recipient: selendra_bft::Recipient) -> Result<(), CurrentNetworkError> {
+	fn send(
+		&self,
+		data: D,
+		recipient: current_selendra_bft::Recipient,
+	) -> Result<(), CurrentNetworkError> {
 		self.0.send(data, recipient.into()).map_err(|e| match e {
 			SendError::SendFailed => CurrentNetworkError::SendFail,
 		})

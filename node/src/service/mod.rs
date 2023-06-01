@@ -4,22 +4,20 @@ use crate::cli::selendra_cli::SelendraCli;
 pub mod chain_spec;
 pub mod executor;
 
-use chain_spec::DEFAULT_BACKUP_FOLDER;
-use executor::SelendraExecutor;
-
 use std::{
 	path::{Path, PathBuf},
 	sync::Arc,
 };
 
+use chain_spec::DEFAULT_BACKUP_FOLDER;
+use executor::SelendraExecutor;
 use finality_selendra::{
-	run_nonvalidator_node, run_validator_node, JustificationNotification, Metrics,
-	MillisecsPerBlock, Protocol, ProtocolNaming, SelendraBlockImport, SelendraConfig,
-	SessionPeriod,
+	run_validator_node, Justification, Metrics, MillisecsPerBlock, Protocol, ProtocolNaming,
+	SelendraBlockImport, SelendraConfig, SessionPeriod, SubstrateChainStatus, TracingBlockImport,
 };
 use futures::channel::mpsc;
-use log::warn;
-use sc_client_api::{Backend, BlockBackend, HeaderBackend};
+use log::{info, warn};
+use sc_client_api::{BlockBackend, HeaderBackend};
 use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
 use sc_consensus_slots::BackoffAuthoringBlocksStrategy;
 use sc_network::NetworkService;
@@ -29,10 +27,10 @@ use sc_service::{
 };
 use sc_telemetry::{Telemetry, TelemetryWorker};
 use selendra_primitives::{opaque::Block, SelendraSessionApi, MAX_BLOCK_SIZE};
+use selendra_rpc::{create_full as create_full_rpc, FullDeps as RpcFullDeps};
 use selendra_runtime::{self, RuntimeApi};
 use sp_api::ProvideRuntimeApi;
 use sp_arithmetic::traits::BaseArithmetic;
-use sp_blockchain::Backend as _;
 use sp_consensus_aura::{sr25519::AuthorityPair as AuraPair, Slot};
 use sp_runtime::{
 	generic::BlockId,
@@ -90,11 +88,11 @@ pub fn new_partial(
 		sc_consensus::DefaultImportQueue<Block, FullClient>,
 		sc_transaction_pool::FullPool<Block, FullClient>,
 		(
-			SelendraBlockImport<Block, FullBackend, FullClient>,
-			mpsc::UnboundedSender<JustificationNotification<Block>>,
-			mpsc::UnboundedReceiver<JustificationNotification<Block>>,
+			TracingBlockImport<Block, Arc<FullClient>>,
+			mpsc::UnboundedSender<Justification<<Block as BlockT>::Header>>,
+			mpsc::UnboundedReceiver<Justification<<Block as BlockT>::Header>>,
 			Option<Telemetry>,
-			Option<Metrics<<<Block as BlockT>::Header as HeaderT>::Hash>>,
+			Metrics<<<Block as BlockT>::Header as HeaderT>::Hash>,
 		),
 	>,
 	ServiceError,
@@ -141,19 +139,28 @@ pub fn new_partial(
 		client.clone(),
 	);
 
-	let metrics = config.prometheus_registry().cloned().and_then(|r| {
-		Metrics::register(&r)
-			.map_err(|err| {
-				warn!("Failed to register Prometheus metrics\n{:?}", err);
-			})
-			.ok()
-	});
+	let metrics = match config.prometheus_registry() {
+		Some(register) => match Metrics::new(register) {
+			Ok(metrics) => metrics,
+			Err(e) => {
+				warn!("Failed to register Prometheus metrics: {:?}.", e);
+				Metrics::noop()
+			},
+		},
+		None => {
+			info!("Running with the metrics is not available.");
+			Metrics::noop()
+		},
+	};
 
 	let (justification_tx, justification_rx) = mpsc::unbounded();
+	let tracing_block_import = TracingBlockImport::new(client.clone(), metrics.clone());
+	let justification_translator = SubstrateChainStatus::new(backend.clone())
+		.map_err(|e| ServiceError::Other(format!("failed to set up chain status: {}", e)))?;
 	let selendra_block_import = SelendraBlockImport::new(
-		client.clone() as Arc<_>,
+		tracing_block_import.clone(),
 		justification_tx.clone(),
-		metrics.clone(),
+		justification_translator,
 	);
 
 	let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
@@ -161,7 +168,7 @@ pub fn new_partial(
 	let import_queue = sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _>(
 		ImportQueueParams {
 			block_import: selendra_block_import.clone(),
-			justification_import: Some(Box::new(selendra_block_import.clone())),
+			justification_import: Some(Box::new(selendra_block_import)),
 			client: client.clone(),
 			create_inherent_data_providers: move |_, ()| async move {
 				let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
@@ -190,7 +197,7 @@ pub fn new_partial(
 		keystore_container,
 		select_chain,
 		transaction_pool,
-		other: (selendra_block_import, justification_tx, justification_rx, telemetry, metrics),
+		other: (tracing_block_import, justification_tx, justification_rx, telemetry, metrics),
 	})
 }
 
@@ -199,13 +206,14 @@ pub fn new_partial(
 fn setup(
 	mut config: Configuration,
 	backend: Arc<FullBackend>,
+	chain_status: SubstrateChainStatus<Block>,
 	keystore_container: &KeystoreContainer,
 	import_queue: sc_consensus::DefaultImportQueue<Block, FullClient>,
 	transaction_pool: Arc<sc_transaction_pool::FullPool<Block, FullClient>>,
 	task_manager: &mut TaskManager,
 	client: Arc<FullClient>,
 	telemetry: &mut Option<Telemetry>,
-	import_justification_tx: mpsc::UnboundedSender<JustificationNotification<Block>>,
+	import_justification_tx: mpsc::UnboundedSender<Justification<<Block as BlockT>::Header>>,
 ) -> Result<
 	(
 		RpcHandlers,
@@ -244,16 +252,16 @@ fn setup(
 	let rpc_builder = {
 		let client = client.clone();
 		let pool = transaction_pool.clone();
-
 		Box::new(move |deny_unsafe, _| {
-			let deps = selendra_rpc::FullDeps {
+			let deps = RpcFullDeps {
 				client: client.clone(),
 				pool: pool.clone(),
 				deny_unsafe,
 				import_justification_tx: import_justification_tx.clone(),
+				justification_translator: chain_status.clone(),
 			};
 
-			Ok(selendra_rpc::create_full(deps)?)
+			Ok(create_full_rpc(deps)?)
 		})
 	};
 
@@ -309,9 +317,12 @@ pub fn new_authority(
 		Some(LimitNonfinalized(selendra_config.max_nonfinalized_blocks()));
 	let prometheus_registry = config.prometheus_registry().cloned();
 
+	let chain_status = SubstrateChainStatus::new(backend.clone())
+		.map_err(|e| ServiceError::Other(format!("failed to set up chain status: {}", e)))?;
 	let (_rpc_handlers, network, protocol_naming, network_starter) = setup(
 		config,
-		backend.clone(),
+		backend,
+		chain_status.clone(),
 		&keystore_container,
 		import_queue,
 		transaction_pool.clone(),
@@ -367,15 +378,14 @@ pub fn new_authority(
 	if selendra_config.external_addresses().is_empty() {
 		panic!("Cannot run a validator node without external addresses, stopping.");
 	}
-	let blockchain_backend = BlockchainBackendImpl { backend };
 	let selendra_config = SelendraConfig {
 		network,
 		client,
-		blockchain_backend,
+		chain_status,
 		select_chain,
 		session_period,
 		millisecs_per_block,
-		spawn_handle: task_manager.spawn_handle(),
+		spawn_handle: task_manager.spawn_handle().into(),
 		keystore: keystore_container.keystore(),
 		justification_rx,
 		metrics,
@@ -385,6 +395,7 @@ pub fn new_authority(
 		validator_port: selendra_config.validator_port(),
 		protocol_naming,
 	};
+
 	task_manager.spawn_essential_handle().spawn_blocking(
 		"selendra",
 		None,
@@ -393,104 +404,4 @@ pub fn new_authority(
 
 	network_starter.start_network();
 	Ok(task_manager)
-}
-
-pub fn new_full(
-	config: Configuration,
-	selendra_config: SelendraCli,
-) -> Result<TaskManager, ServiceError> {
-	let sc_service::PartialComponents {
-		client,
-		backend,
-		mut task_manager,
-		import_queue,
-		keystore_container,
-		select_chain,
-		transaction_pool,
-		other: (_, justification_tx, justification_rx, mut telemetry, metrics),
-	} = new_partial(&config)?;
-
-	let backup_path = backup_path(
-		&selendra_config,
-		config.base_path.as_ref().expect("Please specify base path").path(),
-	);
-
-	let (_rpc_handlers, network, protocol_naming, network_starter) = setup(
-		config,
-		backend.clone(),
-		&keystore_container,
-		import_queue,
-		transaction_pool,
-		&mut task_manager,
-		client.clone(),
-		&mut telemetry,
-		justification_tx,
-	)?;
-
-	let finalized = client.info().finalized_number;
-
-	let session_period =
-		SessionPeriod(client.runtime_api().session_period(&BlockId::Number(finalized)).unwrap());
-
-	let millisecs_per_block = MillisecsPerBlock(
-		client.runtime_api().millisecs_per_block(&BlockId::Number(finalized)).unwrap(),
-	);
-
-	let blockchain_backend = BlockchainBackendImpl { backend };
-	let selendra_config = SelendraConfig {
-		network,
-		client,
-		blockchain_backend,
-		select_chain,
-		session_period,
-		millisecs_per_block,
-		spawn_handle: task_manager.spawn_handle(),
-		keystore: keystore_container.keystore(),
-		justification_rx,
-		metrics,
-		unit_creation_delay: selendra_config.unit_creation_delay(),
-		backup_saving_path: backup_path,
-		external_addresses: selendra_config.external_addresses(),
-		validator_port: selendra_config.validator_port(),
-		protocol_naming,
-	};
-
-	task_manager.spawn_essential_handle().spawn_blocking(
-		"selendra",
-		None,
-		run_nonvalidator_node(selendra_config),
-	);
-
-	network_starter.start_network();
-	Ok(task_manager)
-}
-
-struct BlockchainBackendImpl {
-	backend: Arc<FullBackend>,
-}
-impl finality_selendra::BlockchainBackend<Block> for BlockchainBackendImpl {
-	fn children(&self, parent_hash: <Block as BlockT>::Hash) -> Vec<<Block as BlockT>::Hash> {
-		self.backend.blockchain().children(parent_hash).unwrap_or_default()
-	}
-	fn info(&self) -> sp_blockchain::Info<Block> {
-		self.backend.blockchain().info()
-	}
-	fn header(
-		&self,
-		block_id: BlockId<Block>,
-	) -> sp_blockchain::Result<Option<<Block as BlockT>::Header>> {
-		let hash = match block_id {
-			BlockId::Hash(h) => h,
-			BlockId::Number(n) => {
-				let maybe_hash = self.backend.blockchain().hash(n)?;
-
-				if let Some(h) = maybe_hash {
-					h
-				} else {
-					return Ok(None)
-				}
-			},
-		};
-		self.backend.blockchain().header(hash)
-	}
 }

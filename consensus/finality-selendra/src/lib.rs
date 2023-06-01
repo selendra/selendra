@@ -1,8 +1,11 @@
-extern crate core;
+use std::{
+	fmt::{Debug, Display, Error as FmtError, Formatter},
+	hash::Hash,
+	path::PathBuf,
+	sync::Arc,
+};
 
-use std::{fmt::Debug, path::PathBuf, sync::Arc};
-
-use codec::{Decode, Encode, Output};
+use codec::{Codec, Decode, Encode, Output};
 use derive_more::Display;
 use futures::{
 	channel::{mpsc, oneshot},
@@ -12,21 +15,22 @@ use sc_client_api::{Backend, BlockchainEvents, Finalizer, LockImportRun, Transac
 use sc_consensus::BlockImport;
 use sc_network::NetworkService;
 use sc_network_common::ExHashT;
-use sc_service::SpawnTaskHandle;
-use sp_api::{NumberFor, ProvideRuntimeApi};
+use selendra_primitives::{AuthorityId, BlockNumber};
+use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{HeaderBackend, HeaderMetadata};
 use sp_keystore::CryptoStore;
 use sp_runtime::traits::{BlakeTwo256, Block, Header};
 use tokio::time::Duration;
 
 use crate::{
-	abft::{CurrentNetworkData, LegacyNetworkData, CURRENT_VERSION, LEGACY_VERSION},
-	aggregation::{CurrentRmcNetworkData, LegacyRmcNetworkData},
-	network::data::split::Split,
-	session::{
-		first_block_of_session, last_block_of_session, session_id_from_block_num,
-		SessionBoundaries, SessionId,
+	abft::{
+		CurrentNetworkData, Keychain, LegacyNetworkData, NodeCount, NodeIndex, Recipient,
+		SignatureSet, SpawnHandle, CURRENT_VERSION, LEGACY_VERSION,
 	},
+	aggregation::{CurrentRmcNetworkData, LegacyRmcNetworkData},
+	compatibility::{Version, Versioned},
+	network::data::split::Split,
+	session::{SessionBoundaries, SessionBoundaryInfo, SessionId},
 	VersionedTryFromError::{ExpectedNewGotOld, ExpectedOldGotNew},
 };
 
@@ -38,36 +42,28 @@ mod data_io;
 mod finalization;
 mod import;
 mod justification;
-pub mod metrics;
+mod metrics;
 mod network;
 mod nodes;
 mod party;
 mod session;
 mod session_map;
-// TODO: remove when module is used
-#[allow(dead_code)]
 mod sync;
 #[cfg(test)]
 pub mod testing;
 
-pub use abft::{Keychain, NodeCount, NodeIndex, Recipient, SignatureSet, SpawnHandle};
-pub use import::SelendraBlockImport;
-pub use justification::{JustificationNotification, SelendraJustification};
-pub use network::{Protocol, ProtocolNaming};
-pub use nodes::{run_nonvalidator_node, run_validator_node};
-pub use selendra_primitives::{AuthorityId, AuthorityPair, AuthoritySignature};
-pub use session::SessionPeriod;
-
-use crate::compatibility::{Version, Versioned};
-pub use crate::metrics::Metrics;
+pub use crate::{
+	import::{SelendraBlockImport, TracingBlockImport},
+	justification::SelendraJustification,
+	metrics::Metrics,
+	network::{Protocol, ProtocolNaming},
+	nodes::run_validator_node,
+	session::SessionPeriod,
+	sync::{substrate::Justification, JustificationTranslator, SubstrateChainStatus},
+};
 
 /// Constant defining how often components of finality-selendra should report their state
 const STATUS_REPORT_INTERVAL: Duration = Duration::from_secs(20);
-
-#[derive(Clone, Debug, Encode, Decode)]
-enum Error {
-	SendData,
-}
 
 /// Returns a NonDefaultSetConfig for the specified protocol.
 pub fn peers_set_config(
@@ -94,8 +90,8 @@ pub struct MillisecsPerBlock(pub u64);
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd, Encode, Decode)]
 pub struct UnitCreationDelay(pub u64);
 
-pub type LegacySplitData<B> = Split<LegacyNetworkData<B>, LegacyRmcNetworkData<B>>;
-pub type CurrentSplitData<B> = Split<CurrentNetworkData<B>, CurrentRmcNetworkData<B>>;
+type LegacySplitData<B> = Split<LegacyNetworkData<B>, LegacyRmcNetworkData<B>>;
+type CurrentSplitData<B> = Split<CurrentNetworkData<B>, CurrentRmcNetworkData<B>>;
 
 impl<B: Block> Versioned for LegacyNetworkData<B> {
 	const VERSION: Version = Version(LEGACY_VERSION);
@@ -151,7 +147,7 @@ impl<L: Versioned + Encode, R: Versioned + Encode> Encode for VersionedEitherMes
 	}
 }
 
-pub type VersionedNetworkData<B> = VersionedEitherMessage<LegacySplitData<B>, CurrentSplitData<B>>;
+type VersionedNetworkData<B> = VersionedEitherMessage<LegacySplitData<B>, CurrentSplitData<B>>;
 
 #[derive(Debug, Display, Clone)]
 pub enum VersionedTryFromError {
@@ -220,37 +216,70 @@ where
 {
 }
 
+/// The identifier of a block, the least amount of knowledge we can have about a block.
+pub trait BlockIdentifier: Clone + Hash + Debug + Eq + Codec + Send + Sync + 'static {
+	/// The block number, useful when reasoning about hopeless forks.
+	fn number(&self) -> BlockNumber;
+}
+
 type Hasher = abft::HashWrapper<BlakeTwo256>;
 
-#[derive(PartialEq, Eq, Clone, Debug, Hash)]
-pub struct HashNum<H, N> {
-	hash: H,
-	num: N,
+#[derive(PartialEq, Eq, Clone, Debug, Encode, Decode)]
+pub struct BlockId<H: Header<Number = BlockNumber>> {
+	hash: H::Hash,
+	number: H::Number,
 }
 
-impl<H, N> HashNum<H, N> {
-	fn new(hash: H, num: N) -> Self {
-		HashNum { hash, num }
+impl<H: Header<Number = BlockNumber>> BlockId<H> {
+	pub fn new(hash: H::Hash, number: BlockNumber) -> Self {
+		BlockId { hash, number }
 	}
 }
 
-impl<H, N> From<(H, N)> for HashNum<H, N> {
-	fn from(pair: (H, N)) -> Self {
-		HashNum::new(pair.0, pair.1)
+impl<H: Header<Number = BlockNumber>> From<(H::Hash, BlockNumber)> for BlockId<H> {
+	fn from(pair: (H::Hash, BlockNumber)) -> Self {
+		BlockId::new(pair.0, pair.1)
 	}
 }
 
-pub type BlockHashNum<B> = HashNum<<B as Block>::Hash, NumberFor<B>>;
+impl<SH: Header<Number = BlockNumber>> Hash for BlockId<SH> {
+	fn hash<H>(&self, state: &mut H)
+	where
+		H: std::hash::Hasher,
+	{
+		self.hash.hash(state);
+		self.number.hash(state);
+	}
+}
 
-pub struct SelendraConfig<B: Block, H: ExHashT, C, SC, BB> {
+impl<H: Header<Number = BlockNumber>> Display for BlockId<H> {
+	fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), FmtError> {
+		write!(f, "#{} ({})", self.number, self.hash,)
+	}
+}
+
+type IdentifierFor<B> = BlockId<<B as Block>::Header>;
+
+impl<H: Header<Number = BlockNumber>> BlockIdentifier for BlockId<H> {
+	fn number(&self) -> BlockNumber {
+		self.number
+	}
+}
+
+pub struct SelendraConfig<B, H, C, SC, CS>
+where
+	B: Block,
+	B::Header: Header<Number = BlockNumber>,
+	H: ExHashT,
+{
 	pub network: Arc<NetworkService<B, H>>,
 	pub client: Arc<C>,
-	pub blockchain_backend: BB,
+	pub chain_status: CS,
 	pub select_chain: SC,
-	pub spawn_handle: SpawnTaskHandle,
+	pub spawn_handle: SpawnHandle,
 	pub keystore: Arc<dyn CryptoStore>,
-	pub justification_rx: mpsc::UnboundedReceiver<JustificationNotification<B>>,
-	pub metrics: Option<Metrics<<B::Header as Header>::Hash>>,
+	pub justification_rx: mpsc::UnboundedReceiver<Justification<<B as Block>::Header>>,
+	pub metrics: Metrics<<B::Header as Header>::Hash>,
 	pub session_period: SessionPeriod,
 	pub millisecs_per_block: MillisecsPerBlock,
 	pub unit_creation_delay: UnitCreationDelay,
@@ -258,13 +287,4 @@ pub struct SelendraConfig<B: Block, H: ExHashT, C, SC, BB> {
 	pub external_addresses: Vec<String>,
 	pub validator_port: u16,
 	pub protocol_naming: ProtocolNaming,
-}
-
-pub trait BlockchainBackend<B: Block> {
-	fn children(&self, parent_hash: <B as Block>::Hash) -> Vec<<B as Block>::Hash>;
-	fn info(&self) -> sp_blockchain::Info<B>;
-	fn header(
-		&self,
-		block_id: sp_api::BlockId<B>,
-	) -> sp_blockchain::Result<Option<<B as Block>::Header>>;
 }

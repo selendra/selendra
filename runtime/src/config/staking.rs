@@ -13,25 +13,22 @@
 
 // You should have received a copy of the GNU General Public License
 
-use crate::{
-	Balances, Elections, NominationPools, Runtime, RuntimeEvent, Session, Timestamp, Treasury,
-};
-
-use sp_runtime::{FixedU128, Perbill};
-use sp_staking::EraIndex;
-
 use frame_support::{
 	pallet_prelude::Weight,
 	parameter_types,
 	traits::{ConstU32, U128CurrencyToVote},
 	PalletId,
 };
-
-use selendra_primitives::{
-	AccountId, Balance, DEFAULT_SESSIONS_PER_ERA, MAX_NOMINATORS_REWARDED_PER_VALIDATOR,
+use primitives::{
+	wrap_methods, Balance, DEFAULT_SESSIONS_PER_ERA, MAX_NOMINATORS_REWARDED_PER_VALIDATOR,
 };
-use selendra_runtime_common::{
-	prod_or_fast, staking::era_payout, wrap_methods, BalanceToU256, U256ToBalance,
+use selendra_runtime_common::prod_or_fast;
+use sp_runtime::{traits::Convert, FixedU128, Perbill};
+use sp_staking::EraIndex;
+
+use crate::{
+	origin::EnsureRootOrHalfCouncil, Balances, Elections, Runtime, RuntimeEvent, Session,
+	Timestamp, Treasury,
 };
 
 parameter_types! {
@@ -70,17 +67,17 @@ impl pallet_staking::Config for Runtime {
 	type BenchmarkingConfig = StakingBenchmarkingConfig;
 	type WeightInfo = PayoutStakersDecreasedWeightInfo;
 	type CurrencyBalance = Balance;
-	type OnStakerSlash = NominationPools;
+	type OnStakerSlash = ();
 	type HistoryDepth = HistoryDepth;
 	type TargetList = pallet_staking::UseValidatorsMap<Self>;
-	type AdminOrigin = frame_system::EnsureRoot<AccountId>;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
 }
 
 pub struct UniformEraPayout;
 
 impl pallet_staking::EraPayout<Balance> for UniformEraPayout {
 	fn era_payout(_: Balance, _: Balance, era_duration_millis: u64) -> (Balance, Balance) {
-		era_payout(era_duration_millis)
+		primitives::staking::era_payout(era_duration_millis)
 	}
 }
 
@@ -137,6 +134,22 @@ parameter_types! {
 	pub const PostUnbondPoolsWindow: u32 = 4;
 	pub const NominationPoolsPalletId: PalletId = PalletId(*b"py/nopls");
 	pub const MaxPointsToBalance: u8 = 10;
+}
+
+pub struct BalanceToU256;
+
+impl Convert<Balance, sp_core::U256> for BalanceToU256 {
+	fn convert(balance: Balance) -> sp_core::U256 {
+		sp_core::U256::from(balance)
+	}
+}
+
+pub struct U256ToBalance;
+
+impl Convert<sp_core::U256, Balance> for U256ToBalance {
+	fn convert(n: sp_core::U256) -> Balance {
+		n.try_into().unwrap_or(Balance::max_value())
+	}
 }
 
 impl pallet_nomination_pools::Config for Runtime {

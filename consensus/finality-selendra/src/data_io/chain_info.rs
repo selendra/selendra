@@ -3,35 +3,41 @@ use std::sync::Arc;
 use log::error;
 use lru::LruCache;
 use sc_client_api::HeaderBackend;
-use sp_runtime::traits::{Block as BlockT, Header as HeaderT, NumberFor, One};
+use selendra_primitives::BlockNumber;
+use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 
-use crate::{data_io::ChainInfoCacheConfig, BlockHashNum};
+use crate::{data_io::ChainInfoCacheConfig, IdentifierFor};
 
-pub trait ChainInfoProvider<B: BlockT> {
-	fn is_block_imported(&mut self, block: &BlockHashNum<B>) -> bool;
+pub trait ChainInfoProvider<B>
+where
+	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
+{
+	fn is_block_imported(&mut self, block: &IdentifierFor<B>) -> bool;
 
-	fn get_finalized_at(&mut self, number: NumberFor<B>) -> Result<BlockHashNum<B>, ()>;
+	fn get_finalized_at(&mut self, number: BlockNumber) -> Result<IdentifierFor<B>, ()>;
 
-	fn get_parent_hash(&mut self, block: &BlockHashNum<B>) -> Result<B::Hash, ()>;
+	fn get_parent_hash(&mut self, block: &IdentifierFor<B>) -> Result<B::Hash, ()>;
 
-	fn get_highest_finalized(&mut self) -> BlockHashNum<B>;
+	fn get_highest_finalized(&mut self) -> IdentifierFor<B>;
 }
 
 impl<C, B> ChainInfoProvider<B> for Arc<C>
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	C: HeaderBackend<B>,
 {
-	fn is_block_imported(&mut self, block: &BlockHashNum<B>) -> bool {
+	fn is_block_imported(&mut self, block: &IdentifierFor<B>) -> bool {
 		let maybe_header = self.header(block.hash).expect("client must answer a query");
 		if let Some(header) = maybe_header {
 			// If the block number is incorrect, we treat as not imported.
-			return *header.number() == block.num
+			return *header.number() == block.number
 		}
 		false
 	}
 
-	fn get_finalized_at(&mut self, num: NumberFor<B>) -> Result<BlockHashNum<B>, ()> {
+	fn get_finalized_at(&mut self, num: BlockNumber) -> Result<IdentifierFor<B>, ()> {
 		if self.info().finalized_number < num {
 			return Err(())
 		}
@@ -51,7 +57,7 @@ where
 		}
 	}
 
-	fn get_parent_hash(&mut self, block: &BlockHashNum<B>) -> Result<B::Hash, ()> {
+	fn get_parent_hash(&mut self, block: &IdentifierFor<B>) -> Result<B::Hash, ()> {
 		if let Some(header) = self.header(block.hash).expect("client must respond") {
 			Ok(*header.parent_hash())
 		} else {
@@ -59,7 +65,7 @@ where
 		}
 	}
 
-	fn get_highest_finalized(&mut self) -> BlockHashNum<B> {
+	fn get_highest_finalized(&mut self) -> IdentifierFor<B> {
 		let status = self.info();
 		(status.finalized_hash, status.finalized_number).into()
 	}
@@ -68,17 +74,19 @@ where
 pub struct CachedChainInfoProvider<B, CIP>
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	CIP: ChainInfoProvider<B>,
 {
-	available_block_with_parent_cache: LruCache<BlockHashNum<B>, B::Hash>,
-	available_blocks_cache: LruCache<BlockHashNum<B>, ()>,
-	finalized_cache: LruCache<NumberFor<B>, B::Hash>,
+	available_block_with_parent_cache: LruCache<IdentifierFor<B>, B::Hash>,
+	available_blocks_cache: LruCache<IdentifierFor<B>, ()>,
+	finalized_cache: LruCache<BlockNumber, B::Hash>,
 	chain_info_provider: CIP,
 }
 
 impl<B, CIP> CachedChainInfoProvider<B, CIP>
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	CIP: ChainInfoProvider<B>,
 {
 	pub fn new(chain_info_provider: CIP, config: ChainInfoCacheConfig) -> Self {
@@ -98,9 +106,10 @@ where
 impl<B, CIP> ChainInfoProvider<B> for CachedChainInfoProvider<B, CIP>
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	CIP: ChainInfoProvider<B>,
 {
-	fn is_block_imported(&mut self, block: &BlockHashNum<B>) -> bool {
+	fn is_block_imported(&mut self, block: &IdentifierFor<B>) -> bool {
 		if self.available_blocks_cache.contains(block) {
 			return true
 		}
@@ -112,12 +121,12 @@ where
 		false
 	}
 
-	fn get_finalized_at(&mut self, num: NumberFor<B>) -> Result<BlockHashNum<B>, ()> {
+	fn get_finalized_at(&mut self, num: BlockNumber) -> Result<IdentifierFor<B>, ()> {
 		if let Some(hash) = self.finalized_cache.get(&num) {
 			return Ok((*hash, num).into())
 		}
 
-		if self.get_highest_finalized().num < num {
+		if self.get_highest_finalized().number < num {
 			return Err(())
 		}
 
@@ -128,7 +137,7 @@ where
 		Err(())
 	}
 
-	fn get_parent_hash(&mut self, block: &BlockHashNum<B>) -> Result<B::Hash, ()> {
+	fn get_parent_hash(&mut self, block: &IdentifierFor<B>) -> Result<B::Hash, ()> {
 		if let Some(parent) = self.available_block_with_parent_cache.get(block) {
 			return Ok(*parent)
 		}
@@ -140,7 +149,7 @@ where
 		Err(())
 	}
 
-	fn get_highest_finalized(&mut self) -> BlockHashNum<B> {
+	fn get_highest_finalized(&mut self) -> IdentifierFor<B> {
 		self.chain_info_provider.get_highest_finalized()
 	}
 }
@@ -152,22 +161,24 @@ where
 pub struct AuxFinalizationChainInfoProvider<B, CIP>
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	CIP: ChainInfoProvider<B>,
 {
-	aux_finalized: BlockHashNum<B>,
+	aux_finalized: IdentifierFor<B>,
 	chain_info_provider: CIP,
 }
 
 impl<B, CIP> AuxFinalizationChainInfoProvider<B, CIP>
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	CIP: ChainInfoProvider<B>,
 {
-	pub fn new(chain_info_provider: CIP, aux_finalized: BlockHashNum<B>) -> Self {
+	pub fn new(chain_info_provider: CIP, aux_finalized: IdentifierFor<B>) -> Self {
 		AuxFinalizationChainInfoProvider { aux_finalized, chain_info_provider }
 	}
 
-	pub fn update_aux_finalized(&mut self, aux_finalized: BlockHashNum<B>) {
+	pub fn update_aux_finalized(&mut self, aux_finalized: IdentifierFor<B>) {
 		self.aux_finalized = aux_finalized;
 	}
 }
@@ -175,36 +186,37 @@ where
 impl<B, CIP> ChainInfoProvider<B> for AuxFinalizationChainInfoProvider<B, CIP>
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	CIP: ChainInfoProvider<B>,
 {
-	fn is_block_imported(&mut self, block: &BlockHashNum<B>) -> bool {
+	fn is_block_imported(&mut self, block: &IdentifierFor<B>) -> bool {
 		self.chain_info_provider.is_block_imported(block)
 	}
 
-	fn get_finalized_at(&mut self, num: NumberFor<B>) -> Result<BlockHashNum<B>, ()> {
+	fn get_finalized_at(&mut self, num: BlockNumber) -> Result<IdentifierFor<B>, ()> {
 		let highest_finalized_inner = self.chain_info_provider.get_highest_finalized();
-		if num <= highest_finalized_inner.num {
+		if num <= highest_finalized_inner.number {
 			return self.chain_info_provider.get_finalized_at(num)
 		}
-		if num > self.aux_finalized.num {
+		if num > self.aux_finalized.number {
 			return Err(())
 		}
 		// We are in the situation: internal_highest_finalized < num <= aux_finalized
 		let mut curr_block = self.aux_finalized.clone();
-		while curr_block.num > num {
+		while curr_block.number > num {
 			let parent_hash = self.chain_info_provider.get_parent_hash(&curr_block)?;
-			curr_block = (parent_hash, curr_block.num - NumberFor::<B>::one()).into();
+			curr_block = (parent_hash, curr_block.number - 1).into();
 		}
 		Ok(curr_block)
 	}
 
-	fn get_parent_hash(&mut self, block: &BlockHashNum<B>) -> Result<B::Hash, ()> {
+	fn get_parent_hash(&mut self, block: &IdentifierFor<B>) -> Result<B::Hash, ()> {
 		self.chain_info_provider.get_parent_hash(block)
 	}
 
-	fn get_highest_finalized(&mut self) -> BlockHashNum<B> {
+	fn get_highest_finalized(&mut self) -> IdentifierFor<B> {
 		let highest_finalized_inner = self.chain_info_provider.get_highest_finalized();
-		if self.aux_finalized.num > highest_finalized_inner.num {
+		if self.aux_finalized.number > highest_finalized_inner.number {
 			self.aux_finalized.clone()
 		} else {
 			highest_finalized_inner

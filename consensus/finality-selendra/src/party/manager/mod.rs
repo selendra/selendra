@@ -3,19 +3,20 @@ use std::{collections::HashSet, marker::PhantomData, sync::Arc};
 use async_trait::async_trait;
 use futures::channel::oneshot;
 use log::{debug, info, trace, warn};
+use network_clique::SpawnHandleT;
 use sc_client_api::Backend;
-use selendra_primitives::{SelendraSessionApi, KEY_TYPE};
+use selendra_primitives::{BlockNumber, SelendraSessionApi, KEY_TYPE};
 use sp_consensus::SelectChain;
 use sp_keystore::CryptoStore;
 use sp_runtime::{
 	generic::BlockId,
-	traits::{Block as BlockT, Header, NumberFor, One, Saturating},
+	traits::{Block as BlockT, Header as HeaderT},
 };
 
 use crate::{
 	abft::{
 		current_create_selendra_config, legacy_create_selendra_config, run_current_member,
-		run_legacy_member, SpawnHandle, SpawnHandleT,
+		run_legacy_member, SpawnHandle,
 	},
 	crypto::{AuthorityPen, AuthorityVerifier},
 	data_io::{ChainTracker, DataStore, OrderedDataInterpreter},
@@ -31,8 +32,9 @@ use crate::{
 	party::{
 		backup::ABFTBackup, manager::aggregator::AggregatorVersion, traits::NodeSessionManager,
 	},
-	AuthorityId, CurrentRmcNetworkData, JustificationNotification, Keychain, LegacyRmcNetworkData,
-	Metrics, NodeIndex, SessionBoundaries, SessionId, SessionPeriod, UnitCreationDelay,
+	sync::{substrate::Justification, JustificationSubmissions, JustificationTranslator},
+	AuthorityId, CurrentRmcNetworkData, IdentifierFor, Keychain, LegacyRmcNetworkData, Metrics,
+	NodeIndex, SessionBoundaries, SessionBoundaryInfo, SessionId, SessionPeriod, UnitCreationDelay,
 	VersionedNetworkData,
 };
 
@@ -64,23 +66,26 @@ type CurrentNetworkType<B> = SimpleNetwork<
 	SessionSender<CurrentRmcNetworkData<B>>,
 >;
 
-struct SubtasksParams<C, SC, B, N, BE>
+struct SubtasksParams<C, SC, B, N, BE, JS, JT>
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	C: crate::ClientForSelendra<B, BE> + Send + Sync + 'static,
 	BE: Backend<B> + 'static,
 	SC: SelectChain<B> + 'static,
 	N: Network<VersionedNetworkData<B>> + 'static,
+	JS: JustificationSubmissions<Justification<B::Header>> + Send + Sync + Clone,
+	JT: JustificationTranslator<B::Header> + Send + Sync + Clone,
 {
 	n_members: usize,
 	node_id: NodeIndex,
 	session_id: SessionId,
 	data_network: N,
-	session_boundaries: SessionBoundaries<B>,
+	session_boundaries: SessionBoundaries,
 	subtask_common: SubtaskCommon,
 	data_provider: DataProvider<B>,
 	ordered_data_interpreter: OrderedDataInterpreter<B, C>,
-	aggregator_io: aggregator::IO<B>,
+	aggregator_io: aggregator::IO<B::Header, JS, JT>,
 	multikeychain: Keychain,
 	exit_rx: oneshot::Receiver<()>,
 	backup: ABFTBackup,
@@ -88,37 +93,44 @@ where
 	phantom: PhantomData<BE>,
 }
 
-pub struct NodeSessionManagerImpl<C, SC, B, RB, BE, SM>
+pub struct NodeSessionManagerImpl<C, SC, B, RB, BE, SM, JS, JT>
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	C: crate::ClientForSelendra<B, BE> + Send + Sync + 'static,
 	BE: Backend<B> + 'static,
 	SC: SelectChain<B> + 'static,
-	RB: RequestBlocks<B>,
+	RB: RequestBlocks<IdentifierFor<B>>,
 	SM: SessionManager<VersionedNetworkData<B>> + 'static,
+	JS: JustificationSubmissions<Justification<B::Header>> + Send + Sync + Clone,
+	JT: JustificationTranslator<B::Header> + Send + Sync + Clone,
 {
 	client: Arc<C>,
 	select_chain: SC,
-	session_period: SessionPeriod,
+	session_info: SessionBoundaryInfo,
 	unit_creation_delay: UnitCreationDelay,
-	authority_justification_tx: mpsc::UnboundedSender<JustificationNotification<B>>,
+	justifications_for_sync: JS,
+	justification_translator: JT,
 	block_requester: RB,
-	metrics: Option<Metrics<<B::Header as Header>::Hash>>,
+	metrics: Metrics<<B::Header as HeaderT>::Hash>,
 	spawn_handle: SpawnHandle,
 	session_manager: SM,
 	keystore: Arc<dyn CryptoStore>,
 	_phantom: PhantomData<BE>,
 }
 
-impl<C, SC, B, RB, BE, SM> NodeSessionManagerImpl<C, SC, B, RB, BE, SM>
+impl<C, SC, B, RB, BE, SM, JS, JT> NodeSessionManagerImpl<C, SC, B, RB, BE, SM, JS, JT>
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	C: crate::ClientForSelendra<B, BE> + Send + Sync + 'static,
 	C::Api: selendra_primitives::SelendraSessionApi<B>,
 	BE: Backend<B> + 'static,
 	SC: SelectChain<B> + 'static,
-	RB: RequestBlocks<B>,
+	RB: RequestBlocks<IdentifierFor<B>>,
 	SM: SessionManager<VersionedNetworkData<B>>,
+	JS: JustificationSubmissions<Justification<B::Header>> + Send + Sync + Clone + 'static,
+	JT: JustificationTranslator<B::Header> + Send + Sync + Clone + 'static,
 {
 	#[allow(clippy::too_many_arguments)]
 	pub fn new(
@@ -126,9 +138,10 @@ where
 		select_chain: SC,
 		session_period: SessionPeriod,
 		unit_creation_delay: UnitCreationDelay,
-		authority_justification_tx: mpsc::UnboundedSender<JustificationNotification<B>>,
+		justifications_for_sync: JS,
+		justification_translator: JT,
 		block_requester: RB,
-		metrics: Option<Metrics<<B::Header as Header>::Hash>>,
+		metrics: Metrics<<B::Header as HeaderT>::Hash>,
 		spawn_handle: SpawnHandle,
 		session_manager: SM,
 		keystore: Arc<dyn CryptoStore>,
@@ -136,9 +149,10 @@ where
 		Self {
 			client,
 			select_chain,
-			session_period,
+			session_info: SessionBoundaryInfo::new(session_period),
 			unit_creation_delay,
-			authority_justification_tx,
+			justifications_for_sync,
+			justification_translator,
 			block_requester,
 			metrics,
 			spawn_handle,
@@ -150,7 +164,7 @@ where
 
 	fn legacy_subtasks<N: Network<VersionedNetworkData<B>> + 'static>(
 		&self,
-		params: SubtasksParams<C, SC, B, N, BE>,
+		params: SubtasksParams<C, SC, B, N, BE, JS, JT>,
 	) -> Subtasks {
 		let SubtasksParams {
 			n_members,
@@ -208,7 +222,7 @@ where
 
 	fn current_subtasks<N: Network<VersionedNetworkData<B>> + 'static>(
 		&self,
-		params: SubtasksParams<C, SC, B, N, BE>,
+		params: SubtasksParams<C, SC, B, N, BE, JS, JT>,
 	) -> Subtasks {
 		let SubtasksParams {
 			n_members,
@@ -286,7 +300,7 @@ where
 		let multikeychain =
 			Keychain::new(node_id, authority_verifier.clone(), authority_pen.clone());
 
-		let session_boundaries = SessionBoundaries::new(session_id, self.session_period);
+		let session_boundaries = self.session_info.boundaries_for_session(session_id);
 		let (blocks_for_aggregator, blocks_from_interpreter) = mpsc::unbounded();
 
 		let (chain_tracker, data_provider) = ChainTracker::new(
@@ -307,7 +321,8 @@ where
 			SubtaskCommon { spawn_handle: self.spawn_handle.clone(), session_id: session_id.0 };
 		let aggregator_io = aggregator::IO {
 			blocks_from_interpreter,
-			justifications_for_chain: self.authority_justification_tx.clone(),
+			justifications_for_chain: self.justifications_for_sync.clone(),
+			justification_translator: self.justification_translator.clone(),
 		};
 
 		let data_network = match self
@@ -319,8 +334,7 @@ where
 			Err(e) => panic!("Failed to start validator session: {}", e),
 		};
 
-		let last_block_of_previous_session =
-			session_boundaries.first_block().saturating_sub(<NumberFor<B>>::one());
+		let last_block_of_previous_session = session_boundaries.first_block().saturating_sub(1);
 
 		let params = SubtasksParams {
 			n_members: authorities.len(),
@@ -376,15 +390,19 @@ where
 }
 
 #[async_trait]
-impl<C, SC, B, RB, BE, SM> NodeSessionManager for NodeSessionManagerImpl<C, SC, B, RB, BE, SM>
+impl<C, SC, B, RB, BE, SM, JS, JT> NodeSessionManager
+	for NodeSessionManagerImpl<C, SC, B, RB, BE, SM, JS, JT>
 where
 	B: BlockT,
+	B::Header: HeaderT<Number = BlockNumber>,
 	C: crate::ClientForSelendra<B, BE> + Send + Sync + 'static,
 	C::Api: selendra_primitives::SelendraSessionApi<B>,
 	BE: Backend<B> + 'static,
 	SC: SelectChain<B> + 'static,
-	RB: RequestBlocks<B>,
+	RB: RequestBlocks<IdentifierFor<B>>,
 	SM: SessionManager<VersionedNetworkData<B>>,
+	JS: JustificationSubmissions<Justification<B::Header>> + Send + Sync + Clone + 'static,
+	JT: JustificationTranslator<B::Header> + Send + Sync + Clone + 'static,
 {
 	type Error = SM::Error;
 

@@ -15,7 +15,7 @@ pub type LegacyNetworkData<B> =
 	legacy_selendra_bft::NetworkData<Hasher, SelendraData<B>, Signature, SignatureSet<Signature>>;
 
 pub type CurrentNetworkData<B> =
-	selendra_bft::NetworkData<Hasher, SelendraData<B>, Signature, SignatureSet<Signature>>;
+	current_selendra_bft::NetworkData<Hasher, SelendraData<B>, Signature, SignatureSet<Signature>>;
 
 impl<B: Block> SelendraNetworkMessage<B>
 	for legacy_selendra_bft::NetworkData<Hasher, SelendraData<B>, Signature, SignatureSet<Signature>>
@@ -26,7 +26,7 @@ impl<B: Block> SelendraNetworkMessage<B>
 }
 
 impl<B: Block> SelendraNetworkMessage<B>
-	for selendra_bft::NetworkData<Hasher, SelendraData<B>, Signature, SignatureSet<Signature>>
+	for current_selendra_bft::NetworkData<Hasher, SelendraData<B>, Signature, SignatureSet<Signature>>
 {
 	fn included_data(&self) -> Vec<SelendraData<B>> {
 		self.included_data()
@@ -61,8 +61,8 @@ impl<D: Data, DN: Network<D>> NetworkWrapper<D, DN> {
 }
 
 #[async_trait::async_trait]
-impl<D: Data, DN: Network<D>> selendra_bft::Network<D> for NetworkWrapper<D, DN> {
-	fn send(&self, data: D, recipient: selendra_bft::Recipient) {
+impl<D: Data, DN: Network<D>> current_selendra_bft::Network<D> for NetworkWrapper<D, DN> {
+	fn send(&self, data: D, recipient: current_selendra_bft::Recipient) {
 		NetworkWrapper::send(self, data, recipient)
 	}
 
