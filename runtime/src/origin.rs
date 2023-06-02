@@ -1,6 +1,6 @@
 use frame_support::traits::EitherOfDiverse;
 use frame_system::EnsureRoot;
-use primitives::AccountId;
+use selendra_primitives::AccountId;
 
 pub type CouncilCollective = pallet_collective::Instance1;
 pub type TechnicalCollective = pallet_collective::Instance2;

@@ -5,24 +5,24 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
+codec = { package = "parity-scale-codec", version = "3.5.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
 
-codec = { package = "parity-scale-codec", version = "3.0", default-features = false, features = ["derive"] }
-scale-info = { version = "2.0", default-features = false, features = ["derive"] }
-rand = { version = "0.8.5", default-features = false }
-rand_pcg = { version = "0.3.1", default-features = false }
+rand = { workspace = true }
+rand_pcg = { workspace = true }
 
-pallet-session = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-staking = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-pallet-staking = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-pallet-authorship = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
+sp-staking = { workspace = true }
+sp-std = { workspace = true }
+sp-runtime = { workspace = true }
+sp-io = { workspace = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-session = { workspace = true }
+pallet-staking = { workspace = true }
+pallet-authorship = { workspace = true }
 
-pallets-support = { path = "../support", default-features = false }
-primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
+pallets-support = { workspace = true }
+selendra-primitives = { workspace = true }
 
 [features]
 default = ["std"]
@@ -34,7 +34,7 @@ std = [
     "pallet-staking/std",
     "sp-staking/std",
     "sp-std/std",
-    "primitives/std",
+    "selendra-primitives/std",
     "sp-runtime/std",
     "frame-support/std",
     "frame-system/std",

@@ -26,8 +26,8 @@ use codec::{Decode, Encode};
 use frame_support::traits::StorageVersion;
 pub use migration::{v4::Migration as MigrateToV4, v5::Migration as CommitteeSizeMigration};
 pub use pallet::*;
-pub use primitives::EraValidators;
 use scale_info::TypeInfo;
+pub use selendra_primitives::EraValidators;
 use sp_std::{
 	collections::{btree_map::BTreeMap, btree_set::BTreeSet},
 	prelude::*,
@@ -49,7 +49,7 @@ pub mod pallet {
 	};
 	use frame_support::{pallet_prelude::*, traits::Get};
 	use frame_system::{ensure_root, pallet_prelude::OriginFor};
-	use primitives::{BannedValidators, CommitteeSeats, ElectionOpenness};
+	use selendra_primitives::{BannedValidators, CommitteeSeats, ElectionOpenness};
 
 	use super::*;
 	use crate::traits::ValidatorProvider;

@@ -32,8 +32,10 @@ use frame_support::{pallet_prelude::Get, traits::StorageVersion};
 pub use manager::SessionAndEraManager;
 pub use migration::PrefixMigration;
 pub use pallet::*;
-use primitives::{BanConfig as BanConfigStruct, BanInfo, SessionValidators, LENIENT_THRESHOLD};
 use scale_info::TypeInfo;
+use selendra_primitives::{
+	BanConfig as BanConfigStruct, BanInfo, SessionValidators, LENIENT_THRESHOLD,
+};
 use sp_runtime::Perquintill;
 use sp_std::{collections::btree_map::BTreeMap, default::Default};
 pub use traits::*;
@@ -71,7 +73,7 @@ pub mod pallet {
 		dispatch::DispatchResult, ensure, pallet_prelude::*, BoundedVec, Twox64Concat,
 	};
 	use frame_system::{ensure_root, pallet_prelude::OriginFor};
-	use primitives::{
+	use selendra_primitives::{
 		BanHandler, BanReason, BlockCount, FinalityCommitteeManager, SessionCount,
 		SessionValidators, ValidatorProvider,
 	};

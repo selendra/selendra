@@ -2,7 +2,7 @@
 
 use frame_election_provider_support::{ElectionProvider, Support};
 use frame_support::bounded_vec;
-use primitives::CommitteeSeats;
+use selendra_primitives::CommitteeSeats;
 
 use crate::{
 	mock::{

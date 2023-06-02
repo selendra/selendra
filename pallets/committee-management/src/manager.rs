@@ -1,6 +1,6 @@
 use frame_support::log::debug;
 use pallet_session::SessionManager;
-use primitives::{EraManager, FinalityCommitteeManager};
+use selendra_primitives::{EraManager, FinalityCommitteeManager};
 use sp_staking::{EraIndex, SessionIndex};
 use sp_std::{marker::PhantomData, vec::Vec};
 

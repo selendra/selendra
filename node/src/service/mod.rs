@@ -218,6 +218,7 @@ fn setup(
 	(
 		RpcHandlers,
 		Arc<NetworkService<Block, <Block as BlockT>::Hash>>,
+		Arc<SyncingService<Block>>,
 		ProtocolNaming,
 		NetworkStarter,
 	),
@@ -238,7 +239,7 @@ fn setup(
 		.extra_sets
 		.push(finality_selendra::peers_set_config(protocol_naming.clone(), Protocol::BlockSync));
 
-	let (network, system_rpc_tx, tx_handler_controller, network_starter) =
+	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &config,
 			client: client.clone(),
@@ -246,7 +247,7 @@ fn setup(
 			spawn_handle: task_manager.spawn_handle(),
 			import_queue,
 			block_announce_validator_builder: None,
-			warp_sync: None,
+			warp_sync_params: None,
 		})?;
 
 	let rpc_builder = {
@@ -267,6 +268,7 @@ fn setup(
 
 	let rpc_handlers = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		network: network.clone(),
+		sync_service: sync_network.clone(),
 		client,
 		keystore: keystore_container.sync_keystore(),
 		task_manager,
@@ -279,7 +281,7 @@ fn setup(
 		telemetry: telemetry.as_mut(),
 	})?;
 
-	Ok((rpc_handlers, network, protocol_naming, network_starter))
+	Ok((rpc_handlers, network, sync_network, protocol_naming, network_starter))
 }
 
 /// Builds a new service for a full client.
@@ -303,14 +305,12 @@ pub fn new_authority(
 		config.base_path.as_ref().expect("Please specify base path").path(),
 	);
 
-	let finalized = client.info().finalized_number;
+	let finalized = client.info().finalized_hash;
 
-	let session_period =
-		SessionPeriod(client.runtime_api().session_period(&BlockId::Number(finalized)).unwrap());
+	let session_period = SessionPeriod(client.runtime_api().session_period(finalized).unwrap());
 
-	let millisecs_per_block = MillisecsPerBlock(
-		client.runtime_api().millisecs_per_block(&BlockId::Number(finalized)).unwrap(),
-	);
+	let millisecs_per_block =
+		MillisecsPerBlock(client.runtime_api().millisecs_per_block(finalized).unwrap());
 
 	let force_authoring = config.force_authoring;
 	let backoff_authoring_blocks =
@@ -319,7 +319,7 @@ pub fn new_authority(
 
 	let chain_status = SubstrateChainStatus::new(backend.clone())
 		.map_err(|e| ServiceError::Other(format!("failed to set up chain status: {}", e)))?;
-	let (_rpc_handlers, network, protocol_naming, network_starter) = setup(
+	let (_rpc_handlers, network, sync_network, protocol_naming, network_starter) = setup(
 		config,
 		backend,
 		chain_status.clone(),
@@ -364,8 +364,8 @@ pub fn new_authority(
 			force_authoring,
 			backoff_authoring_blocks,
 			keystore: keystore_container.sync_keystore(),
-			sync_oracle: network.clone(),
-			justification_sync_link: network.clone(),
+			sync_oracle: sync_network.clone(),
+			justification_sync_link: sync_network.clone(),
 			block_proposal_slot_portion: SlotProportion::new(2f32 / 3f32),
 			max_block_proposal_slot_portion: None,
 			telemetry: telemetry.as_ref().map(|x| x.handle()),
@@ -380,6 +380,7 @@ pub fn new_authority(
 	}
 	let selendra_config = SelendraConfig {
 		network,
+		sync_network,
 		client,
 		chain_status,
 		select_chain,

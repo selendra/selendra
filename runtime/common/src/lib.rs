@@ -38,7 +38,7 @@ pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 // The whole process for a single block should take 1s, of which 400ms is for creation,
 // 200ms for propagation and 400ms for validation. Hence the block weight should be within 400ms.
 pub const MAX_BLOCK_WEIGHT: Weight =
-	Weight::from_ref_time(WEIGHT_REF_TIME_PER_MILLIS.saturating_mul(400));
+	Weight::from_parts(WEIGHT_REF_TIME_PER_MILLIS.saturating_mul(400), 0);
 
 // Common constants used in all runtimes.
 parameter_types! {

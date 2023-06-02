@@ -6,28 +6,26 @@ edition = "2021"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.5.0", default-features = false, features = ["derive"] }
-jsonrpsee = { version = "0.16.2", features = ["server"] }
-log = "0.4"
-serde = "1.0"
-serde_json = "1.0"
-futures = "0.3.28"
-hex = "0.4.3"
-hex-literal = "0.4.1"
-libp2p = "0.49.0"
-thiserror = "1.0"
+jsonrpsee = { workspace = true, features = ["server"] }
 
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-sc-transaction-pool-api = { package = "sc-transaction-pool-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+futures = { workspace = true }
+hex = { workspace = true }
+hex-literal = { workspace = true }
+libp2p = { workspace = true }
+thiserror = { workspace = true }
 
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-
-pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-
-selendra-primitives = { path = "../../primitives" }
-finality-selendra = { path = "../../consensus/finality-selendra"}
+sp-blockchain = { workspace = true }
+sp-runtime = { workspace = true }
+sp-api = { workspace = true }
+sp-block-builder = { workspace = true }
+sc-client-api = { workspace = true }
+sc-rpc = { workspace = true }
+sc-rpc-api = { workspace = true }
+sc-transaction-pool-api = { workspace = true }
+pallet-transaction-payment-rpc = { workspace = true }
+substrate-frame-rpc-system = { workspace = true }
+selendra-primitives = { workspace = true }
+finality-selendra = { workspace = true }

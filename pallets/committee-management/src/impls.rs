@@ -1,10 +1,10 @@
 use frame_support::{log::info, pallet_prelude::Get};
-use primitives::{
+use rand::{seq::SliceRandom, SeedableRng};
+use rand_pcg::Pcg32;
+use selendra_primitives::{
 	BanHandler, BanInfo, BanReason, BannedValidators, CommitteeSeats, EraValidators,
 	SessionValidators, ValidatorProvider,
 };
-use rand::{seq::SliceRandom, SeedableRng};
-use rand_pcg::Pcg32;
 use sp_runtime::{Perbill, Perquintill};
 use sp_staking::{EraIndex, SessionIndex};
 use sp_std::{

@@ -1,11 +1,7 @@
-use std::{
-	collections::HashMap,
-	fmt::Debug,
-	time::{Duration, Instant},
-};
+use std::{fmt::Debug, time::Instant};
 
 use futures::channel::mpsc::{TrySendError, UnboundedSender};
-use log::{debug, warn};
+use log::{debug, trace, warn};
 use sc_consensus::{
 	BlockCheckParams, BlockImport, BlockImportParams, ImportResult, JustificationImport,
 };
@@ -15,7 +11,6 @@ use sp_runtime::{
 	traits::{Block as BlockT, Header},
 	Justification as SubstrateJustification,
 };
-use tokio::time::sleep;
 
 use crate::{
 	justification::{backwards_compatible_decode, DecodeError},
@@ -64,12 +59,11 @@ where
 	async fn import_block(
 		&mut self,
 		block: BlockImportParams<B, Self::Transaction>,
-		cache: HashMap<[u8; 4], Vec<u8>>,
 	) -> Result<ImportResult, Self::Error> {
 		let post_hash = block.post_hash();
 		self.metrics.report_block(post_hash, Instant::now(), Checkpoint::Importing);
 
-		let result = self.inner.import_block(block, cache).await;
+		let result = self.inner.import_block(block).await;
 
 		if let Ok(ImportResult::Imported(_)) = &result {
 			self.metrics.report_block(post_hash, Instant::now(), Checkpoint::Imported);
@@ -80,8 +74,7 @@ where
 
 /// A wrapper around a block import that also extracts any present jsutifications and send them to
 /// our components which will process them further and possibly finalize the block. It also makes
-/// blocks from major sync import slightly slower than they normally would, to avoid breaking the
-/// new justificaiton sync. The last part will be removed once we finish rewriting the block sync.
+/// blocks from major sync import as if they came from normal sync.
 #[derive(Clone)]
 pub struct SelendraBlockImport<B, I, JT>
 where
@@ -171,18 +164,18 @@ where
 	async fn import_block(
 		&mut self,
 		mut block: BlockImportParams<B, Self::Transaction>,
-		cache: HashMap<[u8; 4], Vec<u8>>,
 	) -> Result<ImportResult, Self::Error> {
 		let number = *block.header.number();
 		let post_hash = block.post_hash();
 
 		let justifications = block.justifications.take();
-
 		if matches!(block.origin, BlockOrigin::NetworkInitialSync) {
-			sleep(Duration::from_millis(2)).await;
+			trace!(target: "selendra-justification", "Treating block {:?} {:?} from major sync as from a normal sync.", number, block.header.hash());
+			block.origin = BlockOrigin::NetworkBroadcast;
 		}
+
 		debug!(target: "selendra-justification", "Importing block {:?} {:?} {:?}", number, block.header.hash(), block.post_hash());
-		let result = self.inner.import_block(block, cache).await;
+		let result = self.inner.import_block(block).await;
 
 		if let Ok(ImportResult::Imported(_)) = result {
 			if let Some(justification) =

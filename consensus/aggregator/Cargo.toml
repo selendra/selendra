@@ -6,11 +6,14 @@ edition = "2021"
 license = "Apache 2.0"
 
 [dependencies]
-selendra-bft-rmc = { package = "aleph-bft-rmc", version = "0.6"}
-selendra-bft-types = { package = "aleph-bft-types", version = "0.8"}
+codec = { package = "parity-scale-codec", version = "3.5.0", default-features = false, features = ["derive"] }
 
-async-trait = "0.1"
-futures = "0.3"
-codec = { package = "parity-scale-codec", version = "3.0", default-features = false, features = ["derive"] }
-tokio = { version = "1.17", features = [ "sync", "macros", "time", "rt-multi-thread" ] }
-log = "0.4"
+async-trait = { workspace = true }
+futures = { workspace = true }
+tokio = { workspace = true , features = [ "sync", "macros", "time", "rt-multi-thread" ] }
+log = { workspace = true }
+
+selendra-bft-rmc = { workspace = true }
+selendra-bft-types = { workspace = true }
+
+

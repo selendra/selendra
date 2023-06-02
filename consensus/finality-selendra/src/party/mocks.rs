@@ -6,7 +6,7 @@ use std::{
 };
 
 use async_trait::async_trait;
-use selendra_primitives::BlockNumber;
+use selendra_primitives::{AuthorityId, BlockNumber};
 
 use crate::{
 	oneshot,
@@ -15,7 +15,7 @@ use crate::{
 		manager::AuthorityTask,
 		traits::{ChainState, NodeSessionManager, SyncState},
 	},
-	AuthorityId, NodeIndex, SessionId,
+	NodeIndex, SessionId,
 };
 
 type AMutex<T> = Arc<Mutex<T>>;

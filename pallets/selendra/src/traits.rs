@@ -2,7 +2,7 @@ use frame_support::{
 	log,
 	sp_runtime::{traits::OpaqueKeys, RuntimeAppPublic},
 };
-use primitives::{AuthorityId, SessionIndex};
+use selendra_primitives::{AuthorityId, SessionIndex};
 use sp_std::prelude::*;
 
 use crate::Config;

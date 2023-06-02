@@ -31,8 +31,8 @@ use frame_support::{
 };
 pub use pallet::*;
 #[cfg(feature = "std")]
-use primitives::LEGACY_FINALITY_VERSION;
-use primitives::{SessionIndex, Version, VersionChange, DEFAULT_FINALITY_VERSION};
+use selendra_primitives::LEGACY_FINALITY_VERSION;
+use selendra_primitives::{SessionIndex, Version, VersionChange, DEFAULT_FINALITY_VERSION};
 use sp_std::prelude::*;
 
 /// The current storage version.

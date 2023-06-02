@@ -19,7 +19,7 @@ use frame_support::{
 	traits::{ConstU32, U128CurrencyToVote},
 	PalletId,
 };
-use primitives::{
+use selendra_primitives::{
 	wrap_methods, Balance, DEFAULT_SESSIONS_PER_ERA, MAX_NOMINATORS_REWARDED_PER_VALIDATOR,
 };
 use selendra_runtime_common::prod_or_fast;
@@ -77,7 +77,7 @@ pub struct UniformEraPayout;
 
 impl pallet_staking::EraPayout<Balance> for UniformEraPayout {
 	fn era_payout(_: Balance, _: Balance, era_duration_millis: u64) -> (Balance, Balance) {
-		primitives::staking::era_payout(era_duration_millis)
+		selendra_primitives::staking::era_payout(era_duration_millis)
 	}
 }
 

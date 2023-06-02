@@ -32,11 +32,13 @@ use pallet_committee_management::{PrefixMigration, SessionAndEraManager};
 use pallet_elections::{CommitteeSizeMigration, MigrateToV4};
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
-use primitives::{
+use selendra_primitives::{
 	opaque, ApiError as SelendraApiError, SessionAuthorityData, Version as FinalityVersion, TOKEN,
 	TREASURY_PROPOSAL_BOND,
 };
-pub use primitives::{AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, Signature};
+pub use selendra_primitives::{
+	AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, Signature,
+};
 use selendra_runtime_common::{
 	impls::DealWithFees, BlockLength, BlockWeights, SlowAdjustingFeeUpdate,
 };
@@ -295,7 +297,7 @@ construct_runtime!(
 	{
 		// Basic stuff; balances is uncallable initially.
 		System: frame_system = 0,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip = 1,
+		RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip = 1,
 		Scheduler: pallet_scheduler = 2,
 		Aura: pallet_aura = 3,
 		Timestamp: pallet_timestamp = 4,
@@ -506,7 +508,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl primitives::SelendraSessionApi<Block> for Runtime {
+	impl selendra_primitives::SelendraSessionApi<Block> for Runtime {
 		fn millisecs_per_block() -> u64 {
 			MILLISECS_PER_BLOCK
 		}
@@ -549,8 +551,16 @@ impl_runtime_apis! {
 	}
 
 	impl pallet_nomination_pools_runtime_api::NominationPoolsApi<Block, AccountId, Balance> for Runtime {
-		fn pending_rewards(member_account: AccountId) -> Balance {
-			NominationPools::pending_rewards(member_account).unwrap_or_default()
+		fn pending_rewards(member: AccountId) -> Balance {
+			NominationPools::api_pending_rewards(member).unwrap_or_default()
+		}
+
+		fn points_to_balance(pool_id: pallet_nomination_pools::PoolId, points: Balance) -> Balance {
+			NominationPools::api_points_to_balance(pool_id, points)
+		}
+
+		fn balance_to_points(pool_id: pallet_nomination_pools::PoolId, new_funds: Balance) -> Balance {
+			NominationPools::api_balance_to_points(pool_id, new_funds)
 		}
 	}
 
@@ -673,7 +683,7 @@ impl_runtime_apis! {
 #[cfg(test)]
 mod tests {
 	use frame_support::traits::Get;
-	use primitives::HEAP_PAGES;
+	use selendra_primitives::HEAP_PAGES;
 	use smallvec::Array;
 
 	use super::*;

@@ -5,8 +5,8 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
+frame-support = { workspace = true }
+sp-std = { workspace = true }
 
 [features]
 default = ["std"]

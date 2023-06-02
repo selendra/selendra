@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 
 use frame_support::{parameter_types, traits::WithdrawReasons};
-use primitives::Balance;
+use selendra_primitives::Balance;
 use sp_runtime::traits::ConvertInto;
 
 use crate::{
@@ -87,4 +87,4 @@ impl pallet_multisig::Config for Runtime {
 	type WeightInfo = pallet_multisig::weights::SubstrateWeight<Runtime>;
 }
 
-impl pallet_randomness_collective_flip::Config for Runtime {}
+impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
