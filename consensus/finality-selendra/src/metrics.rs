@@ -55,7 +55,7 @@ impl<H: Key> Inner<H> {
 						warn!(
 							target: LOG_TARGET,
 							"Earlier metrics time {:?} is later that current one \
-                        {:?}. Checkpoint type {:?}, block: {:?}",
+						{:?}. Checkpoint type {:?}, block: {:?}",
 							*start,
 							checkpoint_time,
 							checkpoint_type,

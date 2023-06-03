@@ -136,18 +136,19 @@ where
 		genesis_header,
 	);
 	let finalizer = SelendraFinalizer::new(client.clone(), metrics.clone());
-	let (sync_service, justifications_for_sync) = match SyncService::new(
-		block_sync_network,
-		chain_events,
-		chain_status.clone(),
-		verifier,
-		finalizer,
-		session_period,
-		justification_rx,
-	) {
-		Ok(x) => x,
-		Err(e) => panic!("Failed to initialize Sync service: {}", e),
-	};
+	let (sync_service, justifications_for_sync, _) =
+		match SyncService::<Block, _, _, _, _, _, _>::new(
+			block_sync_network,
+			chain_events,
+			chain_status.clone(),
+			verifier,
+			finalizer,
+			session_period,
+			justification_rx,
+		) {
+			Ok(x) => x,
+			Err(e) => panic!("Failed to initialize Sync service: {}", e),
+		};
 	let sync_task = async move { sync_service.run().await };
 
 	let (connection_manager_service, connection_manager) = ConnectionManager::new(

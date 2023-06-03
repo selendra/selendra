@@ -4,7 +4,7 @@ use std::{
 };
 
 use log::warn;
-use sc_client_api::{Backend as _, HeaderBackend};
+use sc_client_api::{blockchain::HeaderBackend, Backend as _};
 use sc_service::TFullBackend;
 use selendra_primitives::{BlockNumber, SELENDRA_ENGINE_ID};
 use sp_blockchain::{Backend as _, Error as BackendError, Info};
@@ -83,11 +83,11 @@ where
 		self.backend.blockchain().info()
 	}
 
-	pub fn hash_for_number(&self, number: BlockNumber) -> Result<Option<B::Hash>, BackendError> {
+	fn hash_for_number(&self, number: BlockNumber) -> Result<Option<B::Hash>, BackendError> {
 		self.backend.blockchain().hash(number)
 	}
 
-	pub fn header_for_hash(&self, hash: B::Hash) -> Result<Option<B::Header>, BackendError> {
+	fn header_for_hash(&self, hash: B::Hash) -> Result<Option<B::Header>, BackendError> {
 		self.backend.blockchain().header(hash)
 	}
 

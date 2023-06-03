@@ -188,7 +188,10 @@ impl SharedSessionMap {
 		if let Some(senders) = guard.1.remove(&id) {
 			for sender in senders {
 				if let Err(e) = sender.send(authority_data.clone()) {
-					error!(target: LOG_TARGET, "Error while sending notification: {:?}", e);
+					error!(
+						target: LOG_TARGET,
+						"Error while sending notification: {:?}", e
+					);
 				}
 			}
 		}
@@ -299,9 +302,9 @@ where
 		let starting_session = SessionId(current_session.0.saturating_sub(PRUNING_THRESHOLD - 1));
 
 		debug!(target: LOG_TARGET,
-            "Last finalized is {:?}; Catching up with authorities starting from session {:?} up to next session {:?}",
-            last_finalized, starting_session.0, current_session.0 + 1
-        );
+			"Last finalized is {:?}; Catching up with authorities starting from session {:?} up to next session {:?}",
+			last_finalized, starting_session.0, current_session.0 + 1
+		);
 
 		// lets catch up with previous sessions
 		for session in starting_session.0..current_session.0 {
@@ -336,7 +339,11 @@ where
 		let mut last_updated = self.catch_up().await;
 
 		while let Some(last_finalized) = self.finality_notifier.next().await {
-			trace!(target: LOG_TARGET, "got FinalityNotification about #{:?}", last_finalized);
+			trace!(
+				target: LOG_TARGET,
+				"got FinalityNotification about #{:?}",
+				last_finalized
+			);
 
 			let session_id = self.session_info.session_id_from_block_num(last_finalized);
 
