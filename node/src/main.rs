@@ -98,8 +98,8 @@ fn main() -> sc_cli::Result<()> {
 		},
 		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
-			use selendra_primitives::MILLISECS_PER_BLOCK;
 			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
+			use selendra_primitives::MILLISECS_PER_BLOCK;
 			use try_runtime_cli::block_building_info::timestamp_with_aura_info;
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
@@ -112,9 +112,7 @@ fn main() -> sc_cli::Result<()> {
 					cmd.run::<Block, ExtendedHostFunctions<
 						sp_io::SubstrateHostFunctions,
 						<ExecutorDispatch as NativeExecutionDispatch>::ExtendHostFunctions,
-					>, _>(Some(timestamp_with_aura_info(
-                        MILLISECS_PER_BLOCK,
-                    ))),
+					>, _>(Some(timestamp_with_aura_info(MILLISECS_PER_BLOCK))),
 					task_manager,
 				))
 			})

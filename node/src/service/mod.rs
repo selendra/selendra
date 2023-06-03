@@ -21,6 +21,7 @@ use sc_client_api::{BlockBackend, HeaderBackend};
 use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
 use sc_consensus_slots::BackoffAuthoringBlocksStrategy;
 use sc_network::NetworkService;
+use sc_network_sync::SyncingService;
 use sc_service::{
 	error::Error as ServiceError, Configuration, KeystoreContainer, NetworkStarter, RpcHandlers,
 	TFullClient, TaskManager,
@@ -32,10 +33,7 @@ use selendra_runtime::{self, RuntimeApi};
 use sp_api::ProvideRuntimeApi;
 use sp_arithmetic::traits::BaseArithmetic;
 use sp_consensus_aura::{sr25519::AuthorityPair as AuraPair, Slot};
-use sp_runtime::{
-	generic::BlockId,
-	traits::{Block as BlockT, Header as HeaderT},
-};
+use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 
 type FullClient = sc_service::TFullClient<Block, RuntimeApi, SelendraExecutor>;
 type FullBackend = sc_service::TFullBackend<Block>;

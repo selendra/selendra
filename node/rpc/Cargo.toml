@@ -19,8 +19,11 @@ thiserror = { workspace = true }
 
 sp-blockchain = { workspace = true }
 sp-runtime = { workspace = true }
+sp-core = { workspace = true }
 sp-api = { workspace = true }
 sp-block-builder = { workspace = true }
+sp-arithmetic = { workspace = true }
+sp-consensus-aura = { workspace = true }
 sc-client-api = { workspace = true }
 sc-rpc = { workspace = true }
 sc-rpc-api = { workspace = true }

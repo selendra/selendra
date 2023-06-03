@@ -43,6 +43,7 @@ sc-consensus = { workspace = true }
 sc-chain-spec = { workspace = true }
 sc-cli = { workspace = true }
 sc-executor = { workspace = true }
+sc-network-sync = { workspace = true }
 sc-service = { workspace = true }
 sc-telemetry = { workspace = true }
 sc-keystore = { workspace = true }

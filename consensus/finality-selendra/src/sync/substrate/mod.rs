@@ -1,8 +1,11 @@
 use std::fmt::{Debug, Display};
 
 use codec::{Decode, Encode};
+use selendra_primitives::{
+	opaque::{Block, Header},
+	BlockNumber,
+};
 use sp_runtime::traits::{CheckedSub, Header as SubstrateHeader, One};
-use selendra_primitives::{opaque::{Block, Header}, BlockNumber,};
 
 use crate::{
 	sync::{Block as BlockT, Header as HeaderT, Justification as JustificationT},
