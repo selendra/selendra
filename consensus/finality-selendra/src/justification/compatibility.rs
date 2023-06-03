@@ -64,17 +64,17 @@ fn encode_with_version(version: Version, payload: &[u8]) -> Vec<u8> {
 	// We do not have a guarantee that size_hint is implemented for SelendraJustification, so we need
 	// to compute actual size to place it in the encoded data.
 	let size = payload.len().try_into().unwrap_or_else(|_| {
-        if payload.len() > ByteCount::MAX.into() {
-            warn!(
-                target: LOG_TARGET,
-                "Versioned Justification v{:?} too big during Encode. Size is {:?}. Should be {:?} at max.",
-                version,
-                payload.len(),
-                ByteCount::MAX
-            );
-        }
-        ByteCount::MAX
-    });
+		if payload.len() > ByteCount::MAX.into() {
+			warn!(
+				target: LOG_TARGET,
+				"Versioned Justification v{:?} too big during Encode. Size is {:?}. Should be {:?} at max.",
+				version,
+				payload.len(),
+				ByteCount::MAX
+			);
+		}
+		ByteCount::MAX
+	});
 
 	let mut result = Vec::with_capacity(version.size_hint() + size.size_hint() + payload.len());
 

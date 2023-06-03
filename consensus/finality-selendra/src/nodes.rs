@@ -5,11 +5,9 @@ use futures::channel::oneshot;
 use log::{debug, error};
 use network_clique::{Service, SpawnHandleT};
 use sc_client_api::Backend;
-use sc_network_common::ExHashT;
-use selendra_primitives::BlockNumber;
+use selendra_primitives::opaque::{Block, Header};
 use sp_consensus::SelectChain;
 use sp_keystore::CryptoStore;
-use sp_runtime::traits::{Block, Header};
 
 use crate::{
 	crypto::AuthorityPen,
@@ -27,8 +25,9 @@ use crate::{
 	session::SessionBoundaryInfo,
 	session_map::{AuthorityProviderImpl, FinalityNotifierImpl, SessionMapUpdater},
 	sync::{
-		ChainStatus, Justification, Service as SyncService, SubstrateChainStatus,
-		SubstrateChainStatusNotifier, SubstrateFinalizationInfo, VerifierCache,
+		ChainStatus, Justification, JustificationTranslator, Service as SyncService,
+		SubstrateChainStatusNotifier, SubstrateFinalizationInfo, SubstrateJustification,
+		VerifierCache,
 	},
 	SelendraConfig,
 };
@@ -46,19 +45,17 @@ pub async fn new_pen(mnemonic: &str, keystore: Arc<dyn CryptoStore>) -> Authorit
 		.expect("we just generated this key so everything should work")
 }
 
-pub async fn run_validator_node<B, H, C, BE, SC>(
-	selendra_config: SelendraConfig<B, H, C, SC, SubstrateChainStatus<B>>,
-) where
-	B: Block,
-	B::Header: Header<Number = BlockNumber>,
-	H: ExHashT,
-	C: crate::ClientForSelendra<B, BE> + Send + Sync + 'static,
-	C::Api: selendra_primitives::SelendraSessionApi<B>,
-	BE: Backend<B> + 'static,
-	SC: SelectChain<B> + 'static,
+pub async fn run_validator_node<C, CS, BE, SC>(selendra_config: SelendraConfig<C, SC, CS>)
+where
+	C: crate::ClientForSelendra<Block, BE> + Send + Sync + 'static,
+	C::Api: selendra_primitives::SelendraSessionApi<Block>,
+	BE: Backend<Block> + 'static,
+	CS: ChainStatus<SubstrateJustification<Header>> + JustificationTranslator<Header>,
+	SC: SelectChain<Block> + 'static,
 {
 	let SelendraConfig {
 		network,
+		sync_network,
 		client,
 		chain_status,
 		select_chain,
@@ -95,12 +92,12 @@ pub async fn run_validator_node<B, H, C, BE, SC>(
 	});
 
 	let (gossip_network_service, authentication_network, block_sync_network) = GossipService::new(
-		SubstrateNetwork::new(network.clone(), protocol_naming),
+		SubstrateNetwork::new(network.clone(), sync_network.clone(), protocol_naming),
 		spawn_handle.clone(),
 	);
 	let gossip_network_task = async move { gossip_network_service.run().await };
 
-	let block_requester = network.clone();
+	let block_requester = sync_network.clone();
 	let auxilliary_requester = Requester::new(
 		block_requester.clone(),
 		chain_status.clone(),
@@ -125,9 +122,7 @@ pub async fn run_validator_node<B, H, C, BE, SC>(
 	let chain_events = SubstrateChainStatusNotifier::new(
 		client.finality_notification_stream(),
 		client.import_notification_stream(),
-		chain_status.clone(),
-	)
-	.expect("chain status notifier should set up correctly");
+	);
 
 	let genesis_header = match chain_status.finalized_at(0) {
 		Ok(Some(justification)) => justification.header().clone(),
@@ -141,18 +136,19 @@ pub async fn run_validator_node<B, H, C, BE, SC>(
 		genesis_header,
 	);
 	let finalizer = SelendraFinalizer::new(client.clone(), metrics.clone());
-	let (sync_service, justifications_for_sync) = match SyncService::new(
-		block_sync_network,
-		chain_events,
-		chain_status.clone(),
-		verifier,
-		finalizer,
-		session_period,
-		justification_rx,
-	) {
-		Ok(x) => x,
-		Err(e) => panic!("Failed to initialize Sync service: {}", e),
-	};
+	let (sync_service, justifications_for_sync, _) =
+		match SyncService::<Block, _, _, _, _, _, _>::new(
+			block_sync_network,
+			chain_events,
+			chain_status.clone(),
+			verifier,
+			finalizer,
+			session_period,
+			justification_rx,
+		) {
+			Ok(x) => x,
+			Err(e) => panic!("Failed to initialize Sync service: {}", e),
+		};
 	let sync_task = async move { sync_service.run().await };
 
 	let (connection_manager_service, connection_manager) = ConnectionManager::new(

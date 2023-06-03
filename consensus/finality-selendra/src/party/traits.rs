@@ -1,11 +1,11 @@
 use std::fmt::Display;
 
 use async_trait::async_trait;
-use selendra_primitives::BlockNumber;
+use selendra_primitives::{AuthorityId, BlockNumber};
 
 use crate::{
 	party::{backup::ABFTBackup, manager::AuthorityTask},
-	AuthorityId, NodeIndex, SessionId,
+	NodeIndex, SessionId,
 };
 
 /// Abstraction of the chain state.

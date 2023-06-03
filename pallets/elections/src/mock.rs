@@ -7,7 +7,7 @@ use frame_support::{
 	weights::{RuntimeDbWeight, Weight},
 	BasicExternalities, BoundedVec,
 };
-use primitives::{BannedValidators, CommitteeSeats, DEFAULT_MAX_WINNERS};
+use selendra_primitives::{BannedValidators, CommitteeSeats, DEFAULT_MAX_WINNERS};
 use sp_core::H256;
 use sp_runtime::{
 	testing::{Header, TestXt},
@@ -41,7 +41,7 @@ pub(crate) type Balance = u128;
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub BlockWeights: frame_system::limits::BlockWeights =
-		frame_system::limits::BlockWeights::simple_max(Weight::from_ref_time(1024));
+	frame_system::limits::BlockWeights::simple_max(Weight::from_parts(1024, 0));
 	pub const TestDbWeight: RuntimeDbWeight = RuntimeDbWeight {
 		read: 25,
 		write: 100

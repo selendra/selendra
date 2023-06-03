@@ -1,6 +1,6 @@
 use frame_support::parameter_types;
-pub use primitives::AuthorityId as SelendraId;
-use primitives::{
+pub use selendra_primitives::AuthorityId as SelendraId;
+use selendra_primitives::{
 	AccountId, Balance, DEFAULT_BAN_REASON_LENGTH, DEFAULT_MAX_WINNERS, DEFAULT_SESSION_PERIOD,
 };
 use selendra_runtime_common::prod_or_fast;

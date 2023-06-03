@@ -25,7 +25,7 @@ const OLD_PREFIX: &str = "Elections";
 #[cfg(feature = "try-runtime")]
 mod elections {
 	use frame_support::{storage_alias, Twox64Concat};
-	use primitives::{BanConfig as BanConfigStruct, BanInfo, BlockCount, SessionCount};
+	use selendra_primitives::{BanConfig as BanConfigStruct, BanInfo, BlockCount, SessionCount};
 
 	use crate::ValidatorTotalRewards;
 

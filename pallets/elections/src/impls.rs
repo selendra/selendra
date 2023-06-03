@@ -1,4 +1,4 @@
-use primitives::{CommitteeSeats, EraValidators};
+use selendra_primitives::{CommitteeSeats, EraValidators};
 use sp_staking::EraIndex;
 use sp_std::{collections::btree_set::BTreeSet, vec::Vec};
 
@@ -30,20 +30,20 @@ where
 	}
 }
 
-impl<T: Config> primitives::EraManager for Pallet<T> {
+impl<T: Config> selendra_primitives::EraManager for Pallet<T> {
 	fn on_new_era(era: EraIndex) {
 		Self::populate_next_era_validators_on_next_era_start(era);
 	}
 }
 
-impl<T: Config> primitives::BanHandler for Pallet<T> {
+impl<T: Config> selendra_primitives::BanHandler for Pallet<T> {
 	type AccountId = T::AccountId;
 	fn can_ban(account_id: &Self::AccountId) -> bool {
 		!NextEraReservedValidators::<T>::get().contains(account_id)
 	}
 }
 
-impl<T: Config + pallet_staking::Config> primitives::ValidatorProvider for Pallet<T> {
+impl<T: Config + pallet_staking::Config> selendra_primitives::ValidatorProvider for Pallet<T> {
 	type AccountId = T::AccountId;
 	fn current_era_validators() -> Option<EraValidators<Self::AccountId>> {
 		if pallet_staking::ActiveEra::<T>::get().map(|ae| ae.index) == Some(0) {

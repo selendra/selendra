@@ -6,61 +6,61 @@ edition = "2021"
 license = "Apache 2.0"
 
 [dependencies]
+codec = { package = "parity-scale-codec", version = "3.5.0", default-features = false, features = ["derive"] }
+
+tokio = { workspace = true, features = [ "sync", "macros", "time", "rt-multi-thread" ] }
+async-trait = { workspace = true }
+bytes = { workspace = true }
+derive_more = { workspace = true }
+env_logger = { workspace = true }
+futures = { workspace = true }
+futures-timer = { workspace = true }
+hash-db = { workspace = true }
+ip_network = { workspace = true }
+log = { workspace = true }
+lru = { workspace = true }
+parking_lot = { workspace = true }
+rand = { workspace = true }
+serde = { workspace = true }
+tiny-bip39 = { workspace = true }
+
 # fixed version to 'freeze' some types used in abft, mainly `SignatureSet` used in justification and signature aggregation
-selendra-bft-crypto = { package = "aleph-bft-crypto", version = "0.5" }
+selendra-bft-crypto = { workspace = true }
+selendra-primitives = { workspace = true }
+network-clique = { workspace = true }
+current-selendra-aggregator = { workspace = true }
+current-selendra-bft = { workspace = true }
+current-selendra-bft-rmc = { workspace = true }
+legacy-selendra-bft = { workspace = true }
+legacy-selendra-bft-rmc = { workspace = true }
+legacy-selendra-aggregator = { workspace = true }
 
-current-selendra-bft = { package = "aleph-bft", version = "0.20" }
-current-selendra-bft-rmc = { package = "aleph-bft-rmc", version = "0.6" }
-legacy-selendra-bft = { package = "aleph-bft", version = "0.19" }
-legacy-selendra-bft-rmc = { package = "aleph-bft-rmc", version = "0.5" }
-
-network-clique = { package = "network-clique", path = "../clique" }
-selendra-primitives = { path = "../../primitives" }
-legacy-selendra-aggregator = { package = "legacy-aggregator", path = "../aggregator/legacy" }
-current-selendra-aggregator = { path = "../aggregator", package = "aggregator" }
-
-async-trait = "0.1"
-bytes = "1.0"
-codec = { package = "parity-scale-codec", version = "3.1", default-features = false, features = ["derive"] }
-derive_more = "0.99"
-env_logger = "0.10"
-futures = "0.3"
-futures-timer = "3.0"
-hash-db = { version = "0.15.2", default-features = false }
-ip_network = "0.4"
-log = "0.4"
-lru = "0.7"
-parking_lot = "0.12"
-rand = "0.8"
-serde = "1.0"
-tiny-bip39 = "1.0"
-tokio = { version = "1.17", features = [ "sync", "macros", "time", "rt-multi-thread" ] }
-
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-keystore = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sc-network = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sc-network-common = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sc-telemetry = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sc-service = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-state-machine = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-trie = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sc-utils = {  git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-api = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sc-consensus = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-consensus = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sc-client-api = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-io = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
+sp-keystore = { workspace = true }
+sp-application-crypto = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-state-machine = { workspace = true }
+sp-trie = { workspace = true }
+sp-api = { workspace = true }
+sp-blockchain = { workspace = true }
+sp-consensus = { workspace = true }
+sc-consensus = { workspace = true }
+sc-utils = {  workspace = true }
+sp-io = { workspace = true }
+sc-client-api = { workspace = true }
+sc-network = { workspace = true }
+sc-network-common = { workspace = true }
+sc-network-sync = { workspace = true }
+sc-telemetry = { workspace = true }
+sc-service = { workspace = true }
+substrate-prometheus-endpoint = { workspace = true }
 
 [dev-dependencies]
-substrate-test-runtime-client = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-substrate-test-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-substrate-test-client = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sc-block-builder = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-selendra-runtime = { path = "../../runtime" }
+substrate-test-runtime-client = { workspace = true }
+substrate-test-runtime = { workspace = true }
+substrate-test-client = { workspace = true }
+sc-block-builder = { workspace = true }
+selendra-runtime = { workspace = true }
 
 [features]
 only_legacy = []

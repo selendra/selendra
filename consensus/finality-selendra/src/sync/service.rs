@@ -14,8 +14,9 @@ use crate::{
 		handler::{Error as HandlerError, Handler, SyncAction},
 		task_queue::TaskQueue,
 		ticker::Ticker,
-		BlockIdFor, BlockIdentifier, ChainStatus, ChainStatusNotification, ChainStatusNotifier,
-		Finalizer, Header, Justification, JustificationSubmissions, Verifier, LOG_TARGET,
+		Block, BlockIdFor, BlockIdentifier, ChainStatus, ChainStatusNotification,
+		ChainStatusNotifier, Finalizer, Header, Justification, JustificationSubmissions,
+		RequestBlocks, Verifier, LOG_TARGET,
 	},
 	SessionPeriod,
 };
@@ -26,20 +27,22 @@ const FINALIZATION_STALL_CHECK_PERIOD: Duration = Duration::from_secs(30);
 
 /// A service synchronizing the knowledge about the chain between the nodes.
 pub struct Service<
+	B: Block,
 	J: Justification,
-	N: GossipNetwork<VersionedNetworkData<J>>,
+	N: GossipNetwork<VersionedNetworkData<B, J>>,
 	CE: ChainStatusNotifier<J::Header>,
 	CS: ChainStatus<J>,
 	V: Verifier<J>,
 	F: Finalizer<J>,
 > {
-	network: VersionWrapper<J, N>,
-	handler: Handler<N::PeerId, J, CS, V, F>,
+	network: VersionWrapper<B, J, N>,
+	handler: Handler<B, N::PeerId, J, CS, V, F>,
 	tasks: TaskQueue<BlockIdFor<J>>,
 	broadcast_ticker: Ticker,
 	chain_events: CE,
 	justifications_from_user: mpsc::UnboundedReceiver<J::Unverified>,
 	additional_justifications_from_user: mpsc::UnboundedReceiver<J::Unverified>,
+	_block_requests_from_user: mpsc::UnboundedReceiver<BlockIdFor<J>>,
 }
 
 impl<J: Justification> JustificationSubmissions<J> for mpsc::UnboundedSender<J::Unverified> {
@@ -50,17 +53,27 @@ impl<J: Justification> JustificationSubmissions<J> for mpsc::UnboundedSender<J::
 	}
 }
 
+impl<BI: BlockIdentifier> RequestBlocks<BI> for mpsc::UnboundedSender<BI> {
+	type Error = mpsc::TrySendError<BI>;
+
+	fn request_block(&mut self, block_id: BI) -> Result<(), Self::Error> {
+		self.unbounded_send(block_id)
+	}
+}
+
 impl<
+		B: Block,
 		J: Justification,
-		N: GossipNetwork<VersionedNetworkData<J>>,
+		N: GossipNetwork<VersionedNetworkData<B, J>>,
 		CE: ChainStatusNotifier<J::Header>,
 		CS: ChainStatus<J>,
 		V: Verifier<J>,
 		F: Finalizer<J>,
-	> Service<J, N, CE, CS, V, F>
+	> Service<B, J, N, CE, CS, V, F>
 {
-	/// Create a new service using the provided network for communication. Also returns an
-	/// interface for submitting additional justifications.
+	/// Create a new service using the provided network for communication.
+	/// Also returns an interface for submitting additional justifications,
+	/// and an interface for requesting blocks.
 	pub fn new(
 		network: N,
 		chain_events: CE,
@@ -69,12 +82,16 @@ impl<
 		finalizer: F,
 		period: SessionPeriod,
 		additional_justifications_from_user: mpsc::UnboundedReceiver<J::Unverified>,
-	) -> Result<(Self, impl JustificationSubmissions<J> + Clone), HandlerError<J, CS, V, F>> {
+	) -> Result<
+		(Self, impl JustificationSubmissions<J> + Clone, impl RequestBlocks<BlockIdFor<J>>),
+		HandlerError<J, CS, V, F>,
+	> {
 		let network = VersionWrapper::new(network);
 		let handler = Handler::new(chain_status, verifier, finalizer, period)?;
 		let tasks = TaskQueue::new();
 		let broadcast_ticker = Ticker::new(BROADCAST_PERIOD, BROADCAST_COOLDOWN);
 		let (justifications_for_sync, justifications_from_user) = mpsc::unbounded();
+		let (block_requests_for_sync, _block_requests_from_user) = mpsc::unbounded();
 		Ok((
 			Service {
 				network,
@@ -84,8 +101,10 @@ impl<
 				chain_events,
 				justifications_from_user,
 				additional_justifications_from_user,
+				_block_requests_from_user,
 			},
 			justifications_for_sync,
+			block_requests_for_sync,
 		))
 	}
 
@@ -105,7 +124,10 @@ impl<
 		let state = match self.handler.state() {
 			Ok(state) => state,
 			Err(e) => {
-				warn!(target: LOG_TARGET, "Failed to construct own knowledge state: {}.", e);
+				warn!(
+					target: LOG_TARGET,
+					"Failed to construct own knowledge state: {}.", e
+				);
 				return
 			},
 		};
@@ -125,7 +147,10 @@ impl<
 		let state = match self.handler.state() {
 			Ok(state) => state,
 			Err(e) => {
-				warn!(target: LOG_TARGET, "Failed to construct own knowledge state: {}.", e);
+				warn!(
+					target: LOG_TARGET,
+					"Failed to construct own knowledge state: {}.", e
+				);
 				return
 			},
 		};
@@ -137,13 +162,13 @@ impl<
 		}
 	}
 
-	fn send_to(&mut self, data: NetworkData<J>, peer: N::PeerId) {
+	fn send_to(&mut self, data: NetworkData<B, J>, peer: N::PeerId) {
 		if let Err(e) = self.network.send_to(data, peer) {
 			warn!(target: LOG_TARGET, "Error sending response: {}.", e);
 		}
 	}
 
-	fn perform_sync_action(&mut self, action: SyncAction<J>, peer: N::PeerId) {
+	fn perform_sync_action(&mut self, action: SyncAction<B, J>, peer: N::PeerId) {
 		use SyncAction::*;
 		match action {
 			Response(data) => self.send_to(data, peer),
@@ -153,11 +178,18 @@ impl<
 	}
 
 	fn handle_state(&mut self, state: State<J>, peer: N::PeerId) {
-		trace!(target: LOG_TARGET, "Handling state {:?} received from {:?}.", state, peer);
+		trace!(
+			target: LOG_TARGET,
+			"Handling state {:?} received from {:?}.",
+			state,
+			peer
+		);
 		match self.handler.handle_state(state, peer.clone()) {
 			Ok(action) => self.perform_sync_action(action, peer),
-			Err(e) =>
-				warn!(target: LOG_TARGET, "Error handling sync state from {:?}: {}.", peer, e),
+			Err(e) => warn!(
+				target: LOG_TARGET,
+				"Error handling sync state from {:?}: {}.", peer, e
+			),
 		}
 	}
 
@@ -166,31 +198,24 @@ impl<
 		justifications: Vec<J::Unverified>,
 		peer: Option<N::PeerId>,
 	) {
-		trace!(target: LOG_TARGET, "Handling {:?} justifications.", justifications.len());
+		trace!(
+			target: LOG_TARGET,
+			"Handling {:?} justifications.",
+			justifications.len()
+		);
 		let mut previous_block_id = None;
 		for justification in justifications {
 			let maybe_block_id =
 				match self.handler.handle_justification(justification, peer.clone()) {
 					Ok(maybe_id) => maybe_id,
-					Err(e) => match e {
-						HandlerError::Verifier(e) => {
-							debug!(
-								target: LOG_TARGET,
-								"Could not verify justification from {:?}: {}.",
-								peer.map_or("user".to_string(), |id| format!("{:?}", id)),
-								e
-							);
-							return
-						},
-						e => {
-							warn!(
-								target: LOG_TARGET,
-								"Error while handling justification from {:?}: {}.",
-								peer.map_or("user".to_string(), |id| format!("{:?}", id)),
-								e
-							);
-							return
-						},
+					Err(e) => {
+						warn!(
+							target: LOG_TARGET,
+							"Error while handling justification from {:?}: {}.",
+							peer.map_or("user".to_string(), |id| format!("{:?}", id)),
+							e
+						);
+						return
 					},
 				};
 			if let Some(block_id) = maybe_block_id {
@@ -201,22 +226,33 @@ impl<
 			}
 		}
 		if let Some(block_id) = previous_block_id {
-			debug!(target: LOG_TARGET, "Initiating a request for {:?}.", block_id);
+			debug!(
+				target: LOG_TARGET,
+				"Initiating a request for {:?}.", block_id
+			);
 			self.request(block_id);
 		}
 	}
 
 	fn handle_request(&mut self, request: Request<J>, peer: N::PeerId) {
-		trace!(target: LOG_TARGET, "Handling a request {:?} from {:?}.", request, peer);
+		trace!(
+			target: LOG_TARGET,
+			"Handling a request {:?} from {:?}.",
+			request,
+			peer
+		);
 		match self.handler.handle_request(request) {
 			Ok(action) => self.perform_sync_action(action, peer),
 			Err(e) => {
-				warn!(target: LOG_TARGET, "Error handling request from {:?}: {}.", peer, e);
+				warn!(
+					target: LOG_TARGET,
+					"Error handling request from {:?}: {}.", peer, e
+				);
 			},
 		}
 	}
 
-	fn handle_network_data(&mut self, data: NetworkData<J>, peer: N::PeerId) {
+	fn handle_network_data(&mut self, data: NetworkData<B, J>, peer: N::PeerId) {
 		use NetworkData::*;
 		match data {
 			StateBroadcast(state) => self.handle_state(state, peer),
@@ -231,7 +267,7 @@ impl<
 				self.handle_request(request, peer.clone());
 				self.handle_state(state, peer)
 			},
-			RequestResponse(justifications) =>
+			RequestResponse(_, justifications) =>
 				self.handle_justifications(justifications, Some(peer)),
 		}
 	}
@@ -259,7 +295,10 @@ impl<
 			BlockImported(header) => {
 				trace!(target: LOG_TARGET, "Handling a new imported block.");
 				if let Err(e) = self.handler.block_imported(header) {
-					error!(target: LOG_TARGET, "Error marking block as imported: {}.", e);
+					error!(
+						target: LOG_TARGET,
+						"Error marking block as imported: {}.", e
+					);
 				}
 			},
 			BlockFinalized(_) => {
@@ -325,9 +364,9 @@ impl<
 							}
 						},
 						Err(e) => error!(
-							target: LOG_TARGET,
-							"Error when retrieving Handler state: {}.", e
-						),
+										target: LOG_TARGET,
+										"Error when retrieving Handler state: {}.", e
+									),
 					}
 				}
 			}

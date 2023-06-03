@@ -2,13 +2,13 @@ use std::{sync::Arc, time::Duration};
 
 use codec::{Decode, Encode, Output};
 use futures::{channel::mpsc, StreamExt};
-use selendra_primitives::KEY_TYPE;
+use selendra_primitives::{AuthorityId, KEY_TYPE};
 use sp_keystore::{testing::KeyStore, CryptoStore};
 use tokio::time::timeout;
 
 use crate::{
 	crypto::{AuthorityPen, AuthorityVerifier},
-	AuthorityId, NodeIndex,
+	NodeIndex,
 };
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]

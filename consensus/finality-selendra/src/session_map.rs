@@ -5,10 +5,7 @@ use log::{debug, error, trace};
 use sc_client_api::{Backend, FinalityNotification};
 use sc_utils::mpsc::TracingUnboundedReceiver;
 use selendra_primitives::{BlockNumber, SelendraSessionApi, SessionAuthorityData};
-use sp_runtime::{
-	generic::BlockId,
-	traits::{Block, Header},
-};
+use sp_runtime::traits::{Block, Header};
 use tokio::sync::{
 	oneshot::{Receiver as OneShotReceiver, Sender as OneShotSender},
 	RwLock,
@@ -17,6 +14,7 @@ use tokio::sync::{
 use crate::{session::SessionBoundaryInfo, ClientForSelendra, SessionId, SessionPeriod};
 
 const PRUNING_THRESHOLD: u32 = 10;
+const LOG_TARGET: &str = "selendra-session-updater";
 type SessionMap = HashMap<SessionId, SessionAuthorityData>;
 type SessionSubscribers = HashMap<SessionId, Vec<OneShotSender<SessionAuthorityData>>>;
 
@@ -46,10 +44,24 @@ where
 	C: ClientForSelendra<B, BE> + Send + Sync + 'static,
 	C::Api: selendra_primitives::SelendraSessionApi<B>,
 	B: Block,
+	B::Header: Header<Number = BlockNumber>,
 	BE: Backend<B> + 'static,
 {
 	pub fn new(client: Arc<C>) -> Self {
 		Self { client, _phantom: PhantomData }
+	}
+
+	fn block_hash(&self, block: BlockNumber) -> Option<B::Hash> {
+		match self.client.block_hash(block) {
+			Ok(r) => r,
+			Err(e) => {
+				error!(
+					target: LOG_TARGET,
+					"Error while retrieving hash for block #{}. {}", block, e
+				);
+				None
+			},
+		}
 	}
 }
 
@@ -62,29 +74,31 @@ where
 	BE: Backend<B> + 'static,
 {
 	fn authority_data(&self, block_number: BlockNumber) -> Option<SessionAuthorityData> {
-		match self.client.runtime_api().authority_data(&BlockId::Number(block_number)) {
+		let block_hash = self.block_hash(block_number)?;
+		match self.client.runtime_api().authority_data(block_hash) {
 			Ok(data) => Some(data),
 			Err(_) => self
 				.client
 				.runtime_api()
-				.authorities(&BlockId::Number(block_number))
+				.authorities(block_hash)
 				.map(|authorities| SessionAuthorityData::new(authorities, None))
 				.ok(),
 		}
 	}
 
 	fn next_authority_data(&self, block_number: BlockNumber) -> Option<SessionAuthorityData> {
+		let block_hash = self.block_hash(block_number)?;
 		match self
 			.client
 			.runtime_api()
-			.next_session_authority_data(&BlockId::Number(block_number))
+			.next_session_authority_data(block_hash)
 			.map(|r| r.ok())
 		{
 			Ok(maybe_data) => maybe_data,
 			Err(_) => self
 				.client
 				.runtime_api()
-				.next_session_authorities(&BlockId::Number(block_number))
+				.next_session_authorities(block_hash)
 				.map(|r| r.map(|authorities| SessionAuthorityData::new(authorities, None)).ok())
 				.ok()
 				.flatten(),
@@ -174,7 +188,10 @@ impl SharedSessionMap {
 		if let Some(senders) = guard.1.remove(&id) {
 			for sender in senders {
 				if let Err(e) = sender.send(authority_data.clone()) {
-					error!(target: "selendra-session-updater", "Error while sending notification: {:?}", e);
+					error!(
+						target: LOG_TARGET,
+						"Error while sending notification: {:?}", e
+					);
 				}
 			}
 		}
@@ -250,9 +267,9 @@ where
 	/// Puts authority data for the next session into the session map
 	async fn handle_first_block_of_session(&mut self, session_id: SessionId) {
 		let first_block = self.session_info.first_block_of_session(session_id);
-		debug!(target: "selendra-session-updater",
-			"Handling first block #{:?} of session {:?}",
-			first_block, session_id.0
+		debug!(
+			target: LOG_TARGET,
+			"Handling first block #{:?} of session {:?}", first_block, session_id.0
 		);
 
 		if let Some(authority_data) = self.authority_provider.next_authority_data(first_block) {
@@ -262,7 +279,8 @@ where
 		}
 
 		if session_id.0 > PRUNING_THRESHOLD && session_id.0 % PRUNING_THRESHOLD == 0 {
-			debug!(target: "selendra-session-updater",
+			debug!(
+				target: LOG_TARGET,
 				"Pruning session map below session #{:?}",
 				session_id.0 - PRUNING_THRESHOLD
 			);
@@ -283,7 +301,7 @@ where
 		let current_session = self.session_info.session_id_from_block_num(last_finalized);
 		let starting_session = SessionId(current_session.0.saturating_sub(PRUNING_THRESHOLD - 1));
 
-		debug!(target: "selendra-session-updater",
+		debug!(target: LOG_TARGET,
 			"Last finalized is {:?}; Catching up with authorities starting from session {:?} up to next session {:?}",
 			last_finalized, starting_session.0, current_session.0 + 1
 		);
@@ -294,7 +312,11 @@ where
 			if let Some(authority_data) = self.authorities_for_session(id) {
 				self.session_map.update(id, authority_data).await;
 			} else {
-				debug!(target: "selendra-session-updater", "No authorities for session {:?} during catch-up. Most likely already pruned.", id.0)
+				debug!(
+					target: LOG_TARGET,
+					"No authorities for session {:?} during catch-up. Most likely already pruned.",
+					id.0
+				)
 			}
 		}
 
@@ -317,7 +339,11 @@ where
 		let mut last_updated = self.catch_up().await;
 
 		while let Some(last_finalized) = self.finality_notifier.next().await {
-			trace!(target: "selendra-session-updater", "got FinalityNotification about #{:?}", last_finalized);
+			trace!(
+				target: LOG_TARGET,
+				"got FinalityNotification about #{:?}",
+				last_finalized
+			);
 
 			let session_id = self.session_info.session_id_from_block_num(last_finalized);
 

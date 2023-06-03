@@ -13,7 +13,7 @@
 
 // You should have received a copy of the GNU General Public License
 
-use primitives::{Balance, TOKEN};
+use selendra_primitives::{Balance, TOKEN};
 
 // Prints debug output of the `contracts` pallet to stdout if the node is started with `-lruntime::contracts=debug`.
 pub const CONTRACTS_DEBUG_OUTPUT: bool = true;
@@ -22,7 +22,7 @@ pub const CONTRACTS_DEBUG_OUTPUT: bool = true;
 pub const CONTRACT_DEPOSIT_PER_BYTE: Balance = 4 * (TOKEN / 100_000);
 
 pub mod currency {
-	use primitives::{Balance, TOKEN};
+	use selendra_primitives::{Balance, TOKEN};
 
 	pub const MILLI_CENT: Balance = TOKEN / 1000;
 	pub const MICRO_CENT: Balance = MILLI_CENT / 1000;
@@ -38,7 +38,7 @@ pub mod currency {
 }
 
 pub mod time {
-	use primitives::{BlockNumber, Moment};
+	use selendra_primitives::{BlockNumber, Moment};
 
 	pub const MILLISECS_PER_BLOCK: u64 = 1000;
 	pub const SECS_PER_BLOCK: Moment = MILLISECS_PER_BLOCK / 1000;
@@ -61,7 +61,7 @@ pub mod fee {
 		constants::ExtrinsicBaseWeight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	};
-	use primitives::Balance;
+	use selendra_primitives::Balance;
 	use smallvec::smallvec;
 	pub use sp_runtime::Perbill;
 

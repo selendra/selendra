@@ -1,4 +1,4 @@
-## 🙋‍♀️ Introduction 
+## 🙋‍♀️ Introduction
 Selendra is  a multichain interoperable proof-of-stake network built with Substrate Framework for building and running Ethereum Virtual Machine (EVM) compatible and Substrate-based blockchain applications.
 
 ### Mission

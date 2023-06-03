@@ -1,5 +1,6 @@
 use frame_support::{parameter_types, traits::ConstU32, weights::Weight};
-use primitives::{AccountId, Balance, BlockNumber};
+use frame_system::{EnsureRoot, EnsureSigned};
+use selendra_primitives::{AccountId, Balance, BlockNumber};
 use selendra_runtime_common::prod_or_fast;
 use sp_runtime::Perbill;
 
@@ -51,6 +52,7 @@ impl pallet_democracy::Config for Runtime {
 	type Preimages = ();
 	type MaxDeposits = ConstU32<100>;
 	type MaxBlacklisted = ConstU32<100>;
+	type SubmitOrigin = EnsureSigned<AccountId>;
 }
 
 parameter_types! {
@@ -66,6 +68,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
+	type SetMembersOrigin = EnsureRoot<AccountId>;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 }
@@ -83,6 +86,7 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 	type MotionDuration = TechnicalMotionDuration;
 	type MaxProposals = TechnicalMaxProposals;
 	type MaxMembers = TechnicalMaxMembers;
+	type SetMembersOrigin = EnsureRoot<AccountId>;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 }

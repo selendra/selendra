@@ -1,4 +1,4 @@
-use primitives::{FinalityCommitteeManager, SessionIndex};
+use selendra_primitives::{FinalityCommitteeManager, SessionIndex};
 use sp_std::vec::Vec;
 
 use crate::{

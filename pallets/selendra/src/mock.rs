@@ -5,7 +5,7 @@ use frame_support::{
 	traits::{OnFinalize, OnInitialize},
 	weights::{RuntimeDbWeight, Weight},
 };
-use primitives::AuthorityId;
+use selendra_primitives::AuthorityId;
 use sp_api_hidden_includes_construct_runtime::hidden_include::traits::GenesisBuild;
 use sp_core::H256;
 use sp_runtime::{
@@ -44,7 +44,7 @@ impl_opaque_keys! {
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub BlockWeights: frame_system::limits::BlockWeights =
-		frame_system::limits::BlockWeights::simple_max(Weight::from_ref_time(1024));
+	frame_system::limits::BlockWeights::simple_max(Weight::from_parts(1024, 0));
 	pub const TestDbWeight: RuntimeDbWeight = RuntimeDbWeight {
 		read: 25,
 		write: 100

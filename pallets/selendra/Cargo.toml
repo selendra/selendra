@@ -6,24 +6,24 @@ edition = "2021"
 license = "Apache 2.0"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "3.5.0", default-features = false, features = ["derive"] }
 serde = "1.0"
-scale-info = { version = "2.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
 
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-pallet-session = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-balances = { workspace = true }
+pallet-session = { workspace = true }
+sp-io = { workspace = true }
+sp-std = { workspace = true }
 
-pallets-support = { path = "../support", default-features = false }
-primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
+pallets-support = { workspace = true }
+selendra-primitives = { workspace = true }
 
 [dev-dependencies]
-pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.38" }
+pallet-timestamp = { workspace = true }
+sp-runtime = { workspace = true }
+sp-core = { workspace = true }
 
 [features]
 default = ["std"]
@@ -32,7 +32,7 @@ std = [
     "frame-support/std",
     "frame-system/std",
     "sp-std/std",
-    "primitives/std",
+    "selendra-primitives/std",
     "pallet-balances/std",
     "pallet-session/std",
     "pallets-support/std",

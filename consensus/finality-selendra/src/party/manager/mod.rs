@@ -5,13 +5,10 @@ use futures::channel::oneshot;
 use log::{debug, info, trace, warn};
 use network_clique::SpawnHandleT;
 use sc_client_api::Backend;
-use selendra_primitives::{BlockNumber, SelendraSessionApi, KEY_TYPE};
+use selendra_primitives::{AuthorityId, BlockNumber, SelendraSessionApi, KEY_TYPE};
 use sp_consensus::SelectChain;
 use sp_keystore::CryptoStore;
-use sp_runtime::{
-	generic::BlockId,
-	traits::{Block as BlockT, Header as HeaderT},
-};
+use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 
 use crate::{
 	abft::{
@@ -33,8 +30,8 @@ use crate::{
 		backup::ABFTBackup, manager::aggregator::AggregatorVersion, traits::NodeSessionManager,
 	},
 	sync::{substrate::Justification, JustificationSubmissions, JustificationTranslator},
-	AuthorityId, CurrentRmcNetworkData, IdentifierFor, Keychain, LegacyRmcNetworkData, Metrics,
-	NodeIndex, SessionBoundaries, SessionBoundaryInfo, SessionId, SessionPeriod, UnitCreationDelay,
+	CurrentRmcNetworkData, IdentifierFor, Keychain, LegacyRmcNetworkData, Metrics, NodeIndex,
+	SessionBoundaries, SessionBoundaryInfo, SessionId, SessionPeriod, UnitCreationDelay,
 	VersionedNetworkData,
 };
 
@@ -335,6 +332,11 @@ where
 		};
 
 		let last_block_of_previous_session = session_boundaries.first_block().saturating_sub(1);
+		let last_block_of_previous_session_hash = self
+			.client
+			.block_hash(last_block_of_previous_session)
+			.expect("Previous session ended, the block should be present")
+			.expect("Previous session ended, we should have the hash.");
 
 		let params = SubtasksParams {
 			n_members: authorities.len(),
@@ -356,7 +358,7 @@ where
 		match self
 			.client
 			.runtime_api()
-			.next_session_finality_version(&BlockId::Number(last_block_of_previous_session))
+			.next_session_finality_version(last_block_of_previous_session_hash)
 		{
 			#[cfg(feature = "only_legacy")]
 			_ if self.only_legacy() => {
@@ -461,8 +463,13 @@ where
 	}
 
 	async fn node_idx(&self, authorities: &[AuthorityId]) -> Option<NodeIndex> {
-		let our_consensus_keys: HashSet<_> =
-			self.keystore.keys(KEY_TYPE).await.unwrap().into_iter().collect();
+		let our_consensus_keys: HashSet<_> = match self.keystore.keys(KEY_TYPE).await {
+			Ok(keys) => keys.into_iter().collect(),
+			Err(e) => {
+				warn!(target: "selendra-data-store", "Error accessing keystore: {}", e);
+				return None
+			},
+		};
 		trace!(target: "selendra-data-store", "Found {:?} consensus keys in our local keystore {:?}", our_consensus_keys.len(), our_consensus_keys);
 		authorities
 			.iter()

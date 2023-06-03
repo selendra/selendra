@@ -5,7 +5,7 @@ use frame_support::{
 	pallet_prelude::{StorageVersion, TypeInfo},
 	traits::OnRuntimeUpgrade,
 };
-use primitives::CommitteeSeats;
+use selendra_primitives::CommitteeSeats;
 use sp_core::Get;
 #[cfg(feature = "try-runtime")]
 use {frame_support::ensure, pallets_support::ensure_storage_version, sp_std::vec::Vec};
