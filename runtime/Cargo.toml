@@ -165,3 +165,5 @@ runtime-benchmarks = [
     "frame-system/runtime-benchmarks",
     "frame-benchmarking/runtime-benchmarks",
 ]
+
+fast-runtime = []
