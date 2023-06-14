@@ -38,7 +38,7 @@ parameter_types! {
 	// see custom implementation of WeightInfo below
 	pub const MaxNominatorRewardedPerValidator: u32 = MAX_NOMINATORS_REWARDED_PER_VALIDATOR;
 	pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(33);
-	pub SessionsPerEra: EraIndex = prod_or_fast!(DEFAULT_SESSIONS_PER_ERA, 3);
+	pub SessionsPerEra: EraIndex = prod_or_fast!(DEFAULT_SESSIONS_PER_ERA, 3, "SEL_SESSION_ERA");
 	pub HistoryDepth: u32 = 84;
 }
 

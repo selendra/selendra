@@ -9,8 +9,9 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub use frame_support::{
 	construct_runtime, log, parameter_types,
 	traits::{
-		Currency, EstimateNextNewSession, Imbalance, KeyOwnerProofSystem, LockIdentifier, Nothing,
-		OnUnbalanced, Randomness, ValidatorSet,
+		ConstBool, ConstU16, ConstU32, Currency, EqualPrivilegeOnly, EstimateNextNewSession,
+		Imbalance, KeyOwnerProofSystem, LockIdentifier, Nothing, OnUnbalanced, Randomness,
+		SortedMembers, ValidatorSet,
 	},
 	weights::{
 		constants::{
@@ -18,12 +19,9 @@ pub use frame_support::{
 		},
 		ConstantMultiplier, IdentityFee, Weight,
 	},
-	StorageValue,
+	PalletId, StorageValue,
 };
-use frame_support::{
-	traits::{ConstBool, ConstU32, EqualPrivilegeOnly, SortedMembers},
-	PalletId,
-};
+
 use frame_system::EnsureSignedBy;
 #[cfg(feature = "try-runtime")]
 use frame_try_runtime::UpgradeCheckSelect;
@@ -78,7 +76,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
 	impl_name: create_runtime_str!("selendra-node"),
 	authoring_version: 1,
-	spec_version: 3001,
+	spec_version: 3002,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -95,7 +93,6 @@ impl_opaque_keys! {
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const BlockHashCount: BlockNumber = 2400;
-	pub const SS58Prefix: u8 = 42;
 }
 
 impl frame_system::Config for Runtime {
@@ -120,9 +117,12 @@ impl frame_system::Config for Runtime {
 	type OnKilledAccount = ();
 	type AccountData = pallet_balances::AccountData<Balance>;
 	type SystemWeightInfo = ();
-	type SS58Prefix = SS58Prefix;
+	#[cfg(feature = "runtime-testnet")]
+	type SS58Prefix = ConstU16<42>;
+	#[cfg(not(feature = "runtime-testnet"))]
+	type SS58Prefix = ConstU16<204>;
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {

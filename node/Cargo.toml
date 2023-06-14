@@ -84,3 +84,6 @@ runtime-benchmarks = [
     "frame-benchmarking-cli/runtime-benchmarks",
     "selendra-runtime/runtime-benchmarks",
 ]
+
+runtime-testnet = []
+fast-runtime = ["runtime-testnet"]

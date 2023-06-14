@@ -41,3 +41,5 @@ std = [
 	"pallet-transaction-payment/std",
     "selendra-primitives/std"
 ]
+
+fast-runtime = []

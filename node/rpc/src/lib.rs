@@ -10,9 +10,9 @@ use std::sync::Arc;
 use finality_selendra::{Justification, JustificationTranslator};
 use futures::channel::mpsc;
 use jsonrpsee::RpcModule;
+use sc_client_api::StorageProvider;
 pub use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool_api::TransactionPool;
-use sc_client_api::StorageProvider;
 use selendra_primitives::{
 	opaque::{Block, Header},
 	AccountId, Balance, Index,

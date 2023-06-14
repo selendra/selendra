@@ -166,4 +166,5 @@ runtime-benchmarks = [
     "frame-benchmarking/runtime-benchmarks",
 ]
 
-fast-runtime = []
+runtime-testnet = []
+fast-runtime = ["runtime-testnet"]

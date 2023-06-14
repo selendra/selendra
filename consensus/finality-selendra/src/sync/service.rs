@@ -124,10 +124,7 @@ impl<
 		let state = match self.handler.state() {
 			Ok(state) => state,
 			Err(e) => {
-				warn!(
-					target: LOG_TARGET,
-					"Failed to construct own knowledge state: {}.", e
-				);
+				warn!(target: LOG_TARGET, "Failed to construct own knowledge state: {}.", e);
 				return
 			},
 		};
@@ -147,10 +144,7 @@ impl<
 		let state = match self.handler.state() {
 			Ok(state) => state,
 			Err(e) => {
-				warn!(
-					target: LOG_TARGET,
-					"Failed to construct own knowledge state: {}.", e
-				);
+				warn!(target: LOG_TARGET, "Failed to construct own knowledge state: {}.", e);
 				return
 			},
 		};
@@ -178,18 +172,11 @@ impl<
 	}
 
 	fn handle_state(&mut self, state: State<J>, peer: N::PeerId) {
-		trace!(
-			target: LOG_TARGET,
-			"Handling state {:?} received from {:?}.",
-			state,
-			peer
-		);
+		trace!(target: LOG_TARGET, "Handling state {:?} received from {:?}.", state, peer);
 		match self.handler.handle_state(state, peer.clone()) {
 			Ok(action) => self.perform_sync_action(action, peer),
-			Err(e) => warn!(
-				target: LOG_TARGET,
-				"Error handling sync state from {:?}: {}.", peer, e
-			),
+			Err(e) =>
+				warn!(target: LOG_TARGET, "Error handling sync state from {:?}: {}.", peer, e),
 		}
 	}
 
@@ -198,11 +185,7 @@ impl<
 		justifications: Vec<J::Unverified>,
 		peer: Option<N::PeerId>,
 	) {
-		trace!(
-			target: LOG_TARGET,
-			"Handling {:?} justifications.",
-			justifications.len()
-		);
+		trace!(target: LOG_TARGET, "Handling {:?} justifications.", justifications.len());
 		let mut previous_block_id = None;
 		for justification in justifications {
 			let maybe_block_id =
@@ -226,28 +209,17 @@ impl<
 			}
 		}
 		if let Some(block_id) = previous_block_id {
-			debug!(
-				target: LOG_TARGET,
-				"Initiating a request for {:?}.", block_id
-			);
+			debug!(target: LOG_TARGET, "Initiating a request for {:?}.", block_id);
 			self.request(block_id);
 		}
 	}
 
 	fn handle_request(&mut self, request: Request<J>, peer: N::PeerId) {
-		trace!(
-			target: LOG_TARGET,
-			"Handling a request {:?} from {:?}.",
-			request,
-			peer
-		);
+		trace!(target: LOG_TARGET, "Handling a request {:?} from {:?}.", request, peer);
 		match self.handler.handle_request(request) {
 			Ok(action) => self.perform_sync_action(action, peer),
 			Err(e) => {
-				warn!(
-					target: LOG_TARGET,
-					"Error handling request from {:?}: {}.", peer, e
-				);
+				warn!(target: LOG_TARGET, "Error handling request from {:?}: {}.", peer, e);
 			},
 		}
 	}
@@ -295,10 +267,7 @@ impl<
 			BlockImported(header) => {
 				trace!(target: LOG_TARGET, "Handling a new imported block.");
 				if let Err(e) = self.handler.block_imported(header) {
-					error!(
-						target: LOG_TARGET,
-						"Error marking block as imported: {}.", e
-					);
+					error!(target: LOG_TARGET, "Error marking block as imported: {}.", e);
 				}
 			},
 			BlockFinalized(_) => {

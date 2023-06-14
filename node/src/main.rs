@@ -13,6 +13,15 @@ use selendra_primitives::HEAP_PAGES;
 use service::ExecutorDispatch;
 use service::{new_authority, new_partial};
 
+#[cfg(not(feature = "runtime-testnet"))]
+use sp_core::crypto::Ss58AddressFormat;
+
+#[cfg(not(feature = "runtime-testnet"))]
+fn set_default_ss58_version() {
+	let ss58_version = Ss58AddressFormat::custom(204);
+	sp_core::crypto::set_default_ss58_version(ss58_version);
+}
+
 fn default_state_pruning() -> Option<DatabasePruningMode> {
 	Some(DatabasePruningMode::Archive)
 }
@@ -56,6 +65,9 @@ fn main() -> sc_cli::Result<()> {
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		},
 		Some(Subcommand::CheckBlock(cmd)) => {
+			#[cfg(not(feature = "runtime-testnet"))]
+			set_default_ss58_version();
+
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, import_queue, .. } =
@@ -64,6 +76,9 @@ fn main() -> sc_cli::Result<()> {
 			})
 		},
 		Some(Subcommand::ExportBlocks(cmd)) => {
+			#[cfg(not(feature = "runtime-testnet"))]
+			set_default_ss58_version();
+
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, .. } = new_partial(&config)?;
@@ -71,6 +86,9 @@ fn main() -> sc_cli::Result<()> {
 			})
 		},
 		Some(Subcommand::ExportState(cmd)) => {
+			#[cfg(not(feature = "runtime-testnet"))]
+			set_default_ss58_version();
+
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, .. } = new_partial(&config)?;
@@ -78,6 +96,9 @@ fn main() -> sc_cli::Result<()> {
 			})
 		},
 		Some(Subcommand::ImportBlocks(cmd)) => {
+			#[cfg(not(feature = "runtime-testnet"))]
+			set_default_ss58_version();
+
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, import_queue, .. } =
@@ -86,10 +107,16 @@ fn main() -> sc_cli::Result<()> {
 			})
 		},
 		Some(Subcommand::PurgeChain(cmd)) => {
+			#[cfg(not(feature = "runtime-testnet"))]
+			set_default_ss58_version();
+
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|config| cmd.run(config.database))
 		},
 		Some(Subcommand::Revert(cmd)) => {
+			#[cfg(not(feature = "runtime-testnet"))]
+			set_default_ss58_version();
+
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, backend, .. } = new_partial(&config)?;
@@ -138,6 +165,9 @@ fn main() -> sc_cli::Result<()> {
 				     `--features runtime-benchmarks`."
 				.into()),
 		None => {
+			#[cfg(not(feature = "runtime-testnet"))]
+			set_default_ss58_version();
+
 			let runner = cli.create_runner(&cli.run)?;
 			if cli.selendra.experimental_pruning() {
 				warn!("Experimental_pruning was turned on. Usage of this flag can lead to misbehaviour, which can be punished. State pruning: {:?}; Blocks pruning: {:?};",

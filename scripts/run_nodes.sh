@@ -37,9 +37,9 @@ set -e
 clear
 
 
-if $BUILD_SELENDRA_NODE ; then
-  cargo build --release --features fast-runtime
-fi
+# if $BUILD_SELENDRA_NODE ; then
+#   cargo build --release
+# fi
 
 ## declare an array variable
 declare -a mnemonics=(
@@ -51,7 +51,7 @@ declare -a mnemonics=(
 
 declare -a account_ids
 for i in $(seq 0 "$(( N_VALIDATORS + N_NON_VALIDATORS - 1 ))"); do
-  account_ids+=($(./target/release/selendra key inspect "${mnemonics[$i]}" | grep "SS58 Address:" | awk '{print $3;}')) 
+  account_ids+=($(./target/release/selendra key inspect "${mnemonics[$i]}" | grep "SS58 Address:" | awk '{print $3;}'))
 done
 validator_ids=("${account_ids[@]::N_VALIDATORS}")
 # space separated ids

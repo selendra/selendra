@@ -38,7 +38,7 @@ impl pallet_session::historical::Config for Runtime {
 }
 
 parameter_types! {
-	pub SessionPeriod: u32 = prod_or_fast!(DEFAULT_SESSION_PERIOD, 96);
+	pub SessionPeriod: u32 = prod_or_fast!(DEFAULT_SESSION_PERIOD, 96, "SEL_SESSION_PERIOD");
 	pub const MaximumBanReasonLength: u32 = DEFAULT_BAN_REASON_LENGTH;
 	pub const MaxWinners: u32 = DEFAULT_MAX_WINNERS;
 }
