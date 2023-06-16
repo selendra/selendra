@@ -153,6 +153,12 @@ substrate-test-client = { git = "https://github.com/paritytech/substrate", branc
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 
+# Evm
+evm = { git = "https://github.com/rust-blockchain/evm", rev = "13240a8a551586fdef0b5028ed73af80b248092a", default-features = false, features = ["with-codec"] }
+evm-gasometer = { git = "https://github.com/rust-blockchain/evm", rev = "13240a8a551586fdef0b5028ed73af80b248092a", default-features = false }
+evm-runtime = { git = "https://github.com/rust-blockchain/evm", rev = "13240a8a551586fdef0b5028ed73af80b248092a", default-features = false }
+ethereum = { version = "0.14.0", default-features = false, features = ["with-codec"] }
+
 # Local Pallet
 pallet-selendra = { path = "pallets/selendra", default-features = false }
 pallet-committee-management = { path = "pallets/committee-management", default-features = false }

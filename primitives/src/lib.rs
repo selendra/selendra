@@ -15,6 +15,7 @@ use sp_std::vec::Vec;
 
 pub mod app;
 pub mod constants;
+pub mod evm;
 
 pub use constants::*;
 

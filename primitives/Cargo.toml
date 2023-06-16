@@ -6,22 +6,37 @@ edition = "2021"
 license = "Apache 2.0"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["max-encoded-len", "derive"] }
 scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
 
 serde = { workspace = true }
+hex-literal = { workspace = true }
+
 sp-api = { workspace = true }
 sp-application-crypto = { workspace = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 sp-staking = { workspace = true }
+frame-support = { workspace = true }
+
+evm = { workspace = true }
+evm-gasometer = { workspace = true }
+evm-runtime = { workspace = true }
+ethereum = { workspace = true }
+
 
 [features]
 default = ["std"]
 std = [
     "codec/std",
     "serde/std",
+
+	"evm/std",
+	"evm/with-serde",
+	"evm-runtime/std",
+	"evm-gasometer/std",
+	"ethereum/with-serde",
 
     "sp-api/std",
     "sp-application-crypto/std",
