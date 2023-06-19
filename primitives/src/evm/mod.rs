@@ -1,6 +1,6 @@
 pub mod task;
 
-use crate::{Balance, Index, BlockNumber};
+use crate::{Balance, BlockNumber, Index};
 
 use core::ops::Range;
 use hex_literal::hex;
