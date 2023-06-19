@@ -3584,6 +3584,9 @@ name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
+dependencies = [
+ "spin 0.5.2",
+]
 
 [[package]]
 name = "lazycell"
@@ -4822,6 +4825,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "61807f77802ff30975e01f4f071c8ba10c022052f98b3294119f3e615d13e5be"
 
 [[package]]
+name = "num"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43db66d1170d347f9a065114077f7dccb00c1b9478c89384490a3425279a4606"
+dependencies = [
+ "num-bigint",
+ "num-complex",
+ "num-integer",
+ "num-iter",
+ "num-rational",
+ "num-traits",
+]
+
+[[package]]
 name = "num-bigint"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4858,6 +4875,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "225d3389fb3509a24c93f5c29eb6bde2586b98d9f016636dff58d7c6f7569cd9"
 dependencies = [
  "autocfg",
+ "num-traits",
+]
+
+[[package]]
+name = "num-iter"
+version = "0.1.43"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d03e6c028c5dc5cac6e2dec0efda81fc887605bb3d884578bb6d6bf7514e252"
+dependencies = [
+ "autocfg",
+ "num-integer",
  "num-traits",
 ]
 
@@ -5229,6 +5257,62 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm"
+version = "0.1.0"
+dependencies = [
+ "env_logger",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "hex-literal",
+ "num",
+ "pallet-balances",
+ "pallet-evm-utility",
+ "pallet-idle-scheduler",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "pallet-utility",
+ "pallets-support",
+ "parity-scale-codec",
+ "ripemd160",
+ "rlp",
+ "scale-info",
+ "selendra-primitives",
+ "serde",
+ "serde_json",
+ "sha3",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "substrate-bn",
+ "tiny-keccak",
+]
+
+[[package]]
+name = "pallet-evm-rpc-runtime-api"
+version = "0.1.0"
+dependencies = [
+ "selendra-primitives",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-evm-utility"
+version = "0.1.0"
+dependencies = [
+ "ethereum",
+ "evm",
+ "evm-gasometer",
+ "evm-runtime",
+ "sha3",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-identity"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.41#3bd809d59c31c7205a0f36c6ddcba603e43051fc"
@@ -5239,6 +5323,22 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-idle-scheduler"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallets-support",
+ "parity-scale-codec",
+ "scale-info",
+ "selendra-primitives",
+ "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -5544,6 +5644,12 @@ name = "pallets-support"
 version = "0.1.1"
 dependencies = [
  "frame-support",
+ "impl-trait-for-tuples",
+ "parity-scale-codec",
+ "selendra-primitives",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
  "sp-std",
 ]
 
@@ -6432,6 +6538,17 @@ dependencies = [
  "untrusted",
  "web-sys",
  "winapi",
+]
+
+[[package]]
+name = "ripemd160"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2eca4ecc81b7f313189bf73ce724400a07da2a6dac19588b03c8bd76a2dcc251"
+dependencies = [
+ "block-buffer 0.9.0",
+ "digest 0.9.0",
+ "opaque-debug 0.3.0",
 ]
 
 [[package]]
@@ -9026,6 +9143,19 @@ dependencies = [
  "schnorrkel",
  "sha2 0.9.9",
  "zeroize",
+]
+
+[[package]]
+name = "substrate-bn"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b5bbfa79abbae15dd642ea8176a21a635ff3c00059961d1ea27ad04e5b441c"
+dependencies = [
+ "byteorder",
+ "crunchy",
+ "lazy_static",
+ "rand 0.8.5",
+ "rustc-hex",
 ]
 
 [[package]]

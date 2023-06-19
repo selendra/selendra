@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+	"primitives",
     "node",
     "runtime",
     "consensus/aggregator",
@@ -10,7 +11,9 @@ members = [
     "pallets/elections",
     "pallets/support",
     "pallets/committee-management",
-    "primitives",
+	"pallets/evm",
+	"pallets/evm/runtime_api",
+	"pallets/idle-scheduler",
 ]
 
 [profile.release]
@@ -43,18 +46,34 @@ jsonrpsee = { version = "0.16.2" }
 libp2p = { version = "0.49.0" }
 log = { version = "0.4.18" }
 lru = { version = "0.7.8" }
+proc-macro2 = "1.0.40"
+quote = "1.0.20"
 parking_lot = { version = "0.12.1" }
 paste = { version = "1.0.11" }
 serde_json = { version = "1.0.96" }
 thiserror = { version = "1.0.40" }
 tiny-bip39 = { version = "1.0.0" }
 tokio = { version = "1.17.0" }
+impl-trait-for-tuples = "0.2.2"
 hash-db = { version = "0.16", default-features = false }
 rand_pcg = { version = "0.3.1", default-features = false }
 rand = { version = "0.8.5", default-features = false }
 scale-info = { version = "2.0", default-features = false }
 smallvec = { version = "1", default-features = false }
 serde = { version = "1.0.163", default-features = false }
+sha3 = { version = "0.10.6", default-features = false }
+syn = { version = "1.0.98", features = ["full", "fold", "extra-traits", "visit"] }
+ripemd160 = { version = "0.9", default-features = false }
+rlp = { version = "0.5.2", default-features = false }
+tiny-keccak = { version = "2.0", features = ["fips202"] }
+num = { version = "0.4", features = ["alloc"], default-features = false }
+bn = { package = "substrate-bn", version = "0.6", default-features = false }
+
+# Evm
+evm = { git = "https://github.com/rust-blockchain/evm", rev = "13240a8a551586fdef0b5028ed73af80b248092a", default-features = false, features = ["with-codec"] }
+evm-gasometer = { git = "https://github.com/rust-blockchain/evm", rev = "13240a8a551586fdef0b5028ed73af80b248092a", default-features = false }
+evm-runtime = { git = "https://github.com/rust-blockchain/evm", rev = "13240a8a551586fdef0b5028ed73af80b248092a", default-features = false }
+ethereum = { version = "0.14.0", default-features = false, features = ["with-codec"] }
 
 # Aleph Consensus
 current-selendra-bft = { package = "aleph-bft", version = "0.20.5" }
@@ -75,7 +94,6 @@ frame-support = { git = "https://github.com/paritytech/substrate", branch = "pol
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 frame-try-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
-
 pallet-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 pallet-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
@@ -101,6 +119,7 @@ pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "p
 pallet-utility = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 pallet-vesting = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 
+# Subsrate primitive
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
@@ -123,6 +142,7 @@ sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch 
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 
+# Subsrate client
 sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 sc-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
@@ -144,6 +164,7 @@ sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch 
 sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 sc-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 
+# Subsrate Utility
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
@@ -153,19 +174,20 @@ substrate-test-client = { git = "https://github.com/paritytech/substrate", branc
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 
-# Evm
-evm = { git = "https://github.com/rust-blockchain/evm", rev = "13240a8a551586fdef0b5028ed73af80b248092a", default-features = false, features = ["with-codec"] }
-evm-gasometer = { git = "https://github.com/rust-blockchain/evm", rev = "13240a8a551586fdef0b5028ed73af80b248092a", default-features = false }
-evm-runtime = { git = "https://github.com/rust-blockchain/evm", rev = "13240a8a551586fdef0b5028ed73af80b248092a", default-features = false }
-ethereum = { version = "0.14.0", default-features = false, features = ["with-codec"] }
+# Evm Pallet
+pallet-idle-scheduler = { path = "pallets/idle-scheduler", default-features = false }
+pallet-evm = { path = "pallets/evm", default-features = false }
+pallet-evm-utility = { path = "pallets/evm/utility", default-features = false }
+pallet-evm-utility-macro = { path = "pallets/evm/utility/macro", default-features = false }
+pallet-evm-rpc-runtime-api = { path = "pallets/evm/runtime_api", default-features = false }
 
-# Local Pallet
+# Core Pallet
 pallet-selendra = { path = "pallets/selendra", default-features = false }
 pallet-committee-management = { path = "pallets/committee-management", default-features = false }
 pallet-elections = { path = "pallets/elections", default-features = false }
 pallets-support = { path = "pallets/support", default-features = false }
 
-# Local Core
+# Core Selendra
 selendra-primitives = { path = "primitives", default-features = false }
 selendra-runtime-common  = { path = "runtime/common", default-features = false }
 selendra-runtime = { path = "runtime" }
