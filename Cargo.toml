@@ -13,7 +13,9 @@ members = [
     "pallets/committee-management",
 	"pallets/evm",
 	"pallets/evm/runtime_api",
+	"pallets/evm/account",
 	"pallets/idle-scheduler",
+
 ]
 
 [profile.release]
@@ -180,6 +182,7 @@ pallet-evm = { path = "pallets/evm", default-features = false }
 pallet-evm-utility = { path = "pallets/evm/utility", default-features = false }
 pallet-evm-utility-macro = { path = "pallets/evm/utility/macro", default-features = false }
 pallet-evm-rpc-runtime-api = { path = "pallets/evm/runtime_api", default-features = false }
+pallet-evm-accounts = { path = "pallets/evm/account", default-features = false }
 
 # Core Pallet
 pallet-selendra = { path = "pallets/selendra", default-features = false }
