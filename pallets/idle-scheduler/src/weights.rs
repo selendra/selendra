@@ -46,9 +46,9 @@ pub trait WeightInfo {
 	fn schedule_task() -> Weight;
 }
 
-/// Weights for pallet_idle_scheduler using the Acala node and recommended hardware.
-pub struct AcalaWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for AcalaWeight<T> {
+/// Weights for pallet_idle_scheduler using the Selendraa node and recommended hardware.
+pub struct SelendraaWeight<T>(PhantomData<T>);
+impl<T: frame_system::Config> WeightInfo for SelendraaWeight<T> {
 	// Storage: ParachainSystem ValidationData (r:1 w:0)
 	// Storage: IdleScheduler PreviousBlockNumber (r:0 w:1)
 	fn on_initialize() -> Weight {

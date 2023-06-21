@@ -55,9 +55,9 @@ pub trait WeightInfo {
 	fn selfdestruct() -> Weight;
 }
 
-/// Weights for pallet_evm using the Acala node and recommended hardware.
-pub struct AcalaWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for AcalaWeight<T> {
+/// Weights for pallet_evm using the Selendraa node and recommended hardware.
+pub struct SelendraaWeight<T>(PhantomData<T>);
+impl<T: frame_system::Config> WeightInfo for SelendraaWeight<T> {
 	// Storage: EvmAccounts EvmAddresses (r:1 w:0)
 	// Proof: EvmAccounts EvmAddresses (max_values: None, max_size: Some(60), added: 2535, mode: MaxEncodedLen)
 	// Storage: EvmAccounts Accounts (r:2 w:0)

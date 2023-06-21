@@ -92,7 +92,7 @@ pub mod weights;
 pub use module::*;
 pub use weights::WeightInfo;
 
-mod mock;
+pub mod mock;
 mod tests;
 
 /// Storage key size and storage value size.
