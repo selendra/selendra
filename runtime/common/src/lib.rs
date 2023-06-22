@@ -16,9 +16,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod check_index;
+pub mod evm;
 pub mod impls;
 pub mod precompile;
-pub mod evm;
 
 use frame_support::{
 	parameter_types,

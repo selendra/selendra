@@ -29,6 +29,7 @@ pallet-evm-accounts = { workspace = true }
 pallet-evm-utility-macro = { workspace = true }
 pallet-idle-scheduler = { workspace = true }
 pallet-timestamp = { workspace = true }
+pallet-scheduler = { workspace = true }
 selendra-primitives = { workspace = true }
 
 
@@ -55,6 +56,7 @@ std = [
 	"pallet-evm/std",
 	"pallet-evm-accounts/std",
 	"pallet-idle-scheduler/std",
+	"pallet-scheduler/std",
 	"pallet-timestamp/std",
     "selendra-primitives/std"
 ]

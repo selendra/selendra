@@ -5511,6 +5511,7 @@ name = "pallet-scheduler"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.41#3bd809d59c31c7205a0f36c6ddcba603e43051fc"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -8123,6 +8124,7 @@ dependencies = [
  "pallet-evm-accounts",
  "pallet-evm-utility-macro",
  "pallet-idle-scheduler",
+ "pallet-scheduler",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallets-support",

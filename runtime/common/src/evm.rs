@@ -1,9 +1,9 @@
 use frame_support::{
 	dispatch::{DispatchClass, Weight},
-	traits::{Get},
+	traits::Get,
 };
 use sp_runtime::traits::Convert;
-use sp_std::{marker::PhantomData};
+use sp_std::marker::PhantomData;
 
 // gas_to_weight_ratio
 pub const RATIO: u64 = 9000;
