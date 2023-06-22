@@ -18,8 +18,8 @@ use crate::evm::WeightToGas;
 use ethabi::Token;
 use frame_support::traits::Get;
 use pallet_evm::{runner::state::PrecompileFailure, ExitRevert};
-use pallets_support::{AddressMapping as AddressMappingT};
-use selendra_primitives::{Balance};
+use pallets_support::AddressMapping as AddressMappingT;
+use selendra_primitives::Balance;
 use sp_core::{H160, U256};
 use sp_runtime::{traits::Convert, DispatchError};
 use sp_std::prelude::*;
@@ -58,20 +58,13 @@ pub struct Input<'a, Action, AccountId, AddressMapping> {
 	target_gas: Option<u64>,
 	_marker: PhantomData<(Action, AccountId, AddressMapping)>,
 }
-impl<'a, Action, AccountId, AddressMapping>
-	Input<'a, Action, AccountId, AddressMapping>
-{
+impl<'a, Action, AccountId, AddressMapping> Input<'a, Action, AccountId, AddressMapping> {
 	pub fn new(content: &'a [u8], target_gas: Option<u64>) -> Self {
-		Self {
-			content,
-			target_gas,
-			_marker: PhantomData,
-		}
+		Self { content, target_gas, _marker: PhantomData }
 	}
 }
 
-impl<Action, AccountId, AddressMapping> InputT
-	for Input<'_, Action, AccountId, AddressMapping>
+impl<Action, AccountId, AddressMapping> InputT for Input<'_, Action, AccountId, AddressMapping>
 where
 	Action: TryFrom<u32>,
 	AddressMapping: AddressMappingT<AccountId>,
@@ -106,11 +99,12 @@ where
 
 	fn action(&self) -> Result<Self::Action, Self::Error> {
 		let param = self.nth_param(ACTION_INDEX, None)?;
-		let action = u32::from_be_bytes(param.try_into().map_err(|_| PrecompileFailure::Revert {
-			exit_status: ExitRevert::Reverted,
-			output: "invalid action".into(),
-			cost: self.target_gas.unwrap_or_default(),
-		})?);
+		let action =
+			u32::from_be_bytes(param.try_into().map_err(|_| PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: "invalid action".into(),
+				cost: self.target_gas.unwrap_or_default(),
+			})?);
 
 		action.try_into().map_err(|_| PrecompileFailure::Revert {
 			exit_status: ExitRevert::Reverted,
@@ -288,12 +282,12 @@ fn decode_i128(bytes: &[u8]) -> Option<i128> {
 	if bytes[0..HALF_PARAM_BYTES] == [0xff; HALF_PARAM_BYTES] {
 		if let Ok(v) = i128::try_from(!U256::from(bytes)) {
 			if let Some(v) = v.checked_neg() {
-				return v.checked_sub(1);
+				return v.checked_sub(1)
 			}
 		}
-		return None;
+		return None
 	} else if bytes[0..HALF_PARAM_BYTES] == [0x00; HALF_PARAM_BYTES] {
-		return i128::try_from(U256::from_big_endian(bytes)).ok();
+		return i128::try_from(U256::from_big_endian(bytes)).ok()
 	}
 	None
 }
