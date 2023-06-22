@@ -869,6 +869,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "bstringify"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd769563b4ea2953e2825c9e6b7470a5f55f67e0be00030bf3e390a2a6071f64"
+
+[[package]]
 name = "build-helper"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2008,6 +2014,20 @@ checksum = "aa68f1b12764fab894d2755d2518754e71b4fd80ecfb822714a1206c2aab39bf"
 dependencies = [
  "cc",
  "libc",
+]
+
+[[package]]
+name = "ethabi"
+version = "18.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7413c5f74cc903ea37386a8965a936cbeb334bd270862fdece542c1b2dcbc898"
+dependencies = [
+ "ethereum-types",
+ "hex",
+ "serde",
+ "sha3",
+ "thiserror",
+ "uint",
 ]
 
 [[package]]
@@ -4918,6 +4938,27 @@ checksum = "0fac9e2da13b5eb447a6ce3d392f23a29d8694bff781bf03a16cd9ac8697593b"
 dependencies = [
  "hermit-abi 0.2.6",
  "libc",
+]
+
+[[package]]
+name = "num_enum"
+version = "0.5.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f646caf906c20226733ed5b1374287eb97e3c2a5c227ce668c1f2ce20ae57c9"
+dependencies = [
+ "num_enum_derive",
+]
+
+[[package]]
+name = "num_enum_derive"
+version = "0.5.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dcbff9bc912032c62bf65ef1d5aea88983b420f4f839db1e9b0c281a25c9c799"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -7959,12 +8000,14 @@ dependencies = [
 name = "selendra-primitives"
 version = "3.1.0"
 dependencies = [
+ "bstringify",
  "ethereum",
  "evm",
  "evm-gasometer",
  "evm-runtime",
  "frame-support",
  "hex-literal",
+ "num_enum",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -8070,12 +8113,15 @@ dependencies = [
 name = "selendra-runtime-common"
 version = "3.1.0"
 dependencies = [
+ "ethabi",
  "frame-support",
  "frame-system",
+ "num_enum",
  "pallet-authorship",
  "pallet-balances",
  "pallet-evm",
  "pallet-evm-accounts",
+ "pallet-evm-utility-macro",
  "pallet-idle-scheduler",
  "pallet-timestamp",
  "pallet-transaction-payment",

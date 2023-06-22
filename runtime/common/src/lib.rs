@@ -17,6 +17,8 @@
 
 pub mod check_index;
 pub mod impls;
+pub mod precompile;
+pub mod evm;
 
 use frame_support::{
 	parameter_types,
@@ -29,9 +31,6 @@ use sp_runtime::{
 	traits::{Bounded, Convert},
 	FixedPointNumber, Perbill, Perquintill,
 };
-
-// gas_to_weight_ratio
-pub const RATIO: u64 = 9000;
 
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,

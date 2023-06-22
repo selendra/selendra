@@ -57,6 +57,8 @@ thiserror = { version = "1.0.40" }
 tiny-bip39 = { version = "1.0.0" }
 tokio = { version = "1.17.0" }
 impl-trait-for-tuples = "0.2.2"
+bstringify = "0.1.2"
+num_enum = { version = "0.5.1", default-features = false }
 hash-db = { version = "0.16", default-features = false }
 rand_pcg = { version = "0.3.1", default-features = false }
 rand = { version = "0.8.5", default-features = false }
@@ -76,6 +78,7 @@ evm = { git = "https://github.com/rust-blockchain/evm", rev = "13240a8a551586fde
 evm-gasometer = { git = "https://github.com/rust-blockchain/evm", rev = "13240a8a551586fdef0b5028ed73af80b248092a", default-features = false }
 evm-runtime = { git = "https://github.com/rust-blockchain/evm", rev = "13240a8a551586fdef0b5028ed73af80b248092a", default-features = false }
 ethereum = { version = "0.14.0", default-features = false, features = ["with-codec"] }
+ethabi = { version = "18.0.0", default-features = false }
 
 # Aleph Consensus
 current-selendra-bft = { package = "aleph-bft", version = "0.20.5" }

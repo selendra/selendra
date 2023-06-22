@@ -8,6 +8,8 @@ edition = "2021"
 codec = { package = "parity-scale-codec", version = "3.5.0", default-features = false, features = ["derive"] }
 scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
 
+num_enum = { workspace = true }
+ethabi = { workspace = true }
 serde = { workspace = true }
 sp-api = { workspace = true }
 sp-io = { workspace = true }
@@ -24,15 +26,19 @@ pallet-transaction-payment = { workspace = true }
 pallets-support = { workspace = true }
 pallet-evm = { workspace = true }
 pallet-evm-accounts = { workspace = true }
+pallet-evm-utility-macro = { workspace = true }
 pallet-idle-scheduler = { workspace = true }
 pallet-timestamp = { workspace = true }
 selendra-primitives = { workspace = true }
+
 
 [features]
 default = [ "std" ]
 std = [
 	"codec/std",
     "serde/std",
+	"num_enum/std",
+	"ethabi/std",
 	"sp-api/std",
 	"sp-application-crypto/std",
 	"sp-core/std",
