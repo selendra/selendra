@@ -19,18 +19,13 @@ use sp_std::{
 };
 
 use selendra_primitives::{
-	evm::{CallInfo, EvmAddress, ReserveIdentifier},
-	Multiplier,
+	evm::{CallInfo, EvmAddress},
+	Multiplier, ReserveIdentifier,
 };
 
 /// Return true if the call of EVM precompile contract is allowed.
 pub trait PrecompileCallerFilter {
 	fn is_allowed(caller: H160) -> bool;
-}
-
-/// Return true if the EVM precompile is paused.
-pub trait PrecompilePauseFilter {
-	fn is_paused(address: H160) -> bool;
 }
 
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug)]

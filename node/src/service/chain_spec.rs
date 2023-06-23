@@ -27,6 +27,7 @@ use selendra_runtime::{
 	SystemConfig,
 	TechnicalCommitteeConfig, // AssetsConfig,
 	VestingConfig,
+	EVMConfig,
 	WASM_BINARY,
 };
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
@@ -416,13 +417,14 @@ fn generate_genesis_config(
 				non_committee: vec![],
 			},
 		},
-		// assets: AssetsConfig::default(),
 		democracy: DemocracyConfig::default(),
 		council: CouncilConfig::default(),
 		technical_committee: TechnicalCommitteeConfig::default(),
 		technical_membership: Default::default(),
-		// phala_computation: Default::default(),
-		// phala_registry: Default::default(),
+		evm: EVMConfig {
+			chain_id: 209,
+			accounts: Default::default(),
+		},
 	}
 }
 

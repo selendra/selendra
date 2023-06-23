@@ -62,6 +62,13 @@ pallet-contracts = { workspace = true }
 pallet-contracts-primitives = { workspace = true }
 pallet-insecure-randomness-collective-flip = { workspace = true }
 
+# Evm pallet
+
+pallet-idle-scheduler = { workspace = true }
+pallet-evm = { workspace = true }
+pallet-evm-rpc-runtime-api = { workspace = true }
+pallet-evm-accounts = { workspace = true }
+
 # Governance pallet
 pallet-democracy = { workspace = true }
 pallet-membership = { workspace = true }
@@ -132,6 +139,10 @@ std = [
     "pallet-democracy/std",
     "pallet-membership/std",
     "pallet-collective/std",
+	"pallet-idle-scheduler/std",
+    "pallet-evm-rpc-runtime-api/std",
+	"pallet-evm/std",
+	"pallet-evm-accounts/std",
 ]
 
 try-runtime = [

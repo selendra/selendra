@@ -19,6 +19,14 @@ impl Convert<Weight, u64> for WeightToGas {
 	}
 }
 
+/// Convert gas to weight
+pub struct GasToWeight;
+impl Convert<u64, Weight> for GasToWeight {
+	fn convert(gas: u64) -> Weight {
+		Weight::from_parts(gas.saturating_mul(RATIO), 0)
+	}
+}
+
 pub struct EvmLimits<T>(PhantomData<T>);
 impl<T> EvmLimits<T>
 where

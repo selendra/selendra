@@ -8,7 +8,7 @@ use hex_literal::hex;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
 pub use ethereum::{AccessListItem, Log, TransactionAction};
@@ -38,25 +38,8 @@ pub const H160_POSITION_CURRENCY_ID_TYPE: usize = 9;
 pub const H160_POSITION_TOKEN: usize = 19;
 pub const H160_POSITION_TOKEN_NFT: Range<usize> = 16..20;
 
-#[derive(
-	Encode,
-	Decode,
-	Eq,
-	PartialEq,
-	Copy,
-	Clone,
-	RuntimeDebug,
-	PartialOrd,
-	Ord,
-	MaxEncodedLen,
-	TypeInfo,
-)]
-#[repr(u8)]
-pub enum ReserveIdentifier {
-	EvmStorageDeposit,
-	EvmDeveloperDeposit,
-	TransactionPayment,
-	TransactionPaymentDeposit,
+pub fn is_system_contract(address: EvmAddress) -> bool {
+	address.as_bytes().starts_with(&SYSTEM_CONTRACT_ADDRESS_PREFIX)
 }
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]

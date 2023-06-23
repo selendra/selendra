@@ -23,8 +23,9 @@ use pallet_evm_utility::{
 	evm::{self, backend::Backend as BackendT, ExitError, ExitReason, Transfer},
 };
 use pallets_support::AddressMapping;
-pub use selendra_primitives::evm::{
-	EvmAddress, ReserveIdentifier, Vicinity, MIRRORED_NFT_ADDRESS_START,
+pub use selendra_primitives::{
+	evm::{EvmAddress, Vicinity, MIRRORED_NFT_ADDRESS_START},
+	ReserveIdentifier,
 };
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::{UniqueSaturatedInto, Zero};

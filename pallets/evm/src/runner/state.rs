@@ -12,9 +12,12 @@ use pallet_evm_utility::{
 	evm_gasometer::{self as gasometer, Gasometer, StorageTarget},
 	evm_runtime::Handler,
 };
-pub use selendra_primitives::evm::{
-	EvmAddress, ReserveIdentifier, Vicinity, H160_POSITION_TOKEN_NFT, MIRRORED_NFT_ADDRESS_START,
-	SYSTEM_CONTRACT_ADDRESS_PREFIX,
+pub use selendra_primitives::{
+	evm::{
+		EvmAddress, Vicinity, H160_POSITION_TOKEN_NFT, MIRRORED_NFT_ADDRESS_START,
+		SYSTEM_CONTRACT_ADDRESS_PREFIX,
+	},
+	ReserveIdentifier,
 };
 use sha3::{Digest, Keccak256};
 use sp_core::{H160, H256, U256};

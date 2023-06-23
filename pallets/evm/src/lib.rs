@@ -70,9 +70,9 @@ pub use pallets_support::{
 pub use selendra_primitives::{
 	evm::{
 		decode_gas_limit, task::TaskResult, CallInfo, CreateInfo, EvmAddress, ExecutionInfo,
-		ReserveIdentifier, Vicinity, MIRRORED_NFT_ADDRESS_START, MIRRORED_TOKENS_ADDRESS_START,
+		Vicinity, MIRRORED_NFT_ADDRESS_START, MIRRORED_TOKENS_ADDRESS_START,
 	},
-	Balance, Index,
+	Balance, Index, ReserveIdentifier,
 };
 
 use sp_core::{H160, H256, U256};

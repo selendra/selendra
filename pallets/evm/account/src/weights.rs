@@ -46,9 +46,9 @@ pub trait WeightInfo {
 	fn claim_default_account() -> Weight;
 }
 
-/// Weights for pallet_evm_accounts using the Selendraa node and recommended hardware.
-pub struct SelendraaWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for SelendraaWeight<T> {
+/// Weights for pallet_evm_accounts using the Selendra node and recommended hardware.
+pub struct SelendraWeight<T>(PhantomData<T>);
+impl<T: frame_system::Config> WeightInfo for SelendraWeight<T> {
 	fn claim_account() -> Weight {
 		Weight::from_parts(340_000_000, 0)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))

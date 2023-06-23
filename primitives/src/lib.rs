@@ -1,6 +1,6 @@
 #![allow(clippy::too_many_arguments, clippy::unnecessary_mut_passed)]
 #![cfg_attr(not(feature = "std"), no_std)]
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ use sp_core::crypto::KeyTypeId;
 pub use sp_runtime::{
 	generic::Header as GenericHeader,
 	traits::{BlakeTwo256, ConstU32, Hash as HashT, Header as HeaderT, IdentifyAccount, Verify},
-	BoundedVec, ConsensusEngineId, FixedU128, MultiSignature, Perbill,
+	BoundedVec, ConsensusEngineId, FixedU128, MultiSignature, Perbill, RuntimeDebug,
 };
 pub use sp_staking::{EraIndex, SessionIndex};
 use sp_std::vec::Vec;
@@ -90,6 +90,27 @@ pub type AuthorityId = app::Public;
 pub type SessionCount = u32;
 
 pub type BlockCount = u32;
+
+#[derive(
+	Encode,
+	Decode,
+	Eq,
+	PartialEq,
+	Copy,
+	Clone,
+	RuntimeDebug,
+	PartialOrd,
+	Ord,
+	MaxEncodedLen,
+	TypeInfo,
+)]
+#[repr(u8)]
+pub enum ReserveIdentifier {
+	EvmStorageDeposit,
+	EvmDeveloperDeposit,
+	TransactionPayment,
+	TransactionPaymentDeposit,
+}
 
 /// Openness of the process of the elections
 #[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq)]

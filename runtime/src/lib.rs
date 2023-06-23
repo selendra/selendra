@@ -6,6 +6,24 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use codec::DecodeLimit;
+use sp_api::impl_runtime_apis;
+use sp_consensus_aura::{sr25519::AuthorityId as AuraId, SlotDuration};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160};
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
+use sp_runtime::{
+	create_runtime_str, generic, impl_opaque_keys,
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT},
+	transaction_validity::{TransactionSource, TransactionValidity},
+	ApplyExtrinsicResult,
+};
+pub use sp_runtime::{FixedPointNumber, Perbill, Permill};
+use sp_std::prelude::*;
+#[cfg(feature = "std")]
+use sp_version::NativeVersion;
+use sp_version::RuntimeVersion;
+
 pub use frame_support::{
 	construct_runtime, log, parameter_types,
 	traits::{
@@ -25,37 +43,24 @@ pub use frame_support::{
 use frame_system::EnsureSignedBy;
 #[cfg(feature = "try-runtime")]
 use frame_try_runtime::UpgradeCheckSelect;
+
 pub use pallet_balances::Call as BalancesCall;
 use pallet_committee_management::{PrefixMigration, SessionAndEraManager};
 use pallet_elections::{CommitteeSizeMigration, MigrateToV4};
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
+use pallet_evm::{runner::RunnerExtended, CreateInfo, CallInfo, AccessListItem};
+
 use selendra_primitives::{
-	opaque, ApiError as SelendraApiError, SessionAuthorityData, Version as FinalityVersion, TOKEN,
-	TREASURY_PROPOSAL_BOND,
+	opaque, ApiError as SelendrapiError, SessionAuthorityData, Version as FinalityVersion, TOKEN,
+	TREASURY_PROPOSAL_BOND, evm::BlockLimits
 };
 pub use selendra_primitives::{
-	AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, Signature,
+	AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, ReserveIdentifier, Signature, evm::EstimateResourcesRequest
 };
 use selendra_runtime_common::{
-	impls::DealWithFees, BlockLength, BlockWeights, SlowAdjustingFeeUpdate,
+	impls::DealWithFees, BlockLength, BlockWeights, SlowAdjustingFeeUpdate, evm::EvmLimits
 };
-use sp_api::impl_runtime_apis;
-use sp_consensus_aura::{sr25519::AuthorityId as AuraId, SlotDuration};
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT},
-	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult,
-};
-pub use sp_runtime::{FixedPointNumber, Perbill, Permill};
-use sp_std::prelude::*;
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
 
 mod config;
 pub mod constants;
@@ -143,7 +148,7 @@ parameter_types! {
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
+	type ReserveIdentifier = ReserveIdentifier;
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// The ubiquitous event type.
@@ -324,26 +329,10 @@ construct_runtime!(
 		// Smart Contract
 		Contracts: pallet_contracts = 50,
 
-		// // Web Contract
-		// PhalaMq: pallet_mq = 60,
-		// PhalaRegistry: pallet_registry = 61,
-		// PhalaComputation: pallet_computation = 62,
-		// PhalaStakePoolv2: pallet_stake_pool_v2 = 63,
-		// PhalaStakePool: pallet_stake_pool = 64,
-		// PhalaVault: pallet_vault = 65,
-		// PhalaWrappedBalances: pallet_wrapped_balances = 66,
-		// PhalaBasePool: pallet_base_pool = 67,
-		// PhalaPhatContracts: pallet_webc = 68,
-		// PhalaPhatTokenomic: pallet_tokenomic = 69,
-
-		// // Rollup and Oracles
-		// PhatRollupAnchor: pallet_anchor = 70,
-		// PhatOracle: pallet_oracle = 71,
-
-		// // Asset and NFT
-		// Assets: pallet_assets = 80,
-		// Uniques: pallet_uniques = 81,
-		// RmrkCore: pallet_rmrk_core = 82,
+		// Evm
+		IdleScheduler: pallet_idle_scheduler = 55,
+		EVM: pallet_evm = 56,
+		EvmAccounts: pallet_evm_accounts = 57,
 
 		// Utility Suff
 		Vesting: pallet_vesting = 90,
@@ -386,7 +375,7 @@ pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, Si
 pub type Migrations =
 	(PrefixMigration<Runtime>, MigrateToV4<Runtime>, CommitteeSizeMigration<Runtime>);
 
-/// Executive: handles dispatch to the various modules.
+/// Executive: handles dispatch to the various pallets.
 pub type Executive = frame_executive::Executive<
 	Runtime,
 	Block,
@@ -521,10 +510,10 @@ impl_runtime_apis! {
 			Selendra::authorities()
 		}
 
-		fn next_session_authorities() -> Result<Vec<SelendraId>, SelendraApiError> {
+		fn next_session_authorities() -> Result<Vec<SelendraId>, SelendrapiError> {
 			let next_authorities = Selendra::next_authorities();
 			if next_authorities.is_empty() {
-				return Err(SelendraApiError::DecodeKey)
+				return Err(SelendrapiError::DecodeKey)
 			}
 
 			Ok(next_authorities)
@@ -534,7 +523,7 @@ impl_runtime_apis! {
 			SessionAuthorityData::new(Selendra::authorities(), Selendra::emergency_finalizer())
 		}
 
-		fn next_session_authority_data() -> Result<SessionAuthorityData, SelendraApiError> {
+		fn next_session_authority_data() -> Result<SessionAuthorityData, SelendrapiError> {
 			Ok(SessionAuthorityData::new(
 				Self::next_session_authorities()?,
 				Selendra::queued_emergency_finalizer(),
@@ -628,6 +617,91 @@ impl_runtime_apis! {
 			Contracts::get_storage(address, key)
 		}
 	}
+
+	// impl pallet_evm_rpc_runtime_api::EVMRuntimeRPCApi<Block, Balance> for Runtime {
+	// 	fn block_limits() -> BlockLimits {
+	// 		BlockLimits {
+	// 			max_gas_limit: EvmLimits::<Runtime>::max_gas_limit(),
+	// 			max_storage_limit: EvmLimits::<Runtime>::max_storage_limit(),
+	// 		}
+	// 	}
+
+	// 	fn call(
+	// 		from: H160,
+	// 		to: H160,
+	// 		data: Vec<u8>,
+	// 		value: Balance,
+	// 		gas_limit: u64,
+	// 		storage_limit: u32,
+	// 		access_list: Option<Vec<AccessListItem>>,
+	// 		_estimate: bool,
+	// 	) -> Result<CallInfo, sp_runtime::DispatchError> {
+	// 		<Runtime as pallet_evm::Config>::Runner::rpc_call(
+	// 			from,
+	// 			from,
+	// 			to,
+	// 			data,
+	// 			value,
+	// 			gas_limit,
+	// 			storage_limit,
+	// 			access_list.unwrap_or_default().into_iter().map(|v| (v.address, v.storage_keys)).collect(),
+	// 			<Runtime as pallet_evm::Config>::config(),
+	// 		)
+	// 	}
+
+	// 	fn create(
+	// 		from: H160,
+	// 		data: Vec<u8>,
+	// 		value: Balance,
+	// 		gas_limit: u64,
+	// 		storage_limit: u32,
+	// 		access_list: Option<Vec<AccessListItem>>,
+	// 		_estimate: bool,
+	// 	) -> Result<CreateInfo, sp_runtime::DispatchError> {
+	// 		<Runtime as pallet_evm::Config>::Runner::rpc_create(
+	// 			from,
+	// 			data,
+	// 			value,
+	// 			gas_limit,
+	// 			storage_limit,
+	// 			access_list.unwrap_or_default().into_iter().map(|v| (v.address, v.storage_keys)).collect(),
+	// 			<Runtime as pallet_evm::Config>::config(),
+	// 		)
+	// 	}
+
+	// 	fn get_estimate_resources_request(extrinsic: Vec<u8>) -> Result<EstimateResourcesRequest, sp_runtime::DispatchError> {
+	// 		let utx = UncheckedExtrinsic::decode_all_with_depth_limit(sp_api::MAX_EXTRINSIC_DEPTH, &mut &*extrinsic)
+	// 			.map_err(|_| sp_runtime::DispatchError::Other("Invalid parameter extrinsic, decode failed"))?;
+
+	// 		let request = match utx.0.function {
+	// 			RuntimeCall::EVM(pallet_evm::Call::call{target, input, value, gas_limit, storage_limit, access_list}) => {
+	// 				Some(EstimateResourcesRequest {
+	// 					from: None,
+	// 					to: Some(target),
+	// 					gas_limit: Some(gas_limit),
+	// 					storage_limit: Some(storage_limit),
+	// 					value: Some(value),
+	// 					data: Some(input),
+	// 					access_list: Some(access_list)
+	// 				})
+	// 			}
+	// 			RuntimeCall::EVM(pallet_evm::Call::create{input, value, gas_limit, storage_limit, access_list}) => {
+	// 				Some(EstimateResourcesRequest {
+	// 					from: None,
+	// 					to: None,
+	// 					gas_limit: Some(gas_limit),
+	// 					storage_limit: Some(storage_limit),
+	// 					value: Some(value),
+	// 					data: Some(input),
+	// 					access_list: Some(access_list)
+	// 				})
+	// 			}
+	// 			_ => None,
+	// 		};
+
+	// 		request.ok_or(sp_runtime::DispatchError::Other("Invalid parameter extrinsic, not evm Call"))
+	// 	}
+	// }
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
