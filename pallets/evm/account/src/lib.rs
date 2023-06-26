@@ -30,8 +30,8 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use pallet_evm_utility_macro::keccak256;
-use pallets_support::{to_bytes, AddressMapping, EVMAccountsManager, TransferAll};
-use selendra_primitives::{evm::EvmAddress, AccountIndex};
+use pallets_support::{AddressMapping, EVMAccountsManager, TransferAll};
+use selendra_primitives::{evm::EvmAddress, to_bytes, AccountIndex};
 use sp_core::{crypto::AccountId32, H160, H256};
 use sp_io::{
 	crypto::secp256k1_ecdsa_recover,

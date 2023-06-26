@@ -47,29 +47,32 @@ use frame_try_runtime::UpgradeCheckSelect;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_committee_management::{PrefixMigration, SessionAndEraManager};
 use pallet_elections::{CommitteeSizeMigration, MigrateToV4};
+use pallet_evm::{AccessListItem, CallInfo, CreateInfo, runner::RunnerExtended};
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
-use pallet_evm::{runner::RunnerExtended, CreateInfo, CallInfo, AccessListItem};
 
 use selendra_primitives::{
-	opaque, ApiError as SelendrapiError, SessionAuthorityData, Version as FinalityVersion, TOKEN,
-	TREASURY_PROPOSAL_BOND, evm::BlockLimits
+	evm::BlockLimits, opaque, ApiError as SelendrapiError, SessionAuthorityData,
+	Version as FinalityVersion, TOKEN, TREASURY_PROPOSAL_BOND,
 };
 pub use selendra_primitives::{
-	AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, ReserveIdentifier, Signature, evm::EstimateResourcesRequest
+	evm::EstimateResourcesRequest, unchecked_extrinsic::SelendraUncheckedExtrinsic, AccountId,
+	AccountIndex, Balance, BlockNumber, Hash, Index, ReserveIdentifier, Signature,
 };
 use selendra_runtime_common::{
-	impls::DealWithFees, BlockLength, BlockWeights, SlowAdjustingFeeUpdate, evm::EvmLimits
+	evm::EvmLimits, impls::DealWithFees, BlockLength, BlockWeights, SlowAdjustingFeeUpdate,
 };
 
 mod config;
 pub mod constants;
+mod impl_convert;
 mod origin;
 
-use config::consensus::{SelendraId, SessionPeriod};
+use config::{SelendraId, SessionPeriod, StorageDepositPerByte, TxFeePerGas};
 use constants::{
 	currency::*, fee::WeightToFee, time::*, CONTRACTS_DEBUG_OUTPUT, CONTRACT_DEPOSIT_PER_BYTE,
 };
+use impl_convert::ConvertEthereumTx;
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -345,8 +348,6 @@ construct_runtime!(
 	}
 );
 
-/// The address format for describing accounts.
-pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 /// Block header type as expected by this runtime.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
@@ -362,13 +363,23 @@ pub type SignedExtra = (
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
 	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
+	selendra_runtime_common::check_nonce::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
+	pallet_evm::SetEvmOrigin<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
+// /// Unchecked extrinsic type as expected by this runtime.
+// pub type UncheckedExtrinsic =
+// 	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+
 /// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic =
-	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+pub type UncheckedExtrinsic = SelendraUncheckedExtrinsic<
+	RuntimeCall,
+	SignedExtra,
+	ConvertEthereumTx,
+	StorageDepositPerByte,
+	TxFeePerGas,
+>;
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra>;
 
@@ -618,90 +629,90 @@ impl_runtime_apis! {
 		}
 	}
 
-	// impl pallet_evm_rpc_runtime_api::EVMRuntimeRPCApi<Block, Balance> for Runtime {
-	// 	fn block_limits() -> BlockLimits {
-	// 		BlockLimits {
-	// 			max_gas_limit: EvmLimits::<Runtime>::max_gas_limit(),
-	// 			max_storage_limit: EvmLimits::<Runtime>::max_storage_limit(),
-	// 		}
-	// 	}
+	impl pallet_evm_rpc_runtime_api::EVMRuntimeRPCApi<Block, Balance> for Runtime {
+		fn block_limits() -> BlockLimits {
+			BlockLimits {
+				max_gas_limit: EvmLimits::<Runtime>::max_gas_limit(),
+				max_storage_limit: EvmLimits::<Runtime>::max_storage_limit(),
+			}
+		}
 
-	// 	fn call(
-	// 		from: H160,
-	// 		to: H160,
-	// 		data: Vec<u8>,
-	// 		value: Balance,
-	// 		gas_limit: u64,
-	// 		storage_limit: u32,
-	// 		access_list: Option<Vec<AccessListItem>>,
-	// 		_estimate: bool,
-	// 	) -> Result<CallInfo, sp_runtime::DispatchError> {
-	// 		<Runtime as pallet_evm::Config>::Runner::rpc_call(
-	// 			from,
-	// 			from,
-	// 			to,
-	// 			data,
-	// 			value,
-	// 			gas_limit,
-	// 			storage_limit,
-	// 			access_list.unwrap_or_default().into_iter().map(|v| (v.address, v.storage_keys)).collect(),
-	// 			<Runtime as pallet_evm::Config>::config(),
-	// 		)
-	// 	}
+		fn call(
+			from: H160,
+			to: H160,
+			data: Vec<u8>,
+			value: Balance,
+			gas_limit: u64,
+			storage_limit: u32,
+			access_list: Option<Vec<AccessListItem>>,
+			_estimate: bool,
+		) -> Result<CallInfo, sp_runtime::DispatchError> {
+			<Runtime as pallet_evm::Config>::Runner::rpc_call(
+				from,
+				from,
+				to,
+				data,
+				value,
+				gas_limit,
+				storage_limit,
+				access_list.unwrap_or_default().into_iter().map(|v| (v.address, v.storage_keys)).collect(),
+				<Runtime as pallet_evm::Config>::config(),
+			)
+		}
 
-	// 	fn create(
-	// 		from: H160,
-	// 		data: Vec<u8>,
-	// 		value: Balance,
-	// 		gas_limit: u64,
-	// 		storage_limit: u32,
-	// 		access_list: Option<Vec<AccessListItem>>,
-	// 		_estimate: bool,
-	// 	) -> Result<CreateInfo, sp_runtime::DispatchError> {
-	// 		<Runtime as pallet_evm::Config>::Runner::rpc_create(
-	// 			from,
-	// 			data,
-	// 			value,
-	// 			gas_limit,
-	// 			storage_limit,
-	// 			access_list.unwrap_or_default().into_iter().map(|v| (v.address, v.storage_keys)).collect(),
-	// 			<Runtime as pallet_evm::Config>::config(),
-	// 		)
-	// 	}
+		fn create(
+			from: H160,
+			data: Vec<u8>,
+			value: Balance,
+			gas_limit: u64,
+			storage_limit: u32,
+			access_list: Option<Vec<AccessListItem>>,
+			_estimate: bool,
+		) -> Result<CreateInfo, sp_runtime::DispatchError> {
+			<Runtime as pallet_evm::Config>::Runner::rpc_create(
+				from,
+				data,
+				value,
+				gas_limit,
+				storage_limit,
+				access_list.unwrap_or_default().into_iter().map(|v| (v.address, v.storage_keys)).collect(),
+				<Runtime as pallet_evm::Config>::config(),
+			)
+		}
 
-	// 	fn get_estimate_resources_request(extrinsic: Vec<u8>) -> Result<EstimateResourcesRequest, sp_runtime::DispatchError> {
-	// 		let utx = UncheckedExtrinsic::decode_all_with_depth_limit(sp_api::MAX_EXTRINSIC_DEPTH, &mut &*extrinsic)
-	// 			.map_err(|_| sp_runtime::DispatchError::Other("Invalid parameter extrinsic, decode failed"))?;
+		fn get_estimate_resources_request(extrinsic: Vec<u8>) -> Result<EstimateResourcesRequest, sp_runtime::DispatchError> {
+			let utx = UncheckedExtrinsic::decode_all_with_depth_limit(sp_api::MAX_EXTRINSIC_DEPTH, &mut &*extrinsic)
+				.map_err(|_| sp_runtime::DispatchError::Other("Invalid parameter extrinsic, decode failed"))?;
 
-	// 		let request = match utx.0.function {
-	// 			RuntimeCall::EVM(pallet_evm::Call::call{target, input, value, gas_limit, storage_limit, access_list}) => {
-	// 				Some(EstimateResourcesRequest {
-	// 					from: None,
-	// 					to: Some(target),
-	// 					gas_limit: Some(gas_limit),
-	// 					storage_limit: Some(storage_limit),
-	// 					value: Some(value),
-	// 					data: Some(input),
-	// 					access_list: Some(access_list)
-	// 				})
-	// 			}
-	// 			RuntimeCall::EVM(pallet_evm::Call::create{input, value, gas_limit, storage_limit, access_list}) => {
-	// 				Some(EstimateResourcesRequest {
-	// 					from: None,
-	// 					to: None,
-	// 					gas_limit: Some(gas_limit),
-	// 					storage_limit: Some(storage_limit),
-	// 					value: Some(value),
-	// 					data: Some(input),
-	// 					access_list: Some(access_list)
-	// 				})
-	// 			}
-	// 			_ => None,
-	// 		};
+			let request = match utx.0.function {
+				RuntimeCall::EVM(pallet_evm::Call::call{target, input, value, gas_limit, storage_limit, access_list}) => {
+					Some(EstimateResourcesRequest {
+						from: None,
+						to: Some(target),
+						gas_limit: Some(gas_limit),
+						storage_limit: Some(storage_limit),
+						value: Some(value),
+						data: Some(input),
+						access_list: Some(access_list)
+					})
+				}
+				RuntimeCall::EVM(pallet_evm::Call::create{input, value, gas_limit, storage_limit, access_list}) => {
+					Some(EstimateResourcesRequest {
+						from: None,
+						to: None,
+						gas_limit: Some(gas_limit),
+						storage_limit: Some(storage_limit),
+						value: Some(value),
+						data: Some(input),
+						access_list: Some(access_list)
+					})
+				}
+				_ => None,
+			};
 
-	// 		request.ok_or(sp_runtime::DispatchError::Other("Invalid parameter extrinsic, not evm Call"))
-	// 	}
-	// }
+			request.ok_or(sp_runtime::DispatchError::Other("Invalid parameter extrinsic, not evm Call"))
+		}
+	}
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {

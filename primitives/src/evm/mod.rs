@@ -15,7 +15,7 @@ pub use ethereum::{AccessListItem, Log, TransactionAction};
 use evm::ExitReason;
 
 use sp_core::{H160, H256, U256};
-use sp_runtime::{traits::Zero, RuntimeDebug};
+use sp_runtime::{traits::Zero, RuntimeDebug, SaturatedConversion};
 use sp_std::prelude::*;
 
 // GAS MASK
@@ -142,4 +142,37 @@ pub fn decode_gas_limit(gas_limit: u64) -> (u64, u32) {
 	};
 
 	(actual_gas_limit, actual_storage_limit)
+}
+
+pub fn decode_gas_price(
+	gas_price: u64,
+	gas_limit: u64,
+	tx_fee_per_gas: u128,
+) -> Option<(u128, u32)> {
+	// ensure gas_price >= 100 Gwei
+	if u128::from(gas_price) < tx_fee_per_gas {
+		return None
+	}
+
+	let mut tip: u128 = 0;
+	let mut actual_gas_price = gas_price;
+	const TEN_GWEI: u64 = 10_000_000_000u64;
+
+	// tip = 10% * tip_number
+	let tip_number = gas_price.checked_div(TEN_GWEI)?.checked_sub(10)?;
+	if !tip_number.is_zero() {
+		actual_gas_price = gas_price.checked_sub(tip_number.checked_mul(TEN_GWEI)?)?;
+		tip = actual_gas_price
+			.checked_mul(gas_limit)?
+			.checked_mul(tip_number)?
+			.checked_div(10)? // percentage
+			.into();
+	}
+
+	// valid_until max is u32::MAX.
+	let valid_until: u32 = Into::<u128>::into(actual_gas_price)
+		.checked_sub(tx_fee_per_gas)?
+		.saturated_into();
+
+	Some((tip, valid_until))
 }

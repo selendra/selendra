@@ -13,7 +13,7 @@ use frame_support::{
 use frame_system::EnsureSignedBy;
 use pallet_transaction_payment::CurrencyAdapter;
 use pallets_support::mock::MockAddressMapping;
-use selendra_primitives::{define_combined_task, ReserveIdentifier, AccountId};
+use selendra_primitives::{define_combined_task, AccountId, ReserveIdentifier};
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,

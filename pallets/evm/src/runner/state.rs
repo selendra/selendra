@@ -14,8 +14,8 @@ use pallet_evm_utility::{
 };
 pub use selendra_primitives::{
 	evm::{
-		EvmAddress, Vicinity, H160_POSITION_TOKEN_NFT, MIRRORED_NFT_ADDRESS_START,
-		SYSTEM_CONTRACT_ADDRESS_PREFIX,
+		EvmAddress, Vicinity, H160_POSITION_CURRENCY_ID_TYPE, H160_POSITION_TOKEN_NFT,
+		MIRRORED_NFT_ADDRESS_START, SYSTEM_CONTRACT_ADDRESS_PREFIX,
 	},
 	ReserveIdentifier,
 };

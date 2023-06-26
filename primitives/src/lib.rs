@@ -4,7 +4,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use sp_core::crypto::KeyTypeId;
+use sp_core::{crypto::KeyTypeId, U256};
 pub use sp_runtime::{
 	generic::Header as GenericHeader,
 	traits::{BlakeTwo256, ConstU32, Hash as HashT, Header as HeaderT, IdentifyAccount, Verify},
@@ -16,7 +16,8 @@ use sp_std::vec::Vec;
 pub mod app;
 pub mod constants;
 pub mod evm;
-
+pub mod signature;
+pub mod unchecked_extrinsic;
 pub use constants::*;
 
 /// The block number type used by Selendra.
@@ -26,7 +27,7 @@ pub type BlockNumber = u32;
 /// An instant or duration in time.
 pub type Moment = u64;
 
-/// Alias to type for a signature for a transaction on the relay chain. This allows one of several
+/// Alias to type for a signature for a transaction on chain. This allows one of several
 /// kinds of underlying crypto to be used, so isn't a fixed size when encoded.
 pub type Signature = MultiSignature;
 
@@ -37,6 +38,9 @@ pub type AccountPublic = <Signature as Verify>::Signer;
 /// Alias to the opaque account ID type for this chain, actually a `AccountId32`. This is always
 /// 32 bytes.
 pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
+
+/// The address format for describing accounts.
+pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 
 /// The type for looking up accounts. We don't expect more than 4 billion of them.
 pub type AccountIndex = u32;
@@ -298,6 +302,11 @@ pub trait BannedValidators {
 pub trait EraManager {
 	/// new era has been planned
 	fn on_new_era(era: EraIndex);
+}
+
+/// Convert any type that implements Into<U256> into byte representation ([u8, 32])
+pub fn to_bytes<T: Into<U256>>(value: T) -> [u8; 32] {
+	Into::<[u8; 32]>::into(value.into())
 }
 
 pub mod staking {

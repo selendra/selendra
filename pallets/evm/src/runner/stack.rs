@@ -7,7 +7,7 @@ use crate::{
 			Accessed, CustomStackState, StackExecutor, StackState as StackStateT,
 			StackSubstateMetadata,
 		},
-		Runner as RunnerT,
+		Runner as RunnerT, RunnerExtended,
 	},
 	AccountInfo, AccountStorages, Accounts, BalanceOf, CallInfo, Config, CreateInfo, Error,
 	ExecutionInfo, One, Pallet, STORAGE_SIZE,
@@ -22,12 +22,12 @@ use pallet_evm_utility::{
 	ethereum::Log,
 	evm::{self, backend::Backend as BackendT, ExitError, ExitReason, Transfer},
 };
-use pallets_support::AddressMapping;
+use pallets_support::{AddressMapping, EVM};
 pub use selendra_primitives::{
 	evm::{EvmAddress, Vicinity, MIRRORED_NFT_ADDRESS_START},
 	ReserveIdentifier,
 };
-use sp_core::{H160, H256, U256};
+use sp_core::{defer, H160, H256, U256};
 use sp_runtime::traits::{UniqueSaturatedInto, Zero};
 use sp_std::{
 	boxed::Box,
@@ -326,6 +326,73 @@ impl<T: Config> RunnerT<T> for Runner<T> {
 					gas_limit,
 					access_list,
 				);
+				(reason, address)
+			},
+		)
+	}
+}
+
+impl<T: Config> RunnerExtended<T> for Runner<T> {
+	/// Special method for rpc call which won't charge for storage rent
+	/// Same as call but with skip_storage_rent: true
+	fn rpc_call(
+		source: H160,
+		origin: H160,
+		target: H160,
+		input: Vec<u8>,
+		value: BalanceOf<T>,
+		gas_limit: u64,
+		storage_limit: u32,
+		access_list: Vec<(H160, Vec<H256>)>,
+		config: &evm::Config,
+	) -> Result<CallInfo, DispatchError> {
+		// Ensure eth_call has evm origin, otherwise xcm charge rent fee will fail.
+		Pallet::<T>::set_origin(T::AddressMapping::get_account_id(&origin));
+		defer!(Pallet::<T>::kill_origin());
+
+		let precompiles = T::PrecompilesValue::get();
+		let value = U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(value));
+		Self::execute(
+			source,
+			origin,
+			value,
+			gas_limit,
+			storage_limit,
+			config,
+			true,
+			&precompiles,
+			|executor| executor.transact_call(source, target, value, input, gas_limit, access_list),
+		)
+	}
+
+	/// Special method for rpc create which won't charge for storage rent
+	/// Same as create but with skip_storage_rent: true
+	fn rpc_create(
+		source: H160,
+		init: Vec<u8>,
+		value: BalanceOf<T>,
+		gas_limit: u64,
+		storage_limit: u32,
+		access_list: Vec<(H160, Vec<H256>)>,
+		config: &evm::Config,
+	) -> Result<CreateInfo, DispatchError> {
+		let precompiles = T::PrecompilesValue::get();
+		let value = U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(value));
+		Self::execute(
+			source,
+			source,
+			value,
+			gas_limit,
+			storage_limit,
+			config,
+			true,
+			&precompiles,
+			|executor| {
+				let address = executor
+					.create_address(evm::CreateScheme::Legacy { caller: source })
+					.unwrap_or_default(); // transact_create will check the address
+				let (reason, _) =
+					executor.transact_create(source, value, init, gas_limit, access_list);
 				(reason, address)
 			},
 		)
