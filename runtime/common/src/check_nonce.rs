@@ -182,3 +182,128 @@ where
 		}
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::mock::{new_test_ext, AccountId32, RuntimeCall, TestRuntime};
+	use frame_support::{assert_noop, assert_ok};
+
+	/// A simple call, which one doesn't matter.
+	pub const CALL: &<TestRuntime as frame_system::Config>::RuntimeCall =
+		&RuntimeCall::System(frame_system::Call::set_heap_pages { pages: 0u64 });
+
+	#[test]
+	fn check_nonce_works() {
+		new_test_ext().execute_with(|| {
+			let alice = AccountId32::from([8; 32]);
+			frame_system::Account::<TestRuntime>::insert(
+				&alice,
+				frame_system::AccountInfo {
+					nonce: 1,
+					consumers: 0,
+					providers: 0,
+					sufficients: 0,
+					data: pallet_balances::AccountData::default(),
+				},
+			);
+			let info = DispatchInfo::default();
+			// stale
+			assert_noop!(
+				CheckNonce::<TestRuntime>::from(0).validate(&alice, CALL, &info, 0),
+				InvalidTransaction::Stale
+			);
+			assert_noop!(
+				CheckNonce::<TestRuntime>::from(0).pre_dispatch(&alice, CALL, &info, 0),
+				InvalidTransaction::Stale
+			);
+			// correct
+			assert_ok!(CheckNonce::<TestRuntime>::from(1).validate(&alice, CALL, &info, 0));
+			assert_ok!(CheckNonce::<TestRuntime>::from(1).pre_dispatch(&alice, CALL, &info, 0));
+			// future
+			assert_ok!(CheckNonce::<TestRuntime>::from(5).validate(&alice, CALL, &info, 0));
+			assert_noop!(
+				CheckNonce::<TestRuntime>::from(5).pre_dispatch(&alice, CALL, &info, 0),
+				InvalidTransaction::Future
+			);
+		})
+	}
+
+	#[test]
+	fn check_evm_nonce_works() {
+		new_test_ext().execute_with(|| {
+			let alice = AccountId32::from([8; 32]);
+			frame_system::Account::<TestRuntime>::insert(
+				&alice,
+				frame_system::AccountInfo {
+					nonce: 2,
+					consumers: 0,
+					providers: 0,
+					sufficients: 0,
+					data: pallet_balances::AccountData::default(),
+				},
+			);
+
+			let address =
+				<TestRuntime as pallet_evm::Config>::AddressMapping::get_evm_address(&alice)
+					.unwrap_or_else(|| {
+						<TestRuntime as pallet_evm::Config>::AddressMapping::get_default_evm_address(
+							&alice,
+						)
+					});
+
+			pallet_evm::Accounts::<TestRuntime>::insert(
+				&address,
+				pallet_evm::AccountInfo { nonce: 1, contract_info: None },
+			);
+
+			let info = DispatchInfo::default();
+			// stale
+			assert_noop!(
+				CheckNonce::<TestRuntime> { nonce: 0u32, is_eth_tx: true, eth_tx_valid_until: 10 }
+					.validate(&alice, CALL, &info, 0),
+				InvalidTransaction::Stale
+			);
+			assert_noop!(
+				CheckNonce::<TestRuntime> { nonce: 0u32, is_eth_tx: true, eth_tx_valid_until: 10 }
+					.pre_dispatch(&alice, CALL, &info, 0),
+				InvalidTransaction::Stale
+			);
+
+			assert_eq!(
+				CheckNonce::<TestRuntime> { nonce: 1u32, is_eth_tx: true, eth_tx_valid_until: 10 }
+					.validate(&alice, CALL, &info, 0),
+				Ok(ValidTransaction {
+					priority: 0,
+					requires: vec![],
+					provides: vec![Encode::encode(&(address, 1u32))],
+					longevity: 10,
+					propagate: true,
+				})
+			);
+			assert_ok!(CheckNonce::<TestRuntime> {
+				nonce: 1u32,
+				is_eth_tx: true,
+				eth_tx_valid_until: 10
+			}
+			.pre_dispatch(&alice, CALL, &info, 0),);
+
+			assert_eq!(
+				CheckNonce::<TestRuntime> { nonce: 3u32, is_eth_tx: true, eth_tx_valid_until: 10 }
+					.validate(&alice, CALL, &info, 0),
+				Ok(ValidTransaction {
+					priority: 0,
+					requires: vec![Encode::encode(&(address, 2u32))],
+					provides: vec![Encode::encode(&(address, 3u32))],
+					longevity: 10,
+					propagate: true,
+				})
+			);
+			assert_noop!(
+				CheckNonce::<TestRuntime> { nonce: 3u32, is_eth_tx: true, eth_tx_valid_until: 10 }
+					.pre_dispatch(&alice, CALL, &info, 0),
+				InvalidTransaction::Future
+			);
+		})
+	}
+}

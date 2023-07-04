@@ -29,7 +29,7 @@ pub type Moment = u64;
 
 /// Alias to type for a signature for a transaction on chain. This allows one of several
 /// kinds of underlying crypto to be used, so isn't a fixed size when encoded.
-pub type Signature = MultiSignature;
+pub type Signature = signature::SelendraMultiSignature;
 
 /// Alias to the public key used for this chain, actually a `MultiSigner`. Like the signature, this
 /// also isn't a fixed size when encoded, as different cryptos have different size public keys.
@@ -40,7 +40,7 @@ pub type AccountPublic = <Signature as Verify>::Signer;
 pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
 
 /// The address format for describing accounts.
-pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
+pub type Address = sp_runtime::MultiAddress<AccountId, AccountIndex>;
 
 /// The type for looking up accounts. We don't expect more than 4 billion of them.
 pub type AccountIndex = u32;
@@ -48,10 +48,10 @@ pub type AccountIndex = u32;
 /// Identifier for a chain. 32-bit should be plenty.
 pub type ChainId = u32;
 
-/// A hash of some data used by the relay chain.
+/// A hash of some data used by the blockchain.
 pub type Hash = sp_core::H256;
 
-/// Index of a transaction in the relay chain. 32-bit should be plenty.
+/// Index of a transaction in the blockchain. 32-bit should be plenty.
 pub type Index = u32;
 
 /// Fee multiplier.

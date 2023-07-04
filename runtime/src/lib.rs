@@ -6,7 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use codec::DecodeLimit;
+use codec::{DecodeLimit, Encode};
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::{sr25519::AuthorityId as AuraId, SlotDuration};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160};
@@ -14,9 +14,9 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160};
 pub use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, StaticLookup},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult,
+	ApplyExtrinsicResult, SaturatedConversion,
 };
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill};
 use sp_std::prelude::*;
@@ -45,9 +45,8 @@ use frame_system::EnsureSignedBy;
 use frame_try_runtime::UpgradeCheckSelect;
 
 pub use pallet_balances::Call as BalancesCall;
-use pallet_committee_management::{PrefixMigration, SessionAndEraManager};
-use pallet_elections::{CommitteeSizeMigration, MigrateToV4};
-use pallet_evm::{AccessListItem, CallInfo, CreateInfo, runner::RunnerExtended};
+use pallet_committee_management::SessionAndEraManager;
+use pallet_evm::{runner::RunnerExtended, AccessListItem, CallInfo, CreateInfo};
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
 
@@ -109,7 +108,7 @@ impl frame_system::Config for Runtime {
 	type BlockLength = BlockLength;
 	type AccountId = AccountId;
 	type RuntimeCall = RuntimeCall;
-	type Lookup = AccountIdLookup<AccountId, ()>;
+	type Lookup = (AccountIdLookup<AccountId, AccountIndex>, EvmAccounts);
 	type Index = Index;
 	type BlockNumber = BlockNumber;
 	type Hash = Hash;
@@ -122,7 +121,8 @@ impl frame_system::Config for Runtime {
 	type Version = Version;
 	type PalletInfo = PalletInfo;
 	type OnNewAccount = ();
-	type OnKilledAccount = ();
+	type OnKilledAccount =
+		(pallet_evm::CallKillAccount<Runtime>, pallet_evm_accounts::CallKillAccount<Runtime>);
 	type AccountData = pallet_balances::AccountData<Balance>;
 	type SystemWeightInfo = ();
 	#[cfg(feature = "runtime-testnet")]
@@ -131,6 +131,63 @@ impl frame_system::Config for Runtime {
 	type SS58Prefix = ConstU16<204>;
 	type OnSetCode = ();
 	type MaxConsumers = ConstU32<16>;
+}
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
+where
+	RuntimeCall: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: RuntimeCall,
+		public: <Signature as sp_runtime::traits::Verify>::Signer,
+		account: AccountId,
+		nonce: Index,
+	) -> Option<(
+		RuntimeCall,
+		<UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
+	)> {
+		// take the biggest period possible.
+		let period =
+			BlockHashCount::get().checked_next_power_of_two().map(|c| c / 2).unwrap_or(2) as u64;
+		let current_block = System::block_number()
+			.saturated_into::<u64>()
+			// The `System::block_number` is initialized with `n+1`,
+			// so the actual block number is `n`.
+			.saturating_sub(1);
+		let tip = 0;
+		let extra: SignedExtra = (
+			frame_system::CheckNonZeroSender::<Runtime>::new(),
+			frame_system::CheckSpecVersion::<Runtime>::new(),
+			frame_system::CheckTxVersion::<Runtime>::new(),
+			frame_system::CheckGenesis::<Runtime>::new(),
+			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
+			selendra_runtime_common::check_nonce::CheckNonce::<Runtime>::from(nonce),
+			frame_system::CheckWeight::<Runtime>::new(),
+			pallet_evm::SetEvmOrigin::<Runtime>::new(),
+			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+		);
+		let raw_payload = SignedPayload::new(call, extra)
+			.map_err(|e| {
+				log::warn!("Unable to create signed payload: {:?}", e);
+			})
+			.ok()?;
+		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
+		let address = AccountIdLookup::unlookup(account);
+		let (call, extra, _) = raw_payload.deconstruct();
+		Some((call, (address, signature, extra)))
+	}
+}
+impl frame_system::offchain::SigningTypes for Runtime {
+	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
+	type Signature = Signature;
+}
+
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
+where
+	RuntimeCall: From<C>,
+{
+	type OverarchingCall = RuntimeCall;
+	type Extrinsic = UncheckedExtrinsic;
 }
 
 parameter_types! {
@@ -206,14 +263,6 @@ impl pallet_timestamp::Config for Runtime {
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
-}
-
-impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
-where
-	RuntimeCall: From<C>,
-{
-	type Extrinsic = UncheckedExtrinsic;
-	type OverarchingCall = RuntimeCall;
 }
 
 parameter_types! {
@@ -354,6 +403,8 @@ pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
+/// The payload being signed in transactions.
+pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
 /// BlockId type as expected by this runtime.
 pub type BlockId = generic::BlockId<Block>;
 /// The SignedExtension to the basic transaction logic.
@@ -368,9 +419,6 @@ pub type SignedExtra = (
 	pallet_evm::SetEvmOrigin<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
-// /// Unchecked extrinsic type as expected by this runtime.
-// pub type UncheckedExtrinsic =
-// 	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = SelendraUncheckedExtrinsic<
@@ -383,8 +431,7 @@ pub type UncheckedExtrinsic = SelendraUncheckedExtrinsic<
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra>;
 
-pub type Migrations =
-	(PrefixMigration<Runtime>, MigrateToV4<Runtime>, CommitteeSizeMigration<Runtime>);
+pub type Migrations = ();
 
 /// Executive: handles dispatch to the various pallets.
 pub type Executive = frame_executive::Executive<

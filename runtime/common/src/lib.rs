@@ -18,6 +18,8 @@
 pub mod check_nonce;
 pub mod evm;
 pub mod impls;
+#[cfg(test)]
+mod mock;
 pub mod precompile;
 
 use frame_support::{
