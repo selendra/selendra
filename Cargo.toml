@@ -3,14 +3,15 @@
 members = [
     "node",
     "runtime",
+	"primitives",
     "consensus/aggregator",
     "consensus/clique",
     "consensus/finality-selendra",
-    "pallets/selendra",
+	"pallets/selendra",
     "pallets/elections",
     "pallets/support",
     "pallets/committee-management",
-    "primitives",
+	"pallets/offchain-rollup",
 ]
 
 [profile.release]
@@ -75,6 +76,7 @@ frame-support = { git = "https://github.com/paritytech/substrate", branch = "pol
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 frame-try-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
+frame-support-test = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 
 pallet-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 pallet-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
@@ -153,11 +155,17 @@ substrate-test-client = { git = "https://github.com/paritytech/substrate", branc
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 
-# Local Pallet
+# Core Pallet
 pallet-selendra = { path = "pallets/selendra", default-features = false }
 pallet-committee-management = { path = "pallets/committee-management", default-features = false }
 pallet-elections = { path = "pallets/elections", default-features = false }
 pallets-support = { path = "pallets/support", default-features = false }
+
+# Indranet Pallet
+indra-offchain-rollup = { path = "pallets/offchain-rollup", default-features = false }
+
+# Indranet Crate
+pink-kv-session = { path = "crates/pink-libs/kv-session", default-features = false }
 
 # Local Core
 selendra-primitives = { path = "primitives", default-features = false }

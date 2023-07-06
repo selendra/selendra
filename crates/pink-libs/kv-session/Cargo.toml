@@ -1,0 +1,12 @@
+[package]
+name = "pink-kv-session"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+license = "Apache 2.0"
+description = "KV session primitives for phat off-chain rollup"
+
+[dependencies]
+
+[dev-dependencies]
+scale = { package = "parity-scale-codec", version = "3.6.1" }
