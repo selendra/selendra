@@ -12,6 +12,9 @@ members = [
     "pallets/support",
     "pallets/committee-management",
 	"pallets/offchain-rollup",
+	"pallets/indranet/mq-runtime-api",
+	"crates/indranet-types",
+	"crates/indranet-mq"
 ]
 
 [profile.release]
@@ -37,7 +40,6 @@ derive_more = { version = "0.99.17" }
 env_logger = { version = "0.10.0" }
 futures = { version = "0.3.28" }
 futures-timer = { version = "3.0.2" }
-hex = { version = "0.4.3" }
 hex-literal = { version = "0.3.4" }
 ip_network = { version = "0.4.1" }
 jsonrpsee = { version = "0.16.2" }
@@ -50,12 +52,21 @@ serde_json = { version = "1.0.96" }
 thiserror = { version = "1.0.40" }
 tiny-bip39 = { version = "1.0.0" }
 tokio = { version = "1.17.0" }
+untrusted = { version = "0.9.0" }
+fixed-macro = "1.2"
+fixed = { version = "1.16.1", default-features = false }
+fixed-sqrt = { version = "0.2", default-features = false }
+hex = { version = "0.4.3", default-features = false }
 hash-db = { version = "0.16", default-features = false }
 rand_pcg = { version = "0.3.1", default-features = false }
 rand = { version = "0.8.5", default-features = false }
 scale-info = { version = "2.0", default-features = false }
 smallvec = { version = "1", default-features = false }
 serde = { version = "1.0.163", default-features = false }
+tracing = { version = "0.1", default-features = false }
+chrono = { version = "0.4.22", default-features = false }
+base64 = { version = "0.13.0", default-features = false, features = ["alloc"] }
+primitive-types = { version = "0.12.1", default-features = false, features = ["codec", "byteorder"] }
 
 # Aleph Consensus
 current-selendra-bft = { package = "aleph-bft", version = "0.20.5" }
@@ -166,6 +177,10 @@ indra-offchain-rollup = { path = "pallets/offchain-rollup", default-features = f
 
 # Indranet Crate
 pink-kv-session = { path = "crates/pink-libs/kv-session", default-features = false }
+indranet-serde-more = { path = "crates/indranet-serde-more", default-features = false }
+indranet-mq = { path = "crates/indranet-mq", default-features = false }
+prpc = { path = "crates/prpc", default-features = false }
+indranet-types = { path = "crates/indranet-types", default-features = false }
 
 # Local Core
 selendra-primitives = { path = "primitives", default-features = false }

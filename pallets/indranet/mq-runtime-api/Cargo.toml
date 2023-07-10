@@ -1,0 +1,15 @@
+[package]
+name = "indranet-mq-runtime-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sp-api = { workspace = true }
+indranet-mq = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+	"sp-api/std",
+	"indranet-mq/std"
+]
