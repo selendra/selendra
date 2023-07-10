@@ -1,0 +1,18 @@
+[package]
+name = "indranet-serde-more"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0.130", default-features = false, features = ["derive", "alloc"] }
+scale = { package = "parity-scale-codec", version = "3.3", default-features = false }
+hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
+
+sp-core = { workspace = true }
+
+[features]
+default = ["std"]
+crypto = ["sp-core/full_crypto"]
+std = [
+    "sp-core/std",
+]
