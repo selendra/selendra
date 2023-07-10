@@ -1,0 +1,96 @@
+[package]
+name = "indranet-pallets"
+version = "0.1.0"
+edition = "2021"
+authors = ["Selendra"]
+license = "Apache 2.0"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.3", default-features = false, features = ["derive"] }
+scale-info = { version = "2.3", default-features = false, features = ["derive"] }
+
+serde_json = { workspace = true, features = ["alloc"] }
+chrono = { workspace = true }
+untrusted = { workspace = true }
+base64 = { workspace = true }
+hex = { workspace = true }
+hex-literal = { workspace = true }
+fixed = { workspace = true }
+fixed-macro = { workspace = true }
+fixed-sqrt = { workspace = true }
+primitive-types = { workspace = true }
+log = { workspace = true }
+
+# pallet-assets = { workspace = true }
+pallet-democracy = { workspace = true }
+# pallet-uniques = { workspace = true }
+pallet-preimage = { workspace = true }
+pallet-balances = { workspace = true }
+pallet-insecure-randomness-collective-flip = { workspace = true }
+
+frame-benchmarking = { workspace = true, optional = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+sp-io = { workspace = true }
+sp-core = { workspace = true }
+sp-application-crypto = { workspace = true }
+indranet-types = { workspace = true }
+
+# RMRK dependencies
+# pallet-rmrk-core = { git = "https://github.com/phala-Network/rmrk-substrate", branch = "polkadot-v0.9.41", default-features = false }
+# rmrk-traits = { git = "https://github.com/phala-Network/rmrk-substrate", branch = "polkadot-v0.9.41", default-features = false }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+webpki = { version = "0.22", default-features = false, features = ["alloc"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+webpki_wasm = { package = "webpki", git = "https://github.com/Phala-Network/phala-blockchain", tags = "v1-rc2", default-features = false, features = ["alloc"] }
+
+[dev-dependencies]
+rand = "0.8.5"
+insta = "1"
+assert_matches = "1.4.0"
+frame-support-test = { workspace = true }
+pallet-timestamp = { workspace = true }
+pallet-scheduler = { workspace = true }
+pallet-collective = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+	"log/std",
+	"codec/std",
+	"scale-info/std",
+	"sp-runtime/std",
+	"sp-io/std",
+	"sp-std/std",
+	"sp-core/std",
+	"sp-application-crypto/std",
+	"frame-support/std",
+	"frame-system/std",
+	"frame-support/std",
+	"frame-system/std",
+	"frame-benchmarking/std",
+	# "pallet-assets/std",
+	"pallet-democracy/std",
+	"pallet-balances/std",
+	# "pallet-uniques/std",
+	"pallet-collective/std",
+	"pallet-insecure-randomness-collective-flip/std",
+	"pallet-preimage/std",
+	# "pallet-rmrk-core/std",
+	# "rmrk-traits/std",
+	"indranet-types/enable_serde",
+]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks"
+]
+try-runtime = ["frame-support/try-runtime"]
+native = [
+	"sp-application-crypto/full_crypto",
+]

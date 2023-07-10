@@ -13,8 +13,9 @@ members = [
     "pallets/committee-management",
 	"pallets/offchain-rollup",
 	"pallets/indranet/mq-runtime-api",
+	"pallets/indranet",
 	"crates/indranet-types",
-	"crates/indranet-mq"
+	"crates/indranet-mq",
 ]
 
 [profile.release]
@@ -102,6 +103,7 @@ pallet-multisig = { git = "https://github.com/paritytech/substrate", branch = "p
 pallet-nomination-pools = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 pallet-nomination-pools-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 pallet-insecure-randomness-collective-flip = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
+pallet-preimage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 pallet-scheduler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 pallet-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 pallet-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
