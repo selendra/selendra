@@ -58,8 +58,6 @@ pallet-multisig = { workspace = true }
 pallet-utility = { workspace = true }
 
 # Contract pallet
-pallet-contracts = { workspace = true }
-pallet-contracts-primitives = { workspace = true }
 pallet-insecure-randomness-collective-flip = { workspace = true }
 
 # Governance pallet
@@ -124,8 +122,6 @@ std = [
     "pallet-vesting/std",
     "pallet-multisig/std",
     "pallet-utility/std",
-    "pallet-contracts-primitives/std",
-    "pallet-contracts/std",
     "pallet-nomination-pools/std",
     "pallet-nomination-pools-runtime-api/std",
     "pallet-committee-management/std",
@@ -139,7 +135,6 @@ try-runtime = [
     "frame-support/try-runtime",
     "frame-try-runtime",
     "frame-system/try-runtime",
-    "pallet-contracts/try-runtime",
     "pallet-nomination-pools/try-runtime",
     "pallet-selendra/try-runtime",
     "pallet-aura/try-runtime",

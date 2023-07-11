@@ -15,9 +15,6 @@
 
 use selendra_primitives::{Balance, TOKEN};
 
-// Prints debug output of the `contracts` pallet to stdout if the node is started with `-lruntime::contracts=debug`.
-pub const CONTRACTS_DEBUG_OUTPUT: bool = true;
-
 // The storage per one byte of contract storage: 4*10^{-5} Selendra per byte.
 pub const CONTRACT_DEPOSIT_PER_BYTE: Balance = 4 * (TOKEN / 100_000);
 

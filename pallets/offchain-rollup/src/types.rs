@@ -7,7 +7,7 @@ pub type ActionBytes = BoundedVec<u8, ConstU32<256>>;
 pub type KeyBytes = BoundedVec<u8, ConstU32<128>>;
 pub type ValueBytes = BoundedVec<u8, ConstU32<2048>>;
 
-// Almost copied from `phat-offchain-rollup/phat/src/lib.rs`.
+// Almost copied from `indra-offchain-rollup/indra/src/lib.rs`.
 #[derive(Debug, Default, PartialEq, Eq, Encode, Decode, Clone, scale_info::TypeInfo)]
 pub struct RollupTx {
 	pub conds: Vec<Cond>,

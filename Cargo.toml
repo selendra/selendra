@@ -93,8 +93,6 @@ frame-support-test = { git = "https://github.com/paritytech/substrate", branch =
 pallet-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 pallet-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
-pallet-contracts = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
-pallet-contracts-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 pallet-democracy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 pallet-identity = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }

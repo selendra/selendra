@@ -1,5 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-//! # Phat Contract Offchain Rollup
+//! # Indra Contract Offchain Rollup
 
 pub mod anchor;
 pub mod oracle;

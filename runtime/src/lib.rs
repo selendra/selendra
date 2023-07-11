@@ -63,7 +63,7 @@ mod origin;
 
 use config::consensus::{SelendraId, SessionPeriod};
 use constants::{
-	currency::*, fee::WeightToFee, time::*, CONTRACTS_DEBUG_OUTPUT, CONTRACT_DEPOSIT_PER_BYTE,
+	currency::*, fee::WeightToFee, time::*, CONTRACT_DEPOSIT_PER_BYTE,
 };
 
 /// The version information used to identify this runtime when compiled natively.
@@ -252,42 +252,6 @@ impl pallet_treasury::Config for Runtime {
 	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
 }
 
-parameter_types! {
-	// Refundable deposit per storage item
-	pub const DepositPerItem: Balance = 32 * CONTRACT_DEPOSIT_PER_BYTE;
-	// Refundable deposit per byte of storage
-	pub const DepositPerByte: Balance = CONTRACT_DEPOSIT_PER_BYTE;
-	// How much weight of each block can be spent on the lazy deletion queue of terminated contracts
-	pub DeletionWeightLimit: Weight = Perbill::from_percent(10) * BlockWeights::get().max_block; // 40ms
-	// Maximum size of the lazy deletion queue of terminated contracts.
-	pub const DeletionQueueDepth: u32 = 128;
-	pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
-}
-
-impl pallet_contracts::Config for Runtime {
-	type Time = Timestamp;
-	type Randomness = RandomnessCollectiveFlip;
-	type Currency = Balances;
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeCall = RuntimeCall;
-	// The safest default is to allow no calls at all. This is unsafe experimental feature with no support in ink!
-	type CallFilter = Nothing;
-	type DepositPerItem = DepositPerItem;
-	type DepositPerByte = DepositPerByte;
-	type WeightPrice = pallet_transaction_payment::Pallet<Self>;
-	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
-	type ChainExtension = ();
-	type DeletionQueueDepth = DeletionQueueDepth;
-	type DeletionWeightLimit = DeletionWeightLimit;
-	type Schedule = Schedule;
-	type CallStack = [pallet_contracts::Frame<Self>; 5];
-	type AddressGenerator = pallet_contracts::DefaultAddressGenerator;
-	type MaxCodeLen = ConstU32<{ 123 * 1024 }>;
-	type MaxStorageKeyLen = ConstU32<128>;
-	type UnsafeUnstableInterface = ConstBool<false>;
-	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
-}
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -320,30 +284,6 @@ construct_runtime!(
 		Council: pallet_collective::<Instance1> = 41 ,
 		TechnicalCommittee: pallet_collective::<Instance2> = 42,
 		TechnicalMembership: pallet_membership::<Instance1> = 43,
-
-		// Smart Contract
-		Contracts: pallet_contracts = 50,
-
-		// // Web Contract
-		// PhalaMq: pallet_mq = 60,
-		// PhalaRegistry: pallet_registry = 61,
-		// PhalaComputation: pallet_computation = 62,
-		// PhalaStakePoolv2: pallet_stake_pool_v2 = 63,
-		// PhalaStakePool: pallet_stake_pool = 64,
-		// PhalaVault: pallet_vault = 65,
-		// PhalaWrappedBalances: pallet_wrapped_balances = 66,
-		// PhalaBasePool: pallet_base_pool = 67,
-		// PhalaPhatContracts: pallet_webc = 68,
-		// PhalaPhatTokenomic: pallet_tokenomic = 69,
-
-		// // Rollup and Oracles
-		// PhatRollupAnchor: pallet_anchor = 70,
-		// PhatOracle: pallet_oracle = 71,
-
-		// // Asset and NFT
-		// Assets: pallet_assets = 80,
-		// Uniques: pallet_uniques = 81,
-		// RmrkCore: pallet_rmrk_core = 82,
 
 		// Utility Suff
 		Vesting: pallet_vesting = 90,
@@ -564,71 +504,6 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_contracts::ContractsApi<Block, AccountId, Balance, BlockNumber, Hash>
-		for Runtime
-	{
-		fn call(
-			origin: AccountId,
-			dest: AccountId,
-			value: Balance,
-			gas_limit: Option<Weight>,
-			storage_deposit_limit: Option<Balance>,
-			input_data: Vec<u8>,
-		) -> pallet_contracts_primitives::ContractExecResult<Balance> {
-			let gas_limit = gas_limit.unwrap_or(BlockWeights::get().max_block);
-			Contracts::bare_call(
-				origin,
-				dest,
-				value,
-				gas_limit,
-				storage_deposit_limit,
-				input_data,
-				CONTRACTS_DEBUG_OUTPUT,
-				pallet_contracts::Determinism::Deterministic,
-			)
-		}
-
-		fn instantiate(
-			origin: AccountId,
-			value: Balance,
-			gas_limit: Option<Weight>,
-			storage_deposit_limit: Option<Balance>,
-			code: pallet_contracts_primitives::Code<Hash>,
-			data: Vec<u8>,
-			salt: Vec<u8>,
-		) -> pallet_contracts_primitives::ContractInstantiateResult<AccountId, Balance>
-		{
-			let gas_limit = gas_limit.unwrap_or(BlockWeights::get().max_block);
-			Contracts::bare_instantiate(
-				origin,
-				value,
-				gas_limit,
-				storage_deposit_limit,
-				code,
-				data,
-				salt,
-				CONTRACTS_DEBUG_OUTPUT
-			)
-		}
-
-		fn upload_code(
-			origin: AccountId,
-			code: Vec<u8>,
-			storage_deposit_limit: Option<Balance>,
-			determinism: pallet_contracts::Determinism,
-		) -> pallet_contracts_primitives::CodeUploadResult<Hash, Balance>
-		{
-			Contracts::bare_upload_code(origin, code, storage_deposit_limit, determinism)
-		}
-
-		fn get_storage(
-			address: AccountId,
-			key: Vec<u8>,
-		) -> pallet_contracts_primitives::GetStorageResult {
-			Contracts::get_storage(address, key)
-		}
-	}
-
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade(checks: UpgradeCheckSelect) -> (Weight, Weight) {
@@ -691,28 +566,5 @@ mod tests {
 	#[test]
 	fn state_version_must_be_zero() {
 		assert_eq!(0, VERSION.state_version);
-	}
-
-	#[test]
-	fn check_contracts_memory_parameters() {
-		// Memory limit of one instance of a runtime
-		const MAX_RUNTIME_MEM: u32 = HEAP_PAGES as u32 * 64 * 1024;
-		// Max stack size defined by wasmi - 1MB
-		const MAX_STACK_SIZE: u32 = 1024 * 1024;
-		// Max heap size is 16 mempages of 64KB each - 1MB
-		let max_heap_size =
-			<Runtime as pallet_contracts::Config>::Schedule::get().limits.max_memory_size();
-		// Max call depth is CallStack::size() + 1
-		let max_call_depth = <Runtime as pallet_contracts::Config>::CallStack::size() as u32 + 1;
-		// Max code len
-		let max_code_len: u32 = <Runtime as pallet_contracts::Config>::MaxCodeLen::get();
-
-		// The factor comes from allocator, contracts representation, and wasmi
-		let lhs = max_call_depth * (72 * max_code_len + max_heap_size + MAX_STACK_SIZE);
-		// We allocate only 75% of all runtime memory to contracts execution. Important: it's not
-		// enforeced in wasmtime
-		let rhs = MAX_RUNTIME_MEM * 3 / 4;
-
-		assert!(lhs < rhs);
 	}
 }

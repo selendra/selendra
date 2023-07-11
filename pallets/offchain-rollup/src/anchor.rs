@@ -1,29 +1,29 @@
 //! # Off-chain Rollup Anchor
 //!
 //! Off-chain rollup anchor is a pallet that handles the off-chain rollup logic. It maintains a
-//! kv-store for Phat Contract to read and write, and allows the Phat Contract to send arbitrary
+//! kv-store for Indra Contract to read and write, and allows the Indra Contract to send arbitrary
 //! messages to the blockchain to trigger custom actions.
 //!
-//! Off-chain Rollup enables ACID operations on the blockchain for Phat Contracts. The kv-stroe
+//! Off-chain Rollup enables ACID operations on the blockchain for Indra Contracts. The kv-stroe
 //! access and the customzed actions are wrapped as Rollup Transactions. It guarantees that the
 //! transactions are isolated and atomic. No conflicting transactions will be accepted.
 //!
 //! The anchor pallet is designed to implement such ACID machanism. It accepts the Rollup
-//! Transaction submitted by the rollup client running in Phat Contract, validates it, and aplly
+//! Transaction submitted by the rollup client running in Indra Contract, validates it, and aplly
 //! the changes.
 //!
 //! On the other hand, the pallet provides two features to the other pallets:
 //!
-//! 1. Push messages to the Phat Contract via the `push_message(name, content)`
-//! 2. Receive messages from Phat Contract by handling `Config::OnResponse` callback trait
+//! 1. Push messages to the Indra Contract via the `push_message(name, content)`
+//! 2. Receive messages from Indra Contract by handling `Config::OnResponse` callback trait
 //!
 //! ## Register a contract
 //!
-//! The anchor pallet allows arbitrary Phat Contract to connect to it. Before using, the Phat
+//! The anchor pallet allows arbitrary Indra Contract to connect to it. Before using, the Indra
 //! Contract must register itself in the pallet to claim a name (in `H256`) by calling extrinsic
 //! `claim_name(name)` by the _submitter account_.
 //!
-//! The _submitter account_ should be an account solely controlled by the Phat Contract. After
+//! The _submitter account_ should be an account solely controlled by the Indra Contract. After
 //! the name is claimed, the submitter account will be saved on the blockchain for access control.
 //! The future rollup transactions must be submitted by that account. The mechanism ensures that
 //! the transaction submission are genuine.
@@ -34,7 +34,7 @@
 //!
 //! ## Outbound message queue
 //!
-//! The anchor pallet provides a message queue to help pass messages to the Phat Contracts:
+//! The anchor pallet provides a message queue to help pass messages to the Indra Contracts:
 //!
 //! - `push_message(name, message)`: Push a message (arbitrary bytes) to the contract and return
 //!    the id of the message. The id starts from 0.
@@ -43,7 +43,7 @@
 //!
 //! ## Receive a message
 //!
-//! The anchor pallet allows Phat Contracts to send message back to the blockchain. To subscribe
+//! The anchor pallet allows Indra Contracts to send message back to the blockchain. To subscribe
 //! the messages, the receiver pallet should implement the [`OnResponse`] trait.
 //!
 //! ```ignore

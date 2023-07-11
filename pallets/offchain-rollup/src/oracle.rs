@@ -116,7 +116,7 @@ pub mod pallet {
 		timestamp_ms: u64,
 	}
 
-	/// The reponse from the oracle Phat Contract (copied from Phat Contract)
+	/// The reponse from the oracle Indra Contract (copied from Indra Contract)
 	#[derive(Debug, PartialEq, Eq, Encode, Decode, Clone, scale_info::TypeInfo)]
 	pub struct ResponseRecord {
 		pub owner: AccountId32,
