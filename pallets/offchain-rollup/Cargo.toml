@@ -1,5 +1,5 @@
 [package]
-name = "pallet-anchor"
+name = "indranet-offchain-rollup"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"

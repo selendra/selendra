@@ -1,6 +1,4 @@
-use crate::base_pool;
-use crate::vault;
-use crate::wrapped_balances;
+use crate::{base_pool, vault, wrapped_balances};
 use indranet_types::WorkerPublicKey;
 use scale_info::TypeInfo;
 use sp_runtime::Permill;

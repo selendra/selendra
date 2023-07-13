@@ -1,4 +1,4 @@
-use crate::{mq, indra, indra_tokenomic, registry};
+use crate::{indra, indra_tokenomic, mq, registry};
 
 use crate::mock::{MockValidator, NoneAttestationEnabled};
 use frame_support::{pallet_prelude::ConstU32, parameter_types, traits::GenesisBuild};
@@ -129,9 +129,7 @@ impl indra_tokenomic::Config for Test {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
+	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	let zero_pubkey = sp_core::sr25519::Public::from_raw([0u8; 32]);
 	let zero_ecdh_pubkey = Vec::from(&[0u8; 32][..]);
 	crate::registry::GenesisConfig::<Test> {
@@ -144,6 +142,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	sp_io::TestExternalities::new(t)
 }
 
+#[allow(dead_code)]
 pub fn take_events() -> Vec<RuntimeEvent> {
 	let evt = System::events().into_iter().map(|evt| evt.event).collect();
 	System::reset_events();

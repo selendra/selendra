@@ -42,14 +42,14 @@ sp-application-crypto = { workspace = true }
 indranet-types = { workspace = true }
 
 # RMRK dependencies
-pallet-rmrk-core = { git = "https://github.com/phala-Network/rmrk-substrate", branch = "polkadot-v0.9.41", default-features = false }
-rmrk-traits = { git = "https://github.com/phala-Network/rmrk-substrate", branch = "polkadot-v0.9.41", default-features = false }
+pallet-rmrk-core = { workspace = true }
+rmrk-traits = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 webpki = { version = "0.22", default-features = false, features = ["alloc"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-webpki_wasm = { package = "webpki", git = "https://github.com/Phala-Network/phala-blockchain", tags = "v1-rc2", default-features = false, features = ["alloc"] }
+webpki_wasm = { workspace = true }
 
 [dev-dependencies]
 rand = "0.8.5"

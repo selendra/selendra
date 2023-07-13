@@ -1,5 +1,19 @@
 [workspace]
 
+exclude = [
+	"subxt",
+	"vendor/webpki",
+	"vendor/ring",
+	"standalone/pruntime",
+	"standalone/prouter",
+	"standalone/crate-version",
+	"crates/pink-drivers/system",
+	"crates/pink-drivers/sidevm_deployer",
+	"crates/pink-drivers/tokenomic",
+	"e2e/contracts",
+]
+
+
 members = [
     "node",
     "runtime",
@@ -183,7 +197,13 @@ pallets-support = { path = "pallets/support", default-features = false }
 # Indranet Pallet
 pallet-assets = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 pallet-uniques = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
-indra-offchain-rollup = { path = "pallets/offchain-rollup", default-features = false }
+indranet-offchain-rollup = { path = "pallets/offchain-rollup", default-features = false }
+indranet-mq-runtime-api = { path = "pallets/indranet/mq-runtime-api", default-features = false }
+indranet-pallets = { path = "pallets/indranet", default-features = false }
+
+# RMRK dependencies
+pallet-rmrk-core = { git = "https://github.com/Phala-Network/rmrk-substrate", branch = "polkadot-v0.9.41", default-features = false }
+rmrk-traits = { git = "https://github.com/Phala-Network/rmrk-substrate", branch = "polkadot-v0.9.41", default-features = false }
 
 # Indranet Crate
 pink-kv-session = { path = "crates/pink-libs/kv-session", default-features = false }
@@ -191,6 +211,7 @@ indranet-serde-more = { path = "crates/indranet-serde-more", default-features = 
 indranet-mq = { path = "crates/indranet-mq", default-features = false }
 prpc = { path = "crates/prpc", default-features = false }
 indranet-types = { path = "crates/indranet-types", default-features = false }
+webpki_wasm = { package = "webpki", git = "https://github.com/Phala-Network/phala-blockchain", tags = "v1-rc2", default-features = false, features = ["alloc"] }
 
 # Local Core
 selendra-primitives = { path = "primitives", default-features = false }

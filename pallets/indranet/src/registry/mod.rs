@@ -14,11 +14,9 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_core::{sr25519, H256};
 	use sp_runtime::SaturatedConversion;
-	use sp_std::prelude::*;
-	use sp_std::{convert::TryFrom, vec};
+	use sp_std::{convert::TryFrom, prelude::*, vec};
 
-	use crate::mq::MessageOriginInfo;
-	use crate::attestation::Error as AttestationError;
+	use crate::{attestation::Error as AttestationError, mq::MessageOriginInfo};
 	use indranet_types::{
 		messaging::{
 			self, bind_topic, ContractClusterId, ContractId, DecodedMessage, GatekeeperChange,
@@ -56,10 +54,7 @@ pub mod pallet {
 	bind_topic!(GatekeeperRegistryEvent, b"^indranet/registry/gk_event");
 	#[derive(Encode, Decode, TypeInfo, Clone, Debug)]
 	pub enum GatekeeperRegistryEvent {
-		RotatedMasterPubkey {
-			rotation_id: u64,
-			master_pubkey: MasterPublicKey,
-		},
+		RotatedMasterPubkey { rotation_id: u64, master_pubkey: MasterPublicKey },
 	}
 
 	#[derive(Encode, Decode, TypeInfo, Clone, Debug, Default)]
@@ -427,14 +422,8 @@ pub mod pallet {
 			ensure!(rotating.is_none(), Error::<T>::MasterKeyInRotation);
 
 			let mut gatekeepers = Gatekeeper::<T>::get();
-			ensure!(
-				gatekeepers.contains(&gatekeeper),
-				Error::<T>::InvalidGatekeeper
-			);
-			ensure!(
-				gatekeepers.len() > 1,
-				Error::<T>::CannotRemoveLastGatekeeper
-			);
+			ensure!(gatekeepers.contains(&gatekeeper), Error::<T>::InvalidGatekeeper);
+			ensure!(gatekeepers.len() > 1, Error::<T>::CannotRemoveLastGatekeeper);
 
 			gatekeepers.retain(|g| *g != gatekeeper);
 			Gatekeeper::<T>::put(gatekeepers);
@@ -469,10 +458,7 @@ pub mod pallet {
 			});
 
 			MasterKeyRotationLock::<T>::put(Some(rotation_id));
-			Self::push_message(GatekeeperLaunch::rotate_master_key(
-				rotation_id,
-				gk_identities,
-			));
+			Self::push_message(GatekeeperLaunch::rotate_master_key(rotation_id, gk_identities));
 			Ok(())
 		}
 
@@ -535,7 +521,7 @@ pub mod pallet {
 							attestation_provider: Some(AttestationProvider::Ias),
 							confidence_level: fields.confidence_level,
 						});
-					}
+					},
 					None => {
 						// Case 2 - New worker register
 						*v = Some(WorkerInfoV2 {
@@ -564,7 +550,7 @@ pub mod pallet {
 							pubkey,
 							frame_system::Pallet::<T>::block_number(),
 						);
-					}
+					},
 				}
 			});
 			// Trigger benchmark anyway
@@ -621,11 +607,11 @@ pub mod pallet {
 					Less => {
 						info.version = pruntime_info.max_consensus_version;
 						info.count = 1;
-					}
+					},
 					Equal => {
 						info.count += 1;
-					}
-					Greater => {}
+					},
+					Greater => {},
 				}
 			});
 
@@ -654,7 +640,7 @@ pub mod pallet {
 							attestation_provider: attestation_report.provider,
 							confidence_level: attestation_report.confidence_level,
 						});
-					}
+					},
 					None => {
 						// Case 2 - New worker register
 						*v = Some(WorkerInfoV2 {
@@ -683,7 +669,7 @@ pub mod pallet {
 							pubkey,
 							frame_system::Pallet::<T>::block_number(),
 						);
-					}
+					},
 				}
 			});
 			// Trigger benchmark anyway
@@ -720,21 +706,15 @@ pub mod pallet {
 			let expiration = 4 * 60 * 60 * 1000; // 4 hours
 			let now = T::UnixTime::now().as_millis().saturated_into::<u64>();
 			ensure!(
-				endpoint_payload.signing_time < now
-					&& now <= endpoint_payload.signing_time + expiration,
+				endpoint_payload.signing_time < now &&
+					now <= endpoint_payload.signing_time + expiration,
 				Error::<T>::InvalidEndpointSigningTime
 			);
 
 			// Validate the public key
-			ensure!(
-				Workers::<T>::contains_key(endpoint_payload.pubkey),
-				Error::<T>::InvalidPubKey
-			);
+			ensure!(Workers::<T>::contains_key(endpoint_payload.pubkey), Error::<T>::InvalidPubKey);
 
-			Endpoints::<T>::insert(
-				endpoint_payload.pubkey,
-				endpoint_payload.versioned_endpoints,
-			);
+			Endpoints::<T>::insert(endpoint_payload.pubkey, endpoint_payload.versioned_endpoints);
 
 			Ok(())
 		}
@@ -748,10 +728,7 @@ pub mod pallet {
 			T::GovernanceOrigin::ensure_origin(origin)?;
 
 			let mut allowlist = PRuntimeAllowList::<T>::get();
-			ensure!(
-				!allowlist.contains(&pruntime_hash),
-				Error::<T>::PRuntimeAlreadyExists
-			);
+			ensure!(!allowlist.contains(&pruntime_hash), Error::<T>::PRuntimeAlreadyExists);
 
 			allowlist.push(pruntime_hash.clone());
 			PRuntimeAllowList::<T>::put(allowlist);
@@ -771,10 +748,7 @@ pub mod pallet {
 			T::GovernanceOrigin::ensure_origin(origin)?;
 
 			let mut allowlist = PRuntimeAllowList::<T>::get();
-			ensure!(
-				allowlist.contains(&pruntime_hash),
-				Error::<T>::PRuntimeNotFound
-			);
+			ensure!(allowlist.contains(&pruntime_hash), Error::<T>::PRuntimeNotFound);
 
 			allowlist.retain(|h| *h != pruntime_hash);
 			PRuntimeAllowList::<T>::put(allowlist);
@@ -819,10 +793,7 @@ pub mod pallet {
 			T::GovernanceOrigin::ensure_origin(origin)?;
 
 			let mut allowlist = RelaychainGenesisBlockHashAllowList::<T>::get();
-			ensure!(
-				allowlist.contains(&genesis_block_hash),
-				Error::<T>::GenesisBlockHashNotFound
-			);
+			ensure!(allowlist.contains(&genesis_block_hash), Error::<T>::GenesisBlockHashNotFound);
 
 			allowlist.retain(|h| *h != genesis_block_hash);
 			RelaychainGenesisBlockHashAllowList::<T>::put(allowlist);
@@ -843,9 +814,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::GovernanceOrigin::ensure_origin(origin)?;
 			MinimumPRuntimeVersion::<T>::put((major, minor, patch));
-			Self::deposit_event(Event::<T>::MinimumPRuntimeVersionChangedTo(
-				major, minor, patch,
-			));
+			Self::deposit_event(Event::<T>::MinimumPRuntimeVersionChangedTo(major, minor, patch));
 			Ok(())
 		}
 
@@ -878,17 +847,17 @@ pub mod pallet {
 				MessageOrigin::Cluster(id) => {
 					pubkey_copy = ClusterKeys::<T>::get(id).ok_or(Error::<T>::UnknownCluster)?;
 					&pubkey_copy
-				}
+				},
 				MessageOrigin::Contract(id) => {
 					pubkey_copy = ContractKeys::<T>::get(id).ok_or(Error::<T>::UnknownContract)?;
 					&pubkey_copy
-				}
+				},
 				MessageOrigin::Gatekeeper => {
 					// GatekeeperMasterPubkey should not be None
 					pubkey_copy = GatekeeperMasterPubkey::<T>::get()
 						.ok_or(Error::<T>::MasterKeyUninitialized)?;
 					&pubkey_copy
-				}
+				},
 				_ => return Err(Error::<T>::CannotHandleUnknownMessage.into()),
 			};
 			Self::verify_signature(pubkey, message)
@@ -915,14 +884,11 @@ pub mod pallet {
 			};
 
 			match message.payload {
-				RegistryEvent::BenchReport {
-					start_time,
-					iterations,
-				} => {
+				RegistryEvent::BenchReport { start_time, iterations } => {
 					let now = T::UnixTime::now().as_millis().saturated_into::<u64>();
 					if now <= start_time {
 						// Oops, should not happen
-						return Err(Error::<T>::InvalidBenchReport.into());
+						return Err(Error::<T>::InvalidBenchReport.into())
 					}
 
 					const MAX_SCORE: u32 = 6000;
@@ -945,29 +911,26 @@ pub mod pallet {
 						pubkey: *worker_pubkey,
 						init_score: score,
 					});
-				}
+				},
 				RegistryEvent::MasterPubkey { master_pubkey } => {
 					let gatekeepers = Gatekeeper::<T>::get();
-					ensure!(
-						gatekeepers.contains(worker_pubkey),
-						Error::<T>::InvalidGatekeeper
-					);
+					ensure!(gatekeepers.contains(worker_pubkey), Error::<T>::InvalidGatekeeper);
 					match GatekeeperMasterPubkey::<T>::try_get() {
 						Ok(saved_pubkey) => {
 							ensure!(
 								saved_pubkey.0 == master_pubkey.0,
 								Error::<T>::MasterKeyMismatch // Oops, this is really bad
 							);
-						}
+						},
 						_ => {
 							GatekeeperMasterPubkey::<T>::put(master_pubkey);
 							Self::push_message(GatekeeperLaunch::master_pubkey_on_chain(
 								master_pubkey,
 							));
 							Self::on_gatekeeper_launched();
-						}
+						},
 					}
-				}
+				},
 			}
 			Ok(())
 		}
@@ -976,21 +939,18 @@ pub mod pallet {
 			message: DecodedMessage<GatekeeperRegistryEvent>,
 		) -> DispatchResult {
 			if !message.sender.is_gatekeeper() {
-				return Err(Error::<T>::InvalidSender.into());
+				return Err(Error::<T>::InvalidSender.into())
 			}
 
 			match message.payload {
-				GatekeeperRegistryEvent::RotatedMasterPubkey {
-					rotation_id,
-					master_pubkey,
-				} => {
+				GatekeeperRegistryEvent::RotatedMasterPubkey { rotation_id, master_pubkey } => {
 					let rotating = MasterKeyRotationLock::<T>::get();
 					if rotating.is_none() || rotating.unwrap() != rotation_id {
 						Self::deposit_event(Event::<T>::MasterKeyRotationFailed {
 							rotation_lock: rotating,
 							gatekeeper_rotation_id: rotation_id,
 						});
-						return Err(Error::<T>::InvalidRotatedMasterPubkey.into());
+						return Err(Error::<T>::InvalidRotatedMasterPubkey.into())
 					}
 
 					GatekeeperMasterPubkey::<T>::put(master_pubkey);
@@ -1000,7 +960,7 @@ pub mod pallet {
 						master_pubkey,
 					});
 					Self::push_message(GatekeeperLaunch::master_pubkey_rotated(master_pubkey));
-				}
+				},
 			}
 			Ok(())
 		}
@@ -1084,15 +1044,11 @@ pub mod pallet {
 				);
 				Pallet::<T>::queue_message(SystemEvent::new_worker_event(
 					*pubkey,
-					WorkerEvent::Registered(messaging::WorkerInfo {
-						confidence_level: 128u8,
-					}),
+					WorkerEvent::Registered(messaging::WorkerInfo { confidence_level: 128u8 }),
 				));
 				Pallet::<T>::queue_message(SystemEvent::new_worker_event(
 					*pubkey,
-					WorkerEvent::BenchStart {
-						duration: self.benchmark_duration,
-					},
+					WorkerEvent::BenchStart { duration: self.benchmark_duration },
 				));
 				BenchmarkDuration::<T>::put(self.benchmark_duration);
 			}
@@ -1391,10 +1347,7 @@ pub mod pallet {
 				);
 				assert_eq!(PRuntimeAllowList::<Test>::get().len(), 1);
 				assert!(PRuntimeAddedAt::<Test>::contains_key(&sample));
-				assert_ok!(IndraRegistry::remove_pruntime(
-					Origin::root(),
-					sample.clone()
-				));
+				assert_ok!(IndraRegistry::remove_pruntime(Origin::root(), sample.clone()));
 				assert_noop!(
 					IndraRegistry::remove_pruntime(Origin::root(), sample.clone()),
 					Error::<Test>::PRuntimeNotFound

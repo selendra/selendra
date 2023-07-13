@@ -5,16 +5,16 @@ pub use self::pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::mq::{self, MessageOriginInfo};
-	use crate::registry;
-	use crate::{BalanceOf, NegativeImbalanceOf, IndranetConfig};
-	use frame_support::traits::WithdrawReasons;
+	use crate::{
+		mq::{self, MessageOriginInfo},
+		registry, BalanceOf, IndranetConfig, NegativeImbalanceOf,
+	};
 	use frame_support::{
 		dispatch::DispatchResult,
 		pallet_prelude::*,
 		traits::{
 			ConstBool, ConstU128, Currency, ExistenceRequirement::KeepAlive, OnUnbalanced,
-			Randomness, StorageVersion, UnixTime,
+			Randomness, StorageVersion, UnixTime, WithdrawReasons,
 		},
 		PalletId,
 	};
@@ -69,16 +69,10 @@ pub mod pallet {
 			// We have to either figure out how to allow settlement in CoolingDown state, or
 			// complete disable it as we do now. Note that when CoolingDown settle is not allowed,
 			// we still have to make sure the slashed V is periodically updated on the blockchain.
-			matches!(
-				self,
-				WorkerState::WorkerIdle | WorkerState::WorkerUnresponsive
-			)
+			matches!(self, WorkerState::WorkerIdle | WorkerState::WorkerUnresponsive)
 		}
 		pub fn is_computing(&self) -> bool {
-			matches!(
-				self,
-				WorkerState::WorkerIdle | WorkerState::WorkerUnresponsive
-			)
+			matches!(self, WorkerState::WorkerIdle | WorkerState::WorkerUnresponsive)
 		}
 	}
 
@@ -107,7 +101,7 @@ pub mod pallet {
 			// `now` must be larger than `challenge_time_last` because it's impossible to report
 			// the heartbeat at the same block with the challenge.
 			if now <= self.challenge_time_last {
-				return Err(());
+				return Err(())
 			}
 			// Lower iteration indicates the worker has been restarted. This is acceptable, but we
 			// have to reset the on-chain counter as well (causing a temporary zero p-instant).
@@ -194,7 +188,9 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + IndranetConfig + mq::Config + registry::Config {
+	pub trait Config:
+		frame_system::Config + IndranetConfig + mq::Config + registry::Config
+	{
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type ExpectedBlockTimeSec: Get<u32>;
 		type MinInitP: Get<u32>;
@@ -582,10 +578,7 @@ pub mod pallet {
 			budget: u128,
 		) -> DispatchResult {
 			T::SetBudgetOrigins::ensure_origin(origin)?;
-			ensure!(
-				nonce > BudgetUpdateNonce::<T>::get(),
-				Error::<T>::NonceIndexInvalid,
-			);
+			ensure!(nonce > BudgetUpdateNonce::<T>::get(), Error::<T>::NonceIndexInvalid,);
 			ensure!(
 				block_number > LastBugdetUpdateBlock::<T>::get(),
 				Error::<T>::BudgetUpdateBlockInvalid,
@@ -641,7 +634,7 @@ pub mod pallet {
 
 		fn heartbeat_challenge() {
 			if HeartbeatPaused::<T>::get() {
-				return;
+				return
 			}
 			// Random seed for the heartbeat challenge
 			let seed_hash = T::Randomness::random(crate::constants::RANDOMNESS_SUBJECT).0;
@@ -651,10 +644,7 @@ pub mod pallet {
 			let num_tx =
 				ExpectedHeartbeatCount::<T>::get().unwrap_or(DEFAULT_EXPECTED_HEARTBEAT_COUNT);
 			let online_target = pow_target(num_tx, online_workers, T::ExpectedBlockTimeSec::get());
-			let seed_info = HeartbeatChallenge {
-				seed,
-				online_target,
-			};
+			let seed_info = HeartbeatChallenge { seed, online_target };
 			Self::push_message(SystemEvent::HeartbeatChallenge(seed_info));
 		}
 
@@ -663,16 +653,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			if let MessageOrigin::Worker(worker) = message.sender {
 				match message.payload {
-					WorkingReportEvent::Heartbeat {
-						iterations,
-						challenge_time,
-						..
-					}
-					| WorkingReportEvent::HeartbeatV2 {
-						iterations,
-						challenge_time,
-						..
-					} => {
+					WorkingReportEvent::Heartbeat { iterations, challenge_time, .. } |
+					WorkingReportEvent::HeartbeatV2 { iterations, challenge_time, .. } => {
 						// Handle with great care!
 						//
 						// In some cases, a message can be delayed, but the worker has been already
@@ -700,7 +682,7 @@ pub mod pallet {
 							p_instant: session_info.benchmark.p_instant,
 						});
 						Sessions::<T>::insert(&session, session_info);
-					}
+					},
 				};
 			}
 			Ok(())
@@ -710,7 +692,7 @@ pub mod pallet {
 			message: DecodedMessage<WorkingInfoUpdateEvent<T::BlockNumber>>,
 		) -> DispatchResult {
 			if !matches!(message.sender, MessageOrigin::Gatekeeper) {
-				return Err(Error::<T>::BadSender.into());
+				return Err(Error::<T>::BadSender.into())
 			}
 
 			let event = message.payload;
@@ -727,7 +709,7 @@ pub mod pallet {
 						};
 						// Skip non-computing workers
 						if !session_info.state.is_computing() {
-							continue;
+							continue
 						}
 						session_info.state = WorkerState::WorkerUnresponsive;
 						Sessions::<T>::insert(&account, &session_info);
@@ -750,7 +732,7 @@ pub mod pallet {
 						};
 						// Skip non-computing workers
 						if !session_info.state.is_computing() {
-							continue;
+							continue
 						}
 						session_info.state = WorkerState::WorkerIdle;
 						Sessions::<T>::insert(&account, &session_info);
@@ -797,7 +779,7 @@ pub mod pallet {
 						v: info.v,
 						payout: info.payout,
 					});
-					return Ok(());
+					return Ok(())
 				}
 				// Otherwise it's a normal update. Let's proceed.
 				session_info.v = info.v; // in bits
@@ -819,10 +801,10 @@ pub mod pallet {
 
 		fn can_reclaim(session_info: &SessionInfo, check_cooldown: bool) -> bool {
 			if session_info.state != WorkerState::WorkerCoolingDown {
-				return false;
+				return false
 			}
 			if !check_cooldown {
-				return true;
+				return true
 			}
 			let now = Self::now_sec();
 			now - session_info.cool_down_start >= Self::cool_down_period()
@@ -838,10 +820,7 @@ pub mod pallet {
 		) -> Result<(BalanceOf<T>, BalanceOf<T>), DispatchError> {
 			let mut session_info =
 				Sessions::<T>::get(&session).ok_or(Error::<T>::SessionNotFound)?;
-			ensure!(
-				Self::can_reclaim(&session_info, check_cooldown),
-				Error::<T>::CoolDownNotReady
-			);
+			ensure!(Self::can_reclaim(&session_info, check_cooldown), Error::<T>::CoolDownNotReady);
 			session_info.state = WorkerState::Ready;
 			session_info.cool_down_start = 0u64;
 			Sessions::<T>::insert(&session, &session_info);
@@ -882,10 +861,7 @@ pub mod pallet {
 				Self::ensure_session_bound(&session).is_err(),
 				Error::<T>::DuplicateBoundSession
 			);
-			ensure!(
-				Self::ensure_worker_bound(&pubkey).is_err(),
-				Error::<T>::DuplicateBoundWorker
-			);
+			ensure!(Self::ensure_worker_bound(&pubkey).is_err(), Error::<T>::DuplicateBoundWorker);
 			// Make sure we are not overriding a running worker (even if the worker is unbound)
 			let can_bind = match Sessions::<T>::get(&session) {
 				Some(info) => info.state == WorkerState::Ready,
@@ -915,10 +891,7 @@ pub mod pallet {
 				},
 			);
 
-			Self::deposit_event(Event::<T>::SessionBound {
-				session,
-				worker: pubkey,
-			});
+			Self::deposit_event(Event::<T>::SessionBound { session, worker: pubkey });
 			Ok(())
 		}
 
@@ -942,10 +915,7 @@ pub mod pallet {
 			}
 			SessionBindings::<T>::remove(session);
 			WorkerBindings::<T>::remove(&worker);
-			Self::deposit_event(Event::<T>::SessionUnbound {
-				session: session.clone(),
-				worker,
-			});
+			Self::deposit_event(Event::<T>::SessionUnbound { session: session.clone(), worker });
 			if notify {
 				T::OnUnbound::on_unbound(&worker, force);
 			}
@@ -971,9 +941,7 @@ pub mod pallet {
 
 			let session_info =
 				registry::Workers::<T>::get(&worker).expect("Bounded worker must exist; qed.");
-			let p = session_info
-				.initial_score
-				.ok_or(Error::<T>::BenchmarkMissing)?;
+			let p = session_info.initial_score.ok_or(Error::<T>::BenchmarkMissing)?;
 			// Disallow some weird benchmark score.
 			ensure!(p >= T::MinInitP::get(), Error::<T>::BenchmarkTooLow);
 
@@ -1003,11 +971,7 @@ pub mod pallet {
 			NextSessionId::<T>::put(session_id + 1);
 			Self::push_message(SystemEvent::new_worker_event(
 				worker,
-				WorkerEvent::Started {
-					session_id,
-					init_v: ve.to_bits(),
-					init_p: p,
-				},
+				WorkerEvent::Started { session_id, init_v: ve.to_bits(), init_p: p },
 			));
 			Self::deposit_event(Event::<T>::WorkerStarted {
 				session,
@@ -1027,8 +991,8 @@ pub mod pallet {
 				Sessions::<T>::get(&session).ok_or(Error::<T>::SessionNotFound)?;
 
 			ensure!(
-				session_info.state != WorkerState::Ready
-					&& session_info.state != WorkerState::WorkerCoolingDown,
+				session_info.state != WorkerState::Ready &&
+					session_info.state != WorkerState::WorkerCoolingDown,
 				Error::<T>::WorkerNotComputing
 			);
 
@@ -1089,9 +1053,7 @@ pub mod pallet {
 		}
 
 		fn now_sec() -> u64 {
-			<T as registry::Config>::UnixTime::now()
-				.as_secs()
-				.saturated_into::<u64>()
+			<T as registry::Config>::UnixTime::now().as_secs().saturated_into::<u64>()
 		}
 	}
 
@@ -1106,10 +1068,7 @@ pub mod pallet {
 		BalanceOf<T>: FixedPointConvert,
 	{
 		fn new(params: TokenomicParams) -> Self {
-			Tokenomic {
-				params,
-				mark: Default::default(),
-			}
+			Tokenomic { params, mark: Default::default() }
 		}
 
 		/// Gets the minimal stake with the given performance score
@@ -1237,7 +1196,7 @@ pub mod pallet {
 	fn pow_target(num_tx: u32, num_workers: u32, secs_per_block: u32) -> U256 {
 		use fixed::types::U32F32;
 		if num_workers == 0 {
-			return U256::zero();
+			return U256::zero()
 		}
 		let num_workers = U32F32::from_num(num_workers);
 		let num_tx = U32F32::from_num(num_tx);
@@ -1247,10 +1206,8 @@ pub mod pallet {
 		let target_tx = cmp::min(num_tx, max_tx);
 		// Convert to U256 target
 		//     target = MAX * tx / num_workers
-		let frac: u32 = (target_tx / num_workers)
-			.checked_shl(24)
-			.expect("No overflow; qed.")
-			.to_num();
+		let frac: u32 =
+			(target_tx / num_workers).checked_shl(24).expect("No overflow; qed.").to_num();
 		(U256::MAX >> 24) * frac
 	}
 
@@ -1411,26 +1368,11 @@ pub mod pallet {
 				// Minimal stake
 				assert_eq!(tokenomic.minimal_stake(1000), 3162_277660146355);
 				// Ve for different confidence level
-				assert_eq!(
-					tokenomic.ve(1000 * DOLLARS, 1000, 1),
-					fp!(1690.0000000000000000282)
-				);
-				assert_eq!(
-					tokenomic.ve(1000 * DOLLARS, 1000, 2),
-					fp!(1690.0000000000000000282)
-				);
-				assert_eq!(
-					tokenomic.ve(1000 * DOLLARS, 1000, 3),
-					fp!(1690.0000000000000000282)
-				);
-				assert_eq!(
-					tokenomic.ve(1000 * DOLLARS, 1000, 4),
-					fp!(1612.0000000000000000247)
-				);
-				assert_eq!(
-					tokenomic.ve(1000 * DOLLARS, 1000, 5),
-					fp!(1572.9999999999999999877)
-				);
+				assert_eq!(tokenomic.ve(1000 * DOLLARS, 1000, 1), fp!(1690.0000000000000000282));
+				assert_eq!(tokenomic.ve(1000 * DOLLARS, 1000, 2), fp!(1690.0000000000000000282));
+				assert_eq!(tokenomic.ve(1000 * DOLLARS, 1000, 3), fp!(1690.0000000000000000282));
+				assert_eq!(tokenomic.ve(1000 * DOLLARS, 1000, 4), fp!(1612.0000000000000000247));
+				assert_eq!(tokenomic.ve(1000 * DOLLARS, 1000, 5), fp!(1572.9999999999999999877));
 				// Rig cost estimation
 				assert_eq!(tokenomic.rig_cost(500), fp!(150.0000000000000000054));
 				assert_eq!(tokenomic.rig_cost(2000), fp!(600.0000000000000000217));
@@ -1461,10 +1403,7 @@ pub mod pallet {
 			new_test_ext().execute_with(|| {
 				set_block_1();
 				let tokenomic = TokenomicParameters::<Test>::get().unwrap();
-				assert_ok!(IndraComputation::update_tokenomic(
-					Origin::root(),
-					tokenomic
-				));
+				assert_ok!(IndraComputation::update_tokenomic(Origin::root(), tokenomic));
 				let ev = take_events();
 				assert_eq!(ev.len(), 0);
 				IndraComputation::on_finalize(1);
@@ -1492,18 +1431,18 @@ pub mod pallet {
 
 				// 110% boost
 				elapse_seconds(100);
-				assert_ok!(IndraComputation::on_working_message_received(
-					DecodedMessage::<WorkingReportEvent> {
-						sender: MessageOrigin::Worker(worker_pubkey(1)),
-						destination: Topic::new(*b"indranet/mining/report"),
-						payload: WorkingReportEvent::Heartbeat {
-							session_id: 0,
-							challenge_block: 2,
-							challenge_time: 100_000,
-							iterations: 11000,
-						},
-					}
-				));
+				assert_ok!(IndraComputation::on_working_message_received(DecodedMessage::<
+					WorkingReportEvent,
+				> {
+					sender: MessageOrigin::Worker(worker_pubkey(1)),
+					destination: Topic::new(*b"indranet/mining/report"),
+					payload: WorkingReportEvent::Heartbeat {
+						session_id: 0,
+						challenge_block: 2,
+						challenge_time: 100_000,
+						iterations: 11000,
+					},
+				}));
 				let worker = IndraComputation::sessions(1).unwrap();
 				assert_eq!(
 					worker.benchmark,
@@ -1518,18 +1457,18 @@ pub mod pallet {
 
 				// 150% boost (capped)
 				elapse_seconds(100);
-				assert_ok!(IndraComputation::on_working_message_received(
-					DecodedMessage::<WorkingReportEvent> {
-						sender: MessageOrigin::Worker(worker_pubkey(1)),
-						destination: Topic::new(*b"indranet/mining/report"),
-						payload: WorkingReportEvent::Heartbeat {
-							session_id: 0,
-							challenge_block: 3,
-							challenge_time: 200_000,
-							iterations: 11000 + 15000,
-						},
-					}
-				));
+				assert_ok!(IndraComputation::on_working_message_received(DecodedMessage::<
+					WorkingReportEvent,
+				> {
+					sender: MessageOrigin::Worker(worker_pubkey(1)),
+					destination: Topic::new(*b"indranet/mining/report"),
+					payload: WorkingReportEvent::Heartbeat {
+						session_id: 0,
+						challenge_block: 3,
+						challenge_time: 200_000,
+						iterations: 11000 + 15000,
+					},
+				}));
 				let worker = IndraComputation::sessions(1).unwrap();
 				assert_eq!(
 					worker.benchmark,

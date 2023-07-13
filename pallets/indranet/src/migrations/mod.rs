@@ -14,10 +14,10 @@ use frame_support::{
 #[allow(unused_imports)]
 use log;
 
-use crate::compute::{base_pool, computation, stake_pool_v2, vault, wrapped_balances};
-use crate::mq;
-use crate::indra;
-use crate::registry;
+use crate::{
+	compute::{base_pool, computation, stake_pool_v2, vault, wrapped_balances},
+	indra, mq, registry,
+};
 
 /// Alias for the runtime that implements all Indranet Pallets
 pub trait IndranetPallets:
@@ -46,13 +46,7 @@ impl<T> IndranetPallets for T where
 {
 }
 
-type Versions = (
-	StorageVersion,
-	StorageVersion,
-	StorageVersion,
-	StorageVersion,
-	StorageVersion,
-);
+type Versions = (StorageVersion, StorageVersion, StorageVersion, StorageVersion, StorageVersion);
 
 #[allow(dead_code)]
 fn get_versions<T: IndranetPallets>() -> Versions {

@@ -1,9 +1,4 @@
-use crate::base_pool;
-use crate::computation;
-use crate::pool_proxy::*;
-use crate::stake_pool_v2;
-use crate::vault;
-use crate::wrapped_balances;
+use crate::{base_pool, computation, pool_proxy::*, stake_pool_v2, vault, wrapped_balances};
 use fixed::types::U64F64 as FixedPoint;
 use frame_support::{
 	assert_noop, assert_ok,
@@ -25,9 +20,8 @@ use crate::mock::{
 	Balances, IndraBasePool, IndraComputation, IndraRegistry, IndraStakePoolv2, IndraVault,
 	IndraWrappedBalances, Preimage, RuntimeCall,
 };
-use pallet_democracy::AccountVote;
-use pallet_democracy::BoundedCallOf;
 use indranet_types::{messaging::SettleInfo, WorkerPublicKey};
+use pallet_democracy::{AccountVote, BoundedCallOf};
 use rmrk_traits::primitives::NftId;
 use sp_runtime::Permill;
 use sp_std::{collections::vec_deque::VecDeque, vec::Vec};
@@ -36,9 +30,8 @@ use sp_std::{collections::vec_deque::VecDeque, vec::Vec};
 fn test_pool_subaccount() {
 	let sub_account: AccountId32 =
 		stake_pool_v2::pool_sub_account(1, &WorkerPublicKey::from_raw([0u8; 32]));
-	let expected = AccountId32::new(hex!(
-		"73706d2f02ab4d74c86ec3b3997a4fadf33e55e8279650c8539ea67e053c02dc"
-	));
+	let expected =
+		AccountId32::new(hex!("73706d2f02ab4d74c86ec3b3997a4fadf33e55e8279650c8539ea67e053c02dc"));
 	assert_eq!(sub_account, expected, "Incorrect sub account");
 }
 
@@ -52,10 +45,7 @@ fn test_wrap() {
 		assert_eq!(free, 0);
 		let free = Balances::free_balance(1);
 		assert_eq!(free, 1000 * DOLLARS);
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			100 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 100 * DOLLARS));
 		let free = Balances::free_balance(
 			&<Test as wrapped_balances::Config>::WrappedBalancesAccountId::get(),
 		);
@@ -71,14 +61,8 @@ fn test_wrap() {
 fn test_unwrap() {
 	new_test_ext().execute_with(|| {
 		mock_asset_id();
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			100 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::unwrap(
-			RuntimeOrigin::signed(1),
-			50 * DOLLARS,
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 100 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::unwrap(RuntimeOrigin::signed(1), 50 * DOLLARS,));
 		let free = Balances::free_balance(1);
 		assert_eq!(free, 950 * DOLLARS);
 		let free = Balances::free_balance(
@@ -89,10 +73,7 @@ fn test_unwrap() {
 		assert_eq!(wpha_free, 50 * DOLLARS);
 		wrapped_balances::pallet::StakerAccounts::<Test>::insert(
 			1,
-			wrapped_balances::FinanceAccount::<u128> {
-				invest_pools: vec![],
-				locked: 20 * DOLLARS,
-			},
+			wrapped_balances::FinanceAccount::<u128> { invest_pools: vec![], locked: 20 * DOLLARS },
 		);
 		assert_noop!(
 			IndraWrappedBalances::unwrap(RuntimeOrigin::signed(1), 50 * DOLLARS),
@@ -105,28 +86,17 @@ fn test_unwrap() {
 fn test_unwrap_all() {
 	new_test_ext().execute_with(|| {
 		mock_asset_id();
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			100 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 100 * DOLLARS));
 		set_block_1();
 		setup_workers(2);
 		setup_stake_pool_with_workers(1, &[1, 2]); // pid = 0
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(1),
-			0,
-			50 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(1), 0, 50 * DOLLARS, None));
 		let free = Balances::free_balance(2);
 		assert_eq!(free, 2000 * DOLLARS);
 		assert_ok!(IndraWrappedBalances::unwrap_all(RuntimeOrigin::signed(1)));
 		let free = Balances::free_balance(1);
 		assert_eq!(free, 950 * DOLLARS);
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			100 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 100 * DOLLARS));
 		assert_ok!(IndraWrappedBalances::unwrap_all(RuntimeOrigin::signed(2)));
 		let free = Balances::free_balance(2);
 		assert_eq!(free, 2000 * DOLLARS);
@@ -149,14 +119,8 @@ fn test_vote() {
 		);
 		assert_eq!(vote_id, 0);
 		assert_eq!(vote_id2, 1);
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			100 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			100 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 100 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 100 * DOLLARS));
 		assert_noop!(
 			IndraWrappedBalances::vote(RuntimeOrigin::signed(1), 90 * DOLLARS, 90 * DOLLARS, 0),
 			wrapped_balances::Error::<Test>::VoteAmountLargerThanTotalStakes,
@@ -198,16 +162,8 @@ fn test_vote() {
 		));
 		let account1_status = wrapped_balances::pallet::StakerAccounts::<Test>::get(1).unwrap();
 		assert_eq!(account1_status.locked, 30 * DOLLARS);
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			890 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::vote(
-			RuntimeOrigin::signed(1),
-			700 * DOLLARS,
-			0,
-			1
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 890 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::vote(RuntimeOrigin::signed(1), 700 * DOLLARS, 0, 1));
 	});
 }
 
@@ -220,14 +176,8 @@ fn test_unlock() {
 			pallet_democracy::VoteThreshold::SimpleMajority,
 			1000,
 		);
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			100 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			100 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 100 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 100 * DOLLARS));
 		assert_ok!(IndraWrappedBalances::vote(
 			RuntimeOrigin::signed(1),
 			20 * DOLLARS,
@@ -408,16 +358,8 @@ fn test_remove_stake_from_nft() {
 		setup_workers(2);
 		setup_stake_pool_with_workers(1, &[1, 2]); // pid = 0
 		let _pool_info = ensure_stake_pool::<Test>(0).unwrap();
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			100 * DOLLARS
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(1),
-			0,
-			50 * DOLLARS,
-			None,
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 100 * DOLLARS));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(1), 0, 50 * DOLLARS, None,));
 		let mut nftid_arr: Vec<NftId> =
 			pallet_rmrk_core::Nfts::<Test>::iter_key_prefix(10000).collect();
 		nftid_arr.retain(|x| {
@@ -451,10 +393,7 @@ fn test_create_stakepool() {
 		assert_ok!(IndraStakePoolv2::create(RuntimeOrigin::signed(2)));
 		assert_eq!(
 			base_pool::Pools::<Test>::get(0),
-			Some(PoolProxy::<u64, Balance>::StakePool(StakePool::<
-				u64,
-				Balance,
-			> {
+			Some(PoolProxy::<u64, Balance>::StakePool(StakePool::<u64, Balance> {
 				basepool: base_pool::BasePool {
 					pid: 0,
 					owner: 1,
@@ -519,32 +458,11 @@ fn test_contribute() {
 		);
 
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(1),
-			0,
-			50 * DOLLARS,
-			None
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(2),
-			0,
-			50 * DOLLARS,
-			None
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(1),
-			0,
-			30 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 500 * DOLLARS));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(1), 0, 50 * DOLLARS, None));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(2), 0, 50 * DOLLARS, None));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(1), 0, 30 * DOLLARS, None));
 
 		let mut nftid_arr: Vec<NftId> =
 			pallet_rmrk_core::Nfts::<Test>::iter_key_prefix(10000).collect();
@@ -581,11 +499,7 @@ fn test_contribute() {
 		assert_eq!(free, 130 * DOLLARS);
 
 		assert_ok!(IndraVault::create(RuntimeOrigin::signed(1)));
-		assert_ok!(IndraVault::contribute(
-			RuntimeOrigin::signed(2),
-			1,
-			200 * DOLLARS,
-		));
+		assert_ok!(IndraVault::contribute(RuntimeOrigin::signed(2), 1, 200 * DOLLARS,));
 		let pool = ensure_vault::<Test>(1).unwrap();
 		assert_eq!(pool.basepool.total_shares, 200 * DOLLARS);
 		assert_eq!(pool.basepool.total_value, 200 * DOLLARS);
@@ -643,99 +557,39 @@ fn test_set_pool_description() {
 fn test_staker_whitelist() {
 	new_test_ext().execute_with(|| {
 		mock_asset_id();
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(3),
-			500 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(3), 500 * DOLLARS));
 		set_block_1();
 		setup_workers(1);
 		setup_stake_pool_with_workers(1, &[1]);
 
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(1),
-			0,
-			40 * DOLLARS,
-			None
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(2),
-			0,
-			40 * DOLLARS,
-			None
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(3),
-			0,
-			40 * DOLLARS,
-			None
-		));
-		assert_ok!(IndraBasePool::add_staker_to_whitelist(
-			RuntimeOrigin::signed(1),
-			0,
-			2,
-		));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(1), 0, 40 * DOLLARS, None));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(2), 0, 40 * DOLLARS, None));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(3), 0, 40 * DOLLARS, None));
+		assert_ok!(IndraBasePool::add_staker_to_whitelist(RuntimeOrigin::signed(1), 0, 2,));
 		let whitelist = IndraBasePool::pool_whitelist(0).unwrap();
 		assert_eq!(whitelist, [2]);
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(1),
-			0,
-			10 * DOLLARS,
-			None
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(2),
-			0,
-			40 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(1), 0, 10 * DOLLARS, None));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(2), 0, 40 * DOLLARS, None));
 		assert_noop!(
 			IndraStakePoolv2::contribute(RuntimeOrigin::signed(3), 0, 40 * DOLLARS, None),
 			base_pool::Error::<Test>::NotInContributeWhitelist
 		);
-		assert_ok!(IndraBasePool::add_staker_to_whitelist(
-			RuntimeOrigin::signed(1),
-			0,
-			3,
-		));
+		assert_ok!(IndraBasePool::add_staker_to_whitelist(RuntimeOrigin::signed(1), 0, 3,));
 		let whitelist = IndraBasePool::pool_whitelist(0).unwrap();
 		assert_eq!(whitelist, [2, 3]);
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(3),
-			0,
-			20 * DOLLARS,
-			None
-		));
-		assert_ok!(IndraBasePool::remove_staker_from_whitelist(
-			RuntimeOrigin::signed(1),
-			0,
-			2
-		));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(3), 0, 20 * DOLLARS, None));
+		assert_ok!(IndraBasePool::remove_staker_from_whitelist(RuntimeOrigin::signed(1), 0, 2));
 		let whitelist = IndraBasePool::pool_whitelist(0).unwrap();
 		assert_eq!(whitelist, [3]);
 		assert_noop!(
 			IndraStakePoolv2::contribute(RuntimeOrigin::signed(2), 0, 20 * DOLLARS, None),
 			base_pool::Error::<Test>::NotInContributeWhitelist
 		);
-		assert_ok!(IndraBasePool::remove_staker_from_whitelist(
-			RuntimeOrigin::signed(1),
-			0,
-			3
-		));
+		assert_ok!(IndraBasePool::remove_staker_from_whitelist(RuntimeOrigin::signed(1), 0, 3));
 		assert!(IndraBasePool::pool_whitelist(0).is_none());
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(3),
-			0,
-			20 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(3), 0, 20 * DOLLARS, None));
 	});
 }
 
@@ -743,18 +597,9 @@ fn test_staker_whitelist() {
 fn test_pool_cap() {
 	new_test_ext().execute_with(|| {
 		mock_asset_id();
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(3),
-			500 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(3), 500 * DOLLARS));
 		set_block_1();
 		setup_workers(1);
 		setup_stake_pool_with_workers(1, &[1]); // pid = 0
@@ -771,33 +616,16 @@ fn test_pool_cap() {
 			stake_pool_v2::Error::<Test>::UnauthorizedPoolOwner,
 		);
 		// Cap to 1000 PHA
-		assert_ok!(IndraStakePoolv2::set_cap(
-			RuntimeOrigin::signed(1),
-			0,
-			100 * DOLLARS
-		));
-		assert_eq!(
-			ensure_stake_pool::<Test>(0).unwrap().cap,
-			Some(100 * DOLLARS)
-		);
+		assert_ok!(IndraStakePoolv2::set_cap(RuntimeOrigin::signed(1), 0, 100 * DOLLARS));
+		assert_eq!(ensure_stake_pool::<Test>(0).unwrap().cap, Some(100 * DOLLARS));
 		// Check cap shouldn't be less than the current stake
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(1),
-			0,
-			10 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(1), 0, 10 * DOLLARS, None));
 		assert_noop!(
 			IndraStakePoolv2::set_cap(RuntimeOrigin::signed(1), 0, 9 * DOLLARS),
 			stake_pool_v2::Error::<Test>::InadequateCapacity,
 		);
 		// Stake to the cap
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(1),
-			0,
-			90 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(1), 0, 90 * DOLLARS, None));
 		// Exceed the cap
 		assert_noop!(
 			IndraStakePoolv2::contribute(RuntimeOrigin::signed(2), 0, 90 * DOLLARS, None),
@@ -812,22 +640,12 @@ fn test_pool_cap() {
 			worker_pubkey(1),
 			100 * DOLLARS
 		));
-		assert_ok!(IndraStakePoolv2::withdraw(
-			RuntimeOrigin::signed(1),
-			0,
-			100 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::withdraw(RuntimeOrigin::signed(1), 0, 100 * DOLLARS, None));
 		assert_noop!(
 			IndraStakePoolv2::contribute(RuntimeOrigin::signed(2), 0, 101 * DOLLARS, None),
 			stake_pool_v2::Error::<Test>::StakeExceedsCapacity
 		);
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(2),
-			0,
-			100 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(2), 0, 100 * DOLLARS, None));
 	});
 }
 
@@ -862,21 +680,11 @@ fn test_add_worker() {
 		);
 		// Add benchmark and retry
 		IndraRegistry::internal_set_benchmark(&worker1, Some(1));
-		assert_ok!(IndraStakePoolv2::add_worker(
-			RuntimeOrigin::signed(1),
-			0,
-			worker1
-		));
+		assert_ok!(IndraStakePoolv2::add_worker(RuntimeOrigin::signed(1), 0, worker1));
 		// Check binding
 		let subaccount = stake_pool_v2::pool_sub_account(0, &worker_pubkey(1));
-		assert_eq!(
-			IndraComputation::ensure_worker_bound(&worker_pubkey(1)).unwrap(),
-			subaccount,
-		);
-		assert_eq!(
-			IndraComputation::ensure_session_bound(&subaccount).unwrap(),
-			worker_pubkey(1),
-		);
+		assert_eq!(IndraComputation::ensure_worker_bound(&worker_pubkey(1)).unwrap(), subaccount,);
+		assert_eq!(IndraComputation::ensure_session_bound(&subaccount).unwrap(), worker_pubkey(1),);
 		// Check assignments
 		assert_eq!(
 			stake_pool_v2::pallet::WorkerAssignments::<Test>::get(worker_pubkey(1)),
@@ -901,14 +709,8 @@ fn test_start_computing() {
 		mock_asset_id();
 		set_block_1();
 		assert_ok!(IndraStakePoolv2::create(RuntimeOrigin::signed(1)));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(99),
-			50000 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(99), 50000 * DOLLARS));
 		// Cannot start computing without a bound worker
 		assert_noop!(
 			IndraStakePoolv2::start_computing(RuntimeOrigin::signed(1), 0, worker_pubkey(1), 0),
@@ -916,17 +718,8 @@ fn test_start_computing() {
 		);
 		// Basic setup
 		setup_workers(2);
-		assert_ok!(IndraStakePoolv2::add_worker(
-			RuntimeOrigin::signed(1),
-			0,
-			worker_pubkey(1)
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(1),
-			0,
-			100 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::add_worker(RuntimeOrigin::signed(1), 0, worker_pubkey(1)));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(1), 0, 100 * DOLLARS, None));
 		// No enough stake
 		assert_noop!(
 			IndraStakePoolv2::start_computing(RuntimeOrigin::signed(1), 0, worker_pubkey(1), 0),
@@ -971,26 +764,10 @@ fn test_force_unbind() {
 		setup_workers_linked_operators(2);
 		setup_stake_pool_with_workers(1, &[1]); // pid = 0
 		setup_stake_pool_with_workers(2, &[2]); // pid = 1
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(1),
-			0,
-			100 * DOLLARS,
-			None
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(2),
-			1,
-			100 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 500 * DOLLARS));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(1), 0, 100 * DOLLARS, None));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(2), 1, 100 * DOLLARS, None));
 		// Pool0: Change the operator to account101 and force unbind (not computing)
 		assert_ok!(IndraRegistry::force_register_worker(
 			RuntimeOrigin::root(),
@@ -999,10 +776,7 @@ fn test_force_unbind() {
 			Some(101)
 		));
 		let sub_account = stake_pool_v2::pool_sub_account(0, &worker_pubkey(1));
-		assert_ok!(IndraComputation::unbind(
-			RuntimeOrigin::signed(101),
-			sub_account
-		));
+		assert_ok!(IndraComputation::unbind(RuntimeOrigin::signed(101), sub_account));
 		// Check worker assignments cleared, and the worker removed from the pool
 		assert!(!stake_pool_v2::pallet::WorkerAssignments::<Test>::contains_key(worker_pubkey(1)));
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
@@ -1032,14 +806,9 @@ fn test_force_unbind() {
 			Some(102)
 		));
 		let sub_account = stake_pool_v2::pool_sub_account(1, &worker_pubkey(2));
-		assert_ok!(IndraComputation::unbind(
-			RuntimeOrigin::signed(102),
-			sub_account
-		));
+		assert_ok!(IndraComputation::unbind(RuntimeOrigin::signed(102), sub_account));
 		// Check worker assignments cleared, and the worker removed from the pool
-		assert!(!stake_pool_v2::WorkerAssignments::<Test>::contains_key(
-			worker_pubkey(2)
-		));
+		assert!(!stake_pool_v2::WorkerAssignments::<Test>::contains_key(worker_pubkey(2)));
 		let pool = ensure_stake_pool::<Test>(1).unwrap();
 		assert!(!pool.workers.contains(&worker_pubkey(2)));
 		// Check the computing is stopped
@@ -1052,14 +821,8 @@ fn test_force_unbind() {
 fn test_stop_computing() {
 	new_test_ext().execute_with(|| {
 		mock_asset_id();
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			500 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 500 * DOLLARS));
 		set_block_1();
 		assert_ok!(IndraStakePoolv2::create(RuntimeOrigin::signed(1)));
 		// Cannot start computing without a bound worker
@@ -1069,17 +832,8 @@ fn test_stop_computing() {
 		);
 		// Basic setup
 		setup_workers(2);
-		assert_ok!(IndraStakePoolv2::add_worker(
-			RuntimeOrigin::signed(1),
-			0,
-			worker_pubkey(1)
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(1),
-			0,
-			100 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::add_worker(RuntimeOrigin::signed(1), 0, worker_pubkey(1)));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(1), 0, 100 * DOLLARS, None));
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
 		let balance = get_balance(pool.basepool.pool_account_id);
 		let lock = get_balance(pool.lock_account);
@@ -1094,11 +848,9 @@ fn test_stop_computing() {
 		let balance = get_balance(pool.basepool.pool_account_id);
 		let lock = get_balance(pool.lock_account);
 		assert_eq!((balance, lock), (0, 100 * DOLLARS));
-		assert_ok!(IndraStakePoolv2::stop_computing(
-			RuntimeOrigin::signed(1),
-			0,
-			worker_pubkey(1),
-		));
+		assert_ok!(
+			IndraStakePoolv2::stop_computing(RuntimeOrigin::signed(1), 0, worker_pubkey(1),)
+		);
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
 		let balance = get_balance(pool.basepool.pool_account_id);
 		let lock = get_balance(pool.lock_account);
@@ -1111,40 +863,23 @@ fn test_stop_computing() {
 fn test_reclaim() {
 	new_test_ext().execute_with(|| {
 		mock_asset_id();
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			500 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 500 * DOLLARS));
 		set_block_1();
 		assert_ok!(IndraStakePoolv2::create(RuntimeOrigin::signed(1)));
 		// Basic setup
 		setup_workers(2);
-		assert_ok!(IndraStakePoolv2::add_worker(
-			RuntimeOrigin::signed(1),
-			0,
-			worker_pubkey(1)
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(1),
-			0,
-			100 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::add_worker(RuntimeOrigin::signed(1), 0, worker_pubkey(1)));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(1), 0, 100 * DOLLARS, None));
 		assert_ok!(IndraStakePoolv2::start_computing(
 			RuntimeOrigin::signed(1),
 			0,
 			worker_pubkey(1),
 			100 * DOLLARS,
 		));
-		assert_ok!(IndraStakePoolv2::stop_computing(
-			RuntimeOrigin::signed(1),
-			0,
-			worker_pubkey(1),
-		));
+		assert_ok!(
+			IndraStakePoolv2::stop_computing(RuntimeOrigin::signed(1), 0, worker_pubkey(1),)
+		);
 		elapse_cool_down();
 		assert_ok!(IndraStakePoolv2::reclaim_pool_worker(
 			RuntimeOrigin::signed(1),
@@ -1162,23 +897,12 @@ fn test_reclaim() {
 fn restart_computing_should_work() {
 	new_test_ext().execute_with(|| {
 		mock_asset_id();
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			500 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 500 * DOLLARS));
 		set_block_1();
 		setup_workers(1);
 		setup_stake_pool_with_workers(1, &[1]); // pid=0
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(2),
-			0,
-			200 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(2), 0, 200 * DOLLARS, None));
 		assert_ok!(IndraStakePoolv2::start_computing(
 			RuntimeOrigin::signed(1),
 			0,
@@ -1222,14 +946,8 @@ fn restart_computing_should_work() {
 fn test_for_cdworkers() {
 	new_test_ext().execute_with(|| {
 		mock_asset_id();
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			500 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 500 * DOLLARS));
 		set_block_1();
 		assert_ok!(IndraStakePoolv2::create(RuntimeOrigin::signed(1)));
 		// Cannot start computing without a bound worker
@@ -1239,17 +957,8 @@ fn test_for_cdworkers() {
 		);
 		// Basic setup
 		setup_workers(2);
-		assert_ok!(IndraStakePoolv2::add_worker(
-			RuntimeOrigin::signed(1),
-			0,
-			worker_pubkey(1)
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(1),
-			0,
-			100 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::add_worker(RuntimeOrigin::signed(1), 0, worker_pubkey(1)));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(1), 0, 100 * DOLLARS, None));
 		assert_ok!(IndraStakePoolv2::start_computing(
 			RuntimeOrigin::signed(1),
 			0,
@@ -1262,22 +971,16 @@ fn test_for_cdworkers() {
 		);
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
 		assert_eq!(pool.cd_workers, []);
-		assert_ok!(IndraStakePoolv2::stop_computing(
-			RuntimeOrigin::signed(1),
-			0,
-			worker_pubkey(1),
-		));
+		assert_ok!(
+			IndraStakePoolv2::stop_computing(RuntimeOrigin::signed(1), 0, worker_pubkey(1),)
+		);
 		elapse_cool_down();
 		assert_ok!(IndraStakePoolv2::reclaim_pool_worker(
 			RuntimeOrigin::signed(1),
 			0,
 			worker_pubkey(1),
 		));
-		assert_ok!(IndraStakePoolv2::remove_worker(
-			RuntimeOrigin::signed(1),
-			0,
-			worker_pubkey(1),
-		));
+		assert_ok!(IndraStakePoolv2::remove_worker(RuntimeOrigin::signed(1), 0, worker_pubkey(1),));
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
 		assert_eq!(pool.cd_workers, []);
 	});
@@ -1288,18 +991,9 @@ fn test_on_reward_for_vault() {
 	use crate::computation::pallet::OnReward;
 	new_test_ext().execute_with(|| {
 		mock_asset_id();
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(3),
-			500 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(3), 500 * DOLLARS));
 		set_block_1();
 		setup_workers(1);
 		setup_vault(3); // pid = 0
@@ -1309,11 +1003,7 @@ fn test_on_reward_for_vault() {
 			1,
 			Some(Permill::from_percent(50))
 		));
-		assert_ok!(IndraVault::contribute(
-			RuntimeOrigin::signed(3),
-			0,
-			100 * DOLLARS
-		));
+		assert_ok!(IndraVault::contribute(RuntimeOrigin::signed(3), 0, 100 * DOLLARS));
 		assert_ok!(IndraStakePoolv2::contribute(
 			RuntimeOrigin::signed(3),
 			1,
@@ -1321,12 +1011,7 @@ fn test_on_reward_for_vault() {
 			Some(0)
 		));
 		// Staker2 contribute 1000 PHA and start computing
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(2),
-			1,
-			50 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(2), 1, 50 * DOLLARS, None));
 		assert_ok!(IndraStakePoolv2::start_computing(
 			RuntimeOrigin::signed(1),
 			1,
@@ -1346,10 +1031,7 @@ fn test_on_reward_for_vault() {
 		assert_eq!(pool.basepool.total_shares, 100 * DOLLARS);
 		let vault_info = ensure_vault::<Test>(0).unwrap();
 		assert_eq!(vault_info.basepool.total_value, 125 * DOLLARS);
-		assert_eq!(
-			get_balance(vault_info.basepool.pool_account_id),
-			50 * DOLLARS
-		);
+		assert_eq!(get_balance(vault_info.basepool.pool_account_id), 50 * DOLLARS);
 		assert_eq!(vault_info.basepool.total_shares, 100 * DOLLARS);
 		let free = Balances::free_balance(
 			&<Test as wrapped_balances::Config>::WrappedBalancesAccountId::get(),
@@ -1363,14 +1045,8 @@ fn test_claim_owner_rewards() {
 	use crate::computation::pallet::OnReward;
 	new_test_ext().execute_with(|| {
 		mock_asset_id();
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			500 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 500 * DOLLARS));
 		set_block_1();
 		setup_workers(1);
 		setup_stake_pool_with_workers(1, &[1]); // pid = 0
@@ -1379,18 +1055,8 @@ fn test_claim_owner_rewards() {
 			0,
 			Some(Permill::from_percent(50))
 		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(1),
-			0,
-			100 * DOLLARS,
-			None
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(2),
-			0,
-			400 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(1), 0, 100 * DOLLARS, None));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(2), 0, 400 * DOLLARS, None));
 		IndraStakePoolv2::on_reward(&[SettleInfo {
 			pubkey: worker_pubkey(1),
 			v: FixedPoint::from_num(1u32).to_bits(),
@@ -1399,11 +1065,7 @@ fn test_claim_owner_rewards() {
 		}]);
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
 		assert_eq!(get_balance(pool.owner_reward_account), 500 * DOLLARS);
-		assert_ok!(IndraStakePoolv2::claim_owner_rewards(
-			RuntimeOrigin::signed(1),
-			0,
-			1
-		));
+		assert_ok!(IndraStakePoolv2::claim_owner_rewards(RuntimeOrigin::signed(1), 0, 1));
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
 		assert_eq!(get_balance(pool.owner_reward_account), 0);
 		assert_eq!(get_balance(1), 900 * DOLLARS);
@@ -1415,18 +1077,9 @@ fn test_vault_owner_shares() {
 	use crate::computation::pallet::OnReward;
 	new_test_ext().execute_with(|| {
 		mock_asset_id();
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(3),
-			500 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(3), 500 * DOLLARS));
 		set_block_1();
 		setup_workers(1);
 		setup_vault(3); // pid = 0
@@ -1436,11 +1089,7 @@ fn test_vault_owner_shares() {
 			Some(Permill::from_percent(50))
 		));
 		setup_stake_pool_with_workers(1, &[1]);
-		assert_ok!(IndraVault::contribute(
-			RuntimeOrigin::signed(3),
-			0,
-			100 * DOLLARS
-		));
+		assert_ok!(IndraVault::contribute(RuntimeOrigin::signed(3), 0, 100 * DOLLARS));
 		assert_ok!(IndraStakePoolv2::contribute(
 			RuntimeOrigin::signed(3),
 			1,
@@ -1449,18 +1098,10 @@ fn test_vault_owner_shares() {
 		));
 		let vault_info = ensure_vault::<Test>(0).unwrap();
 		assert_eq!(vault_info.commission.unwrap(), Permill::from_percent(50));
-		assert_ok!(IndraVault::maybe_gain_owner_shares(
-			RuntimeOrigin::signed(3),
-			0
-		));
+		assert_ok!(IndraVault::maybe_gain_owner_shares(RuntimeOrigin::signed(3), 0));
 		let vault_info = ensure_vault::<Test>(0).unwrap();
 		assert_eq!(vault_info.owner_shares, 0);
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(2),
-			1,
-			50 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(2), 1, 50 * DOLLARS, None));
 		assert_ok!(IndraStakePoolv2::start_computing(
 			RuntimeOrigin::signed(1),
 			1,
@@ -1478,15 +1119,9 @@ fn test_vault_owner_shares() {
 		assert_eq!(pool.basepool.total_value, 200 * DOLLARS);
 		let vault_info = ensure_vault::<Test>(0).unwrap();
 		assert_eq!(vault_info.basepool.total_value, 150 * DOLLARS);
-		assert_eq!(
-			get_balance(vault_info.basepool.pool_account_id),
-			50 * DOLLARS
-		);
+		assert_eq!(get_balance(vault_info.basepool.pool_account_id), 50 * DOLLARS);
 		assert_eq!(vault_info.basepool.total_shares, 100 * DOLLARS);
-		assert_ok!(IndraVault::maybe_gain_owner_shares(
-			RuntimeOrigin::signed(3),
-			0
-		));
+		assert_ok!(IndraVault::maybe_gain_owner_shares(RuntimeOrigin::signed(3), 0));
 		let vault_info = ensure_vault::<Test>(0).unwrap();
 		assert_eq!(vault_info.owner_shares, 20 * DOLLARS);
 		assert_eq!(vault_info.basepool.total_shares, 120 * DOLLARS);
@@ -1494,12 +1129,7 @@ fn test_vault_owner_shares() {
 			IndraVault::claim_owner_shares(RuntimeOrigin::signed(3), 0, 4, 50 * DOLLARS),
 			vault::Error::<Test>::NoEnoughShareToClaim
 		);
-		assert_ok!(IndraVault::claim_owner_shares(
-			RuntimeOrigin::signed(3),
-			0,
-			4,
-			10 * DOLLARS
-		));
+		assert_ok!(IndraVault::claim_owner_shares(RuntimeOrigin::signed(3), 0, 4, 10 * DOLLARS));
 		let vault_info = ensure_vault::<Test>(0).unwrap();
 		assert_eq!(vault_info.owner_shares, 10 * DOLLARS);
 		let mut nftid_arr: Vec<NftId> =
@@ -1523,43 +1153,16 @@ fn test_vault_owner_shares() {
 fn test_withdraw() {
 	new_test_ext().execute_with(|| {
 		mock_asset_id();
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(3),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(99),
-			5000 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(3), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(99), 5000 * DOLLARS));
 		set_block_1();
 		setup_workers(2);
 		setup_stake_pool_with_workers(1, &[1, 2]); // pid = 0
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(2),
-			0,
-			300 * DOLLARS,
-			None
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(1),
-			0,
-			300 * DOLLARS,
-			None
-		));
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(3),
-			0,
-			300 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(2), 0, 300 * DOLLARS, None));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(1), 0, 300 * DOLLARS, None));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(3), 0, 300 * DOLLARS, None));
 		assert_ok!(IndraStakePoolv2::start_computing(
 			RuntimeOrigin::signed(1),
 			0,
@@ -1572,19 +1175,9 @@ fn test_withdraw() {
 			worker_pubkey(2),
 			300 * DOLLARS
 		));
-		assert_ok!(IndraStakePoolv2::withdraw(
-			RuntimeOrigin::signed(2),
-			0,
-			300 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::withdraw(RuntimeOrigin::signed(2), 0, 300 * DOLLARS, None));
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
-		let item = pool
-			.basepool
-			.withdraw_queue
-			.clone()
-			.into_iter()
-			.find(|x| x.user == 2);
+		let item = pool.basepool.withdraw_queue.clone().into_iter().find(|x| x.user == 2);
 		{
 			let nft_attr =
 				IndraBasePool::get_nft_attr_guard(pool.basepool.cid, item.unwrap().nft_id)
@@ -1608,12 +1201,7 @@ fn test_withdraw() {
 			assert_eq!(user_nft_attr.shares, 0);
 		}
 		assert_eq!(get_balance(2), 400 * DOLLARS);
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(99),
-			0,
-			300 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(99), 0, 300 * DOLLARS, None));
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
 		assert_eq!(pool.basepool.withdraw_queue.len(), 0);
 		assert_eq!(get_balance(2), 500 * DOLLARS);
@@ -1631,12 +1219,7 @@ fn test_withdraw() {
 				.clone();
 			assert_eq!(user_nft_attr.shares, 0);
 		}
-		assert_ok!(IndraStakePoolv2::withdraw(
-			RuntimeOrigin::signed(1),
-			0,
-			200 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::withdraw(RuntimeOrigin::signed(1), 0, 200 * DOLLARS, None));
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
 		assert_eq!(pool.basepool.withdraw_queue.len(), 0);
 		assert_eq!(get_balance(1), 400 * DOLLARS);
@@ -1655,34 +1238,17 @@ fn test_withdraw() {
 			assert_eq!(user_nft_attr.shares, 100 * DOLLARS);
 		}
 		let _pid = setup_vault(99);
-		assert_ok!(IndraVault::contribute(
-			RuntimeOrigin::signed(1),
-			1,
-			300 * DOLLARS,
-		));
-		assert_ok!(IndraVault::contribute(
-			RuntimeOrigin::signed(99),
-			1,
-			300 * DOLLARS,
-		));
+		assert_ok!(IndraVault::contribute(RuntimeOrigin::signed(1), 1, 300 * DOLLARS,));
+		assert_ok!(IndraVault::contribute(RuntimeOrigin::signed(99), 1, 300 * DOLLARS,));
 		assert_ok!(IndraStakePoolv2::contribute(
 			RuntimeOrigin::signed(99),
 			0,
 			500 * DOLLARS,
 			Some(1)
 		));
-		assert_ok!(IndraVault::withdraw(
-			RuntimeOrigin::signed(1),
-			1,
-			200 * DOLLARS,
-		));
+		assert_ok!(IndraVault::withdraw(RuntimeOrigin::signed(1), 1, 200 * DOLLARS,));
 		let pool = ensure_vault::<Test>(1).unwrap();
-		let item = pool
-			.basepool
-			.withdraw_queue
-			.clone()
-			.into_iter()
-			.find(|x| x.user == 1);
+		let item = pool.basepool.withdraw_queue.clone().into_iter().find(|x| x.user == 1);
 		{
 			let nft_attr =
 				IndraBasePool::get_nft_attr_guard(pool.basepool.cid, item.unwrap().nft_id)
@@ -1706,12 +1272,7 @@ fn test_withdraw() {
 			assert_eq!(user_nft_attr.shares, 100 * DOLLARS);
 		}
 		assert_eq!(get_balance(1), 200 * DOLLARS);
-		assert_ok!(IndraStakePoolv2::withdraw(
-			RuntimeOrigin::signed(3),
-			0,
-			200 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::withdraw(RuntimeOrigin::signed(3), 0, 200 * DOLLARS, None));
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
 		assert_eq!(get_balance(pool.basepool.pool_account_id), 300 * DOLLARS);
 		assert_ok!(IndraStakePoolv2::withdraw(
@@ -1740,8 +1301,8 @@ fn test_withdraw() {
 			pallet_rmrk_core::Nfts::<Test>::iter_key_prefix(10000).collect();
 		nftid_arr.retain(|x| {
 			let nft = pallet_rmrk_core::Nfts::<Test>::get(10000, x).unwrap();
-			nft.owner
-				== rmrk_traits::AccountIdOrCollectionNftTuple::AccountId(
+			nft.owner ==
+				rmrk_traits::AccountIdOrCollectionNftTuple::AccountId(
 					vault.basepool.pool_account_id,
 				)
 		});
@@ -1769,11 +1330,7 @@ fn test_withdraw() {
 			assert_eq!(user_nft_attr.shares, 100 * DOLLARS);
 		}
 		let _pid = setup_vault(99);
-		assert_ok!(IndraVault::contribute(
-			RuntimeOrigin::signed(99),
-			2,
-			300000000100000,
-		));
+		assert_ok!(IndraVault::contribute(RuntimeOrigin::signed(99), 2, 300000000100000,));
 		assert_ok!(IndraVault::withdraw(RuntimeOrigin::signed(99), 2, 100000,));
 		assert_ok!(IndraStakePoolv2::contribute(
 			RuntimeOrigin::signed(99),
@@ -1781,11 +1338,7 @@ fn test_withdraw() {
 			299990000000000,
 			Some(2)
 		));
-		assert_ok!(IndraVault::withdraw(
-			RuntimeOrigin::signed(99),
-			2,
-			300 * DOLLARS,
-		));
+		assert_ok!(IndraVault::withdraw(RuntimeOrigin::signed(99), 2, 300 * DOLLARS,));
 		let pool = ensure_vault::<Test>(1).unwrap();
 		assert_ok!(IndraVault::check_and_maybe_force_withdraw(
 			RuntimeOrigin::signed(4),
@@ -1798,31 +1351,14 @@ fn test_withdraw() {
 fn test_check_and_maybe_force_withdraw() {
 	new_test_ext().execute_with(|| {
 		mock_asset_id();
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(1),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(2),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(3),
-			500 * DOLLARS
-		));
-		assert_ok!(IndraWrappedBalances::wrap(
-			RuntimeOrigin::signed(99),
-			500 * DOLLARS
-		));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(1), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(2), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(3), 500 * DOLLARS));
+		assert_ok!(IndraWrappedBalances::wrap(RuntimeOrigin::signed(99), 500 * DOLLARS));
 		set_block_1();
 		setup_workers(2);
 		setup_stake_pool_with_workers(1, &[1, 2]); // pid = 0
-		assert_ok!(IndraStakePoolv2::contribute(
-			RuntimeOrigin::signed(2),
-			0,
-			300 * DOLLARS,
-			None
-		));
+		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(2), 0, 300 * DOLLARS, None));
 		assert_ok!(IndraStakePoolv2::start_computing(
 			RuntimeOrigin::signed(1),
 			0,
@@ -1835,17 +1371,10 @@ fn test_check_and_maybe_force_withdraw() {
 			worker_pubkey(2),
 			100 * DOLLARS
 		));
-		assert_ok!(IndraStakePoolv2::withdraw(
-			RuntimeOrigin::signed(2),
-			0,
-			300 * DOLLARS,
-			None
-		));
-		assert_ok!(IndraStakePoolv2::stop_computing(
-			RuntimeOrigin::signed(1),
-			0,
-			worker_pubkey(1),
-		));
+		assert_ok!(IndraStakePoolv2::withdraw(RuntimeOrigin::signed(2), 0, 300 * DOLLARS, None));
+		assert_ok!(
+			IndraStakePoolv2::stop_computing(RuntimeOrigin::signed(1), 0, worker_pubkey(1),)
+		);
 		elapse_seconds(864000);
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
 		assert_eq!(get_balance(pool.basepool.pool_account_id), 0);
@@ -1858,12 +1387,7 @@ fn test_check_and_maybe_force_withdraw() {
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
 		assert_eq!(get_balance(pool.basepool.pool_account_id), 0);
 		assert_eq!(pool.cd_workers, []);
-		let item = pool
-			.basepool
-			.withdraw_queue
-			.clone()
-			.into_iter()
-			.find(|x| x.user == 2);
+		let item = pool.basepool.withdraw_queue.clone().into_iter().find(|x| x.user == 2);
 		{
 			let nft_attr =
 				IndraBasePool::get_nft_attr_guard(pool.basepool.cid, item.unwrap().nft_id)
@@ -1887,10 +1411,7 @@ fn test_check_and_maybe_force_withdraw() {
 			assert_eq!(user_nft_attr.shares, 0);
 		}
 		assert_eq!(get_balance(2), 400 * DOLLARS);
-		assert_ok!(IndraStakePoolv2::check_and_maybe_force_withdraw(
-			RuntimeOrigin::signed(3),
-			0
-		));
+		assert_ok!(IndraStakePoolv2::check_and_maybe_force_withdraw(RuntimeOrigin::signed(3), 0));
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
 		assert_eq!(pool.cd_workers, [worker_pubkey(2)]);
 		elapse_seconds(864000);
@@ -1901,11 +1422,7 @@ fn test_check_and_maybe_force_withdraw() {
 		));
 		let pid = setup_vault(99);
 
-		assert_ok!(IndraVault::contribute(
-			RuntimeOrigin::signed(3),
-			1,
-			400 * DOLLARS,
-		));
+		assert_ok!(IndraVault::contribute(RuntimeOrigin::signed(3), 1, 400 * DOLLARS,));
 		assert_ok!(IndraStakePoolv2::contribute(
 			RuntimeOrigin::signed(99),
 			0,
@@ -1924,29 +1441,17 @@ fn test_check_and_maybe_force_withdraw() {
 			worker_pubkey(2),
 			100 * DOLLARS
 		));
-		assert_ok!(IndraVault::withdraw(
-			RuntimeOrigin::signed(3),
-			1,
-			400 * DOLLARS,
-		));
+		assert_ok!(IndraVault::withdraw(RuntimeOrigin::signed(3), 1, 400 * DOLLARS,));
 		assert_ok!(IndraStakePoolv2::withdraw(
 			RuntimeOrigin::signed(99),
 			0,
 			100 * DOLLARS,
 			Some(pid)
 		));
-		assert_ok!(IndraVault::check_and_maybe_force_withdraw(
-			RuntimeOrigin::signed(4),
-			pid
-		));
+		assert_ok!(IndraVault::check_and_maybe_force_withdraw(RuntimeOrigin::signed(4), pid));
 		let vault = ensure_vault::<Test>(1).unwrap();
 		assert_eq!(get_balance(vault.basepool.pool_account_id), 0);
-		let item = vault
-			.basepool
-			.withdraw_queue
-			.clone()
-			.into_iter()
-			.find(|x| x.user == 3);
+		let item = vault.basepool.withdraw_queue.clone().into_iter().find(|x| x.user == 3);
 		{
 			let nft_attr =
 				IndraBasePool::get_nft_attr_guard(vault.basepool.cid, item.unwrap().nft_id)
@@ -1956,10 +1461,7 @@ fn test_check_and_maybe_force_withdraw() {
 			assert_eq!(nft_attr.shares, 200 * DOLLARS);
 		}
 		elapse_seconds(864000);
-		assert_ok!(IndraVault::check_and_maybe_force_withdraw(
-			RuntimeOrigin::signed(4),
-			pid
-		));
+		assert_ok!(IndraVault::check_and_maybe_force_withdraw(RuntimeOrigin::signed(4), pid));
 		let pool = ensure_stake_pool::<Test>(0).unwrap();
 		let item = pool
 			.basepool
@@ -1979,15 +1481,8 @@ fn test_check_and_maybe_force_withdraw() {
 			IndraStakePoolv2::withdraw(RuntimeOrigin::signed(99), 0, 100 * DOLLARS, Some(pid)),
 			stake_pool_v2::Error::<Test>::VaultIsLocked,
 		);
-		assert_ok!(IndraVault::contribute(
-			RuntimeOrigin::signed(99),
-			1,
-			400 * DOLLARS,
-		));
-		assert_ok!(IndraVault::check_and_maybe_force_withdraw(
-			RuntimeOrigin::signed(4),
-			pid
-		));
+		assert_ok!(IndraVault::contribute(RuntimeOrigin::signed(99), 1, 400 * DOLLARS,));
+		assert_ok!(IndraVault::check_and_maybe_force_withdraw(RuntimeOrigin::signed(4), pid));
 		assert_ok!(IndraStakePoolv2::withdraw(
 			RuntimeOrigin::signed(99),
 			0,
@@ -2034,11 +1529,7 @@ fn setup_vault(owner: u64) -> u64 {
 }
 
 fn set_balance_proposal(value: u128) -> BoundedCallOf<Test> {
-	let inner = pallet_balances::Call::set_balance {
-		who: 42,
-		new_free: value,
-		new_reserved: 0,
-	};
+	let inner = pallet_balances::Call::set_balance { who: 42, new_free: value, new_reserved: 0 };
 	let outer = RuntimeCall::Balances(inner);
 	Preimage::bound(outer).unwrap()
 }

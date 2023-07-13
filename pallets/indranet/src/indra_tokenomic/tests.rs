@@ -2,8 +2,7 @@ use super::*;
 use frame_support::{assert_err, assert_ok};
 use mock::{RuntimeOrigin as Origin, Test, DOLLARS};
 
-use sp_core::crypto::AccountId32;
-use sp_core::H256;
+use sp_core::{crypto::AccountId32, H256};
 
 const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
 const BOB: AccountId32 = AccountId32::new([2u8; 32]);
@@ -50,13 +49,13 @@ fn should_be_happy_to_stake() {
 		assert_eq!(stake_of_contract(), 3 * DOLLARS);
 		assert_eq!(balance_of_user(&BOB), 98 * DOLLARS);
 
-		// assert_ok!(stake!(BOB, 0));
-		// assert_ok!(stake!(ALICE, 0));
-		// assert_eq!(stake_of_user(&ALICE), 0);
-		// assert_eq!(stake_of_user(&BOB), 0);
-		// assert_eq!(stake_of_contract(), 0);
-		// assert_eq!(balance_of_user(&ALICE), 100 * DOLLARS);
-		// assert_eq!(balance_of_user(&BOB), 100 * DOLLARS);
+		assert_ok!(stake!(BOB, 0));
+		assert_ok!(stake!(ALICE, 0));
+		assert_eq!(stake_of_user(&ALICE), 0);
+		assert_eq!(stake_of_user(&BOB), 0);
+		assert_eq!(stake_of_contract(), 0);
+		assert_eq!(balance_of_user(&ALICE), 100 * DOLLARS);
+		assert_eq!(balance_of_user(&BOB), 100 * DOLLARS);
 
 		// let events = mock::take_events();
 		// insta::assert_debug_snapshot!(events);
@@ -67,10 +66,7 @@ fn should_be_happy_to_stake() {
 fn can_not_stake_less_than_minstake() {
 	mock::new_test_ext().execute_with(|| {
 		prapare();
-		assert_err!(
-			stake!(ALICE, DOLLARS - 1),
-			Error::<Test>::InvalidAmountOfStake
-		);
+		assert_err!(stake!(ALICE, DOLLARS - 1), Error::<Test>::InvalidAmountOfStake);
 	});
 }
 
@@ -87,10 +83,10 @@ fn can_restake_without_any_changes() {
 		// let events = mock::take_events();
 		// insta::assert_debug_snapshot!(events);
 
-		// assert_ok!(stake!(ALICE, DOLLARS));
-		// assert_eq!(stake_of_user(&ALICE), DOLLARS);
-		// assert_eq!(stake_of_contract(), DOLLARS);
-		// assert_eq!(balance_of_user(&ALICE), 99 * DOLLARS);
+		assert_ok!(stake!(ALICE, DOLLARS));
+		assert_eq!(stake_of_user(&ALICE), DOLLARS);
+		assert_eq!(stake_of_contract(), DOLLARS);
+		assert_eq!(balance_of_user(&ALICE), 99 * DOLLARS);
 
 		// let events = mock::take_events();
 		// insta::assert_debug_snapshot!(events);

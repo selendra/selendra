@@ -62,9 +62,7 @@ pub mod constants;
 mod origin;
 
 use config::consensus::{SelendraId, SessionPeriod};
-use constants::{
-	currency::*, fee::WeightToFee, time::*,
-};
+use constants::{currency::*, fee::WeightToFee, time::*};
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]

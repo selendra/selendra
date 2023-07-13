@@ -12,10 +12,12 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 
-	use indranet_types::contract::{command_topic, InkCommand};
-	use indranet_types::messaging::ContractId;
-	use indranet_types::messaging::{
-		BindTopic, CommandPayload, ContractCommand, Message, MessageOrigin, Path, SignedMessage,
+	use indranet_types::{
+		contract::{command_topic, InkCommand},
+		messaging::{
+			BindTopic, CommandPayload, ContractCommand, ContractId, Message, MessageOrigin, Path,
+			SignedMessage,
+		},
 	};
 	use primitive_types::H256;
 	use sp_std::vec::Vec;
@@ -74,17 +76,11 @@ pub mod pallet {
 			ensure!(sender.is_offchain(), Error::<T>::BadSender);
 
 			// Check destination
-			ensure!(
-				signed_message.message.destination.is_valid(),
-				Error::<T>::BadDestination
-			);
+			ensure!(signed_message.message.destination.is_valid(), Error::<T>::BadDestination);
 
 			// Check ingress sequence
 			let expected_seq = OffchainIngress::<T>::get(sender).unwrap_or(0);
-			ensure!(
-				signed_message.sequence == expected_seq,
-				Error::<T>::BadSequence
-			);
+			ensure!(signed_message.sequence == expected_seq, Error::<T>::BadSequence);
 			// Validate signature
 			crate::registry::Pallet::<T>::check_message(&signed_message)?;
 			// Update ingress

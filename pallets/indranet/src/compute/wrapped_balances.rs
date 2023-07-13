@@ -2,18 +2,19 @@ pub use self::pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::balance_convert::{mul as bmul, FixedPointConvert};
-	use crate::base_pool;
-	use crate::computation;
-	use crate::pool_proxy::PoolProxy;
-	use crate::registry;
-	use crate::vault;
-	use crate::{BalanceOf, NegativeImbalanceOf, IndranetConfig};
+	use crate::{
+		balance_convert::{mul as bmul, FixedPointConvert},
+		base_pool, computation,
+		pool_proxy::PoolProxy,
+		registry, vault, BalanceOf, IndranetConfig, NegativeImbalanceOf,
+	};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
-			tokens::fungibles::{Inspect, Mutate},
-			tokens::nonfungibles::InspectEnumerable,
+			tokens::{
+				fungibles::{Inspect, Mutate},
+				nonfungibles::InspectEnumerable,
+			},
 			Currency,
 			ExistenceRequirement::{AllowDeath, KeepAlive},
 			OnUnbalanced, StorageVersion,
@@ -151,7 +152,7 @@ pub mod pallet {
 			if base_pool::pallet::PoolCollections::<T>::get(collection_id).is_some() {
 				// Forbid any delegation transfer before delegation nft transfer and sell is fully prepared.
 				// TODO(mingxuan): reopen pre_check function.
-				return false;
+				return false
 			}
 
 			true
@@ -201,10 +202,7 @@ pub mod pallet {
 			if !StakerAccounts::<T>::contains_key(&user) {
 				StakerAccounts::<T>::insert(
 					&user,
-					FinanceAccount::<BalanceOf<T>> {
-						invest_pools: vec![],
-						locked: Zero::zero(),
-					},
+					FinanceAccount::<BalanceOf<T>> { invest_pools: vec![], locked: Zero::zero() },
 				);
 			}
 			Self::deposit_event(Event::<T>::Wrapped { user, amount });
@@ -247,10 +245,7 @@ pub mod pallet {
 			let free_stakes: BalanceOf<T> = <pallet_assets::pallet::Pallet<T> as Inspect<
 				T::AccountId,
 			>>::balance(T::WPhaAssetId::get(), &user);
-			ensure!(
-				amount <= free_stakes,
-				Error::<T>::UnwrapAmountExceedsAvaliableStake
-			);
+			ensure!(amount <= free_stakes, Error::<T>::UnwrapAmountExceedsAvaliableStake);
 			let active_stakes = Self::get_net_value(user.clone())?;
 			let locked =
 				StakerAccounts::<T>::get(&user).map_or(Zero::zero(), |status| status.locked);
@@ -284,7 +279,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let user = ensure_signed(origin.clone())?;
 			if !Self::is_ongoing(vote_id) {
-				return Err(Error::<T>::ReferendumInvalid.into());
+				return Err(Error::<T>::ReferendumInvalid.into())
 			}
 
 			let active_stakes = Self::get_net_value(user.clone())?;
@@ -301,12 +296,7 @@ pub mod pallet {
 				account_vote,
 			)?;
 			Self::update_user_locked(user.clone())?;
-			Self::deposit_event(Event::<T>::Voted {
-				user,
-				vote_id,
-				aye_amount,
-				nay_amount,
-			});
+			Self::deposit_event(Event::<T>::Voted { user, vote_id, aye_amount, nay_amount });
 			Ok(())
 		}
 
@@ -323,7 +313,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure_signed(origin)?;
 			if Self::is_ongoing(vote_id) {
-				return Err(Error::<T>::ReferendumOngoing.into());
+				return Err(Error::<T>::ReferendumOngoing.into())
 			}
 			ensure!(
 				max_iterations > 0 && max_iterations <= MAX_ITERRATIONS,
@@ -336,7 +326,7 @@ pub mod pallet {
 				Self::update_user_locked(user.clone()).expect("useraccount should exist: qed.");
 				i += 1;
 				if i >= max_iterations {
-					break;
+					break
 				}
 			}
 
@@ -465,10 +455,7 @@ pub mod pallet {
 				total_nay_amount += nay_amount;
 			});
 
-			AccountVote::<BalanceOf<T>>::Split {
-				aye: total_aye_amount,
-				nay: total_nay_amount,
-			}
+			AccountVote::<BalanceOf<T>>::Split { aye: total_aye_amount, nay: total_nay_amount }
 		}
 
 		/// Tries to update locked W-PHA amount of the user

@@ -11,11 +11,7 @@ use sp_std::{
 
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq, Eq)]
 pub enum Attestation {
-	SgxIas {
-		ra_report: Vec<u8>,
-		signature: Vec<u8>,
-		raw_signing_cert: Vec<u8>,
-	},
+	SgxIas { ra_report: Vec<u8>, signature: Vec<u8>, raw_signing_cert: Vec<u8> },
 }
 
 pub trait AttestationValidator {
@@ -57,18 +53,14 @@ impl IasFields {
 		let report_data = &quote_body[368..432];
 
 		// Extract report time
-		let raw_report_timestamp = parsed_report["timestamp"]
-			.as_str()
-			.unwrap_or("UNKNOWN")
-			.to_owned() + "Z";
+		let raw_report_timestamp =
+			parsed_report["timestamp"].as_str().unwrap_or("UNKNOWN").to_owned() + "Z";
 		let report_timestamp = chrono::DateTime::parse_from_rfc3339(&raw_report_timestamp)
 			.or(Err(Error::BadIASReport))?
 			.timestamp();
 
 		// Filter valid `isvEnclaveQuoteStatus`
-		let quote_status = &parsed_report["isvEnclaveQuoteStatus"]
-			.as_str()
-			.unwrap_or("UNKNOWN");
+		let quote_status = &parsed_report["isvEnclaveQuoteStatus"].as_str().unwrap_or("UNKNOWN");
 		let mut confidence_level: u8 = 128;
 		if IAS_QUOTE_STATUS_LEVEL_1.contains(quote_status) {
 			confidence_level = 1;
@@ -80,7 +72,7 @@ impl IasFields {
 			confidence_level = 5;
 		}
 		if confidence_level == 128 {
-			return Err(Error::InvalidQuoteStatus);
+			return Err(Error::InvalidQuoteStatus)
 		}
 		// CL 1 means there is no known issue of the CPU
 		// CL 2 means the worker's firmware up to date, and the worker has well configured to prevent known issues
@@ -133,11 +125,7 @@ impl AttestationValidator for IasValidator {
 		pruntime_allowlist: Vec<Vec<u8>>,
 	) -> Result<IasFields, Error> {
 		let fields = match attestation {
-			Attestation::SgxIas {
-				ra_report,
-				signature,
-				raw_signing_cert,
-			} => validate_ias_report(
+			Attestation::SgxIas { ra_report, signature, raw_signing_cert } => validate_ias_report(
 				ra_report,
 				signature,
 				raw_signing_cert,
@@ -186,13 +174,13 @@ pub fn validate_ias_report(
 	if verify_pruntime {
 		let t_mrenclave = ias_fields.extend_mrenclave();
 		if !pruntime_allowlist.contains(&t_mrenclave) {
-			return Err(Error::PRuntimeRejected);
+			return Err(Error::PRuntimeRejected)
 		}
 	}
 
 	// Validate time
 	if (now as i64 - report_timestamp) >= 7200 {
-		return Err(Error::OutdatedIASReport);
+		return Err(Error::OutdatedIASReport)
 	}
 
 	Ok(ias_fields)

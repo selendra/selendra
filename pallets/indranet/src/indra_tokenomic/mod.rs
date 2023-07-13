@@ -12,8 +12,7 @@ pub mod pallet {
 		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use indranet_types::messaging::ContractClusterId;
-	use indranet_types::messaging::ContractId;
+	use indranet_types::messaging::{ContractClusterId, ContractId};
 	use sp_runtime::traits::{AccountIdConversion, Zero};
 
 	type BalanceOf<T> =
@@ -120,7 +119,8 @@ pub mod pallet {
 			ContractUserStakes::<T>::insert(&user, contract, amount);
 			ContractTotalStakes::<T>::insert(contract, total);
 
-			let cluster = crate::indra::Pallet::<T>::get_contract_info(&contract).map(|x| x.cluster);
+			let cluster =
+				crate::indra::Pallet::<T>::get_contract_info(&contract).map(|x| x.cluster);
 
 			Self::deposit_event(Event::ContractDepositChanged {
 				cluster,

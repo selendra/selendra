@@ -429,9 +429,7 @@ impl AttestationValidator for MockValidator {
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
+	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	// Inject genesis storage
 	let zero_pubkey = sp_core::sr25519::Public::from_raw([0u8; 32]);
 	let zero_ecdh_pubkey = Vec::from(&[0u8; 32][..]);
@@ -465,10 +463,7 @@ pub fn set_block_1() {
 }
 
 pub fn take_events() -> Vec<RuntimeEvent> {
-	let evt = System::events()
-		.into_iter()
-		.map(|evt| evt.event)
-		.collect::<Vec<_>>();
+	let evt = System::events().into_iter().map(|evt| evt.event).collect::<Vec<_>>();
 	println!("event(): {evt:?}");
 	System::reset_events();
 	evt
@@ -499,10 +494,7 @@ pub fn ecdh_pubkey(i: u8) -> EcdhPublicKey {
 pub fn setup_relaychain_genesis_allowlist() {
 	use frame_support::assert_ok;
 	let sample: H256 = H256::repeat_byte(1);
-	assert_ok!(IndraRegistry::add_relaychain_genesis_block_hash(
-		RuntimeOrigin::root(),
-		sample
-	));
+	assert_ok!(IndraRegistry::add_relaychain_genesis_block_hash(RuntimeOrigin::root(), sample));
 }
 
 /// Sets up `n` workers starting from 1, registered and benchmarked. All owned by account1.
