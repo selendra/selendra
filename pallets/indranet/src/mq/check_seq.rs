@@ -24,7 +24,7 @@ use sp_std::vec::Vec;
 pub struct CheckMqSequence<T>(PhantomData<T>);
 
 pub fn tag(sender: &MessageOrigin, seq: u64) -> Vec<u8> {
-	("IndranetMqOffchainMessages", sender, seq).encode()
+	("IndraMqOffchainMessages", sender, seq).encode()
 }
 
 impl<T> Default for CheckMqSequence<T> {
@@ -171,7 +171,7 @@ mod tests {
 	}
 
 	fn sync_msg_call(i: u8, seq: u64) -> TestCall {
-		TestCall::IndranetMq(Call::<Test>::sync_offchain_message {
+		TestCall::IndraMq(Call::<Test>::sync_offchain_message {
 			signed_message: SignedMessage {
 				message: Message::new(
 					MessageOrigin::Worker(worker_pubkey(i)),

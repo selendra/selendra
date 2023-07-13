@@ -1215,7 +1215,7 @@ pub mod pallet {
 			setup_relaychain_genesis_allowlist, worker_pubkey, RuntimeOrigin as Origin, Test,
 		};
 		// Pallets
-		use crate::mock::IndranetRegistry;
+		use crate::mock::IndraRegistry;
 
 		#[test]
 		fn test_register_worker() {
@@ -1225,7 +1225,7 @@ pub mod pallet {
 
 				// New registration without valid genesis_block_hash
 				assert_noop!(
-					IndranetRegistry::register_worker(
+					IndraRegistry::register_worker(
 						Origin::signed(1),
 						WorkerRegistrationInfo::<u64> {
 							version: 1,
@@ -1246,7 +1246,7 @@ pub mod pallet {
 				);
 
 				// New registration
-				assert_ok!(IndranetRegistry::register_worker(
+				assert_ok!(IndraRegistry::register_worker(
 					Origin::signed(1),
 					WorkerRegistrationInfo::<u64> {
 						version: 1,
@@ -1267,7 +1267,7 @@ pub mod pallet {
 				assert_eq!(worker.operator, Some(1));
 				// Refreshed validator
 				elapse_seconds(100);
-				assert_ok!(IndranetRegistry::register_worker(
+				assert_ok!(IndraRegistry::register_worker(
 					Origin::signed(1),
 					WorkerRegistrationInfo::<u64> {
 						version: 1,
@@ -1298,7 +1298,7 @@ pub mod pallet {
 
 				// New registration without valid genesis_block_hash
 				assert_noop!(
-					IndranetRegistry::register_worker_v2(
+					IndraRegistry::register_worker_v2(
 						Origin::signed(1),
 						WorkerRegistrationInfoV2::<u64> {
 							version: 1,
@@ -1318,7 +1318,7 @@ pub mod pallet {
 
 				// New registration with wrong para_id
 				assert_noop!(
-					IndranetRegistry::register_worker_v2(
+					IndraRegistry::register_worker_v2(
 						Origin::signed(1),
 						WorkerRegistrationInfoV2::<u64> {
 							version: 1,
@@ -1337,7 +1337,7 @@ pub mod pallet {
 				);
 
 				// New registration
-				assert_ok!(IndranetRegistry::register_worker_v2(
+				assert_ok!(IndraRegistry::register_worker_v2(
 					Origin::signed(1),
 					WorkerRegistrationInfoV2::<u64> {
 						version: 1,
@@ -1356,7 +1356,7 @@ pub mod pallet {
 				assert_eq!(worker.operator, Some(1));
 				// Refreshed validator
 				elapse_seconds(100);
-				assert_ok!(IndranetRegistry::register_worker_v2(
+				assert_ok!(IndraRegistry::register_worker_v2(
 					Origin::signed(1),
 					WorkerRegistrationInfoV2::<u64> {
 						version: 1,
@@ -1384,19 +1384,19 @@ pub mod pallet {
 				set_block_1();
 
 				let sample: Vec<u8> = [1, 2, 3, 4].to_vec();
-				assert_ok!(IndranetRegistry::add_pruntime(Origin::root(), sample.clone()));
+				assert_ok!(IndraRegistry::add_pruntime(Origin::root(), sample.clone()));
 				assert_noop!(
-					IndranetRegistry::add_pruntime(Origin::root(), sample.clone()),
+					IndraRegistry::add_pruntime(Origin::root(), sample.clone()),
 					Error::<Test>::PRuntimeAlreadyExists
 				);
 				assert_eq!(PRuntimeAllowList::<Test>::get().len(), 1);
 				assert!(PRuntimeAddedAt::<Test>::contains_key(&sample));
-				assert_ok!(IndranetRegistry::remove_pruntime(
+				assert_ok!(IndraRegistry::remove_pruntime(
 					Origin::root(),
 					sample.clone()
 				));
 				assert_noop!(
-					IndranetRegistry::remove_pruntime(Origin::root(), sample.clone()),
+					IndraRegistry::remove_pruntime(Origin::root(), sample.clone()),
 					Error::<Test>::PRuntimeNotFound
 				);
 				assert_eq!(PRuntimeAllowList::<Test>::get().len(), 0);
@@ -1411,21 +1411,21 @@ pub mod pallet {
 				set_block_1();
 
 				let sample: H256 = H256::repeat_byte(1);
-				assert_ok!(IndranetRegistry::add_relaychain_genesis_block_hash(
+				assert_ok!(IndraRegistry::add_relaychain_genesis_block_hash(
 					Origin::root(),
 					sample
 				));
 				assert_noop!(
-					IndranetRegistry::add_relaychain_genesis_block_hash(Origin::root(), sample),
+					IndraRegistry::add_relaychain_genesis_block_hash(Origin::root(), sample),
 					Error::<Test>::GenesisBlockHashAlreadyExists
 				);
 				assert_eq!(RelaychainGenesisBlockHashAllowList::<Test>::get().len(), 1);
-				assert_ok!(IndranetRegistry::remove_relaychain_genesis_block_hash(
+				assert_ok!(IndraRegistry::remove_relaychain_genesis_block_hash(
 					Origin::root(),
 					sample
 				));
 				assert_noop!(
-					IndranetRegistry::remove_relaychain_genesis_block_hash(Origin::root(), sample),
+					IndraRegistry::remove_relaychain_genesis_block_hash(Origin::root(), sample),
 					Error::<Test>::GenesisBlockHashNotFound
 				);
 				assert_eq!(RelaychainGenesisBlockHashAllowList::<Test>::get().len(), 0);

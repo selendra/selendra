@@ -63,7 +63,7 @@ mod origin;
 
 use config::consensus::{SelendraId, SessionPeriod};
 use constants::{
-	currency::*, fee::WeightToFee, time::*, CONTRACT_DEPOSIT_PER_BYTE,
+	currency::*, fee::WeightToFee, time::*,
 };
 
 /// The version information used to identify this runtime when compiled natively.
@@ -557,10 +557,6 @@ impl_runtime_apis! {
 
 #[cfg(test)]
 mod tests {
-	use frame_support::traits::Get;
-	use selendra_primitives::HEAP_PAGES;
-	use smallvec::Array;
-
 	use super::*;
 
 	#[test]

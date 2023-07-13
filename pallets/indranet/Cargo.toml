@@ -24,9 +24,9 @@ fixed-sqrt = { workspace = true }
 primitive-types = { workspace = true }
 log = { workspace = true }
 
-# pallet-assets = { workspace = true }
+pallet-assets = { workspace = true }
 pallet-democracy = { workspace = true }
-# pallet-uniques = { workspace = true }
+pallet-uniques = { workspace = true }
 pallet-preimage = { workspace = true }
 pallet-balances = { workspace = true }
 pallet-insecure-randomness-collective-flip = { workspace = true }
@@ -42,8 +42,8 @@ sp-application-crypto = { workspace = true }
 indranet-types = { workspace = true }
 
 # RMRK dependencies
-# pallet-rmrk-core = { git = "https://github.com/phala-Network/rmrk-substrate", branch = "polkadot-v0.9.41", default-features = false }
-# rmrk-traits = { git = "https://github.com/phala-Network/rmrk-substrate", branch = "polkadot-v0.9.41", default-features = false }
+pallet-rmrk-core = { git = "https://github.com/phala-Network/rmrk-substrate", branch = "polkadot-v0.9.41", default-features = false }
+rmrk-traits = { git = "https://github.com/phala-Network/rmrk-substrate", branch = "polkadot-v0.9.41", default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 webpki = { version = "0.22", default-features = false, features = ["alloc"] }
@@ -76,15 +76,15 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"frame-benchmarking/std",
-	# "pallet-assets/std",
+	"pallet-assets/std",
 	"pallet-democracy/std",
 	"pallet-balances/std",
-	# "pallet-uniques/std",
+	"pallet-uniques/std",
 	"pallet-collective/std",
 	"pallet-insecure-randomness-collective-flip/std",
 	"pallet-preimage/std",
-	# "pallet-rmrk-core/std",
-	# "rmrk-traits/std",
+	"pallet-rmrk-core/std",
+	"rmrk-traits/std",
 	"indranet-types/enable_serde",
 ]
 runtime-benchmarks = [

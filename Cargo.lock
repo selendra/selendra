@@ -3360,16 +3360,20 @@ dependencies = [
  "indranet-types",
  "insta",
  "log",
+ "pallet-assets",
  "pallet-balances",
  "pallet-collective",
  "pallet-democracy",
  "pallet-insecure-randomness-collective-flip",
  "pallet-preimage",
+ "pallet-rmrk-core",
  "pallet-scheduler",
  "pallet-timestamp",
+ "pallet-uniques",
  "parity-scale-codec",
  "primitive-types",
  "rand 0.8.5",
+ "rmrk-traits",
  "scale-info",
  "serde_json",
  "sp-application-crypto",
@@ -5150,6 +5154,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-assets"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.41#3bd809d59c31c7205a0f36c6ddcba603e43051fc"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-aura"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.41#3bd809d59c31c7205a0f36c6ddcba603e43051fc"
@@ -5464,6 +5483,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-rmrk-core"
+version = "0.0.1"
+source = "git+https://github.com/phala-Network/rmrk-substrate?branch=polkadot-v0.9.41#9993b5e60c4622b19b5d9aa2e4da67011a95caaf"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-uniques",
+ "parity-scale-codec",
+ "rmrk-traits",
+ "scale-info",
+ "serde",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-scheduler"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.41#3bd809d59c31c7205a0f36c6ddcba603e43051fc"
@@ -5631,6 +5668,21 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-uniques"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.41#3bd809d59c31c7205a0f36c6ddcba603e43051fc"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
  "sp-runtime",
  "sp-std",
 ]
@@ -6609,6 +6661,22 @@ dependencies = [
  "untrusted 0.7.1",
  "web-sys",
  "winapi",
+]
+
+[[package]]
+name = "rmrk-traits"
+version = "0.0.1"
+source = "git+https://github.com/phala-Network/rmrk-substrate?branch=polkadot-v0.9.41#9993b5e60c4622b19b5d9aa2e4da67011a95caaf"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
