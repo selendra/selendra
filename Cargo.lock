@@ -3342,6 +3342,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "indranet-offchain-rollup"
+version = "0.1.0"
+dependencies = [
+ "assert_matches",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "pink-kv-session",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "indranet-pallets"
 version = "0.1.0"
 dependencies = [
@@ -5135,25 +5154,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-anchor"
-version = "0.1.0"
-dependencies = [
- "assert_matches",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-timestamp",
- "parity-scale-codec",
- "pink-kv-session",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-assets"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.41#3bd809d59c31c7205a0f36c6ddcba603e43051fc"
@@ -5470,13 +5470,11 @@ name = "pallet-preimage"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.41#3bd809d59c31c7205a0f36c6ddcba603e43051fc"
 dependencies = [
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
  "parity-scale-codec",
  "scale-info",
- "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -5485,7 +5483,7 @@ dependencies = [
 [[package]]
 name = "pallet-rmrk-core"
 version = "0.0.1"
-source = "git+https://github.com/phala-Network/rmrk-substrate?branch=polkadot-v0.9.41#9993b5e60c4622b19b5d9aa2e4da67011a95caaf"
+source = "git+https://github.com/Phala-Network/rmrk-substrate?branch=polkadot-v0.9.41#9993b5e60c4622b19b5d9aa2e4da67011a95caaf"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6666,7 +6664,7 @@ dependencies = [
 [[package]]
 name = "rmrk-traits"
 version = "0.0.1"
-source = "git+https://github.com/phala-Network/rmrk-substrate?branch=polkadot-v0.9.41#9993b5e60c4622b19b5d9aa2e4da67011a95caaf"
+source = "git+https://github.com/Phala-Network/rmrk-substrate?branch=polkadot-v0.9.41#9993b5e60c4622b19b5d9aa2e4da67011a95caaf"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8089,6 +8087,10 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
+ "indranet-mq-runtime-api",
+ "indranet-offchain-rollup",
+ "indranet-pallets",
+ "indranet-types",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -8102,6 +8104,7 @@ dependencies = [
  "pallet-multisig",
  "pallet-nomination-pools",
  "pallet-nomination-pools-runtime-api",
+ "pallet-rmrk-core",
  "pallet-scheduler",
  "pallet-selendra",
  "pallet-session",
@@ -8114,6 +8117,7 @@ dependencies = [
  "pallet-utility",
  "pallet-vesting",
  "parity-scale-codec",
+ "rmrk-traits",
  "scale-info",
  "selendra-primitives",
  "selendra-runtime-common",
