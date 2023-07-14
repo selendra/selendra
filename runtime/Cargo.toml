@@ -75,10 +75,13 @@ indranet-pallets = { workspace = true }
 indranet-mq-runtime-api = { workspace = true }
 indranet-offchain-rollup = { workspace = true }
 
-# # RMRK dependencies
-pallet-rmrk-core = { workspace = true }
-rmrk-traits = { workspace = true }
+# Assets pallet
+pallet-assets = { workspace = true }
+pallet-uniques = { workspace = true }
 
+# RMRK pallet
+pallet-rmrk-core = { workspace = true }
+# rmrk-traits = { workspace = true }
 
 # Local
 selendra-primitives= { workspace = true }
@@ -116,6 +119,8 @@ std = [
 
     "pallet-selendra/std",
     "pallet-aura/std",
+	"pallet-assets/std",
+	"pallet-uniques/std",
     "pallet-authorship/std",
     "pallet-balances/std",
     "pallet-elections/std",
@@ -142,7 +147,7 @@ std = [
 	"indranet-mq-runtime-api/std",
 	"indranet-pallets/std",
 	"pallet-rmrk-core/std",
-	"rmrk-traits/std",
+	# "rmrk-traits/std",
 ]
 
 try-runtime = [

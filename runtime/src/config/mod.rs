@@ -1,7 +1,8 @@
+mod asset;
 mod consensus;
 mod governance;
+mod indranet;
 mod staking;
 mod utility;
-mod indranet;
 
 pub use consensus::{SelendraId, SessionPeriod};

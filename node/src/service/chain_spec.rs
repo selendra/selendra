@@ -12,22 +12,9 @@ use selendra_primitives::{
 	LEGACY_FINALITY_VERSION, MIN_NOMINATOR_BOND, MIN_VALIDATOR_BOND, TOKEN, TOKEN_DECIMALS,
 };
 use selendra_runtime::{
-	AuraConfig,
-	BalancesConfig,
-	CommitteeManagementConfig,
-	CouncilConfig,
-	DemocracyConfig,
-	ElectionsConfig,
-	GenesisConfig,
-	SelendraConfig,
-	SessionConfig,
-	SessionKeys,
-	StakingConfig,
-	SudoConfig,
-	SystemConfig,
-	TechnicalCommitteeConfig, // AssetsConfig,
-	VestingConfig,
-	WASM_BINARY,
+	AssetsConfig, AuraConfig, BalancesConfig, CommitteeManagementConfig, CouncilConfig,
+	DemocracyConfig, ElectionsConfig, GenesisConfig, SelendraConfig, SessionConfig, SessionKeys,
+	StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig, VestingConfig, WASM_BINARY,
 };
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{Number, Value};
@@ -416,7 +403,7 @@ fn generate_genesis_config(
 				non_committee: vec![],
 			},
 		},
-		// assets: AssetsConfig::default(),
+		assets: AssetsConfig::default(),
 		democracy: DemocracyConfig::default(),
 		council: CouncilConfig::default(),
 		technical_committee: TechnicalCommitteeConfig::default(),

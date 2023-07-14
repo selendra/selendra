@@ -283,6 +283,11 @@ construct_runtime!(
 		TechnicalCommittee: pallet_collective::<Instance2> = 42,
 		TechnicalMembership: pallet_membership::<Instance1> = 43,
 
+		// Asset and Nft
+		Assets: pallet_assets = 50,
+		Uniques: pallet_uniques::{Pallet, Storage, Event<T>} = 51,
+		RmrkCore: pallet_rmrk_core::{Pallet, Call, Event<T>} = 52,
+
 		// Utility Suff
 		Vesting: pallet_vesting = 90,
 		Utility: pallet_utility = 91,
