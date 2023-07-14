@@ -179,7 +179,7 @@ pallets-support = { path = "pallets/support", default-features = false }
 # Indranet Pallet
 pallet-assets = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
 pallet-uniques = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
-indranet-offchain-rollup = { path = "pallets/offchain-rollup", default-features = false }
+indra-offchain-rollup = { path = "pallets/offchain-rollup", default-features = false }
 indranet-mq-runtime-api = { path = "pallets/indranet/mq-runtime-api", default-features = false }
 indranet-pallets = { path = "pallets/indranet", default-features = false }
 

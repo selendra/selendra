@@ -3316,6 +3316,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "indra-offchain-rollup"
+version = "0.1.0"
+dependencies = [
+ "assert_matches",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "pink-kv-session",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "indranet-mq"
 version = "0.1.0"
 dependencies = [
@@ -3339,25 +3358,6 @@ version = "0.1.0"
 dependencies = [
  "indranet-mq",
  "sp-api",
-]
-
-[[package]]
-name = "indranet-offchain-rollup"
-version = "0.1.0"
-dependencies = [
- "assert_matches",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-timestamp",
- "parity-scale-codec",
- "pink-kv-session",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -8087,8 +8087,8 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
+ "indra-offchain-rollup",
  "indranet-mq-runtime-api",
- "indranet-offchain-rollup",
  "indranet-pallets",
  "indranet-types",
  "pallet-assets",

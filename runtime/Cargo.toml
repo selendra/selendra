@@ -73,7 +73,7 @@ pallet-insecure-randomness-collective-flip = { workspace = true }
 indranet-types = { workspace = true }
 indranet-pallets = { workspace = true }
 indranet-mq-runtime-api = { workspace = true }
-indranet-offchain-rollup = { workspace = true }
+indra-offchain-rollup = { workspace = true }
 
 # Assets pallet
 pallet-assets = { workspace = true }
@@ -143,7 +143,7 @@ std = [
     "pallet-membership/std",
     "pallet-collective/std",
 
-	"indranet-offchain-rollup/std",
+	"indra-offchain-rollup/std",
 	"indranet-mq-runtime-api/std",
 	"indranet-pallets/std",
 	"pallet-rmrk-core/std",
