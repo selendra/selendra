@@ -1,19 +1,5 @@
 [workspace]
 
-exclude = [
-	"subxt",
-	"vendor/webpki",
-	"vendor/ring",
-	"standalone/pruntime",
-	"standalone/prouter",
-	"standalone/crate-version",
-	"crates/pink-drivers/system",
-	"crates/pink-drivers/sidevm_deployer",
-	"crates/pink-drivers/tokenomic",
-	"e2e/contracts",
-]
-
-
 members = [
     "node",
     "runtime",
