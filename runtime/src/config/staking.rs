@@ -13,23 +13,25 @@
 
 // You should have received a copy of the GNU General Public License
 
+use crate::{
+	origin::EnsureRootOrHalfCouncil, Balances, Elections, Runtime, RuntimeEvent, Session,
+	Timestamp, Treasury,
+};
+
+use sp_runtime::{traits::Convert, FixedU128, Perbill};
+use sp_staking::EraIndex;
+
 use frame_support::{
 	pallet_prelude::Weight,
 	parameter_types,
 	traits::{ConstU32, U128CurrencyToVote},
 	PalletId,
 };
+
 use selendra_primitives::{
 	wrap_methods, Balance, DEFAULT_SESSIONS_PER_ERA, MAX_NOMINATORS_REWARDED_PER_VALIDATOR,
 };
 use selendra_runtime_common::prod_or_fast;
-use sp_runtime::{traits::Convert, FixedU128, Perbill};
-use sp_staking::EraIndex;
-
-use crate::{
-	origin::EnsureRootOrHalfCouncil, Balances, Elections, Runtime, RuntimeEvent, Session,
-	Timestamp, Treasury,
-};
 
 parameter_types! {
 	pub const BondingDuration: EraIndex = 14;

@@ -13,14 +13,15 @@
 
 // You should have received a copy of the GNU General Public License
 
-use frame_support::{parameter_types, traits::WithdrawReasons};
-use selendra_primitives::Balance;
-use sp_runtime::traits::ConvertInto;
-
 use crate::{
 	origin::EnsureRootOrHalfCouncil, Balances, OriginCaller, Runtime, RuntimeCall, RuntimeEvent,
 	Treasury, MICRO_CENT, MILLI_CENT,
 };
+
+use frame_support::{parameter_types, traits::WithdrawReasons};
+use sp_runtime::traits::ConvertInto;
+
+use selendra_primitives::Balance;
 
 impl pallet_utility::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

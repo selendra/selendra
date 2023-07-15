@@ -1,15 +1,16 @@
+use crate::{
+	Aura, CommitteeManagement, Elections, Runtime, RuntimeEvent, Selendra, Session,
+	SessionAndEraManager, SessionKeys, Staking,
+};
+
 use frame_support::parameter_types;
+use sp_runtime::traits::OpaqueKeys;
+
 pub use selendra_primitives::AuthorityId as SelendraId;
 use selendra_primitives::{
 	AccountId, Balance, DEFAULT_BAN_REASON_LENGTH, DEFAULT_MAX_WINNERS, DEFAULT_SESSION_PERIOD,
 };
 use selendra_runtime_common::prod_or_fast;
-use sp_runtime::traits::OpaqueKeys;
-
-use crate::{
-	Aura, CommitteeManagement, Elections, Runtime, RuntimeEvent, Selendra, Session,
-	SessionAndEraManager, SessionKeys, Staking,
-};
 
 impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
