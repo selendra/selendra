@@ -15,8 +15,6 @@ use indranet_serde_more as more;
 use serde::{Deserialize, Serialize};
 
 /// The origin of a Indranet message
-// TODO: should we use XCM MultiLocation directly?
-// [Reference](https://github.com/paritytech/xcm-format#multilocation-universal-destination-identifiers)
 #[derive(
 	Encode, Decode, TypeInfo, Debug, Clone, Eq, PartialOrd, Ord, Display, Serialize, Deserialize,
 )]
@@ -37,10 +35,6 @@ pub enum MessageOrigin {
 	#[display(fmt = "AccountId({})", "hex::encode(_0)")]
 	#[serde(with = "more::scale_bytes")]
 	AccountId(AccountId),
-	/// A remote location (parachain, etc.)
-	#[display(fmt = "MultiLocation({})", "hex::encode(_0)")]
-	#[serde(with = "more::scale_bytes")]
-	MultiLocation(Vec<u8>),
 	/// All gatekeepers share the same origin
 	Gatekeeper,
 	/// A contract cluster
