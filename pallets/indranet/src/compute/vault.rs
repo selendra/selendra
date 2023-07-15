@@ -410,7 +410,7 @@ pub mod pallet {
 
 			ensure!(a >= T::MinContribution::get(), Error::<T>::InsufficientContribution);
 			let free = pallet_assets::Pallet::<T>::maybe_balance(
-				<T as wrapped_balances::Config>::WPhaAssetId::get(),
+				<T as wrapped_balances::Config>::WSelAssetId::get(),
 				&who,
 			)
 			.ok_or(Error::<T>::AssetAccountNotExist)?;

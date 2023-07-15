@@ -535,7 +535,7 @@ pub mod pallet {
 			let rewards = pool_info.get_owner_stakes::<T>();
 			ensure!(rewards > Zero::zero(), Error::<T>::NoRewardToClaim);
 			<pallet_assets::pallet::Pallet<T> as Transfer<T::AccountId>>::transfer(
-				<T as wrapped_balances::Config>::WPhaAssetId::get(),
+				<T as wrapped_balances::Config>::WSelAssetId::get(),
 				&pool_info.owner_reward_account,
 				&target,
 				rewards,
@@ -631,7 +631,7 @@ pub mod pallet {
 			let free = match &maybe_vault {
 				Some((_, vault_info)) => vault_info.basepool.get_free_stakes::<T>(),
 				_ => pallet_assets::Pallet::<T>::balance(
-					<T as wrapped_balances::Config>::WPhaAssetId::get(),
+					<T as wrapped_balances::Config>::WSelAssetId::get(),
 					&who,
 				),
 			};
@@ -789,7 +789,7 @@ pub mod pallet {
 				},
 				None => base_pool::pallet::Pools::<T>::iter(),
 			};
-			let asset_id = <T as wrapped_balances::Config>::WPhaAssetId::get();
+			let asset_id = <T as wrapped_balances::Config>::WSelAssetId::get();
 			let mut i = 0;
 			for (pid, pool_proxy) in iter.by_ref() {
 				match pool_proxy {
@@ -932,7 +932,7 @@ pub mod pallet {
 			let session: T::AccountId = pool_sub_account(pid, &worker);
 			computation::pallet::Pallet::<T>::start_computing(session, stake)?;
 			<pallet_assets::pallet::Pallet<T> as Transfer<T::AccountId>>::transfer(
-				<T as wrapped_balances::Config>::WPhaAssetId::get(),
+				<T as wrapped_balances::Config>::WSelAssetId::get(),
 				&pool_info.basepool.pool_account_id,
 				&pool_info.lock_account,
 				stake,
@@ -1043,13 +1043,13 @@ pub mod pallet {
 				// and creating a logical pending slash. The actual slash happens with the pending
 				// slash to individuals is settled.
 				pool_info.basepool.slash(slashed);
-				//TODO(mingxuan): Burn the WPHA and transfer the amount to treasury when slash is active
+				//TODO(mingxuan): Burn the WSEL and transfer the amount to treasury when slash is active
 				Self::deposit_event(Event::<T>::PoolSlashed { pid, amount: slashed });
 			}
 
 			// With the worker being cleaned, those stake now are free
 			<pallet_assets::pallet::Pallet<T> as Transfer<T::AccountId>>::transfer(
-				<T as wrapped_balances::Config>::WPhaAssetId::get(),
+				<T as wrapped_balances::Config>::WSelAssetId::get(),
 				&pool_info.lock_account,
 				&pool_info.basepool.pool_account_id,
 				returned,

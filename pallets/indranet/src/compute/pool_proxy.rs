@@ -77,7 +77,7 @@ impl<AccountId, Balance> StakePool<AccountId, Balance> {
 		T: base_pool::Config + wrapped_balances::Config + vault::Config,
 	{
 		pallet_assets::Pallet::<T>::balance(
-			<T as wrapped_balances::Config>::WPhaAssetId::get(),
+			<T as wrapped_balances::Config>::WSelAssetId::get(),
 			&self.owner_reward_account,
 		)
 	}

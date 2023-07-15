@@ -52,8 +52,8 @@ fn test_wrap() {
 		assert_eq!(free, 100 * DOLLARS);
 		let free = Balances::free_balance(1);
 		assert_eq!(free, 900 * DOLLARS);
-		let wpha_free = get_balance(1);
-		assert_eq!(wpha_free, 100 * DOLLARS);
+		let wsel_free = get_balance(1);
+		assert_eq!(wsel_free, 100 * DOLLARS);
 	});
 }
 
@@ -69,8 +69,8 @@ fn test_unwrap() {
 			&<Test as wrapped_balances::Config>::WrappedBalancesAccountId::get(),
 		);
 		assert_eq!(free, 50 * DOLLARS);
-		let wpha_free = get_balance(1);
-		assert_eq!(wpha_free, 50 * DOLLARS);
+		let wsel_free = get_balance(1);
+		assert_eq!(wsel_free, 50 * DOLLARS);
 		wrapped_balances::pallet::StakerAccounts::<Test>::insert(
 			1,
 			wrapped_balances::FinanceAccount::<u128> { invest_pools: vec![], locked: 20 * DOLLARS },
@@ -1494,7 +1494,7 @@ fn test_check_and_maybe_force_withdraw() {
 
 fn mock_asset_id() {
 	<pallet_assets::pallet::Pallet<Test> as Create<u64>>::create(
-		<Test as wrapped_balances::Config>::WPhaAssetId::get(),
+		<Test as wrapped_balances::Config>::WSelAssetId::get(),
 		1,
 		true,
 		100000000,
@@ -1504,7 +1504,7 @@ fn mock_asset_id() {
 
 fn get_balance(account_id: u64) -> u128 {
 	<pallet_assets::pallet::Pallet<Test> as Inspect<u64>>::balance(
-		<Test as wrapped_balances::Config>::WPhaAssetId::get(),
+		<Test as wrapped_balances::Config>::WSelAssetId::get(),
 		&account_id,
 	)
 }

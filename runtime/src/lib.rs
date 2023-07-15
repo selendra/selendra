@@ -43,8 +43,7 @@ use frame_system::EnsureSignedBy;
 use frame_try_runtime::UpgradeCheckSelect;
 
 pub use pallet_balances::Call as BalancesCall;
-use pallet_committee_management::{PrefixMigration, SessionAndEraManager};
-use pallet_elections::{CommitteeSizeMigration, MigrateToV4};
+use pallet_committee_management::SessionAndEraManager;
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
 
@@ -60,11 +59,11 @@ use selendra_runtime_common::{
 };
 
 use indra_offchain_rollup::{anchor as pallet_anchor, oracle as pallet_oracle};
-// pub use indranet_pallets::{
-// 	pallet_base_pool, pallet_computation, pallet_indra, pallet_indra_tokenomic, pallet_mq,
-// 	pallet_registry, pallet_stake_pool, pallet_stake_pool_v2, pallet_vault,
-// 	pallet_wrapped_balances,
-// };
+pub use indranet_pallets::{
+	pallet_base_pool, pallet_computation, pallet_indra, pallet_indra_tokenomic, pallet_mq,
+	pallet_registry, pallet_stake_pool, pallet_stake_pool_v2, pallet_vault,
+	pallet_wrapped_balances,
+};
 
 mod config;
 pub mod constants;
@@ -297,17 +296,17 @@ construct_runtime!(
 		Uniques: pallet_uniques::{Pallet, Storage, Event<T>} = 51,
 		RmrkCore: pallet_rmrk_core::{Pallet, Call, Event<T>} = 52,
 
-		// // Indranet
-		// IndranetMq: pallet_mq = 60,
-		// IndranetRegistry: pallet_registry = 61,
-		// IndranetComputation: pallet_computation = 62,
-		// IndranetStakePoolv2: pallet_stake_pool_v2 = 63,
-		// IndranetStakePool: pallet_stake_pool = 64,
-		// IndranetVault: pallet_vault = 65,
-		// IndranetWrappedBalances: pallet_wrapped_balances = 66,
-		// IndranetBasePool: pallet_base_pool = 67,
-		// IndranetIndraContracts: pallet_indra = 68,
-		// IndranetIndraTokenomic: pallet_indra_tokenomic = 69,
+		// Indranet
+		IndranetMq: pallet_mq = 60,
+		IndranetRegistry: pallet_registry = 61,
+		IndranetComputation: pallet_computation = 62,
+		IndranetStakePoolv2: pallet_stake_pool_v2 = 63,
+		IndranetStakePool: pallet_stake_pool = 64,
+		IndranetVault: pallet_vault = 65,
+		IndranetWrappedBalances: pallet_wrapped_balances = 66,
+		IndranetBasePool: pallet_base_pool = 67,
+		IndranetIndraContracts: pallet_indra = 68,
+		IndranetIndraTokenomic: pallet_indra_tokenomic = 69,
 		// Rollup and Oracles
 		IndraRollupAnchor: pallet_anchor = 80,
 		IndraOracle: pallet_oracle = 81,
@@ -350,8 +349,7 @@ pub type UncheckedExtrinsic =
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra>;
 
-pub type Migrations =
-	(PrefixMigration<Runtime>, MigrateToV4<Runtime>, CommitteeSizeMigration<Runtime>);
+pub type Migrations = ();
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<

@@ -66,7 +66,7 @@ pub mod pallet {
 	{
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type MigrationAccountId: Get<Self::AccountId>;
-		type WPhaMinBalance: Get<BalanceOf<Self>>;
+		type WSelMinBalance: Get<BalanceOf<Self>>;
 	}
 
 	#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
@@ -327,7 +327,7 @@ pub mod pallet {
 			T: Config + wrapped_balances::Config + vault::Config,
 		{
 			pallet_assets::Pallet::<T>::balance(
-				<T as wrapped_balances::Config>::WPhaAssetId::get(),
+				<T as wrapped_balances::Config>::WSelAssetId::get(),
 				&self.pool_account_id,
 			)
 		}
@@ -753,7 +753,7 @@ pub mod pallet {
 			pool.total_shares += shares;
 			pool.total_value += amount;
 			<pallet_assets::pallet::Pallet<T> as Transfer<T::AccountId>>::transfer(
-				<T as wrapped_balances::Config>::WPhaAssetId::get(),
+				<T as wrapped_balances::Config>::WSelAssetId::get(),
 				&account_id,
 				&pool.pool_account_id,
 				amount,
@@ -784,7 +784,7 @@ pub mod pallet {
 			let (total_stake, _) = extract_dust(pool.total_value - amount);
 
 			<pallet_assets::pallet::Pallet<T> as Transfer<T::AccountId>>::transfer(
-				<T as wrapped_balances::Config>::WPhaAssetId::get(),
+				<T as wrapped_balances::Config>::WSelAssetId::get(),
 				&pool.pool_account_id,
 				userid,
 				amount,
@@ -998,7 +998,7 @@ pub mod pallet {
 				None => return false,
 			};
 			let current_balance = bmul(nft.shares, &price);
-			if current_balance > T::WPhaMinBalance::get() {
+			if current_balance > T::WSelMinBalance::get() {
 				return false
 			}
 			pool_info.total_shares -= nft.shares;
@@ -1034,7 +1034,7 @@ pub mod pallet {
 				None => return,
 			};
 
-			while pool_info.get_free_stakes::<T>() > T::WPhaMinBalance::get() {
+			while pool_info.get_free_stakes::<T>() > T::WSelMinBalance::get() {
 				if let Some(withdraw) = pool_info.withdraw_queue.front().cloned() {
 					// Must clear the pending reward before any stake change
 					let mut withdraw_nft_guard =

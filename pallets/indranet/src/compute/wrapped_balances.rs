@@ -41,7 +41,7 @@ pub mod pallet {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// W-PHA's asset id
 		#[pallet::constant]
-		type WPhaAssetId: Get<u32>;
+		type WSelAssetId: Get<u32>;
 		/// Pha's global fund pool
 		#[pallet::constant]
 		type WrappedBalancesAccountId: Get<Self::AccountId>;
@@ -220,7 +220,7 @@ pub mod pallet {
 			let active_stakes = Self::get_net_value(user.clone())?;
 			let free_stakes: BalanceOf<T> = <pallet_assets::pallet::Pallet<T> as Inspect<
 				T::AccountId,
-			>>::balance(T::WPhaAssetId::get(), &user);
+			>>::balance(T::WSelAssetId::get(), &user);
 			let locked =
 				StakerAccounts::<T>::get(&user).map_or(Zero::zero(), |status| status.locked);
 			let withdraw_amount = (active_stakes - locked).min(free_stakes);
@@ -244,7 +244,7 @@ pub mod pallet {
 			let user = ensure_signed(origin)?;
 			let free_stakes: BalanceOf<T> = <pallet_assets::pallet::Pallet<T> as Inspect<
 				T::AccountId,
-			>>::balance(T::WPhaAssetId::get(), &user);
+			>>::balance(T::WSelAssetId::get(), &user);
 			ensure!(amount <= free_stakes, Error::<T>::UnwrapAmountExceedsAvaliableStake);
 			let active_stakes = Self::get_net_value(user.clone())?;
 			let locked =
@@ -361,7 +361,7 @@ pub mod pallet {
 	{
 		/// Gets W-PHA's asset id
 		pub fn get_asset_id() -> u32 {
-			T::WPhaAssetId::get()
+			T::WSelAssetId::get()
 		}
 
 		/// Removes slash dust
@@ -369,7 +369,7 @@ pub mod pallet {
 			debug_assert!(dust != Zero::zero());
 			if dust != Zero::zero() {
 				let actual_removed =
-					pallet_assets::Pallet::<T>::slash(T::WPhaAssetId::get(), who, dust)
+					pallet_assets::Pallet::<T>::slash(T::WSelAssetId::get(), who, dust)
 						.expect("slash should success with correct amount: qed.");
 				let (imbalance, _remaining) = <T as IndranetConfig>::Currency::slash(
 					&<computation::pallet::Pallet<T>>::account_id(),
@@ -385,13 +385,13 @@ pub mod pallet {
 
 		/// Mints some W-PHA
 		pub fn mint_into(target: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
-			pallet_assets::Pallet::<T>::mint_into(T::WPhaAssetId::get(), target, amount)?;
+			pallet_assets::Pallet::<T>::mint_into(T::WSelAssetId::get(), target, amount)?;
 			Ok(())
 		}
 
 		/// Burns some W-PHA
 		pub fn burn_from(target: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
-			pallet_assets::Pallet::<T>::burn_from(T::WPhaAssetId::get(), target, amount)?;
+			pallet_assets::Pallet::<T>::burn_from(T::WSelAssetId::get(), target, amount)?;
 			Ok(())
 		}
 
@@ -419,7 +419,7 @@ pub mod pallet {
 		fn get_net_value(who: T::AccountId) -> Result<BalanceOf<T>, DispatchError> {
 			let mut total_active_stakes: BalanceOf<T> =
 				<pallet_assets::pallet::Pallet<T> as Inspect<T::AccountId>>::balance(
-					T::WPhaAssetId::get(),
+					T::WSelAssetId::get(),
 					&who,
 				);
 			let account_status = match StakerAccounts::<T>::get(&who) {

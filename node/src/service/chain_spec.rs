@@ -408,8 +408,8 @@ fn generate_genesis_config(
 		council: CouncilConfig::default(),
 		technical_committee: TechnicalCommitteeConfig::default(),
 		technical_membership: Default::default(),
-		// indranetnet_computation: Default::default(),
-		// indranet_registry: Default::default(),
+		indranet_computation: Default::default(),
+		indranet_registry: Default::default(),
 	}
 }
 

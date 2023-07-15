@@ -87,7 +87,7 @@ impl pallet_rmrk_core::Config for Runtime {
 	type PropertiesLimit = PropertiesLimit;
 	type CollectionSymbolLimit = CollectionSymbolLimit;
 	type MaxResourcesOnMint = MaxResourcesOnMint;
-	// type TransferHooks = IndranetWrappedBalances;\
+	// type TransferHooks = IndranetWrappedBalances;
 	type TransferHooks = ();
 	type WeightInfo = pallet_rmrk_core::weights::SubstrateWeight<Runtime>;
 	#[cfg(feature = "runtime-benchmarks")]

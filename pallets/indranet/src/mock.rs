@@ -255,12 +255,12 @@ impl computation::Config for Test {
 }
 
 parameter_types! {
-	pub const WPhaAssetId: u32 = 1;
+	pub const WSelAssetId: u32 = 1;
 }
 
 impl wrapped_balances::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type WPhaAssetId = WPhaAssetId;
+	type WSelAssetId = WSelAssetId;
 	type WrappedBalancesAccountId = ConstU64<1234>;
 	type OnSlashed = ();
 }
@@ -385,7 +385,7 @@ impl stake_pool_v2::Config for Test {
 
 parameter_types! {
 	pub const InitialPriceCheckPoint: Balance = DOLLARS;
-	pub const WPhaMinBalance: Balance = CENTS;
+	pub const WSelMinBalance: Balance = CENTS;
 }
 
 impl vault::Config for Test {
@@ -397,7 +397,7 @@ impl vault::Config for Test {
 impl base_pool::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type MigrationAccountId = ConstU64<1234>;
-	type WPhaMinBalance = WPhaMinBalance;
+	type WSelMinBalance = WSelMinBalance;
 }
 
 impl stake_pool::Config for Test {
