@@ -1,5 +1,5 @@
 use crate::{
-	deposit, origin::EnsureRootOrFullCouncil, Balances, Runtime, RuntimeEvent, MILLI_CENT, TOKEN,
+	deposit, origin::EnsureRootOrFullCouncil, Balances, Runtime, RuntimeEvent, MILLI_CENT, TOKEN, IndranetWrappedBalances,
 };
 
 use frame_support::{parameter_types, traits::AsEnsureOriginWithArg};
@@ -87,8 +87,7 @@ impl pallet_rmrk_core::Config for Runtime {
 	type PropertiesLimit = PropertiesLimit;
 	type CollectionSymbolLimit = CollectionSymbolLimit;
 	type MaxResourcesOnMint = MaxResourcesOnMint;
-	// type TransferHooks = IndranetWrappedBalances;
-	type TransferHooks = ();
+	type TransferHooks = IndranetWrappedBalances;
 	type WeightInfo = pallet_rmrk_core::weights::SubstrateWeight<Runtime>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = pallet_rmrk_core::RmrkBenchmark;
