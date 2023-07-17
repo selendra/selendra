@@ -4,6 +4,7 @@ members = [
     "node",
     "runtime",
 	"primitives",
+	# "relayer/iruntime",
     "consensus/aggregator",
     "consensus/clique",
     "consensus/finality-selendra",
@@ -16,6 +17,11 @@ members = [
 	"pallets/indranet",
 	"crates/indranet-types",
 	"crates/indranet-mq",
+]
+
+exclude = [
+	"vendor/webpki",
+	"vendor/ring",
 ]
 
 [profile.release]
@@ -184,8 +190,8 @@ indranet-mq-runtime-api = { path = "pallets/indranet/mq-runtime-api", default-fe
 indranet-pallets = { path = "pallets/indranet", default-features = false }
 
 # RMRK dependencies
-pallet-rmrk-core = { git = "https://github.com/Phala-Network/rmrk-substrate", branch = "polkadot-v0.9.41", default-features = false }
-rmrk-traits = { git = "https://github.com/Phala-Network/rmrk-substrate", branch = "polkadot-v0.9.41", default-features = false }
+pallet-rmrk-core = { path = "pallets/rmrk/rmrk-core", default-features = false }
+rmrk-traits = { path = "pallets/rmrk/traits", default-features = false }
 
 # Indranet Crate
 pink-kv-session = { path = "crates/pink-libs/kv-session", default-features = false }
@@ -193,7 +199,10 @@ indranet-serde-more = { path = "crates/indranet-serde-more", default-features = 
 indranet-mq = { path = "crates/indranet-mq", default-features = false }
 prpc = { path = "crates/prpc", default-features = false }
 indranet-types = { path = "crates/indranet-types", default-features = false }
-webpki_wasm = { package = "webpki", git = "https://github.com/Phala-Network/phala-blockchain", tags = "v1-rc2", default-features = false, features = ["alloc"] }
+reqwest-env-proxy = { path = "crates/reqwest-env-proxy", default-features = false }
+
+# Vendor
+webpki_wasm = { package = "webpki", path = "vendor/webpki", default-features = false, features = ["alloc"] }
 
 # Local Core
 selendra-primitives = { path = "primitives", default-features = false }
@@ -204,3 +213,5 @@ finality-selendra = { path = "consensus/finality-selendra" }
 network-clique = { path = "consensus/clique" }
 legacy-selendra-aggregator = { package = "legacy-aggregator", path = "consensus/aggregator/legacy" }
 current-selendra-aggregator = { package = "aggregator", path = "consensus/aggregator" }
+
+# Relayer
