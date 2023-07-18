@@ -1,0 +1,20 @@
+[package]
+name = "pink-extension-runtime"
+version = "0.1.0"
+edition = "2021"
+description = "Mock pink chain extension for Indranet pink contract"
+license = "Apache-2.0"
+
+[dependencies]
+log = "0.4"
+ring = "0.16"
+getrandom = "0.2"
+once_cell = "1.10.0"
+hex_fmt = "0.3.0"
+reqwest = { version = "0.11", default-features = false, features = ["rustls-tls", "socks", "blocking"] }
+
+sp-core = { version = "7" }
+sp-runtime-interface = { version = "7", features = ["disable_target_static_assertions"] }
+
+pink-extension = { path = "../pink-extension" }
+reqwest-env-proxy = { path = "../../reqwest-env-proxy" }

@@ -53,13 +53,13 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 
 indranet-trie-storage = { path = "../indranet-trie-storage", default-features = false }
-# indranet-mq = { path = "../indranet-mq", default-features = false }
+#indranet-mq = { path = "../indranet-mq", default-features = false }
 indranet-serde-more = { path = "../indranet-serde-more" }
 
-# indranet-crypto = { path = "../indranet-crypto", features = ["getrandom", "stream"] }
-# prpc = { path = "../prpc" }
-# pink = { path = "../pink/runner", package = "pink-runner" }
-# pink-extension-runtime = { path = "../pink/pink-extension-runtime" }
+indranet-crypto = { path = "../indranet-crypto", features = ["getrandom", "stream"] }
+#irpc = { path = "../irpc", default-features = false }
+pink = { path = "../pink/runner", package = "pink-runner" }
+pink-extension-runtime = { path = "../pink/pink-extension-runtime" }
 
 # # Indranet specific
 # runtime = { path = "../../standalone/runtime", package = "indranet-node-runtime", default-features = false, features = ["std"] }

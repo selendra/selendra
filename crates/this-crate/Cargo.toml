@@ -1,0 +1,9 @@
+[package]
+name = "this-crate"
+version = "0.1.0"
+edition = "2021"
+description = "A utility crate for working with crate version information"
+license = "MIT"
+authors = ["Kevin Wang <wy721@qq.com>"]
+
+[dependencies]
