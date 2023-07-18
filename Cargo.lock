@@ -3432,8 +3432,8 @@ version = "0.1.0"
 dependencies = [
  "hex",
  "indranet-mq",
+ "irpc",
  "parity-scale-codec",
- "prpc",
  "scale-info",
  "serde",
  "sp-core",
@@ -3532,6 +3532,18 @@ name = "ipnet"
 version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28b29a3cd74f0f4598934efe3aeba42bae0eb4680554128851ebbecb02af14e6"
+
+[[package]]
+name = "irpc"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "derive_more",
+ "parity-scale-codec",
+ "prost",
+ "serde_json",
+]
 
 [[package]]
 name = "is-terminal"
@@ -6299,18 +6311,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "213622a1460818959ac1181aaeb2dc9c7f63df720db7d788b3e24eacd1983e13"
 dependencies = [
  "prost",
-]
-
-[[package]]
-name = "prpc"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "derive_more",
- "parity-scale-codec",
- "prost",
- "serde_json",
 ]
 
 [[package]]

@@ -4,7 +4,6 @@ members = [
     "node",
     "runtime",
 	"primitives",
-	# "relayer/iruntime",
     "consensus/aggregator",
     "consensus/clique",
     "consensus/finality-selendra",
@@ -22,6 +21,7 @@ members = [
 exclude = [
 	"vendor/webpki",
 	"vendor/ring",
+	"relayer/iruntime",
 ]
 
 [profile.release]
@@ -197,9 +197,8 @@ rmrk-traits = { path = "pallets/rmrk/traits", default-features = false }
 pink-kv-session = { path = "crates/pink-libs/kv-session", default-features = false }
 indranet-serde-more = { path = "crates/indranet-serde-more", default-features = false }
 indranet-mq = { path = "crates/indranet-mq", default-features = false }
-prpc = { path = "crates/prpc", default-features = false }
+irpc = { path = "crates/irpc", default-features = false }
 indranet-types = { path = "crates/indranet-types", default-features = false }
-reqwest-env-proxy = { path = "crates/reqwest-env-proxy", default-features = false }
 
 # Vendor
 webpki_wasm = { package = "webpki", path = "vendor/webpki", default-features = false, features = ["alloc"] }
@@ -213,5 +212,3 @@ finality-selendra = { path = "consensus/finality-selendra" }
 network-clique = { path = "consensus/clique" }
 legacy-selendra-aggregator = { package = "legacy-aggregator", path = "consensus/aggregator/legacy" }
 current-selendra-aggregator = { package = "aggregator", path = "consensus/aggregator" }
-
-# Relayer

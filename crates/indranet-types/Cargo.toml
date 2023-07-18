@@ -12,7 +12,7 @@ scale-info = { version = "2.3", default-features = false, features = ["derive"] 
 
 sp-core = { workspace = true }
 indranet-mq = { workspace = true }
-prpc = { workspace = true }
+irpc = { workspace = true }
 
 [features]
 default = ["std", "enable_serde"]

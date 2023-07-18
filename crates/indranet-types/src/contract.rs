@@ -285,7 +285,7 @@ pub enum ContractQueryError {
 	OtherError(String),
 }
 
-impl From<ContractQueryError> for prpc::server::Error {
+impl From<ContractQueryError> for irpc::server::Error {
 	fn from(err: ContractQueryError) -> Self {
 		Self::ContractQueryError(alloc::format!("{err:?}"))
 	}
