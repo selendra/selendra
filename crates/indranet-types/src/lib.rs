@@ -357,15 +357,15 @@ pub mod messaging {
 		NewRandomNumber(RandomNumberEvent),
 		TokenomicParametersChanged(TokenomicParameters),
 		/// Deprecated after <https://github.com/Indranet-Network/indranet-blockchain/pull/499>
-		/// Dropped in Indranet. The index is reserved here for Khala+iruntime-v0 compatibility.
+		/// Dropped in Indranet. The index is reserved here for Khala+pruntime-v0 compatibility.
 		_RepairV,
 		/// Trigger a set of changes:
 		/// - <https://github.com/Indranet-Network/indranet-blockchain/issues/693>
 		/// - <https://github.com/Indranet-Network/indranet-blockchain/issues/676>
-		/// Dropped in Indranet. The index is reserved here for Khala+iruntime-v0 compatibility.
+		/// Dropped in Indranet. The index is reserved here for Khala+pruntime-v0 compatibility.
 		_IndranetLaunched,
 		/// Fix the payout duration problem in unresponsive state.
-		/// Dropped in Indranet. The index is reserved here for Khala+iruntime-v0 compatibility.
+		/// Dropped in Indranet. The index is reserved here for Khala+pruntime-v0 compatibility.
 		_UnrespFix,
 	}
 
@@ -509,6 +509,7 @@ pub struct ChallengeHandlerInfo<BlockNumber> {
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 pub struct EncryptedWorkerKey {
 	pub genesis_block_hash: H256,
+	pub para_id: u32,
 	pub dev_mode: bool,
 	pub encrypted_key: messaging::EncryptedKey,
 }
@@ -533,6 +534,7 @@ pub struct WorkerRegistrationInfoV2<AccountId> {
 	pub genesis_block_hash: H256,
 	pub features: Vec<u32>,
 	pub operator: Option<AccountId>,
+	pub para_id: u32,
 	pub max_consensus_version: u32,
 }
 
