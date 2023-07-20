@@ -42,7 +42,7 @@ parameter_types! {
 	pub const MiningEnabledByDefault: bool = true;
 	pub const MaxPoolWorkers: u32 = 10;
 	pub const NoneAttestationEnabled: bool = true;
-	pub const VerifyPRuntime: bool = false;
+	pub const VerifyIruntime: bool = false;
 	pub const VerifyRelaychainGenesisBlockHash: bool = true;
 }
 impl system::Config for Test {

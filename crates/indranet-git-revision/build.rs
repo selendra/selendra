@@ -32,7 +32,7 @@ fn export_git_revision() {
         .success();
     let tail = if dirty { "-dirty" } else { "" };
     if revision.is_empty() {
-        println!("cargo:warning=⚠️ Failed to get git revision for pRuntime.");
+        println!("cargo:warning=⚠️ Failed to get git revision for iruntime.");
         println!("cargo:warning=⚠️ Please ensure you have git installed and are compiling from a git repository.");
     }
     println!("cargo:rustc-env=INDRANET_GIT_REVISION={revision}{tail}");

@@ -20,9 +20,7 @@ indranet-crypto = { path = "../../indranet-crypto" }
 
 [dev-dependencies]
 pink = { path = "../runtime" }
-scale = { package = "parity-scale-codec", version = "3.1", default-features = false, features = [
-    "derive",
-] }
+scale = { package = "parity-scale-codec", version = "3.1", default-features = false, features = [ "derive",] }
 insta = "1"
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 pallet-contracts-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }

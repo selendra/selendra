@@ -100,7 +100,7 @@ pub mod pallet {
 		///
 		/// Affected states:
 		/// - the stake related fields in [`Pools`]
-		/// - the user W-PHA balance reduced
+		/// - the user W-SEL balance reduced
 		/// - the user recive ad share NFT once contribution succeeded
 		/// - when there was any request in the withdraw queue, the action may trigger withdrawals
 		///   ([`Withdrawal`](#variant.Withdrawal) event)

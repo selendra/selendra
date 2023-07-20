@@ -82,7 +82,7 @@ pub mod pallet {
 		///
 		/// SHOULD NOT SET TO FALSE ON PRODUCTION!!!
 		#[pallet::constant]
-		type VerifyPRuntime: Get<bool>;
+		type VerifyIruntime: Get<bool>;
 
 		/// Verify relaychain genesis
 		///
@@ -151,16 +151,16 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type BenchmarkDuration<T: Config> = StorageValue<_, u32>;
 
-	/// Allow list of pRuntime binary digest
+	/// Allow list of iruntime binary digest
 	///
-	/// Only pRuntime within the list can register.
+	/// Only iruntime within the list can register.
 	#[pallet::storage]
-	#[pallet::getter(fn pruntime_allowlist)]
-	pub type PRuntimeAllowList<T: Config> = StorageValue<_, Vec<Vec<u8>>, ValueQuery>;
+	#[pallet::getter(fn iruntime_allowlist)]
+	pub type IruntimeAllowList<T: Config> = StorageValue<_, Vec<Vec<u8>>, ValueQuery>;
 
-	/// The effective height of pRuntime binary
+	/// The effective height of iruntime binary
 	#[pallet::storage]
-	pub type PRuntimeAddedAt<T: Config> = StorageMap<_, Twox64Concat, Vec<u8>, T::BlockNumber>;
+	pub type IruntimeAddedAt<T: Config> = StorageMap<_, Twox64Concat, Vec<u8>, T::BlockNumber>;
 
 	/// Allow list of relaychain genesis
 	///
@@ -175,25 +175,25 @@ pub mod pallet {
 	pub type Endpoints<T: Config> =
 		StorageMap<_, Twox64Concat, WorkerPublicKey, VersionedWorkerEndpoints>;
 
-	/// Allow list of pRuntime binary digest
+	/// Allow list of iruntime binary digest
 	///
-	/// Only pRuntime within the list can register.
+	/// Only iruntime within the list can register.
 	#[pallet::storage]
 	#[pallet::getter(fn temp_workers_iter_key)]
 	pub type TempWorkersIterKey<T: Config> = StorageValue<_, Option<Vec<u8>>, ValueQuery>;
 
-	/// PRuntimes whoes version less than MinimumPRuntimeVersion would be forced to quit.
+	/// Iruntimes whoes version less than MinimumIruntimeVersion would be forced to quit.
 	#[pallet::storage]
-	pub type MinimumPRuntimeVersion<T: Config> = StorageValue<_, (u32, u32, u32), ValueQuery>;
+	pub type MinimumIruntimeVersion<T: Config> = StorageValue<_, (u32, u32, u32), ValueQuery>;
 
-	/// The consensus version used by pruntime. PRuntimes would switch some code path according
+	/// The consensus version used by iruntime. Iruntimes would switch some code path according
 	/// the current consensus version.
 	#[pallet::storage]
-	pub type PRuntimeConsensusVersion<T: Config> = StorageValue<_, u32, ValueQuery>;
+	pub type IruntimeConsensusVersion<T: Config> = StorageValue<_, u32, ValueQuery>;
 
-	/// The max consensus version that pruntime has report via register_worker
+	/// The max consensus version that iruntime has report via register_worker
 	#[pallet::storage]
-	pub type MaxKnownPRuntimeConsensusVersion<T: Config> =
+	pub type MaxKnownIruntimeConsensusVersion<T: Config> =
 		StorageValue<_, KnownConsensusVersion, ValueQuery>;
 
 	#[pallet::event]
@@ -228,8 +228,8 @@ pub mod pallet {
 			pubkey: WorkerPublicKey,
 			init_score: u32,
 		},
-		MinimumPRuntimeVersionChangedTo(u32, u32, u32),
-		PRuntimeConsensusVersionChangedTo(u32),
+		MinimumIruntimeVersionChangedTo(u32, u32, u32),
+		IruntimeConsensusVersionChangedTo(u32),
 		GatekeeperLaunched,
 	}
 
@@ -265,10 +265,10 @@ pub mod pallet {
 		GenesisBlockHashRejected,
 		GenesisBlockHashAlreadyExists,
 		GenesisBlockHashNotFound,
-		// PRuntime related
-		PRuntimeRejected,
-		PRuntimeAlreadyExists,
-		PRuntimeNotFound,
+		// Iruntime related
+		IruntimeRejected,
+		IruntimeAlreadyExists,
+		IruntimeNotFound,
 		// Additional
 		UnknownCluster,
 		NotImplemented,
@@ -467,24 +467,24 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn register_worker(
 			origin: OriginFor<T>,
-			pruntime_info: WorkerRegistrationInfo<T::AccountId>,
+			iruntime_info: WorkerRegistrationInfo<T::AccountId>,
 			attestation: Attestation,
 		) -> DispatchResult {
 			ensure_signed(origin)?;
 			// Validate RA report & embedded user data
 			let now = T::UnixTime::now().as_secs().saturated_into::<u64>();
-			let runtime_info_hash = crate::hashing::blake2_256(&Encode::encode(&pruntime_info));
+			let runtime_info_hash = crate::hashing::blake2_256(&Encode::encode(&iruntime_info));
 			let fields = T::LegacyAttestationValidator::validate(
 				&attestation,
 				&runtime_info_hash,
 				now,
-				T::VerifyPRuntime::get(),
-				PRuntimeAllowList::<T>::get(),
+				T::VerifyIruntime::get(),
+				IruntimeAllowList::<T>::get(),
 			)
 			.map_err(Into::<Error<T>>::into)?;
 
 			if T::VerifyRelaychainGenesisBlockHash::get() {
-				let genesis_block_hash = pruntime_info.genesis_block_hash;
+				let genesis_block_hash = iruntime_info.genesis_block_hash;
 				let allowlist = RelaychainGenesisBlockHashAllowList::<T>::get();
 				ensure!(
 					allowlist.contains(&genesis_block_hash),
@@ -493,16 +493,16 @@ pub mod pallet {
 			}
 
 			// Update the registry
-			let pubkey = pruntime_info.pubkey;
+			let pubkey = iruntime_info.pubkey;
 			Workers::<T>::mutate(pubkey, |v| {
 				match v {
 					Some(worker_info) => {
 						// Case 1 - Refresh the RA report, optionally update the operator, and redo benchmark
 						worker_info.last_updated = now;
-						worker_info.operator = pruntime_info.operator;
-						worker_info.runtime_version = pruntime_info.version;
+						worker_info.operator = iruntime_info.operator;
+						worker_info.runtime_version = iruntime_info.version;
 						worker_info.confidence_level = fields.confidence_level;
-						worker_info.features = pruntime_info.features;
+						worker_info.features = iruntime_info.features;
 						// TODO: We should reset `initial_score` here, but we need ensure no breaking.
 						// worker_info.initial_score = None;
 
@@ -522,14 +522,14 @@ pub mod pallet {
 						// Case 2 - New worker register
 						*v = Some(WorkerInfoV2 {
 							pubkey,
-							ecdh_pubkey: pruntime_info.ecdh_pubkey,
-							runtime_version: pruntime_info.version,
+							ecdh_pubkey: iruntime_info.ecdh_pubkey,
+							runtime_version: iruntime_info.version,
 							last_updated: now,
-							operator: pruntime_info.operator,
+							operator: iruntime_info.operator,
 							attestation_provider: Some(AttestationProvider::Ias),
 							confidence_level: fields.confidence_level,
 							initial_score: None,
-							features: pruntime_info.features,
+							features: iruntime_info.features,
 						});
 						Self::push_message(SystemEvent::new_worker_event(
 							pubkey,
@@ -567,25 +567,25 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn register_worker_v2(
 			origin: OriginFor<T>,
-			pruntime_info: WorkerRegistrationInfoV2<T::AccountId>,
+			iruntime_info: WorkerRegistrationInfoV2<T::AccountId>,
 			attestation: Option<AttestationReport>,
 		) -> DispatchResult {
 			ensure_signed(origin)?;
 			// Validate RA report & embedded user data
 			let now = T::UnixTime::now().as_secs().saturated_into::<u64>();
-			let runtime_info_hash = crate::hashing::blake2_256(&Encode::encode(&pruntime_info));
+			let runtime_info_hash = crate::hashing::blake2_256(&Encode::encode(&iruntime_info));
 			let attestation_report = crate::attestation::validate(
 				attestation,
 				&runtime_info_hash,
 				now,
-				T::VerifyPRuntime::get(),
-				PRuntimeAllowList::<T>::get(),
+				T::VerifyIruntime::get(),
+				IruntimeAllowList::<T>::get(),
 				T::NoneAttestationEnabled::get(),
 			)
 			.map_err(Into::<Error<T>>::into)?;
 
 			if T::VerifyRelaychainGenesisBlockHash::get() {
-				let genesis_block_hash = pruntime_info.genesis_block_hash;
+				let genesis_block_hash = iruntime_info.genesis_block_hash;
 				let allowlist = RelaychainGenesisBlockHashAllowList::<T>::get();
 				ensure!(
 					allowlist.contains(&genesis_block_hash),
@@ -593,11 +593,11 @@ pub mod pallet {
 				);
 			}
 
-			MaxKnownPRuntimeConsensusVersion::<T>::mutate(|info| {
+			MaxKnownIruntimeConsensusVersion::<T>::mutate(|info| {
 				use core::cmp::Ordering::*;
-				match info.version.cmp(&pruntime_info.max_consensus_version) {
+				match info.version.cmp(&iruntime_info.max_consensus_version) {
 					Less => {
-						info.version = pruntime_info.max_consensus_version;
+						info.version = iruntime_info.max_consensus_version;
 						info.count = 1;
 					},
 					Equal => {
@@ -608,16 +608,16 @@ pub mod pallet {
 			});
 
 			// Update the registry
-			let pubkey = pruntime_info.pubkey;
+			let pubkey = iruntime_info.pubkey;
 			Workers::<T>::mutate(pubkey, |v| {
 				match v {
 					Some(worker_info) => {
 						// Case 1 - Refresh the RA report, optionally update the operator, and redo benchmark
 						worker_info.last_updated = now;
-						worker_info.operator = pruntime_info.operator;
-						worker_info.runtime_version = pruntime_info.version;
+						worker_info.operator = iruntime_info.operator;
+						worker_info.runtime_version = iruntime_info.version;
 						worker_info.confidence_level = attestation_report.confidence_level;
-						worker_info.features = pruntime_info.features;
+						worker_info.features = iruntime_info.features;
 						// TODO: We should reset `initial_score` here, but we need ensure no breaking.
 						// worker_info.initial_score = None;
 
@@ -637,14 +637,14 @@ pub mod pallet {
 						// Case 2 - New worker register
 						*v = Some(WorkerInfoV2 {
 							pubkey,
-							ecdh_pubkey: pruntime_info.ecdh_pubkey,
-							runtime_version: pruntime_info.version,
+							ecdh_pubkey: iruntime_info.ecdh_pubkey,
+							runtime_version: iruntime_info.version,
 							last_updated: now,
-							operator: pruntime_info.operator,
+							operator: iruntime_info.operator,
 							attestation_provider: attestation_report.provider,
 							confidence_level: attestation_report.confidence_level,
 							initial_score: None,
-							features: pruntime_info.features,
+							features: iruntime_info.features,
 						});
 						Self::push_message(SystemEvent::new_worker_event(
 							pubkey,
@@ -711,41 +711,41 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Registers a pruntime binary to [`PRuntimeAllowList`]
+		/// Registers a iruntime binary to [`IruntimeAllowList`]
 		///
 		/// Can only be called by `GovernanceOrigin`.
 		#[pallet::call_index(9)]
 		#[pallet::weight(0)]
-		pub fn add_pruntime(origin: OriginFor<T>, pruntime_hash: Vec<u8>) -> DispatchResult {
+		pub fn add_iruntime(origin: OriginFor<T>, iruntime_hash: Vec<u8>) -> DispatchResult {
 			T::GovernanceOrigin::ensure_origin(origin)?;
 
-			let mut allowlist = PRuntimeAllowList::<T>::get();
-			ensure!(!allowlist.contains(&pruntime_hash), Error::<T>::PRuntimeAlreadyExists);
+			let mut allowlist = IruntimeAllowList::<T>::get();
+			ensure!(!allowlist.contains(&iruntime_hash), Error::<T>::IruntimeAlreadyExists);
 
-			allowlist.push(pruntime_hash.clone());
-			PRuntimeAllowList::<T>::put(allowlist);
+			allowlist.push(iruntime_hash.clone());
+			IruntimeAllowList::<T>::put(allowlist);
 
 			let now = frame_system::Pallet::<T>::block_number();
-			PRuntimeAddedAt::<T>::insert(&pruntime_hash, now);
+			IruntimeAddedAt::<T>::insert(&iruntime_hash, now);
 
 			Ok(())
 		}
 
-		/// Removes a pruntime binary from [`PRuntimeAllowList`]
+		/// Removes a iruntime binary from [`IruntimeAllowList`]
 		///
 		/// Can only be called by `GovernanceOrigin`.
 		#[pallet::call_index(10)]
 		#[pallet::weight(0)]
-		pub fn remove_pruntime(origin: OriginFor<T>, pruntime_hash: Vec<u8>) -> DispatchResult {
+		pub fn remove_iruntime(origin: OriginFor<T>, iruntime_hash: Vec<u8>) -> DispatchResult {
 			T::GovernanceOrigin::ensure_origin(origin)?;
 
-			let mut allowlist = PRuntimeAllowList::<T>::get();
-			ensure!(allowlist.contains(&pruntime_hash), Error::<T>::PRuntimeNotFound);
+			let mut allowlist = IruntimeAllowList::<T>::get();
+			ensure!(allowlist.contains(&iruntime_hash), Error::<T>::IruntimeNotFound);
 
-			allowlist.retain(|h| *h != pruntime_hash);
-			PRuntimeAllowList::<T>::put(allowlist);
+			allowlist.retain(|h| *h != iruntime_hash);
+			IruntimeAllowList::<T>::put(allowlist);
 
-			PRuntimeAddedAt::<T>::remove(&pruntime_hash);
+			IruntimeAddedAt::<T>::remove(&iruntime_hash);
 
 			Ok(())
 		}
@@ -793,36 +793,36 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Set minimum pRuntime version. Versions less than MinimumPRuntimeVersion would be forced to quit.
+		/// Set minimum iruntime version. Versions less than MinimumIruntimeVersion would be forced to quit.
 		///
 		/// Can only be called by `GovernanceOrigin`.
 		#[pallet::call_index(13)]
 		#[pallet::weight(0)]
-		pub fn set_minimum_pruntime_version(
+		pub fn set_minimum_iruntime_version(
 			origin: OriginFor<T>,
 			major: u32,
 			minor: u32,
 			patch: u32,
 		) -> DispatchResult {
 			T::GovernanceOrigin::ensure_origin(origin)?;
-			MinimumPRuntimeVersion::<T>::put((major, minor, patch));
-			Self::deposit_event(Event::<T>::MinimumPRuntimeVersionChangedTo(major, minor, patch));
+			MinimumIruntimeVersion::<T>::put((major, minor, patch));
+			Self::deposit_event(Event::<T>::MinimumIruntimeVersionChangedTo(major, minor, patch));
 			Ok(())
 		}
 
-		/// Set the consensus version used by pruntime. PRuntimes would switch some code path according
+		/// Set the consensus version used by iruntime. Iruntimes would switch some code path according
 		/// the current consensus version.
 		///
 		/// Can only be called by `GovernanceOrigin`.
 		#[pallet::call_index(14)]
 		#[pallet::weight(0)]
-		pub fn set_pruntime_consensus_version(
+		pub fn set_iruntime_consensus_version(
 			origin: OriginFor<T>,
 			version: u32,
 		) -> DispatchResult {
 			T::GovernanceOrigin::ensure_origin(origin)?;
-			PRuntimeConsensusVersion::<T>::put(version);
-			Self::deposit_event(Event::<T>::PRuntimeConsensusVersionChangedTo(version));
+			IruntimeConsensusVersion::<T>::put(version);
+			Self::deposit_event(Event::<T>::IruntimeConsensusVersionChangedTo(version));
 			Ok(())
 		}
 	}
@@ -1076,13 +1076,13 @@ pub mod pallet {
 		pub pubkey: WorkerPublicKey,
 		/// The public key for ECDH communication
 		pub ecdh_pubkey: EcdhPublicKey,
-		/// The pruntime version of the worker upon registering
+		/// The iruntime version of the worker upon registering
 		pub runtime_version: u32,
 		/// The unix timestamp of the last updated time
 		pub last_updated: u64,
 		/// The stake pool owner that can control this worker
 		///
-		/// When initializing pruntime, the user can specify an _operator account_. Then this field
+		/// When initializing iruntime, the user can specify an _operator account_. Then this field
 		/// will be updated when the worker is being registered on the blockchain. Once it's set,
 		/// the worker can only be added to a stake pool if the pool owner is the same as the
 		/// operator. It ensures only the trusted person can control the worker.
@@ -1109,13 +1109,13 @@ pub mod pallet {
 		pub pubkey: WorkerPublicKey,
 		/// The public key for ECDH communication
 		pub ecdh_pubkey: EcdhPublicKey,
-		/// The pruntime version of the worker upon registering
+		/// The iruntime version of the worker upon registering
 		pub runtime_version: u32,
 		/// The unix timestamp of the last updated time
 		pub last_updated: u64,
 		/// The stake pool owner that can control this worker
 		///
-		/// When initializing pruntime, the user can specify an _operator account_. Then this field
+		/// When initializing iruntime, the user can specify an _operator account_. Then this field
 		/// will be updated when the worker is being registered on the blockchain. Once it's set,
 		/// the worker can only be added to a stake pool if the pool owner is the same as the
 		/// operator. It ensures only the trusted person can control the worker.
@@ -1140,7 +1140,7 @@ pub mod pallet {
 	impl<T: Config> From<AttestationError> for Error<T> {
 		fn from(err: AttestationError) -> Self {
 			match err {
-				AttestationError::PRuntimeRejected => Self::PRuntimeRejected,
+				AttestationError::IruntimeRejected => Self::IruntimeRejected,
 				AttestationError::InvalidIASSigningCert => Self::InvalidIASSigningCert,
 				AttestationError::InvalidReport => Self::InvalidReport,
 				AttestationError::InvalidQuoteStatus => Self::InvalidQuoteStatus,
@@ -1303,26 +1303,26 @@ pub mod pallet {
 		}
 
 		#[test]
-		fn test_pruntime_allowlist_works() {
+		fn test_iruntime_allowlist_works() {
 			new_test_ext().execute_with(|| {
 				// Set block number to 1 to test the events
 				set_block_1();
 
 				let sample: Vec<u8> = [1, 2, 3, 4].to_vec();
-				assert_ok!(IndraRegistry::add_pruntime(Origin::root(), sample.clone()));
+				assert_ok!(IndraRegistry::add_iruntime(Origin::root(), sample.clone()));
 				assert_noop!(
-					IndraRegistry::add_pruntime(Origin::root(), sample.clone()),
-					Error::<Test>::PRuntimeAlreadyExists
+					IndraRegistry::add_iruntime(Origin::root(), sample.clone()),
+					Error::<Test>::IruntimeAlreadyExists
 				);
-				assert_eq!(PRuntimeAllowList::<Test>::get().len(), 1);
-				assert!(PRuntimeAddedAt::<Test>::contains_key(&sample));
-				assert_ok!(IndraRegistry::remove_pruntime(Origin::root(), sample.clone()));
+				assert_eq!(IruntimeAllowList::<Test>::get().len(), 1);
+				assert!(IruntimeAddedAt::<Test>::contains_key(&sample));
+				assert_ok!(IndraRegistry::remove_iruntime(Origin::root(), sample.clone()));
 				assert_noop!(
-					IndraRegistry::remove_pruntime(Origin::root(), sample.clone()),
-					Error::<Test>::PRuntimeNotFound
+					IndraRegistry::remove_iruntime(Origin::root(), sample.clone()),
+					Error::<Test>::IruntimeNotFound
 				);
-				assert_eq!(PRuntimeAllowList::<Test>::get().len(), 0);
-				assert!(!PRuntimeAddedAt::<Test>::contains_key(&sample));
+				assert_eq!(IruntimeAllowList::<Test>::get().len(), 0);
+				assert!(!IruntimeAddedAt::<Test>::contains_key(&sample));
 			});
 		}
 

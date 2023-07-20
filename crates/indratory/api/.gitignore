@@ -1,0 +1,6 @@
+*
+
+!.gitignore
+!mod.rs
+!tests.rs
+/proto_rendered

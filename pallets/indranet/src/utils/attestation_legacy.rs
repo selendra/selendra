@@ -20,8 +20,8 @@ pub trait AttestationValidator {
 		attestation: &Attestation,
 		user_data_hash: &[u8; 32],
 		now: u64,
-		verify_pruntime_hash: bool,
-		pruntime_allowlist: Vec<Vec<u8>>,
+		verify_iruntime_hash: bool,
+		iruntime_allowlist: Vec<Vec<u8>>,
 	) -> Result<IasFields, Error>;
 }
 
@@ -121,8 +121,8 @@ impl AttestationValidator for IasValidator {
 		attestation: &Attestation,
 		user_data_hash: &[u8; 32],
 		now: u64,
-		verify_pruntime: bool,
-		pruntime_allowlist: Vec<Vec<u8>>,
+		verify_iruntime: bool,
+		iruntime_allowlist: Vec<Vec<u8>>,
 	) -> Result<IasFields, Error> {
 		let fields = match attestation {
 			Attestation::SgxIas { ra_report, signature, raw_signing_cert } => validate_ias_report(
@@ -130,8 +130,8 @@ impl AttestationValidator for IasValidator {
 				signature,
 				raw_signing_cert,
 				now,
-				verify_pruntime,
-				pruntime_allowlist,
+				verify_iruntime,
+				iruntime_allowlist,
 			),
 		}?;
 		let commit = &fields.report_data[..32];
@@ -148,8 +148,8 @@ pub fn validate_ias_report(
 	signature: &[u8],
 	raw_signing_cert: &[u8],
 	now: u64,
-	verify_pruntime: bool,
-	pruntime_allowlist: Vec<Vec<u8>>,
+	verify_iruntime: bool,
+	iruntime_allowlist: Vec<Vec<u8>>,
 ) -> Result<IasFields, Error> {
 	// Validate report
 	let sig_cert = webpki::EndEntityCert::try_from(raw_signing_cert);
@@ -170,11 +170,11 @@ pub fn validate_ias_report(
 
 	let (ias_fields, report_timestamp) = IasFields::from_ias_report(report)?;
 
-	// Validate PRuntime
-	if verify_pruntime {
+	// Validate Iruntime
+	if verify_iruntime {
 		let t_mrenclave = ias_fields.extend_mrenclave();
-		if !pruntime_allowlist.contains(&t_mrenclave) {
-			return Err(Error::PRuntimeRejected)
+		if !iruntime_allowlist.contains(&t_mrenclave) {
+			return Err(Error::IruntimeRejected)
 		}
 	}
 
@@ -193,7 +193,7 @@ mod test {
 
 	pub const ATTESTATION_SAMPLE: &[u8] = include_bytes!("../../sample/ias_attestation.json");
 	pub const ATTESTATION_TIMESTAMP: u64 = 1631441180; // 2021-09-12T18:06:20.402478
-	pub const PRUNTIME_HASH: &str = "518422fa769d2d55982015a0e0417c6a8521fdfc7308f5ec18aaa1b6924bd0f300000000815f42f11cf64430c30bab7816ba596a1da0130c3b028b673133a66cf9a3e0e6";
+	pub const IRUNTIME_HASH: &str = "518422fa769d2d55982015a0e0417c6a8521fdfc7308f5ec18aaa1b6924bd0f300000000815f42f11cf64430c30bab7816ba596a1da0130c3b028b673133a66cf9a3e0e6";
 
 	#[test]
 	fn test_ias_validator() {
@@ -225,7 +225,7 @@ mod test {
 				true,
 				vec![]
 			),
-			Err(Error::PRuntimeRejected)
+			Err(Error::IruntimeRejected)
 		);
 
 		assert_ok!(validate_ias_report(
@@ -234,7 +234,7 @@ mod test {
 			&raw_signing_cert,
 			ATTESTATION_TIMESTAMP,
 			true,
-			vec![hex::decode(PRUNTIME_HASH).unwrap()]
+			vec![hex::decode(IRUNTIME_HASH).unwrap()]
 		));
 	}
 }

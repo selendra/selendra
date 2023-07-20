@@ -1,0 +1,10 @@
+[package]
+name = "indratory-pal"
+version = "0.1.0"
+edition = "2018"
+description = "Platform abstraction layer for Indratory Runtime"
+
+[dependencies]
+anyhow = "1.0.69"
+indranet-types = { path = "../../indranet-types", default-features = false, features = ["enable_serde", "sgx"] }
+indratory-api = { path = "../api" }

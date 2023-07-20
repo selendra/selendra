@@ -1,6 +1,6 @@
 //! The LocalCache provides a local KV cache for contracts to do some offchain computation.
 //! When we say local, it means that the data stored in the cache is different in different
-//! machines of the same contract. And the data might loss when the pruntime restart or caused
+//! machines of the same contract. And the data might loss when the iruntime restart or caused
 //! by some kind of cache expiring machanism.
 
 use once_cell::sync::Lazy;

@@ -27,6 +27,11 @@ glob = "0.3"
 bitflags = "1"
 async-trait = "0.1.57"
 derive_more = "0.99.0"
+futures = { version = "0.3.17", default-features = false }
+async-io = { version = "1.6.0" }
+async-executor = { version = "1.4.1" }
+async-std = { version = "1.10.0" }
+reqwest = { version = "0.11", default-features = false, features = ["rustls-tls", "socks"] }
 hash-db = { version = "0.16.0", default-features = false }
 num = { package = "num-traits", version = "0.2", default-features = false }
 tokio = { version = "1", features = ["full"] }
@@ -53,34 +58,29 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 
 indranet-trie-storage = { path = "../indranet-trie-storage", default-features = false }
-#indranet-mq = { path = "../indranet-mq", default-features = false }
+indranet-mq = { path = "../indranet-mq", default-features = false }
 indranet-serde-more = { path = "../indranet-serde-more" }
 
 indranet-crypto = { path = "../indranet-crypto", features = ["getrandom", "stream"] }
-#irpc = { path = "../irpc", default-features = false }
+irpc = { path = "../irpc", default-features = false }
 pink = { path = "../pink/runner", package = "pink-runner" }
 pink-extension-runtime = { path = "../pink/pink-extension-runtime" }
 
 # # Indranet specific
-# runtime = { path = "../../standalone/runtime", package = "indranet-node-runtime", default-features = false, features = ["std"] }
-# indranet-pallets = { path = "../../pallets/indranet", default-features = false }
-# indranet-types = { path = "../indranet-types", default-features = false, features = ["enable_serde", "sgx"] }
-# indratory-api = { path = "./api", default-features = false }
-# indratory-pal = { path = "./pal", default-features = false }
+runtime = { path = "../../runtime", package = "selendra-runtime", default-features = false, features = ["std"] }
+indranet-pallets = { path = "../../pallets/indranet", default-features = false }
+indranet-types = { path = "../indranet-types", default-features = false, features = ["enable_serde", "sgx"] }
+indratory-api = { path = "./api", default-features = false }
+indratory-pal = { path = "./pal", default-features = false }
 
 # # for network service
-# futures = { version = "0.3.17", default-features = false }
-# async-io = { version = "1.6.0" }
-# async-executor = { version = "1.4.1" }
-# async-std = { version = "1.10.0" }
-# sidevm = { package = "sidevm-host-runtime", path = "../sidevm/host-runtime" }
-# indranet-async-executor = { path = '../indranet-async-executor' }
+sidevm = { package = "sidevm-host-runtime", path = "../sidevm/host-runtime" }
+indranet-async-executor = { path = '../indranet-async-executor' }
 
 
-# indranet-scheduler = { path = "../indranet-scheduler" }
-# sgx-api-lite = { path = "../sgx-api-lite" }
-# reqwest = { version = "0.11", default-features = false, features = ["rustls-tls", "socks"] }
-# reqwest-env-proxy = { path = "../reqwest-env-proxy" }
+indranet-scheduler = { path = "../indranet-scheduler" }
+sgx-api-lite = { path = "../sgx-api-lite" }
+reqwest-env-proxy = { path = "../reqwest-env-proxy" }
 
 [dev-dependencies]
 insta = "1.7.2"

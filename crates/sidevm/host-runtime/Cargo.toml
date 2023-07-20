@@ -1,0 +1,39 @@
+[package]
+name = "sidevm-host-runtime"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.69"
+dashmap = "5.2.0"
+futures = "0.3"
+hex_fmt = "0.3.0"
+log = "0.4.16"
+tracing = "0.1"
+loupe = "0.1.3"
+rustls-pemfile = "1"
+rand = "0.8.5"
+thiserror = "1"
+libc = "0.2"
+webpki-roots = "0.22"
+thread_local = "1.1"
+tokio-rustls = "0.23"
+page_size = "0.4.2"
+tokio = { version = "1.24.2", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+scale = { version = "3.3", package = "parity-scale-codec" }
+wasmer = "3"
+once_cell = "1"
+parity-wasm = "0.45.0"
+wasm-instrument = "0.3.0"
+wasmer-middlewares = "3"
+wasmer-wasi-types = "3"
+derive_more = "0.99.17"
+wasmer-compiler-singlepass = "3"
+wasmer-compiler-cranelift = { version = "3", optional = true }
+wasmer-compiler-llvm = { version = "3", optional = true }
+
+wasmer-tunables = { path = "../../wasmer-tunables" }
+sidevm-env = { path = "../env", features = ["host"] }
+tokio-proxy = { path = "../../tokio-proxy" }
+indranet-scheduler = { path = "../../indranet-scheduler" }

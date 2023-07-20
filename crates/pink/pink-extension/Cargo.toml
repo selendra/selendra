@@ -2,7 +2,7 @@
 name = "pink-extension"
 version = "0.1.0"
 edition = "2018"
-description = "Phala's ink! for writing Indra contracts"
+description = "ink! for writing Indra contracts"
 license = "Apache-2.0"
 
 [dependencies]

@@ -38,7 +38,7 @@ parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 20;
 	pub const MinimumPeriod: u64 = 1;
-	pub const VerifyPRuntime: bool = false;
+	pub const VerifyIruntime: bool = false;
 	pub const VerifyRelaychainGenesisBlockHash: bool = true;
 }
 impl system::Config for Test {
@@ -110,7 +110,7 @@ impl registry::Config for Test {
 	type LegacyAttestationValidator = MockValidator;
 	type UnixTime = Timestamp;
 	type NoneAttestationEnabled = NoneAttestationEnabled;
-	type VerifyPRuntime = VerifyPRuntime;
+	type VerifyIruntime = VerifyIruntime;
 	type VerifyRelaychainGenesisBlockHash = VerifyRelaychainGenesisBlockHash;
 	type GovernanceOrigin = frame_system::EnsureRoot<Self::AccountId>;
 }

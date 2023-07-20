@@ -1095,7 +1095,7 @@ pub mod pallet {
 			FixedPoint::from_bits(self.params.v_max)
 		}
 
-		/// Gets the estimated rig costs in PHA
+		/// Gets the estimated rig costs in SEL
 		fn rig_cost(&self, p: u32) -> FixedPoint {
 			let cost_k = FixedPoint::from_bits(self.params.rig_k);
 			let cost_b = FixedPoint::from_bits(self.params.rig_b);
@@ -1426,7 +1426,7 @@ pub mod pallet {
 				assert_ok!(IndraComputation::bind(1, worker_pubkey(1)));
 				assert_ok!(IndraComputation::start_computing(1, 3000 * DOLLARS));
 				// Though only the computing workers can send heartbeat, but we don't enforce it in
-				// the pallet, but just by pRuntime. Therefore we can directly throw a heartbeat
+				// the pallet, but just by iruntime. Therefore we can directly throw a heartbeat
 				// response to test benchmark report.
 
 				// 110% boost

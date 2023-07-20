@@ -25,7 +25,7 @@ pub struct StakePool<AccountId, Balance> {
 	pub workers: Vec<WorkerPublicKey>,
 	/// The workers in cd in the pool
 	pub cd_workers: Vec<WorkerPublicKey>,
-	/// Generated account to store W-PHA locked in computing workers, controlled by the pallet
+	/// Generated account to store W-SEL locked in computing workers, controlled by the pallet
 	pub lock_account: AccountId,
 	/// Generated account to maintain owner rewards, controlled by the pallet
 	pub owner_reward_account: AccountId,

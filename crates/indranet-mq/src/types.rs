@@ -27,7 +27,7 @@ pub enum MessageOrigin {
 	#[display(fmt = "Contract({})", "hex::encode(_0)")]
 	#[serde(with = "more::scale_bytes")]
 	Contract(ContractId),
-	/// A pRuntime worker
+	/// A iruntime worker
 	#[display(fmt = "Worker({})", "hex::encode(_0)")]
 	#[serde(with = "more::scale_bytes")]
 	Worker(sp_core::sr25519::Public),

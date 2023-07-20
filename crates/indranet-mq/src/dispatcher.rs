@@ -152,7 +152,7 @@ impl<T: Decode> TypedReceiver<T> {
 			Err(err) =>
 				if msg.sender.always_well_formed() {
 					panic!(
-                        "Failed to decode critical mq message (dest={:?}), please upgrade the pRuntime client",
+                        "Failed to decode critical mq message (dest={:?}), please upgrade the iruntime client",
                         msg.destination
                     );
 				} else {

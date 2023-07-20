@@ -39,7 +39,7 @@ pub mod pallet {
 		+ pallet_uniques::Config<CollectionId = CollectionId, ItemId = NftId>
 	{
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-		/// W-PHA's asset id
+		/// W-SEL's asset id
 		#[pallet::constant]
 		type WSelAssetId: Get<u32>;
 		/// Pha's global fund pool
@@ -54,7 +54,7 @@ pub mod pallet {
 	pub struct FinanceAccount<Balance> {
 		/// The pools and their pool collection id the user delegated
 		pub invest_pools: Vec<(u64, CollectionId)>,
-		/// The locked W-PHA amount used to vote
+		/// The locked W-SEL amount used to vote
 		pub locked: Balance,
 	}
 
@@ -67,7 +67,7 @@ pub mod pallet {
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
-	/// Mapping from the vote ids and accounts to the amounts of W-PHA used to approve or oppose to the vote
+	/// Mapping from the vote ids and accounts to the amounts of W-SEL used to approve or oppose to the vote
 	#[pallet::storage]
 	pub type VoteAccountMap<T: Config> = StorageDoubleMap<
 		_,
@@ -78,7 +78,7 @@ pub mod pallet {
 		(BalanceOf<T>, BalanceOf<T>),
 	>;
 
-	/// Mapping from the accounts and vote ids to the amounts of W-PHA used to approve or oppose to the vote
+	/// Mapping from the accounts and vote ids to the amounts of W-SEL used to approve or oppose to the vote
 	#[pallet::storage]
 	pub type AccountVoteMap<T: Config> =
 		StorageDoubleMap<_, Blake2_128Concat, T::AccountId, Blake2_128Concat, ReferendumIndex, ()>;
@@ -129,7 +129,7 @@ pub mod pallet {
 		VoteAmountLargerThanTotalStakes,
 		/// The vote is not currently on going
 		ReferendumInvalid,
-		/// The vote is now on going and the W-PHA used in voting can not be unlocked
+		/// The vote is now on going and the W-SEL used in voting can not be unlocked
 		ReferendumOngoing,
 		/// The Iteration exceed the max limitaion
 		IterationsIsNotVaild,
@@ -184,7 +184,7 @@ pub mod pallet {
 		T: pallet_democracy::Config<Currency = <T as crate::IndranetConfig>::Currency>,
 		T: Config + vault::Config,
 	{
-		/// Wraps some pha and gain equal amount of W-PHA
+		/// Wraps some pha and gain equal amount of W-SEL
 		///
 		/// The wrapped pha is stored in `WrappedBalancesAccountId`'s wallet and can not be taken away
 		#[pallet::call_index(0)]
@@ -209,7 +209,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Burns the amount of all free W-PHA and unwraps equal amount of pha
+		/// Burns the amount of all free W-SEL and unwraps equal amount of pha
 		///
 		/// The unwrapped pha is transfered from `WrappedBalancesAccountId` to the user's wallet
 		#[pallet::call_index(1)]
@@ -234,7 +234,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Unwraps some pha by burning equal amount of W-PHA
+		/// Unwraps some pha by burning equal amount of W-SEL
 		///
 		/// The unwrapped pha is transfered from `WrappedBalancesAccountId` to the user's wallet
 		#[pallet::call_index(2)]
@@ -264,10 +264,10 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Uses some W-PHA to approve or oppose a vote
+		/// Uses some W-SEL to approve or oppose a vote
 		///
 		/// Can both approve and oppose a vote at the same time
-		/// The W-PHA used in vote will be locked until the vote is finished or canceled
+		/// The W-SEL used in vote will be locked until the vote is finished or canceled
 		#[pallet::call_index(3)]
 		#[pallet::weight(0)]
 		#[frame_support::transactional]
@@ -359,7 +359,7 @@ pub mod pallet {
 		T: pallet_assets::Config<AssetId = u32, Balance = BalanceOf<T>>,
 		T: Config + vault::Config,
 	{
-		/// Gets W-PHA's asset id
+		/// Gets W-SEL's asset id
 		pub fn get_asset_id() -> u32 {
 			T::WSelAssetId::get()
 		}
@@ -383,13 +383,13 @@ pub mod pallet {
 			}
 		}
 
-		/// Mints some W-PHA
+		/// Mints some W-SEL
 		pub fn mint_into(target: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
 			pallet_assets::Pallet::<T>::mint_into(T::WSelAssetId::get(), target, amount)?;
 			Ok(())
 		}
 
-		/// Burns some W-PHA
+		/// Burns some W-SEL
 		pub fn burn_from(target: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
 			pallet_assets::Pallet::<T>::burn_from(T::WSelAssetId::get(), target, amount)?;
 			Ok(())
@@ -410,9 +410,9 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Caculates the net W-PHA value of a user
+		/// Caculates the net W-SEL value of a user
 		///
-		/// The net W-PHA value includes:
+		/// The net W-SEL value includes:
 		/// 1. Free stakes in user's asset account
 		/// 2. The current value of shares owned by the user
 		/// Note: shares in withdraw queues are not included
@@ -445,7 +445,7 @@ pub mod pallet {
 			Ok(total_active_stakes)
 		}
 
-		/// Sums up all amounts of W-PHA approves or opposes to the vote
+		/// Sums up all amounts of W-SEL approves or opposes to the vote
 		// TODO(mingxuan): Optimize to O(1) in the future.
 		pub fn accumulate_account_vote(vote_id: ReferendumIndex) -> AccountVote<BalanceOf<T>> {
 			let mut total_aye_amount: BalanceOf<T> = Zero::zero();
@@ -458,7 +458,7 @@ pub mod pallet {
 			AccountVote::<BalanceOf<T>>::Split { aye: total_aye_amount, nay: total_nay_amount }
 		}
 
-		/// Tries to update locked W-PHA amount of the user
+		/// Tries to update locked W-SEL amount of the user
 		fn update_user_locked(user: T::AccountId) -> DispatchResult {
 			let mut max_lock: BalanceOf<T> = Zero::zero();
 			AccountVoteMap::<T>::iter_prefix(user.clone()).for_each(|(vote_id, ())| {

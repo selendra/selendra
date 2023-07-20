@@ -6,7 +6,7 @@ pub trait FixedPointConvert {
 	fn to_fixed(&self) -> FixedPoint;
 }
 
-const PHA: u128 = 1_000_000_000_000;
+const SEL: u128 = 1_000_000_000_000;
 
 // 12 decimals u128 conversion
 impl FixedPointConvert for u128 {
@@ -14,11 +14,11 @@ impl FixedPointConvert for u128 {
 		Self::from_fixed(&FixedPoint::from_bits(bits))
 	}
 	fn from_fixed(v: &FixedPoint) -> Self {
-		U80F48::unwrapped_from_num(*v).unwrapped_mul_int(PHA).to_num()
+		U80F48::unwrapped_from_num(*v).unwrapped_mul_int(SEL).to_num()
 	}
 	fn to_fixed(&self) -> FixedPoint {
 		let v = U80F48::unwrapped_from_num(*self);
-		FixedPoint::unwrapped_from_num(v.unwrapped_div_int(PHA))
+		FixedPoint::unwrapped_from_num(v.unwrapped_div_int(SEL))
 	}
 }
 

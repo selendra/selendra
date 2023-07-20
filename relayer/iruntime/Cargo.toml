@@ -27,7 +27,7 @@ rocket_cors = { version = "0.6.0-alpha1", git = "https://github.com/lawliet89/ro
 reqwest-env-proxy = { path = "../../crates/reqwest-env-proxy" }
 indranet-sanitized-logger = { path = "../../crates/indranet-sanitized-logger" }
 indratory = { path = "../../crates/indratory" }
-# indratory-api = { path = "../../crates/indratory/api", features = ["pruntime-client"] }
+# indratory-api = { path = "../../crates/indratory/api", features = ["iruntime-client"] }
 # indratory-pal = { path = "../../crates/indratory/pal" }
 # indranet-allocator = { path = "../../crates/indranet-allocator" }
 # indranet-rocket-middleware = { path = "../../crates/indranet-rocket-middleware" }

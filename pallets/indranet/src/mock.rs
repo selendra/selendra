@@ -74,7 +74,7 @@ parameter_types! {
 	pub const MinInitP: u32 = 1;
 	pub const MaxPoolWorkers: u32 = 10;
 	pub const NoneAttestationEnabled: bool = true;
-	pub const VerifyPRuntime: bool = false;
+	pub const VerifyIruntime: bool = false;
 	pub const VerifyRelaychainGenesisBlockHash: bool = true;
 }
 impl system::Config for Test {
@@ -171,7 +171,7 @@ impl registry::Config for Test {
 	type LegacyAttestationValidator = MockValidator;
 	type UnixTime = Timestamp;
 	type NoneAttestationEnabled = NoneAttestationEnabled;
-	type VerifyPRuntime = VerifyPRuntime;
+	type VerifyIruntime = VerifyIruntime;
 	type VerifyRelaychainGenesisBlockHash = VerifyRelaychainGenesisBlockHash;
 	type GovernanceOrigin = EnsureRoot<Self::AccountId>;
 }
@@ -411,8 +411,8 @@ impl AttestationValidator for MockValidator {
 		_attestation: &Attestation,
 		_user_data_hash: &[u8; 32],
 		_now: u64,
-		_verify_pruntime: bool,
-		_pruntime_allowlist: Vec<Vec<u8>>,
+		_verify_iruntime: bool,
+		_iruntime_allowlist: Vec<Vec<u8>>,
 	) -> Result<IasFields, AttestationError> {
 		Ok(IasFields {
 			mr_enclave: [0u8; 32],

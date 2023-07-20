@@ -244,7 +244,7 @@ pub mod pallet {
 			Self::push_message_to(topic, message);
 		}
 
-		/// Push an ink message to a contract running in pRuntime.
+		/// Push an ink message to a contract running in iruntime.
 		///
 		/// The message is scale encoded selector + args
 		///

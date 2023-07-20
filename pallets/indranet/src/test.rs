@@ -615,7 +615,7 @@ fn test_pool_cap() {
 			IndraStakePoolv2::set_cap(RuntimeOrigin::signed(2), 0, 1),
 			stake_pool_v2::Error::<Test>::UnauthorizedPoolOwner,
 		);
-		// Cap to 1000 PHA
+		// Cap to 1000 SEL
 		assert_ok!(IndraStakePoolv2::set_cap(RuntimeOrigin::signed(1), 0, 100 * DOLLARS));
 		assert_eq!(ensure_stake_pool::<Test>(0).unwrap().cap, Some(100 * DOLLARS));
 		// Check cap shouldn't be less than the current stake
@@ -1010,7 +1010,7 @@ fn test_on_reward_for_vault() {
 			50 * DOLLARS,
 			Some(0)
 		));
-		// Staker2 contribute 1000 PHA and start computing
+		// Staker2 contribute 1000 SEL and start computing
 		assert_ok!(IndraStakePoolv2::contribute(RuntimeOrigin::signed(2), 1, 50 * DOLLARS, None));
 		assert_ok!(IndraStakePoolv2::start_computing(
 			RuntimeOrigin::signed(1),

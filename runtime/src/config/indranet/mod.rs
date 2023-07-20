@@ -34,7 +34,7 @@ impl pallet_mq::Config for Runtime {
 
 parameter_types! {
 	pub const NoneAttestationEnabled: bool = true;
-	pub const VerifyPRuntime: bool = false;
+	pub const VerifyIruntime: bool = false;
 	pub const VerifyRelaychainGenesisBlockHash: bool = false;
 }
 
@@ -44,7 +44,7 @@ impl pallet_registry::Config for Runtime {
 	type UnixTime = Timestamp;
 	type LegacyAttestationValidator = pallet_registry::IasValidator;
 	type NoneAttestationEnabled = NoneAttestationEnabled;
-	type VerifyPRuntime = VerifyPRuntime;
+	type VerifyIruntime = VerifyIruntime;
 	type VerifyRelaychainGenesisBlockHash = VerifyRelaychainGenesisBlockHash;
 	type GovernanceOrigin = EnsureRootOrHalfCouncil;
 }
