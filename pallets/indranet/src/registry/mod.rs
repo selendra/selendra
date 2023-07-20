@@ -16,7 +16,7 @@ pub mod pallet {
 	use sp_runtime::SaturatedConversion;
 	use sp_std::{convert::TryFrom, prelude::*, vec};
 
-	use crate::{attestation::Error as AttestationError, mq::MessageOriginInfo};
+	use crate::{mq::MessageOriginInfo, utils::attestation::Error as AttestationError};
 	use indranet_types::{
 		messaging::{
 			self, bind_topic, ContractClusterId, ContractId, DecodedMessage, GatekeeperChange,
@@ -31,7 +31,7 @@ pub mod pallet {
 	pub use indranet_types::AttestationReport;
 	// Re-export
 	// TODO: Legacy
-	pub use crate::attestation_legacy::{
+	pub use crate::utils::attestation_legacy::{
 		Attestation, AttestationValidator, IasFields, IasValidator,
 	};
 
@@ -89,6 +89,9 @@ pub mod pallet {
 		/// SHOULD NOT SET TO FALSE ON PRODUCTION!!!
 		#[pallet::constant]
 		type VerifyRelaychainGenesisBlockHash: Get<bool>;
+
+		/// Callback to get parachain id
+		type ParachainId: Get<u32>;
 
 		/// Origin used to govern the pallet
 		type GovernanceOrigin: EnsureOrigin<Self::RuntimeOrigin>;
@@ -279,6 +282,7 @@ pub mod pallet {
 		InvalidEndpointSigningTime,
 		/// Migration root not authorized
 		NotMigrationRoot,
+		ParachainIdMismatch,
 		InvalidConsensusVersion,
 	}
 
@@ -584,6 +588,10 @@ pub mod pallet {
 			)
 			.map_err(Into::<Error<T>>::into)?;
 
+			ensure!(
+				iruntime_info.para_id == T::ParachainId::get(),
+				Error::<T>::ParachainIdMismatch
+			);
 			if T::VerifyRelaychainGenesisBlockHash::get() {
 				let genesis_block_hash = iruntime_info.genesis_block_hash;
 				let allowlist = RelaychainGenesisBlockHashAllowList::<T>::get();
@@ -1254,6 +1262,7 @@ pub mod pallet {
 							pubkey: worker_pubkey(1),
 							ecdh_pubkey: ecdh_pubkey(1),
 							genesis_block_hash: Default::default(),
+							para_id: 0,
 							features: vec![4, 1],
 							operator: Some(1),
 							max_consensus_version: 0,
@@ -1261,6 +1270,26 @@ pub mod pallet {
 						None
 					),
 					Error::<Test>::GenesisBlockHashRejected
+				);
+
+				// New registration with wrong para_id
+				assert_noop!(
+					IndraRegistry::register_worker_v2(
+						Origin::signed(1),
+						WorkerRegistrationInfoV2::<u64> {
+							version: 1,
+							machine_id: Default::default(),
+							pubkey: worker_pubkey(1),
+							ecdh_pubkey: ecdh_pubkey(1),
+							genesis_block_hash: H256::repeat_byte(1),
+							para_id: 1,
+							features: vec![4, 1],
+							operator: Some(1),
+							max_consensus_version: 0,
+						},
+						None
+					),
+					Error::<Test>::ParachainIdMismatch
 				);
 
 				// New registration
@@ -1272,6 +1301,7 @@ pub mod pallet {
 						pubkey: worker_pubkey(1),
 						ecdh_pubkey: ecdh_pubkey(1),
 						genesis_block_hash: H256::repeat_byte(1),
+						para_id: 0,
 						features: vec![4, 1],
 						operator: Some(1),
 						max_consensus_version: 0,
@@ -1290,6 +1320,7 @@ pub mod pallet {
 						pubkey: worker_pubkey(1),
 						ecdh_pubkey: ecdh_pubkey(1),
 						genesis_block_hash: H256::repeat_byte(1),
+						para_id: 0,
 						features: vec![4, 1],
 						operator: Some(2),
 						max_consensus_version: 0,

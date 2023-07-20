@@ -11,7 +11,7 @@ extern crate webpki_wasm as webpki;
 extern crate alloc;
 
 // Re-export
-use utils::{attestation, attestation_legacy, balance_convert, constants, fixed_point};
+use utils::{attestation, balance_convert, constants, fixed_point};
 
 pub mod migrations;
 pub mod utils;
@@ -19,6 +19,7 @@ pub mod utils;
 pub mod compute;
 pub mod indra;
 pub mod mq;
+pub mod puppets;
 pub mod registry;
 pub mod stake_pool;
 

@@ -174,6 +174,7 @@ impl registry::Config for Test {
 	type VerifyIruntime = VerifyIruntime;
 	type VerifyRelaychainGenesisBlockHash = VerifyRelaychainGenesisBlockHash;
 	type GovernanceOrigin = EnsureRoot<Self::AccountId>;
+	type ParachainId = ConstU32<0>;
 }
 
 parameter_types! {

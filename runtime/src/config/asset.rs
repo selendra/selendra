@@ -1,5 +1,6 @@
 use crate::{
-	deposit, origin::EnsureRootOrFullCouncil, Balances, Runtime, RuntimeEvent, MILLI_CENT, TOKEN, IndranetWrappedBalances,
+	deposit, origin::EnsureRootOrFullCouncil, Balances, IndranetWrappedBalances, Runtime,
+	RuntimeEvent, MILLI_CENT, TOKEN,
 };
 
 use frame_support::{parameter_types, traits::AsEnsureOriginWithArg};

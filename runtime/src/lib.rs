@@ -52,7 +52,7 @@ use selendra_primitives::{
 	TREASURY_PROPOSAL_BOND,
 };
 pub use selendra_primitives::{
-	AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, Signature,
+	AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, Moment, Signature,
 };
 use selendra_runtime_common::{
 	impls::DealWithFees, BlockLength, BlockWeights, SlowAdjustingFeeUpdate,
@@ -62,7 +62,7 @@ use indra_offchain_rollup::{anchor as pallet_anchor, oracle as pallet_oracle};
 pub use indranet_pallets::{
 	pallet_base_pool, pallet_computation, pallet_indra, pallet_indra_tokenomic, pallet_mq,
 	pallet_registry, pallet_stake_pool, pallet_stake_pool_v2, pallet_vault,
-	pallet_wrapped_balances,
+	pallet_wrapped_balances, puppets,
 };
 
 mod config;
@@ -195,12 +195,12 @@ impl pallet_scheduler::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
+	pub const MinimumPeriod: Moment = MILLISECS_PER_BLOCK / 2;
 }
 
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
-	type Moment = u64;
+	type Moment = Moment;
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
@@ -319,6 +319,10 @@ construct_runtime!(
 
 		// Temporary
 		Sudo: pallet_sudo = 100,
+
+		// Put them here to make sure indrary could be compiled with selendra's metadata.
+		ParachainInfo: puppets::parachain_info = 200,
+		ParachainSystem: puppets::parachain_system = 201,
 	}
 );
 

@@ -4,8 +4,9 @@ mod rollup;
 use crate::{
 	origin::EnsureRootOrHalfCouncil, pallet_base_pool, pallet_computation, pallet_indra,
 	pallet_indra_tokenomic, pallet_mq, pallet_registry, pallet_stake_pool, pallet_stake_pool_v2,
-	pallet_vault, pallet_wrapped_balances, Balances, IndranetStakePoolv2, RandomnessCollectiveFlip,
-	Runtime, RuntimeCall, RuntimeEvent, SecsPerBlock, Timestamp, Treasury, Vec, MILLI_CENT, TOKEN,
+	pallet_vault, pallet_wrapped_balances, puppets, Balances, IndranetStakePoolv2,
+	RandomnessCollectiveFlip, Runtime, RuntimeCall, RuntimeEvent, SecsPerBlock, Timestamp,
+	Treasury, Vec, MILLI_CENT, TOKEN,
 };
 
 use codec::{Decode, Encode};
@@ -47,6 +48,7 @@ impl pallet_registry::Config for Runtime {
 	type VerifyIruntime = VerifyIruntime;
 	type VerifyRelaychainGenesisBlockHash = VerifyRelaychainGenesisBlockHash;
 	type GovernanceOrigin = EnsureRootOrHalfCouncil;
+	type ParachainId = ConstU32<0>;
 }
 
 pub struct SetBudgetMembers;
@@ -157,3 +159,6 @@ impl pallet_indra::Config for Runtime {
 impl indranet_pallets::IndranetConfig for Runtime {
 	type Currency = Balances;
 }
+
+impl puppets::parachain_info::Config for Runtime {}
+impl puppets::parachain_system::Config for Runtime {}
