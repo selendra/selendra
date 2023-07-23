@@ -1,0 +1,33 @@
+[package]
+name = "subxt-metadata"
+version = "0.28.0"
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = true
+autotests = false
+
+license.workspace = true
+repository.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+description = "Command line utilities for checking metadata compatibility between nodes."
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "full"] }
+frame-metadata = "15.0.0"
+scale-info = "2.5.0"
+sp-core-hashing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
+
+[dev-dependencies]
+bitvec = { version = "1.0.0", default-features = false, features = ["alloc"] }
+criterion = "0.4"
+scale-info = { version = "2.5.0", features = ["bit-vec"] }
+
+[lib]
+# Without this, libtest cli opts interfere with criteron benches:
+bench = false
+
+[[bench]]
+name = "bench"
+harness = false

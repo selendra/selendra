@@ -1,0 +1,33 @@
+[package]
+name = "subxt-codegen"
+version = "0.28.0"
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = true
+
+license.workspace = true
+repository.workspace = true
+documentation = "https://docs.rs/subxt-codegen"
+homepage.workspace = true
+description = "Generate an API for interacting with a substrate node from FRAME metadata"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "full"] }
+darling = "0.14.4"
+frame-metadata = "15.0.0"
+heck = "0.4.1"
+proc-macro2 = "1.0.55"
+quote = "1.0.8"
+syn = "1.0.109"
+scale-info = "2.5.0"
+subxt-metadata = { version = "0.28.0", path = "../metadata" }
+jsonrpsee = { version = "0.16.0", features = ["async-client", "client-ws-transport", "http-client"] }
+hex = "0.4.3"
+tokio = { version = "1.27", features = ["macros", "rt-multi-thread"] }
+thiserror = "1.0.40"
+
+[dev-dependencies]
+bitvec = { version = "1.0.0", default-features = false, features = ["alloc"] }
+scale-info = { version = "2.5.0", features = ["bit-vec"] }
+pretty_assertions = "1.0.0"
