@@ -71,17 +71,14 @@ pallet-committee-management = { workspace = true }
 # Indranet pallet
 pallet-insecure-randomness-collective-flip = { workspace = true }
 indranet-types = { workspace = true }
-indranet-pallets = { workspace = true }
+indranet-pallets  = { workspace = true }
 indranet-mq-runtime-api = { workspace = true }
 indra-offchain-rollup = { workspace = true }
 
 # Assets pallet
 pallet-assets = { workspace = true }
 pallet-uniques = { workspace = true }
-
-# RMRK pallet
 pallet-rmrk-core = { workspace = true }
-# rmrk-traits = { workspace = true }
 
 # Local
 selendra-primitives= { workspace = true }
@@ -147,7 +144,6 @@ std = [
 	"indranet-mq-runtime-api/std",
 	"indranet-pallets/std",
 	"pallet-rmrk-core/std",
-	# "rmrk-traits/std",
 ]
 
 try-runtime = [

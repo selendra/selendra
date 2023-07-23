@@ -11,11 +11,7 @@ use selendra_primitives::{
 	AccountId, AuthorityId as SelendraId, SessionValidators, Version as FinalityVersion,
 	LEGACY_FINALITY_VERSION, MIN_NOMINATOR_BOND, MIN_VALIDATOR_BOND, TOKEN, TOKEN_DECIMALS,
 };
-use selendra_runtime::{
-	AssetsConfig, AuraConfig, BalancesConfig, CommitteeManagementConfig, CouncilConfig,
-	DemocracyConfig, ElectionsConfig, GenesisConfig, SelendraConfig, SessionConfig, SessionKeys,
-	StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig, VestingConfig, WASM_BINARY,
-};
+use selendra_runtime::{GenesisConfig, SessionKeys, WASM_BINARY};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{Number, Value};
 use sp_application_crypto::Ss58Codec;
@@ -361,26 +357,26 @@ fn generate_genesis_config(
 		configure_chain_spec_fields(unique_accounts_balances, authorities, controller_accounts);
 
 	GenesisConfig {
-		system: SystemConfig {
+		system: selendra_runtime::SystemConfig {
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),
 		},
-		balances: BalancesConfig {
+		balances: selendra_runtime::BalancesConfig {
 			// Configure endowed accounts with an initial, significant balance
 			balances: accounts_config.balances,
 		},
-		aura: AuraConfig { authorities: vec![] },
-		sudo: SudoConfig {
+		aura: selendra_runtime::AuraConfig { authorities: vec![] },
+		sudo: selendra_runtime::SudoConfig {
 			// Assign network admin rights.
 			key: Some(sudo_account),
 		},
-		elections: ElectionsConfig {
+		elections: selendra_runtime::ElectionsConfig {
 			reserved_validators: accounts_config.members.clone(),
 			non_reserved_validators: vec![],
 			committee_seats: Default::default(),
 		},
-		session: SessionConfig { keys: accounts_config.keys },
-		staking: StakingConfig {
+		session: selendra_runtime::SessionConfig { keys: accounts_config.keys },
+		staking: selendra_runtime::StakingConfig {
 			force_era: Forcing::NotForcing,
 			validator_count,
 			// to satisfy some e2e tests as this cannot be changed during runtime
@@ -391,23 +387,23 @@ fn generate_genesis_config(
 			min_nominator_bond: MIN_NOMINATOR_BOND,
 			..Default::default()
 		},
-		selendra: SelendraConfig { finality_version, ..Default::default() },
+		selendra: selendra_runtime::SelendraConfig { finality_version, ..Default::default() },
 		treasury: Default::default(),
 		nomination_pools: Default::default(),
-		vesting: VestingConfig { vesting: vec![] },
+		vesting: selendra_runtime::VestingConfig { vesting: vec![] },
 		transaction_payment: Default::default(),
-		committee_management: CommitteeManagementConfig {
+		committee_management: selendra_runtime::CommitteeManagementConfig {
 			committee_ban_config: Default::default(),
 			session_validators: SessionValidators {
 				committee: accounts_config.members,
 				non_committee: vec![],
 			},
 		},
-		assets: AssetsConfig::default(),
-		democracy: DemocracyConfig::default(),
-		council: CouncilConfig::default(),
-		technical_committee: TechnicalCommitteeConfig::default(),
+		democracy: selendra_runtime::DemocracyConfig::default(),
+		council: selendra_runtime::CouncilConfig::default(),
+		technical_committee: selendra_runtime::TechnicalCommitteeConfig::default(),
 		technical_membership: Default::default(),
+		assets: selendra_runtime::AssetsConfig::default(),
 		indranet_computation: Default::default(),
 		indranet_registry: Default::default(),
 	}

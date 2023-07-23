@@ -25,9 +25,3 @@ open-runtime-module-library
 v0.*
 
 node-*.log
-
-/vendor/ring/build/
-/vendor/ring/ssl/test/runner/runner
-/vendor/ring/doc/*.html
-/vendor/ring/doc/doc.css
-/proto_rendered
