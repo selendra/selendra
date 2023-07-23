@@ -465,7 +465,7 @@ pub mod pallet {
 		/// Registers a worker on the blockchain
 		/// This is the legacy version that support EPID attestation type only.
 		///
-		/// Usually called by a bridging relayer program (`pherry` and `prb`). Can be called by
+		/// Usually called by a bridging relayer program (`indranet` and `prb`). Can be called by
 		/// anyone on behalf of a worker.
 		#[pallet::call_index(6)]
 		#[pallet::weight(0)]
@@ -565,7 +565,7 @@ pub mod pallet {
 		/// Registers a worker on the blockchain.
 		/// This is the version 2 that both support DCAP attestation type.
 		///
-		/// Usually called by a bridging relayer program (`pherry` and `prb`). Can be called by
+		/// Usually called by a bridging relayer program (`indranet` and `prb`). Can be called by
 		/// anyone on behalf of a worker.
 		#[pallet::call_index(7)]
 		#[pallet::weight(0)]

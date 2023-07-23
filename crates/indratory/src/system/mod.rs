@@ -819,7 +819,7 @@ impl<Platform: pal::Platform> System<Platform> {
                 &self.platform,
             );
             crate::maybe_remove_checkpoints(&self.sealing_path);
-            panic!("Received master key, please restart iruntime and pherry to sync as Gatekeeper");
+            panic!("Received master key, please restart iruntime and indranet to sync as Gatekeeper");
         }
 
         if self

@@ -51,7 +51,7 @@ pub mod traits {
 	use crate::{BindTopic, Path, SigningMessage};
 
 	/// A MessageChannel is used to push messages into the egress queue, then the messages
-	/// are ready to be synchronized to the chain by pherry or prb.
+	/// are ready to be synchronized to the chain by indranet or prb.
 	pub trait MessageChannel {
 		type Signer;
 		/// Push given binary data as message payload into the egress queue.

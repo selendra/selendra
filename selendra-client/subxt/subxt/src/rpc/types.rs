@@ -767,9 +767,9 @@ mod test {
 
     #[test]
     fn runtime_version_is_substrate_compatible() {
-        use sp_version::RuntimeVersion as SpRuntimeVersion;
+        use sp_version::RuntimeVersion as SiruntimeVersion;
 
-        let substrate_runtime_version = SpRuntimeVersion {
+        let substrate_runtime_version = SiruntimeVersion {
             spec_version: 123,
             transaction_version: 456,
             ..Default::default()

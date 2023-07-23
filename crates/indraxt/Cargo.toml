@@ -1,0 +1,22 @@
+[package]
+name = "indraxt"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+serde = { version = "1.0.130", features = ["derive"] }
+serde_json = "1.0.67"
+parity-scale-codec = "3.3"
+scale-info = '2.3'
+scale-encode = "0.1.2"
+anyhow = "1"
+tokio = "1"
+jsonrpsee = "0.16.2"
+primitive-types = { version = "0.12.0", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
+
+subxt = { path = "../../selendra-client/subxt/subxt", features = ["jsonrpsee-ws"] }
+indranet-types = { path = "../indranet-types" }
+indranet-node-rpc-ext-types = { path = "../indranet-node-rpc-ext/types" }
+indranet-pallets = { path = "../../pallets/indranet" }
+

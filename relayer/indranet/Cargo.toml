@@ -1,0 +1,44 @@
+[package]
+name = "indranet"
+version = "0.1.0"
+authors = ["Selendra"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.69"
+env_logger = "0.9.0"
+futures = { package = "futures", version = "0.3.4" }
+log = "0.4"
+tokio = { version = "1.24.2", features = ["full"] }
+reqwest = { version = "0.11", default-features = false, features = ["rustls-tls", "socks"] }
+hex = { version = "*" }
+base64 = "0.13.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rand = "0.8.4"
+async-stream = "0.3.4"
+clap = { version = "4.0.19", features = ["derive"] }
+
+async-trait = "0.1.57"
+system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", package = "frame-system" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", package = "sp-runtime" }
+sp-consensus-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
+codec = { package = 'parity-scale-codec', version = "3.3" }
+scale-info = { version = '2.3' }
+
+pallet-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
+pallet-indices = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
+balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
+
+indranet-types = { path = "../../crates/indranet-types" }
+indranet-pallets = { path = "../../pallets/indranet" }
+indranet-trie-storage = { path = "../../crates/indranet-trie-storage" }
+indranet-node-rpc-ext = { path = "../../crates/indranet-node-rpc-ext" }
+indranet-mq = { path = "../../crates/indranet-mq" }
+indratory-api = { path = "../../crates/indratory/api", features = ["iruntime-client"] }
+
+indraxt = { path = "../../crates/indraxt" }
+
