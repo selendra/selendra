@@ -1,0 +1,106 @@
+Running in Native mode
+git revision: c8b7fe8ac0249acf34bbb8059d7f1332f1985025-dirty
+2023-07-25T00:30:17.757499Z  INFO main: iruntime: Starting iruntime... sgx=false
+2023-07-25T00:30:17.757792Z  INFO main: iruntime: bench_cores=0
+2023-07-25T00:30:17.757809Z  INFO main: iruntime: init_args: InitArgs {
+    sealing_path: "./data/protected_files",
+    storage_path: "./data/storage_files",
+    init_bench: false,
+    version: "0.1.0",
+    git_revision: "c8b7fe8ac0249acf34bbb8059d7f1332f1985025-20230723201427",
+    enable_checkpoint: true,
+    checkpoint_interval: 1800,
+    remove_corrupted_checkpoint: false,
+    max_checkpoint_files: 5,
+    cores: 0,
+    public_port: None,
+    safe_mode_level: 0,
+    no_rcu: false,
+}
+2023-07-25T00:30:17.757837Z  INFO main: iruntime::runtime: No checkpoint found
+2023-07-25T00:30:17.757855Z  INFO main: iruntime::runtime: Enclave init OK
+2023-07-25T00:30:17.758112Z  INFO main:srv-internal: iruntime::api_server: Methods under /irpc:
+2023-07-25T00:30:17.758135Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.GetInfo
+2023-07-25T00:30:17.758138Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.SyncHeader
+2023-07-25T00:30:17.758140Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.SyncParaHeader
+2023-07-25T00:30:17.758142Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.SyncCombinedHeaders
+2023-07-25T00:30:17.758143Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.DispatchBlocks
+2023-07-25T00:30:17.758144Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.InitRuntime
+2023-07-25T00:30:17.758145Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.GetRuntimeInfo
+2023-07-25T00:30:17.758146Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.GetEgressMessages
+2023-07-25T00:30:17.758147Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.ContractQuery
+2023-07-25T00:30:17.758148Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.GetWorkerState
+2023-07-25T00:30:17.758150Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.AddEndpoint
+2023-07-25T00:30:17.758151Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.RefreshEndpointSigningTime
+2023-07-25T00:30:17.758152Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.GetEndpointInfo
+2023-07-25T00:30:17.758153Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.SignEndpointInfo
+2023-07-25T00:30:17.758154Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.DeriveIndranetI2pKey
+2023-07-25T00:30:17.758155Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.Echo
+2023-07-25T00:30:17.758157Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.HandoverCreateChallenge
+2023-07-25T00:30:17.758158Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.HandoverStart
+2023-07-25T00:30:17.758159Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.HandoverAcceptChallenge
+2023-07-25T00:30:17.758160Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.HandoverReceive
+2023-07-25T00:30:17.758161Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.ConfigNetwork
+2023-07-25T00:30:17.758162Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.HttpFetch
+2023-07-25T00:30:17.758163Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.GetContractInfo
+2023-07-25T00:30:17.758164Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.GetClusterInfo
+2023-07-25T00:30:17.758166Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.UploadSidevmCode
+2023-07-25T00:30:17.758167Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.CalculateContractId
+2023-07-25T00:30:17.758168Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.GetNetworkConfig
+2023-07-25T00:30:17.758169Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.LoadChainState
+2023-07-25T00:30:17.758170Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.Stop
+2023-07-25T00:30:17.758171Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.LoadStorageProof
+2023-07-25T00:30:17.758172Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.TakeCheckpoint
+2023-07-25T00:30:17.758174Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.Statistics
+2023-07-25T00:30:17.758176Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.GenerateClusterStateRequest
+2023-07-25T00:30:17.758177Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.SaveClusterState
+2023-07-25T00:30:17.758178Z  INFO main:srv-internal: iruntime::api_server:     /irpc/IndratoryAPI.LoadClusterState
+2023-07-25T00:30:17.758180Z  INFO main:srv-internal: iruntime::api_server: Allow CORS
+2023-07-25T00:30:17.758295Z  INFO main:srv-internal: rocket::launch: 🔧 Configured for release.    
+2023-07-25T00:30:17.758312Z  INFO main:srv-internal: rocket::launch::_: address: [1;49;39m0.0.0.0[0m    
+2023-07-25T00:30:17.758317Z  INFO main:srv-internal: rocket::launch::_: port: [1;49;39m18000[0m    
+2023-07-25T00:30:17.758320Z  INFO main:srv-internal: rocket::launch::_: workers: [1;49;39m32[0m    
+2023-07-25T00:30:17.758322Z  INFO main:srv-internal: rocket::launch::_: max blocking threads: [1;49;39m512[0m    
+2023-07-25T00:30:17.758323Z  INFO main:srv-internal: rocket::launch::_: ident: [1;49;39mRocket[0m    
+2023-07-25T00:30:17.758325Z  INFO main:srv-internal: rocket::launch::_: IP header: [1;49;39mX-Real-IP[0m    
+2023-07-25T00:30:17.758327Z  INFO main:srv-internal: rocket::launch::_: limits: [1;49;39mbytes = 8KiB, data-form = 2MiB, file = 1MiB, form = 32KiB, json = 1MiB, msgpack = 1MiB, string = 8KiB[0m    
+2023-07-25T00:30:17.758331Z  INFO main:srv-internal: rocket::launch::_: temp dir: [1;49;39m/tmp[0m    
+2023-07-25T00:30:17.758333Z  INFO main:srv-internal: rocket::launch::_: http/2: [1;49;39mtrue[0m    
+2023-07-25T00:30:17.758335Z  INFO main:srv-internal: rocket::launch::_: keep-alive: [1;49;39m5[0m[1;49;39ms[0m    
+2023-07-25T00:30:17.758337Z  INFO main:srv-internal: rocket::launch::_: tls: [1;49;39mdisabled[0m    
+2023-07-25T00:30:17.758338Z  INFO main:srv-internal: rocket::launch::_: shutdown: [1;49;39mctrlc = true, force = true, signals = [SIGTERM], grace = 2s, mercy = 3s[0m    
+2023-07-25T00:30:17.758341Z  INFO main:srv-internal: rocket::launch::_: log level: [1;49;39mcritical[0m    
+2023-07-25T00:30:17.758342Z  INFO main:srv-internal: rocket::launch::_: cli colors: [1;49;39mtrue[0m    
+2023-07-25T00:30:17.758362Z  INFO main:srv-internal: rocket::launch: 📬 [35mRoutes[0m:    
+2023-07-25T00:30:17.758373Z  INFO main:srv-internal: rocket::launch::_: [36m([0m[37mgetinfo[0m[36m)[0m [32mGET[0m [34m/info[0m    
+2023-07-25T00:30:17.758377Z  INFO main:srv-internal: rocket::launch::_: [36m([0m[37mhelp[0m[36m)[0m [32mGET[0m [34m/help[0m    
+2023-07-25T00:30:17.758378Z  INFO main:srv-internal: rocket::launch::_: [36m([0m[37mget_info[0m[36m)[0m [32mGET[0m [34m/get_info[0m    
+2023-07-25T00:30:17.758380Z  INFO main:srv-internal: rocket::launch::_: [36m([0m[37mget_info_post[0m[36m)[0m [32mPOST[0m [34m/get_info[0m [33mapplication/json[0m    
+2023-07-25T00:30:17.758383Z  INFO main:srv-internal: rocket::launch::_: [32mOPTIONS[0m [34m/<catch_all_options_route..>[0m [[1;49;39m9223372036854775807[0m]    
+2023-07-25T00:30:17.758385Z  INFO main:srv-internal: rocket::launch::_: [36m([0m[37mirpc_proxy[0m[36m)[0m [32mPOST[0m [4;34m/irpc[0m[34m/<method>?<json>[0m    
+2023-07-25T00:30:17.758387Z  INFO main:srv-internal: rocket::launch::_: [36m([0m[37mirpc_proxy_get[0m[36m)[0m [32mGET[0m [4;34m/irpc[0m[34m/<method>[0m    
+2023-07-25T00:30:17.758389Z  INFO main:srv-internal: rocket::launch::_: [32mGET[0m [4;34m/cors[0m[34m/<status>[0m    
+2023-07-25T00:30:17.758391Z  INFO main:srv-internal: rocket::launch::_: [36m([0m[37msync_header[0m[36m)[0m [32mPOST[0m [4;34m/bin_api[0m[34m/sync_header[0m    
+2023-07-25T00:30:17.758393Z  INFO main:srv-internal: rocket::launch::_: [36m([0m[37mdispatch_block[0m[36m)[0m [32mPOST[0m [4;34m/bin_api[0m[34m/dispatch_block[0m    
+2023-07-25T00:30:17.758395Z  INFO main:srv-internal: rocket::launch::_: [36m([0m[37msync_combined_headers[0m[36m)[0m [32mPOST[0m [4;34m/bin_api[0m[34m/sync_combined_headers[0m    
+2023-07-25T00:30:17.758397Z  INFO main:srv-internal: rocket::launch::_: [36m([0m[37mFileServer: ./data/storage_files/public[0m[36m)[0m [32mGET[0m [4;34m/download[0m[34m/<path..>[0m [[1;49;39m10[0m]    
+2023-07-25T00:30:17.758401Z  INFO main:srv-internal: rocket::launch: 📡 [35mFairings[0m:    
+2023-07-25T00:30:17.758403Z  INFO main:srv-internal: rocket::launch::_: [1;49;39mCORS[0m ([1;34mignite, request, response[0m)    
+2023-07-25T00:30:17.758405Z  INFO main:srv-internal: rocket::launch::_: [1;49;39mTime meter[0m ([1;34mrequest, response[0m)    
+2023-07-25T00:30:17.758407Z  INFO main:srv-internal: rocket::launch::_: [1;49;39mShield[0m ([1;34mliftoff, response, singleton[0m)    
+2023-07-25T00:30:17.758408Z  INFO main:srv-internal: rocket::launch::_: [1;49;39mReqeust Tracer[0m ([1;34mrequest, response[0m)    
+2023-07-25T00:30:17.758473Z  INFO main:srv-internal: rocket::shield::shield: 🛡️ [35mShield[0m:    
+2023-07-25T00:30:17.758491Z  INFO main:srv-internal: rocket::shield::shield::_: X-Content-Type-Options: [49;39mnosniff[0m    
+2023-07-25T00:30:17.758496Z  INFO main:srv-internal: rocket::shield::shield::_: X-Frame-Options: [49;39mSAMEORIGIN[0m    
+2023-07-25T00:30:17.758497Z  INFO main:srv-internal: rocket::shield::shield::_: Permissions-Policy: [49;39minterest-cohort=()[0m    
+2023-07-25T00:30:17.758501Z  WARN main:srv-internal: rocket::launch: 🚀 [1;49;39mRocket has launched from[0m [1;4;49;39mhttp://0.0.0.0:18000[0m    
+2023-07-25T00:35:40.241435Z  INFO rocket::server: [32mPOST[0m [34m/irpc/IndratoryAPI.GetInfo[0m:    
+2023-07-25T00:35:40.241456Z  INFO rocket::server::_: Matched: [36m([0m[37mirpc_proxy[0m[36m)[0m [32mPOST[0m [4;34m/irpc[0m[34m/<method>?<json>[0m    
+2023-07-25T00:35:40.241477Z  INFO irpc{id=0}: iruntime::api_server: Payload size: 0
+2023-07-25T00:35:40.241480Z  INFO irpc{id=0}: iruntime::runtime: Handling irpc request path=IndratoryAPI.GetInfo json=false
+2023-07-25T00:35:40.241482Z  INFO irpc{id=0}: indratory::irpc_service: Dispatching request: IndratoryAPI.GetInfo
+2023-07-25T00:35:40.241527Z  INFO irpc{id=0}: indratory::irpc_service: Got info: Info { reg: false, hdr: 0, phdr: 0, blk: 0, dev: false, msgs: 0, ver: "0.1.0", git: "c8b7fe8a", rmem: 1102207, mpeak: 2238816256, rpeak: 1110387, rspike: 1110387, mfree: 13292589056, whdr: false, cluster: 0, gblk: 0 }
+2023-07-25T00:35:40.241542Z  INFO irpc{id=0}: iruntime::runtime: irpc returned code=200 size=103
+2023-07-25T00:35:40.241549Z  INFO rocket::server::_: [1;49;39mOutcome:[0m [49;32mSuccess[0m    
+2023-07-25T00:35:40.241564Z  INFO irpc_measuring: POST /irpc/IndratoryAPI.GetInfo cost 132 microseconds, status: 200    
+2023-07-25T00:35:40.241575Z  INFO rocket::server::_: [32mResponse succeeded.[0m    

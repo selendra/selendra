@@ -1,0 +1,67 @@
+[package]
+name = "indratory-api"
+version = "0.1.0"
+edition = "2018"
+resolver = "2"
+
+[dependencies]
+parity-scale-codec   = { package = "parity-scale-codec", version = "3.3", default-features = false, features = ["derive"] }
+scale-info = { version = "2.3", default-features = false, features = ["derive"] }
+serde = { version = "1", features = ["derive"], default-features = false }
+base64 = { version = "0.13" }
+derive_more = { version = "0.99.17" }
+prost = "0.11.8"
+# for iruntime_client
+async-trait = "0.1.57"
+anyhow = { version = "1.0.69", optional = true }
+log = { version = "0.4.14" }
+reqwest = { version = "0.11", optional = true, default-features = false, features = ["rustls-tls", "socks"] }
+primitive-types = { version = "0.12.1", optional = true, default-features = false }
+serde_json = "1.0.79"
+im = "15"
+
+indranet-trie-storage = { path = "../../../crates/indranet-trie-storage", default-features = false, features = ["serde"] }
+indranet-types = { path = "../../../crates/indranet-types", default-features = false, features = ["enable_serde", "sgx"] }
+irpc = { path = "../../../crates/irpc", default-features = false }
+indranet-crypto = { path = "../../../crates/indranet-crypto" }
+indranet-mq = { path = "../../../crates/indranet-mq" }
+chain = { path = "../../../runtime", default-features = false, package = "selendra-runtime" }
+
+sp-consensus-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false, features = ["full_crypto"] }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false, features = ["full_crypto"] }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41", default-features = false }
+indranet-git-revision = { path = "../../indranet-git-revision" }
+
+[dev-dependencies]
+insta = "1.13.0"
+
+[build-dependencies]
+irpc-build = { path = "../../../crates/irpc-build" }
+tera = { version = "1.12.1" }
+tempdir = { version = "0.3.7" }
+
+[features]
+default = ["std"]
+
+std = [
+    "derive_serde",
+    "sp-core/full_crypto",
+    "sp-runtime/std",
+    "sp-application-crypto/std",
+    "frame-system/std",
+    "chain/std",
+    "irpc/std",
+]
+
+sgx = []
+iruntime-client = [
+    "anyhow",
+    "reqwest",
+]
+
+derive_serde = [
+    "indranet-trie-storage/serde",
+    "primitive-types/serde",
+]

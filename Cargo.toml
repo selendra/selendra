@@ -14,7 +14,7 @@ members = [
     "pallets/committee-management",
 	"pallets/offchain-rollup",
 	"pallets/indranet",
-	"relayer/indranet"
+	# "relayer/indranet"
 ]
 
 exclude = [

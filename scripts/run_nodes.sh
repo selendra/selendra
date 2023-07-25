@@ -103,6 +103,7 @@ run_node() {
     --unit-creation-delay 500 \
     --execution Native \
     --rpc-cors=all \
+    --rpc-methods=Unsafe \
     --no-mdns \
     --public-validator-addresses 127.0.0.1:${validator_port} \
     --validator-port ${validator_port} \

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use indratory_api::blocks::BlockHeaderWithChanges;
-use pindraxt::{BlockNumber, RpcClient};
+use indraxt::{BlockNumber, RpcClient};
 use tokio::task::JoinHandle;
 
 struct StoragePrefetchState {
