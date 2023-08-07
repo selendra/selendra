@@ -1,0 +1,1 @@
+docker run --user root --rm --name srtool -e PACKAGE=selendra-runtime -e BUILD_OPTS= -e DEFAULT_FEATURES= -e PROFILE=production -v /home/$USER/Projects/selendra:/build -v /tmp/cargo:/cargo-home paritytech/srtool:1.66.1 build

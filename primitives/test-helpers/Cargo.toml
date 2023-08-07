@@ -1,0 +1,13 @@
+[package]
+name = "selendra-primitives-test-helpers"
+version = "0.3.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-application-crypto = { package = "sp-application-crypto", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-core = { git = "https://github.com/paritytech/substrate", features = ["std"] , branch = "polkadot-v0.9.33" }
+selendra-primitives = { path = "../" }
+rand = "0.8.5"
