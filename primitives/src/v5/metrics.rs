@@ -27,6 +27,8 @@ pub enum RuntimeMetricOp {
 	IncrementCounterVec(u64, RuntimeMetricLabelValues),
 	/// Increment a counter metric by value.
 	IncrementCounter(u64),
+	/// Observe histogram value
+	ObserveHistogram(u128),
 }
 
 /// Runtime metric update event.
@@ -127,6 +129,16 @@ pub mod metric_definitions {
 		pub labels: &'a [&'static str],
 	}
 
+	/// `Histogram` metric definition
+	pub struct HistogramDefinition<'a> {
+		/// The name of the metric.
+		pub name: &'static str,
+		/// The description of the metric.
+		pub description: &'static str,
+		/// The buckets for the histogram
+		pub buckets: &'a [f64],
+	}
+
 	/// Counts parachain inherent data weights. Use `before` and `after` labels to differentiate
 	/// between the weight before and after filtering.
 	pub const PARACHAIN_INHERENT_DATA_WEIGHT: CounterVecDefinition = CounterVecDefinition {
@@ -135,45 +147,47 @@ pub mod metric_definitions {
 		labels: &["when"],
 	};
 
-	/// Counts the number of bitfields processed in `enter_inner`.
+	/// Counts the number of bitfields processed in `process_inherent_data`.
 	pub const PARACHAIN_INHERENT_DATA_BITFIELDS_PROCESSED: CounterDefinition = CounterDefinition {
 		name: "selendra_parachain_inherent_data_bitfields_processed",
-		description: "Counts the number of bitfields processed in `enter_inner`.",
+		description: "Counts the number of bitfields processed in `process_inherent_data`.",
 	};
 
 	/// Counts the `total`, `sanitized` and `included` number of parachain block candidates
-	/// in `enter_inner`.
+	/// in `process_inherent_data`.
 	pub const PARACHAIN_INHERENT_DATA_CANDIDATES_PROCESSED: CounterVecDefinition =
 		CounterVecDefinition {
 			name: "selendra_parachain_inherent_data_candidates_processed",
 			description:
-				"Counts the number of parachain block candidates processed in `enter_inner`.",
+				"Counts the number of parachain block candidates processed in `process_inherent_data`.",
 			labels: &["category"],
 		};
 
 	/// Counts the number of `imported`, `current` and `concluded_invalid` dispute statements sets
-	/// processed in `enter_inner`. The `current` label refers to the disputes statement sets of
+	/// processed in `process_inherent_data`. The `current` label refers to the disputes statement sets of
 	/// the current session.
 	pub const PARACHAIN_INHERENT_DATA_DISPUTE_SETS_PROCESSED: CounterVecDefinition =
 		CounterVecDefinition {
 			name: "selendra_parachain_inherent_data_dispute_sets_processed",
-			description: "Counts the number of dispute statements sets processed in `enter_inner`.",
+			description:
+				"Counts the number of dispute statements sets processed in `process_inherent_data`.",
 			labels: &["category"],
 		};
 
-	/// Counts the number of dispute statements sets included in a block in `enter_inner`.
-	pub const PARACHAIN_INHERENT_DATA_DISPUTE_SETS_INCLUDED: CounterDefinition =
-		CounterDefinition {
-			name: "selendra_parachain_inherent_data_dispute_sets_included",
-			description:
-				"Counts the number of dispute statements sets included in a block in `enter_inner`.",
-		};
-
-	/// Counts the number of `valid` and `invalid` bitfields signature checked in `enter_inner`.
+	/// Counts the number of `valid` and `invalid` bitfields signature checked in `process_inherent_data`.
 	pub const PARACHAIN_CREATE_INHERENT_BITFIELDS_SIGNATURE_CHECKS: CounterVecDefinition =
 		CounterVecDefinition {
 			name: "selendra_parachain_create_inherent_bitfields_signature_checks",
-			description: "Counts the number of bitfields signature checked in `enter_inner`.",
+			description:
+				"Counts the number of bitfields signature checked in `process_inherent_data`.",
 			labels: &["validity"],
 		};
+
+	/// Measures how much time does it take to verify a single validator signature of a dispute statement
+	pub const PARACHAIN_VERIFY_DISPUTE_SIGNATURE: HistogramDefinition =
+		HistogramDefinition {
+			name: "selendra_parachain_verify_dispute_signature",
+			description: "How much time does it take to verify a single validator signature of a dispute statement, in seconds",
+			buckets: &[0.0, 0.00005, 0.00006, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.3, 0.5, 1.0],
+	};
 }

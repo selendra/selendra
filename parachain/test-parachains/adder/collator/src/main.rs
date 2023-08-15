@@ -16,11 +16,11 @@
 
 //! Collator for the adder test parachain.
 
-use sc_cli::{Error as SubstrateCliError, SubstrateCli};
 use selendra_cli::{Error, Result};
 use selendra_node_primitives::CollationGenerationConfig;
 use selendra_node_subsystem::messages::{CollationGenerationMessage, CollatorProtocolMessage};
-use selendra_primitives::v2::Id as ParaId;
+use selendra_primitives::Id as ParaId;
+use sc_cli::{Error as SubstrateCliError, SubstrateCli};
 use sp_core::hexdisplay::HexDisplay;
 use test_parachain_adder_collator::Collator;
 
