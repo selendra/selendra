@@ -1,21 +1,20 @@
 // Copyright 2022 Smallworld Selendra
-// This file is part of Cumulus.
+// This file is part of Selendra.
 
-// Substrate is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Substrate is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Cross-Consensus Message format data structures.
-
+use crate::v3::Error as NewError;
 use core::result;
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
@@ -110,10 +109,42 @@ pub enum Error {
 	WeightNotComputable,
 }
 
+impl TryFrom<NewError> for Error {
+	type Error = ();
+	fn try_from(new_error: NewError) -> result::Result<Error, ()> {
+		use NewError::*;
+		Ok(match new_error {
+			Overflow => Self::Overflow,
+			Unimplemented => Self::Unimplemented,
+			UntrustedReserveLocation => Self::UntrustedReserveLocation,
+			UntrustedTeleportLocation => Self::UntrustedTeleportLocation,
+			LocationFull => Self::MultiLocationFull,
+			LocationNotInvertible => Self::MultiLocationNotInvertible,
+			BadOrigin => Self::BadOrigin,
+			InvalidLocation => Self::InvalidLocation,
+			AssetNotFound => Self::AssetNotFound,
+			FailedToTransactAsset(s) => Self::FailedToTransactAsset(s),
+			NotWithdrawable => Self::NotWithdrawable,
+			LocationCannotHold => Self::LocationCannotHold,
+			ExceedsMaxMessageSize => Self::ExceedsMaxMessageSize,
+			DestinationUnsupported => Self::DestinationUnsupported,
+			Transport(s) => Self::Transport(s),
+			Unroutable => Self::Unroutable,
+			UnknownClaim => Self::UnknownClaim,
+			FailedToDecode => Self::FailedToDecode,
+			MaxWeightInvalid => Self::MaxWeightInvalid,
+			NotHoldingFees => Self::NotHoldingFees,
+			TooExpensive => Self::TooExpensive,
+			Trap(i) => Self::Trap(i),
+			_ => return Err(()),
+		})
+	}
+}
+
 impl From<SendError> for Error {
 	fn from(e: SendError) -> Self {
 		match e {
-			SendError::CannotReachDestination(..) | SendError::Unroutable => Error::Unroutable,
+			SendError::NotApplicable(..) | SendError::Unroutable => Error::Unroutable,
 			SendError::Transport(s) => Error::Transport(s),
 			SendError::DestinationUnsupported => Error::DestinationUnsupported,
 			SendError::ExceedsMaxMessageSize => Error::ExceedsMaxMessageSize,
@@ -210,7 +241,7 @@ pub enum SendError {
 	///
 	/// This is not considered fatal: if there are alternative transport routes available, then
 	/// they may be attempted. For this reason, the destination and message are contained.
-	CannotReachDestination(MultiLocation, Xcm<()>),
+	NotApplicable(MultiLocation, Xcm<()>),
 	/// Destination is routable, but there is some issue with the transport mechanism. This is
 	/// considered fatal.
 	/// A human-readable explanation of the specific issue is provided.
@@ -231,7 +262,7 @@ pub type SendResult = result::Result<(), SendError>;
 /// Utility for sending an XCM message.
 ///
 /// These can be amalgamated in tuples to form sophisticated routing systems. In tuple format, each router might return
-/// `CannotReachDestination` to pass the execution to the next sender item. Note that each `CannotReachDestination`
+/// `NotApplicable` to pass the execution to the next sender item. Note that each `NotApplicable`
 /// might alter the destination and the XCM message for to the next router.
 ///
 ///
@@ -244,7 +275,7 @@ pub type SendResult = result::Result<(), SendError>;
 /// struct Sender1;
 /// impl SendXcm for Sender1 {
 ///     fn send_xcm(destination: impl Into<MultiLocation>, message: Xcm<()>) -> SendResult {
-///         return Err(SendError::CannotReachDestination(destination.into(), message))
+///         return Err(SendError::NotApplicable(destination.into(), message))
 ///     }
 /// }
 ///
@@ -267,7 +298,7 @@ pub type SendResult = result::Result<(), SendError>;
 ///         let destination = destination.into();
 ///         match destination {
 ///             MultiLocation { parents: 1, interior: Here } => Ok(()),
-///             _ => Err(SendError::CannotReachDestination(destination, message)),
+///             _ => Err(SendError::NotApplicable(destination, message)),
 ///         }
 ///     }
 /// }
@@ -298,7 +329,7 @@ pub trait SendXcm {
 	/// Send an XCM `message` to a given `destination`.
 	///
 	/// If it is not a destination which can be reached with this type but possibly could by others, then it *MUST*
-	/// return `CannotReachDestination`. Any other error will cause the tuple implementation to exit early without
+	/// return `NotApplicable`. Any other error will cause the tuple implementation to exit early without
 	/// trying other type fields.
 	fn send_xcm(destination: impl Into<MultiLocation>, message: Xcm<()>) -> SendResult;
 }
@@ -309,10 +340,10 @@ impl SendXcm for Tuple {
 		for_tuples!( #(
 			// we shadow `destination` and `message` in each expansion for the next one.
 			let (destination, message) = match Tuple::send_xcm(destination, message) {
-				Err(SendError::CannotReachDestination(d, m)) => (d, m),
+				Err(SendError::NotApplicable(d, m)) => (d, m),
 				o @ _ => return o,
 			};
 		)* );
-		Err(SendError::CannotReachDestination(destination.into(), message))
+		Err(SendError::NotApplicable(destination.into(), message))
 	}
 }

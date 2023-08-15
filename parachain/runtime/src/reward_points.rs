@@ -17,13 +17,13 @@
 //! An implementation of the `RewardValidators` trait used by `inclusion` that employs
 //! `pallet-staking` to compute the rewards.
 //!
-//! Based on <https://research.web3.foundation/en/latest/selendra/overview/2-token-economics.html>
+//! Based on <https://research.web3.foundation/en/latest/polkadot/overview/2-token-economics.html>
 //! which doesn't currently mention availability bitfields. As such, we don't reward them
 //! for the time being, although we will build schemes to do so in the future.
 
 use crate::{session_info, shared};
 use frame_support::traits::{Defensive, ValidatorSet};
-use primitives::v2::{SessionIndex, ValidatorIndex};
+use primitives::{SessionIndex, ValidatorIndex};
 use sp_std::collections::btree_set::BTreeSet;
 
 /// The amount of era points given by backing a candidate that is included.

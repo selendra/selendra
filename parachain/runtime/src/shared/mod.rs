@@ -20,7 +20,7 @@
 //! dependent on any of the other pallets.
 
 use frame_support::pallet_prelude::*;
-use primitives::v2::{SessionIndex, ValidatorId, ValidatorIndex};
+use primitives::{SessionIndex, ValidatorId, ValidatorIndex};
 use sp_std::vec::Vec;
 
 use rand::{seq::SliceRandom, SeedableRng};
@@ -43,7 +43,6 @@ pub mod pallet {
 	use super::*;
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
@@ -124,8 +123,8 @@ impl<T: Config> Pallet<T> {
 		CurrentSessionIndex::<T>::set(index);
 	}
 
-	#[cfg(any(feature = "runtime-benchmarks", test))]
-	pub(crate) fn set_active_validators_ascending(active: Vec<ValidatorId>) {
+	#[cfg(any(feature = "std", feature = "runtime-benchmarks", test))]
+	pub fn set_active_validators_ascending(active: Vec<ValidatorId>) {
 		ActiveValidatorIndices::<T>::set(
 			(0..active.len()).map(|i| ValidatorIndex(i as _)).collect(),
 		);

@@ -16,32 +16,31 @@
 
 //! Dispute slashing pallet.
 //!
-//! Once a dispute is concluded, we want to slash validators
-//! who were on the wrong side of the dispute. The slashing amount
-//! depends on whether the candidate was valid (small) or invalid (big).
-//! In addition to that, we might want to kick out the validators from the
-//! active set.
+//! Once a dispute is concluded, we want to slash validators who were on the
+//! wrong side of the dispute. The slashing amount depends on whether the
+//! candidate was valid (none at the moment) or invalid (big). In addition to
+//! that, we might want to kick out the validators from the active set.
+//! Currently, we limit slashing to the backing group for invalid disputes.
 //!
 //! The `offences` pallet from Substrate provides us with a way to do both.
-//! Currently, the interface expects us to provide staking information
-//! including nominator exposure in order to submit an offence.
+//! Currently, the interface expects us to provide staking information including
+//! nominator exposure in order to submit an offence.
 //!
 //! Normally, we'd able to fetch this information from the runtime as soon as
 //! the dispute is concluded. This is also what `im-online` pallet does.
 //! However, since a dispute can conclude several sessions after the candidate
 //! was backed (see `dispute_period` in `HostConfiguration`), we can't rely on
-//! this information be available in the context of the current block. The
-//! `babe` and `grandpa` equivocation handlers also have to deal
-//! with this problem.
+//! this information being available in the context of the current block. The
+//! `babe` and `grandpa` equivocation handlers also have to deal with this
+//! problem.
 //!
 //! Our implementation looks like a hybrid of `im-online` and `grandpa`
 //! equivocation handlers. Meaning, we submit an `offence` for the concluded
-//! disputes about the current session candidate directly from the runtime.
-//! If, however, the dispute is about a past session, we record unapplied
-//! slashes on chain, without `FullIdentification` of the offenders.
-//! Later on, a block producer can submit an unsigned transaction with
-//! `KeyOwnershipProof` of an offender and submit it to the runtime
-//! to produce an offence.
+//! disputes about the current session candidate directly from the runtime. If,
+//! however, the dispute is about a past session, we record unapplied slashes on
+//! chain, without `FullIdentification` of the offenders. Later on, a block
+//! producer can submit an unsigned transaction with `KeyOwnershipProof` of an
+//! offender and submit it to the runtime to produce an offence.
 
 use crate::{disputes, initializer::ValidatorSetCount, session_info::IdentificationTuple};
 use frame_support::{
@@ -50,8 +49,10 @@ use frame_support::{
 	weights::Weight,
 };
 
-use parity_scale_codec::{Decode, Encode};
-use primitives::v2::{CandidateHash, SessionIndex, ValidatorId, ValidatorIndex};
+use primitives::{
+	vstaging::slashing::{DisputeProof, DisputesTimeSlot, PendingSlashes, SlashingOffenceKind},
+	CandidateHash, SessionIndex, ValidatorId, ValidatorIndex,
+};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::Convert,
@@ -59,12 +60,12 @@ use sp_runtime::{
 		InvalidTransaction, TransactionPriority, TransactionSource, TransactionValidity,
 		TransactionValidityError, ValidTransaction,
 	},
-	DispatchResult, KeyTypeId, Perbill, RuntimeDebug,
+	KeyTypeId, Perbill,
 };
 use sp_session::{GetSessionNumber, GetValidatorCount};
 use sp_staking::offence::{DisableStrategy, Kind, Offence, OffenceError, ReportOffence};
 use sp_std::{
-	collections::btree_map::{BTreeMap, Entry},
+	collections::{btree_map::Entry, btree_set::BTreeSet},
 	prelude::*,
 };
 
@@ -73,7 +74,7 @@ const LOG_TARGET: &str = "runtime::parachains::slashing";
 // These are constants, but we want to make them configurable
 // via `HostConfiguration` in the future.
 const SLASH_FOR_INVALID: Perbill = Perbill::from_percent(100);
-const SLASH_AGAINST_VALID: Perbill = Perbill::from_perthousand(1);
+const SLASH_AGAINST_VALID: Perbill = Perbill::zero();
 const DEFENSIVE_PROOF: &'static str = "disputes module should bail on old session";
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -90,23 +91,8 @@ impl<const M: u32> BenchmarkingConfiguration for BenchConfig<M> {
 	const MAX_VALIDATORS: u32 = M;
 }
 
-/// Timeslots should uniquely identify offences and are used for the offence
-/// deduplication.
-#[derive(Eq, PartialEq, Ord, PartialOrd, Clone, Encode, Decode, TypeInfo, RuntimeDebug)]
-pub struct DisputesTimeSlot {
-	// The order of these matters for `derive(Ord)`.
-	session_index: SessionIndex,
-	candidate_hash: CandidateHash,
-}
-
-impl DisputesTimeSlot {
-	pub fn new(session_index: SessionIndex, candidate_hash: CandidateHash) -> Self {
-		Self { session_index, candidate_hash }
-	}
-}
-
 /// An offence that is filed when a series of validators lost a dispute.
-#[derive(RuntimeDebug, TypeInfo)]
+#[derive(TypeInfo)]
 #[cfg_attr(feature = "std", derive(Clone, PartialEq, Eq))]
 pub struct SlashingOffence<KeyOwnerIdentification> {
 	/// The size of the validator set in that session.
@@ -228,18 +214,30 @@ where
 		candidate_hash: CandidateHash,
 		kind: SlashingOffenceKind,
 		losers: impl IntoIterator<Item = ValidatorIndex>,
+		backers: impl IntoIterator<Item = ValidatorIndex>,
 	) {
-		let losers: Vec<ValidatorIndex> = losers.into_iter().collect();
-		if losers.is_empty() {
-			// Nothing to do
+		// sanity check for the current implementation
+		if kind == SlashingOffenceKind::AgainstValid {
+			debug_assert!(false, "should only slash ForInvalid disputes");
 			return
 		}
+		let losers: BTreeSet<_> = losers.into_iter().collect();
+		if losers.is_empty() {
+			return
+		}
+		let backers: BTreeSet<_> = backers.into_iter().collect();
+		let to_punish: Vec<ValidatorIndex> = losers.intersection(&backers).cloned().collect();
+		if to_punish.is_empty() {
+			return
+		}
+
 		let session_info = crate::session_info::Pallet::<T>::session_info(session_index);
 		let session_info = match session_info.defensive_proof(DEFENSIVE_PROOF) {
 			Some(info) => info,
 			None => return,
 		};
-		let maybe = Self::maybe_identify_validators(session_index, losers.iter().cloned());
+
+		let maybe = Self::maybe_identify_validators(session_index, to_punish.iter().cloned());
 		if let Some(offenders) = maybe {
 			let validator_set_count = session_info.discovery_keys.len() as ValidatorSetCount;
 			let offence = SlashingOffence::new(
@@ -255,12 +253,20 @@ where
 			return
 		}
 
-		let keys = losers
+		let keys = to_punish
 			.into_iter()
 			.filter_map(|i| session_info.validators.get(i).cloned().map(|id| (i, id)))
 			.collect();
 		let unapplied = PendingSlashes { keys, kind };
-		<UnappliedSlashes<T>>::insert(session_index, candidate_hash, unapplied);
+
+		let append = |old: &mut Option<PendingSlashes>| {
+			let old = old
+				.get_or_insert(PendingSlashes { keys: Default::default(), kind: unapplied.kind });
+			debug_assert_eq!(old.kind, unapplied.kind);
+
+			old.keys.extend(unapplied.keys)
+		};
+		<UnappliedSlashes<T>>::mutate(session_index, candidate_hash, append);
 	}
 }
 
@@ -272,18 +278,20 @@ where
 		session_index: SessionIndex,
 		candidate_hash: CandidateHash,
 		losers: impl IntoIterator<Item = ValidatorIndex>,
+		backers: impl IntoIterator<Item = ValidatorIndex>,
 	) {
 		let kind = SlashingOffenceKind::ForInvalid;
-		Self::do_punish(session_index, candidate_hash, kind, losers);
+		Self::do_punish(session_index, candidate_hash, kind, losers, backers);
 	}
 
 	fn punish_against_valid(
-		session_index: SessionIndex,
-		candidate_hash: CandidateHash,
-		losers: impl IntoIterator<Item = ValidatorIndex>,
+		_session_index: SessionIndex,
+		_candidate_hash: CandidateHash,
+		_losers: impl IntoIterator<Item = ValidatorIndex>,
+		_backers: impl IntoIterator<Item = ValidatorIndex>,
 	) {
-		let kind = SlashingOffenceKind::AgainstValid;
-		Self::do_punish(session_index, candidate_hash, kind, losers);
+		// do nothing for now
+		// NOTE: changing that requires modifying `do_punish` implementation
 	}
 
 	fn initializer_initialize(now: T::BlockNumber) -> Weight {
@@ -297,39 +305,6 @@ where
 	fn initializer_on_new_session(session_index: SessionIndex) {
 		Pallet::<T>::initializer_on_new_session(session_index)
 	}
-}
-
-#[derive(PartialEq, Eq, Clone, Copy, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub enum SlashingOffenceKind {
-	#[codec(index = 0)]
-	ForInvalid,
-	#[codec(index = 1)]
-	AgainstValid,
-}
-
-/// We store most of the information about a lost dispute on chain. This struct
-/// is required to identify and verify it.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub struct DisputeProof {
-	/// Time slot when the dispute occured.
-	pub time_slot: DisputesTimeSlot,
-	/// The dispute outcome.
-	pub kind: SlashingOffenceKind,
-	/// The index of the validator who lost a dispute.
-	pub validator_index: ValidatorIndex,
-	/// The parachain session key of the validator.
-	pub validator_id: ValidatorId,
-}
-
-/// Slashes that are waiting to be applied once we have validator key
-/// identification.
-#[derive(Encode, Decode, RuntimeDebug, TypeInfo)]
-pub struct PendingSlashes {
-	/// Indices and keys of the validators who lost a dispute and are pending
-	/// slashes.
-	pub keys: BTreeMap<ValidatorIndex, ValidatorId>,
-	/// The dispute outcome.
-	pub kind: SlashingOffenceKind,
 }
 
 /// A trait that defines methods to report an offence (after the slashing report
@@ -358,7 +333,7 @@ pub trait HandleReports<T: Config> {
 	fn submit_unsigned_slashing_report(
 		dispute_proof: DisputeProof,
 		key_owner_proof: T::KeyOwnerProof,
-	) -> DispatchResult;
+	) -> Result<(), sp_runtime::TryRuntimeError>;
 }
 
 impl<T: Config> HandleReports<T> for () {
@@ -380,7 +355,7 @@ impl<T: Config> HandleReports<T> for () {
 	fn submit_unsigned_slashing_report(
 		_dispute_proof: DisputeProof,
 		_key_owner_proof: T::KeyOwnerProof,
-	) -> DispatchResult {
+	) -> Result<(), sp_runtime::TryRuntimeError> {
 		Ok(())
 	}
 }
@@ -475,6 +450,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::report_dispute_lost(
 			key_owner_proof.validator_count()
 		))]
@@ -486,16 +462,13 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
 
+			let validator_set_count = key_owner_proof.validator_count() as ValidatorSetCount;
 			// check the membership proof to extract the offender's id
-			let key = (primitives::v2::PARACHAIN_KEY_TYPE_ID, dispute_proof.validator_id.clone());
+			let key = (primitives::PARACHAIN_KEY_TYPE_ID, dispute_proof.validator_id.clone());
 			let offender = T::KeyOwnerProofSystem::check_proof(key, key_owner_proof)
 				.ok_or(Error::<T>::InvalidKeyOwnershipProof)?;
 
 			let session_index = dispute_proof.time_slot.session_index;
-			let validator_set_count = crate::session_info::Pallet::<T>::session_info(session_index)
-				.ok_or(Error::<T>::InvalidSessionIndex)?
-				.discovery_keys
-				.len() as ValidatorSetCount;
 
 			// check that there is a pending slash for the given
 			// validator index and candidate hash
@@ -578,6 +551,17 @@ impl<T: Config> Pallet<T> {
 		let old_session = session_index - config.dispute_period - 1;
 		let _ = <UnappliedSlashes<T>>::clear_prefix(old_session, REMOVE_LIMIT, None);
 	}
+
+	pub(crate) fn unapplied_slashes() -> Vec<(SessionIndex, CandidateHash, PendingSlashes)> {
+		<UnappliedSlashes<T>>::iter().collect()
+	}
+
+	pub(crate) fn submit_unsigned_slashing_report(
+		dispute_proof: DisputeProof,
+		key_ownership_proof: <T as Config>::KeyOwnerProof,
+	) -> Option<()> {
+		T::HandleReports::submit_unsigned_slashing_report(dispute_proof, key_ownership_proof).ok()
+	}
 }
 
 /// Methods for the `ValidateUnsigned` implementation:
@@ -639,7 +623,7 @@ fn is_known_offence<T: Config>(
 	key_owner_proof: &T::KeyOwnerProof,
 ) -> Result<(), TransactionValidityError> {
 	// check the membership proof to extract the offender's id
-	let key = (primitives::v2::PARACHAIN_KEY_TYPE_ID, dispute_proof.validator_id.clone());
+	let key = (primitives::PARACHAIN_KEY_TYPE_ID, dispute_proof.validator_id.clone());
 
 	let offender = T::KeyOwnerProofSystem::check_proof(key, key_owner_proof.clone())
 		.ok_or(InvalidTransaction::BadProof)?;
@@ -705,7 +689,7 @@ where
 	fn submit_unsigned_slashing_report(
 		dispute_proof: DisputeProof,
 		key_owner_proof: <T as Config>::KeyOwnerProof,
-	) -> DispatchResult {
+	) -> Result<(), sp_runtime::TryRuntimeError> {
 		use frame_system::offchain::SubmitTransaction;
 
 		let session_index = dispute_proof.time_slot.session_index;
@@ -718,22 +702,26 @@ where
 		};
 
 		match SubmitTransaction::<T, Call<T>>::submit_unsigned_transaction(call.into()) {
-			Ok(()) => log::info!(
-				target: LOG_TARGET,
-				"Submitted dispute slashing report, session({}), index({}), kind({:?})",
-				session_index,
-				validator_index,
-				kind,
-			),
-			Err(()) => log::error!(
-				target: LOG_TARGET,
-				"Error submitting dispute slashing report, session({}), index({}), kind({:?})",
-				session_index,
-				validator_index,
-				kind,
-			),
+			Ok(()) => {
+				log::info!(
+					target: LOG_TARGET,
+					"Submitted dispute slashing report, session({}), index({}), kind({:?})",
+					session_index,
+					validator_index,
+					kind,
+				);
+				Ok(())
+			},
+			Err(()) => {
+				log::error!(
+					target: LOG_TARGET,
+					"Error submitting dispute slashing report, session({}), index({}), kind({:?})",
+					session_index,
+					validator_index,
+					kind,
+				);
+				Err(sp_runtime::DispatchError::Other(""))
+			},
 		}
-
-		Ok(())
 	}
 }

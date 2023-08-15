@@ -16,9 +16,12 @@
 
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Everything, Nothing},
+	traits::{ConstU32, Everything, Nothing},
+	weights::Weight,
 };
-use sp_core::H256;
+use frame_system::EnsureRoot;
+use parity_scale_codec::Encode;
+use primitive_types::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, AccountId32};
 use sp_std::cell::RefCell;
 
@@ -31,7 +34,7 @@ use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
 	ChildParachainAsNative, ChildParachainConvertsVia, ChildSystemParachainAsSuperuser,
 	CurrencyAdapter as XcmCurrencyAdapter, FixedRateOfFungible, FixedWeightBounds,
-	IsChildSystemParachain, IsConcrete, LocationInverter, SignedAccountId32AsNative,
+	IsChildSystemParachain, IsConcrete, MintLocation, RespectSuspension, SignedAccountId32AsNative,
 	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 };
 
@@ -39,20 +42,31 @@ pub type AccountId = AccountId32;
 pub type Balance = u128;
 
 thread_local! {
-	pub static SENT_XCM: RefCell<Vec<(MultiLocation, opaque::Xcm)>> = RefCell::new(Vec::new());
+	pub static SENT_XCM: RefCell<Vec<(MultiLocation, opaque::Xcm, XcmHash)>> = RefCell::new(Vec::new());
 }
-pub fn sent_xcm() -> Vec<(MultiLocation, opaque::Xcm)> {
+pub fn sent_xcm() -> Vec<(MultiLocation, opaque::Xcm, XcmHash)> {
 	SENT_XCM.with(|q| (*q.borrow()).clone())
 }
 pub struct TestSendXcm;
 impl SendXcm for TestSendXcm {
-	fn send_xcm(dest: impl Into<MultiLocation>, msg: opaque::Xcm) -> SendResult {
-		SENT_XCM.with(|q| q.borrow_mut().push((dest.into(), msg)));
-		Ok(())
+	type Ticket = (MultiLocation, Xcm<()>, XcmHash);
+	fn validate(
+		dest: &mut Option<MultiLocation>,
+		msg: &mut Option<Xcm<()>>,
+	) -> SendResult<(MultiLocation, Xcm<()>, XcmHash)> {
+		let msg = msg.take().unwrap();
+		let hash = fake_message_hash(&msg);
+		let triplet = (dest.take().unwrap(), msg, hash);
+		Ok((triplet, MultiAssets::new()))
+	}
+	fn deliver(triplet: (MultiLocation, Xcm<()>, XcmHash)) -> Result<XcmHash, SendError> {
+		let hash = triplet.2;
+		SENT_XCM.with(|q| q.borrow_mut().push(triplet));
+		Ok(hash)
 	}
 }
 
-// copied from selendra constants
+// copied from testnet constants
 pub const UNITS: Balance = 1_000_000_000_000;
 pub const CENTS: Balance = UNITS / 30_000;
 
@@ -103,6 +117,10 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = ();
 	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = [u8; 8];
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type FreezeIdentifier = ();
+	type MaxHolds = ConstU32<0>;
+	type MaxFreezes = ConstU32<0>;
 }
 
 impl shared::Config for Runtime {}
@@ -111,20 +129,20 @@ impl configuration::Config for Runtime {
 	type WeightInfo = configuration::TestWeightInfo;
 }
 
-// aims to closely emulate the Selendra XcmConfig
+// aims to closely emulate the Testnet XcmConfig
 parameter_types! {
-	pub const SelLocation: MultiLocation = MultiLocation::here();
-	pub const SelendraNetwork: NetworkId = NetworkId::Selendra;
-	pub Ancestry: MultiLocation = Here.into();
-	pub CheckAccount: AccountId = XcmPallet::check_account();
+	pub const TsnLocation: MultiLocation = MultiLocation::here();
+	pub const TestnetNetwork: NetworkId = NetworkId::Testnet;
+	pub UniversalLocation: InteriorMultiLocation = Here;
+	pub CheckAccount: (AccountId, MintLocation) = (XcmPallet::check_account(), MintLocation::Local);
 }
 
 pub type SovereignAccountOf =
-	(ChildParachainConvertsVia<ParaId, AccountId>, AccountId32Aliases<SelendraNetwork, AccountId>);
+	(ChildParachainConvertsVia<ParaId, AccountId>, AccountId32Aliases<TestnetNetwork, AccountId>);
 
 pub type LocalCurrencyAdapter = XcmCurrencyAdapter<
 	Balances,
-	IsConcrete<SelLocation>,
+	IsConcrete<TsnLocation>,
 	SovereignAccountOf,
 	AccountId,
 	CheckAccount,
@@ -135,13 +153,13 @@ pub type LocalAssetTransactor = (LocalCurrencyAdapter,);
 type LocalOriginConverter = (
 	SovereignSignedViaLocation<SovereignAccountOf, RuntimeOrigin>,
 	ChildParachainAsNative<origin::Origin, RuntimeOrigin>,
-	SignedAccountId32AsNative<SelendraNetwork, RuntimeOrigin>,
+	SignedAccountId32AsNative<TestnetNetwork, RuntimeOrigin>,
 	ChildSystemParachainAsSuperuser<ParaId, RuntimeOrigin>,
 );
 
 parameter_types! {
-	pub const BaseXcmWeight: u64 = 1_000_000_000;
-	pub SelPerSecond: (AssetId, u128) = (SelLocation::get().into(), 1);
+	pub const BaseXcmWeight: Weight = Weight::from_parts(1_000_000_000, 1024);
+	pub TsnPerSecondPerByte: (AssetId, u128, u128) = (TsnLocation::get().into(), 1, 1);
 }
 
 pub type Barrier = (
@@ -152,11 +170,13 @@ pub type Barrier = (
 );
 
 parameter_types! {
-	pub const SelendraForStatemine: (MultiAssetFilter, MultiLocation) =
-		(MultiAssetFilter::Wild(WildMultiAsset::AllOf { id: Concrete(MultiLocation::here()), fun: WildFungible }), X1(Parachain(1000)).into());
+	pub TestnetForStatemine: (MultiAssetFilter, MultiLocation) =
+		(Wild(AllOf { id: Concrete(Here.into()), fun: WildFungible }), Parachain(1000).into());
 	pub const MaxInstructions: u32 = 100;
+	pub const MaxAssetsIntoHolding: u32 = 4;
 }
-pub type TrustedTeleporters = (xcm_builder::Case<SelendraForStatemine>,);
+
+pub type TrustedTeleporters = (xcm_builder::Case<TestnetForStatemine>,);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -166,21 +186,36 @@ impl xcm_executor::Config for XcmConfig {
 	type OriginConverter = LocalOriginConverter;
 	type IsReserve = ();
 	type IsTeleporter = TrustedTeleporters;
-	type LocationInverter = LocationInverter<Ancestry>;
-	type Barrier = Barrier;
+	type UniversalLocation = UniversalLocation;
+	type Barrier = RespectSuspension<Barrier, XcmPallet>;
 	type Weigher = FixedWeightBounds<BaseXcmWeight, RuntimeCall, MaxInstructions>;
-	type Trader = FixedRateOfFungible<SelPerSecond, ()>;
+	type Trader = FixedRateOfFungible<TsnPerSecondPerByte, ()>;
 	type ResponseHandler = XcmPallet;
 	type AssetTrap = XcmPallet;
+	type AssetLocker = ();
+	type AssetExchanger = ();
 	type AssetClaims = XcmPallet;
 	type SubscriptionService = XcmPallet;
+	type PalletInstancesInfo = AllPalletsWithSystem;
+	type MaxAssetsIntoHolding = MaxAssetsIntoHolding;
+	type FeeManager = ();
+	type MessageExporter = ();
+	type UniversalAliases = Nothing;
+	type CallDispatcher = RuntimeCall;
+	type SafeCallFilter = Everything;
+	type Aliasers = Nothing;
 }
 
-pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, SelendraNetwork>;
+pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, TestnetNetwork>;
+
+#[cfg(feature = "runtime-benchmarks")]
+parameter_types! {
+	pub ReachableDest: Option<MultiLocation> = Some(Here.into());
+}
 
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type LocationInverter = LocationInverter<Ancestry>;
+	type UniversalLocation = UniversalLocation;
 	type SendXcmOrigin = xcm_builder::EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmRouter = TestSendXcm;
 	// Anyone can execute XCM messages locally...
@@ -194,6 +229,17 @@ impl pallet_xcm::Config for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
+	type TrustedLockers = ();
+	type SovereignAccountOf = ();
+	type Currency = Balances;
+	type CurrencyMatcher = IsConcrete<TsnLocation>;
+	type MaxLockers = frame_support::traits::ConstU32<8>;
+	type MaxRemoteLockConsumers = frame_support::traits::ConstU32<0>;
+	type RemoteLockConsumerIdentifier = ();
+	type WeightInfo = pallet_xcm::TestWeightInfo;
+	#[cfg(feature = "runtime-benchmarks")]
+	type ReachableDest = ReachableDest;
+	type AdminOrigin = EnsureRoot<AccountId>;
 }
 
 impl origin::Config for Runtime {}
@@ -214,9 +260,7 @@ construct_runtime!(
 	}
 );
 
-pub fn selendra_like_with_balances(
-	balances: Vec<(AccountId, Balance)>,
-) -> sp_io::TestExternalities {
+pub fn testnet_like_with_balances(balances: Vec<(AccountId, Balance)>) -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 	pallet_balances::GenesisConfig::<Runtime> { balances }
@@ -226,4 +270,8 @@ pub fn selendra_like_with_balances(
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| System::set_block_number(1));
 	ext
+}
+
+pub fn fake_message_hash<T>(message: &Xcm<T>) -> XcmHash {
+	message.using_encoded(sp_io::hashing::blake2_256)
 }

@@ -6,13 +6,15 @@ description = "Examples of xcm-simulator usage."
 edition = "2021"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0" }
+codec = { package = "parity-scale-codec", version = "3.6.1" }
 honggfuzz = "0.5.55"
-scale-info = { version = "2.1.2", features = ["derive"] }
+arbitrary = "1.2.0"
+scale-info = { version = "2.5.0", features = ["derive"] }
 
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+pallet-message-queue = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
@@ -26,6 +28,14 @@ pallet-xcm = { path = "../../pallet-xcm" }
 selendra-core-primitives = { path = "../../../../primitives/core" }
 selendra-runtime-parachains = { path = "../../../runtime" }
 selendra-parachain = { path = "../../.." }
+
+[features]
+runtime-benchmarks = [
+    "pallet-xcm/runtime-benchmarks",
+    "pallet-message-queue/runtime-benchmarks",
+    "xcm-builder/runtime-benchmarks",
+    "frame-support/runtime-benchmarks",
+]
 
 [[bin]]
 path = "src/fuzz.rs"

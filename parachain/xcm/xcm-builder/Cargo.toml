@@ -5,35 +5,40 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 description = "Tools & types for building with XCM and its executor."
 
-
 [dependencies]
-parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive"] }
-scale-info = { version = "2.1.2", default-features = false, features = ["derive"] }
 log = { version = "0.4.17", default-features = false }
+impl-trait-for-tuples = "0.2.1"
+parity-scale-codec = { version = "3.6.1", default-features = false, features = ["derive"] }
+scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
 
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
+sp-weights = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 
 xcm = { path = "..", default-features = false }
 xcm-executor = { path = "../xcm-executor", default-features = false }
+# Selendra dependencies
 selendra-parachain = { path = "../..", default-features = false }
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+assert_matches = "1.5.0"
+primitive-types = "0.12.1"
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 pallet-xcm = { path = "../pallet-xcm" }
 selendra-runtime-parachains = { path = "../../runtime" }
+selendra-test-runtime = { path = "../../../runtime/test-runtime" }
 
 [features]
 default = ["std"]
 runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
-	"frame-system/runtime-benchmarks"
+	"frame-system/runtime-benchmarks",
+	"xcm-executor/runtime-benchmarks",
 ]
 std = [
 	"log/std",
@@ -45,7 +50,9 @@ std = [
 	"sp-arithmetic/std",
 	"sp-io/std",
 	"sp-runtime/std",
+	"sp-weights/std",
 	"frame-support/std",
+	"frame-system/std",
 	"selendra-parachain/std",
 	"pallet-transaction-payment/std",
 ]

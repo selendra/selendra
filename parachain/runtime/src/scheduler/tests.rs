@@ -18,26 +18,30 @@ use super::*;
 
 use frame_support::assert_ok;
 use keyring::Sr25519Keyring;
-use primitives::v2::{BlockNumber, CollatorId, SessionIndex, ValidatorId};
+use primitives::{BlockNumber, CollatorId, SessionIndex, ValidationCode, ValidatorId};
 
 use crate::{
 	configuration::HostConfiguration,
 	initializer::SessionChangeNotification,
 	mock::{
-		new_test_ext, Configuration, MockGenesisConfig, Paras, ParasShared, Scheduler, System, Test,
+		new_test_ext, Configuration, MockGenesisConfig, Paras, ParasShared, RuntimeOrigin,
+		Scheduler, System, Test,
 	},
 	paras::{ParaGenesisArgs, ParaKind},
 };
 
 fn schedule_blank_para(id: ParaId, parakind: ParaKind) {
+	let validation_code: ValidationCode = vec![1, 2, 3].into();
 	assert_ok!(Paras::schedule_para_initialize(
 		id,
 		ParaGenesisArgs {
 			genesis_head: Vec::new().into(),
-			validation_code: vec![1, 2, 3].into(),
+			validation_code: validation_code.clone(),
 			para_kind: parakind,
 		}
 	));
+
+	assert_ok!(Paras::add_trusted_validation_code(RuntimeOrigin::root(), validation_code));
 }
 
 fn run_to_block(
@@ -865,7 +869,7 @@ fn schedule_rotates_groups() {
 			_ => None,
 		});
 
-		let session_start_block = <Scheduler as Store>::SessionStartBlock::get();
+		let session_start_block = SessionStartBlock::<Test>::get();
 		assert_eq!(session_start_block, 1);
 
 		Scheduler::add_parathread_claim(ParathreadClaim(thread_a, collator.clone()));

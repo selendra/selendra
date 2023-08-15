@@ -19,8 +19,11 @@
 pub use codec::Encode;
 pub use paste;
 
-pub use frame_support::{traits::Get, weights::Weight};
-pub use sp_io::TestExternalities;
+pub use frame_support::{
+	traits::{EnqueueMessage, Get, ProcessMessage, ProcessMessageError, ServiceQueues},
+	weights::{Weight, WeightMeter},
+};
+pub use sp_io::{hashing::blake2_256, TestExternalities};
 pub use sp_std::{cell::RefCell, collections::vec_deque::VecDeque, marker::PhantomData};
 
 pub use selendra_core_primitives::BlockNumber as RelayBlockNumber;
@@ -30,9 +33,10 @@ pub use selendra_parachain::primitives::{
 };
 pub use selendra_runtime_parachains::{
 	dmp,
-	ump::{self, MessageId, UmpSink, XcmSink},
+	inclusion::{AggregateMessageOrigin, UmpQueueId},
 };
 pub use xcm::{latest::prelude::*, VersionedXcm};
+pub use xcm_builder::ProcessXcmMessage;
 pub use xcm_executor::XcmExecutor;
 
 pub trait TestExt {
@@ -77,6 +81,10 @@ pub fn encode_xcm(message: Xcm<()>, message_kind: MessageKind) -> Vec<u8> {
 	}
 }
 
+pub fn fake_message_hash<T>(message: &Xcm<T>) -> XcmHash {
+	message.using_encoded(blake2_256)
+}
+
 /// The macro is implementing upward message passing(UMP) for the provided relay
 /// chain struct. The struct has to provide the XCM configuration for the relay
 /// chain.
@@ -96,7 +104,11 @@ macro_rules! decl_test_relay_chain {
 	(
 		pub struct $name:ident {
 			Runtime = $runtime:path,
+			RuntimeCall = $runtime_call:path,
+			RuntimeEvent = $runtime_event:path,
 			XcmConfig = $xcm_config:path,
+			MessageQueue = $mq:path,
+			System = $system:path,
 			new_ext = $new_ext:expr,
 		}
 	) => {
@@ -104,18 +116,38 @@ macro_rules! decl_test_relay_chain {
 
 		$crate::__impl_ext!($name, $new_ext);
 
-		impl $crate::UmpSink for $name {
-			fn process_upward_message(
-				origin: $crate::ParaId,
+		impl $crate::ProcessMessage for $name {
+			type Origin = $crate::ParaId;
+
+			fn process_message(
 				msg: &[u8],
-				max_weight: $crate::Weight,
-			) -> Result<$crate::Weight, ($crate::MessageId, $crate::Weight)> {
-				use $crate::{ump::UmpSink, TestExt};
+				para: Self::Origin,
+				meter: &mut $crate::WeightMeter,
+				id: &mut [u8; 32],
+			) -> Result<bool, $crate::ProcessMessageError> {
+				use $crate::{Weight, AggregateMessageOrigin, UmpQueueId, ServiceQueues, EnqueueMessage};
+				use $mq as message_queue;
+				use $runtime_event as runtime_event;
 
 				Self::execute_with(|| {
-					$crate::ump::XcmSink::<$crate::XcmExecutor<$xcm_config>, $runtime>::process_upward_message(
-						origin, msg, max_weight,
-					)
+					<$mq as EnqueueMessage<AggregateMessageOrigin>>::enqueue_message(
+						msg.try_into().expect("Message too long"),
+						AggregateMessageOrigin::Ump(UmpQueueId::Para(para.clone()))
+					);
+
+					<$system>::reset_events();
+					<$mq as ServiceQueues>::service_queues(Weight::MAX);
+					let events = <$system>::events();
+					let event = events.last().expect("There must be at least one event");
+
+					match &event.event {
+						runtime_event::MessageQueue(
+								pallet_message_queue::Event::Processed {origin, ..}) => {
+							assert_eq!(origin, &AggregateMessageOrigin::Ump(UmpQueueId::Para(para)));
+						},
+						event => panic!("Unexpected event: {:#?}", event),
+					}
+					Ok(true)
 				})
 			}
 		}
@@ -257,6 +289,7 @@ macro_rules! decl_test_network {
 			parachains = vec![ $( ($para_id:expr, $parachain:ty), )* ],
 		}
 	) => {
+		use $crate::Encode;
 		pub struct $name;
 
 		impl $name {
@@ -281,19 +314,25 @@ macro_rules! decl_test_network {
 
 		/// Process all messages originating from parachains.
 		fn process_para_messages() -> $crate::XcmResult {
-			use $crate::{UmpSink, XcmpMessageHandlerT};
+			use $crate::{ProcessMessage, XcmpMessageHandlerT};
 
 			while let Some((para_id, destination, message)) = $crate::PARA_MESSAGE_BUS.with(
 				|b| b.borrow_mut().pop_front()) {
 				match destination.interior() {
 					$crate::Junctions::Here if destination.parent_count() == 1 => {
 						let encoded = $crate::encode_xcm(message, $crate::MessageKind::Ump);
-						let r = <$relay_chain>::process_upward_message(
-							para_id, &encoded[..],
-							$crate::Weight::MAX,
+						let mut _id = [0; 32];
+						let r = <$relay_chain>::process_message(
+							encoded.as_slice(), para_id,
+							&mut $crate::WeightMeter::max_limit(),
+							&mut _id,
 						);
-						if let Err((id, required)) = r {
-							return Err($crate::XcmError::WeightLimitReached(required.ref_time()));
+						match r {
+							Err($crate::ProcessMessageError::Overweight(required)) =>
+								return Err($crate::XcmError::WeightLimitReached(required)),
+							// Not really the correct error, but there is no "undecodable".
+							Err(_) => return Err($crate::XcmError::Unimplemented),
+							Ok(_) => (),
 						}
 					},
 					$(
@@ -343,45 +382,65 @@ macro_rules! decl_test_network {
 		pub struct ParachainXcmRouter<T>($crate::PhantomData<T>);
 
 		impl<T: $crate::Get<$crate::ParaId>> $crate::SendXcm for ParachainXcmRouter<T> {
-			fn send_xcm(destination: impl Into<$crate::MultiLocation>, message: $crate::Xcm<()>) -> $crate::SendResult {
-				use $crate::{UmpSink, XcmpMessageHandlerT};
+			type Ticket = ($crate::ParaId, $crate::MultiLocation, $crate::Xcm<()>);
+			fn validate(
+				destination: &mut Option<$crate::MultiLocation>,
+				message: &mut Option<$crate::Xcm<()>>,
+			) -> $crate::SendResult<($crate::ParaId, $crate::MultiLocation, $crate::Xcm<()>)> {
+				use $crate::XcmpMessageHandlerT;
 
-				let destination = destination.into();
-				match destination.interior() {
-					$crate::Junctions::Here if destination.parent_count() == 1 => {
-						$crate::PARA_MESSAGE_BUS.with(
-							|b| b.borrow_mut().push_back((T::get(), destination, message)));
-						Ok(())
-					},
+				let d = destination.take().ok_or($crate::SendError::MissingArgument)?;
+				match (d.interior(), d.parent_count()) {
+					($crate::Junctions::Here, 1) => {},
 					$(
-						$crate::X1($crate::Parachain(id)) if *id == $para_id && destination.parent_count() == 1 => {
-							$crate::PARA_MESSAGE_BUS.with(
-								|b| b.borrow_mut().push_back((T::get(), destination, message)));
-							Ok(())
-						},
+						($crate::X1($crate::Parachain(id)), 1) if id == &$para_id => {}
 					)*
-					_ => Err($crate::SendError::CannotReachDestination(destination, message)),
+					_ => {
+						*destination = Some(d);
+						return Err($crate::SendError::NotApplicable)
+					},
 				}
+				let m = message.take().ok_or($crate::SendError::MissingArgument)?;
+				Ok(((T::get(), d, m), $crate::MultiAssets::new()))
+			}
+			fn deliver(
+				triple: ($crate::ParaId, $crate::MultiLocation, $crate::Xcm<()>),
+			) -> Result<$crate::XcmHash, $crate::SendError> {
+				let hash = $crate::fake_message_hash(&triple.2);
+				$crate::PARA_MESSAGE_BUS.with(|b| b.borrow_mut().push_back(triple));
+				Ok(hash)
 			}
 		}
 
 		/// XCM router for relay chain.
 		pub struct RelayChainXcmRouter;
 		impl $crate::SendXcm for RelayChainXcmRouter {
-			fn send_xcm(destination: impl Into<$crate::MultiLocation>, message: $crate::Xcm<()>) -> $crate::SendResult {
+			type Ticket = ($crate::MultiLocation, $crate::Xcm<()>);
+			fn validate(
+				destination: &mut Option<$crate::MultiLocation>,
+				message: &mut Option<$crate::Xcm<()>>,
+			) -> $crate::SendResult<($crate::MultiLocation, $crate::Xcm<()>)> {
 				use $crate::DmpMessageHandlerT;
 
-				let destination = destination.into();
-				match destination.interior() {
+				let d = destination.take().ok_or($crate::SendError::MissingArgument)?;
+				match (d.interior(), d.parent_count()) {
 					$(
-						$crate::X1($crate::Parachain(id)) if *id == $para_id && destination.parent_count() == 0 => {
-							$crate::RELAY_MESSAGE_BUS.with(
-								|b| b.borrow_mut().push_back((destination, message)));
-							Ok(())
-						},
+						($crate::X1($crate::Parachain(id)), 0) if id == &$para_id => {},
 					)*
-					_ => Err($crate::SendError::Unroutable),
+					_ => {
+						*destination = Some(d);
+						return Err($crate::SendError::NotApplicable)
+					},
 				}
+				let m = message.take().ok_or($crate::SendError::MissingArgument)?;
+				Ok(((d, m), $crate::MultiAssets::new()))
+			}
+			fn deliver(
+				pair: ($crate::MultiLocation, $crate::Xcm<()>),
+			) -> Result<$crate::XcmHash, $crate::SendError> {
+				let hash = $crate::fake_message_hash(&pair.1);
+				$crate::RELAY_MESSAGE_BUS.with(|b| b.borrow_mut().push_back(pair));
+				Ok(hash)
 			}
 		}
 	};
