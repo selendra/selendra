@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Common runtime code for Selendra and Selendra.
+//! Common runtime code for Selendra.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -23,9 +23,13 @@ pub mod elections;
 pub mod impls;
 pub mod paras_registrar;
 pub mod paras_sudo_wrapper;
+pub mod session;
 pub mod slot_range;
 pub mod slots;
 pub mod traits;
+
+#[cfg(feature = "try-runtime")]
+pub mod try_runtime;
 pub mod xcm_sender;
 
 #[cfg(test)]
@@ -34,10 +38,10 @@ mod mock;
 use frame_support::{
 	parameter_types,
 	traits::{ConstU32, Currency, OneSessionHandler},
-	weights::{constants::WEIGHT_PER_SECOND, Weight},
+	weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight},
 };
 use frame_system::limits;
-use primitives::v2::{AssignmentId, Balance, BlockNumber, ValidatorId, MAX_POV_SIZE};
+use primitives::{AssignmentId, Balance, BlockNumber, ValidatorId};
 use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
 use static_assertions::const_assert;
 
@@ -63,9 +67,10 @@ pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(1);
 /// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
 /// by  Operational  extrinsics.
 pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+/// We allow for 2 seconds of compute with a 6 second average block time.
 /// The storage proof size is not limited so far.
 pub const MAXIMUM_BLOCK_WEIGHT: Weight =
-	WEIGHT_PER_SECOND.saturating_mul(2).set_proof_size(MAX_POV_SIZE as u64);
+	Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2), u64::MAX);
 
 const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct());
 
@@ -90,7 +95,7 @@ parameter_types! {
 }
 
 /// Parameterized slow adjusting fee updated based on
-/// https://research.web3.foundation/en/latest/selendra/overview/2-token-economics.html#-2.-slow-adjusting-mechanism
+/// https://research.web3.foundation/Polkadot/overview/token-economics#2-slow-adjusting-mechanism
 pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
 	R,
 	TargetBlockFullness,
@@ -150,8 +155,8 @@ macro_rules! impl_runtime_weights {
 /// The type used for currency conversion.
 ///
 /// This must only be used as long as the balance type is `u128`.
-pub type CurrencyToVote = frame_support::traits::U128CurrencyToVote;
-static_assertions::assert_eq_size!(primitives::v2::Balance, u128);
+pub type CurrencyToVote = sp_staking::currency_to_vote::U128CurrencyToVote;
+static_assertions::assert_eq_size!(primitives::Balance, u128);
 
 /// A placeholder since there is currently no provided session key handler for parachain validator
 /// keys.

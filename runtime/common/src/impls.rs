@@ -15,7 +15,7 @@
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Auxiliary `struct`/`enum`s for selendra runtime.
-
+//!
 use crate::NegativeImbalance;
 use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 
@@ -24,8 +24,8 @@ pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for ToAuthor<R>
 where
 	R: pallet_balances::Config + pallet_authorship::Config,
-	<R as frame_system::Config>::AccountId: From<primitives::v2::AccountId>,
-	<R as frame_system::Config>::AccountId: Into<primitives::v2::AccountId>,
+	<R as frame_system::Config>::AccountId: From<primitives::AccountId>,
+	<R as frame_system::Config>::AccountId: Into<primitives::AccountId>,
 {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
 		if let Some(author) = <pallet_authorship::Pallet<R>>::author() {
@@ -38,8 +38,8 @@ pub struct DealWithFees<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
 where
 	R: pallet_balances::Config + pallet_authorship::Config,
-	<R as frame_system::Config>::AccountId: From<primitives::v2::AccountId>,
-	<R as frame_system::Config>::AccountId: Into<primitives::v2::AccountId>,
+	<R as frame_system::Config>::AccountId: From<primitives::AccountId>,
+	<R as frame_system::Config>::AccountId: Into<primitives::AccountId>,
 {
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
 		if let Some(fees) = fees_then_tips.next() {
@@ -62,11 +62,14 @@ where
 mod tests {
 	use super::*;
 	use frame_support::{
-		dispatch::DispatchClass, parameter_types, traits::FindAuthor, weights::Weight,
+		dispatch::DispatchClass,
+		parameter_types,
+		traits::{ConstU32, FindAuthor},
+		weights::Weight,
 	};
 	use frame_system::limits;
-	use primitives::v2::AccountId;
-	use sp_core::H256;
+	use primitives::AccountId;
+	use sp_core::{ConstU64, H256};
 	use sp_runtime::{
 		testing::Header,
 		traits::{BlakeTwo256, IdentityLookup},
@@ -84,7 +87,7 @@ mod tests {
 			UncheckedExtrinsic = UncheckedExtrinsic,
 		{
 			System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-			Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent},
+			Authorship: pallet_authorship::{Pallet, Storage},
 			Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		}
 	);
@@ -92,12 +95,12 @@ mod tests {
 	parameter_types! {
 		pub const BlockHashCount: u64 = 250;
 		pub BlockWeights: limits::BlockWeights = limits::BlockWeights::builder()
-			.base_block(Weight::from_ref_time(10))
+			.base_block(Weight::from_parts(10, 0))
 			.for_class(DispatchClass::all(), |weight| {
-				weight.base_extrinsic = Weight::from_ref_time(100);
+				weight.base_extrinsic = Weight::from_parts(100, 0);
 			})
 			.for_class(DispatchClass::non_mandatory(), |weight| {
-				weight.max_total = Some(Weight::from_ref_time(1024).set_proof_size(u64::MAX));
+				weight.max_total = Some(Weight::from_parts(1024, u64::MAX));
 			})
 			.build_or_panic();
 		pub BlockLength: limits::BlockLength = limits::BlockLength::max(2 * 1024);
@@ -135,12 +138,16 @@ mod tests {
 		type Balance = u64;
 		type RuntimeEvent = RuntimeEvent;
 		type DustRemoval = ();
-		type ExistentialDeposit = ();
+		type ExistentialDeposit = ConstU64<1>;
 		type AccountStore = System;
 		type MaxLocks = ();
 		type MaxReserves = ();
 		type ReserveIdentifier = [u8; 8];
 		type WeightInfo = ();
+		type RuntimeHoldReason = RuntimeHoldReason;
+		type FreezeIdentifier = ();
+		type MaxHolds = ConstU32<1>;
+		type MaxFreezes = ConstU32<1>;
 	}
 
 	pub struct OneAuthor;
@@ -154,8 +161,6 @@ mod tests {
 	}
 	impl pallet_authorship::Config for Test {
 		type FindAuthor = OneAuthor;
-		type UncleGenerations = ();
-		type FilterUncle = ();
 		type EventHandler = ();
 	}
 

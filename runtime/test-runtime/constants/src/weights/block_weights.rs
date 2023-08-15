@@ -13,7 +13,6 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License.
 
 pub mod constants {
 	use frame_support::{
@@ -23,7 +22,8 @@ pub mod constants {
 
 	parameter_types! {
 		/// Importing a block with 0 Extrinsics.
-		pub const BlockExecutionWeight: Weight = constants::WEIGHT_PER_NANOS.saturating_mul(5_000_000);
+		pub const BlockExecutionWeight: Weight =
+			Weight::from_parts(constants::WEIGHT_REF_TIME_PER_NANOS.saturating_mul(5_000_000), 0);
 	}
 
 	#[cfg(test)]
@@ -39,12 +39,12 @@ pub mod constants {
 
 			// At least 100 µs.
 			assert!(
-				w.ref_time() >= 100u64 * constants::WEIGHT_PER_MICROS.ref_time(),
+				w.ref_time() >= 100u64 * constants::WEIGHT_REF_TIME_PER_MICROS,
 				"Weight should be at least 100 µs."
 			);
 			// At most 50 ms.
 			assert!(
-				w.ref_time() <= 50u64 * constants::WEIGHT_PER_MILLIS.ref_time(),
+				w.ref_time() <= 50u64 * constants::WEIGHT_REF_TIME_PER_MILLIS,
 				"Weight should be at most 50 ms."
 			);
 		}

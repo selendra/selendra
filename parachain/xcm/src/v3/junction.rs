@@ -58,12 +58,6 @@ pub enum NetworkId {
 	Selendra,
 	/// The Testnet canary-net Relay-chain.
 	Testnet,
-	/// The Westend testnet Relay-chain.
-	Westend,
-	/// The Rococo testnet Relay-chain.
-	Rococo,
-	/// The Wococo testnet Relay-chain.
-	Wococo,
 	/// An Ethereum network specified by its chain ID.
 	Ethereum {
 		/// The EIP-155 chain ID.

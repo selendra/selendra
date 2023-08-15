@@ -29,7 +29,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
-use primitives::v2::Id as ParaId;
+use primitives::Id as ParaId;
 use sp_runtime::traits::{CheckedConversion, CheckedSub, Saturating, Zero};
 use sp_std::prelude::*;
 
@@ -65,7 +65,6 @@ pub mod pallet {
 	use super::*;
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
@@ -163,6 +162,7 @@ pub mod pallet {
 		/// independently of any other on-chain mechanism to use it.
 		///
 		/// The dispatch origin for this call must match `T::ForceOrigin`.
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::force_lease())]
 		pub fn force_lease(
 			origin: OriginFor<T>,
@@ -181,6 +181,7 @@ pub mod pallet {
 		/// Clear all leases for a Para Id, refunding any deposits back to the original owners.
 		///
 		/// The dispatch origin for this call must match `T::ForceOrigin`.
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::clear_all_leases())]
 		pub fn clear_all_leases(origin: OriginFor<T>, para: ParaId) -> DispatchResult {
 			T::ForceOrigin::ensure_origin(origin)?;
@@ -203,6 +204,7 @@ pub mod pallet {
 		/// let them onboard from here.
 		///
 		/// Origin must be signed, but can be called by anyone.
+		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::trigger_onboard())]
 		pub fn trigger_onboard(origin: OriginFor<T>, para: ParaId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
@@ -501,7 +503,7 @@ mod tests {
 	use frame_support::{assert_noop, assert_ok, parameter_types};
 	use frame_system::EnsureRoot;
 	use pallet_balances;
-	use primitives::v2::{BlockNumber, Header};
+	use primitives::{BlockNumber, Header};
 	use sp_core::H256;
 	use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 
@@ -564,6 +566,10 @@ mod tests {
 		type MaxLocks = ();
 		type MaxReserves = ();
 		type ReserveIdentifier = [u8; 8];
+		type RuntimeHoldReason = RuntimeHoldReason;
+		type FreezeIdentifier = ();
+		type MaxHolds = ConstU32<1>;
+		type MaxFreezes = ConstU32<1>;
 	}
 
 	parameter_types! {
@@ -840,9 +846,9 @@ mod tests {
 			// max_num different people are reserved for leases to Para ID 1
 			for i in 1u32..=max_num {
 				let j: u64 = i.into();
-				assert_ok!(Slots::lease_out(1.into(), &j, j * 10, i * i, i));
-				assert_eq!(Slots::deposit_held(1.into(), &j), j * 10);
-				assert_eq!(Balances::reserved_balance(j), j * 10);
+				assert_ok!(Slots::lease_out(1.into(), &j, j * 10 - 1, i * i, i));
+				assert_eq!(Slots::deposit_held(1.into(), &j), j * 10 - 1);
+				assert_eq!(Balances::reserved_balance(j), j * 10 - 1);
 			}
 
 			assert_ok!(Slots::clear_all_leases(RuntimeOrigin::root(), 1.into()));
@@ -980,9 +986,10 @@ mod benchmarking {
 	use super::*;
 	use frame_support::assert_ok;
 	use frame_system::RawOrigin;
+	use runtime_parachains::paras;
 	use sp_runtime::traits::{Bounded, One};
 
-	use frame_benchmarking::{account, benchmarks, whitelisted_caller};
+	use frame_benchmarking::{account, benchmarks, whitelisted_caller, BenchmarkError};
 
 	use crate::slots::Pallet as Slots;
 
@@ -994,7 +1001,7 @@ mod benchmarking {
 		assert_eq!(event, &system_event);
 	}
 
-	fn register_a_parathread<T: Config>(i: u32) -> (ParaId, T::AccountId) {
+	fn register_a_parathread<T: Config + paras::Config>(i: u32) -> (ParaId, T::AccountId) {
 		let para = ParaId::from(i);
 		let leaser: T::AccountId = account("leaser", i, 0);
 		T::Currency::make_free_balance_be(&leaser, BalanceOf::<T>::max_value());
@@ -1005,14 +1012,21 @@ mod benchmarking {
 			leaser.clone(),
 			para,
 			worst_head_data,
-			worst_validation_code
+			worst_validation_code.clone(),
 		));
+		assert_ok!(paras::Pallet::<T>::add_trusted_validation_code(
+			frame_system::Origin::<T>::Root.into(),
+			worst_validation_code,
+		));
+
 		T::Registrar::execute_pending_transitions();
 
 		(para, leaser)
 	}
 
 	benchmarks! {
+		where_clause { where T: paras::Config }
+
 		force_lease {
 			// If there is an offset, we need to be on that block to be able to do lease things.
 			frame_system::Pallet::<T>::set_block_number(T::LeaseOffset::get() + One::one());
@@ -1022,7 +1036,8 @@ mod benchmarking {
 			let amount = T::Currency::minimum_balance();
 			let period_begin = 69u32.into();
 			let period_count = 3u32.into();
-			let origin = T::ForceOrigin::successful_origin();
+			let origin =
+				T::ForceOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
 		}: _<T::RuntimeOrigin>(origin, para, leaser.clone(), amount, period_begin, period_count)
 		verify {
 			assert_last_event::<T>(Event::<T>::Leased {
@@ -1037,8 +1052,8 @@ mod benchmarking {
 		// Worst case scenario, T parathreads onboard, and C parachains offboard.
 		manage_lease_period_start {
 			// Assume reasonable maximum of 100 paras at any time
-			let c in 1 .. 100;
-			let t in 1 .. 100;
+			let c in 0 .. 100;
+			let t in 0 .. 100;
 
 			let period_begin = 1u32.into();
 			let period_count = 4u32.into();
@@ -1056,7 +1071,8 @@ mod benchmarking {
 			// T parathread are upgrading to parachains
 			for (para, leaser) in paras_info {
 				let amount = T::Currency::minimum_balance();
-				let origin = T::ForceOrigin::successful_origin();
+				let origin = T::ForceOrigin::try_successful_origin()
+					.expect("ForceOrigin has no successful origin required for the benchmark");
 				Slots::<T>::force_lease(origin, para, leaser, amount, period_begin, period_count)?;
 			}
 
@@ -1107,7 +1123,8 @@ mod benchmarking {
 				// Average slot has 4 lease periods.
 				let period_count: LeasePeriodOf<T> = 4u32.into();
 				let period_begin = period_count * i.into();
-				let origin = T::ForceOrigin::successful_origin();
+				let origin = T::ForceOrigin::try_successful_origin()
+					.expect("ForceOrigin has no successful origin required for the benchmark");
 				Slots::<T>::force_lease(origin, para, leaser, amount, period_begin, period_count)?;
 			}
 
@@ -1116,7 +1133,8 @@ mod benchmarking {
 				assert_eq!(T::Currency::reserved_balance(&leaser), T::Currency::minimum_balance());
 			}
 
-			let origin = T::ForceOrigin::successful_origin();
+			let origin =
+				T::ForceOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
 		}: _<T::RuntimeOrigin>(origin, para)
 		verify {
 			for i in 0 .. max_people {
@@ -1136,5 +1154,11 @@ mod benchmarking {
 			T::Registrar::execute_pending_transitions();
 			assert!(T::Registrar::is_parachain(para));
 		}
+
+		impl_benchmark_test_suite!(
+			Slots,
+			crate::integration_tests::new_test_ext(),
+			crate::integration_tests::Test,
+		);
 	}
 }
