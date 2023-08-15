@@ -13,9 +13,9 @@ parking_lot = "0.12.0"
 orchestra = "0.0.2"
 parity-util-mem = { version = "0.12.0", default-features = false }
 
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-client = { package = "sc-client-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+client = { package = "sc-client-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 
 selendra-node-network-protocol = { path = "../network/protocol" }
 selendra-node-primitives = { path = "../primitives" }
@@ -28,7 +28,7 @@ gum = { package = "tracing-gum", path = "../gum" }
 femme = "2.2.1"
 assert_matches = "1.4.0"
 metered = { package = "prioritized-metered-channel", version = "0.2.0" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 futures = { version = "0.3.21", features = ["thread-pool"] }
 test-helpers = { package = "selendra-primitives-test-helpers", path = "../../../primitives/test-helpers" }
 
