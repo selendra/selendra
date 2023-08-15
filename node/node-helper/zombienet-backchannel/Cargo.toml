@@ -2,7 +2,7 @@
 name = "zombienet-backchannel"
 description = "Zombienet backchannel to notify test runner and coordinate with malus actors."
 license = "GPL-3.0-only"
-version = "0.3.0"
+version = "1.0.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 readme = "README.md"

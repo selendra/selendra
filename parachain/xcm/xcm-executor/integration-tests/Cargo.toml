@@ -3,7 +3,7 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 name = "xcm-executor-integration-tests"
 description = "Integration tests for the XCM Executor"
-version = "0.3.0"
+version = "1.0.0"
 
 [dependencies]
 futures = "0.3.21"

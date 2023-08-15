@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-jaeger"
-version = "0.3.0"
+version = "1.0.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 description = "Selendra Jaeger primitives, but equally useful for Grafana/Tempo"
