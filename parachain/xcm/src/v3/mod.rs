@@ -901,7 +901,7 @@ pub enum Instruction<Call> {
 	///   should be sent on arrival.
 	/// - `xcm`: The message to be exported.
 	///
-	/// As an example, to export a message for execution on Statemine (parachain #1000 in the
+	/// As an example, to export a message for execution on Indranet (parachain #1000 in the
 	/// Testnet network), you would call with `network: NetworkId::Testnet` and
 	/// `destination: X1(Parachain(1000))`. Alternatively, to export a message for execution on
 	/// Selendra, you would call with `network: NetworkId:: Selendra` and `destination: Here`.

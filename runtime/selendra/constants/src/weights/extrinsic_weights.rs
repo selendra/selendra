@@ -34,24 +34,26 @@
 //   --repeat=100
 //   --header=./file_header.txt
 
+
 use sp_core::parameter_types;
-use sp_weights::{constants::WEIGHT_PER_NANOS, Weight};
+use sp_weights::{constants::WEIGHT_REF_TIME_PER_NANOS, Weight};
 
 parameter_types! {
 	/// Time to execute a NO-OP extrinsic, for example `System::remark`.
 	/// Calculated by multiplying the *Average* with `1.0` and adding `0`.
 	///
 	/// Stats nanoseconds:
-	///   Min, Max: 94_862, 96_847
-	///   Average:  95_479
-	///   Median:   95_465
-	///   Std-Dev:  347.27
+	///   Min, Max: 125_467, 127_402
+	///   Average:  126_045
+	///   Median:   126_039
+	///   Std-Dev:  310.96
 	///
 	/// Percentiles nanoseconds:
-	///   99th: 96_351
-	///   95th: 96_116
-	///   75th: 95_639
-	pub const ExtrinsicBaseWeight: Weight = WEIGHT_PER_NANOS.saturating_mul(95_479);
+	///   99th: 126_699
+	///   95th: 126_620
+	///   75th: 126_207
+	pub const ExtrinsicBaseWeight: Weight =
+		Weight::from_parts(WEIGHT_REF_TIME_PER_NANOS.saturating_mul(126_045), 0);
 }
 
 #[cfg(test)]
@@ -67,12 +69,12 @@ mod test_weights {
 
 		// At least 10 µs.
 		assert!(
-			w.ref_time() >= 10u64 * constants::WEIGHT_PER_MICROS.ref_time(),
+			w.ref_time() >= 10u64 * constants::WEIGHT_REF_TIME_PER_MICROS,
 			"Weight should be at least 10 µs."
 		);
 		// At most 1 ms.
 		assert!(
-			w.ref_time() <= constants::WEIGHT_PER_MILLIS.ref_time(),
+			w.ref_time() <= constants::WEIGHT_REF_TIME_PER_MILLIS,
 			"Weight should be at most 1 ms."
 		);
 	}

@@ -347,7 +347,6 @@ impl<T: Config> Leaser<T::BlockNumber> for Pallet<T> {
 		let (current_lease_period, _) =
 			Self::lease_period_index(now).ok_or(LeaseError::NoLeasePeriod)?;
 		// Finally, we update the deposit held so it is `amount` for the new lease period
-		// indices that were won in the auction.
 		let offset = period_begin
 			.checked_sub(&current_lease_period)
 			.and_then(|x| x.checked_into::<usize>())

@@ -279,8 +279,7 @@ pub mod pallet {
 		///
 		/// The `ParaId`s remain mapped to the same head data and code so external code can rely on
 		/// `ParaId` to be a long-term identifier of a notional "parachain". However, their
-		/// scheduling info (i.e. whether they're a parathread or parachain), auction information
-		/// and the auction deposit are switched.
+		/// scheduling info (i.e. whether they're a parathread or parachain)
 		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::swap())]
 		pub fn swap(origin: OriginFor<T>, id: ParaId, other: ParaId) -> DispatchResult {

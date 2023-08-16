@@ -22,7 +22,7 @@ pub use self::currency::DOLLARS;
 
 /// Money matters.
 pub mod currency {
-	use primitives::v2::Balance;
+	use primitives::Balance;
 
 	/// The existential deposit.
 	pub const EXISTENTIAL_DEPOSIT: Balance = 10 * CENTS;
@@ -40,7 +40,7 @@ pub mod currency {
 
 /// Time and blocks.
 pub mod time {
-	use primitives::v2::{BlockNumber, Moment};
+	use primitives::{BlockNumber, Moment};
 	use runtime_common::prod_or_fast;
 	pub const MILLISECS_PER_BLOCK: Moment = 6000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
@@ -55,7 +55,7 @@ pub mod time {
 	// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 	// The choice of is done in accordance to the slot duration and expected target
 	// block time, for safely resisting network delays of maximum two seconds.
-	// <https://research.web3.foundation/en/latest/selendra/BABE/Babe/#6-practical-results>
+	// <https://research.web3.foundation/en/latest/polkadot/BABE/Babe/#6-practical-results>
 	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
 }
 
@@ -65,7 +65,7 @@ pub mod fee {
 	use frame_support::weights::{
 		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
 	};
-	use primitives::v2::Balance;
+	use primitives::Balance;
 	use smallvec::smallvec;
 	pub use sp_runtime::Perbill;
 
@@ -97,6 +97,21 @@ pub mod fee {
 			}]
 		}
 	}
+}
+
+/// XCM protocol related constants.
+pub mod xcm {
+	/// Pluralistic bodies existing within the consensus.
+	pub mod body {
+		// The bodies corresponding to the Polkadot OpenGov Origins.
+		pub const FELLOWSHIP_ADMIN_INDEX: u32 = 1;
+	}
+}
+
+/// System Parachains.
+pub mod system_parachain {
+	/// Statemint parachain ID.
+	pub const INDRANET_ID: u32 = 1000;
 }
 
 #[cfg(test)]

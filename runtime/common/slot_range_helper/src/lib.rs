@@ -24,7 +24,7 @@ pub use paste;
 pub use sp_runtime::traits::CheckedSub;
 pub use sp_std::{ops::Add, result};
 
-/// This macro generates a `SlotRange` enum of arbitrary length for use in the Slot Auction
+/// This macro generates a `SlotRange` enum of arbitrary length for use in the Slot
 /// mechanism on Selendra.
 ///
 /// Usage:
@@ -175,7 +175,7 @@ macro_rules! generate_slot_range_new_bounded {
 			last: Index
 		) -> $crate::result::Result<Self, &'static str> {
 			if first > last || first < current || last >= current + (LEASE_PERIODS_PER_SLOT as u32).into() {
-				return Err("Invalid range for this auction")
+				return Err("Invalid range for this slot")
 			}
 			let count: u32 = last.checked_sub(&first)
 				.ok_or("range ends before it begins")?
