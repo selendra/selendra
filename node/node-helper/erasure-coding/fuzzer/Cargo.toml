@@ -5,8 +5,9 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
-selendra-erasure-coding = { path = ".." }
 honggfuzz = "0.5"
+
+selendra-erasure-coding = { path = ".." }
 selendra-primitives = { path = "../../../../primitives" }
 primitives = { package = "selendra-node-primitives", path = "../primitives" }
 
@@ -17,5 +18,3 @@ path = "src/reconstruct.rs"
 [[bin]]
 name = "round_trip"
 path = "src/round_trip.rs"
-
-[workspace]
