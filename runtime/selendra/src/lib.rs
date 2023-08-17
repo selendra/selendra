@@ -100,8 +100,8 @@ use selendra_runtime_constants::{currency::*, fee::*, time::*};
 
 // Weights used in the runtime.
 mod weights;
-// #[cfg(test)]
-// mod test;
+#[cfg(test)]
+mod test;
 
 mod bag_thresholds;
 
@@ -997,11 +997,127 @@ pub type SignedExtra = (
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
 
-pub struct StakingMigrationV11OldPallet;
-impl Get<&'static str> for StakingMigrationV11OldPallet {
-	fn get() -> &'static str {
-		"VoterList"
+/// All migrations that will run on the next runtime upgrade.
+///
+/// This contains the combined migrations of the last 10 releases. It allows to skip runtime
+/// upgrades in case governance decides to do so. THE ORDER IS IMPORTANT.
+pub type Migrations = (
+	migrations::V0934,
+	migrations::V0937,
+	migrations::V0938,
+	migrations::V0940,
+	migrations::V0941,
+	migrations::V0942,
+	migrations::V0943,
+	migrations::V10000,
+	migrations::Unreleased,
+);
+
+/// The runtime migrations per release.
+#[allow(deprecated, missing_docs)]
+pub mod migrations {
+	use super::*;
+	use frame_support::traits::{GetStorageVersion, OnRuntimeUpgrade, StorageVersion};
+
+	pub type V0934 = (
+		pallet_balances::migration::MigrateToTrackInactive<Runtime, xcm_config::CheckAccount>,
+	);
+
+	pub type V0935 = (); // Node only release - no migrations.
+
+	pub type V0936 = (); // Node only release - no migrations.
+
+	pub type V0937 = (
+		pallet_balances::migration::ResetInactive<Runtime>,
+		// We need to apply this migration again, because `ResetInactive` resets the state again.
+		pallet_balances::migration::MigrateToTrackInactive<Runtime, xcm_config::CheckAccount>,
+		pallet_scheduler::migration::v4::CleanupAgendas<Runtime>,
+		pallet_staking::migrations::v13::MigrateToV13<Runtime>,
+	);
+	
+	pub type V0938 = (
+		pallet_xcm::migration::v1::MigrateToV1<Runtime>,
+		// Remove stale entries in the set id -> session index storage map (after
+		// this release they will be properly pruned after the bonding duration has
+		// elapsed)
+		pallet_grandpa::migrations::CleanupSetIdSessionMap<Runtime>,
+	);
+
+	pub type V0939 = (); // Node only release - no migrations.
+
+	pub type V0940 = (
+		pallet_nomination_pools::migration::v4::MigrateToV4<
+			Runtime,
+			NominationPoolsMigrationV4OldPallet,
+		>,
+		pallet_nomination_pools::migration::v5::MigrateToV5<Runtime>,
+	);
+	pub type V0941 = (); // Node only release - no migrations.
+	pub type V0942 = (
+		parachains_configuration::migration::v5::MigrateToV5<Runtime>,
+		pallet_offences::migration::v1::MigrateToV1<Runtime>,
+		runtime_common::session::migration::ClearOldSessionStorage<Runtime>,
+	);
+	pub type V0943 = (
+		SetStorageVersions,
+		// Remove UMP dispatch queue <https://github.com/paritytech/polkadot/pull/6271>
+		parachains_configuration::migration::v6::MigrateToV6<Runtime>,
+		ump_migrations::UpdateUmpLimits,
+	);
+
+	pub type V10000 = (
+		pallet_im_online::migration::v1::Migration<Runtime>,
+	);
+
+	/// Unreleased migrations. Add new ones here:
+	pub type Unreleased = ();
+
+	/// Migrations that set `StorageVersion`s we missed to set.
+	pub struct SetStorageVersions;
+
+	impl OnRuntimeUpgrade for SetStorageVersions {
+		fn on_runtime_upgrade() -> Weight {
+			// `Referenda` pallet was added on chain after the migration to version `1` was added.
+			// Thus, it never required the migration and we just missed to set the correct `StorageVersion`.
+			let storage_version = Referenda::on_chain_storage_version();
+			if storage_version < 1 {
+				StorageVersion::new(1).put::<Referenda>();
+			}
+
+			// Was missed as part of: `runtime_common::session::migration::ClearOldSessionStorage<Runtime>`.
+			let storage_version = Historical::on_chain_storage_version();
+			if storage_version < 1 {
+				StorageVersion::new(1).put::<Historical>();
+			}
+
+			RocksDbWeight::get().reads_writes(2, 2)
+		}
 	}
+}
+
+pub struct NominationPoolsMigrationV4OldPallet;
+impl Get<Perbill> for NominationPoolsMigrationV4OldPallet {
+	fn get() -> Perbill {
+		Perbill::zero()
+	}
+}
+
+/// Helpers to configure all migrations.
+pub mod ump_migrations {
+	use runtime_parachains::configuration::migration_ump;
+
+	pub const MAX_UPWARD_QUEUE_SIZE: u32 = 1 * 1024 * 1024;
+	pub const MAX_UPWARD_QUEUE_COUNT: u32 = 174762;
+	pub const MAX_UPWARD_MESSAGE_SIZE: u32 = (1 << 16) - 5; // Checked in test `max_upward_message_size`.
+	pub const MAX_UPWARD_MESSAGE_NUM_PER_CANDIDATE: u32 = 16;
+
+	pub type UpdateUmpLimits = migration_ump::latest::ScheduleConfigUpdate<
+		super::Runtime,
+		MAX_UPWARD_QUEUE_SIZE,
+		MAX_UPWARD_QUEUE_COUNT,
+		MAX_UPWARD_MESSAGE_SIZE,
+		MAX_UPWARD_MESSAGE_NUM_PER_CANDIDATE,
+	>;
 }
 
 /// Unchecked extrinsic type as expected by this runtime.
@@ -1014,10 +1130,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(
-		pallet_election_provider_multi_phase::migrations::v1::MigrateToV1<Runtime>,
-		pallet_fast_unstake::migrations::v1::MigrateToV1<Runtime>,
-	),
+	Migrations,
 >;
 
 /// The payload being signed in transactions.
@@ -1514,7 +1627,7 @@ sp_api::impl_runtime_apis! {
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade(checks: frame_try_runtime::UpgradeCheckSelect) -> (Weight, Weight) {
-			log::info!("try-runtime::on_runtime_upgrade polkadot.");
+			log::info!("try-runtime::on_runtime_upgrade selendra.");
 			let weight = Executive::try_runtime_upgrade(checks).unwrap();
 			(weight, BlockWeights::get().max_block)
 		}
