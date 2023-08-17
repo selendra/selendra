@@ -28,21 +28,21 @@ use frame_support::{
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
-use selendra_runtime_constants::{
-	currency::CENTS, system_parachain::*, xcm::body::FELLOWSHIP_ADMIN_INDEX,
-};
 use runtime_common::{
 	paras_registrar,
 	xcm_sender::{ChildParachainRouter, ExponentialPrice},
 	ToAuthor,
 };
+use selendra_runtime_constants::{
+	currency::CENTS, system_parachain::*, xcm::body::FELLOWSHIP_ADMIN_INDEX,
+};
 use sp_core::ConstU32;
 use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, AllowKnownQueryResponses,
-	AllowSubscriptionsFrom, AllowTopLevelPaidExecutionFrom, BackingToPlurality,
-	ChildParachainAsNative, ChildParachainConvertsVia, CurrencyAdapter as XcmCurrencyAdapter,
-	FixedWeightBounds, IsConcrete, MintLocation, OriginToPluralityVoice, SignedAccountId32AsNative,
+	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
+	AllowTopLevelPaidExecutionFrom, BackingToPlurality, ChildParachainAsNative,
+	ChildParachainConvertsVia, CurrencyAdapter as XcmCurrencyAdapter, FixedWeightBounds,
+	IsConcrete, MintLocation, OriginToPluralityVoice, SignedAccountId32AsNative,
 	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 	WithComputedOrigin,
 };
@@ -139,8 +139,7 @@ parameter_types! {
 }
 
 /// Selendra Relay recognizes/respects the Indranet chain as a teleporter.
-pub type TrustedTeleporters =
-	(xcm_builder::Case<SelForIndranet>,);
+pub type TrustedTeleporters = (xcm_builder::Case<SelForIndranet>,);
 
 match_types! {
 	pub type OnlyParachains: impl Contains<MultiLocation> = {

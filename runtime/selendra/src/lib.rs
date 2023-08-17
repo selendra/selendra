@@ -22,8 +22,8 @@
 
 use pallet_transaction_payment::CurrencyAdapter;
 use runtime_common::{
-	impl_runtime_weights, impls::DealWithFees, paras_registrar, paras_sudo_wrapper,
-	prod_or_fast, slots, BlockHashCount, BlockLength, CurrencyToVote, SlowAdjustingFeeUpdate,
+	impl_runtime_weights, impls::DealWithFees, paras_registrar, paras_sudo_wrapper, prod_or_fast,
+	slots, BlockHashCount, BlockLength, CurrencyToVote, SlowAdjustingFeeUpdate,
 };
 
 use runtime_parachains::{
@@ -40,12 +40,14 @@ use runtime_parachains::{
 
 use authority_discovery_primitives::AuthorityId as AuthorityDiscoveryId;
 use beefy_primitives::crypto::{AuthorityId as BeefyId, Signature as BeefySignature};
-use frame_election_provider_support::{generate_solution_type, onchain, SequentialPhragmen, BalancingConfig};
+use frame_election_provider_support::{
+	generate_solution_type, onchain, BalancingConfig, SequentialPhragmen,
+};
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, EitherOf, EitherOfDiverse, KeyOwnerProofSystem, LockIdentifier,
-		PrivilegeCmp, ProcessMessage, ProcessMessageError, WithdrawReasons,
+		ConstBool, ConstU32, EitherOf, EitherOfDiverse, KeyOwnerProofSystem, LockIdentifier,
+		Nothing, PrivilegeCmp, ProcessMessage, ProcessMessageError, Randomness, WithdrawReasons,
 	},
 	weights::{ConstantMultiplier, WeightMeter},
 	PalletId, RuntimeDebug,
@@ -61,8 +63,7 @@ use primitives::{
 	CommittedCandidateReceipt, CoreState, DisputeState, ExecutorParams, GroupRotationInfo, Hash,
 	Id as ParaId, InboundDownwardMessage, InboundHrmpMessage, Moment, Nonce,
 	OccupiedCoreAssumption, PersistedValidationData, ScrapedOnChainVotes, SessionInfo, Signature,
-	ValidationCode, ValidationCodeHash, ValidatorId, ValidatorIndex,
-	PARACHAIN_KEY_TYPE_ID,
+	ValidationCode, ValidationCodeHash, ValidatorId, ValidatorIndex, PARACHAIN_KEY_TYPE_ID,
 };
 use sp_core::OpaqueMetadata;
 use sp_mmr_primitives as mmr;
@@ -72,7 +73,7 @@ use sp_runtime::{
 	generic, impl_opaque_keys,
 	traits::{
 		AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Extrinsic as ExtrinsicT,
-		OpaqueKeys, SaturatedConversion, Verify,
+		OpaqueKeys, SaturatedConversion, Verify, Zero,
 	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, FixedU128, KeyTypeId, Perbill, Percent, Permill,
@@ -94,25 +95,27 @@ pub use pallet_timestamp::Call as TimestampCall;
 use sp_runtime::traits::Get;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
+#[cfg(feature = "runtime-benchmarks")]
+use pallet_contracts::NoopMigration;
 
 /// Constant values used within the runtime.
 use selendra_runtime_constants::{currency::*, fee::*, time::*};
 
 // Weights used in the runtime.
-mod weights;
 #[cfg(test)]
 mod test;
+mod weights;
 
 mod bag_thresholds;
 
+pub mod governance;
 pub mod parachain_config;
 pub mod proxy_config;
 pub mod xcm_config;
-pub mod governance;
 
 use governance::{
-	CouncilCollective, pallet_custom_origins, FellowshipAdmin, GeneralAdmin,
-	LeaseAdmin, StakingAdmin, Treasurer, TreasurySpender,
+	pallet_custom_origins, CouncilCollective, FellowshipAdmin, GeneralAdmin, LeaseAdmin,
+	StakingAdmin, Treasurer, TreasurySpender,
 };
 
 impl_runtime_weights!(selendra_runtime_constants);
@@ -133,13 +136,13 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	apis: RUNTIME_API_VERSIONS,
 	#[cfg(feature = "disable-runtime-api")]
 	apis: sp_version::create_apis_vec![[]],
-	transaction_version: 3,
+	transaction_version: 4,
 	state_version: 0,
 };
 
 /// The BABE epoch configuration at genesis.
 pub const BABE_GENESIS_EPOCH_CONFIG: babe_primitives::BabeEpochConfiguration =
-babe_primitives::BabeEpochConfiguration {
+	babe_primitives::BabeEpochConfiguration {
 		c: PRIMARY_PROBABILITY,
 		allowed_slots: babe_primitives::AllowedSlots::PrimaryAndSecondaryVRFSlots,
 	};
@@ -149,7 +152,6 @@ babe_primitives::BabeEpochConfiguration {
 pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
-
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
@@ -549,7 +551,6 @@ parameter_types! {
 	pub const MaxNominations: u32 = <NposCompactSolution16 as frame_election_provider_support::NposSolution>::LIMIT as u32;
 }
 
-
 impl pallet_staking::Config for Runtime {
 	type MaxNominations = MaxNominations;
 	type Currency = Balances;
@@ -890,6 +891,57 @@ impl pallet_recovery::Config for Runtime {
 	type RecoveryDeposit = RecoveryDeposit;
 }
 
+/// Codes using the randomness functionality cannot be uploaded. Neither can contracts
+/// be instantiated from existing codes that use this deprecated functionality.
+///
+/// But since some `Randomness` config type is still required for `pallet-contracts`, we provide this dummy type.
+pub struct DummyDeprecatedRandomness;
+impl Randomness<Hash, BlockNumber> for DummyDeprecatedRandomness {
+	fn random(_: &[u8]) -> (Hash, BlockNumber) {
+		(Default::default(), Zero::zero())
+	}
+}
+
+parameter_types! {
+	pub const DepositPerItem: Balance = deposit(1, 0);
+	pub const DepositPerByte: Balance = deposit(0, 1);
+	// Fallback value if storage deposit limit not set by the user
+	pub const DefaultDepositLimit: Balance = deposit(1024, 1024 * 1024);
+	pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
+}
+
+impl pallet_contracts::Config for Runtime {
+	type Time = Timestamp;
+	type Randomness = DummyDeprecatedRandomness;
+	type Currency = Balances;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+	/// The safest default is to allow no calls at all.
+	///
+	/// Runtimes should whitelist dispatchables that are allowed to be called from contracts
+	/// and make sure they are stable. Dispatchables exposed to contracts are not allowed to
+	/// change because that would break already deployed contracts. The `Call` structure itself
+	/// is not allowed to change the indices of existing pallets, too.
+	type CallFilter = Nothing;
+	type DepositPerItem = DepositPerItem;
+	type DepositPerByte = DepositPerByte;
+	type DefaultDepositLimit = DefaultDepositLimit;
+	type CallStack = [pallet_contracts::Frame<Self>; 5];
+	type WeightPrice = pallet_transaction_payment::Pallet<Self>;
+	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
+	type ChainExtension = ();
+	type Schedule = Schedule;
+	type AddressGenerator = pallet_contracts::DefaultAddressGenerator;
+	type MaxCodeLen = ConstU32<{ 123 * 1024 }>;
+	type MaxStorageKeyLen = ConstU32<128>;
+	type UnsafeUnstableInterface = ConstBool<false>;
+	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	type Migrations = ();
+	#[cfg(feature = "runtime-benchmarks")]
+	type Migrations = (NoopMigration<1>, NoopMigration<2>);
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -970,6 +1022,8 @@ construct_runtime! {
 		// Generalized message queue
 		MessageQueue: pallet_message_queue::{Pallet, Call, Storage, Event<T>} = 100,
 
+		Contracts: pallet_contracts = 150,
+
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Event<T>, Config<T>} = 200,
 		ParasSudoWrapper: paras_sudo_wrapper::{Pallet, Call} = 201,
 	}
@@ -1019,9 +1073,8 @@ pub mod migrations {
 	use super::*;
 	use frame_support::traits::{GetStorageVersion, OnRuntimeUpgrade, StorageVersion};
 
-	pub type V0934 = (
-		pallet_balances::migration::MigrateToTrackInactive<Runtime, xcm_config::CheckAccount>,
-	);
+	pub type V0934 =
+		(pallet_balances::migration::MigrateToTrackInactive<Runtime, xcm_config::CheckAccount>,);
 
 	pub type V0935 = (); // Node only release - no migrations.
 
@@ -1034,7 +1087,7 @@ pub mod migrations {
 		pallet_scheduler::migration::v4::CleanupAgendas<Runtime>,
 		pallet_staking::migrations::v13::MigrateToV13<Runtime>,
 	);
-	
+
 	pub type V0938 = (
 		pallet_xcm::migration::v1::MigrateToV1<Runtime>,
 		// Remove stale entries in the set id -> session index storage map (after
@@ -1065,12 +1118,10 @@ pub mod migrations {
 		ump_migrations::UpdateUmpLimits,
 	);
 
-	pub type V10000 = (
-		pallet_im_online::migration::v1::Migration<Runtime>,
-	);
+	pub type V10000 = (pallet_im_online::migration::v1::Migration<Runtime>,);
 
 	/// Unreleased migrations. Add new ones here:
-	pub type Unreleased = ();
+	pub type Unreleased = (pallet_contracts::Migration<Runtime>,);
 
 	/// Migrations that set `StorageVersion`s we missed to set.
 	pub struct SetStorageVersions;
@@ -1164,6 +1215,7 @@ mod benches {
 		[pallet_child_bounties, ChildBounties]
 		[pallet_collective, Council]
 		[pallet_collective, TechnicalCommittee]
+		[pallet_contracts, Contracts]
 		[pallet_democracy, Democracy]
 		[pallet_elections_phragmen, PhragmenElection]
 		[pallet_election_provider_multi_phase, ElectionProviderMultiPhase]

@@ -122,7 +122,8 @@ mod test_fees {
 			voters += 1;
 		}
 
-		let cost = voters as Balance * (governance::VotingBondBase::get() + 16 * governance::VotingBondFactor::get());
+		let cost = voters as Balance *
+			(governance::VotingBondBase::get() + 16 * governance::VotingBondFactor::get());
 		let cost_dollars = cost / DOLLARS;
 		println!(
 			"can support {} voters in a single block for council elections; total bond {}",

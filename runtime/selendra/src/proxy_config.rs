@@ -15,8 +15,8 @@
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>
 
 use super::{
-	deposit, parameter_types, paras_registrar, weights, Balance, Balances, Runtime, RuntimeCall,
-	RuntimeDebug, RuntimeEvent, BlakeTwo256
+	deposit, parameter_types, paras_registrar, weights, Balance, Balances, BlakeTwo256, Runtime,
+	RuntimeCall, RuntimeDebug, RuntimeEvent,
 };
 use frame_support::traits::InstanceFilter;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
@@ -202,4 +202,3 @@ impl pallet_proxy::Config for Runtime {
 	type AnnouncementDepositBase = AnnouncementDepositBase;
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
-

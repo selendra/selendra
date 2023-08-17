@@ -34,7 +34,6 @@
 //   --repeat=100
 //   --header=./file_header.txt
 
-
 use sp_core::parameter_types;
 use sp_weights::{constants::WEIGHT_REF_TIME_PER_NANOS, Weight};
 

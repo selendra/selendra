@@ -16,12 +16,12 @@
 
 ///! Parachain configuration for Selendra.
 use super::{
-	deposit, parameter_types, weights, xcm_config, Babe, Balances, EnsureRoot, Historical,
-	ParasDisputes, Registrar, Runtime, RuntimeEvent, RuntimeOrigin, Slots, MessageQueue, UmpQueueId,
-	TransactionPriority, DOLLARS, WEEKS, parachains_slashing, paras_sudo_wrapper, ParaInclusion,
-	Weight, Perbill, BlockWeights, ProcessMessage, AggregateMessageOrigin, WeightMeter, ProcessMessageError,
-	RuntimeCall, ParasSlashing, KeyOwnerProofSystem, KeyTypeId, ValidatorId, LeaseAdmin, Offences, EitherOf,
-	ReportLongevity
+	deposit, parachains_slashing, parameter_types, paras_sudo_wrapper, weights, xcm_config,
+	AggregateMessageOrigin, Babe, Balances, BlockWeights, EitherOf, EnsureRoot, Historical,
+	KeyOwnerProofSystem, KeyTypeId, LeaseAdmin, MessageQueue, Offences, ParaInclusion,
+	ParasDisputes, ParasSlashing, Perbill, ProcessMessage, ProcessMessageError, Registrar,
+	ReportLongevity, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Slots, TransactionPriority,
+	UmpQueueId, ValidatorId, Weight, WeightMeter, DOLLARS, WEEKS,
 };
 
 use primitives::{AccountId, Balance, BlockNumber};
@@ -34,7 +34,7 @@ use runtime_parachains::{
 	initializer as parachains_initializer, origin as parachains_origin, paras as parachains_paras,
 	paras_inherent as parachains_paras_inherent, reward_points as parachains_reward_points,
 	scheduler as parachains_scheduler, session_info as parachains_session_info,
-	shared as parachains_shared
+	shared as parachains_shared,
 };
 
 impl parachains_origin::Config for Runtime {}

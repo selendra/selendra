@@ -4,8 +4,8 @@ use frame_system::EnsureRootWithSuccess;
 use xcm::latest::BodyId;
 mod origins;
 pub use origins::{
-	pallet_custom_origins, FellowshipAdmin, GeneralAdmin, LeaseAdmin,
-	ReferendumCanceller, ReferendumKiller, Spender, StakingAdmin, Treasurer, WhitelistedCaller,
+	pallet_custom_origins, FellowshipAdmin, GeneralAdmin, LeaseAdmin, ReferendumCanceller,
+	ReferendumKiller, Spender, StakingAdmin, Treasurer, WhitelistedCaller,
 };
 mod tracks;
 pub use tracks::TracksInfo;
