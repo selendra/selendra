@@ -5,13 +5,16 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
+rand = "0.8"
 futures = "0.3.21"
+futures-timer = "3.0.2"
+
 gum = { package = "tracing-gum", path = "../../gum" }
 selendra-primitives = { path = "../../../../primitives" }
 selendra-node-subsystem = {path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 selendra-node-network-protocol = { path = "../../network/protocol" }
-rand = "0.8"
+
 
 [dev-dependencies]
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }

@@ -31,7 +31,7 @@ use sp_keyring::Sr25519Keyring;
 use selendra_node_network_protocol::request_response::{v1, Recipient};
 use selendra_node_primitives::{BlockData, PoV, Proof};
 use selendra_node_subsystem::messages::AllMessages;
-use selendra_primitives::v2::{CandidateHash, ValidatorIndex};
+use selendra_primitives::{CandidateHash, ValidatorIndex};
 
 use super::*;
 use crate::{metrics::Metrics, tests::mock::get_valid_chunk_data};

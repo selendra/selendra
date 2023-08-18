@@ -22,21 +22,17 @@ use futures::{prelude::*, stream::BoxStream};
 use parity_scale_codec::Encode;
 
 use sc_network::{
-	multiaddr::Multiaddr, Event as NetworkEvent, IfDisconnected, NetworkService, OutboundFailure,
-	RequestFailure,
-};
-use sc_network_common::{
-	config::parse_addr,
-	protocol::ProtocolName,
-	service::{NetworkEventStream, NetworkNotification, NetworkPeers, NetworkRequest},
+	config::parse_addr, multiaddr::Multiaddr, types::ProtocolName, Event as NetworkEvent,
+	IfDisconnected, NetworkEventStream, NetworkNotification, NetworkPeers, NetworkRequest,
+	NetworkService, OutboundFailure, ReputationChange, RequestFailure,
 };
 
 use selendra_node_network_protocol::{
 	peer_set::{PeerSet, PeerSetProtocolNames, ProtocolVersion},
 	request_response::{OutgoingRequest, Recipient, ReqProtocolNames, Requests},
-	PeerId, UnifiedReputationChange as Rep,
+	PeerId,
 };
-use selendra_primitives::v2::{AuthorityDiscoveryId, Block, Hash};
+use selendra_primitives::{AuthorityDiscoveryId, Block, Hash};
 
 use crate::validator_discovery::AuthorityDiscovery;
 
@@ -110,7 +106,7 @@ pub trait Network: Clone + Send + 'static {
 	);
 
 	/// Report a given peer as either beneficial (+) or costly (-) according to the given scalar.
-	fn report_peer(&self, who: PeerId, cost_benefit: Rep);
+	fn report_peer(&self, who: PeerId, rep: ReputationChange);
 
 	/// Disconnect a given peer from the protocol specified without harming reputation.
 	fn disconnect_peer(&self, who: PeerId, protocol: ProtocolName);
@@ -137,8 +133,8 @@ impl Network for Arc<NetworkService<Block, Hash>> {
 		NetworkService::remove_peers_from_reserved_set(&**self, protocol, peers);
 	}
 
-	fn report_peer(&self, who: PeerId, cost_benefit: Rep) {
-		NetworkService::report_peer(&**self, who, cost_benefit.into_base_rep());
+	fn report_peer(&self, who: PeerId, rep: ReputationChange) {
+		NetworkService::report_peer(&**self, who, rep);
 	}
 
 	fn disconnect_peer(&self, who: PeerId, protocol: ProtocolName) {
@@ -161,6 +157,12 @@ impl Network for Arc<NetworkService<Block, Hash>> {
 		let peer_id = match peer {
 			Recipient::Peer(peer_id) => Some(peer_id),
 			Recipient::Authority(authority) => {
+				gum::trace!(
+					target: LOG_TARGET,
+					?authority,
+					"Searching for peer id to connect to authority",
+				);
+
 				let mut found_peer_id = None;
 				// Note: `get_addresses_by_authority_id` searched in a cache, and it thus expected
 				// to be very quick.
@@ -174,7 +176,7 @@ impl Network for Arc<NetworkService<Block, Hash>> {
 						Ok(v) => v,
 						Err(_) => continue,
 					};
-					NetworkService::add_known_address(&*self, peer_id.clone(), addr);
+					NetworkService::add_known_address(self, peer_id, addr);
 					found_peer_id = Some(peer_id);
 				}
 				found_peer_id
@@ -187,8 +189,9 @@ impl Network for Arc<NetworkService<Block, Hash>> {
 				match pending_response
 					.send(Err(RequestFailure::Network(OutboundFailure::DialFailure)))
 				{
-					Err(_) =>
-						gum::debug!(target: LOG_TARGET, "Sending failed request response failed."),
+					Err(_) => {
+						gum::debug!(target: LOG_TARGET, "Sending failed request response failed.")
+					},
 					Ok(_) => {},
 				}
 				return
@@ -196,8 +199,16 @@ impl Network for Arc<NetworkService<Block, Hash>> {
 			Some(peer_id) => peer_id,
 		};
 
+		gum::trace!(
+			target: LOG_TARGET,
+			%peer_id,
+			protocol = %req_protocol_names.get_name(protocol),
+			?if_disconnected,
+			"Starting request",
+		);
+
 		NetworkService::start_request(
-			&*self,
+			self,
 			peer_id,
 			req_protocol_names.get_name(protocol),
 			payload,

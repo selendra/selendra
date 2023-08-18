@@ -32,15 +32,15 @@ mod handle_new_activations {
 	use selendra_node_subsystem_test_helpers::{
 		subsystem_test_harness, TestSubsystemContextHandle,
 	};
-	use selendra_primitives::v2::{
+	use selendra_primitives::{
 		CollatorPair, Id as ParaId, PersistedValidationData, ScheduledCore, ValidationCode,
 	};
 	use std::pin::Pin;
 
 	fn test_collation() -> Collation {
 		Collation {
-			upward_messages: vec![],
-			horizontal_messages: vec![],
+			upward_messages: Default::default(),
+			horizontal_messages: Default::default(),
 			new_validation_code: None,
 			head_data: dummy_head_data(),
 			proof_of_validity: MaybeCompressedPoV::Raw(PoV { block_data: BlockData(Vec::new()) }),

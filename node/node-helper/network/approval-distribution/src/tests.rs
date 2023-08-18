@@ -17,7 +17,6 @@
 use super::*;
 use assert_matches::assert_matches;
 use futures::{executor, future, Future};
-use rand::SeedableRng;
 use selendra_node_network_protocol::{
 	grid_topology::{SessionGridTopology, TopologyPeerInfo},
 	our_view,
@@ -25,13 +24,16 @@ use selendra_node_network_protocol::{
 	view, ObservedRole,
 };
 use selendra_node_primitives::approval::{
-	AssignmentCertKind, VRFOutput, VRFProof, RELAY_VRF_MODULO_CONTEXT,
+	AssignmentCertKind, VrfOutput, VrfProof, VrfSignature, RELAY_VRF_MODULO_CONTEXT,
 };
-use selendra_node_subsystem::messages::{network_bridge_event, AllMessages, ApprovalCheckError};
+use selendra_node_subsystem::messages::{
+	network_bridge_event, AllMessages, ApprovalCheckError, ReportPeerMessage,
+};
 use selendra_node_subsystem_test_helpers as test_helpers;
-use selendra_node_subsystem_util::TimeoutExt as _;
-use selendra_primitives::v2::{AuthorityDiscoveryId, BlakeTwo256, HashT};
+use selendra_node_subsystem_util::{reputation::add_reputation, TimeoutExt as _};
+use selendra_primitives::{AuthorityDiscoveryId, BlakeTwo256, HashT};
 use selendra_primitives_test_helpers::dummy_signature;
+use rand::SeedableRng;
 use sp_authority_discovery::AuthorityPair as AuthorityDiscoveryPair;
 use sp_core::crypto::Pair as PairT;
 use std::time::Duration;
@@ -54,7 +56,8 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
 	{
 		let mut rng = rand_chacha::ChaCha12Rng::seed_from_u64(12345);
 
-		let subsystem = subsystem.run_inner(context, &mut state, &mut rng);
+		let subsystem =
+			subsystem.run_inner(context, &mut state, REPUTATION_CHANGE_TEST_INTERVAL, &mut rng);
 
 		let test_fut = test_fn(virtual_overseer);
 
@@ -78,6 +81,7 @@ fn test_harness<T: Future<Output = VirtualOverseer>>(
 }
 
 const TIMEOUT: Duration = Duration::from_millis(200);
+const REPUTATION_CHANGE_TEST_INTERVAL: Duration = Duration::from_millis(1);
 
 async fn overseer_send(overseer: &mut VirtualOverseer, msg: ApprovalDistributionMessage) {
 	gum::trace!(msg = ?msg, "Sending message");
@@ -265,7 +269,7 @@ fn fake_assignment_cert(block_hash: Hash, validator: ValidatorIndex) -> Indirect
 		validator,
 		cert: AssignmentCert {
 			kind: AssignmentCertKind::RelayVRFModulo { sample: 1 },
-			vrf: (VRFOutput(out), VRFProof(proof)),
+			vrf: VrfSignature { output: VrfOutput(out), proof: VrfProof(proof) },
 		},
 	}
 }
@@ -273,20 +277,44 @@ fn fake_assignment_cert(block_hash: Hash, validator: ValidatorIndex) -> Indirect
 async fn expect_reputation_change(
 	virtual_overseer: &mut VirtualOverseer,
 	peer_id: &PeerId,
-	expected_reputation_change: Rep,
+	rep: Rep,
 ) {
 	assert_matches!(
 		overseer_recv(virtual_overseer).await,
-		AllMessages::NetworkBridgeTx(
-			NetworkBridgeTxMessage::ReportPeer(
-				rep_peer,
-				rep,
-			)
-		) => {
-			assert_eq!(peer_id, &rep_peer);
-			assert_eq!(expected_reputation_change, rep);
+		AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::ReportPeer(
+			ReportPeerMessage::Single(p, r),
+		)) => {
+			assert_eq!(p, *peer_id);
+			assert_eq!(r, rep.into());
 		}
 	);
+}
+
+async fn expect_reputation_changes(
+	virtual_overseer: &mut VirtualOverseer,
+	peer_id: &PeerId,
+	reps: Vec<Rep>,
+) {
+	let mut acc = HashMap::new();
+	for rep in reps {
+		add_reputation(&mut acc, *peer_id, rep);
+	}
+	assert_matches!(
+		overseer_recv(virtual_overseer).await,
+		AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::ReportPeer(
+			ReportPeerMessage::Batch(v),
+		)) => {
+			assert_eq!(v, acc);
+		}
+	);
+}
+
+fn state_without_reputation_delay() -> State {
+	State { reputation: ReputationAggregator::new(|_| true), ..Default::default() }
+}
+
+fn state_with_reputation_delay() -> State {
+	State { reputation: ReputationAggregator::new(|_| false), ..Default::default() }
 }
 
 /// import an assignment
@@ -301,7 +329,7 @@ fn try_import_the_same_assignment() {
 	let parent_hash = Hash::repeat_byte(0xFF);
 	let hash = Hash::repeat_byte(0xAA);
 
-	let _ = test_harness(State::default(), |mut virtual_overseer| async move {
+	let _ = test_harness(state_without_reputation_delay(), |mut virtual_overseer| async move {
 		let overseer = &mut virtual_overseer;
 		// setup peers
 		setup_peer_with_view(overseer, &peer_a, view![]).await;
@@ -373,6 +401,65 @@ fn try_import_the_same_assignment() {
 	});
 }
 
+/// import an assignment
+/// connect a new peer
+/// state sends aggregated reputation change
+#[test]
+fn delay_reputation_change() {
+	let peer = PeerId::random();
+	let parent_hash = Hash::repeat_byte(0xFF);
+	let hash = Hash::repeat_byte(0xAA);
+
+	let _ = test_harness(state_with_reputation_delay(), |mut virtual_overseer| async move {
+		let overseer = &mut virtual_overseer;
+
+		// Setup peers
+		setup_peer_with_view(overseer, &peer, view![]).await;
+
+		// new block `hash_a` with 1 candidates
+		let meta = BlockApprovalMeta {
+			hash,
+			parent_hash,
+			number: 2,
+			candidates: vec![Default::default(); 1],
+			slot: 1.into(),
+			session: 1,
+		};
+		let msg = ApprovalDistributionMessage::NewBlocks(vec![meta]);
+		overseer_send(overseer, msg).await;
+
+		// send the assignment related to `hash`
+		let validator_index = ValidatorIndex(0);
+		let cert = fake_assignment_cert(hash, validator_index);
+		let assignments = vec![(cert.clone(), 0u32)];
+
+		let msg = protocol_v1::ApprovalDistributionMessage::Assignments(assignments.clone());
+		send_message_from_peer(overseer, &peer, msg).await;
+
+		// send an `Accept` message from the Approval Voting subsystem
+		assert_matches!(
+			overseer_recv(overseer).await,
+			AllMessages::ApprovalVoting(ApprovalVotingMessage::CheckAndImportAssignment(
+				assignment,
+				0u32,
+				tx,
+			)) => {
+				assert_eq!(assignment, cert);
+				tx.send(AssignmentCheckResult::Accepted).unwrap();
+			}
+		);
+		expect_reputation_changes(
+			overseer,
+			&peer,
+			vec![COST_UNEXPECTED_MESSAGE, BENEFIT_VALID_MESSAGE_FIRST],
+		)
+		.await;
+		assert!(overseer.recv().timeout(TIMEOUT).await.is_none(), "no message should be sent");
+
+		virtual_overseer
+	});
+}
+
 /// <https://github.com/paritytech/polkadot/pull/2160#discussion_r547594835>
 ///
 /// 1. Send a view update that removes block B from their view.
@@ -385,7 +472,7 @@ fn spam_attack_results_in_negative_reputation_change() {
 	let peer_a = PeerId::random();
 	let hash_b = Hash::repeat_byte(0xBB);
 
-	let _ = test_harness(State::default(), |mut virtual_overseer| async move {
+	let _ = test_harness(state_without_reputation_delay(), |mut virtual_overseer| async move {
 		let overseer = &mut virtual_overseer;
 		let peer = &peer_a;
 		setup_peer_with_view(overseer, peer, view![]).await;
@@ -469,7 +556,7 @@ fn peer_sending_us_the_same_we_just_sent_them_is_ok() {
 	let peer_a = PeerId::random();
 	let hash = Hash::repeat_byte(0xAA);
 
-	let _ = test_harness(State::default(), |mut virtual_overseer| async move {
+	let _ = test_harness(state_without_reputation_delay(), |mut virtual_overseer| async move {
 		let overseer = &mut virtual_overseer;
 		let peer = &peer_a;
 		setup_peer_with_view(overseer, peer, view![]).await;
@@ -545,7 +632,7 @@ fn import_approval_happy_path() {
 	let parent_hash = Hash::repeat_byte(0xFF);
 	let hash = Hash::repeat_byte(0xAA);
 
-	let _ = test_harness(State::default(), |mut virtual_overseer| async move {
+	let _ = test_harness(state_without_reputation_delay(), |mut virtual_overseer| async move {
 		let overseer = &mut virtual_overseer;
 		// setup peers
 		setup_peer_with_view(overseer, &peer_a, view![]).await;
@@ -633,7 +720,7 @@ fn import_approval_bad() {
 	let parent_hash = Hash::repeat_byte(0xFF);
 	let hash = Hash::repeat_byte(0xAA);
 
-	let _ = test_harness(State::default(), |mut virtual_overseer| async move {
+	let _ = test_harness(state_without_reputation_delay(), |mut virtual_overseer| async move {
 		let overseer = &mut virtual_overseer;
 		// setup peers
 		setup_peer_with_view(overseer, &peer_a, view![]).await;
@@ -942,7 +1029,7 @@ fn import_remotely_then_locally() {
 	let hash = Hash::repeat_byte(0xAA);
 	let peer = &peer_a;
 
-	let _ = test_harness(State::default(), |mut virtual_overseer| async move {
+	let _ = test_harness(state_without_reputation_delay(), |mut virtual_overseer| async move {
 		let overseer = &mut virtual_overseer;
 		// setup the peer
 		setup_peer_with_view(overseer, peer, view![hash]).await;
@@ -1114,7 +1201,7 @@ fn race_condition_in_local_vs_remote_view_update() {
 	let peer_a = PeerId::random();
 	let hash_b = Hash::repeat_byte(0xBB);
 
-	let _ = test_harness(State::default(), |mut virtual_overseer| async move {
+	let _ = test_harness(state_without_reputation_delay(), |mut virtual_overseer| async move {
 		let overseer = &mut virtual_overseer;
 		let peer = &peer_a;
 
@@ -1294,7 +1381,7 @@ fn propagates_assignments_along_unshared_dimension() {
 
 	let peers = make_peers_and_authority_ids(100);
 
-	let _ = test_harness(State::default(), |mut virtual_overseer| async move {
+	let _ = test_harness(state_without_reputation_delay(), |mut virtual_overseer| async move {
 		let overseer = &mut virtual_overseer;
 
 		// Connect all peers.
@@ -1817,6 +1904,9 @@ fn originator_aggression_l1() {
 					session: 1,
 				};
 
+				let msg = ApprovalDistributionMessage::ApprovalCheckingLagUpdate(level + 1);
+				overseer_send(overseer, msg).await;
+
 				let msg = ApprovalDistributionMessage::NewBlocks(vec![meta]);
 				overseer_send(overseer, msg).await;
 
@@ -1880,7 +1970,7 @@ fn non_originator_aggression_l1() {
 
 	let peers = make_peers_and_authority_ids(100);
 
-	let mut state = State::default();
+	let mut state = state_without_reputation_delay();
 	state.aggression_config.resend_unfinalized_period = None;
 	let aggression_l1_threshold = state.aggression_config.l1_threshold.clone().unwrap();
 
@@ -1984,7 +2074,7 @@ fn non_originator_aggression_l2() {
 
 	let peers = make_peers_and_authority_ids(100);
 
-	let mut state = State::default();
+	let mut state = state_without_reputation_delay();
 	state.aggression_config.resend_unfinalized_period = None;
 
 	let aggression_l1_threshold = state.aggression_config.l1_threshold.clone().unwrap();
@@ -2071,6 +2161,9 @@ fn non_originator_aggression_l2() {
 					session: 1,
 				};
 
+				let msg = ApprovalDistributionMessage::ApprovalCheckingLagUpdate(level + 1);
+				overseer_send(overseer, msg).await;
+
 				let msg = ApprovalDistributionMessage::NewBlocks(vec![meta]);
 				overseer_send(overseer, msg).await;
 
@@ -2097,6 +2190,10 @@ fn non_originator_aggression_l2() {
 					session: 1,
 				};
 
+				let msg = ApprovalDistributionMessage::ApprovalCheckingLagUpdate(
+					aggression_l1_threshold + level + 1,
+				);
+				overseer_send(overseer, msg).await;
 				let msg = ApprovalDistributionMessage::NewBlocks(vec![meta]);
 				overseer_send(overseer, msg).await;
 
@@ -2144,7 +2241,7 @@ fn resends_messages_periodically() {
 
 	let peers = make_peers_and_authority_ids(100);
 
-	let mut state = State::default();
+	let mut state = state_without_reputation_delay();
 	state.aggression_config.l1_threshold = None;
 	state.aggression_config.l2_threshold = None;
 	state.aggression_config.resend_unfinalized_period = Some(2);
@@ -2241,6 +2338,8 @@ fn resends_messages_periodically() {
 						session: 1,
 					};
 
+					let msg = ApprovalDistributionMessage::ApprovalCheckingLagUpdate(2);
+					overseer_send(overseer, msg).await;
 					let msg = ApprovalDistributionMessage::NewBlocks(vec![meta]);
 					overseer_send(overseer, msg).await;
 
@@ -2275,4 +2374,149 @@ fn resends_messages_periodically() {
 		assert!(overseer.recv().timeout(TIMEOUT).await.is_none(), "no message should be sent");
 		virtual_overseer
 	});
+}
+
+fn batch_test_round(message_count: usize) {
+	use selendra_node_subsystem::SubsystemContext;
+	let pool = sp_core::testing::TaskExecutor::new();
+	let mut state = State::default();
+
+	let (mut context, mut virtual_overseer) = test_helpers::make_subsystem_context(pool.clone());
+	let subsystem = ApprovalDistribution::new(Default::default());
+	let mut rng = rand_chacha::ChaCha12Rng::seed_from_u64(12345);
+	let mut sender = context.sender().clone();
+	let subsystem =
+		subsystem.run_inner(context, &mut state, REPUTATION_CHANGE_TEST_INTERVAL, &mut rng);
+
+	let test_fut = async move {
+		let overseer = &mut virtual_overseer;
+		let validators = 0..message_count;
+		let assignments: Vec<_> = validators
+			.clone()
+			.map(|index| (fake_assignment_cert(Hash::zero(), ValidatorIndex(index as u32)), 0))
+			.collect();
+
+		let approvals: Vec<_> = validators
+			.map(|index| IndirectSignedApprovalVote {
+				block_hash: Hash::zero(),
+				candidate_index: 0,
+				validator: ValidatorIndex(index as u32),
+				signature: dummy_signature(),
+			})
+			.collect();
+
+		let peer = PeerId::random();
+		send_assignments_batched(&mut sender, assignments.clone(), peer).await;
+		send_approvals_batched(&mut sender, approvals.clone(), peer).await;
+
+		// Check expected assignments batches.
+		for assignment_index in (0..assignments.len()).step_by(super::MAX_ASSIGNMENT_BATCH_SIZE) {
+			assert_matches!(
+				overseer_recv(overseer).await,
+				AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
+					peers,
+					Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
+						protocol_v1::ApprovalDistributionMessage::Assignments(sent_assignments)
+					))
+				)) => {
+					// Last batch should cover all remaining messages.
+					if sent_assignments.len() < super::MAX_ASSIGNMENT_BATCH_SIZE {
+						assert_eq!(sent_assignments.len() + assignment_index, assignments.len());
+					} else {
+						assert_eq!(sent_assignments.len(), super::MAX_ASSIGNMENT_BATCH_SIZE);
+					}
+
+					assert_eq!(peers.len(), 1);
+
+					for (message_index,  assignment) in sent_assignments.iter().enumerate() {
+						assert_eq!(assignment.0, assignments[assignment_index + message_index].0);
+						assert_eq!(assignment.1, 0);
+					}
+				}
+			);
+		}
+
+		// Check approval vote batching.
+		for approval_index in (0..approvals.len()).step_by(super::MAX_APPROVAL_BATCH_SIZE) {
+			assert_matches!(
+				overseer_recv(overseer).await,
+				AllMessages::NetworkBridgeTx(NetworkBridgeTxMessage::SendValidationMessage(
+					peers,
+					Versioned::V1(protocol_v1::ValidationProtocol::ApprovalDistribution(
+						protocol_v1::ApprovalDistributionMessage::Approvals(sent_approvals)
+					))
+				)) => {
+					// Last batch should cover all remaining messages.
+					if sent_approvals.len() < super::MAX_APPROVAL_BATCH_SIZE {
+						assert_eq!(sent_approvals.len() + approval_index, approvals.len());
+					} else {
+						assert_eq!(sent_approvals.len(), super::MAX_APPROVAL_BATCH_SIZE);
+					}
+
+					assert_eq!(peers.len(), 1);
+
+					for (message_index,  approval) in sent_approvals.iter().enumerate() {
+						assert_eq!(approval, &approvals[approval_index + message_index]);
+					}
+				}
+			);
+		}
+		virtual_overseer
+	};
+
+	futures::pin_mut!(test_fut);
+	futures::pin_mut!(subsystem);
+
+	executor::block_on(future::join(
+		async move {
+			let mut overseer = test_fut.await;
+			overseer
+				.send(FromOrchestra::Signal(OverseerSignal::Conclude))
+				.timeout(TIMEOUT)
+				.await
+				.expect("Conclude send timeout");
+		},
+		subsystem,
+	));
+}
+
+#[test]
+fn batch_sending_1_msg() {
+	batch_test_round(1);
+}
+
+#[test]
+fn batch_sending_exactly_one_batch() {
+	batch_test_round(super::MAX_APPROVAL_BATCH_SIZE);
+	batch_test_round(super::MAX_ASSIGNMENT_BATCH_SIZE);
+}
+
+#[test]
+fn batch_sending_partial_batch() {
+	batch_test_round(super::MAX_APPROVAL_BATCH_SIZE * 2 + 4);
+	batch_test_round(super::MAX_ASSIGNMENT_BATCH_SIZE * 2 + 4);
+}
+
+#[test]
+fn batch_sending_multiple_same_len() {
+	batch_test_round(super::MAX_APPROVAL_BATCH_SIZE * 10);
+	batch_test_round(super::MAX_ASSIGNMENT_BATCH_SIZE * 10);
+}
+
+#[test]
+fn batch_sending_half_batch() {
+	batch_test_round(super::MAX_APPROVAL_BATCH_SIZE / 2);
+	batch_test_round(super::MAX_ASSIGNMENT_BATCH_SIZE / 2);
+}
+
+#[test]
+#[should_panic]
+fn const_batch_size_panics_if_zero() {
+	crate::ensure_size_not_zero(0);
+}
+
+#[test]
+fn const_ensure_size_not_zero() {
+	crate::ensure_size_not_zero(super::MAX_ASSIGNMENT_BATCH_SIZE);
+	crate::ensure_size_not_zero(super::MAX_APPROVAL_BATCH_SIZE);
 }

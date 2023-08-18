@@ -17,7 +17,7 @@
 use super::*;
 use futures::{executor::block_on, pin_mut, StreamExt};
 use selendra_node_subsystem::messages::AllMessages;
-use selendra_primitives::v2::{CandidateHash, OccupiedCore};
+use selendra_primitives::{CandidateHash, OccupiedCore};
 use test_helpers::dummy_candidate_descriptor;
 
 fn occupied_core(para_id: u32, candidate_hash: CandidateHash) -> CoreState {

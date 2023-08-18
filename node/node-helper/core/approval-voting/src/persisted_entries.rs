@@ -21,7 +21,7 @@
 //! data and logic are intertwined.
 
 use selendra_node_primitives::approval::{AssignmentCert, DelayTranche, RelayVRFStory};
-use selendra_primitives::v2::{
+use selendra_primitives::{
 	BlockNumber, CandidateHash, CandidateReceipt, CoreIndex, GroupIndex, Hash, SessionIndex,
 	ValidatorIndex, ValidatorSignature,
 };

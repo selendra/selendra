@@ -17,9 +17,12 @@
 use fatality::Nested;
 use futures::channel::{mpsc, oneshot};
 
-use selendra_node_subsystem::{messages::ValidationFailed, SubsystemError};
+use selendra_node_subsystem::{
+	messages::{StoreAvailableDataError, ValidationFailed},
+	SubsystemError,
+};
 use selendra_node_subsystem_util::Error as UtilError;
-use selendra_primitives::v2::BackedCandidate;
+use selendra_primitives::BackedCandidate;
 
 use crate::LOG_TARGET;
 
@@ -50,7 +53,7 @@ pub enum Error {
 	ValidateFromChainState(#[source] oneshot::Canceled),
 
 	#[error("StoreAvailableData channel closed before receipt")]
-	StoreAvailableData(#[source] oneshot::Canceled),
+	StoreAvailableDataChannel(#[source] oneshot::Canceled),
 
 	#[error("a channel was closed before receipt in try_join!")]
 	JoinMultiple(#[source] oneshot::Canceled),
@@ -70,6 +73,13 @@ pub enum Error {
 
 	#[error(transparent)]
 	SubsystemError(#[from] SubsystemError),
+
+	#[fatal]
+	#[error(transparent)]
+	OverseerExited(SubsystemError),
+
+	#[error("Availability store error")]
+	StoreAvailableData(#[source] StoreAvailableDataError),
 }
 
 /// Utility for eating top level errors and log them.

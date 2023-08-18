@@ -20,12 +20,12 @@
 #![warn(missing_docs)]
 
 use parity_scale_codec::{Decode, Encode};
-use selendra_primitives::v2::{BlockNumber, Hash};
+use selendra_primitives::{BlockNumber, Hash};
 use std::{collections::HashMap, fmt};
 
-pub use sc_network::{IfDisconnected, PeerId};
 #[doc(hidden)]
 pub use selendra_node_jaeger as jaeger;
+pub use sc_network::{IfDisconnected, PeerId};
 #[doc(hidden)]
 pub use std::sync::Arc;
 
@@ -139,7 +139,7 @@ impl std::ops::Deref for OurView {
 ///
 /// ```
 /// # use selendra_node_network_protocol::our_view;
-/// # use selendra_primitives::v2::Hash;
+/// # use selendra_primitives::Hash;
 /// let our_view = our_view![Hash::repeat_byte(1), Hash::repeat_byte(2)];
 /// ```
 #[macro_export]
@@ -173,7 +173,7 @@ pub struct View {
 ///
 /// ```
 /// # use selendra_node_network_protocol::view;
-/// # use selendra_primitives::v2::Hash;
+/// # use selendra_primitives::Hash;
 /// let view = view![Hash::repeat_byte(1), Hash::repeat_byte(2)];
 /// ```
 #[macro_export]
@@ -207,7 +207,7 @@ impl View {
 	}
 
 	/// Obtain an iterator over all heads.
-	pub fn iter<'a>(&'a self) -> impl Iterator<Item = &'a Hash> {
+	pub fn iter(&self) -> impl Iterator<Item = &Hash> {
 		self.heads.iter()
 	}
 
@@ -398,7 +398,7 @@ impl_versioned_try_from!(
 pub mod v1 {
 	use parity_scale_codec::{Decode, Encode};
 
-	use selendra_primitives::v2::{
+	use selendra_primitives::{
 		CandidateHash, CandidateIndex, CollatorId, CollatorSignature, CompactStatement, Hash,
 		Id as ParaId, UncheckedSignedAvailabilityBitfield, ValidatorIndex, ValidatorSignature,
 	};

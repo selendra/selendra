@@ -45,11 +45,11 @@ use selendra_node_subsystem::{
 	overseer, ActivatedLeaf, ActiveLeavesUpdate, FromOrchestra, OverseerSignal, SpawnedSubsystem,
 };
 
-use selendra_primitives::v2::{AuthorityDiscoveryId, BlockNumber, Hash, ValidatorIndex};
+use selendra_primitives::{AuthorityDiscoveryId, BlockNumber, Hash, ValidatorIndex};
 
 /// Peer set info for network initialization.
 ///
-/// To be added to [`NetworkConfiguration::extra_sets`].
+/// To be passed to [`FullNetworkConfiguration::add_notification_protocol`]().
 pub use selendra_node_network_protocol::peer_set::{peer_sets_info, IsAuthority};
 
 use std::{
@@ -125,7 +125,7 @@ where
 		let future = run_network_in(self, ctx, network_stream)
 			.map_err(|e| SubsystemError::with_origin("network-bridge", e))
 			.boxed();
-		SpawnedSubsystem { name: "network-bridge-subsystem", future }
+		SpawnedSubsystem { name: "network-bridge-rx-subsystem", future }
 	}
 }
 
@@ -145,14 +145,13 @@ where
 	loop {
 		match network_stream.next().await {
 			None => return Err(Error::EventStreamConcluded),
-			Some(NetworkEvent::Dht(_)) |
-			Some(NetworkEvent::SyncConnected { .. }) |
-			Some(NetworkEvent::SyncDisconnected { .. }) => {},
+			Some(NetworkEvent::Dht(_)) => {},
 			Some(NetworkEvent::NotificationStreamOpened {
 				remote: peer,
 				protocol,
 				role,
 				negotiated_fallback,
+				received_handshake: _,
 			}) => {
 				let role = ObservedRole::from(role);
 				let (peer_set, version) = {
@@ -213,7 +212,7 @@ where
 						PeerSet::Collation => &mut shared.collation_peers,
 					};
 
-					match peer_map.entry(peer.clone()) {
+					match peer_map.entry(peer) {
 						hash_map::Entry::Occupied(_) => continue,
 						hash_map::Entry::Vacant(vacant) => {
 							vacant.insert(PeerData { view: View::default(), version });
@@ -234,12 +233,12 @@ where
 						dispatch_validation_events_to_all(
 							vec![
 								NetworkBridgeEvent::PeerConnected(
-									peer.clone(),
+									peer,
 									role,
 									version,
 									maybe_authority,
 								),
-								NetworkBridgeEvent::PeerViewChange(peer.clone(), View::default()),
+								NetworkBridgeEvent::PeerViewChange(peer, View::default()),
 							],
 							&mut sender,
 						)
@@ -259,12 +258,12 @@ where
 						dispatch_collation_events_to_all(
 							vec![
 								NetworkBridgeEvent::PeerConnected(
-									peer.clone(),
+									peer,
 									role,
 									version,
 									maybe_authority,
 								),
-								NetworkBridgeEvent::PeerViewChange(peer.clone(), View::default()),
+								NetworkBridgeEvent::PeerViewChange(peer, View::default()),
 							],
 							&mut sender,
 						)
@@ -365,7 +364,7 @@ where
 				let v_messages = match v_messages {
 					Err(rep) => {
 						gum::debug!(target: LOG_TARGET, action = "ReportPeer");
-						network_service.report_peer(remote, rep);
+						network_service.report_peer(remote, rep.into());
 
 						continue
 					},
@@ -396,7 +395,7 @@ where
 				let c_messages = match c_messages {
 					Err(rep) => {
 						gum::debug!(target: LOG_TARGET, action = "ReportPeer");
-						network_service.report_peer(remote, rep);
+						network_service.report_peer(remote, rep.into());
 
 						continue
 					},
@@ -421,7 +420,7 @@ where
 							Some(ValidationVersion::V1.into())
 						{
 							handle_v1_peer_messages::<protocol_v1::ValidationProtocol, _>(
-								remote.clone(),
+								remote,
 								PeerSet::Validation,
 								&mut shared.0.lock().validation_peers,
 								v_messages,
@@ -442,7 +441,7 @@ where
 						};
 
 					for report in reports {
-						network_service.report_peer(remote.clone(), report);
+						network_service.report_peer(remote, report.into());
 					}
 
 					dispatch_validation_events_to_all(events, &mut sender).await;
@@ -454,7 +453,7 @@ where
 							Some(CollationVersion::V1.into())
 						{
 							handle_v1_peer_messages::<protocol_v1::CollationProtocol, _>(
-								remote.clone(),
+								remote,
 								PeerSet::Collation,
 								&mut shared.0.lock().collation_peers,
 								c_messages,
@@ -475,7 +474,7 @@ where
 						};
 
 					for report in reports {
-						network_service.report_peer(remote.clone(), report);
+						network_service.report_peer(remote, report.into());
 					}
 
 					dispatch_collation_events_to_all(events, &mut sender).await;
@@ -566,7 +565,7 @@ where
 					num_deactivated = %deactivated.len(),
 				);
 
-				for activated in activated {
+				if let Some(activated) = activated {
 					let pos = live_heads
 						.binary_search_by(|probe| probe.number.cmp(&activated.number).reverse())
 						.unwrap_or_else(|i| i);
@@ -653,7 +652,7 @@ where
 	)
 	.remote_handle();
 
-	ctx.spawn("network-bridge-in-network-worker", Box::pin(task))?;
+	ctx.spawn_blocking("network-bridge-in-network-worker", Box::pin(task))?;
 	futures::pin_mut!(network_event_handler);
 
 	let orchestra_signal_handler = run_incoming_orchestra_signals(
@@ -795,11 +794,11 @@ fn handle_v1_peer_messages<RawMessage: Decode, OutMessage: From<RawMessage>>(
 				} else {
 					peer_data.view = new_view;
 
-					NetworkBridgeEvent::PeerViewChange(peer.clone(), peer_data.view.clone())
+					NetworkBridgeEvent::PeerViewChange(peer, peer_data.view.clone())
 				}
 			},
 			WireMessage::ProtocolMessage(message) =>
-				NetworkBridgeEvent::PeerMessage(peer.clone(), message.into()),
+				NetworkBridgeEvent::PeerMessage(peer, message.into()),
 		})
 	}
 

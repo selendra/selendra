@@ -16,7 +16,7 @@
 
 //! Subsystem trait definitions and message types.
 //!
-//! Node-side logic for Selendra is mostly comprised of Subsystems, which are discrete components
+//! Node-side logic for SEDelendra is mostly comprised of Subsystems, which are discrete components
 //! that communicate via message-passing. They are coordinated by an overseer, provided by a
 //! separate crate.
 
@@ -24,7 +24,7 @@
 
 use std::{fmt, sync::Arc};
 
-pub use selendra_primitives::v2::{BlockNumber, Hash};
+pub use selendra_primitives::{BlockNumber, Hash};
 use smallvec::SmallVec;
 
 pub mod errors;

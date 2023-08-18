@@ -15,7 +15,7 @@
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::{PeerSet, ProtocolVersion};
-use selendra_node_subsystem_util::metrics::{self, prometheus};
+use selendra_node_metrics::metrics::{self, prometheus};
 
 /// Metrics for the network bridge.
 #[derive(Clone, Default)]

@@ -37,7 +37,7 @@ use std::{
 
 use bitvec::{bitvec, vec::BitVec};
 
-use selendra_primitives::v2::{AuthorityDiscoveryId, GroupIndex, Hash, SessionIndex};
+use selendra_primitives::{AuthorityDiscoveryId, GroupIndex, Hash, SessionIndex};
 
 /// The ring buffer stores at most this many unique validator groups.
 ///

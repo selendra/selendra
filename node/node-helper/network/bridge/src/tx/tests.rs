@@ -22,9 +22,8 @@ use async_trait::async_trait;
 use parking_lot::Mutex;
 use std::collections::HashSet;
 
-use sc_network::{Event as NetworkEvent, IfDisconnected, ProtocolName};
+use sc_network::{Event as NetworkEvent, IfDisconnected, ProtocolName, ReputationChange};
 
-use sc_network::Multiaddr;
 use selendra_node_network_protocol::{
 	peer_set::PeerSetProtocolNames,
 	request_response::{outgoing::Requests, ReqProtocolNames},
@@ -33,18 +32,19 @@ use selendra_node_network_protocol::{
 use selendra_node_subsystem::{FromOrchestra, OverseerSignal};
 use selendra_node_subsystem_test_helpers::TestSubsystemContextHandle;
 use selendra_node_subsystem_util::metered;
-use selendra_primitives::v2::{AuthorityDiscoveryId, Hash};
+use selendra_primitives::{AuthorityDiscoveryId, Hash};
 use selendra_primitives_test_helpers::dummy_collator_signature;
+use sc_network::Multiaddr;
 use sp_keyring::Sr25519Keyring;
 
 const TIMEOUT: std::time::Duration = selendra_node_subsystem_test_helpers::TestSubsystemContextHandle::<NetworkBridgeTxMessage>::TIMEOUT;
 
-use crate::{network::Network, validator_discovery::AuthorityDiscovery, Rep};
+use crate::{network::Network, validator_discovery::AuthorityDiscovery};
 
 #[derive(Debug, PartialEq)]
 pub enum NetworkAction {
 	/// Note a change in reputation for a peer.
-	ReputationChange(PeerId, Rep),
+	ReputationChange(PeerId, ReputationChange),
 	/// Disconnect a peer from the given peer-set.
 	DisconnectPeer(PeerId, PeerSet),
 	/// Write a notification to a given peer on the given peer-set.
@@ -116,10 +116,10 @@ impl Network for TestNetwork {
 	) {
 	}
 
-	fn report_peer(&self, who: PeerId, cost_benefit: Rep) {
+	fn report_peer(&self, who: PeerId, rep: ReputationChange) {
 		self.action_tx
 			.lock()
-			.unbounded_send(NetworkAction::ReputationChange(who, cost_benefit))
+			.unbounded_send(NetworkAction::ReputationChange(who, rep))
 			.unwrap();
 	}
 
@@ -173,6 +173,7 @@ impl TestNetworkHandle {
 			protocol: self.peerset_protocol_names.get_main_name(peer_set),
 			negotiated_fallback: None,
 			role: role.into(),
+			received_handshake: vec![],
 		})
 		.await;
 	}

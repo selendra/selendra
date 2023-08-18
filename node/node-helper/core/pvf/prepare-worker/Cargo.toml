@@ -1,0 +1,31 @@
+[package]
+name = "selendra-node-core-pvf-prepare-worker"
+version = "1.0.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+futures = "0.3.21"
+libc = "0.2.139"
+rayon = "1.5.1"
+tikv-jemalloc-ctl = { version = "0.5.0", optional = true }
+tokio = { version = "1.24.2", features = ["fs", "process"] }
+parity-scale-codec = { version = "3.6.1", default-features = false, features = ["derive"] }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+sc-executor-wasmtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+
+gum = { package = "tracing-gum", path = "../../../gum" }
+selendra-node-core-pvf-common = { path = "../common" }
+selendra-parachain = { path = "../../../../../parachain" }
+selendra-primitives = { path = "../../../../../primitives" }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+tikv-jemalloc-ctl = "0.5.0"
+
+[features]
+builder = []
+jemalloc-allocator = ["dep:tikv-jemalloc-ctl"]

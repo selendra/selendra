@@ -15,7 +15,7 @@
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Selendra CLI library.
-
+//! 
 use clap::Parser;
 
 #[allow(missing_docs)]
@@ -79,16 +79,31 @@ pub enum Subcommand {
 #[derive(Debug, Parser)]
 pub struct ValidationWorkerCommand {
 	/// The path to the validation host's socket.
+	#[arg(long)]
 	pub socket_path: String,
+	/// Calling node implementation version
+	#[arg(long)]
+	pub node_impl_version: String,
 }
 
 #[allow(missing_docs)]
 #[derive(Debug, Parser)]
 #[group(skip)]
 pub struct RunCmd {
-	#[allow(missing_docs)]
 	#[clap(flatten)]
 	pub base: sc_cli::RunCmd,
+
+	/// Force using Kusama native runtime.
+	#[arg(long = "force-kusama")]
+	pub force_kusama: bool,
+
+	/// Force using Westend native runtime.
+	#[arg(long = "force-westend")]
+	pub force_westend: bool,
+
+	/// Force using Rococo native runtime.
+	#[arg(long = "force-rococo")]
+	pub force_rococo: bool,
 
 	/// Setup a GRANDPA scheduled voting pause.
 	///
@@ -99,9 +114,10 @@ pub struct RunCmd {
 	#[arg(long = "grandpa-pause", num_args = 2)]
 	pub grandpa_pause: Vec<u32>,
 
-	/// Enable the BEEFY gadget (only on testnet for now).
+	/// Disable the BEEFY gadget
+	/// (currently enabled by default on Rococo, Wococo and Versi).
 	#[arg(long)]
-	pub beefy: bool,
+	pub no_beefy: bool,
 
 	/// Add the destination address to the jaeger agent.
 	///
@@ -139,6 +155,10 @@ pub struct RunCmd {
 pub struct Cli {
 	#[command(subcommand)]
 	pub subcommand: Option<Subcommand>,
+
 	#[clap(flatten)]
 	pub run: RunCmd,
+
+	#[clap(flatten)]
+	pub storage_monitor: sc_storage_monitor::StorageMonitorParams,
 }

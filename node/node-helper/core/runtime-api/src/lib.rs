@@ -28,7 +28,7 @@ use selendra_node_subsystem::{
 	overseer, FromOrchestra, OverseerSignal, SpawnedSubsystem, SubsystemError, SubsystemResult,
 };
 use selendra_node_subsystem_types::RuntimeApiSubsystemClient;
-use selendra_primitives::v2::Hash;
+use selendra_primitives::Hash;
 
 use cache::{RequestResult, RequestResultCache};
 use futures::{channel::oneshot, prelude::*, select, stream::FuturesUnordered};
@@ -132,6 +132,8 @@ where
 				.cache_candidate_pending_availability((relay_parent, para_id), candidate),
 			CandidateEvents(relay_parent, events) =>
 				self.requests_cache.cache_candidate_events(relay_parent, events),
+			SessionExecutorParams(_relay_parent, session_index, index) =>
+				self.requests_cache.cache_session_executor_params(session_index, index),
 			SessionInfo(_relay_parent, session_index, info) =>
 				if let Some(info) = info {
 					self.requests_cache.cache_session_info(session_index, info);
@@ -155,6 +157,12 @@ where
 				self.requests_cache.cache_version(relay_parent, version),
 			Disputes(relay_parent, disputes) =>
 				self.requests_cache.cache_disputes(relay_parent, disputes),
+			UnappliedSlashes(relay_parent, unapplied_slashes) =>
+				self.requests_cache.cache_unapplied_slashes(relay_parent, unapplied_slashes),
+			KeyOwnershipProof(relay_parent, validator_id, key_ownership_proof) => self
+				.requests_cache
+				.cache_key_ownership_proof((relay_parent, validator_id), key_ownership_proof),
+			SubmitReportDisputeLost(_, _, _, _) => {},
 		}
 	}
 
@@ -229,6 +237,17 @@ where
 					.map(|sender| Request::CandidatePendingAvailability(para, sender)),
 			Request::CandidateEvents(sender) =>
 				query!(candidate_events(), sender).map(|sender| Request::CandidateEvents(sender)),
+			Request::SessionExecutorParams(session_index, sender) => {
+				if let Some(executor_params) =
+					self.requests_cache.session_executor_params(session_index)
+				{
+					self.metrics.on_cached_request();
+					let _ = sender.send(Ok(executor_params.clone()));
+					None
+				} else {
+					Some(Request::SessionExecutorParams(session_index, sender))
+				}
+			},
 			Request::SessionInfo(index, sender) => {
 				if let Some(info) = self.requests_cache.session_info(index) {
 					self.metrics.on_cached_request();
@@ -258,6 +277,17 @@ where
 					.map(|sender| Request::ValidationCodeHash(para, assumption, sender)),
 			Request::Disputes(sender) =>
 				query!(disputes(), sender).map(|sender| Request::Disputes(sender)),
+			Request::UnappliedSlashes(sender) =>
+				query!(unapplied_slashes(), sender).map(|sender| Request::UnappliedSlashes(sender)),
+			Request::KeyOwnershipProof(validator_id, sender) =>
+				query!(key_ownership_proof(validator_id), sender)
+					.map(|sender| Request::KeyOwnershipProof(validator_id, sender)),
+			Request::SubmitReportDisputeLost(dispute_proof, key_ownership_proof, sender) =>
+				query!(submit_report_dispute_lost(dispute_proof, key_ownership_proof), sender).map(
+					|sender| {
+						Request::SubmitReportDisputeLost(dispute_proof, key_ownership_proof, sender)
+					},
+				),
 		}
 	}
 
@@ -268,7 +298,7 @@ where
 		let (sender, receiver) = oneshot::channel();
 
 		// TODO: make the cache great again https://github.com/paritytech/polkadot/issues/5546
-		let request = match self.query_cache(relay_parent.clone(), request) {
+		let request = match self.query_cache(relay_parent, request) {
 			Some(request) => request,
 			None => return,
 		};
@@ -406,33 +436,38 @@ where
 
 		Request::Authorities(sender) => query!(Authorities, authorities(), ver = 1, sender),
 		Request::Validators(sender) => query!(Validators, validators(), ver = 1, sender),
-		Request::ValidatorGroups(sender) =>
-			query!(ValidatorGroups, validator_groups(), ver = 1, sender),
-		Request::AvailabilityCores(sender) =>
-			query!(AvailabilityCores, availability_cores(), ver = 1, sender),
+		Request::ValidatorGroups(sender) => {
+			query!(ValidatorGroups, validator_groups(), ver = 1, sender)
+		},
+		Request::AvailabilityCores(sender) => {
+			query!(AvailabilityCores, availability_cores(), ver = 1, sender)
+		},
 		Request::PersistedValidationData(para, assumption, sender) => query!(
 			PersistedValidationData,
 			persisted_validation_data(para, assumption),
 			ver = 1,
 			sender
 		),
-		Request::AssumedValidationData(para, expected_persisted_validation_data_hash, sender) =>
+		Request::AssumedValidationData(para, expected_persisted_validation_data_hash, sender) => {
 			query!(
 				AssumedValidationData,
 				assumed_validation_data(para, expected_persisted_validation_data_hash),
 				ver = 1,
 				sender
-			),
+			)
+		},
 		Request::CheckValidationOutputs(para, commitments, sender) => query!(
 			CheckValidationOutputs,
 			check_validation_outputs(para, commitments),
 			ver = 1,
 			sender
 		),
-		Request::SessionIndexForChild(sender) =>
-			query!(SessionIndexForChild, session_index_for_child(), ver = 1, sender),
-		Request::ValidationCode(para, assumption, sender) =>
-			query!(ValidationCode, validation_code(para, assumption), ver = 1, sender),
+		Request::SessionIndexForChild(sender) => {
+			query!(SessionIndexForChild, session_index_for_child(), ver = 1, sender)
+		},
+		Request::ValidationCode(para, assumption, sender) => {
+			query!(ValidationCode, validation_code(para, assumption), ver = 1, sender)
+		},
 		Request::ValidationCodeByHash(validation_code_hash, sender) => query!(
 			ValidationCodeByHash,
 			validation_code_by_hash(validation_code_hash),
@@ -445,48 +480,28 @@ where
 			ver = 1,
 			sender
 		),
-		Request::CandidateEvents(sender) =>
-			query!(CandidateEvents, candidate_events(), ver = 1, sender),
-		Request::SessionInfo(index, sender) => {
-			let api_version = client
-				.api_version_parachain_host(relay_parent)
-				.await
-				.unwrap_or_default()
-				.unwrap_or_default();
-
-			let res = if api_version >= 2 {
-				let res = client.session_info(relay_parent, index).await.map_err(|e| {
-					RuntimeApiError::Execution {
-						runtime_api_name: "SessionInfo",
-						source: std::sync::Arc::new(e),
-					}
-				});
-				metrics.on_request(res.is_ok());
-				res
-			} else {
-				#[allow(deprecated)]
-				let res = client.session_info_before_version_2(relay_parent, index).await.map_err(|e| {
-					RuntimeApiError::Execution {
-						runtime_api_name: "SessionInfo",
-						source: std::sync::Arc::new(e),
-					}
-				});
-				metrics.on_request(res.is_ok());
-
-				res.map(|r| r.map(|old| old.into()))
-			};
-
-			let _ = sender.send(res.clone());
-
-			res.ok().map(|res| RequestResult::SessionInfo(relay_parent, index, res))
+		Request::CandidateEvents(sender) => {
+			query!(CandidateEvents, candidate_events(), ver = 1, sender)
 		},
+		Request::SessionInfo(index, sender) => {
+			query!(SessionInfo, session_info(index), ver = 2, sender)
+		},
+		Request::SessionExecutorParams(session_index, sender) => query!(
+			SessionExecutorParams,
+			session_executor_params(session_index),
+			ver = Request::EXECUTOR_PARAMS_RUNTIME_REQUIREMENT,
+			sender
+		),
 		Request::DmqContents(id, sender) => query!(DmqContents, dmq_contents(id), ver = 1, sender),
-		Request::InboundHrmpChannelsContents(id, sender) =>
-			query!(InboundHrmpChannelsContents, inbound_hrmp_channels_contents(id), ver = 1, sender),
-		Request::CurrentBabeEpoch(sender) =>
-			query!(CurrentBabeEpoch, current_epoch(), ver = 1, sender),
-		Request::FetchOnChainVotes(sender) =>
-			query!(FetchOnChainVotes, on_chain_votes(), ver = 1, sender),
+		Request::InboundHrmpChannelsContents(id, sender) => {
+			query!(InboundHrmpChannelsContents, inbound_hrmp_channels_contents(id), ver = 1, sender)
+		},
+		Request::CurrentBabeEpoch(sender) => {
+			query!(CurrentBabeEpoch, current_epoch(), ver = 1, sender)
+		},
+		Request::FetchOnChainVotes(sender) => {
+			query!(FetchOnChainVotes, on_chain_votes(), ver = 1, sender)
+		},
 		Request::SubmitPvfCheckStatement(stmt, signature, sender) => {
 			query!(
 				SubmitPvfCheckStatement,
@@ -498,9 +513,29 @@ where
 		Request::PvfsRequirePrecheck(sender) => {
 			query!(PvfsRequirePrecheck, pvfs_require_precheck(), ver = 2, sender)
 		},
-		Request::ValidationCodeHash(para, assumption, sender) =>
-			query!(ValidationCodeHash, validation_code_hash(para, assumption), ver = 2, sender),
-		Request::Disputes(sender) =>
-			query!(Disputes, disputes(), ver = Request::DISPUTES_RUNTIME_REQUIREMENT, sender),
+		Request::ValidationCodeHash(para, assumption, sender) => {
+			query!(ValidationCodeHash, validation_code_hash(para, assumption), ver = 2, sender)
+		},
+		Request::Disputes(sender) => {
+			query!(Disputes, disputes(), ver = Request::DISPUTES_RUNTIME_REQUIREMENT, sender)
+		},
+		Request::UnappliedSlashes(sender) => query!(
+			UnappliedSlashes,
+			unapplied_slashes(),
+			ver = Request::UNAPPLIED_SLASHES_RUNTIME_REQUIREMENT,
+			sender
+		),
+		Request::KeyOwnershipProof(validator_id, sender) => query!(
+			KeyOwnershipProof,
+			key_ownership_proof(validator_id),
+			ver = Request::KEY_OWNERSHIP_PROOF_RUNTIME_REQUIREMENT,
+			sender
+		),
+		Request::SubmitReportDisputeLost(dispute_proof, key_ownership_proof, sender) => query!(
+			SubmitReportDisputeLost,
+			submit_report_dispute_lost(dispute_proof, key_ownership_proof),
+			ver = Request::SUBMIT_REPORT_DISPUTE_LOST_RUNTIME_REQUIREMENT,
+			sender
+		),
 	}
 }

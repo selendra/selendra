@@ -19,7 +19,7 @@
 
 use fatality::Nested;
 use selendra_node_network_protocol::request_response::outgoing::RequestError;
-use selendra_primitives::v2::SessionIndex;
+use selendra_primitives::SessionIndex;
 
 use futures::channel::oneshot;
 

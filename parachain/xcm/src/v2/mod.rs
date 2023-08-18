@@ -1,5 +1,5 @@
 // Copyright 2022 Smallworld Selendra
-// This file is part of Cumulus.
+// This file is part of Forest.
 
 //Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
+// along with Forest.  If not, see <http://www.gnu.org/licenses/>.
 
 //! # XCM Version 2
 //! Version 2 of the Cross-Consensus Message format data structures. The comprehensive list of
@@ -84,21 +84,21 @@ pub use traits::{Error, ExecuteXcm, Outcome, Result, SendError, SendResult, Send
 #[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, Debug, TypeInfo)]
 pub enum OriginKind {
 	/// Origin should just be the native dispatch origin representation for the sender in the
-	/// local runtime framework. For Cumulus/Frame chains this is the `Parachain` or `Relay` origin
+	/// local runtime framework. For Forest/Frame chains this is the `Parachain` or `Relay` origin
 	/// if coming from a chain, though there may be others if the `MultiLocation` XCM origin has a
 	/// primary/native dispatch origin form.
 	Native,
 
 	/// Origin should just be the standard account-based origin with the sovereign account of
-	/// the sender. For Cumulus/Frame chains, this is the `Signed` origin.
+	/// the sender. For Forest/Frame chains, this is the `Signed` origin.
 	SovereignAccount,
 
-	/// Origin should be the super-user. For Cumulus/Frame chains, this is the `Root` origin.
+	/// Origin should be the super-user. For Forest/Frame chains, this is the `Root` origin.
 	/// This will not usually be an available option.
 	Superuser,
 
 	/// Origin should be interpreted as an XCM native origin and the `MultiLocation` should be
-	/// encoded directly in the dispatch origin unchanged. For Cumulus/Frame chains, this will be
+	/// encoded directly in the dispatch origin unchanged. For Forest/Frame chains, this will be
 	/// the `pallet_xcm::Origin::Xcm` type.
 	Xcm,
 }

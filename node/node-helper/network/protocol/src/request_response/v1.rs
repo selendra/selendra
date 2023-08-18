@@ -21,7 +21,7 @@ use parity_scale_codec::{Decode, Encode};
 use selendra_node_primitives::{
 	AvailableData, DisputeMessage, ErasureChunk, PoV, Proof, UncheckedDisputeMessage,
 };
-use selendra_primitives::v2::{
+use selendra_primitives::{
 	CandidateHash, CandidateReceipt, CommittedCandidateReceipt, Hash, Id as ParaId, ValidatorIndex,
 };
 

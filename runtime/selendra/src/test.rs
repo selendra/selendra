@@ -333,7 +333,7 @@ mod remote_tests {
 
 		sp_tracing::try_init_simple();
 		let transport: Transport =
-			var("WS").unwrap_or("wss://rpc.polkadot.io:443".to_string()).into();
+			var("WS").unwrap_or("wss://rpc.selendra.org".to_string()).into();
 		let maybe_state_snapshot: Option<SnapshotConfig> = var("SNAP").map(|s| s.into()).ok();
 		let mut ext = Builder::<Block>::default()
 			.mode(if let Some(state_snapshot) = maybe_state_snapshot {
@@ -359,7 +359,7 @@ mod remote_tests {
 	async fn try_fast_unstake_all() {
 		sp_tracing::try_init_simple();
 		let transport: Transport =
-			var("WS").unwrap_or("wss://rpc.polkadot.io:443".to_string()).into();
+			var("WS").unwrap_or("wss://rpc.selendra.org".to_string()).into();
 		let maybe_state_snapshot: Option<SnapshotConfig> = var("SNAP").map(|s| s.into()).ok();
 		let mut ext = Builder::<Block>::default()
 			.mode(if let Some(state_snapshot) = maybe_state_snapshot {

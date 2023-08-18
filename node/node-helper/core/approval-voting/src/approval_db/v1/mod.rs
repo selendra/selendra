@@ -15,12 +15,18 @@
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Version 1 of the DB schema.
+//!
+//! Note that the version here differs from the actual version of the parachains
+//! database (check `CURRENT_VERSION` in `node/service/src/parachains_db/upgrade.rs`).
+//! The code in this module implements the way approval voting works with
+//! its data in the database. Any breaking changes here will still
+//! require a db migration (check `node/service/src/parachains_db/upgrade.rs`).
 
 use parity_scale_codec::{Decode, Encode};
 use selendra_node_primitives::approval::{AssignmentCert, DelayTranche};
 use selendra_node_subsystem::{SubsystemError, SubsystemResult};
 use selendra_node_subsystem_util::database::{DBTransaction, Database};
-use selendra_primitives::v2::{
+use selendra_primitives::{
 	BlockNumber, CandidateHash, CandidateReceipt, CoreIndex, GroupIndex, Hash, SessionIndex,
 	ValidatorIndex, ValidatorSignature,
 };
@@ -154,8 +160,6 @@ pub type Bitfield = BitVec<u8, BitOrderLsb0>;
 pub struct Config {
 	/// The column family in the database where data is stored.
 	pub col_approval_data: u32,
-	/// The column of the database where rolling session window data is stored.
-	pub col_session_data: u32,
 }
 
 /// Details pertaining to our assignment on a block.

@@ -27,7 +27,7 @@ use selendra_node_network_protocol::{
 };
 use selendra_node_primitives::{AvailableData, ErasureChunk};
 use selendra_node_subsystem::{jaeger, messages::AvailabilityStoreMessage, SubsystemSender};
-use selendra_primitives::v2::{CandidateHash, ValidatorIndex};
+use selendra_primitives::{CandidateHash, ValidatorIndex};
 
 use crate::{
 	error::{JfyiError, Result},
@@ -186,7 +186,10 @@ where
 {
 	let span = jaeger::Span::new(req.payload.candidate_hash, "answer-chunk-request");
 
-	let _child_span = span.child("answer-chunk-request").with_chunk_index(req.payload.index.0);
+	let _child_span = span
+		.child("answer-chunk-request")
+		.with_trace_id(req.payload.candidate_hash)
+		.with_chunk_index(req.payload.index.0);
 
 	let chunk = query_chunk(sender, req.payload.candidate_hash, req.payload.index).await?;
 

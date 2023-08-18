@@ -32,7 +32,7 @@ use selendra_overseer::{
 	gen::{FromOrchestra, SpawnedSubsystem},
 	HeadSupportsParachains, SubsystemError,
 };
-use selendra_primitives::v2::{CandidateReceipt, Hash};
+use selendra_primitives::{CandidateReceipt, Hash, PvfExecTimeoutKind};
 
 struct AlwaysSupportsParachains;
 
@@ -76,7 +76,7 @@ impl Subsystem1 {
 			let msg = CandidateValidationMessage::ValidateFromChainState(
 				candidate_receipt,
 				PoV { block_data: BlockData(Vec::new()) }.into(),
-				Default::default(),
+				PvfExecTimeoutKind::Backing,
 				tx,
 			);
 			ctx.send_message(msg).await;

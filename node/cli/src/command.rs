@@ -17,16 +17,20 @@
 use crate::cli::{Cli, Subcommand};
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::future::TryFutureExt;
-use sc_cli::{RuntimeVersion, SubstrateCli};
-use selendra_client::benchmarking::{
-	benchmark_inherent_data, ExistentialDepositProvider, RemarkBuilder, TransferKeepAliveBuilder,
+use sc_cli::SubstrateCli;
+use service::{
+	self,
+	benchmarking::{benchmark_inherent_data, RemarkBuilder, TransferKeepAliveBuilder},
+	HeaderBackend, IdentifyVariant,
 };
-use service::{self, HeaderBackend, IdentifyVariant};
 use sp_keyring::Sr25519Keyring;
 use std::net::ToSocketAddrs;
 
 pub use crate::{error::Error, service::BlockId};
+#[cfg(feature = "hostperfcheck")]
 pub use selendra_performance_test::PerfCheckError;
+#[cfg(feature = "pyroscope")]
+use pyroscope_pprofrs::{pprof_backend, PprofConfig};
 
 impl From<String> for Error {
 	fn from(s: String) -> Self {
@@ -102,15 +106,6 @@ impl SubstrateCli for Cli {
 		})
 	}
 
-	fn native_runtime_version(_spec: &Box<dyn service::ChainSpec>) -> &'static RuntimeVersion {
-		#[cfg(feature = "selendra-native")]
-		{
-			return &service::selendra_runtime::VERSION
-		}
-
-		#[cfg(not(feature = "selendra-native"))]
-		panic!("No runtime feature selendra is enabled")
-	}
 }
 
 fn set_default_ss58_version(_spec: &Box<dyn service::ChainSpec>) {
@@ -129,39 +124,24 @@ fn ensure_dev(spec: &Box<dyn service::ChainSpec>) -> std::result::Result<(), Str
 	}
 }
 
-/// Unwraps a [`selendra_client::Client`] into the concrete runtime client.
-macro_rules! unwrap_client {
-	(
-		$client:ident,
-		$code:expr
-	) => {
-		match $client.as_ref() {
-			#[cfg(feature = "selendra-native")]
-			selendra_client::Client::Selendra($client) => $code,
-			#[allow(unreachable_patterns)]
-			_ => Err(Error::CommandNotImplemented),
-		}
-	};
-}
 
 /// Runs performance checks.
 /// Should only be used in release build since the check would take too much time otherwise.
 fn host_perf_check() -> Result<()> {
-	#[cfg(not(build_type = "release"))]
+	#[cfg(not(feature = "hostperfcheck"))]
+	{
+		return Err(Error::FeatureNotEnabled { feature: "hostperfcheck" }.into())
+	}
+
+	#[cfg(all(not(build_type = "release"), feature = "hostperfcheck"))]
 	{
 		return Err(PerfCheckError::WrongBuildType.into())
 	}
-	#[cfg(build_type = "release")]
+
+	#[cfg(all(feature = "hostperfcheck", build_type = "release"))]
 	{
-		#[cfg(not(feature = "hostperfcheck"))]
-		{
-			return Err(PerfCheckError::FeatureNotEnabled { feature: "hostperfcheck" }.into())
-		}
-		#[cfg(feature = "hostperfcheck")]
-		{
-			crate::host_perf_check::host_perf_check()?;
-			return Ok(())
-		}
+		crate::host_perf_check::host_perf_check()?;
+		return Ok(())
 	}
 }
 
@@ -193,10 +173,8 @@ where
 		.map_err(Error::from)?;
 	let chain_spec = &runner.config().chain_spec;
 
-	// Disallow BEEFY on production networks.
-	if cli.run.beefy && chain_spec.is_selendra() {
-		return Err(Error::Other("BEEFY disallowed on production networks".to_string()))
-	}
+	// By default, enable BEEFY on test networks.
+	let enable_beefy = !cli.run.no_beefy;
 
 	set_default_ss58_version(chain_spec);
 
@@ -205,6 +183,7 @@ where
 	} else {
 		Some((cli.run.grandpa_pause[0], cli.run.grandpa_pause[1]))
 	};
+
 
 	let jaeger_agent = if let Some(ref jaeger_agent) = cli.run.jaeger_agent {
 		Some(
@@ -219,20 +198,19 @@ where
 	};
 
 	runner.run_node_until_exit(move |config| async move {
-		let hwbench = if !cli.run.no_hardware_benchmarks {
-			config.database.path().map(|database_path| {
+		let hwbench = (!cli.run.no_hardware_benchmarks)
+			.then_some(config.database.path().map(|database_path| {
 				let _ = std::fs::create_dir_all(&database_path);
 				sc_sysinfo::gather_hwbench(Some(database_path))
-			})
-		} else {
-			None
-		};
+			}))
+			.flatten();
 
-		service::build_full(
+		let database_source = config.database.clone();
+		let task_manager = service::build_full(
 			config,
 			service::IsCollator::No,
 			grandpa_pause,
-			cli.run.beefy,
+			enable_beefy,
 			jaeger_agent,
 			None,
 			false,
@@ -241,8 +219,15 @@ where
 			maybe_malus_finality_delay,
 			hwbench,
 		)
-		.map(|full| full.task_manager)
-		.map_err(Into::into)
+		.map(|full| full.task_manager)?;
+
+		sc_storage_monitor::StorageMonitorService::try_spawn(
+			cli.storage_monitor,
+			database_source,
+			&task_manager.spawn_essential_handle(),
+		)?;
+
+		Ok(task_manager)
 	})
 }
 
@@ -258,14 +243,13 @@ pub fn run() -> Result<()> {
 			.next()
 			.ok_or_else(|| Error::AddressResolutionMissing)?;
 		// The pyroscope agent requires a `http://` prefix, so we just do that.
-		let mut agent = pyro::PyroscopeAgent::builder(
+		let agent = pyro::PyroscopeAgent::builder(
 			"http://".to_owned() + address.to_string().as_str(),
 			"selendra".to_owned(),
 		)
-		.sample_rate(113)
+		.backend(pprof_backend(PprofConfig::new().sample_rate(113)))
 		.build()?;
-		agent.start();
-		Some(agent)
+		Some(agent.start()?)
 	} else {
 		None
 	};
@@ -375,7 +359,10 @@ pub fn run() -> Result<()> {
 
 			#[cfg(not(target_os = "android"))]
 			{
-				selendra_node_core_pvf::prepare_worker_entrypoint(&cmd.socket_path);
+				selendra_node_core_pvf_prepare_worker::worker_entrypoint(
+					&cmd.socket_path,
+					Some(&cmd.node_impl_version),
+				);
 				Ok(())
 			}
 		},
@@ -394,7 +381,10 @@ pub fn run() -> Result<()> {
 
 			#[cfg(not(target_os = "android"))]
 			{
-				selendra_node_core_pvf::execute_worker_entrypoint(&cmd.socket_path);
+				selendra_node_core_pvf_execute_worker::worker_entrypoint(
+					&cmd.socket_path,
+					Some(&cmd.node_impl_version),
+				);
 				Ok(())
 			}
 		},
@@ -417,32 +407,30 @@ pub fn run() -> Result<()> {
 					let db = backend.expose_db();
 					let storage = backend.expose_storage();
 
-					unwrap_client!(
-						client,
-						cmd.run(config, client.clone(), db, storage).map_err(Error::SubstrateCli)
-					)
+					cmd.run(config, client.clone(), db, storage).map_err(Error::SubstrateCli)
 				}),
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|mut config| {
 					let (client, _, _, _) = service::new_chain_ops(&mut config, None)?;
 
-					unwrap_client!(client, cmd.run(client.clone()).map_err(Error::SubstrateCli))
+					cmd.run(client.clone()).map_err(Error::SubstrateCli)
 				}),
 				// These commands are very similar and can be handled in nearly the same way.
 				BenchmarkCmd::Extrinsic(_) | BenchmarkCmd::Overhead(_) => {
 					ensure_dev(chain_spec).map_err(Error::Other)?;
 					runner.sync_run(|mut config| {
 						let (client, _, _, _) = service::new_chain_ops(&mut config, None)?;
-						let header = client.header(BlockId::Number(0_u32.into())).unwrap().unwrap();
+						let header = client.header(client.info().genesis_hash).unwrap().unwrap();
 						let inherent_data = benchmark_inherent_data(header)
 							.map_err(|e| format!("generating inherent data: {:?}", e))?;
-						let remark_builder = RemarkBuilder::new(client.clone());
+						let remark_builder =
+							RemarkBuilder::new(client.clone(), config.chain_spec.identify_chain());
 
 						match cmd {
 							BenchmarkCmd::Extrinsic(cmd) => {
 								let tka_builder = TransferKeepAliveBuilder::new(
 									client.clone(),
 									Sr25519Keyring::Alice.to_account_id(),
-									client.existential_deposit(),
+									config.chain_spec.identify_chain(),
 								);
 
 								let ext_factory = ExtrinsicFactory(vec![
@@ -450,28 +438,18 @@ pub fn run() -> Result<()> {
 									Box::new(tka_builder),
 								]);
 
-								unwrap_client!(
-									client,
-									cmd.run(
-										client.clone(),
-										inherent_data,
-										Vec::new(),
-										&ext_factory
-									)
+								cmd.run(client.clone(), inherent_data, Vec::new(), &ext_factory)
 									.map_err(Error::SubstrateCli)
-								)
 							},
-							BenchmarkCmd::Overhead(cmd) => unwrap_client!(
-								client,
-								cmd.run(
+							BenchmarkCmd::Overhead(cmd) => cmd
+								.run(
 									config,
 									client.clone(),
 									inherent_data,
 									Vec::new(),
-									&remark_builder
+									&remark_builder,
 								)
-								.map_err(Error::SubstrateCli)
-							),
+								.map_err(Error::SubstrateCli),
 							_ => unreachable!("Ensured by the outside match; qed"),
 						}
 					})
@@ -480,18 +458,19 @@ pub fn run() -> Result<()> {
 					set_default_ss58_version(chain_spec);
 					ensure_dev(chain_spec).map_err(Error::Other)?;
 
-					// else we assume it is selendra.
-					#[cfg(feature = "selendra-native")]
-					{
-						return Ok(runner.sync_run(|config| {
-							cmd.run::<service::selendra_runtime::Block, service::SelendraExecutorDispatch>(config)
+					if cfg!(feature = "runtime-benchmarks") {
+						runner.sync_run(|config| {
+							cmd.run::<service::Block, ()>(config)
 								.map_err(|e| Error::SubstrateCli(e))
-						})?)
+						})
+					} else {
+						Err(sc_cli::Error::Input(
+							"Benchmarking wasn't enabled when building the node. \
+				You can enable it with `--features runtime-benchmarks`."
+								.into(),
+						)
+						.into())
 					}
-
-					#[cfg(not(feature = "selendra-native"))]
-					#[allow(unreachable_code)]
-					Err(service::Error::NoRuntime.into())
 				},
 				BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| {
 					cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())
@@ -513,11 +492,13 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),
 		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
+			use sc_service::TaskManager;
+			use try_runtime_cli::block_building_info::timestamp_with_babe_info;
+
 			let runner = cli.create_runner(cmd)?;
 			let chain_spec = &runner.config().chain_spec;
 			set_default_ss58_version(chain_spec);
 
-			use sc_service::TaskManager;
 			let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
 			let task_manager = TaskManager::new(runner.config().tokio_handle.clone(), *registry)
 				.map_err(|e| Error::SubstrateService(sc_service::Error::Prometheus(e)))?;
@@ -527,10 +508,10 @@ pub fn run() -> Result<()> {
 			// else we assume it is selendra.
 			#[cfg(feature = "selendra-native")]
 			{
-				return runner.async_run(|config| {
+				return runner.async_run(|_| {
 					Ok((
-						cmd.run::<service::selendra_runtime::Block, service::SelendraExecutorDispatch>(
-							config,
+						cmd.run::<service::selendra_runtime::Block, sp_io::SubstrateHostFunctions, _>(
+							Some(timestamp_with_babe_info(service::selendra_runtime_constants::time::MILLISECS_PER_BLOCK))
 						)
 						.map_err(Error::SubstrateCli),
 						task_manager,
@@ -554,8 +535,9 @@ pub fn run() -> Result<()> {
 	}?;
 
 	#[cfg(feature = "pyroscope")]
-	if let Some(mut pyroscope_agent) = pyroscope_agent_maybe.take() {
-		pyroscope_agent.stop();
+	if let Some(pyroscope_agent) = pyroscope_agent_maybe.take() {
+		let agent = pyroscope_agent.stop()?;
+		agent.shutdown();
 	}
 	Ok(())
 }

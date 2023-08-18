@@ -72,17 +72,18 @@ use futures::{channel::oneshot, future::BoxFuture, select, Future, FutureExt, St
 use lru::LruCache;
 
 use client::{BlockImportNotification, BlockchainEvents, FinalityNotification};
-use selendra_primitives::v2::{Block, BlockNumber, Hash};
+use selendra_primitives::{Block, BlockNumber, Hash};
 
+use self::messages::{BitfieldSigningMessage, PvfCheckerMessage};
 use selendra_node_subsystem_types::messages::{
 	ApprovalDistributionMessage, ApprovalVotingMessage, AvailabilityDistributionMessage,
 	AvailabilityRecoveryMessage, AvailabilityStoreMessage, BitfieldDistributionMessage,
-	BitfieldSigningMessage, CandidateBackingMessage, CandidateValidationMessage, ChainApiMessage,
-	ChainSelectionMessage, CollationGenerationMessage, CollatorProtocolMessage,
-	DisputeCoordinatorMessage, DisputeDistributionMessage, GossipSupportMessage,
-	NetworkBridgeRxMessage, NetworkBridgeTxMessage, ProvisionerMessage, PvfCheckerMessage,
-	RuntimeApiMessage, StatementDistributionMessage,
+	CandidateBackingMessage, CandidateValidationMessage, ChainApiMessage, ChainSelectionMessage,
+	CollationGenerationMessage, CollatorProtocolMessage, DisputeCoordinatorMessage,
+	DisputeDistributionMessage, GossipSupportMessage, NetworkBridgeRxMessage,
+	NetworkBridgeTxMessage, ProvisionerMessage, RuntimeApiMessage, StatementDistributionMessage,
 };
+
 pub use selendra_node_subsystem_types::{
 	errors::{SubsystemError, SubsystemResult},
 	jaeger, ActivatedLeaf, ActiveLeavesUpdate, LeafStatus, OverseerSignal,
@@ -101,8 +102,6 @@ pub use selendra_node_metrics::{
 	Metronome,
 };
 
-use parity_util_mem::MemoryAllocationTracker;
-
 pub use orchestra as gen;
 pub use orchestra::{
 	contextbounds, orchestra, subsystem, FromOrchestra, MapSubsystem, MessagePacket,
@@ -118,6 +117,8 @@ pub const KNOWN_LEAVES_CACHE_SIZE: NonZeroUsize = match NonZeroUsize::new(2 * 24
 	None => panic!("Known leaves cache size must be non-zero"),
 };
 
+#[cfg(any(target_os = "linux", feature = "jemalloc-allocator"))]
+mod memory_stats;
 #[cfg(test)]
 mod tests;
 
@@ -368,7 +369,7 @@ pub async fn forward_events<P: BlockchainEvents<Block>>(client: Arc<P>, mut hand
 /// # use std::time::Duration;
 /// # use futures::{executor, pin_mut, select, FutureExt};
 /// # use futures_timer::Delay;
-/// # use selendra_primitives::v2::Hash;
+/// # use selendra_primitives::Hash;
 /// # use selendra_overseer::{
 /// # 	self as overseer,
 /// #   OverseerSignal,
@@ -457,7 +458,7 @@ pub struct Overseer<SupportsParachains> {
 	])]
 	candidate_validation: CandidateValidation,
 
-	#[subsystem(PvfCheckerMessage, sends: [
+	#[subsystem(sends: [
 		CandidateValidationMessage,
 		RuntimeApiMessage,
 	])]
@@ -497,7 +498,7 @@ pub struct Overseer<SupportsParachains> {
 	])]
 	availability_recovery: AvailabilityRecovery,
 
-	#[subsystem(blocking, BitfieldSigningMessage, sends: [
+	#[subsystem(blocking, sends: [
 		AvailabilityStoreMessage,
 		RuntimeApiMessage,
 		BitfieldDistributionMessage,
@@ -528,7 +529,7 @@ pub struct Overseer<SupportsParachains> {
 	])]
 	availability_store: AvailabilityStore,
 
-	#[subsystem(NetworkBridgeRxMessage, sends: [
+	#[subsystem(blocking, NetworkBridgeRxMessage, sends: [
 		BitfieldDistributionMessage,
 		StatementDistributionMessage,
 		ApprovalDistributionMessage,
@@ -539,7 +540,7 @@ pub struct Overseer<SupportsParachains> {
 	])]
 	network_bridge_rx: NetworkBridgeRx,
 
-	#[subsystem(NetworkBridgeTxMessage, sends: [])]
+	#[subsystem(blocking, NetworkBridgeTxMessage, sends: [])]
 	network_bridge_tx: NetworkBridgeTx,
 
 	#[subsystem(blocking, ChainApiMessage, sends: [])]
@@ -558,7 +559,7 @@ pub struct Overseer<SupportsParachains> {
 	])]
 	collator_protocol: CollatorProtocol,
 
-	#[subsystem(ApprovalDistributionMessage, sends: [
+	#[subsystem(blocking, message_capacity: 64000, ApprovalDistributionMessage, sends: [
 		NetworkBridgeTxMessage,
 		ApprovalVotingMessage,
 	])]
@@ -583,7 +584,7 @@ pub struct Overseer<SupportsParachains> {
 	])]
 	gossip_support: GossipSupport,
 
-	#[subsystem(blocking, DisputeCoordinatorMessage, sends: [
+	#[subsystem(blocking, message_capacity: 32000, DisputeCoordinatorMessage, sends: [
 		RuntimeApiMessage,
 		ChainApiMessage,
 		DisputeDistributionMessage,
@@ -591,6 +592,7 @@ pub struct Overseer<SupportsParachains> {
 		ApprovalVotingMessage,
 		AvailabilityStoreMessage,
 		AvailabilityRecoveryMessage,
+		ChainSelectionMessage,
 	])]
 	dispute_coordinator: DisputeCoordinator,
 
@@ -609,11 +611,6 @@ pub struct Overseer<SupportsParachains> {
 
 	/// Stores the [`jaeger::Span`] per active leaf.
 	pub span_per_active_leaf: HashMap<Hash, Arc<jaeger::Span>>,
-
-	/// A set of leaves that `Overseer` starts working with.
-	///
-	/// Drained at the beginning of `run` and never used again.
-	pub leaves: Vec<(Hash, BlockNumber)>,
 
 	/// The set of the "active leaves".
 	pub active_leaves: HashMap<Hash, BlockNumber>,
@@ -651,8 +648,9 @@ where
 	}
 	let subsystem_meters = overseer.map_subsystems(ExtractNameAndMeters);
 
+	#[cfg(any(target_os = "linux", feature = "jemalloc-allocator"))]
 	let collect_memory_stats: Box<dyn Fn(&OverseerMetrics) + Send> =
-		match MemoryAllocationTracker::new() {
+		match memory_stats::MemoryAllocationTracker::new() {
 			Ok(memory_stats) =>
 				Box::new(move |metrics: &OverseerMetrics| match memory_stats.snapshot() {
 					Ok(memory_stats_snapshot) => {
@@ -676,6 +674,9 @@ where
 			},
 		};
 
+	#[cfg(not(any(target_os = "linux", feature = "jemalloc-allocator")))]
+	let collect_memory_stats: Box<dyn Fn(&OverseerMetrics) + Send> = Box::new(|_| {});
+
 	let metronome = Metronome::new(std::time::Duration::from_millis(950)).for_each(move |_| {
 		collect_memory_stats(&metronome_metrics);
 
@@ -686,7 +687,7 @@ where
 			subsystem_meters
 				.iter()
 				.cloned()
-				.filter_map(|x| x)
+				.flatten()
 				.map(|(name, ref meters)| (name, meters.read())),
 		);
 
@@ -710,19 +711,17 @@ where
 	}
 
 	/// Run the `Overseer`.
-	pub async fn run(mut self) -> SubsystemResult<()> {
+	///
+	/// Logging any errors.
+	pub async fn run(self) {
+		if let Err(err) = self.run_inner().await {
+			gum::error!(target: LOG_TARGET, ?err, "Overseer exited with error");
+		}
+	}
+
+	async fn run_inner(mut self) -> SubsystemResult<()> {
 		let metrics = self.metrics.clone();
 		spawn_metronome_metrics(&mut self, metrics)?;
-
-		// Notify about active leaves on startup before starting the loop
-		for (hash, number) in std::mem::take(&mut self.leaves) {
-			let _ = self.active_leaves.insert(hash, number);
-			if let Some((span, status)) = self.on_head_activated(&hash, None).await {
-				let update =
-					ActiveLeavesUpdate::start_work(ActivatedLeaf { hash, number, status, span });
-				self.broadcast_signal(OverseerSignal::ActiveLeaves(update)).await?;
-			}
-		}
 
 		loop {
 			select! {
@@ -861,7 +860,7 @@ where
 		let mut span = jaeger::Span::new(*hash, "leaf-activated");
 
 		if let Some(parent_span) = parent_hash.and_then(|h| self.span_per_active_leaf.get(&h)) {
-			span.add_follows_from(&*parent_span);
+			span.add_follows_from(parent_span);
 		}
 
 		let span = Arc::new(span);

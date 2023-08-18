@@ -9,14 +9,15 @@ description = "Subsystem traits and message definitions"
 async-trait = "0.1.57"
 futures = "0.3.21"
 parking_lot = "0.12.0"
-selendra-node-subsystem = { path = "../subsystem" }
-selendra-node-subsystem-util = { path = "../subsystem-util" }
-selendra-primitives = { path = "../../../primitives" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+
+selendra-node-subsystem = { path = "../subsystem" }
+selendra-node-subsystem-util = { path = "../subsystem-util" }
+selendra-primitives = { path = "../../../primitives" }
 
 [dev-dependencies]
 selendra-overseer = { path = "../overseer" }

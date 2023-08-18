@@ -19,12 +19,12 @@
 use babe_primitives::AuthorityId as BabeId;
 use grandpa::AuthorityId as GrandpaId;
 use pallet_staking::Forcing;
-use sc_chain_spec::{ChainSpec, ChainType};
-use selendra_primitives::v2::{AccountId, AssignmentId, ValidatorId, MAX_CODE_SIZE, MAX_POV_SIZE};
+use selendra_primitives::{AccountId, AssignmentId, ValidatorId, MAX_CODE_SIZE, MAX_POV_SIZE};
 use selendra_service::chain_spec::{
 	get_account_id_from_seed, get_from_seed, selendra_chain_spec_properties, Extensions,
 };
 use selendra_test_runtime::BABE_GENESIS_EPOCH_CONFIG;
+use sc_chain_spec::{ChainSpec, ChainType};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::sr25519;
 use sp_runtime::Perbill;
@@ -34,7 +34,7 @@ const DEFAULT_PROTOCOL_ID: &str = "sel";
 
 /// The `ChainSpec` parameterized for selendra test runtime.
 pub type SelendraChainSpec =
-	sc_service::GenericChainSpec<selendra_test_runtime::GenesisConfig, Extensions>;
+	sc_service::GenericChainSpec<selendra_test_runtime::RuntimeGenesisConfig, Extensions>;
 
 /// Local testnet config (multivalidator Alice + Bob)
 pub fn selendra_local_testnet_config() -> SelendraChainSpec {
@@ -53,7 +53,7 @@ pub fn selendra_local_testnet_config() -> SelendraChainSpec {
 }
 
 /// Local testnet genesis config (multivalidator Alice + Bob)
-pub fn selendra_local_testnet_genesis() -> selendra_test_runtime::GenesisConfig {
+pub fn selendra_local_testnet_genesis() -> selendra_test_runtime::RuntimeGenesisConfig {
 	selendra_testnet_genesis(
 		vec![get_authority_keys_from_seed("Alice"), get_authority_keys_from_seed("Bob")],
 		get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -93,7 +93,7 @@ fn testnet_accounts() -> Vec<AccountId> {
 	]
 }
 
-/// Helper function to create selendra `GenesisConfig` for testing
+/// Helper function to create selendra `RuntimeGenesisConfig` for testing
 fn selendra_testnet_genesis(
 	initial_authorities: Vec<(
 		AccountId,
@@ -106,7 +106,7 @@ fn selendra_testnet_genesis(
 	)>,
 	root_key: AccountId,
 	endowed_accounts: Option<Vec<AccountId>>,
-) -> selendra_test_runtime::GenesisConfig {
+) -> selendra_test_runtime::RuntimeGenesisConfig {
 	use selendra_test_runtime as runtime;
 
 	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
@@ -114,7 +114,7 @@ fn selendra_testnet_genesis(
 	const ENDOWMENT: u128 = 1_000_000 * SELS;
 	const STASH: u128 = 100 * SELS;
 
-	runtime::GenesisConfig {
+	runtime::RuntimeGenesisConfig {
 		system: runtime::SystemConfig {
 			code: runtime::WASM_BINARY.expect("Wasm binary must be built for testing").to_vec(),
 			..Default::default()
@@ -146,7 +146,7 @@ fn selendra_testnet_genesis(
 			validator_count: 2,
 			stakers: initial_authorities
 				.iter()
-				.map(|x| (x.0.clone(), x.1.clone(), STASH, runtime::StakerStatus::Validator))
+				.map(|x| (x.0.clone(), x.0.clone(), STASH, runtime::StakerStatus::Validator))
 				.collect(),
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
 			force_era: Forcing::NotForcing,

@@ -13,12 +13,12 @@ sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "pol
 gum = { package = "tracing-gum", path = "../../gum" }
 selendra-primitives = { path = "../../../../primitives" }
 selendra-node-subsystem = {path = "../../subsystem" }
-selendra-node-subsystem-util = { path = "../../subsystem-util" }
+selendra-node-metrics = { path = "../../metrics" }
 
 [dev-dependencies]
-futures = { version = "0.3.21", features = ["thread-pool"] }
 maplit = "1.0.2"
-parity-scale-codec = "3.1.5"
+futures = { version = "0.3.21", features = ["thread-pool"] }
+parity-scale-codec = "3.6.1"
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 selendra-node-primitives = { path = "../../primitives" }
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }

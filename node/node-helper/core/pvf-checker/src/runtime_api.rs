@@ -21,7 +21,7 @@ use selendra_node_subsystem::{
 	messages::{RuntimeApiMessage, RuntimeApiRequest},
 	SubsystemSender,
 };
-use selendra_primitives::v2::{
+use selendra_primitives::{
 	Hash, PvfCheckStatement, SessionIndex, ValidationCodeHash, ValidatorId, ValidatorSignature,
 };
 

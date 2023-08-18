@@ -10,8 +10,8 @@ bs58 = { version = "0.4.0", features = ["alloc"] }
 log = "0.4.17"
 futures = "0.3.21"
 futures-timer = "3.0.2"
+codec = { package = "parity-scale-codec", version = "3.6.1" }
 metered = { package = "prioritized-metered-channel", version = "0.2.0" }
-codec = { package = "parity-scale-codec", version = "3.0.0" }
 
 # Both `sc-service` and `sc-cli` are required by runtime metrics `logger_hook()`.
 sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
@@ -23,12 +23,11 @@ gum = { package = "tracing-gum", path = "../gum" }
 primitives = { package = "selendra-primitives", path = "../../../primitives/" }
 
 [dev-dependencies]
-hyper = { version = "0.14.20", default-features = false, features = ["http1", "tcp"] }
-prometheus-parse = {version = "0.2.2"}
 assert_cmd = "2.0.4"
-nix = "0.24.1"
+prometheus-parse = {version = "0.2.2"}
 tempfile = "3.2.0"
-tokio = "1.19.2"
+hyper = { version = "0.14.20", default-features = false, features = ["http1", "tcp"] }
+tokio = "1.24.2"
 substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }

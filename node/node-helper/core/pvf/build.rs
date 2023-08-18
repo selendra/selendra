@@ -14,26 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Selendra Zombienet Backchannel error definitions.
-
-#[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
-pub enum BackchannelError {
-	#[error("Error connecting websocket server")]
-	CantConnectToWS,
-
-	#[error("Backchannel not initialized yet")]
-	Uninitialized,
-
-	#[error("Backchannel already initialized")]
-	AlreadyInitialized,
-
-	#[error("Error sending new value to backchannel")]
-	SendItemFail,
-
-	#[error("Invalid host for connection backchannel")]
-	InvalidHost,
-
-	#[error("Invalid port for connection backchannel")]
-	InvalidPort,
+fn main() {
+	substrate_build_script_utils::generate_cargo_keys();
 }

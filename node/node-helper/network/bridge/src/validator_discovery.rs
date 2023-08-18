@@ -30,7 +30,7 @@ use selendra_node_network_protocol::{
 	peer_set::{PeerSet, PeerSetProtocolNames, PerPeerSet},
 	PeerId,
 };
-use selendra_primitives::v2::AuthorityDiscoveryId;
+use selendra_primitives::AuthorityDiscoveryId;
 
 const LOG_TARGET: &str = "parachain::validator-discovery";
 
@@ -169,12 +169,12 @@ mod tests {
 
 	use async_trait::async_trait;
 	use futures::stream::BoxStream;
-	use sc_network::{Event as NetworkEvent, IfDisconnected, ProtocolName};
 	use selendra_node_network_protocol::{
 		request_response::{outgoing::Requests, ReqProtocolNames},
 		PeerId,
 	};
-	use selendra_primitives::v2::Hash;
+	use selendra_primitives::Hash;
+	use sc_network::{Event as NetworkEvent, IfDisconnected, ProtocolName, ReputationChange};
 	use sp_keyring::Sr25519Keyring;
 	use std::collections::{HashMap, HashSet};
 
@@ -249,7 +249,7 @@ mod tests {
 		) {
 		}
 
-		fn report_peer(&self, _: PeerId, _: crate::Rep) {
+		fn report_peer(&self, _: PeerId, _: ReputationChange) {
 			panic!()
 		}
 

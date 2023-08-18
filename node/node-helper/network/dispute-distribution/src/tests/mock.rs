@@ -26,14 +26,14 @@ use std::{
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 
-use sc_keystore::LocalKeystore;
 use selendra_node_network_protocol::{authority_discovery::AuthorityDiscovery, PeerId};
-use sp_application_crypto::AppKey;
+use sc_keystore::LocalKeystore;
+use sp_application_crypto::AppCrypto;
 use sp_keyring::Sr25519Keyring;
-use sp_keystore::{SyncCryptoStore, SyncCryptoStorePtr};
+use sp_keystore::{Keystore, KeystorePtr};
 
 use selendra_node_primitives::{DisputeMessage, SignedDisputeStatement};
-use selendra_primitives::v2::{
+use selendra_primitives::{
 	AuthorityDiscoveryId, CandidateHash, CandidateReceipt, Hash, SessionIndex, SessionInfo,
 	ValidatorId, ValidatorIndex,
 };
@@ -126,13 +126,13 @@ pub fn make_candidate_receipt(relay_parent: Hash) -> CandidateReceipt {
 	}
 }
 
-pub async fn make_explicit_signed(
+pub fn make_explicit_signed(
 	validator: Sr25519Keyring,
 	candidate_hash: CandidateHash,
 	valid: bool,
 ) -> SignedDisputeStatement {
-	let keystore: SyncCryptoStorePtr = Arc::new(LocalKeystore::in_memory());
-	SyncCryptoStore::sr25519_generate_new(&*keystore, ValidatorId::ID, Some(&validator.to_seed()))
+	let keystore: KeystorePtr = Arc::new(LocalKeystore::in_memory());
+	Keystore::sr25519_generate_new(&*keystore, ValidatorId::ID, Some(&validator.to_seed()))
 		.expect("Insert key into keystore");
 
 	SignedDisputeStatement::sign_explicit(
@@ -142,12 +142,11 @@ pub async fn make_explicit_signed(
 		MOCK_SESSION_INDEX,
 		validator.public().into(),
 	)
-	.await
 	.expect("Keystore should be fine.")
 	.expect("Signing should work.")
 }
 
-pub async fn make_dispute_message(
+pub fn make_dispute_message(
 	candidate: CandidateReceipt,
 	valid_validator: ValidatorIndex,
 	invalid_validator: ValidatorIndex,
@@ -155,16 +154,14 @@ pub async fn make_dispute_message(
 	let candidate_hash = candidate.hash();
 	let before_request = Instant::now();
 	let valid_vote =
-		make_explicit_signed(MOCK_VALIDATORS[valid_validator.0 as usize], candidate_hash, true)
-			.await;
+		make_explicit_signed(MOCK_VALIDATORS[valid_validator.0 as usize], candidate_hash, true);
 	gum::trace!(
 		"Passed time for valid vote: {:#?}",
 		Instant::now().saturating_duration_since(before_request)
 	);
 	let before_request = Instant::now();
 	let invalid_vote =
-		make_explicit_signed(MOCK_VALIDATORS[invalid_validator.0 as usize], candidate_hash, false)
-			.await;
+		make_explicit_signed(MOCK_VALIDATORS[invalid_validator.0 as usize], candidate_hash, false);
 	gum::trace!(
 		"Passed time for invald vote: {:#?}",
 		Instant::now().saturating_duration_since(before_request)
@@ -210,7 +207,7 @@ impl MockAuthorityDiscovery {
 impl AuthorityDiscovery for MockAuthorityDiscovery {
 	async fn get_addresses_by_authority_id(
 		&mut self,
-		_authority: selendra_primitives::v2::AuthorityDiscoveryId,
+		_authority: selendra_primitives::AuthorityDiscoveryId,
 	) -> Option<HashSet<sc_network::Multiaddr>> {
 		panic!("Not implemented");
 	}
@@ -218,7 +215,7 @@ impl AuthorityDiscovery for MockAuthorityDiscovery {
 	async fn get_authority_ids_by_peer_id(
 		&mut self,
 		peer_id: selendra_node_network_protocol::PeerId,
-	) -> Option<HashSet<selendra_primitives::v2::AuthorityDiscoveryId>> {
+	) -> Option<HashSet<selendra_primitives::AuthorityDiscoveryId>> {
 		for (a, p) in self.peer_ids.iter() {
 			if p == &peer_id {
 				let result =

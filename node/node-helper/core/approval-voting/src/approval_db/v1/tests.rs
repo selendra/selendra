@@ -22,18 +22,16 @@ use crate::{
 	ops::{add_block_entry, canonicalize, force_approve, NewCandidateInfo},
 };
 use selendra_node_subsystem_util::database::Database;
-use selendra_primitives::v2::Id as ParaId;
+use selendra_primitives::Id as ParaId;
 use std::{collections::HashMap, sync::Arc};
 
 use ::test_helpers::{dummy_candidate_receipt, dummy_candidate_receipt_bad_sig, dummy_hash};
 
 const DATA_COL: u32 = 0;
-const SESSION_DATA_COL: u32 = 1;
 
-const NUM_COLUMNS: u32 = 2;
+const NUM_COLUMNS: u32 = 1;
 
-const TEST_CONFIG: Config =
-	Config { col_approval_data: DATA_COL, col_session_data: SESSION_DATA_COL };
+const TEST_CONFIG: Config = Config { col_approval_data: DATA_COL };
 
 fn make_db() -> (DbBackend, Arc<dyn Database>) {
 	let db = kvdb_memorydb::create(NUM_COLUMNS);
@@ -401,7 +399,7 @@ fn canonicalize_works() {
 			assert_eq!(entry.candidates.len(), with_candidates.len());
 
 			for x in with_candidates {
-				assert!(entry.candidates.iter().position(|&(_, ref c)| c == &x).is_some());
+				assert!(entry.candidates.iter().any(|(_, c)| c == &x));
 			}
 		}
 	};

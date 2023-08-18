@@ -20,7 +20,7 @@
 use selendra_node_network_protocol::PeerId;
 use selendra_node_subsystem::SubsystemError;
 use selendra_node_subsystem_util::runtime;
-use selendra_primitives::v2::{CandidateHash, Hash};
+use selendra_primitives::{CandidateHash, Hash};
 
 use crate::LOG_TARGET;
 

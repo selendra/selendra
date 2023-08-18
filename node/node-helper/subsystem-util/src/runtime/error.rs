@@ -20,7 +20,7 @@
 use futures::channel::oneshot;
 
 use selendra_node_subsystem::errors::RuntimeApiError;
-use selendra_primitives::v2::SessionIndex;
+use selendra_primitives::SessionIndex;
 
 #[allow(missing_docs)]
 #[fatality::fatality(splitable)]

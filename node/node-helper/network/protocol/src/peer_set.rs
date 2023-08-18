@@ -17,11 +17,11 @@
 //! All peersets and protocols used for parachains.
 
 use derive_more::Display;
-use sc_network_common::{
+use selendra_primitives::Hash;
+use sc_network::{
 	config::{NonDefaultSetConfig, SetConfig},
-	protocol::ProtocolName,
+	types::ProtocolName,
 };
-use selendra_primitives::v2::Hash;
 use std::{
 	collections::{hash_map::Entry, HashMap},
 	ops::{Index, IndexMut},
@@ -36,7 +36,7 @@ const LEGACY_COLLATION_PROTOCOL_V1: &str = "/selendra/collation/1";
 const LEGACY_PROTOCOL_VERSION_V1: u32 = 1;
 
 /// Max notification size is currently constant.
-const MAX_NOTIFICATION_SIZE: u64 = 100 * 1024;
+pub const MAX_NOTIFICATION_SIZE: u64 = 100 * 1024;
 
 /// The peer-sets and thus the protocols which are used for the network.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter)]
@@ -81,7 +81,7 @@ impl PeerSet {
 				fallback_names,
 				max_notification_size,
 				handshake: None,
-				set_config: sc_network_common::config::SetConfig {
+				set_config: SetConfig {
 					// we allow full nodes to connect to validators for gossip
 					// to ensure any `MIN_GOSSIP_PEERS` always include reserved peers
 					// we limit the amount of non-reserved slots to be less
@@ -89,7 +89,7 @@ impl PeerSet {
 					in_peers: super::MIN_GOSSIP_PEERS as u32 / 2 - 1,
 					out_peers: super::MIN_GOSSIP_PEERS as u32 / 2 - 1,
 					reserved_nodes: Vec::new(),
-					non_reserved_mode: sc_network_common::config::NonReservedPeerMode::Accept,
+					non_reserved_mode: sc_network::config::NonReservedPeerMode::Accept,
 				},
 			},
 			PeerSet::Collation => NonDefaultSetConfig {
@@ -103,9 +103,9 @@ impl PeerSet {
 					out_peers: 0,
 					reserved_nodes: Vec::new(),
 					non_reserved_mode: if is_authority == IsAuthority::Yes {
-						sc_network_common::config::NonReservedPeerMode::Accept
+						sc_network::config::NonReservedPeerMode::Accept
 					} else {
-						sc_network_common::config::NonReservedPeerMode::Deny
+						sc_network::config::NonReservedPeerMode::Deny
 					},
 				},
 			},
@@ -190,7 +190,7 @@ impl<T> IndexMut<PeerSet> for PerPeerSet<T> {
 pub fn peer_sets_info(
 	is_authority: IsAuthority,
 	peerset_protocol_names: &PeerSetProtocolNames,
-) -> Vec<sc_network_common::config::NonDefaultSetConfig> {
+) -> Vec<NonDefaultSetConfig> {
 	PeerSet::iter()
 		.map(|s| s.get_info(is_authority, &peerset_protocol_names))
 		.collect()

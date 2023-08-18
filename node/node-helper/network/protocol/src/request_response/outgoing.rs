@@ -21,7 +21,7 @@ use parity_scale_codec::{Decode, Encode, Error as DecodingError};
 use sc_network as network;
 use sc_network::PeerId;
 
-use selendra_primitives::v2::AuthorityDiscoveryId;
+use selendra_primitives::AuthorityDiscoveryId;
 
 use super::{v1, IsRequest, Protocol};
 

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-use selendra_primitives::v2::{Hash, ValidationCodeHash};
+use selendra_primitives::{Hash, ValidationCodeHash};
 use std::collections::{
 	btree_map::{self, BTreeMap},
 	HashSet,

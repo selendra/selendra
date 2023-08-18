@@ -5,22 +5,23 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
+thiserror = "1.0.31"
+rand = "0.8.5"
+derive_more = "0.99.17"
+lru = "0.9.0"
+fatality = "0.0.6"
 futures = "0.3.21"
+parity-scale-codec = { version = "3.6.1", features = ["std"] }
+sp-core = { git = "https://github.com/paritytech/substrate", features = ["std"] , branch = "polkadot-v1.0.0" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+
 gum = { package = "tracing-gum", path = "../../gum" }
-parity-scale-codec = { version = "3.1.5", features = ["std"] }
 selendra-primitives = { path = "../../../../primitives" }
 selendra-erasure-coding = { path = "../../erasure-coding" }
 selendra-node-network-protocol = { path = "../../network/protocol" }
 selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 selendra-node-primitives = { path = "../../primitives" }
-sp-core = { git = "https://github.com/paritytech/substrate", features = ["std"] , branch = "polkadot-v1.0.0" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
-thiserror = "1.0.31"
-rand = "0.8.5"
-derive_more = "0.99.17"
-lru = "0.8.0"
-fatality = "0.0.6"
 
 [dev-dependencies]
 futures-timer = "3.0.2"

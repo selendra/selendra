@@ -103,7 +103,7 @@ pub(crate) fn impl_gum2(orig: TokenStream, level: Level) -> Result<TokenStream> 
 					Some(Value::Value(ValueWithFormatMarker {
 						marker,
 						ident: alias,
-						sel: None,
+						dot: None,
 						inner: Punctuated::new(),
 					})),
 				)

@@ -25,7 +25,7 @@ use crate::LOG_TARGET;
 use futures::channel::oneshot;
 use selendra_node_primitives::CandidateVotes;
 use selendra_node_subsystem::{messages::DisputeCoordinatorMessage, overseer};
-use selendra_primitives::v2::{CandidateHash, SessionIndex};
+use selendra_primitives::{CandidateHash, SessionIndex};
 
 /// Request the relevant dispute statements for a set of disputes identified by `CandidateHash` and the `SessionIndex`.
 async fn request_votes(

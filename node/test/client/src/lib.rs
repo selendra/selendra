@@ -20,16 +20,14 @@
 
 mod block_builder;
 
-use sc_service::client;
-use selendra_primitives::v2::Block;
-use sp_core::storage::Storage;
+use selendra_primitives::Block;
 use sp_runtime::BuildStorage;
+use std::sync::Arc;
 
 pub use block_builder::*;
 pub use selendra_test_runtime as runtime;
 pub use selendra_test_service::{
 	construct_extrinsic, construct_transfer_extrinsic, Client, FullBackend,
-	SelendraTestExecutorDispatch,
 };
 pub use substrate_test_client::*;
 
@@ -37,7 +35,7 @@ pub use substrate_test_client::*;
 pub type Executor = client::LocalCallExecutor<
 	Block,
 	FullBackend,
-	sc_executor::NativeElseWasmExecutor<SelendraTestExecutorDispatch>,
+	WasmExecutor<(sp_io::SubstrateHostFunctions, frame_benchmarking::benchmarking::HostFunctions)>,
 >;
 
 /// Test client builder for Selendra.
@@ -72,7 +70,21 @@ pub trait TestClientBuilderExt: Sized {
 
 impl TestClientBuilderExt for TestClientBuilder {
 	fn build_with_longest_chain(self) -> (Client, LongestChain) {
-		self.build_with_native_executor(None)
+		let executor = WasmExecutor::builder().build();
+		let executor = client::LocalCallExecutor::new(
+			self.backend().clone(),
+			executor.clone(),
+			Default::default(),
+			ExecutionExtensions::new(
+				Default::default(),
+				None,
+				sc_offchain::OffchainDb::factory_from_backend(&*self.backend()),
+				Arc::new(executor),
+			),
+		)
+		.unwrap();
+
+		self.build_with_executor(executor)
 	}
 }
 

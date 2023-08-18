@@ -22,7 +22,7 @@ use selendra_node_network_protocol::{
 	PeerId,
 };
 use selendra_node_primitives::SignedDisputeStatement;
-use selendra_primitives::v2::{CandidateReceipt, ValidatorIndex};
+use selendra_primitives::{CandidateReceipt, ValidatorIndex};
 
 use crate::receiver::{BATCH_COLLECTING_INTERVAL, MIN_KEEP_BATCH_ALIVE_VOTES};
 

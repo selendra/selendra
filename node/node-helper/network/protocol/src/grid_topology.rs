@@ -30,8 +30,8 @@
 //!
 
 use crate::PeerId;
+use selendra_primitives::{AuthorityDiscoveryId, SessionIndex, ValidatorIndex};
 use rand::{CryptoRng, Rng};
-use selendra_primitives::v2::{AuthorityDiscoveryId, SessionIndex, ValidatorIndex};
 use std::{
 	collections::{hash_map, HashMap, HashSet},
 	fmt::Debug,
@@ -94,7 +94,7 @@ impl SessionGridTopology {
 			let n = &self.canonical_shuffling[r_n];
 			grid_subset.validator_indices_x.insert(n.validator_index);
 			for p in &n.peer_ids {
-				grid_subset.peers_x.insert(p.clone());
+				grid_subset.peers_x.insert(*p);
 			}
 		}
 
@@ -102,7 +102,7 @@ impl SessionGridTopology {
 			let n = &self.canonical_shuffling[c_n];
 			grid_subset.validator_indices_y.insert(n.validator_index);
 			for p in &n.peer_ids {
-				grid_subset.peers_y.insert(p.clone());
+				grid_subset.peers_y.insert(*p);
 			}
 		}
 

@@ -17,12 +17,11 @@
 //! Selendra chain configurations.
 
 use beefy_primitives::crypto::AuthorityId as BeefyId;
-use frame_support::weights::Weight;
 use grandpa::AuthorityId as GrandpaId;
-use hex_literal::hex;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
+
 use pallet_staking::Forcing;
-use selendra_primitives::v2::{AccountId, AccountPublic, AssignmentId, ValidatorId};
+use selendra_primitives::{AccountId, AccountPublic, AssignmentId, ValidatorId};
 #[cfg(feature = "selendra-native")]
 use selendra_runtime as selendra;
 #[cfg(feature = "selendra-native")]
@@ -30,10 +29,12 @@ use selendra_runtime_constants::currency::UNITS as SEL;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
 
-use sc_chain_spec::{ChainSpecExtension, ChainType};
+use sc_chain_spec::ChainSpecExtension;
+use sc_chain_spec::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
-use sp_runtime::{traits::IdentifyAccount, Perbill};
+use sp_runtime::traits::IdentifyAccount;
+use sp_runtime::Perbill;
 use telemetry::TelemetryEndpoints;
 
 #[cfg(feature = "selendra-native")]
@@ -48,9 +49,9 @@ const DEFAULT_PROTOCOL_ID: &str = "sel";
 #[serde(rename_all = "camelCase")]
 pub struct Extensions {
 	/// Block numbers with known hashes.
-	pub fork_blocks: sc_client_api::ForkBlocks<selendra_primitives::v2::Block>,
+	pub fork_blocks: sc_client_api::ForkBlocks<selendra_primitives::Block>,
 	/// Known bad block hashes.
-	pub bad_blocks: sc_client_api::BadBlocks<selendra_primitives::v2::Block>,
+	pub bad_blocks: sc_client_api::BadBlocks<selendra_primitives::Block>,
 	/// The light sync state.
 	///
 	/// This value will be set by the `sync-state rpc` implementation.
@@ -59,7 +60,7 @@ pub struct Extensions {
 
 /// The `ChainSpec` parameterized for the selendra runtime.
 #[cfg(feature = "selendra-native")]
-pub type SelendraChainSpec = service::GenericChainSpec<selendra::GenesisConfig, Extensions>;
+pub type SelendraChainSpec = service::GenericChainSpec<selendra::RuntimeGenesisConfig, Extensions>;
 
 // Dummy chain spec, in case when we don't have the native runtime.
 pub type DummyChainSpec = service::GenericChainSpec<(), Extensions>;
@@ -77,12 +78,13 @@ pub fn selendra_testnet_config() -> Result<SelendraChainSpec, String> {
 }
 
 /// The default parachains host configuration.
-#[cfg(any(feature = "selendra-native"))]
+#[cfg(any(
+	feature = "selendra-native"
+))]
 fn default_parachains_host_configuration(
-) -> selendra_runtime_parachains::configuration::HostConfiguration<
-	selendra_primitives::v2::BlockNumber,
-> {
-	use selendra_primitives::v2::{MAX_CODE_SIZE, MAX_POV_SIZE};
+) -> selendra_runtime_parachains::configuration::HostConfiguration<selendra_primitives::BlockNumber>
+{
+	use selendra_primitives::{MAX_CODE_SIZE, MAX_POV_SIZE};
 
 	selendra_runtime_parachains::configuration::HostConfiguration {
 		validation_upgrade_cooldown: 2u32,
@@ -97,8 +99,6 @@ fn default_parachains_host_configuration(
 		max_upward_queue_count: 8,
 		max_upward_queue_size: 1024 * 1024,
 		max_downward_message_size: 1024 * 1024,
-		ump_service_total_weight: Weight::from_ref_time(100_000_000_000)
-			.set_proof_size(MAX_POV_SIZE as u64),
 		max_upward_message_size: 50 * 1024,
 		max_upward_message_num_per_candidate: 5,
 		hrmp_sender_deposit: 0,
@@ -122,7 +122,9 @@ fn default_parachains_host_configuration(
 	}
 }
 
-#[cfg(any(feature = "selendra-native"))]
+#[cfg(any(
+	feature = "selendra-native"
+))]
 #[test]
 fn default_parachains_host_configuration_is_consistent() {
 	default_parachains_host_configuration().panic_if_not_consistent();
@@ -148,10 +150,7 @@ fn selendra_session_keys(
 }
 
 #[cfg(feature = "selendra-native")]
-fn selendra_staging_testnet_config_genesis(
-	wasm_binary: &[u8],
-	root_key: AccountId,
-) -> selendra::GenesisConfig {
+fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8], root_key: AccountId,) -> selendra::RuntimeGenesisConfig {
 	// subkey inspect "$SECRET"
 	let endowed_accounts = vec![];
 
@@ -169,7 +168,7 @@ fn selendra_staging_testnet_config_genesis(
 	const ENDOWMENT: u128 = 1_000_000 * SEL;
 	const STASH: u128 = 100 * SEL;
 
-	selendra::GenesisConfig {
+	selendra::RuntimeGenesisConfig {
 		system: selendra::SystemConfig { code: wasm_binary.to_vec() },
 		balances: selendra::BalancesConfig {
 			balances: endowed_accounts
@@ -203,7 +202,7 @@ fn selendra_staging_testnet_config_genesis(
 			minimum_validator_count: 4,
 			stakers: initial_authorities
 				.iter()
-				.map(|x| (x.0.clone(), x.1.clone(), STASH, selendra::StakerStatus::Validator))
+				.map(|x| (x.0.clone(), x.0.clone(), STASH, selendra::StakerStatus::Validator))
 				.collect(),
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
 			force_era: Forcing::ForceNone,
@@ -217,7 +216,6 @@ fn selendra_staging_testnet_config_genesis(
 			members: vec![],
 			phantom: Default::default(),
 		},
-		technical_membership: Default::default(),
 		council_membership: Default::default(),
 		babe: selendra::BabeConfig {
 			authorities: Default::default(),
@@ -254,7 +252,7 @@ pub fn selendra_chain_spec_properties() -> serde_json::map::Map<String, serde_js
 pub fn selendra_staging_testnet_config() -> Result<SelendraChainSpec, String> {
 	let wasm_binary = selendra::WASM_BINARY.ok_or("Selendra development wasm not available")?;
 	let boot_nodes = vec![];
-	let root_key: AccountId = hex![
+	let root_key: AccountId = hex_literal::hex![
 		// 5CkQtjERkXaTRr6Kioi8VfDZ52J72K6QAo2THNAfzg1ybUXH
 		"1e48b569d594871628099074a611bddc8177ca642ed6a2e64becdd025c975e41"
 	]
@@ -335,6 +333,9 @@ pub fn get_authority_keys_from_seed_no_beefy(
 	)
 }
 
+#[cfg(any(
+	feature = "selendra-native",
+))]
 fn testnet_accounts() -> Vec<AccountId> {
 	vec![
 		get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -352,7 +353,7 @@ fn testnet_accounts() -> Vec<AccountId> {
 	]
 }
 
-/// Helper function to create selendra `GenesisConfig` for testing
+/// Helper function to create selendra `RuntimeGenesisConfig` for testing
 #[cfg(feature = "selendra-native")]
 pub fn selendra_testnet_genesis(
 	wasm_binary: &[u8],
@@ -368,13 +369,13 @@ pub fn selendra_testnet_genesis(
 	)>,
 	_root_key: AccountId,
 	endowed_accounts: Option<Vec<AccountId>>,
-) -> selendra::GenesisConfig {
+) -> selendra::RuntimeGenesisConfig {
 	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
 	const ENDOWMENT: u128 = 1_000_000 * SEL;
 	const STASH: u128 = 100 * SEL;
 
-	selendra::GenesisConfig {
+	selendra::RuntimeGenesisConfig {
 		system: selendra::SystemConfig { code: wasm_binary.to_vec() },
 		indices: selendra::IndicesConfig { indices: vec![] },
 		balances: selendra::BalancesConfig {
@@ -404,7 +405,7 @@ pub fn selendra_testnet_genesis(
 			validator_count: initial_authorities.len() as u32,
 			stakers: initial_authorities
 				.iter()
-				.map(|x| (x.0.clone(), x.1.clone(), STASH, selendra::StakerStatus::Validator))
+				.map(|x| (x.0.clone(), x.0.clone(), STASH, selendra::StakerStatus::Validator))
 				.collect(),
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
 			force_era: Forcing::NotForcing,
@@ -419,7 +420,6 @@ pub fn selendra_testnet_genesis(
 			phantom: Default::default(),
 		},
 		council_membership: Default::default(),
-		technical_membership: Default::default(),
 		babe: selendra::BabeConfig {
 			authorities: Default::default(),
 			epoch_config: Some(selendra::BABE_GENESIS_EPOCH_CONFIG),
@@ -441,7 +441,7 @@ pub fn selendra_testnet_genesis(
 }
 
 #[cfg(feature = "selendra-native")]
-fn selendra_development_config_genesis(wasm_binary: &[u8]) -> selendra::GenesisConfig {
+fn selendra_development_config_genesis(wasm_binary: &[u8]) -> selendra::RuntimeGenesisConfig {
 	selendra_testnet_genesis(
 		wasm_binary,
 		vec![get_authority_keys_from_seed_no_beefy("Alice")],
@@ -457,7 +457,7 @@ pub fn selendra_development_config() -> Result<SelendraChainSpec, String> {
 
 	Ok(SelendraChainSpec::from_genesis(
 		"Development",
-		"dev",
+		"selendra_dev",
 		ChainType::Development,
 		move || selendra_development_config_genesis(wasm_binary),
 		vec![],
@@ -470,7 +470,7 @@ pub fn selendra_development_config() -> Result<SelendraChainSpec, String> {
 }
 
 #[cfg(feature = "selendra-native")]
-fn selendra_local_testnet_genesis(wasm_binary: &[u8]) -> selendra::GenesisConfig {
+fn selendra_local_testnet_genesis(wasm_binary: &[u8]) -> selendra::RuntimeGenesisConfig {
 	selendra_testnet_genesis(
 		wasm_binary,
 		vec![
@@ -500,3 +500,4 @@ pub fn selendra_local_testnet_config() -> Result<SelendraChainSpec, String> {
 		Default::default(),
 	))
 }
+

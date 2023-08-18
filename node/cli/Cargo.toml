@@ -18,34 +18,37 @@ clap = { version = "4.0.9", features = ["derive"], optional = true }
 log = "0.4.17"
 thiserror = "1.0.31"
 futures = "0.3.21"
-pyro = { package = "pyroscope", version = "0.3.1", optional = true }
+pyro = { package = "pyroscope", version = "0.5.3", optional = true }
+pyroscope_pprofrs = { version = "0.2", optional = true }
+
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+
+sc-tracing = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v1.0.0" }
+sc-sysinfo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+sc-storage-monitor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
+sc-cli = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v1.0.0" }
+sc-service = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v1.0.0" }
+
+frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v1.0.0" }
+try-runtime-cli = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v1.0.0" }
 
 service = { package = "selendra-service", path = "../service", default-features = false, optional = true }
-selendra-client = { path = "../client", optional = true }
-selendra-node-core-pvf = { path = "../node-helper/core/pvf", optional = true }
+selendra-node-core-pvf-execute-worker = { path = "../node-helper/core/pvf/execute-worker", optional = true }
+selendra-node-core-pvf-prepare-worker = { path = "../node-helper/core/pvf/prepare-worker", optional = true }
 selendra-performance-test = { path = "../test/performance-test", optional = true }
 selendra-node-metrics = { path = "../node-helper/metrics" }
 
 
-frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", optional = true }
-try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", optional = true }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
-sc-sysinfo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", optional = true }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", optional = true }
-sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", optional = true }
-
-# this crate is used only to enable `trie-memory-tracker` feature
-# see https://github.com/paritytech/substrate/pull/6745
-sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 
 [build-dependencies]
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 
 [features]
-default = ["wasmtime", "db", "cli", "hostperfcheck", "full-node", "trie-memory-tracker", "selendra-native"]
-wasmtime = ["sc-cli/wasmtime"]
+default = ["db", "cli", "full-node"]
 db = ["service/db"]
 cli = [
 	"clap",
@@ -54,19 +57,19 @@ cli = [
 	"sc-tracing",
 	"frame-benchmarking-cli",
 	"try-runtime-cli",
-	"selendra-client",
-	"selendra-node-core-pvf",
+	"selendra-node-core-pvf-execute-worker",
+	"selendra-node-core-pvf-prepare-worker",
+	"service",
 ]
 runtime-benchmarks = [
 	"service/runtime-benchmarks",
 	"selendra-node-metrics/runtime-benchmarks",
 	"selendra-performance-test?/runtime-benchmarks"
 ]
-trie-memory-tracker = ["sp-trie/memory-tracker"]
 full-node = ["service/full-node"]
 try-runtime = ["service/try-runtime", "try-runtime-cli/try-runtime"]
 fast-runtime = ["service/fast-runtime"]
-pyroscope = ["pyro"]
+pyroscope = ["pyro", "pyroscope_pprofrs"]
 hostperfcheck = ["selendra-performance-test"]
 
 # Configure the native runtimes to use. Selendra is enabled by default.

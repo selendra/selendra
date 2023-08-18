@@ -17,7 +17,7 @@
 //! Selendra Jaeger span definitions.
 //!
 //! ```rust
-//! # use selendra_primitives::v2::{CandidateHash, Hash};
+//! # use selendra_primitives::{CandidateHash, Hash};
 //! # fn main() {
 //! use selendra_node_jaeger as jaeger;
 //!
@@ -51,7 +51,7 @@
 //! over the course of a function, for this purpose use the non-consuming
 //! `fn` variants, i.e.
 //! ```rust
-//! # use selendra_primitives::v2::{CandidateHash, Hash};
+//! # use selendra_primitives::{CandidateHash, Hash};
 //! # fn main() {
 //! # use selendra_node_jaeger as jaeger;
 //!
@@ -84,11 +84,9 @@
 //! ```
 
 use parity_scale_codec::Encode;
-use sc_network::PeerId;
 use selendra_node_primitives::PoV;
-use selendra_primitives::v2::{
-	BlakeTwo256, CandidateHash, Hash, HashT, Id as ParaId, ValidatorIndex,
-};
+use selendra_primitives::{BlakeTwo256, CandidateHash, Hash, HashT, Id as ParaId, ValidatorIndex};
+use sc_network::PeerId;
 
 use std::{fmt, sync::Arc};
 
@@ -151,10 +149,11 @@ pub enum Stage {
 	AvailabilityRecovery = 6,
 	BitfieldDistribution = 7,
 	ApprovalChecking = 8,
+	ApprovalDistribution = 9,
 	// Expand as needed, numbers should be ascending according to the stage
 	// through the inclusion pipeline, or according to the descriptions
 	// in [the path of a para chain block]
-	// (https://selendra.network/the-path-of-a-parachain-block/)
+	// (https://polkadot.network/the-path-of-a-parachain-block/)
 	// see [issue](https://github.com/paritytech/polkadot/issues/2389)
 }
 
@@ -278,11 +277,18 @@ impl Span {
 	}
 
 	/// Derive a child span from `self`.
-	pub fn child(&self, name: &'static str) -> Self {
+	pub fn child(&self, name: &str) -> Self {
 		match self {
 			Self::Enabled(inner) => Self::Enabled(inner.child(name)),
 			Self::Disabled => Self::Disabled,
 		}
+	}
+
+	/// Attach a 'traceID' tag set to the decimal representation of the candidate hash.
+	#[inline(always)]
+	pub fn with_trace_id(mut self, candidate_hash: CandidateHash) -> Self {
+		self.add_string_tag("traceID", hash_to_trace_identifier(candidate_hash.0));
+		self
 	}
 
 	#[inline(always)]
@@ -291,9 +297,20 @@ impl Span {
 		self
 	}
 
+	/// Attach a peer-id tag to the span.
 	#[inline(always)]
 	pub fn with_peer_id(self, peer: &PeerId) -> Self {
 		self.with_string_tag("peer-id", &peer.to_base58())
+	}
+
+	/// Attach a `peer-id` tag to the span when peer is present.
+	#[inline(always)]
+	pub fn with_optional_peer_id(self, peer: Option<&PeerId>) -> Self {
+		if let Some(peer) = peer {
+			self.with_peer_id(peer)
+		} else {
+			self
+		}
 	}
 
 	/// Attach a candidate hash to the span.

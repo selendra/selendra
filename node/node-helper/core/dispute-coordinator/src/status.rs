@@ -15,7 +15,7 @@
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use selendra_node_primitives::{dispute_is_inactive, DisputeStatus, Timestamp};
-use selendra_primitives::v2::{CandidateHash, SessionIndex};
+use selendra_primitives::{CandidateHash, SessionIndex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::LOG_TARGET;

@@ -16,7 +16,7 @@
 
 use std::collections::{BTreeSet, HashMap};
 
-use selendra_primitives::v2::{CandidateHash, SessionIndex, ValidatorIndex};
+use selendra_primitives::{CandidateHash, SessionIndex, ValidatorIndex};
 
 use crate::LOG_TARGET;
 

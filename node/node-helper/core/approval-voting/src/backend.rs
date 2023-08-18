@@ -22,7 +22,7 @@
 //! before any commit to the underlying storage is made.
 
 use selendra_node_subsystem::SubsystemResult;
-use selendra_primitives::v2::{BlockNumber, CandidateHash, Hash};
+use selendra_primitives::{BlockNumber, CandidateHash, Hash};
 
 use std::collections::HashMap;
 

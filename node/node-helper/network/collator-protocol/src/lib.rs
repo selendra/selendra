@@ -28,17 +28,16 @@ use futures::{
 	FutureExt, TryFutureExt,
 };
 
-use sp_keystore::SyncCryptoStorePtr;
+use selendra_node_subsystem_util::reputation::ReputationAggregator;
+use sp_keystore::KeystorePtr;
 
 use selendra_node_network_protocol::{
 	request_response::{v1 as request_v1, IncomingRequestReceiver},
 	PeerId, UnifiedReputationChange as Rep,
 };
-use selendra_primitives::v2::CollatorPair;
+use selendra_primitives::CollatorPair;
 
-use selendra_node_subsystem::{
-	errors::SubsystemError, messages::NetworkBridgeTxMessage, overseer, SpawnedSubsystem,
-};
+use selendra_node_subsystem::{errors::SubsystemError, overseer, SpawnedSubsystem};
 
 mod error;
 
@@ -70,7 +69,7 @@ pub enum ProtocolSide {
 	/// Validators operate on the relay chain.
 	Validator {
 		/// The keystore holding validator keys.
-		keystore: SyncCryptoStorePtr,
+		keystore: KeystorePtr,
 		/// An eviction policy for inactive peers or validators.
 		eviction_policy: CollatorEvictionPolicy,
 		/// Prometheus metrics for validators.
@@ -124,6 +123,7 @@ impl<Context> CollatorProtocolSubsystem {
 
 /// Modify the reputation of a peer based on its behavior.
 async fn modify_reputation(
+	reputation: &mut ReputationAggregator,
 	sender: &mut impl overseer::CollatorProtocolSenderTrait,
 	peer: PeerId,
 	rep: Rep,
@@ -135,7 +135,7 @@ async fn modify_reputation(
 		"reputation change for peer",
 	);
 
-	sender.send_message(NetworkBridgeTxMessage::ReportPeer(peer, rep)).await;
+	reputation.modify(sender, peer, rep).await;
 }
 
 /// Wait until tick and return the timestamp for the following one.

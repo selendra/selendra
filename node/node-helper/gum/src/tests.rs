@@ -15,7 +15,7 @@
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::*;
-pub use selendra_primitives::v2::{CandidateHash, Hash};
+pub use selendra_primitives::{CandidateHash, Hash};
 
 #[derive(Default, Debug)]
 struct Y {

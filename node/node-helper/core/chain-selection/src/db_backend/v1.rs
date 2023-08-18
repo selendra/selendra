@@ -38,7 +38,7 @@ use crate::{
 };
 
 use selendra_node_primitives::BlockWeight;
-use selendra_primitives::v2::{BlockNumber, Hash};
+use selendra_primitives::{BlockNumber, Hash};
 
 use parity_scale_codec::{Decode, Encode};
 use selendra_node_subsystem_util::database::{DBTransaction, Database};

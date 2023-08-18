@@ -1,4 +1,6 @@
 // Copyright 2022 Smallworld Selendra
+// This file is part of Selendra.
+
 // Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -29,7 +31,7 @@ use selendra_node_network_protocol::{
 	},
 	PeerId, UnifiedReputationChange as Rep,
 };
-use selendra_primitives::v2::{CandidateHash, CommittedCandidateReceipt, Hash};
+use selendra_primitives::{CandidateHash, CommittedCandidateReceipt, Hash};
 
 use crate::LOG_TARGET;
 

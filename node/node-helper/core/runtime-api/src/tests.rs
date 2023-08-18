@@ -21,14 +21,11 @@ use selendra_node_primitives::{BabeAllowedSlots, BabeEpoch, BabeEpochConfigurati
 use selendra_node_subsystem::SpawnGlue;
 use selendra_node_subsystem_test_helpers::make_subsystem_context;
 use selendra_primitives::{
-	runtime_api::ParachainHost,
-	v2::{
-		AuthorityDiscoveryId, Block, CandidateEvent, CommittedCandidateReceipt, CoreState,
-		GroupRotationInfo, Id as ParaId, InboundDownwardMessage, InboundHrmpMessage,
-		OccupiedCoreAssumption, PersistedValidationData, PvfCheckStatement, ScrapedOnChainVotes,
-		SessionIndex, SessionInfo, ValidationCode, ValidationCodeHash, ValidatorId, ValidatorIndex,
-		ValidatorSignature,
-	},
+	runtime_api::ParachainHost, AuthorityDiscoveryId, Block, CandidateEvent,
+	CommittedCandidateReceipt, CoreState, GroupRotationInfo, Id as ParaId, InboundDownwardMessage,
+	InboundHrmpMessage, OccupiedCoreAssumption, PersistedValidationData, PvfCheckStatement,
+	ScrapedOnChainVotes, SessionIndex, SessionInfo, ValidationCode, ValidationCodeHash,
+	ValidatorId, ValidatorIndex, ValidatorSignature,
 };
 use sp_api::ProvideRuntimeApi;
 use sp_authority_discovery::AuthorityDiscoveryApi;
@@ -115,7 +112,7 @@ sp_api::mock_impl_runtime_apis! {
 		fn check_validation_outputs(
 			&self,
 			para_id: ParaId,
-			_commitments: selendra_primitives::v2::CandidateCommitments,
+			_commitments: selendra_primitives::CandidateCommitments,
 		) -> bool {
 			self.validation_outputs_results
 				.get(&para_id)
@@ -223,7 +220,7 @@ sp_api::mock_impl_runtime_apis! {
 		}
 
 		fn submit_report_equivocation_unsigned_extrinsic(
-			_equivocation_proof: sp_consensus_babe::EquivocationProof<selendra_primitives::v2::Header>,
+			_equivocation_proof: sp_consensus_babe::EquivocationProof<selendra_primitives::Header>,
 			_key_owner_proof: sp_consensus_babe::OpaqueKeyOwnershipProof,
 		) -> Option<()> {
 			None
@@ -452,7 +449,7 @@ fn requests_check_validation_outputs() {
 	let relay_parent = [1; 32].into();
 	let para_a = ParaId::from(5_u32);
 	let para_b = ParaId::from(6_u32);
-	let commitments = selendra_primitives::v2::CandidateCommitments::default();
+	let commitments = selendra_primitives::CandidateCommitments::default();
 	let spawner = sp_core::testing::TaskExecutor::new();
 
 	runtime_api.validation_outputs_results.insert(para_a, false);

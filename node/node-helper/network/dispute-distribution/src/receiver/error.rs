@@ -22,7 +22,7 @@ use fatality::Nested;
 use gum::CandidateHash;
 use selendra_node_network_protocol::{request_response::incoming, PeerId};
 use selendra_node_subsystem_util::runtime;
-use selendra_primitives::v2::AuthorityDiscoveryId;
+use selendra_primitives::AuthorityDiscoveryId;
 
 use crate::LOG_TARGET;
 

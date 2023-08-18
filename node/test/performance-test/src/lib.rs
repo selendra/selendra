@@ -17,7 +17,7 @@
 //! A Selendra performance tests utilities.
 
 use selendra_erasure_coding::{obtain_chunks, reconstruct};
-use selendra_node_core_pvf::{sc_executor_common, sp_maybe_compressed_blob};
+use selendra_primitives::ExecutorParams;
 use std::time::{Duration, Instant};
 
 mod constants;
@@ -35,9 +35,6 @@ pub use selendra_runtime::WASM_BINARY;
 pub enum PerfCheckError {
 	#[error("This subcommand is only available in release mode")]
 	WrongBuildType,
-
-	#[error("This subcommand is only available when compiled with `{feature}`")]
-	FeatureNotEnabled { feature: &'static str },
 
 	#[error("No wasm code found for running the performance test")]
 	WasmBinaryMissing,
@@ -68,8 +65,10 @@ pub fn measure_pvf_prepare(wasm_code: &[u8]) -> Result<Duration, PerfCheckError>
 		.or(Err(PerfCheckError::CodeDecompressionFailed))?;
 
 	// Recreate the pipeline from the pvf prepare worker.
-	let blob = selendra_node_core_pvf::prevalidate(code.as_ref()).map_err(PerfCheckError::from)?;
-	selendra_node_core_pvf::prepare(blob).map_err(PerfCheckError::from)?;
+	let blob = selendra_node_core_pvf_prepare_worker::prevalidate(code.as_ref())
+		.map_err(PerfCheckError::from)?;
+	selendra_node_core_pvf_prepare_worker::prepare(blob, &ExecutorParams::default())
+		.map_err(PerfCheckError::from)?;
 
 	Ok(start.elapsed())
 }

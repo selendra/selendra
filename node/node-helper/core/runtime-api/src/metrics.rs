@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
-use selendra_node_subsystem_util::metrics::{self, prometheus};
+use selendra_node_metrics::metrics::{self, prometheus};
 
 #[derive(Clone)]
 pub(crate) struct MetricsInner {

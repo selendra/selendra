@@ -20,12 +20,11 @@
 //! (by running [`start_pool`]).
 //!
 //! The pool will spawn workers in new processes and those should execute pass control to
-//! [`worker_entrypoint`].
+//! `selendra_node_core_pvf_worker::prepare_worker_entrypoint`.
 
 mod pool;
 mod queue;
-mod worker;
+mod worker_intf;
 
 pub use pool::start as start_pool;
 pub use queue::{start as start_queue, FromQueue, ToQueue};
-pub use worker::worker_entrypoint;

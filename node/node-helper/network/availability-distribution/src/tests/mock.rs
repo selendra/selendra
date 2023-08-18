@@ -22,7 +22,7 @@ use sp_keyring::Sr25519Keyring;
 
 use selendra_erasure_coding::{branches, obtain_chunks_v1 as obtain_chunks};
 use selendra_node_primitives::{AvailableData, BlockData, ErasureChunk, PoV, Proof};
-use selendra_primitives::v2::{
+use selendra_primitives::{
 	CandidateCommitments, CandidateDescriptor, CandidateHash, CommittedCandidateReceipt,
 	GroupIndex, Hash, HeadData, Id as ParaId, IndexedVec, OccupiedCore, PersistedValidationData,
 	SessionInfo, ValidatorIndex,

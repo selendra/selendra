@@ -23,14 +23,13 @@
 //! Subsystems' APIs are defined separately from their implementation, leading to easier mocking.
 
 use futures::channel::oneshot;
-use sc_network::Multiaddr;
+use sc_network::{Multiaddr, ReputationChange};
 use thiserror::Error;
 
 pub use sc_network::IfDisconnected;
 
 use selendra_node_network_protocol::{
 	self as net_protocol, peer_set::PeerSet, request_response::Requests, PeerId,
-	UnifiedReputationChange,
 };
 use selendra_node_primitives::{
 	approval::{BlockApprovalMeta, IndirectAssignmentCert, IndirectSignedApprovalVote},
@@ -38,31 +37,24 @@ use selendra_node_primitives::{
 	CollationSecondedSignal, DisputeMessage, DisputeStatus, ErasureChunk, PoV,
 	SignedDisputeStatement, SignedFullStatement, ValidationResult,
 };
-use selendra_primitives::v2::{
-	AuthorityDiscoveryId, BackedCandidate, BlockNumber, CandidateEvent, CandidateHash,
+use selendra_primitives::{
+	slashing, AuthorityDiscoveryId, BackedCandidate, BlockNumber, CandidateEvent, CandidateHash,
 	CandidateIndex, CandidateReceipt, CollatorId, CommittedCandidateReceipt, CoreState,
-	DisputeState, GroupIndex, GroupRotationInfo, Hash, Header as BlockHeader, Id as ParaId,
-	InboundDownwardMessage, InboundHrmpMessage, MultiDisputeStatementSet, OccupiedCoreAssumption,
-	PersistedValidationData, PvfCheckStatement, SessionIndex, SessionInfo,
-	SignedAvailabilityBitfield, SignedAvailabilityBitfields, ValidationCode, ValidationCodeHash,
-	ValidatorId, ValidatorIndex, ValidatorSignature,
+	DisputeState, ExecutorParams, GroupIndex, GroupRotationInfo, Hash, Header as BlockHeader,
+	Id as ParaId, InboundDownwardMessage, InboundHrmpMessage, MultiDisputeStatementSet,
+	OccupiedCoreAssumption, PersistedValidationData, PvfCheckStatement, PvfExecTimeoutKind,
+	SessionIndex, SessionInfo, SignedAvailabilityBitfield, SignedAvailabilityBitfields,
+	ValidationCode, ValidationCodeHash, ValidatorId, ValidatorIndex, ValidatorSignature,
 };
 use selendra_statement_table::v2::Misbehavior;
 use std::{
 	collections::{BTreeMap, HashMap, HashSet},
 	sync::Arc,
-	time::Duration,
 };
 
 /// Network events as transmitted to other subsystems, wrapped in their message types.
 pub mod network_bridge_event;
 pub use network_bridge_event::NetworkBridgeEvent;
-
-/// Subsystem messages where each message is always bound to a relay parent.
-pub trait BoundToRelayParent {
-	/// Returns the relay parent this message is bound to.
-	fn relay_parent(&self) -> Hash;
-}
 
 /// Messages received by the Candidate Backing subsystem.
 #[derive(Debug)]
@@ -74,18 +66,9 @@ pub enum CandidateBackingMessage {
 	/// given relay-parent (ref. by hash). This candidate must be validated.
 	Second(Hash, CandidateReceipt, PoV),
 	/// Note a validator's statement about a particular candidate. Disagreements about validity must be escalated
-	/// to a broader check by Misbehavior Arbitration. Agreements are simply tallied until a quorum is reached.
+	/// to a broader check by the Disputes Subsystem, though that escalation is deferred until the approval voting
+	/// stage to guarantee availability. Agreements are simply tallied until a quorum is reached.
 	Statement(Hash, SignedFullStatement),
-}
-
-impl BoundToRelayParent for CandidateBackingMessage {
-	fn relay_parent(&self) -> Hash {
-		match self {
-			Self::GetBackedCandidates(hash, _, _) => *hash,
-			Self::Second(hash, _, _) => *hash,
-			Self::Statement(hash, _) => *hash,
-		}
-	}
 }
 
 /// Blanket error for validation failing for internal reasons.
@@ -136,7 +119,7 @@ pub enum CandidateValidationMessage {
 		CandidateReceipt,
 		Arc<PoV>,
 		/// Execution timeout
-		Duration,
+		PvfExecTimeoutKind,
 		oneshot::Sender<Result<ValidationResult, ValidationFailed>>,
 	),
 	/// Validate a candidate with provided, exhaustive parameters for validation.
@@ -154,7 +137,7 @@ pub enum CandidateValidationMessage {
 		CandidateReceipt,
 		Arc<PoV>,
 		/// Execution timeout
-		Duration,
+		PvfExecTimeoutKind,
 		oneshot::Sender<Result<ValidationResult, ValidationFailed>>,
 	),
 	/// Try to compile the given validation code and send back
@@ -168,17 +151,6 @@ pub enum CandidateValidationMessage {
 		ValidationCodeHash,
 		oneshot::Sender<PreCheckOutcome>,
 	),
-}
-
-impl CandidateValidationMessage {
-	/// If the current variant contains the relay parent hash, return it.
-	pub fn relay_parent(&self) -> Option<Hash> {
-		match self {
-			Self::ValidateFromChainState(_, _, _, _) => None,
-			Self::ValidateFromExhaustive(_, _, _, _, _, _) => None,
-			Self::PreCheck(relay_parent, _, _) => Some(*relay_parent),
-		}
-	}
 }
 
 /// Messages received by the Collator Protocol subsystem.
@@ -215,12 +187,6 @@ pub enum CollatorProtocolMessage {
 impl Default for CollatorProtocolMessage {
 	fn default() -> Self {
 		Self::CollateOn(Default::default())
-	}
-}
-
-impl BoundToRelayParent for CollatorProtocolMessage {
-	fn relay_parent(&self) -> Hash {
-		Default::default()
 	}
 }
 
@@ -268,13 +234,13 @@ pub enum DisputeCoordinatorMessage {
 		///		- or the imported statements are backing/approval votes, which are always accepted.
 		pending_confirmation: Option<oneshot::Sender<ImportStatementsResult>>,
 	},
-	/// Fetch a list of all recent disputes the co-ordinator is aware of.
+	/// Fetch a list of all recent disputes the coordinator is aware of.
 	/// These are disputes which have occurred any time in recent sessions,
 	/// and which may have already concluded.
 	RecentDisputes(oneshot::Sender<Vec<(SessionIndex, CandidateHash, DisputeStatus)>>),
 	/// Fetch a list of all active disputes that the coordinator is aware of.
 	/// These disputes are either not yet concluded or recently concluded.
-	ActiveDisputes(oneshot::Sender<Vec<(SessionIndex, CandidateHash)>>),
+	ActiveDisputes(oneshot::Sender<Vec<(SessionIndex, CandidateHash, DisputeStatus)>>),
 	/// Get candidate votes for a candidate.
 	QueryCandidateVotes(
 		Vec<(SessionIndex, CandidateHash)>,
@@ -338,11 +304,20 @@ pub enum NetworkBridgeRxMessage {
 	},
 }
 
+/// Type of peer reporting
+#[derive(Debug)]
+pub enum ReportPeerMessage {
+	/// Single peer report about malicious actions which should be sent right away
+	Single(PeerId, ReputationChange),
+	/// Delayed report for other actions.
+	Batch(HashMap<PeerId, i32>),
+}
+
 /// Messages received from other subsystems by the network bridge subsystem.
 #[derive(Debug)]
 pub enum NetworkBridgeTxMessage {
 	/// Report a peer for their actions.
-	ReportPeer(PeerId, UnifiedReputationChange),
+	ReportPeer(ReportPeerMessage),
 
 	/// Disconnect a peer from the given peer-set without affecting their reputation.
 	DisconnectPeer(PeerId, PeerSet),
@@ -397,23 +372,6 @@ pub enum NetworkBridgeTxMessage {
 	},
 }
 
-impl NetworkBridgeTxMessage {
-	/// If the current variant contains the relay parent hash, return it.
-	pub fn relay_parent(&self) -> Option<Hash> {
-		match self {
-			Self::ReportPeer(_, _) => None,
-			Self::DisconnectPeer(_, _) => None,
-			Self::SendValidationMessage(_, _) => None,
-			Self::SendCollationMessage(_, _) => None,
-			Self::SendValidationMessages(_) => None,
-			Self::SendCollationMessages(_) => None,
-			Self::ConnectToValidators { .. } => None,
-			Self::ConnectToResolvedValidators { .. } => None,
-			Self::SendRequests { .. } => None,
-		}
-	}
-}
-
 /// Availability Distribution Message.
 #[derive(Debug)]
 pub enum AvailabilityDistributionMessage {
@@ -463,28 +421,6 @@ pub enum BitfieldDistributionMessage {
 	NetworkBridgeUpdate(NetworkBridgeEvent<net_protocol::BitfieldDistributionMessage>),
 }
 
-impl BitfieldDistributionMessage {
-	/// If the current variant contains the relay parent hash, return it.
-	pub fn relay_parent(&self) -> Option<Hash> {
-		match self {
-			Self::DistributeBitfield(hash, _) => Some(*hash),
-			Self::NetworkBridgeUpdate(_) => None,
-		}
-	}
-}
-
-/// Bitfield signing message.
-///
-/// Currently non-instantiable.
-#[derive(Debug)]
-pub enum BitfieldSigningMessage {}
-
-impl BoundToRelayParent for BitfieldSigningMessage {
-	fn relay_parent(&self) -> Hash {
-		match *self {}
-	}
-}
-
 /// Availability store subsystem message.
 #[derive(Debug)]
 pub enum AvailabilityStoreMessage {
@@ -500,6 +436,9 @@ pub enum AvailabilityStoreMessage {
 
 	/// Query an `ErasureChunk` from the AV store by the candidate hash and validator index.
 	QueryChunk(CandidateHash, ValidatorIndex, oneshot::Sender<Option<ErasureChunk>>),
+
+	/// Get the size of an `ErasureChunk` from the AV store by the candidate hash.
+	QueryChunkSize(CandidateHash, oneshot::Sender<Option<usize>>),
 
 	/// Query all chunks that we have for the given candidate hash.
 	QueryAllChunks(CandidateHash, oneshot::Sender<Vec<ErasureChunk>>),
@@ -523,9 +462,10 @@ pub enum AvailabilityStoreMessage {
 		tx: oneshot::Sender<Result<(), ()>>,
 	},
 
-	/// Store a `AvailableData` and all of its chunks in the AV store.
+	/// Computes and checks the erasure root of `AvailableData` before storing all of its chunks in
+	/// the AV store.
 	///
-	/// Return `Ok(())` if the store operation succeeded, `Err(())` if it failed.
+	/// Return `Ok(())` if the store operation succeeded, `Err(StoreAvailableData)` if it failed.
 	StoreAvailableData {
 		/// A hash of the candidate this `available_data` belongs to.
 		candidate_hash: CandidateHash,
@@ -533,18 +473,19 @@ pub enum AvailabilityStoreMessage {
 		n_validators: u32,
 		/// The `AvailableData` itself.
 		available_data: AvailableData,
+		/// Erasure root we expect to get after chunking.
+		expected_erasure_root: Hash,
 		/// Sending side of the channel to send result to.
-		tx: oneshot::Sender<Result<(), ()>>,
+		tx: oneshot::Sender<Result<(), StoreAvailableDataError>>,
 	},
 }
 
-impl AvailabilityStoreMessage {
-	/// In fact, none of the `AvailabilityStore` messages assume a particular relay parent.
-	pub fn relay_parent(&self) -> Option<Hash> {
-		match self {
-			_ => None,
-		}
-	}
+/// The error result type of a [`AvailabilityStoreMessage::StoreAvailableData`] request.
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
+#[allow(missing_docs)]
+pub enum StoreAvailableDataError {
+	#[error("The computed erasure root did not match expected one")]
+	InvalidErasureRoot,
 }
 
 /// A response channel for the result of a chain API request.
@@ -589,13 +530,6 @@ pub enum ChainApiMessage {
 	},
 }
 
-impl ChainApiMessage {
-	/// If the current variant contains the relay parent hash, return it.
-	pub fn relay_parent(&self) -> Option<Hash> {
-		None
-	}
-}
-
 /// Chain selection subsystem messages
 #[derive(Debug)]
 pub enum ChainSelectionMessage {
@@ -606,20 +540,9 @@ pub enum ChainSelectionMessage {
 	/// Request the best leaf containing the given block in its ancestry. Return `None` if
 	/// there is no such leaf.
 	BestLeafContaining(Hash, oneshot::Sender<Option<Hash>>),
-}
-
-impl ChainSelectionMessage {
-	/// If the current variant contains the relay parent hash, return it.
-	pub fn relay_parent(&self) -> Option<Hash> {
-		// None of the messages, even the ones containing specific
-		// block hashes, can be considered to have those blocks as
-		// a relay parent.
-		match *self {
-			ChainSelectionMessage::Approved(_) => None,
-			ChainSelectionMessage::Leaves(_) => None,
-			ChainSelectionMessage::BestLeafContaining(..) => None,
-		}
-	}
+	/// The passed blocks must be marked as reverted, and their children must be marked
+	/// as non-viable.
+	RevertBlocks(Vec<(BlockNumber, Hash)>),
 }
 
 /// A sender for the result of a runtime API request.
@@ -656,7 +579,7 @@ pub enum RuntimeApiRequest {
 	/// Sends back `true` if the validation outputs pass all acceptance criteria checks.
 	CheckValidationOutputs(
 		ParaId,
-		selendra_primitives::v2::CandidateCommitments,
+		selendra_primitives::CandidateCommitments,
 		RuntimeApiSender<bool>,
 	),
 	/// Get the session index that a child of the block will have.
@@ -673,6 +596,8 @@ pub enum RuntimeApiRequest {
 	/// Get all events concerning candidates (backing, inclusion, time-out) in the parent of
 	/// the block in whose state this request is executed.
 	CandidateEvents(RuntimeApiSender<Vec<CandidateEvent>>),
+	/// Get the execution environment parameter set by session index
+	SessionExecutorParams(SessionIndex, RuntimeApiSender<Option<ExecutorParams>>),
 	/// Get the session info for the given session, if stored.
 	SessionInfo(SessionIndex, RuntimeApiSender<Option<SessionInfo>>),
 	/// Get all the pending inbound messages in the downward message queue for a para.
@@ -686,7 +611,7 @@ pub enum RuntimeApiRequest {
 	/// Get information about the BABE epoch the block was included in.
 	CurrentBabeEpoch(RuntimeApiSender<BabeEpoch>),
 	/// Get all disputes in relation to a relay parent.
-	FetchOnChainVotes(RuntimeApiSender<Option<selendra_primitives::v2::ScrapedOnChainVotes>>),
+	FetchOnChainVotes(RuntimeApiSender<Option<selendra_primitives::ScrapedOnChainVotes>>),
 	/// Submits a PVF pre-checking statement into the transaction pool.
 	SubmitPvfCheckStatement(PvfCheckStatement, ValidatorSignature, RuntimeApiSender<()>),
 	/// Returns code hashes of PVFs that require pre-checking by validators in the active set.
@@ -700,6 +625,21 @@ pub enum RuntimeApiRequest {
 	),
 	/// Returns all on-chain disputes at given block number. Available in `v3`.
 	Disputes(RuntimeApiSender<Vec<(SessionIndex, CandidateHash, DisputeState<BlockNumber>)>>),
+	/// Returns a list of validators that lost a past session dispute and need to be slashed.
+	/// `V5`
+	UnappliedSlashes(
+		RuntimeApiSender<Vec<(SessionIndex, CandidateHash, slashing::PendingSlashes)>>,
+	),
+	/// Returns a merkle proof of a validator session key.
+	/// `V5`
+	KeyOwnershipProof(ValidatorId, RuntimeApiSender<Option<slashing::OpaqueKeyOwnershipProof>>),
+	/// Submits an unsigned extrinsic to slash validator who lost a past session dispute.
+	/// `V5`
+	SubmitReportDisputeLost(
+		slashing::DisputeProof,
+		slashing::OpaqueKeyOwnershipProof,
+		RuntimeApiSender<Option<()>>,
+	),
 }
 
 impl RuntimeApiRequest {
@@ -707,6 +647,18 @@ impl RuntimeApiRequest {
 
 	/// `Disputes`
 	pub const DISPUTES_RUNTIME_REQUIREMENT: u32 = 3;
+
+	/// `ExecutorParams`
+	pub const EXECUTOR_PARAMS_RUNTIME_REQUIREMENT: u32 = 4;
+
+	/// `UnappliedSlashes`
+	pub const UNAPPLIED_SLASHES_RUNTIME_REQUIREMENT: u32 = 5;
+
+	/// `KeyOwnershipProof`
+	pub const KEY_OWNERSHIP_PROOF_RUNTIME_REQUIREMENT: u32 = 5;
+
+	/// `SubmitReportDisputeLost`
+	pub const SUBMIT_REPORT_DISPUTE_LOST_RUNTIME_REQUIREMENT: u32 = 5;
 }
 
 /// A message to the Runtime API subsystem.
@@ -714,15 +666,6 @@ impl RuntimeApiRequest {
 pub enum RuntimeApiMessage {
 	/// Make a request of the runtime API against the post-state of the given relay-parent.
 	Request(Hash, RuntimeApiRequest),
-}
-
-impl RuntimeApiMessage {
-	/// If the current variant contains the relay parent hash, return it.
-	pub fn relay_parent(&self) -> Option<Hash> {
-		match self {
-			Self::Request(hash, _) => Some(*hash),
-		}
-	}
 }
 
 /// Statement distribution message.
@@ -776,27 +719,11 @@ pub enum ProvisionerMessage {
 	ProvisionableData(Hash, ProvisionableData),
 }
 
-impl BoundToRelayParent for ProvisionerMessage {
-	fn relay_parent(&self) -> Hash {
-		match self {
-			Self::RequestInherentData(hash, _) => *hash,
-			Self::ProvisionableData(hash, _) => *hash,
-		}
-	}
-}
-
 /// Message to the Collation Generation subsystem.
 #[derive(Debug)]
 pub enum CollationGenerationMessage {
 	/// Initialize the collation generation subsystem
 	Initialize(CollationGenerationConfig),
-}
-
-impl CollationGenerationMessage {
-	/// If the current variant contains the relay parent hash, return it.
-	pub fn relay_parent(&self) -> Option<Hash> {
-		None
-	}
 }
 
 /// The result type of [`ApprovalVotingMessage::CheckAndImportAssignment`] request.
@@ -943,6 +870,8 @@ pub enum ApprovalDistributionMessage {
 		HashSet<(Hash, CandidateIndex)>,
 		oneshot::Sender<HashMap<ValidatorIndex, ValidatorSignature>>,
 	),
+	/// Approval checking lag update measured in blocks.
+	ApprovalCheckingLagUpdate(BlockNumber),
 }
 
 /// Message to the Gossip Support subsystem.
@@ -952,9 +881,3 @@ pub enum GossipSupportMessage {
 	#[from]
 	NetworkBridgeUpdate(NetworkBridgeEvent<net_protocol::GossipSupportNetworkMessage>),
 }
-
-/// PVF checker message.
-///
-/// Currently non-instantiable.
-#[derive(Debug)]
-pub enum PvfCheckerMessage {}

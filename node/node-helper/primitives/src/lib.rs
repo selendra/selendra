@@ -16,30 +16,30 @@
 
 //! Primitive types used on the node-side.
 //!
-//! Unlike the `selendra-primitives` crate, these primitives are only used on the node-side,
+//! Unlike the `Selendra-primitives` crate, these primitives are only used on the node-side,
 //! not shared between the node and the runtime. This crate builds on top of the primitives defined
 //! there.
 
 #![deny(missing_docs)]
 
-use std::{pin::Pin, time::Duration};
+use std::{num::NonZeroUsize, pin::Pin};
 
 use bounded_vec::BoundedVec;
 use futures::Future;
 use parity_scale_codec::{Decode, Encode, Error as CodecError, Input};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 
-use selendra_primitives::v2::{
-	BlakeTwo256, CandidateCommitments, CandidateHash, CollatorPair, CommittedCandidateReceipt,
-	CompactStatement, EncodeAs, Hash, HashT, HeadData, Id as ParaId, OutboundHrmpMessage,
-	PersistedValidationData, SessionIndex, Signed, UncheckedSigned, UpwardMessage, ValidationCode,
-	ValidatorIndex, MAX_CODE_SIZE, MAX_POV_SIZE,
+use selendra_primitives::{
+	BlakeTwo256, BlockNumber, CandidateCommitments, CandidateHash, CollatorPair,
+	CommittedCandidateReceipt, CompactStatement, EncodeAs, Hash, HashT, HeadData, Id as ParaId,
+	PersistedValidationData, SessionIndex, Signed, UncheckedSigned, ValidationCode, ValidatorIndex,
+	MAX_CODE_SIZE, MAX_POV_SIZE,
 };
 pub use sp_consensus_babe::{
 	AllowedSlots as BabeAllowedSlots, BabeEpochConfiguration, Epoch as BabeEpoch,
 };
 
-pub use selendra_parachain::primitives::BlockData;
+pub use selendra_parachain::primitives::{BlockData, HorizontalMessages, UpwardMessages};
 
 pub mod approval;
 
@@ -64,16 +64,28 @@ pub const VALIDATION_CODE_BOMB_LIMIT: usize = (MAX_CODE_SIZE * 4u32) as usize;
 /// The bomb limit for decompressing PoV blobs.
 pub const POV_BOMB_LIMIT: usize = (MAX_POV_SIZE * 4u32) as usize;
 
-/// The amount of time to spend on execution during backing.
-pub const BACKING_EXECUTION_TIMEOUT: Duration = Duration::from_secs(2);
-
-/// The amount of time to spend on execution during approval or disputes.
+/// How many blocks after finalization an information about backed/included candidate should be
+/// pre-loaded (when scraoing onchain votes) and kept locally (when pruning).
 ///
-/// This is deliberately much longer than the backing execution timeout to
-/// ensure that in the absence of extremely large disparities between hardware,
-/// blocks that pass backing are considered executable by approval checkers or
-/// dispute participants.
-pub const APPROVAL_EXECUTION_TIMEOUT: Duration = Duration::from_secs(12);
+/// We don't want to remove scraped candidates on finalization because we want to
+/// be sure that disputes will conclude on abandoned forks.
+/// Removing the candidate on finalization creates a possibility for an attacker to
+/// avoid slashing. If a bad fork is abandoned too quickly because another
+/// better one gets finalized the entries for the bad fork will be pruned and we
+/// might never participate in a dispute for it.
+///
+/// Why pre-load finalized blocks? I dispute might be raised against finalized candidate. In most
+/// of the cases it will conclude valid (otherwise we are in big trouble) but never the less the
+/// node must participate. It's possible to see a vote for such dispute onchain before we have it
+/// imported by `dispute-distribution`. In this case we won't have `CandidateReceipt` and the import
+/// will fail unless we keep them preloaded.
+///
+/// This value should consider the timeout we allow for participation in approval-voting. In
+/// particular, the following condition should hold:
+///
+/// slot time * `DISPUTE_CANDIDATE_LIFETIME_AFTER_FINALIZATION` > `APPROVAL_EXECUTION_TIMEOUT`
+/// + slot time
+pub const DISPUTE_CANDIDATE_LIFETIME_AFTER_FINALIZATION: BlockNumber = 10;
 
 /// Linked to `MAX_FINALITY_LAG` in relay chain selection,
 /// `MAX_HEADS_LOOK_BACK` in `approval-voting` and
@@ -110,7 +122,7 @@ macro_rules! new_session_window_size {
 }
 
 /// It would be nice to draw this from the chain state, but we have no tools for it right now.
-/// On Selendra this is 1 day
+/// On Selendra this is 1 day.
 ///
 /// Number of sessions we want to consider in disputes.
 pub const DISPUTE_WINDOW: SessionWindowSize = new_session_window_size!(6);
@@ -128,6 +140,12 @@ impl SessionWindowSize {
 	#[doc(hidden)]
 	pub const fn unchecked_new(size: SessionIndex) -> Self {
 		Self(size)
+	}
+}
+
+impl From<SessionWindowSize> for NonZeroUsize {
+	fn from(value: SessionWindowSize) -> Self {
+		NonZeroUsize::new(value.get() as usize).expect("SessionWindowSize can't be 0. qed.")
 	}
 }
 
@@ -207,7 +225,7 @@ pub type UncheckedSignedFullStatement = UncheckedSigned<Statement, CompactStatem
 /// Candidate invalidity details
 #[derive(Debug)]
 pub enum InvalidCandidate {
-	/// Failed to execute.`validate_block`. This includes function panicking.
+	/// Failed to execute `validate_block`. This includes function panicking.
 	ExecutionError(String),
 	/// Validation outputs check doesn't pass.
 	InvalidOutputs,
@@ -217,8 +235,6 @@ pub enum InvalidCandidate {
 	ParamsTooLarge(u64),
 	/// Code size is over the limit.
 	CodeTooLarge(u64),
-	/// Code does not decompress correctly.
-	CodeDecompressionFailure,
 	/// PoV does not decompress correctly.
 	PoVDecompressionFailure,
 	/// Validation function returned invalid data.
@@ -288,15 +304,15 @@ impl MaybeCompressedPoV {
 ///
 /// This differs from `CandidateCommitments` in two ways:
 ///
-/// - does not contain the erasure root; that's computed at the Selendra level, not at Cumulus
+/// - does not contain the erasure root; that's computed at the Selendra level, not at Forest
 /// - contains a proof of validity.
 #[derive(Clone, Encode, Decode)]
 #[cfg(not(target_os = "unknown"))]
-pub struct Collation<BlockNumber = selendra_primitives::v2::BlockNumber> {
+pub struct Collation<BlockNumber = selendra_primitives::BlockNumber> {
 	/// Messages destined to be interpreted by the Relay chain itself.
-	pub upward_messages: Vec<UpwardMessage>,
+	pub upward_messages: UpwardMessages,
 	/// The horizontal messages sent by the parachain.
-	pub horizontal_messages: Vec<OutboundHrmpMessage<ParaId>>,
+	pub horizontal_messages: HorizontalMessages,
 	/// New validation code.
 	pub new_validation_code: Option<ValidationCode>,
 	/// The head-data produced as a result of execution.
@@ -383,7 +399,7 @@ impl std::fmt::Debug for CollationGenerationConfig {
 pub struct AvailableData {
 	/// The Proof-of-Validation of the candidate.
 	pub pov: std::sync::Arc<PoV>,
-	/// The persisted validation data needed for secondary checks.
+	/// The persisted validation data needed for approval checks.
 	pub validation_data: PersistedValidationData,
 }
 

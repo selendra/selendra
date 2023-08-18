@@ -19,7 +19,7 @@ use std::collections::{hash_map::Entry, HashMap, VecDeque};
 use futures::future::pending;
 use futures_timer::Delay;
 use selendra_node_network_protocol::request_response::{v1::DisputeRequest, IncomingRequest};
-use selendra_primitives::v2::AuthorityDiscoveryId;
+use selendra_primitives::AuthorityDiscoveryId;
 
 use crate::RECEIVE_RATE_LIMIT;
 

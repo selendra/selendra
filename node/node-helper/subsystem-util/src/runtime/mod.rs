@@ -21,20 +21,22 @@ use std::num::NonZeroUsize;
 use lru::LruCache;
 
 use parity_scale_codec::Encode;
-use sp_application_crypto::AppKey;
+use sp_application_crypto::AppCrypto;
 use sp_core::crypto::ByteArray;
-use sp_keystore::{CryptoStore, SyncCryptoStorePtr};
+use sp_keystore::{Keystore, KeystorePtr};
 
 use selendra_node_subsystem::{messages::RuntimeApiMessage, overseer, SubsystemSender};
-use selendra_primitives::v2::{
-	CandidateEvent, CoreState, EncodeAs, GroupIndex, GroupRotationInfo, Hash, IndexedVec,
-	OccupiedCore, ScrapedOnChainVotes, SessionIndex, SessionInfo, Signed, SigningContext,
-	UncheckedSigned, ValidationCode, ValidationCodeHash, ValidatorId, ValidatorIndex,
+use selendra_primitives::{
+	vstaging, CandidateEvent, CandidateHash, CoreState, EncodeAs, GroupIndex, GroupRotationInfo,
+	Hash, IndexedVec, OccupiedCore, ScrapedOnChainVotes, SessionIndex, SessionInfo, Signed,
+	SigningContext, UncheckedSigned, ValidationCode, ValidationCodeHash, ValidatorId,
+	ValidatorIndex,
 };
 
 use crate::{
-	request_availability_cores, request_candidate_events, request_on_chain_votes,
-	request_session_index_for_child, request_session_info, request_validation_code_by_hash,
+	request_availability_cores, request_candidate_events, request_key_ownership_proof,
+	request_on_chain_votes, request_session_index_for_child, request_session_info,
+	request_submit_report_dispute_lost, request_unapplied_slashes, request_validation_code_by_hash,
 	request_validator_groups,
 };
 
@@ -49,7 +51,7 @@ pub struct Config {
 	/// Needed for retrieval of `ValidatorInfo`
 	///
 	/// Pass `None` if you are not interested.
-	pub keystore: Option<SyncCryptoStorePtr>,
+	pub keystore: Option<KeystorePtr>,
 
 	/// How many sessions should we keep in the cache?
 	pub session_cache_lru_size: NonZeroUsize,
@@ -69,7 +71,7 @@ pub struct RuntimeInfo {
 	session_info_cache: LruCache<SessionIndex, ExtendedSessionInfo>,
 
 	/// Key store for determining whether we are a validator and what `ValidatorIndex` we have.
-	keystore: Option<SyncCryptoStorePtr>,
+	keystore: Option<KeystorePtr>,
 }
 
 /// `SessionInfo` with additional useful data for validator nodes.
@@ -102,7 +104,7 @@ impl Default for Config {
 
 impl RuntimeInfo {
 	/// Create a new `RuntimeInfo` for convenient runtime fetches.
-	pub fn new(keystore: Option<SyncCryptoStorePtr>) -> Self {
+	pub fn new(keystore: Option<KeystorePtr>) -> Self {
 		Self::new_with_config(Config { keystore, ..Default::default() })
 	}
 
@@ -171,7 +173,7 @@ impl RuntimeInfo {
 				recv_runtime(request_session_info(parent, session_index, sender).await)
 					.await?
 					.ok_or(JfyiError::NoSuchSession(session_index))?;
-			let validator_info = self.get_validator_info(&session_info).await?;
+			let validator_info = self.get_validator_info(&session_info)?;
 
 			let full_info = ExtendedSessionInfo { session_info, validator_info };
 
@@ -206,8 +208,8 @@ impl RuntimeInfo {
 	///
 	///
 	/// Returns: `None` if not a parachain validator.
-	async fn get_validator_info(&self, session_info: &SessionInfo) -> Result<ValidatorInfo> {
-		if let Some(our_index) = self.get_our_index(&session_info.validators).await {
+	fn get_validator_info(&self, session_info: &SessionInfo) -> Result<ValidatorInfo> {
+		if let Some(our_index) = self.get_our_index(&session_info.validators) {
 			// Get our group index:
 			let our_group =
 				session_info.validator_groups.iter().enumerate().find_map(|(i, g)| {
@@ -228,13 +230,13 @@ impl RuntimeInfo {
 	/// Get our `ValidatorIndex`.
 	///
 	/// Returns: None if we are not a validator.
-	async fn get_our_index(
+	fn get_our_index(
 		&self,
 		validators: &IndexedVec<ValidatorIndex, ValidatorId>,
 	) -> Option<ValidatorIndex> {
 		let keystore = self.keystore.as_ref()?;
 		for (i, v) in validators.iter().enumerate() {
-			if CryptoStore::has_keys(&**keystore, &[(v.to_raw_vec(), ValidatorId::ID)]).await {
+			if Keystore::has_keys(&**keystore, &[(v.to_raw_vec(), ValidatorId::ID)]) {
 				return Some(ValidatorIndex(i as u32))
 			}
 		}
@@ -342,4 +344,52 @@ where
 {
 	recv_runtime(request_validation_code_by_hash(relay_parent, validation_code_hash, sender).await)
 		.await
+}
+
+/// Fetch a list of `PendingSlashes` from the runtime.
+pub async fn get_unapplied_slashes<Sender>(
+	sender: &mut Sender,
+	relay_parent: Hash,
+) -> Result<Vec<(SessionIndex, CandidateHash, vstaging::slashing::PendingSlashes)>>
+where
+	Sender: SubsystemSender<RuntimeApiMessage>,
+{
+	recv_runtime(request_unapplied_slashes(relay_parent, sender).await).await
+}
+
+/// Generate validator key ownership proof.
+///
+/// Note: The choice of `relay_parent` is important here, it needs to match
+/// the desired session index of the validator set in question.
+pub async fn key_ownership_proof<Sender>(
+	sender: &mut Sender,
+	relay_parent: Hash,
+	validator_id: ValidatorId,
+) -> Result<Option<vstaging::slashing::OpaqueKeyOwnershipProof>>
+where
+	Sender: SubsystemSender<RuntimeApiMessage>,
+{
+	recv_runtime(request_key_ownership_proof(relay_parent, validator_id, sender).await).await
+}
+
+/// Submit a past-session dispute slashing report.
+pub async fn submit_report_dispute_lost<Sender>(
+	sender: &mut Sender,
+	relay_parent: Hash,
+	dispute_proof: vstaging::slashing::DisputeProof,
+	key_ownership_proof: vstaging::slashing::OpaqueKeyOwnershipProof,
+) -> Result<Option<()>>
+where
+	Sender: SubsystemSender<RuntimeApiMessage>,
+{
+	recv_runtime(
+		request_submit_report_dispute_lost(
+			relay_parent,
+			dispute_proof,
+			key_ownership_proof,
+			sender,
+		)
+		.await,
+	)
+	.await
 }

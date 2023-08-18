@@ -21,7 +21,7 @@
 //! [`Backend`], maintaining consistency between queries and temporary writes,
 //! before any commit to the underlying storage is made.
 
-use selendra_primitives::v2::{BlockNumber, Hash};
+use selendra_primitives::{BlockNumber, Hash};
 
 use std::collections::HashMap;
 

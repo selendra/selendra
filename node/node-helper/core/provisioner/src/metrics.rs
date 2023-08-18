@@ -29,13 +29,16 @@ struct MetricsInner {
 	inherent_data_response_bitfields: prometheus::Histogram,
 
 	/// The following metrics track how many disputes/votes the runtime will have to process. These will count
-	/// all recent statements meaning every dispute from last sessions: 4 hours on Selendra.
-	///  The metrics are updated only when the node authors a block, so values vary across nodes.
+	/// all recent statements meaning every dispute from last sessions:  4 hours on Selendra.
+	/// The metrics are updated only when the node authors a block, so values vary across nodes.
 	inherent_data_dispute_statement_sets: prometheus::Counter<prometheus::U64>,
 	inherent_data_dispute_statements: prometheus::CounterVec<prometheus::U64>,
 
 	/// The disputes received from `disputes-coordinator` by partition
 	partitioned_disputes: prometheus::CounterVec<prometheus::U64>,
+
+	/// The disputes fetched from the runtime.
+	fetched_onchain_disputes: prometheus::Counter<prometheus::U64>,
 }
 
 /// Provisioner metrics.
@@ -143,6 +146,12 @@ impl Metrics {
 				.inc_by(inactive_concluded_known_onchain.len().try_into().unwrap_or(0));
 		}
 	}
+
+	pub(crate) fn on_fetched_onchain_disputes(&self, onchain_count: u64) {
+		if let Some(metrics) = &self.0 {
+			metrics.fetched_onchain_disputes.inc_by(onchain_count);
+		}
+	}
 }
 
 impl metrics::Metrics for Metrics {
@@ -194,7 +203,7 @@ impl metrics::Metrics for Metrics {
 					prometheus::HistogramOpts::new(
 						"selendra_parachain_provisioner_inherent_data_response_bitfields_sent",
 						"Number of inherent bitfields sent in response to `ProvisionerMessage::RequestInherentData`.",
-					).buckets(vec![0.0, 10.0, 25.0, 50.0, 75.0, 100.0, 150.0, 200.0, 250.0, 300.0]),
+					).buckets(vec![0.0, 25.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 400.0, 500.0, 600.0]),
 				)?,
 				registry,
 			)?,
@@ -202,9 +211,14 @@ impl metrics::Metrics for Metrics {
 				prometheus::CounterVec::new(
 					prometheus::Opts::new(
 						"selendra_parachain_provisioner_partitioned_disputes",
-						"some fancy description",
+						"Number of disputes partitioned by type.",
 					),
 					&["partition"],
+				)?,
+				&registry,
+			)?,
+			fetched_onchain_disputes: prometheus::register(
+				prometheus::Counter::new("selendra_parachain_fetched_onchain_disputes", "Number of disputes fetched from the runtime"
 				)?,
 				&registry,
 			)?,

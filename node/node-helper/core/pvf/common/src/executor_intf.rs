@@ -16,17 +16,16 @@
 
 //! Interface to the Substrate Executor
 
+use selendra_primitives::{ExecutorParam, ExecutorParams};
 use sc_executor_common::{
+	error::WasmError,
 	runtime_blob::RuntimeBlob,
-	wasm_runtime::{InvokeMethod, WasmModule as _},
+	wasm_runtime::{HeapAllocStrategy, InvokeMethod, WasmModule as _},
 };
-use sc_executor_wasmtime::{Config, DeterministicStackLimit, Semantics};
+use sc_executor_wasmtime::{Config, DeterministicStackLimit, Semantics, WasmtimeRuntime};
 use sp_core::storage::{ChildInfo, TrackedStorageKey};
 use sp_externalities::MultiRemovalResults;
-use std::{
-	any::{Any, TypeId},
-	path::Path,
-};
+use std::any::{Any, TypeId};
 
 // Memory configuration
 //
@@ -40,20 +39,23 @@ use std::{
 // The data section for runtimes are typically rather small and can fit in a single digit number of
 // WASM pages, so let's say an extra 16 pages. Thus let's assume that 32 pages or 2 MiB are used for
 // these needs by default.
-const DEFAULT_HEAP_PAGES_ESTIMATE: u64 = 32;
-const EXTRA_HEAP_PAGES: u64 = 2048;
+const DEFAULT_HEAP_PAGES_ESTIMATE: u32 = 32;
+const EXTRA_HEAP_PAGES: u32 = 2048;
 
 /// The number of bytes devoted for the stack during wasm execution of a PVF.
-const NATIVE_STACK_MAX: u32 = 256 * 1024 * 1024;
+pub const NATIVE_STACK_MAX: u32 = 256 * 1024 * 1024;
 
-const CONFIG: Config = Config {
+// VALUES OF THE DEFAULT CONFIGURATION SHOULD NEVER BE CHANGED
+// They are used as base values for the execution environment parametrization.
+// To overwrite them, add new ones to `EXECUTOR_PARAMS` in the `session_info` pallet and perform
+// a runtime upgrade to make them active.
+pub const DEFAULT_CONFIG: Config = Config {
 	allow_missing_func_imports: true,
 	cache_path: None,
 	semantics: Semantics {
-		extra_heap_pages: EXTRA_HEAP_PAGES,
-
-		// NOTE: This is specified in bytes, so we multiply by WASM page size.
-		max_memory_size: Some(((DEFAULT_HEAP_PAGES_ESTIMATE + EXTRA_HEAP_PAGES) * 65536) as usize),
+		heap_alloc_strategy: sc_executor_common::wasm_runtime::HeapAllocStrategy::Dynamic {
+			maximum_pages: Some(DEFAULT_HEAP_PAGES_ESTIMATE + EXTRA_HEAP_PAGES),
+		},
 
 		instantiation_strategy:
 			sc_executor_wasmtime::InstantiationStrategy::RecreateInstanceCopyOnWrite,
@@ -82,79 +84,55 @@ const CONFIG: Config = Config {
 		// On the one hand, it simplifies the code, on the other, however, slows down compile times
 		// for execute requests. This behavior may change in future.
 		parallel_compilation: false,
+
+		// WASM extensions. Only those that are meaningful to us may be controlled here. By default,
+		// we're using WASM MVP, which means all the extensions are disabled. Nevertheless, some
+		// extensions (e.g., sign extension ops) are enabled by Wasmtime and cannot be disabled.
+		wasm_reference_types: false,
+		wasm_simd: false,
+		wasm_bulk_memory: false,
+		wasm_multi_value: false,
 	},
 };
 
-/// Runs the prevalidation on the given code. Returns a [`RuntimeBlob`] if it succeeds.
-pub fn prevalidate(code: &[u8]) -> Result<RuntimeBlob, sc_executor_common::error::WasmError> {
-	let blob = RuntimeBlob::new(code)?;
-	// It's assumed this function will take care of any prevalidation logic
-	// that needs to be done.
-	//
-	// Do nothing for now.
-	Ok(blob)
+pub fn params_to_wasmtime_semantics(par: &ExecutorParams) -> Result<Semantics, String> {
+	let mut sem = DEFAULT_CONFIG.semantics.clone();
+	let mut stack_limit = if let Some(stack_limit) = sem.deterministic_stack_limit.clone() {
+		stack_limit
+	} else {
+		return Err("No default stack limit set".to_owned())
+	};
+
+	for p in par.iter() {
+		match p {
+			ExecutorParam::MaxMemoryPages(max_pages) =>
+				sem.heap_alloc_strategy =
+					HeapAllocStrategy::Dynamic { maximum_pages: Some(*max_pages) },
+			ExecutorParam::StackLogicalMax(slm) => stack_limit.logical_max = *slm,
+			ExecutorParam::StackNativeMax(snm) => stack_limit.native_stack_max = *snm,
+			ExecutorParam::WasmExtBulkMemory => sem.wasm_bulk_memory = true,
+			// TODO: Not implemented yet; <https://github.com/paritytech/polkadot/issues/6472>.
+			ExecutorParam::PrecheckingMaxMemory(_) => (),
+			ExecutorParam::PvfPrepTimeout(_, _) | ExecutorParam::PvfExecTimeout(_, _) => (), // Not used here
+		}
+	}
+	sem.deterministic_stack_limit = Some(stack_limit);
+	Ok(sem)
 }
 
-/// Runs preparation on the given runtime blob. If successful, it returns a serialized compiled
-/// artifact which can then be used to pass into [`execute`] after writing it to the disk.
-pub fn prepare(blob: RuntimeBlob) -> Result<Vec<u8>, sc_executor_common::error::WasmError> {
-	sc_executor_wasmtime::prepare_runtime_artifact(blob, &CONFIG.semantics)
-}
-
+/// A WASM executor with a given configuration. It is instantiated once per execute worker and is
+/// specific to that worker.
+#[derive(Clone)]
 pub struct Executor {
-	thread_pool: rayon::ThreadPool,
-	spawner: TaskSpawner,
+	config: Config,
 }
 
 impl Executor {
-	pub fn new() -> Result<Self, String> {
-		// Wasmtime powers the Substrate Executor. It compiles the wasm bytecode into native code.
-		// That native code does not create any stacks and just reuses the stack of the thread that
-		// wasmtime was invoked from.
-		//
-		// Also, we configure the executor to provide the deterministic stack and that requires
-		// supplying the amount of the native stack space that wasm is allowed to use. This is
-		// realized by supplying the limit into `wasmtime::Config::max_wasm_stack`.
-		//
-		// There are quirks to that configuration knob:
-		//
-		// 1. It only limits the amount of stack space consumed by wasm but does not ensure nor check
-		//    that the stack space is actually available.
-		//
-		//    That means, if the calling thread has 1 MiB of stack space left and the wasm code consumes
-		//    more, then the wasmtime limit will **not** trigger. Instead, the wasm code will hit the
-		//    guard page and the Rust stack overflow handler will be triggered. That leads to an
-		//    **abort**.
-		//
-		// 2. It cannot and does not limit the stack space consumed by Rust code.
-		//
-		//    Meaning that if the wasm code leaves no stack space for Rust code, then the Rust code
-		//    will abort and that will abort the process as well.
-		//
-		// Typically on Linux the main thread gets the stack size specified by the `ulimit` and
-		// typically it's configured to 8 MiB. Rust's spawned threads are 2 MiB. OTOH, the
-		// NATIVE_STACK_MAX is set to 256 MiB. Not nearly enough.
-		//
-		// Hence we need to increase it.
-		//
-		// The simplest way to fix that is to spawn a thread with the desired stack limit. In order
-		// to avoid costs of creating a thread, we use a thread pool. The execution is
-		// single-threaded hence the thread pool has only one thread.
-		//
-		// The reasoning why we pick this particular size is:
-		//
-		// The default Rust thread stack limit 2 MiB + 256 MiB wasm stack.
-		let thread_stack_size = 2 * 1024 * 1024 + NATIVE_STACK_MAX as usize;
-		let thread_pool = rayon::ThreadPoolBuilder::new()
-			.num_threads(1)
-			.stack_size(thread_stack_size)
-			.build()
-			.map_err(|e| format!("Failed to create thread pool: {:?}", e))?;
+	pub fn new(params: ExecutorParams) -> Result<Self, String> {
+		let mut config = DEFAULT_CONFIG.clone();
+		config.semantics = params_to_wasmtime_semantics(&params)?;
 
-		let spawner =
-			TaskSpawner::new().map_err(|e| format!("cannot create task spawner: {}", e))?;
-
-		Ok(Self { thread_pool, spawner })
+		Ok(Self { config })
 	}
 
 	/// Executes the given PVF in the form of a compiled artifact and returns the result of execution
@@ -164,56 +142,57 @@ impl Executor {
 	///
 	/// The caller must ensure that the compiled artifact passed here was:
 	///   1) produced by [`prepare`],
-	///   2) written to the disk as a file,
-	///   3) was not modified,
-	///   4) will not be modified while any runtime using this artifact is alive, or is being
-	///      instantiated.
+	///   2) was not modified,
 	///
 	/// Failure to adhere to these requirements might lead to crashes and arbitrary code execution.
 	pub unsafe fn execute(
 		&self,
-		compiled_artifact_path: &Path,
+		compiled_artifact_blob: &[u8],
 		params: &[u8],
 	) -> Result<Vec<u8>, String> {
-		let spawner = self.spawner.clone();
-		let mut result = None;
-		self.thread_pool.scope({
-			let result = &mut result;
-			move |s| {
-				s.spawn(move |_| {
-					// spawn does not return a value, so we need to use a variable to pass the result.
-					*result = Some(
-						do_execute(compiled_artifact_path, params, spawner)
-							.map_err(|err| format!("execute error: {:?}", err)),
-					);
-				});
-			}
-		});
-		result.unwrap_or_else(|| Err("rayon thread pool spawn failed".to_string()))
+		let mut extensions = sp_externalities::Extensions::new();
+
+		extensions.register(sp_core::traits::ReadRuntimeVersionExt::new(ReadRuntimeVersion));
+
+		let mut ext = ValidationExternalities(extensions);
+
+		match sc_executor::with_externalities_safe(&mut ext, || {
+			let runtime = self.create_runtime_from_bytes(compiled_artifact_blob)?;
+			runtime.new_instance()?.call(InvokeMethod::Export("validate_block"), params)
+		}) {
+			Ok(Ok(ok)) => Ok(ok),
+			Ok(Err(err)) | Err(err) => Err(err),
+		}
+		.map_err(|err| format!("execute error: {:?}", err))
+	}
+
+	/// Constructs the runtime for the given PVF, given the artifact bytes.
+	///
+	/// # Safety
+	///
+	/// The caller must ensure that the compiled artifact passed here was:
+	///   1) produced by [`prepare`],
+	///   2) was not modified,
+	///
+	/// Failure to adhere to these requirements might lead to crashes and arbitrary code execution.
+	pub unsafe fn create_runtime_from_bytes(
+		&self,
+		compiled_artifact_blob: &[u8],
+	) -> Result<WasmtimeRuntime, WasmError> {
+		sc_executor_wasmtime::create_runtime_from_artifact_bytes::<HostFunctions>(
+			compiled_artifact_blob,
+			self.config.clone(),
+		)
 	}
 }
 
-unsafe fn do_execute(
-	compiled_artifact_path: &Path,
-	params: &[u8],
-	spawner: impl sp_core::traits::SpawnNamed + 'static,
-) -> Result<Vec<u8>, sc_executor_common::error::Error> {
-	let mut extensions = sp_externalities::Extensions::new();
-
-	extensions.register(sp_core::traits::TaskExecutorExt::new(spawner));
-	extensions.register(sp_core::traits::ReadRuntimeVersionExt::new(ReadRuntimeVersion));
-
-	let mut ext = ValidationExternalities(extensions);
-
-	sc_executor::with_externalities_safe(&mut ext, || {
-		let runtime = sc_executor_wasmtime::create_runtime_from_artifact::<HostFunctions>(
-			compiled_artifact_path,
-			CONFIG,
-		)?;
-		runtime.new_instance()?.call(InvokeMethod::Export("validate_block"), params)
-	})?
-}
-
+/// Available host functions. We leave out:
+///
+/// 1. storage related stuff (PVF doesn't have a notion of a persistent storage/trie)
+/// 2. tracing
+/// 3. off chain workers (PVFs do not have such a notion)
+/// 4. runtime tasks
+/// 5. sandbox
 type HostFunctions = (
 	sp_io::misc::HostFunctions,
 	sp_io::crypto::HostFunctions,
@@ -223,7 +202,8 @@ type HostFunctions = (
 	sp_io::trie::HostFunctions,
 );
 
-/// The validation externalities that will panic on any storage related access.
+/// The validation externalities that will panic on any storage related access. (PVFs should not
+/// have a notion of a persistent storage/trie.)
 struct ValidationExternalities(sp_externalities::Extensions);
 
 impl sp_externalities::Externalities for ValidationExternalities {
@@ -369,43 +349,6 @@ impl sp_externalities::ExtensionStore for ValidationExternalities {
 	}
 }
 
-/// An implementation of `SpawnNamed` on top of a futures' thread pool.
-///
-/// This is a light handle meaning it will only clone the handle not create a new thread pool.
-#[derive(Clone)]
-pub(crate) struct TaskSpawner(futures::executor::ThreadPool);
-
-impl TaskSpawner {
-	pub(crate) fn new() -> Result<Self, String> {
-		futures::executor::ThreadPoolBuilder::new()
-			.pool_size(4)
-			.name_prefix("pvf-task-executor")
-			.create()
-			.map_err(|e| e.to_string())
-			.map(Self)
-	}
-}
-
-impl sp_core::traits::SpawnNamed for TaskSpawner {
-	fn spawn_blocking(
-		&self,
-		_task_name: &'static str,
-		_subsystem_name: Option<&'static str>,
-		future: futures::future::BoxFuture<'static, ()>,
-	) {
-		self.0.spawn_ok(future);
-	}
-
-	fn spawn(
-		&self,
-		_task_name: &'static str,
-		_subsystem_name: Option<&'static str>,
-		future: futures::future::BoxFuture<'static, ()>,
-	) {
-		self.0.spawn_ok(future);
-	}
-}
-
 struct ReadRuntimeVersion;
 
 impl sp_core::traits::ReadRuntimeVersion for ReadRuntimeVersion {
@@ -424,7 +367,7 @@ impl sp_core::traits::ReadRuntimeVersion for ReadRuntimeVersion {
 				use parity_scale_codec::Encode;
 				Ok(version.encode())
 			},
-			None => Err(format!("runtime version section is not found")),
+			None => Err("runtime version section is not found".to_string()),
 		}
 	}
 }

@@ -24,14 +24,16 @@ use selendra_node_network_protocol::{
 };
 
 use selendra_node_subsystem::{
-	errors::SubsystemError, messages::NetworkBridgeTxMessage, overseer, FromOrchestra,
-	OverseerSignal, SpawnedSubsystem,
+	errors::SubsystemError,
+	messages::{NetworkBridgeTxMessage, ReportPeerMessage},
+	overseer, FromOrchestra, OverseerSignal, SpawnedSubsystem,
 };
 
 /// Peer set info for network initialization.
 ///
-/// To be added to [`NetworkConfiguration::extra_sets`].
+/// To be passed to [`FullNetworkConfiguration::add_notification_protocol`]().
 pub use selendra_node_network_protocol::peer_set::{peer_sets_info, IsAuthority};
+use sc_network::ReputationChange;
 
 use crate::validator_discovery;
 
@@ -90,7 +92,7 @@ where
 		let future = run_network_out(self, ctx)
 			.map_err(|e| SubsystemError::with_origin("network-bridge", e))
 			.boxed();
-		SpawnedSubsystem { name: "network-bridge-subsystem", future }
+		SpawnedSubsystem { name: "network-bridge-tx-subsystem", future }
 	}
 }
 
@@ -148,13 +150,24 @@ where
 	AD: validator_discovery::AuthorityDiscovery + Clone,
 {
 	match msg {
-		NetworkBridgeTxMessage::ReportPeer(peer, rep) => {
-			if !rep.is_benefit() {
+		NetworkBridgeTxMessage::ReportPeer(ReportPeerMessage::Single(peer, rep)) => {
+			if !rep.value.is_positive() {
 				gum::debug!(target: LOG_TARGET, ?peer, ?rep, action = "ReportPeer");
 			}
 
 			metrics.on_report_event();
 			network_service.report_peer(peer, rep);
+		},
+		NetworkBridgeTxMessage::ReportPeer(ReportPeerMessage::Batch(batch)) => {
+			for (peer, score) in batch {
+				let rep = ReputationChange::new(score, "Aggregated reputation change");
+				if !rep.value.is_positive() {
+					gum::debug!(target: LOG_TARGET, ?peer, ?rep, action = "ReportPeer");
+				}
+
+				metrics.on_report_event();
+				network_service.report_peer(peer, rep);
+			}
 		},
 		NetworkBridgeTxMessage::DisconnectPeer(peer, peer_set) => {
 			gum::trace!(
