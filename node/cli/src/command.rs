@@ -90,11 +90,8 @@ impl SubstrateCli for Cli {
 		Ok(match id {
 			"selendra" => Box::new(service::chain_spec::selendra_config()?),
 			"selendra-testnet" | "testnet" => Box::new(service::chain_spec::selendra_testnet_config()?),
-			#[cfg(feature = "selendra-native")]
 			"selendra-dev" | "dev" => Box::new(service::chain_spec::selendra_development_config()?),
-			#[cfg(feature = "selendra-native")]
 			"selendra-local" => Box::new(service::chain_spec::selendra_local_testnet_config()?),
-			#[cfg(feature = "selendra-native")]
 			"selendra-staging" => Box::new(service::chain_spec::selendra_staging_testnet_config()?),
 			path => {
 				let path = std::path::PathBuf::from(path);
