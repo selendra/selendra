@@ -3,10 +3,12 @@
   "id": "selendra",
   "chainType": "Live",
   "bootNodes": [
-    "/ip4/104.248.159.91/tcp/33334/p2p/12D3KooWHni2hsRPXmcK9BhS5qWQiKFLhQTeRtqi5P6JGMegAC8A",
-    "/ip4/134.209.117.153/tcp/33334/p2p/12D3KooWBUXH2tTfMUn8Xd4EDWHVq6xELCU1P13oFPpg7VHrVcqg",
     "/ip4/134.209.117.157/tcp/33334/p2p/12D3KooWGuH2DwJ1284YR5FsZL4NHP9B7iyRU3KSxAU7Mv7oFf61",
-    "/ip4/167.71.223.120/tcp/33334/p2p/12D3KooWRczdFQkcs54oxieAjvtZik5reQPTtCmYX6qWbEwtHwui"
+    "/ip4/118.67.207.109/tcp/30333/p2p/12D3KooWJM17TuTVS5DaujjhdoZfKYBKpv9djnBrisw77ZC2LF5b",
+    "/ip4/118.67.207.110/tcp/30333/p2p/12D3KooWD8tGE4TqC3ewC7dRiy5m2yk2Twv2gqykPpnxKrnat9id",
+    "/ip4/118.67.207.105/tcp/30333/p2p/12D3KooWCNEsVuFMFYLX6vA1x2wcJTAA9pc1JsHqoLNr1DbKSG7j",
+    "/ip4/118.67.207.108/tcp/30333/p2p/12D3KooWSyhwAZoEhgowq5afpHf76TqhX3tZvKHgzctSeoAe6fXJ",
+    "/ip4/118.67.207.107/tcp/30333/p2p/12D3KooWMQnfsfDUUV7FcTvF3NRyd7pfBR3RKzhHhYhDQrEUvTFe"
   ],
   "telemetryEndpoints": [
     [
