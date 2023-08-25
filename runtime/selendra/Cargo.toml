@@ -91,6 +91,12 @@ runtime-common = { package = "selendra-runtime-common", path = "../common", defa
 primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
 selendra-runtime-constants = { package = "selendra-runtime-constants", path = "./constants", default-features = false }
 
+evm = { git = "https://github.com/rust-blockchain/evm", rev = "b7b82c7e1fc57b7449d6dfa6826600de37cc1e65", default-features = false }
+evm-gasometer = { git = "https://github.com/rust-blockchain/evm", rev = "b7b82c7e1fc57b7449d6dfa6826600de37cc1e65", default-features = false }
+evm-runtime = { git = "https://github.com/rust-blockchain/evm", rev = "b7b82c7e1fc57b7449d6dfa6826600de37cc1e65", default-features = false }
+ethereum-types = { version = "0.14", default-features = false }
+ethereum = { version = "0.14.0", default-features = false }
+
 
 [dev-dependencies]
 hex-literal = "0.3.4"

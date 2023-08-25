@@ -84,8 +84,6 @@ use pallet_contracts::NoopMigration;
 use selendra_runtime_constants::{currency::*, fee::*, time::*};
 
 // Weights used in the runtime.
-#[cfg(test)]
-mod test;
 mod weights;
 
 mod bag_thresholds;
@@ -110,7 +108,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
 	impl_name: create_runtime_str!("selendra"),
 	authoring_version: 1,
-	spec_version: 6000,
+	spec_version: 10000,
 	impl_version: 0,
 	#[cfg(not(feature = "disable-runtime-api"))]
 	apis: RUNTIME_API_VERSIONS,
@@ -144,13 +142,12 @@ impl frame_system::Config for Runtime {
 	type BlockLength = BlockLength;
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
-	type Index = Nonce;
-	type BlockNumber = BlockNumber;
+	type Nonce = Nonce;
 	type Hash = Hash;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = AccountIdLookup<AccountId, ()>;
-	type Header = generic::Header<BlockNumber, BlakeTwo256>;
+	type Block = Block;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type DbWeight = RocksDbWeight;
@@ -711,7 +708,7 @@ impl pallet_grandpa::Config for Runtime {
 		pallet_grandpa::EquivocationReportSystem<Self, Offences, Historical, ReportLongevity>;
 }
 
-/// Submits transaction with the node's public and signature type. Adheres to the signed extension
+/// Submits a transaction with the node's public and signature type. Adheres to the signed extension
 /// format of the chain.
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where
@@ -721,7 +718,7 @@ where
 		call: RuntimeCall,
 		public: <Signature as Verify>::Signer,
 		account: AccountId,
-		nonce: <Runtime as frame_system::Config>::Index,
+		nonce: <Runtime as frame_system::Config>::Nonce,
 	) -> Option<(RuntimeCall, <UncheckedExtrinsic as ExtrinsicT>::SignaturePayload)> {
 		use sp_runtime::traits::StaticLookup;
 		// take the biggest period possible.
@@ -883,57 +880,54 @@ impl pallet_contracts::Config for Runtime {
 }
 
 construct_runtime! {
-	pub enum Runtime where
-		Block = Block,
-		NodeBlock = primitives::Block,
-		UncheckedExtrinsic = UncheckedExtrinsic
+	pub enum Runtime
 	{
 		// Basic stuff; balances is uncallable initially.
-		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 0,
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 1,
-		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 2,
-		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 4,
+		System: frame_system = 0,
+		Timestamp: pallet_timestamp = 1,
+		Scheduler: pallet_scheduler = 2,
+		Preimage: pallet_preimage = 4,
 
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 14,
+		Balances: pallet_balances = 10,
+		TransactionPayment: pallet_transaction_payment = 14,
 
-		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 20,
-		Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 21,
+		Treasury: pallet_treasury = 20,
+		Bounties: pallet_bounties = 21,
 		ChildBounties: pallet_child_bounties = 23,
 
-		Utility: pallet_utility::{Pallet, Call, Event} = 30,
-		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 31,
-		Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>} = 32,
-		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 33,
-		Indices: pallet_indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
-		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 37,
-		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 38,
+		Utility: pallet_utility = 30,
+		Multisig: pallet_multisig = 31,
+		Recovery: pallet_recovery = 32,
+		Proxy: pallet_proxy = 33,
+		Indices: pallet_indices = 36,
+		Identity: pallet_identity = 37,
+		Vesting: pallet_vesting = 38,
 
 		// Babe must be before session.
-		Authorship: pallet_authorship::{Pallet, Storage} = 40,
-		Babe: pallet_babe::{Pallet, Call, Storage, Config, ValidateUnsigned} = 41,
-		Staking: pallet_staking::{Pallet, Call, Storage, Config<T>, Event<T>} = 42,
-		Offences: pallet_offences::{Pallet, Storage, Event} = 43,
-		Historical: session_historical::{Pallet} = 44,
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 45,
-		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 46,
-		ImOnline: pallet_im_online::{Pallet, Call, Storage, Event<T>, ValidateUnsigned, Config<T>} = 47,
-		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 48,
-		ElectionProviderMultiPhase: pallet_election_provider_multi_phase::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 49,
-		VoterList: pallet_bags_list::<Instance1>::{Pallet, Call, Storage, Event<T>} = 50,
+		Authorship: pallet_authorship = 40,
+		Babe: pallet_babe = 41,
+		Staking: pallet_staking = 42,
+		Offences: pallet_offences = 43,
+		Historical: session_historical = 44,
+		Session: pallet_session = 45,
+		Grandpa: pallet_grandpa = 46,
+		ImOnline: pallet_im_online = 47,
+		AuthorityDiscovery: pallet_authority_discovery = 48,
+		ElectionProviderMultiPhase: pallet_election_provider_multi_phase = 49,
+		VoterList: pallet_bags_list::<Instance1> = 50,
 
 		// Fast unstake pallet: extension to staking.
 		FastUnstake: pallet_fast_unstake = 55,
 
 		// Governance stuff.
-		ConvictionVoting: pallet_conviction_voting::{Pallet, Call, Storage, Event<T>} = 60,
-		Referenda: pallet_referenda::{Pallet, Call, Storage, Event<T>} = 63,
-		Whitelist: pallet_whitelist::{Pallet, Call, Storage, Event<T>} = 64,
-		Origins: pallet_custom_origins::{Origin} = 69,
+		ConvictionVoting: pallet_conviction_voting = 60,
+		Referenda: pallet_referenda = 63,
+		Whitelist: pallet_whitelist = 64,
+		Origins: pallet_custom_origins = 69,
 
 		Contracts: pallet_contracts = 150,
 
-		Sudo: pallet_sudo::{Pallet, Call, Storage, Event<T>, Config<T>} = 200,
+		Sudo: pallet_sudo = 200,
 	}
 }
 
@@ -996,10 +990,6 @@ pub type Executive = frame_executive::Executive<
 pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
 
 #[cfg(feature = "runtime-benchmarks")]
-#[macro_use]
-extern crate frame_benchmarking;
-
-#[cfg(feature = "runtime-benchmarks")]
 mod benches {
 	frame_benchmarking::define_benchmarks!(
 		// Substrate
@@ -1008,8 +998,6 @@ mod benches {
 		[frame_benchmarking::baseline, Baseline::<Runtime>]
 		[pallet_bounties, Bounties]
 		[pallet_child_bounties, ChildBounties]
-		[pallet_collective, Council]
-		[pallet_collective, TechnicalCommittee]
 		[pallet_contracts, Contracts]
 		[pallet_election_provider_multi_phase, ElectionProviderMultiPhase]
 		[frame_election_provider_support, ElectionProviderBench::<Runtime>]
@@ -1108,7 +1096,7 @@ sp_api::impl_runtime_apis! {
 			Executive::offchain_worker(header)
 		}
 	}
-
+	
 	impl pallet_contracts::ContractsApi<Block, AccountId, Balance, BlockNumber, Hash, EventRecord> for Runtime
 	{
 		fn call(
@@ -1375,7 +1363,8 @@ sp_api::impl_runtime_apis! {
 			Vec<frame_benchmarking::BenchmarkBatch>,
 			sp_runtime::RuntimeString,
 		> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, TrackedStorageKey};
+			use frame_benchmarking::{Benchmarking, BenchmarkBatch};
+			use sp_storage::TrackedStorageKey;
 			// Trying to add benchmarks directly to some pallets caused cyclic dependency issues.
 			// To get around that, we separated the benchmarks into its own crate.
 			use pallet_session_benchmarking::Pallet as SessionBench;
@@ -1390,20 +1379,9 @@ sp_api::impl_runtime_apis! {
 			impl frame_system_benchmarking::Config for Runtime {}
 			impl frame_benchmarking::baseline::Config for Runtime {}
 
-			let whitelist: Vec<TrackedStorageKey> = vec![
-				// Block Number
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
-				// Total Issuance
-				hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
-				// Execution Phase
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
-				// Event Count
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
-				// System Events
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
-				// Treasury Account
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da95ecffd7b6c0f78751baa9d281e0bfa3a6d6f646c70792f74727372790000000000000000000000000000000000000000").to_vec().into(),
-			];
+			let mut whitelist: Vec<TrackedStorageKey> = AllPalletsWithSystem::whitelisted_storage_keys();
+			let treasury_key = frame_system::Account::<Runtime>::hashed_key_for(Treasury::account_id());
+			whitelist.push(treasury_key.to_vec().into());
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
