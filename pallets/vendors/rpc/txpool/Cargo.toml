@@ -1,0 +1,31 @@
+[package]
+name = "selendra-rpc-txpool"
+authors = ["PureStake"]
+edition = "2021"
+homepage = "https://moonbeam.network"
+license = "GPL-3.0-only"
+repository = "https://github.com/PureStake/moonbeam/"
+version = "0.6.0"
+
+[dependencies]
+jsonrpsee = { version = "0.16.2", features = ["macros", "server"] }
+rlp = { version = "0.5", default-features = false }
+serde = { version = "1.0.151", features = ["derive"] }
+sha3 = { version = "0.10.1", features = ["std"] }
+
+# Substrate
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false, features = ["std"] }
+sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
+sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false, features = ["std"] }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false, features = ["std"] }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false, features = ["std"] }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false, features = ["std"] }
+
+selendra-rpc-core-txpool = { path = "../../rpc-core/txpool" }
+selendra-rpc-primitives-txpool = { path = "../../primitives/txpool" }
+
+# Frontier
+ethereum-types = { version = "0.14", features = ["std"] }
+fc-rpc = { path = "../../../../frontier/client/rpc", features = ["rpc-binary-search-estimate"] }

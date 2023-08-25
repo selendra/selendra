@@ -4,8 +4,25 @@ members = [
 	"runtime/common",
 	"runtime/selendra",
 	"runtime/selendra/constants",
-	# "utils/staking-miner",
-	# "utils/generate-bags",
+	"pallets/vendors/evm-tracing",
+	"pallets/vendors/primitives/debug",
+	"pallets/vendors/primitives/evm-tracing-events",
+	"pallets/vendors/primitives/txpool",
+	"pallets/vendors/rpc/debug",
+	"pallets/vendors/rpc/trace",
+	"pallets/vendors/rpc/txpool",
+	"pallets/vendors/rpc-core/debug",
+	"pallets/vendors/rpc-core/trace",
+	"pallets/vendors/rpc-core/txpool",
+	"pallets/vendors/rpc-core/types",
+	"pallets/vendors/runtime/evm-tracer",
+	"pallets/vendors/runtime/ext",
+	"pallets/precompiles/*",
+	"pallets/custom-signatures"
+]
+
+exclude = [
+	"frontier"
 ]
 
 [profile.release]

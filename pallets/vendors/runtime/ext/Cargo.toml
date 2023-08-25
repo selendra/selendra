@@ -1,0 +1,30 @@
+[package]
+name = "selendra-primitives-ext"
+authors = ["PureStake"]
+edition = "2021"
+homepage = "https://moonbeam.network"
+license = "GPL-3.0-only"
+repository = "https://github.com/PureStake/moonbeam/"
+version = "0.1.0"
+
+[dependencies]
+ethereum-types = { version = "0.14", default-features = false }
+
+evm-tracing-events = { path = "../../primitives/evm-tracing-events" }
+
+# Substrate
+parity-scale-codec = { version = "3.6.1", default-features = false }
+sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
+sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+	"parity-scale-codec/std",
+	"ethereum-types/std",
+	"evm-tracing-events/std",
+	"sp-externalities/std",
+	"sp-runtime-interface/std",
+	"sp-std/std",
+]

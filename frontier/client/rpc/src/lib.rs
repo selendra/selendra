@@ -24,7 +24,6 @@
 	clippy::len_zero,
 	clippy::new_without_default
 )]
-#![deny(unused_crate_dependencies)]
 
 mod eth;
 mod eth_pubsub;
