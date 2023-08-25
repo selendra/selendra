@@ -99,20 +99,6 @@ pub mod fee {
 	}
 }
 
-/// XCM protocol related constants.
-pub mod xcm {
-	/// Pluralistic bodies existing within the consensus.
-	pub mod body {
-		// The bodies corresponding to the Polkadot OpenGov Origins.
-		pub const FELLOWSHIP_ADMIN_INDEX: u32 = 1;
-	}
-}
-
-/// System Parachains.
-pub mod system_parachain {
-	/// Statemint parachain ID.
-	pub const INDRANET_ID: u32 = 1000;
-}
 
 #[cfg(test)]
 mod tests {

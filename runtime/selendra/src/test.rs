@@ -100,41 +100,6 @@ mod test_fees {
 	}
 
 	#[test]
-	fn full_block_council_election_cost() {
-		// the number of voters needed to consume almost a full block in council election, and how
-		// much it is going to cost.
-		use pallet_elections_phragmen::WeightInfo;
-
-		// Loser candidate lose a lot of money; sybil attack by candidates is even more expensive,
-		// and we don't care about it here. For now, we assume no extra candidates, and only
-		// superfluous voters.
-		let candidates = governance::DesiredMembers::get() + governance::DesiredRunnersUp::get();
-		let mut voters = 1u32;
-		let weight_with = |v| {
-			<Runtime as pallet_elections_phragmen::Config>::WeightInfo::election_phragmen(
-				candidates,
-				v,
-				v * 16,
-			)
-		};
-
-		while weight_with(voters).all_lte(BlockWeights::get().max_block) {
-			voters += 1;
-		}
-
-		let cost = voters as Balance *
-			(governance::VotingBondBase::get() + 16 * governance::VotingBondFactor::get());
-		let cost_dollars = cost / DOLLARS;
-		println!(
-			"can support {} voters in a single block for council elections; total bond {}",
-			voters, cost_dollars,
-		);
-		// The minimal number of voters we expect per block.
-		assert!(voters >= 1_000);
-		assert!(cost_dollars >= 10_000);
-	}
-
-	#[test]
 	fn nominator_limit() {
 		use pallet_election_provider_multi_phase::WeightInfo;
 		// starting point of the nominators.

@@ -15,7 +15,7 @@
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>
 
 use super::{
-	deposit, parameter_types, paras_registrar, weights, Balance, Balances, BlakeTwo256, Runtime,
+	deposit, parameter_types, weights, Balance, Balances, BlakeTwo256, Runtime,
 	RuntimeCall, RuntimeDebug, RuntimeEvent,
 };
 use frame_support::traits::InstanceFilter;
@@ -54,38 +54,6 @@ pub enum ProxyType {
 	// Skip 4 as it is now removed (was SudoBalances)
 	IdentityJudgement = 5,
 	CancelProxy = 6,
-	NominationPools = 7,
-}
-
-#[cfg(test)]
-mod proxy_type_tests {
-	use super::*;
-
-	#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug)]
-	pub enum OldProxyType {
-		Any,
-		NonTransfer,
-		Governance,
-		Staking,
-		SudoBalances,
-		IdentityJudgement,
-	}
-
-	#[test]
-	fn proxy_type_decodes_correctly() {
-		for (i, j) in vec![
-			(OldProxyType::Any, ProxyType::Any),
-			(OldProxyType::NonTransfer, ProxyType::NonTransfer),
-			(OldProxyType::Governance, ProxyType::Governance),
-			(OldProxyType::Staking, ProxyType::Staking),
-			(OldProxyType::IdentityJudgement, ProxyType::IdentityJudgement),
-		]
-		.into_iter()
-		{
-			assert_eq!(i.encode(), j.encode());
-		}
-		assert!(ProxyType::decode(&mut &OldProxyType::SudoBalances.encode()[..]).is_err());
-	}
 }
 
 impl Default for ProxyType {
@@ -112,15 +80,9 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 				RuntimeCall::Session(..) |
 				RuntimeCall::Grandpa(..) |
 				RuntimeCall::ImOnline(..) |
-				RuntimeCall::Democracy(..) |
-				RuntimeCall::Council(..) |
-				RuntimeCall::TechnicalCommittee(..) |
-				RuntimeCall::PhragmenElection(..) |
-				RuntimeCall::CouncilMembership(..) |
 				RuntimeCall::Treasury(..) |
 				RuntimeCall::Bounties(..) |
 				RuntimeCall::ChildBounties(..) |
-				RuntimeCall::Tips(..) |
 				RuntimeCall::ConvictionVoting(..) |
 				RuntimeCall::Referenda(..) |
 				RuntimeCall::Whitelist(..) |
@@ -131,24 +93,15 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 				RuntimeCall::Identity(..) |
 				RuntimeCall::Proxy(..) |
 				RuntimeCall::Multisig(..) |
-				RuntimeCall::Registrar(paras_registrar::Call::register {..}) |
-				RuntimeCall::Registrar(paras_registrar::Call::deregister {..}) |
-				// Specifically omitting Registrar `swap`
-				RuntimeCall::Registrar(paras_registrar::Call::reserve {..}) |
-				RuntimeCall::Slots(..) |
 				RuntimeCall::VoterList(..) |
-				RuntimeCall::NominationPools(..) |
 				RuntimeCall::FastUnstake(..)
 			),
 			ProxyType::Governance =>
 				matches!(
 					c,
-					RuntimeCall::Democracy(..) |
-						RuntimeCall::Council(..) | RuntimeCall::TechnicalCommittee(..) |
-						RuntimeCall::PhragmenElection(..) |
 						RuntimeCall::Treasury(..) |
 						RuntimeCall::Bounties(..) |
-						RuntimeCall::Tips(..) | RuntimeCall::Utility(..) |
+						RuntimeCall::Utility(..) |
 						RuntimeCall::ChildBounties(..) |
 						RuntimeCall::ConvictionVoting(..) |
 						RuntimeCall::Referenda(..) |
@@ -160,12 +113,8 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 					RuntimeCall::Staking(..) |
 						RuntimeCall::Session(..) | RuntimeCall::Utility(..) |
 						RuntimeCall::FastUnstake(..) |
-						RuntimeCall::VoterList(..) |
-						RuntimeCall::NominationPools(..)
+						RuntimeCall::VoterList(..)
 				)
-			},
-			ProxyType::NominationPools => {
-				matches!(c, RuntimeCall::NominationPools(..) | RuntimeCall::Utility(..))
 			},
 			ProxyType::IdentityJudgement => matches!(
 				c,
