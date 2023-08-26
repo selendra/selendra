@@ -76,6 +76,11 @@ impl SubstrateCli for Cli {
 	}
 }
 
+fn set_default_ss58_version() {
+	let ss58_version = sp_core::crypto::Ss58AddressFormat::custom(204);
+	sp_core::crypto::set_default_ss58_version(ss58_version);
+}
+
 /// Parse command line arguments into service configuration.
 pub fn run() -> Result<()> {
 	let cli = Cli::from_args();
@@ -83,12 +88,17 @@ pub fn run() -> Result<()> {
 	match &cli.subcommand {
 		None => {
 			let runner = cli.create_runner(&cli.run)?;
+	
+			set_default_ss58_version();
+
 			runner.run_node_until_exit(|config| async move {
 				service::new_full(config, cli).map_err(sc_cli::Error::Service)
 			})
 		},
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
+			set_default_ss58_version();
 
 			runner.sync_run(|config| {
 				// This switch needs to be in the client, since the client decides
