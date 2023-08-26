@@ -40,6 +40,7 @@ frame-support = { git = "https://github.com/paritytech/substrate", branch = "pol
 frame-system = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 
+pallet-assets = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 pallet-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 pallet-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 pallet-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
@@ -91,12 +92,30 @@ runtime-common = { package = "selendra-runtime-common", path = "../common", defa
 primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
 selendra-runtime-constants = { package = "selendra-runtime-constants", path = "./constants", default-features = false }
 
-evm = { git = "https://github.com/rust-blockchain/evm", rev = "b7b82c7e1fc57b7449d6dfa6826600de37cc1e65", default-features = false }
-evm-gasometer = { git = "https://github.com/rust-blockchain/evm", rev = "b7b82c7e1fc57b7449d6dfa6826600de37cc1e65", default-features = false }
-evm-runtime = { git = "https://github.com/rust-blockchain/evm", rev = "b7b82c7e1fc57b7449d6dfa6826600de37cc1e65", default-features = false }
-ethereum-types = { version = "0.14", default-features = false }
-ethereum = { version = "0.14.0", default-features = false }
+# Evm and Frontier
+fp-rpc = { path = "../../frontier/primitives/rpc", default-features = false }
+fp-self-contained = { path = "../../frontier/primitives/self-contained", default-features = false, features = ["serde"] }
 
+pallet-base-fee = { path = "../../frontier/frame/base-fee", default-features = false }
+pallet-ethereum = { path = "../../frontier/frame/ethereum", default-features = false }
+pallet-evm = { path = "../../frontier/frame/evm", default-features = false }
+pallet-custom-signatures = { path = "../../pallets/custom-signatures", default-features = false  }
+pallet-evm-precompile-assets-erc20 = { path = "../../pallets/precompiles/assets-erc20", default-features = false  }
+pallet-evm-precompile-batch = { path = "../../pallets/precompiles/batch", default-features = false }
+pallet-evm-precompile-sr25519 = { path = "../../pallets/precompiles/sr25519", default-features = false }
+pallet-evm-precompile-substrate-ecdsa = { path = "../../pallets/precompiles/substrate-ecdsa", default-features = false }
+pallet-evm-precompile-blake2 = { path = "../../frontier/frame/evm/precompile/blake2", default-features = false }
+pallet-evm-precompile-bn128 = { path = "../../frontier/frame/evm/precompile/bn128", default-features = false }
+pallet-evm-precompile-dispatch = { path = "../../frontier/frame/evm/precompile/dispatch", default-features = false }
+pallet-evm-precompile-ed25519 = { path = "../../frontier/frame/evm/precompile/ed25519", default-features = false }
+pallet-evm-precompile-modexp = { path = "../../frontier/frame/evm/precompile/modexp", default-features = false }
+pallet-evm-precompile-sha3fips = { path = "../../frontier/frame/evm/precompile/sha3fips", default-features = false }
+pallet-evm-precompile-simple = { path = "../../frontier/frame/evm/precompile/simple", default-features = false }
+
+# Evm tracing
+selendra-evm-tracer = { path = "../../pallets/vendors/runtime/evm-tracer", default-features = false, optional = true }
+selendra-rpc-primitives-debug = { path = "../../pallets/vendors/primitives/debug", default-features = false, optional = true }
+selendra-rpc-primitives-txpool = { path = "../../pallets/vendors/primitives/txpool", default-features = false, optional = true }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
@@ -140,12 +159,15 @@ std = [
 	"sp-npos-elections/std",
 	"babe-primitives/std",
 	"sp-session/std",
+	"fp-rpc/std",
+	"fp-self-contained/std",
 	"frame-try-runtime/std",
 	"frame-election-provider-support/std",
 	"frame-support/std",
 	"frame-executive/std",
 	"frame-system/std",
 	"frame-system-rpc-runtime-api/std",
+	"pallet-assets/std",
 	"pallet-authority-discovery/std",
 	"pallet-authorship/std",
 	"pallet-bags-list/std",
@@ -184,7 +206,25 @@ std = [
 	"pallet-staking-runtime-api/std",
 	"pallet-sudo/std",
 	"pallet-recovery/std",
+	"pallet-base-fee/std",
+	"pallet-ethereum/std",
+	"pallet-evm/std",
+	"pallet-custom-signatures/std",
+	"pallet-evm-precompile-assets-erc20/std",
+	"pallet-evm-precompile-batch/std",
+	"pallet-evm-precompile-sr25519/std",
+	"pallet-evm-precompile-substrate-ecdsa/std",
+	"pallet-evm-precompile-blake2/std",
+	"pallet-evm-precompile-bn128/std",
+	"pallet-evm-precompile-dispatch/std",
+	"pallet-evm-precompile-ed25519/std",
+	"pallet-evm-precompile-modexp/std",
+	"pallet-evm-precompile-sha3fips/std",
+	"pallet-evm-precompile-simple/std",
 	"selendra-runtime-constants/std",
+	"selendra-evm-tracer/std",
+	"selendra-rpc-primitives-debug/std",
+	"selendra-rpc-primitives-txpool/std",
 	"runtime-common/std",
 ]
 runtime-benchmarks = [
@@ -206,6 +246,7 @@ runtime-benchmarks = [
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-identity/runtime-benchmarks",
 	"pallet-im-online/runtime-benchmarks",
+	"pallet-assets/runtime-benchmarks",
 	"pallet-contracts/runtime-benchmarks",
 	"pallet-indices/runtime-benchmarks",
 	"pallet-membership/runtime-benchmarks",
@@ -229,6 +270,7 @@ runtime-benchmarks = [
 	"frame-election-provider-support/runtime-benchmarks",
 ]
 try-runtime = [
+	"fp-self-contained/try-runtime",
 	"frame-executive/try-runtime",
 	"frame-try-runtime",
 	"frame-system/try-runtime",
@@ -237,6 +279,7 @@ try-runtime = [
 	"pallet-authorship/try-runtime",
 	"pallet-balances/try-runtime",
 	"pallet-bags-list/try-runtime",
+	"pallet-assets/try-runtime",
 	"pallet-bounties/try-runtime",
 	"pallet-child-bounties/try-runtime",
 	"pallet-conviction-voting/try-runtime",
@@ -261,11 +304,15 @@ try-runtime = [
 	"pallet-session/try-runtime",
 	"pallet-staking/try-runtime",
 	"pallet-timestamp/try-runtime",
+	"pallet-custom-signatures/try-runtime",
 	"pallet-treasury/try-runtime",
 	"pallet-babe/try-runtime",
 	"pallet-referenda/try-runtime",
 	"pallet-vesting/try-runtime",
 	"pallet-utility/try-runtime",
+	"pallet-evm/try-runtime",
+	"pallet-base-fee/try-runtime",
+	"pallet-ethereum/try-runtime",
 ]
 # When enabled, the runtime API will not be build.
 #
@@ -285,3 +332,9 @@ on-chain-release-build = [
 fast-runtime = []
 
 runtime-metrics = ["sp-io/with-tracing"]
+
+evm-tracing = [
+	"selendra-evm-tracer",
+	"selendra-rpc-primitives-debug",
+	"selendra-rpc-primitives-txpool",
+]

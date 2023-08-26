@@ -8,22 +8,22 @@ homepage = "https://astar.network"
 repository = "https://github.com/AstarNetwork/Astar"
 
 [dependencies]
+parity-scale-codec = { version = "3.6.1", default-features = false, features = ["derive"] }
 log = { version = "0.4.17", default-features = false }
 num_enum = { version = "0.5.3", default-features = false }
 slices = "0.2.0"
-
-precompile-utils = { path = "../utils" }
 
 # Substrate
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 pallet-assets = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
-parity-scale-codec = { version = "3.6.1", default-features = false, features = ["max-encoded-len"] }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
+
+precompile-utils = { path = "../utils", default-features = false }
 
 # Frontier
 fp-evm = { path = "../../../frontier/primitives/evm", default-features = false }

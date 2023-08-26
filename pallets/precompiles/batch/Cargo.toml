@@ -14,20 +14,21 @@ paste = "1.0.6"
 slices = "0.2.0"
 
 # Moonbeam
-precompile-utils = { path = "../utils" }
+precompile-utils = { path = "../utils", default-features = false }
 
 # Substrate
+parity-scale-codec = { version = "3.6.1", default-features = false, features = ["max-encoded-len"] }
+
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
-parity-scale-codec = { version = "3.6.1", default-features = false, features = ["max-encoded-len"] }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
 
 # Frontier
 evm = { git = "https://github.com/rust-blockchain/evm", rev = "b7b82c7e1fc57b7449d6dfa6826600de37cc1e65", default-features = false, features = ["with-codec"] }
-fp-evm = { path = "../../../frontier/primitives/evm" }
-pallet-evm = { path = "../../../frontier/frame/evm" }
+fp-evm = { path = "../../../frontier/primitives/evm", default-features = false }
+pallet-evm = { path = "../../../frontier/frame/evm", default-features = false }
 
 [dev-dependencies]
 derive_more = { version = "0.99" }

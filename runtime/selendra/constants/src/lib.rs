@@ -99,7 +99,6 @@ pub mod fee {
 	}
 }
 
-
 #[cfg(test)]
 mod tests {
 	use super::{

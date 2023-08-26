@@ -3,8 +3,8 @@ use frame_support::{parameter_types, traits::EitherOf};
 use frame_system::EnsureRootWithSuccess;
 mod origins;
 pub use origins::{
-	pallet_custom_origins, FellowshipAdmin, GeneralAdmin, ReferendumCanceller,
-	ReferendumKiller, Spender, StakingAdmin, Treasurer, WhitelistedCaller,
+	pallet_custom_origins, FellowshipAdmin, GeneralAdmin, ReferendumCanceller, ReferendumKiller,
+	Spender, StakingAdmin, Treasurer, WhitelistedCaller,
 };
 mod tracks;
 pub use tracks::TracksInfo;

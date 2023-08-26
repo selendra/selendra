@@ -17,7 +17,7 @@ members = [
 	"pallets/vendors/rpc-core/types",
 	"pallets/vendors/runtime/evm-tracer",
 	"pallets/vendors/runtime/ext",
-	"pallets/precompiles/*",
+	# "pallets/precompiles/*",
 	"pallets/custom-signatures"
 ]
 

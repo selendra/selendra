@@ -10,7 +10,7 @@ version = "0.1.0"
 [dependencies]
 ethereum-types = { version = "0.14", default-features = false }
 
-evm-tracing-events = { path = "../../primitives/evm-tracing-events" }
+evm-tracing-events = { path = "../../primitives/evm-tracing-events", default-features = false }
 
 # Substrate
 parity-scale-codec = { version = "3.6.1", default-features = false }

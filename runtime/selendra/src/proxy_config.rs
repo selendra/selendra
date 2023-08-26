@@ -15,8 +15,8 @@
 // along with Selendra.  If not, see <http://www.gnu.org/licenses/>
 
 use super::{
-	deposit, parameter_types, weights, Balance, Balances, BlakeTwo256, Runtime,
-	RuntimeCall, RuntimeDebug, RuntimeEvent,
+	deposit, parameter_types, weights, Balance, Balances, BlakeTwo256, Runtime, RuntimeCall,
+	RuntimeDebug, RuntimeEvent,
 };
 use frame_support::traits::InstanceFilter;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
@@ -68,6 +68,7 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::NonTransfer => matches!(
 				c,
 				RuntimeCall::System(..) |
+				RuntimeCall::Assets(..) |
 				RuntimeCall::Scheduler(..) |
 				RuntimeCall::Babe(..) |
 				RuntimeCall::Timestamp(..) |
@@ -96,17 +97,16 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 				RuntimeCall::VoterList(..) |
 				RuntimeCall::FastUnstake(..)
 			),
-			ProxyType::Governance =>
-				matches!(
-					c,
-						RuntimeCall::Treasury(..) |
-						RuntimeCall::Bounties(..) |
-						RuntimeCall::Utility(..) |
-						RuntimeCall::ChildBounties(..) |
-						RuntimeCall::ConvictionVoting(..) |
-						RuntimeCall::Referenda(..) |
-						RuntimeCall::Whitelist(..)
-				),
+			ProxyType::Governance => matches!(
+				c,
+				RuntimeCall::Treasury(..) |
+					RuntimeCall::Bounties(..) |
+					RuntimeCall::Utility(..) |
+					RuntimeCall::ChildBounties(..) |
+					RuntimeCall::ConvictionVoting(..) |
+					RuntimeCall::Referenda(..) |
+					RuntimeCall::Whitelist(..)
+			),
 			ProxyType::Staking => {
 				matches!(
 					c,

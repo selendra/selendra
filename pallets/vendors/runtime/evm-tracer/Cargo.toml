@@ -10,8 +10,8 @@ version = "0.1.0"
 [dependencies]
 
 # Moonbeam
-evm-tracing-events = { path = "../../primitives/evm-tracing-events", features = ["evm-tracing"] }
-selendra-primitives-ext = { path = "../ext" }
+evm-tracing-events = { path = "../../primitives/evm-tracing-events", default-features = false, features = ["evm-tracing"] }
+selendra-primitives-ext = { path = "../ext", default-features = false }
 
 # Substrate
 parity-scale-codec = { version = "3.6.1", default-features = false }
