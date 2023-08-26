@@ -28,6 +28,7 @@ use codec::Encode;
 use frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE;
 use frame_system_rpc_runtime_api::AccountNonceApi;
 use futures::prelude::*;
+use fc_rpc::{EthTask};
 use sc_client_api::{Backend, BlockBackend};
 use sc_consensus_babe::{self, SlotProportion};
 use sc_executor::NativeElseWasmExecutor;
@@ -41,9 +42,14 @@ use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use selendra_primitives::Block;
 use selendra_runtime::{RuntimeApi, TransactionConverter};
 use sp_api::ProvideRuntimeApi;
+use sc_client_api::BlockchainEvents;
 use sp_core::crypto::Pair;
 use sp_runtime::{generic, traits::Block as BlockT, SaturatedConversion};
-use std::{path::Path, sync::Arc};
+use std::{
+	path::{Path},
+	sync::{Arc},
+	time::Duration,
+};
 
 // Declare an instance of the native executor named `ExecutorDispatch`. Include the wasm binary as
 // the equivalent wasm code.
@@ -401,6 +407,8 @@ pub fn new_full_base(
 	> = Default::default();
 	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
 
+	let pubsub_notification = pubsub_notification_sinks.clone();
+
 	// for ethereum-compatibility rpc.
 	config.rpc_id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
 	let eth_rpc_params = selendra_rpc::EthDeps {
@@ -574,6 +582,67 @@ pub fn new_full_base(
 			babe,
 		);
 	}
+	
+	// Spawn main mapping sync worker background task.
+	match frontier_backend {
+		fc_db::Backend::KeyValue(b) => {
+			task_manager.spawn_essential_handle().spawn(
+				"frontier-mapping-sync-worker",
+				Some("frontier"),
+				fc_mapping_sync::kv::MappingSyncWorker::new(
+					client.import_notification_stream(),
+					Duration::new(6, 0),
+					client.clone(),
+					backend.clone(),
+					overrides.clone(),
+					Arc::new(b),
+					3,
+					0,
+					fc_mapping_sync::SyncStrategy::Normal,
+					sync_service.clone(),
+					pubsub_notification.clone(),
+				)
+				.for_each(|()| future::ready(())),
+			);
+		},
+		fc_db::Backend::Sql(b) => {
+			task_manager.spawn_essential_handle().spawn_blocking(
+				"frontier-mapping-sync-worker",
+				Some("frontier"),
+				fc_mapping_sync::sql::SyncWorker::run(
+					client.clone(),
+					backend.clone(),
+					Arc::new(b),
+					client.import_notification_stream(),
+					fc_mapping_sync::sql::SyncWorkerConfig {
+						read_notification_timeout: Duration::from_secs(10),
+						check_indexed_blocks_interval: Duration::from_secs(60),
+					},
+					fc_mapping_sync::SyncStrategy::Parachain,
+					sync_service.clone(),
+					pubsub_notification.clone(),
+				),
+			);
+		},
+	}
+
+	// Spawn Frontier EthFilterApi maintenance task.
+	if let Some(filter_pool) = filter_pool {
+		// Each filter is allowed to stay in the pool for 100 blocks.
+		const FILTER_RETAIN_THRESHOLD: u64 = 100;
+		task_manager.spawn_essential_handle().spawn(
+			"frontier-filter-pool",
+			Some("frontier"),
+			EthTask::filter_pool_task(client.clone(), filter_pool, FILTER_RETAIN_THRESHOLD),
+		);
+	}
+
+	// Spawn Frontier FeeHistory cache maintenance task.
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-fee-history",
+		Some("frontier"),
+		EthTask::fee_history_task(client.clone(), overrides, fee_history_cache, fee_history_cache_limit),
+	);
 
 	// Spawn authority discovery module.
 	if role.is_authority() {
@@ -657,7 +726,7 @@ pub fn new_full_base(
 			sc_offchain::OffchainWorkers::new(sc_offchain::OffchainWorkerOptions {
 				runtime_api_provider: client.clone(),
 				keystore: Some(keystore_container.keystore()),
-				offchain_db: backend.offchain_storage(),
+				offchain_db: backend.offchain_storage().clone(),
 				transaction_pool: Some(OffchainTransactionPoolFactory::new(
 					transaction_pool.clone(),
 				)),
