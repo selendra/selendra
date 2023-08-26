@@ -147,8 +147,8 @@ fp-account = { version = "1.0.0-dev", path = "primitives/account", default-featu
 fp-consensus = { version = "2.0.0-dev", path = "primitives/consensus", default-features = false }
 fp-dynamic-fee = { version = "1.0.0", path = "primitives/dynamic-fee", default-features = false }
 fp-ethereum = { version = "1.0.0-dev", path = "primitives/ethereum", default-features = false }
-fp-evm = { version = "3.0.0-dev", path = "primitives/evm", default-features = false }
-fp-rpc = { version = "3.0.0-dev", path = "primitives/rpc", default-features = false }
+fp-evm = { path = "primitives/evm", default-features = false }
+fp-rpc = { path = "primitives/rpc", default-features = false }
 fp-self-contained = { version = "1.0.0-dev", path = "primitives/self-contained", default-features = false }
 fp-storage = { version = "2.0.0", path = "primitives/storage", default-features = false }
 # Frontier FRAME

@@ -86,3 +86,6 @@ pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 /// [2^64; 2^128-1] Ecosystem assets
 /// 2^128-1         Relay chain token (KSM)
 pub type AssetId = u128;
+
+/// Digest item type.
+pub type DigestItem = generic::DigestItem;

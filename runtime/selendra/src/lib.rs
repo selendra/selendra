@@ -24,7 +24,7 @@ use pallet_ethereum::Transaction as EthereumTransaction;
 use pallet_evm::{FeeCalculator, GasWeightMapping, Runner};
 use pallet_evm_precompile_assets_erc20::AddressToAssetId;
 use pallet_transaction_payment::CurrencyAdapter;
-use runtime_common::{
+pub use runtime_common::{
 	impl_runtime_weights, impls::DealWithFees, prod_or_fast, BlockHashCount, BlockLength,
 	CurrencyToVote, SlowAdjustingFeeUpdate,
 };
@@ -105,6 +105,16 @@ impl_runtime_weights!(selendra_runtime_constants);
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+
+/// Wasm binary unwrapped. If built with `SKIP_WASM_BUILD`, the function panics.
+#[cfg(feature = "std")]
+pub fn wasm_binary_unwrap() -> &'static [u8] {
+	WASM_BINARY.expect(
+		"Development wasm binary is not available. This means the client is built with \
+		 `SKIP_WASM_BUILD` flag and it is only usable for production chains. Please rebuild with \
+		 the flag disabled.",
+	)
+}
 
 // Selendra version identifier;
 #[sp_version::runtime_version]

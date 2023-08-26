@@ -201,9 +201,7 @@ where
 				(Some(remaining), _) => remaining,
 				(None, Mode::BatchAll) =>
 					return Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas }),
-				(None, _) => {
-					return Ok(succeed(EvmDataWriter::new().write(true).build()))
-				},
+				(None, _) => return Ok(succeed(EvmDataWriter::new().write(true).build())),
 			};
 
 			// Cost of the call itself that the batch precompile must pay.

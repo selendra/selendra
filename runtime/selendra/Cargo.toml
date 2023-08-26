@@ -112,11 +112,6 @@ pallet-evm-precompile-modexp = { path = "../../frontier/frame/evm/precompile/mod
 pallet-evm-precompile-sha3fips = { path = "../../frontier/frame/evm/precompile/sha3fips", default-features = false }
 pallet-evm-precompile-simple = { path = "../../frontier/frame/evm/precompile/simple", default-features = false }
 
-# Evm tracing
-selendra-evm-tracer = { path = "../../pallets/vendors/runtime/evm-tracer", default-features = false, optional = true }
-selendra-rpc-primitives-debug = { path = "../../pallets/vendors/primitives/debug", default-features = false, optional = true }
-selendra-rpc-primitives-txpool = { path = "../../pallets/vendors/primitives/txpool", default-features = false, optional = true }
-
 [dev-dependencies]
 hex-literal = "0.3.4"
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
@@ -222,9 +217,6 @@ std = [
 	"pallet-evm-precompile-sha3fips/std",
 	"pallet-evm-precompile-simple/std",
 	"selendra-runtime-constants/std",
-	"selendra-evm-tracer/std",
-	"selendra-rpc-primitives-debug/std",
-	"selendra-rpc-primitives-txpool/std",
 	"runtime-common/std",
 ]
 runtime-benchmarks = [
@@ -332,9 +324,3 @@ on-chain-release-build = [
 fast-runtime = []
 
 runtime-metrics = ["sp-io/with-tracing"]
-
-evm-tracing = [
-	"selendra-evm-tracer",
-	"selendra-rpc-primitives-debug",
-	"selendra-rpc-primitives-txpool",
-]
