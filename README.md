@@ -12,6 +12,3 @@ Open opportunities for individuals, businesses, and communities by making access
 Selendra project is inspired by the excellent work of many growing projects in the Polkadot ecosystem and many other blockchain developers around the world. Our progress in the past, the present and the future is only possible thanks to the open sources software community, framework, and tools. Thank you!
 
 This is a work in progress, we will update more information as we progress further. Please refer to the token economy working paper for more details.
-
-## License
-Selendra project is inspired by [Polkadot](https://github.com/paritytech/polkadot) under [GPL 3.0 licensed](LICENSE).
