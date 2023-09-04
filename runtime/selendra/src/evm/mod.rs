@@ -90,9 +90,18 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	}
 }
 
+#[cfg(not(feature = "runtime-testnet"))]
 parameter_types! {
 	pub ChainId: u64 = 0x7A9; // Mainnet 1961
-	// pub ChainId: u64 = 0x7A4; // Testnet 1956
+}
+
+#[cfg(feature = "runtime-testnet")]
+parameter_types! {
+	pub ChainId: u64 = 0x7A1; // Testnet 1953
+}
+
+
+parameter_types! {
 	/// EVM gas limit
 	pub BlockGasLimit: U256 = U256::from(
 		NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS

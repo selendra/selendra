@@ -116,13 +116,29 @@ pub fn wasm_binary_unwrap() -> &'static [u8] {
 	)
 }
 
-// Selendra version identifier;
+#[cfg(not(feature = "runtime-testnet"))]
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
 	impl_name: create_runtime_str!("selendra"),
 	authoring_version: 1,
-	spec_version: 10010,
+	spec_version: 10000,
+	impl_version: 0,
+	#[cfg(not(feature = "disable-runtime-api"))]
+	apis: RUNTIME_API_VERSIONS,
+	#[cfg(feature = "disable-runtime-api")]
+	apis: sp_version::create_apis_vec![[]],
+	transaction_version: 4,
+	state_version: 0,
+};
+
+#[cfg(feature = "runtime-testnet")]
+#[sp_version::runtime_version]
+pub const VERSION: RuntimeVersion = RuntimeVersion {
+	spec_name: create_runtime_str!("selendra"),
+	impl_name: create_runtime_str!("selendra-testnet"),
+	authoring_version: 1,
+	spec_version: 10020,
 	impl_version: 0,
 	#[cfg(not(feature = "disable-runtime-api"))]
 	apis: RUNTIME_API_VERSIONS,

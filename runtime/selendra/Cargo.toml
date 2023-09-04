@@ -323,4 +323,6 @@ on-chain-release-build = [
 # Set timing constants (e.g. session period) to faster versions to speed up testing.
 fast-runtime = []
 
+runtime-testnet = []
+
 runtime-metrics = ["sp-io/with-tracing"]
