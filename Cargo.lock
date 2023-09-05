@@ -5318,7 +5318,7 @@ dependencies = [
 
 [[package]]
 name = "node-cli"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "array-bytes",
  "assert_cmd",
@@ -9357,7 +9357,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-primitives"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "frame-support",
  "pallet-assets",
@@ -9370,7 +9370,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-rpc"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "fc-cli",
  "fc-consensus",
@@ -9415,7 +9415,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "bitvec",
  "fp-rpc",
@@ -9528,7 +9528,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime-common"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -9575,7 +9575,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime-constants"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "frame-support",
  "selendra-primitives",
