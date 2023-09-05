@@ -595,9 +595,9 @@ impl pallet_fast_unstake::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BasicDeposit: Balance = deposit(1, 258);
+	pub const BasicDeposit: Balance = deposit(500, 258);
 	pub const FieldDeposit: Balance = deposit(0, 66);
-	pub const SubAccountDeposit: Balance = deposit(1, 53);
+	pub const SubAccountDeposit: Balance = deposit(50, 53);
 	pub const MaxSubAccounts: u32 = 100;
 	pub const MaxAdditionalFields: u32 = 100;
 	pub const MaxRegistrars: u32 = 20;
@@ -824,7 +824,7 @@ impl pallet_utility::Config for Runtime {
 
 parameter_types! {
 	// One storage item; key size is 32; value is size 4+4+16+32 bytes = 56 bytes.
-	pub const DepositBase: Balance = deposit(1, 88);
+	pub const DepositBase: Balance = deposit(10, 88);
 	// Additional storage item size of 32 bytes.
 	pub const DepositFactor: Balance = deposit(0, 32);
 	pub const MaxSignatories: u32 = 100;
