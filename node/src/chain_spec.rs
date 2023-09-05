@@ -72,6 +72,17 @@ pub fn selendra_testnet_config() -> Result<ChainSpec, String> {
 	ChainSpec::from_json_bytes(&include_bytes!("../res/selendra-testnet.json")[..])
 }
 
+/// Returns the properties for the [`SelendraChainSpec`].
+pub fn selendra_chain_spec_properties() -> serde_json::map::Map<String, serde_json::Value> {
+	serde_json::json!({
+		"tokenDecimals": 18,
+		"tokenSymbol": "SEL"
+	})
+	.as_object()
+	.expect("Map given; qed")
+	.clone()
+}
+
 fn session_keys(
 	grandpa: GrandpaId,
 	babe: BabeId,
@@ -199,7 +210,7 @@ pub fn staging_testnet_config() -> ChainSpec {
 		),
 		None,
 		None,
-		None,
+		Some(selendra_chain_spec_properties()),
 		Default::default(),
 	)
 }
@@ -382,7 +393,7 @@ pub fn development_config() -> ChainSpec {
 		None,
 		None,
 		None,
-		None,
+		Some(selendra_chain_spec_properties()),
 		Default::default(),
 	)
 }
@@ -407,7 +418,7 @@ pub fn local_testnet_config() -> ChainSpec {
 		None,
 		None,
 		None,
-		None,
+		Some(selendra_chain_spec_properties()),
 		Default::default(),
 	)
 }
