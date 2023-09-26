@@ -1,4 +1,4 @@
-// Copyright 2023 Smallworld Selendra
+// Copyright 2022 Smallworld Selendra
 // This file is part of Selendra.
 
 // Selendra is free software: you can redistribute it and/or modify
@@ -12,9 +12,10 @@
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Auxiliary `struct`/`enum`s for selendra runtime.
-
+//!
 use crate::NegativeImbalance;
 use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 
@@ -23,8 +24,8 @@ pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for ToAuthor<R>
 where
 	R: pallet_balances::Config + pallet_authorship::Config,
-	<R as frame_system::Config>::AccountId: From<selendra_primitives::AccountId>,
-	<R as frame_system::Config>::AccountId: Into<selendra_primitives::AccountId>,
+	<R as frame_system::Config>::AccountId: From<primitives::AccountId>,
+	<R as frame_system::Config>::AccountId: Into<primitives::AccountId>,
 {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
 		if let Some(author) = <pallet_authorship::Pallet<R>>::author() {
@@ -37,8 +38,8 @@ pub struct DealWithFees<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
 where
 	R: pallet_balances::Config + pallet_authorship::Config,
-	<R as frame_system::Config>::AccountId: From<selendra_primitives::AccountId>,
-	<R as frame_system::Config>::AccountId: Into<selendra_primitives::AccountId>,
+	<R as frame_system::Config>::AccountId: From<primitives::AccountId>,
+	<R as frame_system::Config>::AccountId: Into<primitives::AccountId>,
 {
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
 		if let Some(fees) = fees_then_tips.next() {

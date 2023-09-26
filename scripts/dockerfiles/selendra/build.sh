@@ -8,7 +8,7 @@ PROJECT_ROOT=`git rev-parse --show-toplevel`
 cd $PROJECT_ROOT
 
 # Find the current version from Cargo.toml
-VERSION=`grep "^version" ./node/cli/Cargo.toml | egrep -o "([0-9\.]+)"`
+VERSION=`grep "^version" ./node/Cargo.toml | egrep -o "([0-9\.]+)"`
 GITUSER=selendrachain
 GITREPO=selendra
 

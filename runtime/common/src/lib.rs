@@ -1,4 +1,4 @@
-// Copyright 2023 Smallworld Selendra
+// Copyright 2022 Smallworld Selendra
 // This file is part of Selendra.
 
 // Selendra is free software: you can redistribute it and/or modify
@@ -12,37 +12,57 @@
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
+
+//! Common runtime code for Selendra.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod elections;
 pub mod impls;
-pub mod staking;
 
 use frame_support::{
 	parameter_types,
-	traits::Currency,
-	weights::{constants::WEIGHT_REF_TIME_PER_MILLIS, Weight},
+	traits::{ConstU32, Currency},
+	weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight},
 };
+use frame_system::limits;
+use primitives::{Balance, BlockNumber};
+use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
+use static_assertions::const_assert;
+
+pub use pallet_balances::Call as BalancesCall;
+#[cfg(feature = "std")]
+pub use pallet_staking::StakerStatus;
+pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
-use selendra_primitives::{Balance, MAX_BLOCK_SIZE};
-use sp_runtime::{
-	traits::{Bounded, Convert},
-	FixedPointNumber, Perbill, Perquintill,
-};
+pub use sp_runtime::traits::Bounded;
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
+
+/// Implementations of some helper traits passed into runtime modules as associated types.
+pub use impls::ToAuthor;
 
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::NegativeImbalance;
 
-// 75% block weight is dedicated to normal extrinsics
+/// We assume that an on-initialize consumes 1% of the weight on average, hence a single extrinsic
+/// will not be allowed to consume more than `AvailableBlockRatio - 1%`.
+pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(1);
+/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
+/// by  Operational  extrinsics.
 pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
-// The whole process for a single block should take 1s, of which 400ms is for creation,
-// 200ms for propagation and 400ms for validation. Hence the block weight should be within 400ms.
-pub const MAX_BLOCK_WEIGHT: Weight =
-	Weight::from_ref_time(WEIGHT_REF_TIME_PER_MILLIS.saturating_mul(400));
+/// We allow for 2 seconds of compute with a 6 second average block time.
+/// The storage proof size is not limited so far.
+pub const MAXIMUM_BLOCK_WEIGHT: Weight =
+	Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2), u64::MAX);
+
+const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct());
 
 // Common constants used in all runtimes.
 parameter_types! {
+	pub const BlockHashCount: BlockNumber = 4096;
 	/// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
 	/// than this will decrease the weight and more will increase.
 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
@@ -55,17 +75,13 @@ parameter_types! {
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 10u128);
 	/// The maximum amount of the multiplier.
 	pub MaximumMultiplier: Multiplier = Bounded::max_value();
-
-	pub BlockWeights: frame_system::limits::BlockWeights = frame_system::limits::BlockWeights
-		::with_sensible_defaults(MAX_BLOCK_WEIGHT.set_proof_size(u64::MAX), NORMAL_DISPATCH_RATIO);
-
 	/// Maximum length of block. Up to 5MB.
-	pub BlockLength: frame_system::limits::BlockLength =
-		frame_system::limits::BlockLength::max_with_normal_ratio(MAX_BLOCK_SIZE, NORMAL_DISPATCH_RATIO);
+	pub BlockLength: limits::BlockLength =
+	limits::BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 }
 
 /// Parameterized slow adjusting fee updated based on
-/// https://research.web3.foundation/en/latest/selendra/overview/2-token-economics.html#-2.-slow-adjusting-mechanism
+/// https://research.web3.foundation/Polkadot/overview/token-economics#2-slow-adjusting-mechanism
 pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
 	R,
 	TargetBlockFullness,
@@ -74,19 +90,81 @@ pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
 	MaximumMultiplier,
 >;
 
-pub struct BalanceToU256;
+/// Implements the weight types for a runtime.
+/// It expects the passed runtime constants to contain a `weights` module.
+/// The generated weight types were formerly part of the common
+/// runtime but are now runtime dependant.
+#[macro_export]
+macro_rules! impl_runtime_weights {
+	($runtime:ident) => {
+		use frame_support::{dispatch::DispatchClass, weights::Weight};
+		use frame_system::limits;
+		use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
+		pub use runtime_common::{
+			impl_elections_weights, AVERAGE_ON_INITIALIZE_RATIO, MAXIMUM_BLOCK_WEIGHT,
+			NORMAL_DISPATCH_RATIO,
+		};
+		use sp_runtime::{FixedPointNumber, Perquintill};
 
-impl Convert<Balance, sp_core::U256> for BalanceToU256 {
-	fn convert(balance: Balance) -> sp_core::U256 {
-		sp_core::U256::from(balance)
+		// Implement the weight types of the elections module.
+		impl_elections_weights!($runtime);
+
+		// Expose the weight from the runtime constants module.
+		pub use $runtime::weights::{
+			BlockExecutionWeight, ExtrinsicBaseWeight, ParityDbWeight, RocksDbWeight,
+		};
+
+		parameter_types! {
+			/// Block weights base values and limits.
+			pub BlockWeights: limits::BlockWeights = limits::BlockWeights::builder()
+				.base_block($runtime::weights::BlockExecutionWeight::get())
+				.for_class(DispatchClass::all(), |weights| {
+					weights.base_extrinsic = $runtime::weights::ExtrinsicBaseWeight::get();
+				})
+				.for_class(DispatchClass::Normal, |weights| {
+					weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
+				})
+				.for_class(DispatchClass::Operational, |weights| {
+					weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
+					// Operational transactions have an extra reserved space, so that they
+					// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
+					weights.reserved = Some(
+						MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT,
+					);
+				})
+				.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
+				.build_or_panic();
+		}
+	};
+}
+
+/// The type used for currency conversion.
+///
+/// This must only be used as long as the balance type is `u128`.
+pub type CurrencyToVote = sp_staking::currency_to_vote::U128CurrencyToVote;
+static_assertions::assert_eq_size!(primitives::Balance, u128);
+
+/// A reasonable benchmarking config for staking pallet.
+pub struct StakingBenchmarkingConfig;
+impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
+	type MaxValidators = ConstU32<1000>;
+	type MaxNominators = ConstU32<1000>;
+}
+
+/// Convert a balance to an unsigned 256-bit number, use in nomination pools.
+pub struct BalanceToU256;
+impl sp_runtime::traits::Convert<Balance, sp_core::U256> for BalanceToU256 {
+	fn convert(n: Balance) -> sp_core::U256 {
+		n.into()
 	}
 }
 
+/// Convert an unsigned 256-bit number to balance, use in nomination pools.
 pub struct U256ToBalance;
-
-impl Convert<sp_core::U256, Balance> for U256ToBalance {
+impl sp_runtime::traits::Convert<sp_core::U256, Balance> for U256ToBalance {
 	fn convert(n: sp_core::U256) -> Balance {
-		n.try_into().unwrap_or(Balance::max_value())
+		use frame_support::traits::Defensive;
+		n.try_into().defensive_unwrap_or(Balance::MAX)
 	}
 }
 
@@ -98,7 +176,8 @@ impl Convert<sp_core::U256, Balance> for U256ToBalance {
 /// ```Rust
 /// parameter_types! {
 /// 	// Note that the env variable version parameter cannot be const.
-/// 	pub LaunchPeriod: BlockNumber = prod_or_fast!(100, 1);
+/// 	pub LaunchPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1, "SEL_LAUNCH_PERIOD");
+/// 	pub const VotingPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1 * MINUTES);
 /// }
 /// ```
 #[macro_export]
