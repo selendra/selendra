@@ -19,16 +19,17 @@ precompile-utils = { path = "../utils", default-features = false }
 # Substrate
 parity-scale-codec = { version = "3.6.1", default-features = false, features = ["max-encoded-len"] }
 
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
+frame-support = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
+frame-system = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
+sp-core = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
+sp-io = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
+sp-std = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
 
 # Frontier
 evm = { git = "https://github.com/rust-blockchain/evm", rev = "b7b82c7e1fc57b7449d6dfa6826600de37cc1e65", default-features = false, features = ["with-codec"] }
-fp-evm = { path = "../../../frontier/primitives/evm", default-features = false }
-pallet-evm = { path = "../../../frontier/frame/evm", default-features = false }
+fp-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.1.0", default-features = false }
+pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.1.0", default-features = false }
 
 [dev-dependencies]
 derive_more = { version = "0.99" }
@@ -36,12 +37,12 @@ hex-literal = "0.4.1"
 serde = { version = "1.0.151", features = ["derive"] }
 sha3 = { version = "0.10.1", default-features = false }
 
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", features = ["std"] }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", features = ["std"] }
+pallet-balances = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", features = ["std"] }
+pallet-timestamp = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", features = ["std"] }
 parity-scale-codec = { version = "3.6.1", features = ["max-encoded-len", "std"] }
 precompile-utils = { path ="../utils", features = ["std", "testing"] }
 scale-info = { version = "2.5.0", features = ["derive", "std"] }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", features = ["std"] }
+
 
 [features]
 default = ["std"]
@@ -55,4 +56,5 @@ std = [
 	"sp-core/std",
 	"sp-io/std",
 	"sp-std/std",
+	"sp-runtime/std"
 ]

@@ -33,7 +33,7 @@
 use std::sync::Arc;
 
 use jsonrpsee::RpcModule;
-use sc_client_api::{client::BlockchainEvents, AuxStore, Backend, StorageProvider};
+use sc_client_api::{client::BlockchainEvents, AuxStore, Backend, StorageProvider, UsageProvider,};
 use sc_consensus_babe::BabeWorkerHandle;
 use sc_consensus_grandpa::{
 	FinalityProofProvider, GrandpaJustificationStream, SharedAuthoritySet, SharedVoterState,
@@ -49,6 +49,8 @@ use sp_consensus::SelectChain;
 use sp_consensus_babe::BabeApi;
 use sp_keystore::KeystorePtr;
 use txpool_api::TransactionPool;
+use sp_inherents::CreateInherentDataProviders;
+pub use fc_rpc::pending::ConsensusDataProvider;
 
 mod eth;
 pub use self::eth::{create_eth, overrides_handle, EthDeps};
@@ -76,7 +78,7 @@ pub struct GrandpaDeps<B> {
 }
 
 /// Full client dependencies.
-pub struct FullDeps<C, P, SC, B, A: ChainApi, CT> {
+pub struct FullDeps<C, P, SC, B, A: ChainApi, CT, CIDP> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
@@ -94,11 +96,12 @@ pub struct FullDeps<C, P, SC, B, A: ChainApi, CT> {
 	/// The backend used by the node.
 	pub backend: Arc<B>,
 	/// Ethereum-compatibility specific dependencies.
-	pub eth: EthDeps<C, P, A, CT, Block>,
+	// pub eth: EthDeps<C, P, A, CT, Block, CIDP>,
+	pub eth: EthDeps<Block, C, P, A, CT, CIDP>,
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, SC, B, A, CT>(
+pub fn create_full<C, P, SC, B, A, CT, CIDP>(
 	FullDeps {
 		client,
 		pool,
@@ -109,13 +112,14 @@ pub fn create_full<C, P, SC, B, A, CT>(
 		grandpa,
 		backend,
 		eth,
-	}: FullDeps<C, P, SC, B, A, CT>,
+	}: FullDeps<C, P, SC, B, A, CT, CIDP>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 	pubsub_notification_sinks: Arc<
 		fc_mapping_sync::EthereumBlockNotificationSinks<
 			fc_mapping_sync::EthereumBlockNotification<Block>,
 		>,
 	>,
+	pending_consenus_data_provider: Box<dyn ConsensusDataProvider<Block>>,
 ) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
 where
 	C: ProvideRuntimeApi<Block>
@@ -126,6 +130,7 @@ where
 		+ AuxStore
 		+ HeaderMetadata<Block, Error = BlockChainError>
 		+ BlockchainEvents<Block>
+		+ UsageProvider<Block>
 		+ 'static
 		+ Sync
 		+ Send
@@ -139,8 +144,9 @@ where
 	P: TransactionPool<Block = Block> + 'static,
 	SC: SelectChain<Block> + 'static,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
-	B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
+	B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashingFor<Block>>,
 	A: ChainApi<Block = Block> + 'static,
+	CIDP: CreateInherentDataProviders<Block, ()> + Send + 'static,
 	CT: fp_rpc::ConvertTransaction<<Block as BlockT>::Extrinsic> + Send + Sync + 'static,
 {
 	use frame_rpc_system::{System, SystemApiServer};
@@ -193,12 +199,23 @@ where
 	io.merge(StateMigration::new(client.clone(), backend, deny_unsafe).into_rpc())?;
 	io.merge(Dev::new(client, deny_unsafe).into_rpc())?;
 
+	// // Ethereum compatibility RPCs
+	// // Ethereum compatibility RPCs
+	// let io = create_eth::<_, _, _, _, _, _, _, DefaultEthConfig<C, B>>(
+	// 	io,
+	// 	eth,
+	// 	subscription_task_executor,
+	// 	pubsub_notification_sinks,
+	// 	pending_consenus_data_provider,
+	// )?;
+
 	// Ethereum compatibility RPCs
-	let io = create_eth::<_, _, _, _, _, _, DefaultEthConfig<C, B>>(
+	let io = create_eth::<_, _, _, _, _, _, _, DefaultEthConfig<C, B>>(
 		io,
 		eth,
 		subscription_task_executor,
 		pubsub_notification_sinks,
+		pending_consenus_data_provider,
 	)?;
 
 	Ok(io)

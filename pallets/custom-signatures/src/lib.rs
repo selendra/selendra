@@ -26,12 +26,12 @@ pub mod ethereum;
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{
-		dispatch::{Dispatchable, GetDispatchInfo},
+		dispatch::GetDispatchInfo,
 		pallet_prelude::*,
 		traits::{Currency, ExistenceRequirement, Get, OnUnbalanced, WithdrawReasons},
 	};
 	use frame_system::{ensure_none, pallet_prelude::*};
-	use sp_runtime::traits::{IdentifyAccount, Verify};
+	use sp_runtime::traits::{Dispatchable, IdentifyAccount, Verify};
 	use sp_std::{convert::TryFrom, prelude::*};
 
 	#[pallet::pallet]

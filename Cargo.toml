@@ -1,7 +1,7 @@
 [workspace]
 members = [
 	"rpc",
-	"node",
+	# "node",
 	"primitives",
 	"runtime/common",
 	"runtime/selendra",

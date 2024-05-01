@@ -38,7 +38,7 @@
 
 use fp_evm::{IsPrecompileResult, PrecompileHandle, PrecompileOutput};
 use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::traits::StaticLookup,
 	traits::{
 		fungibles::{
@@ -52,7 +52,7 @@ use precompile_utils::{
 	keccak256, succeed, Address, Bytes, EvmData, EvmDataWriter, EvmResult, FunctionModifier,
 	LogExt, LogsBuilder, PrecompileHandleExt, RuntimeHelper,
 };
-use sp_runtime::traits::{Bounded, Zero};
+use sp_runtime::traits::{Dispatchable, Bounded, Zero};
 
 use sp_core::{Get, MaxEncodedLen, H160, U256};
 use sp_std::{

@@ -21,7 +21,6 @@ pub mod pallet_bags_list;
 pub mod pallet_balances;
 pub mod pallet_bounties;
 pub mod pallet_child_bounties;
-pub mod pallet_contracts;
 pub mod pallet_conviction_voting;
 pub mod pallet_election_provider_multi_phase;
 pub mod pallet_fast_unstake;
