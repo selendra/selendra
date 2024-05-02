@@ -22,7 +22,6 @@
 
 use pallet_ethereum::Transaction as EthereumTransaction;
 use pallet_evm::{FeeCalculator, GasWeightMapping, Runner};
-use pallet_evm_precompile_assets_erc20::AddressToAssetId;
 use pallet_transaction_payment::CurrencyAdapter;
 pub use runtime_common::{
 	impl_runtime_weights, impls::DealWithFees, prod_or_fast, BlockHashCount, BlockLength,
@@ -37,20 +36,20 @@ use frame_election_provider_support::{
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		AsEnsureOriginWithArg, ConstU32, EitherOf, EitherOfDiverse, KeyOwnerProofSystem,
+		ConstU32, EitherOf, EitherOfDiverse, KeyOwnerProofSystem,
 		OnFinalize, PrivilegeCmp, WithdrawReasons,
 	},
 	weights::ConstantMultiplier,
 	PalletId,
 };
-use frame_system::{EnsureRoot, EnsureSigned};
+use frame_system::EnsureRoot;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId};
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_session::historical as session_historical;
 use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
-use parity_scale_codec::{Compact, Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use primitives::{
-	assets::EvmRevertCodeHandler, AccountId, AccountIndex, AssetId, Balance, BlockNumber, Hash,
+	AccountId, AccountIndex, Balance, BlockNumber, Hash,
 	Moment, Nonce, Signature,
 };
 use sp_core::{OpaqueMetadata, H160, H256, U256};
@@ -868,58 +867,6 @@ impl pallet_recovery::Config for Runtime {
 	type RecoveryDeposit = RecoveryDeposit;
 }
 
-impl AddressToAssetId<AssetId> for Runtime {
-	fn address_to_asset_id(address: H160) -> Option<AssetId> {
-		let mut data = [0u8; 16];
-		let address_bytes: [u8; 20] = address.into();
-		if evm::precompiles::ASSET_PRECOMPILE_ADDRESS_PREFIX.eq(&address_bytes[0..4]) {
-			data.copy_from_slice(&address_bytes[4..20]);
-			Some(u128::from_be_bytes(data))
-		} else {
-			None
-		}
-	}
-
-	fn asset_id_to_address(asset_id: AssetId) -> H160 {
-		let mut data = [0u8; 20];
-		data[0..4].copy_from_slice(evm::precompiles::ASSET_PRECOMPILE_ADDRESS_PREFIX);
-		data[4..20].copy_from_slice(&asset_id.to_be_bytes());
-		H160::from(data)
-	}
-}
-
-parameter_types! {
-	pub const AssetDeposit: Balance = 10 * DOLLARS;
-	pub const AssetsStringLimit: u32 = 50;
-	/// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
-	pub const MetadataDepositBase: Balance = deposit(1, 68);
-	pub const MetadataDepositPerByte: Balance = deposit(0, 1);
-	pub const AssetAccountDeposit: Balance = deposit(1, 18);
-}
-
-impl pallet_assets::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Balance = Balance;
-	type AssetId = AssetId;
-	type Currency = Balances;
-	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
-	type ForceOrigin = EitherOf<EnsureRoot<AccountId>, GeneralAdmin>;
-	type AssetDeposit = AssetDeposit;
-	type MetadataDepositBase = MetadataDepositBase;
-	type MetadataDepositPerByte = MetadataDepositPerByte;
-	type AssetAccountDeposit = AssetAccountDeposit;
-	type ApprovalDeposit = ExistentialDeposit;
-	type StringLimit = AssetsStringLimit;
-	type Freezer = ();
-	type Extra = ();
-	type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
-	type RemoveItemsLimit = ConstU32<1000>;
-	type AssetIdParameter = Compact<AssetId>;
-	type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
-	#[cfg(feature = "runtime-benchmarks")]
-	type BenchmarkHelper = ();
-}
-
 construct_runtime! {
 	pub enum Runtime
 	{
@@ -930,7 +877,6 @@ construct_runtime! {
 		Preimage: pallet_preimage = 4,
 		Balances: pallet_balances = 5,
 		TransactionPayment: pallet_transaction_payment = 6,
-		Assets: pallet_assets = 7,
 
 		// Babe must be before session.
 		Authorship: pallet_authorship = 10,
@@ -1130,7 +1076,6 @@ mod benches {
 		[pallet_conviction_voting, ConvictionVoting]
 		[pallet_referenda, Referenda]
 		[pallet_whitelist, Whitelist]
-		[pallet_assets, Assets]
 	);
 }
 

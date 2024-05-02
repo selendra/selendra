@@ -20,7 +20,6 @@ use pallet_evm::{
 	ExitRevert, IsPrecompileResult, Precompile, PrecompileFailure, PrecompileHandle,
 	PrecompileResult, PrecompileSet,
 };
-use pallet_evm_precompile_assets_erc20::{AddressToAssetId, Erc20AssetsPrecompileSet};
 use pallet_evm_precompile_batch::BatchPrecompile;
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
@@ -29,14 +28,8 @@ use pallet_evm_precompile_ed25519::Ed25519Verify;
 use pallet_evm_precompile_modexp::Modexp;
 use pallet_evm_precompile_sha3fips::Sha3FIPS256;
 use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripemd160, Sha256};
-use pallet_evm_precompile_sr25519::Sr25519Precompile;
-use pallet_evm_precompile_substrate_ecdsa::SubstrateEcdsaPrecompile;
 use sp_core::H160;
 use sp_std::{fmt::Debug, marker::PhantomData};
-
-/// The asset precompile address prefix. Addresses that match against this prefix will be routed
-/// to Erc20AssetsPrecompileSet
-pub const ASSET_PRECOMPILE_ADDRESS_PREFIX: &[u8] = &[255u8; 4];
 
 /// The PrecompileSet installed in the Astar runtime.
 #[derive(Debug, Default, Clone, Copy)]
@@ -61,12 +54,8 @@ impl<R> SelendraPrecompiles<R> {
 /// 1024-2047 Precompiles that are not in Ethereum Mainnet
 impl<R> PrecompileSet for SelendraPrecompiles<R>
 where
-	Erc20AssetsPrecompileSet<R>: PrecompileSet,
 	BatchPrecompile<R>: Precompile,
 	Dispatch<R>: Precompile,
-	R: pallet_evm::Config
-		+ pallet_assets::Config
-		+ AddressToAssetId<<R as pallet_assets::Config>::AssetId>,
 {
 	fn execute(&self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
 		let address = handle.code_address();
@@ -96,29 +85,16 @@ where
 			a if a == hash(1025) => Some(Dispatch::<R>::execute(handle)),
 			a if a == hash(1026) => Some(ECRecoverPublicKey::execute(handle)),
 			a if a == hash(1027) => Some(Ed25519Verify::execute(handle)),
-			// Sr25519     0x5002
-			a if a == hash(20482) => Some(Sr25519Precompile::<R>::execute(handle)),
-			// SubstrateEcdsa 0x5003
-			a if a == hash(20483) => Some(SubstrateEcdsaPrecompile::<R>::execute(handle)),
 			// Batch 0x5006
 			a if a == hash(20486) => Some(BatchPrecompile::<R>::execute(handle)),
-			// If the address matches asset prefix, the we route through the asset precompile set
-			a if &a.to_fixed_bytes()[0..4] == ASSET_PRECOMPILE_ADDRESS_PREFIX =>
-				Erc20AssetsPrecompileSet::<R>::new().execute(handle),
 			// Default
 			_ => None,
 		}
 	}
 
-	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
-		let assets_precompile =
-			match Erc20AssetsPrecompileSet::<R>::new().is_precompile(address, gas) {
-				IsPrecompileResult::Answer { is_precompile, .. } => is_precompile,
-				_ => false,
-			};
-
+	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
 		IsPrecompileResult::Answer {
-			is_precompile: assets_precompile || Self::used_addresses().any(|x| x == address),
+			is_precompile: Self::used_addresses().any(|x| x == address),
 			extra_cost: 0,
 		}
 	}

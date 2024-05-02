@@ -345,7 +345,6 @@ pub fn testnet_genesis(
 		grandpa: Default::default(),
 		treasury: Default::default(),
 		vesting: Default::default(),
-		assets: Default::default(),
 		transaction_payment: Default::default(),
 		evm: EVMConfig {
 			// We need _some_ code inserted at the precompile address so that

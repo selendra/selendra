@@ -7,7 +7,6 @@ members = [
 	"runtime/common",
 	"runtime/selendra",
 	"runtime/selendra/constants",
-	"pallets/precompiles/*",
 	"pallets/custom-signatures"
 ]
 

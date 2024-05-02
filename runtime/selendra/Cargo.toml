@@ -40,7 +40,6 @@ frame-support = { git = "https://github.com/paritytech/polkadot-sdk", branch = "
 frame-system = {git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
 frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
 
-pallet-assets = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
 pallet-authority-discovery = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
 pallet-authorship = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
 pallet-babe = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
@@ -100,10 +99,7 @@ pallet-base-fee = { git = "https://github.com/polkadot-evm/frontier", branch = "
 pallet-ethereum = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.1.0", default-features = false }
 pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.1.0", default-features = false }
 pallet-custom-signatures = { path = "../../pallets/custom-signatures", default-features = false  }
-pallet-evm-precompile-assets-erc20 = { path = "../../pallets/precompiles/assets-erc20", default-features = false  }
 pallet-evm-precompile-batch = { path = "../../pallets/precompiles/batch", default-features = false }
-pallet-evm-precompile-sr25519 = { path = "../../pallets/precompiles/sr25519", default-features = false }
-pallet-evm-precompile-substrate-ecdsa = { path = "../../pallets/precompiles/substrate-ecdsa", default-features = false }
 pallet-evm-precompile-blake2 = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.1.0", default-features = false }
 pallet-evm-precompile-bn128 = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.1.0", default-features = false }
 pallet-evm-precompile-dispatch = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.1.0", default-features = false }
@@ -162,7 +158,6 @@ std = [
 	"frame-executive/std",
 	"frame-system/std",
 	"frame-system-rpc-runtime-api/std",
-	"pallet-assets/std",
 	"pallet-authority-discovery/std",
 	"pallet-authorship/std",
 	"pallet-bags-list/std",
@@ -205,10 +200,7 @@ std = [
 	"pallet-ethereum/std",
 	"pallet-evm/std",
 	"pallet-custom-signatures/std",
-	"pallet-evm-precompile-assets-erc20/std",
 	"pallet-evm-precompile-batch/std",
-	"pallet-evm-precompile-sr25519/std",
-	"pallet-evm-precompile-substrate-ecdsa/std",
 	"pallet-evm-precompile-blake2/std",
 	"pallet-evm-precompile-bn128/std",
 	"pallet-evm-precompile-dispatch/std",
@@ -238,7 +230,6 @@ runtime-benchmarks = [
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-identity/runtime-benchmarks",
 	"pallet-im-online/runtime-benchmarks",
-	"pallet-assets/runtime-benchmarks",
 	"pallet-contracts/runtime-benchmarks",
 	"pallet-indices/runtime-benchmarks",
 	"pallet-membership/runtime-benchmarks",
@@ -271,7 +262,6 @@ try-runtime = [
 	"pallet-authorship/try-runtime",
 	"pallet-balances/try-runtime",
 	"pallet-bags-list/try-runtime",
-	"pallet-assets/try-runtime",
 	"pallet-bounties/try-runtime",
 	"pallet-child-bounties/try-runtime",
 	"pallet-conviction-voting/try-runtime",
