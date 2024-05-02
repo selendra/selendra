@@ -368,6 +368,7 @@ pub fn testnet_genesis(
 			sp_core::U256::from(1_000_000_000),
 			sp_runtime::Permill::zero(),
 		),
+		dynamic_fee: Default::default(),
 		ethereum: Default::default(),
 	}
 }

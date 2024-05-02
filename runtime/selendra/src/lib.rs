@@ -917,6 +917,7 @@ construct_runtime! {
 		Ethereum: pallet_ethereum = 71,
 		BaseFee: pallet_base_fee = 72,
 		EthCall: pallet_custom_signatures = 73,
+		DynamicFee: pallet_dynamic_fee = 74,
 
 		Sudo: pallet_sudo = 200,
 	}

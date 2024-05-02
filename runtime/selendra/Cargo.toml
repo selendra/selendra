@@ -96,6 +96,7 @@ fp-rpc = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-
 fp-self-contained = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.1.0", default-features = false, features = ["serde"] }
 
 pallet-base-fee = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.1.0", default-features = false }
+pallet-dynamic-fee = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.1.0", default-features = false }
 pallet-ethereum = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.1.0", default-features = false }
 pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.1.0", default-features = false }
 pallet-custom-signatures = { path = "../../pallets/custom-signatures", default-features = false  }
@@ -198,6 +199,7 @@ std = [
 	"pallet-recovery/std",
 	"pallet-base-fee/std",
 	"pallet-ethereum/std",
+	"pallet-dynamic-fee/std",
 	"pallet-evm/std",
 	"pallet-custom-signatures/std",
 	"pallet-evm-precompile-batch/std",
