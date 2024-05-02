@@ -38,13 +38,14 @@
 use ::evm::{ExitError, ExitReason};
 use fp_evm::{Context, Log, PrecompileFailure, PrecompileHandle, Transfer};
 use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
 };
 use pallet_evm::{Precompile, PrecompileOutput};
 use precompile_utils::{bytes::BoundedBytes, data::BoundedVec, *};
 use sp_core::{H160, U256};
 use sp_std::{iter::repeat, marker::PhantomData, vec, vec::Vec};
+use sp_runtime::traits::Dispatchable;
 
 // #[cfg(test)]
 // mod mock;

@@ -18,8 +18,6 @@
 
 //! Core Selendra types.
 
-pub mod assets;
-
 use sp_runtime::{
 	generic,
 	traits::{IdentifyAccount, Verify},
@@ -77,15 +75,6 @@ pub type BlockId = generic::BlockId<Block>;
 
 /// Opaque, encoded, unchecked extrinsic.
 pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-
-/// Id used for identifying assets.
-///
-/// AssetId allocation:
-/// [1; 2^32-1]     Custom user assets (permissionless)
-/// [2^32; 2^64-1]  Statemine assets (simple map)
-/// [2^64; 2^128-1] Ecosystem assets
-/// 2^128-1         Relay chain token (KSM)
-pub type AssetId = u128;
 
 /// Digest item type.
 pub type DigestItem = generic::DigestItem;

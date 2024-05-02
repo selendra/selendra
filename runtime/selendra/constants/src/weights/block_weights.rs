@@ -38,19 +38,19 @@ use sp_core::parameter_types;
 use sp_weights::{constants::WEIGHT_REF_TIME_PER_NANOS, Weight};
 
 parameter_types! {
-	/// Time to execute an empty block.
-	/// Calculated by multiplying the *Average* with `1.0` and adding `0`.
-	///
-	/// Stats nanoseconds:
-	///   Min, Max: 13_546_462, 14_258_156
-	///   Average:  13_806_190
-	///   Median:   13_798_575
-	///   Std-Dev:  141568.11
-	///
-	/// Percentiles nanoseconds:
-	///   99th: 14_144_016
-	///   95th: 14_039_432
-	///   75th: 13_904_965
+	// Time to execute an empty block.
+	// Calculated by multiplying the *Average* with `1.0` and adding `0`.
+	//
+	// Stats nanoseconds:
+	//   Min, Max: 13_546_462, 14_258_156
+	//   Average:  13_806_190
+	//   Median:   13_798_575
+	//   Std-Dev:  141568.11
+	//
+	// Percentiles nanoseconds:
+	//   99th: 14_144_016
+	//   95th: 14_039_432
+	//   75th: 13_904_965
 	pub const BlockExecutionWeight: Weight =
 		Weight::from_parts(WEIGHT_REF_TIME_PER_NANOS.saturating_mul(13_806_190), 0);
 }
@@ -59,7 +59,7 @@ parameter_types! {
 mod test_weights {
 	use sp_weights::constants;
 
-	/// Checks that the weight exists and is sane.
+	// Checks that the weight exists and is sane.
 	// NOTE: If this test fails but you are sure that the generated values are fine,
 	// you can delete it.
 	#[test]

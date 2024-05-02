@@ -345,7 +345,6 @@ pub fn testnet_genesis(
 		grandpa: Default::default(),
 		treasury: Default::default(),
 		vesting: Default::default(),
-		assets: Default::default(),
 		transaction_payment: Default::default(),
 		evm: EVMConfig {
 			// We need _some_ code inserted at the precompile address so that
@@ -369,6 +368,7 @@ pub fn testnet_genesis(
 			sp_core::U256::from(1_000_000_000),
 			sp_runtime::Permill::zero(),
 		),
+		dynamic_fee: Default::default(),
 		ethereum: Default::default(),
 	}
 }

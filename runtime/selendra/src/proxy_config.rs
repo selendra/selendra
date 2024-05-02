@@ -68,7 +68,6 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::NonTransfer => matches!(
 				c,
 				RuntimeCall::System(..) |
-				RuntimeCall::Assets(..) |
 				RuntimeCall::Scheduler(..) |
 				RuntimeCall::Babe(..) |
 				RuntimeCall::Timestamp(..) |

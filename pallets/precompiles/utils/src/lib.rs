@@ -31,13 +31,14 @@ use fp_evm::{
 	PrecompileOutput,
 };
 use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	pallet_prelude::Weight,
 	traits::Get,
 };
 use pallet_evm::{GasWeightMapping, Log};
 use sp_core::{H160, H256, U256};
 use sp_std::{marker::PhantomData, vec, vec::Vec};
+use sp_runtime::traits::Dispatchable;
 
 pub mod bytes;
 pub mod data;

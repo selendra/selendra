@@ -28,12 +28,12 @@ use codec::Encode;
 use frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE;
 use frame_system_rpc_runtime_api::AccountNonceApi;
 use futures::prelude::*;
-use fc_rpc::{EthTask};
+use fc_rpc::EthTask;
 use sc_client_api::{Backend, BlockBackend};
 use sc_consensus_babe::{self, SlotProportion};
 use sc_executor::NativeElseWasmExecutor;
 use sc_network::{event::Event, NetworkEventStream, NetworkService};
-use sc_network_common::sync::warp::WarpSyncParams;
+use sc_network_sync::warp::WarpSyncParams;
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
 use sc_service::{config::Configuration, error::Error as ServiceError, RpcHandlers, TaskManager};
@@ -43,11 +43,11 @@ use selendra_primitives::Block;
 use selendra_runtime::{RuntimeApi, TransactionConverter};
 use sp_api::ProvideRuntimeApi;
 use sc_client_api::BlockchainEvents;
-use sp_core::crypto::Pair;
+use sp_core::{U256, crypto::Pair};
 use sp_runtime::{generic, traits::Block as BlockT, SaturatedConversion};
 use std::{
-	path::{Path},
-	sync::{Arc},
+	path::Path,
+	sync::Arc,
 	time::Duration,
 };
 
@@ -77,6 +77,8 @@ type FullGrandpaBlockImport =
 
 /// The transaction pool type defintion.
 pub type TransactionPool = sc_transaction_pool::FullPool<Block, FullClient>;
+
+const GRANDPA_JUSTIFICATION_PERIOD: u32 = 512;
 
 /// Fetch the nonce of the given `account` from the chain state.
 ///
@@ -161,7 +163,7 @@ pub fn new_partial(
 		FullClient,
 		FullBackend,
 		FullSelectChain,
-		sc_consensus::DefaultImportQueue<Block, FullClient>,
+		sc_consensus::DefaultImportQueue<Block>,
 		sc_transaction_pool::FullPool<Block, FullClient>,
 		(
 			sc_consensus_babe::BabeBlockImport<Block, FullClient, FullGrandpaBlockImport>,
@@ -215,6 +217,7 @@ pub fn new_partial(
 
 	let (grandpa_block_import, grandpa_link) = grandpa::block_import(
 		client.clone(),
+		GRANDPA_JUSTIFICATION_PERIOD,
 		&(client.clone() as Arc<_>),
 		select_chain.clone(),
 		telemetry.as_ref().map(|x| x.handle()),
@@ -409,6 +412,24 @@ pub fn new_full_base(
 
 	let pubsub_notification = pubsub_notification_sinks.clone();
 
+	let enable_dev_signer = eth_config.enable_dev_signer;
+
+	let slot_duration = babe_link.config().slot_duration();
+
+	let target_gas_price = eth_config.target_gas_price;
+
+	let pending_create_inherent_data_providers = move |_, ()| async move {
+		let current = sp_timestamp::InherentDataProvider::from_system_time();
+		let next_slot = current.timestamp().as_millis() + slot_duration.as_millis();
+		let timestamp = sp_timestamp::InherentDataProvider::new(next_slot.into());
+		let slot = sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+			*timestamp,
+			slot_duration,
+		);
+		let dynamic_fee = fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
+		Ok((slot, timestamp, dynamic_fee))
+	};
+
 	// for ethereum-compatibility rpc.
 	config.rpc_id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
 	let eth_rpc_params = selendra_rpc::EthDeps {
@@ -417,6 +438,7 @@ pub fn new_full_base(
 		graph: transaction_pool.pool().clone(),
 		converter: Some(TransactionConverter),
 		is_authority: config.role.is_authority(),
+		enable_dev_signer,
 		network: network.clone(),
 		sync: sync_service.clone(),
 		frontier_backend: match frontier_backend.clone() {
@@ -437,6 +459,8 @@ pub fn new_full_base(
 		fee_history_cache_limit,
 		execute_gas_limit_multiplier: eth_config.execute_gas_limit_multiplier,
 		forced_parent_hashes: None,
+		pending_create_inherent_data_providers: pending_create_inherent_data_providers.clone(),
+		pending_consensus_data_provider: Some(selendra_rpc::BabeConsensusDataProvider::new()),
 	};
 
 	let (rpc_extensions_builder, rpc_setup) = {
@@ -682,7 +706,7 @@ pub fn new_full_base(
 	let grandpa_config = grandpa::Config {
 		// FIXME #1578 make this available through chainspec
 		gossip_duration: std::time::Duration::from_millis(333),
-		justification_period: 512,
+		justification_generation_period: GRANDPA_JUSTIFICATION_PERIOD,
 		name: Some(name),
 		observer_enabled: false,
 		keystore,
