@@ -1,7 +1,8 @@
 [workspace]
+resolver = "1"
 members = [
 	"rpc",
-	# "node",
+	"node",
 	"primitives",
 	"runtime/common",
 	"runtime/selendra",

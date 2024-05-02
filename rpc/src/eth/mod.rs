@@ -20,13 +20,15 @@ use sp_inherents::CreateInherentDataProviders;
 use sp_runtime::traits::Block as BlockT;
 // Frontier
 use fc_rpc::{
-	pending::ConsensusDataProvider, Eth, EthApiServer, EthDevSigner, EthFilter,
+	Eth, EthApiServer, EthDevSigner, EthFilter,
 	EthFilterApiServer, EthPubSub, EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3,
 	Web3ApiServer, EthBlockDataCacheTask, EthConfig, OverrideHandle
 };
 pub use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
 pub use fc_storage::overrides_handle;
 use fp_rpc::{ConvertTransaction, ConvertTransactionRuntimeApi, EthereumRuntimeRPCApi};
+
+pub mod consensus_data_provider;
 
 /// Extra dependencies for Ethereum compatibility.
 pub struct EthDeps<B: BlockT, C, P, A: ChainApi, CT, CIDP> {
@@ -67,33 +69,36 @@ pub struct EthDeps<B: BlockT, C, P, A: ChainApi, CT, CIDP> {
 	pub forced_parent_hashes: Option<BTreeMap<H256, H256>>,
 	/// Something that can create the inherent data providers for pending state
 	pub pending_create_inherent_data_providers: CIDP,
+
+	pub pending_consensus_data_provider: Option<consensus_data_provider::BabeConsensusDataProvider>,
 }
 
-// // impl<C, P, A: ChainApi, CT: Clone, B: BlockT> Clone for EthDeps<C, P, A, CT, B> {}
-// impl<B: BlockT, C, P, A: ChainApi, CT, CIDP> Clone for EthDeps<B, C, A, CT, B, CIDP> {
-// 	fn clone(&self) -> Self {
-// 		Self {
-// 			client: self.client.clone(),
-// 			pool: self.pool.clone(),
-// 			graph: self.graph.clone(),
-// 			converter: self.converter.clone(),
-// 			is_authority: self.is_authority,
-// 			enable_dev_signer: self.enable_dev_signer.clone(),
-// 			network: self.network.clone(),
-// 			sync: self.sync.clone(),
-// 			frontier_backend: self.frontier_backend.clone(),
-// 			overrides: self.overrides.clone(),
-// 			block_data_cache: self.block_data_cache.clone(),
-// 			filter_pool: self.filter_pool.clone(),
-// 			max_past_logs: self.max_past_logs,
-// 			fee_history_cache: self.fee_history_cache.clone(),
-// 			fee_history_cache_limit: self.fee_history_cache_limit,
-// 			execute_gas_limit_multiplier: self.execute_gas_limit_multiplier,
-// 			forced_parent_hashes: self.forced_parent_hashes.clone(),
-// 			pending_create_inherent_data_providers: self.pending_create_inherent_data_providers
-// 		}
-// 	}
-// }
+// impl<C, P, A: ChainApi, CT: Clone, B: BlockT> Clone for EthDeps<C, P, A, CT, B> {}
+impl<B: BlockT, C, P, A: ChainApi, CT: Clone, CIDP: Clone> Clone for EthDeps<B, C, P, A, CT, CIDP> {
+	fn clone(&self) -> Self {
+		Self {
+			client: self.client.clone(),
+			pool: self.pool.clone(),
+			graph: self.graph.clone(),
+			converter: self.converter.clone(),
+			is_authority: self.is_authority,
+			enable_dev_signer: self.enable_dev_signer.clone(),
+			network: self.network.clone(),
+			sync: self.sync.clone(),
+			frontier_backend: self.frontier_backend.clone(),
+			overrides: self.overrides.clone(),
+			block_data_cache: self.block_data_cache.clone(),
+			filter_pool: self.filter_pool.clone(),
+			max_past_logs: self.max_past_logs,
+			fee_history_cache: self.fee_history_cache.clone(),
+			fee_history_cache_limit: self.fee_history_cache_limit,
+			execute_gas_limit_multiplier: self.execute_gas_limit_multiplier,
+			forced_parent_hashes: self.forced_parent_hashes.clone(),
+			pending_create_inherent_data_providers: self.pending_create_inherent_data_providers.clone(),
+			pending_consensus_data_provider: self.pending_consensus_data_provider.clone()
+		}
+	}
+}
 
 /// Instantiate Ethereum-compatible RPC extensions.
 pub fn create_eth<B, C, BE, P, A, CT, CIDP, EC>(
@@ -105,7 +110,6 @@ pub fn create_eth<B, C, BE, P, A, CT, CIDP, EC>(
 			fc_mapping_sync::EthereumBlockNotification<B>,
 		>,
 	>,
-	pending_consenus_data_provider: Box<dyn ConsensusDataProvider<B>>,
 ) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
 where
 	B: BlockT<Hash = H256>,
@@ -142,6 +146,7 @@ where
 		execute_gas_limit_multiplier,
 		forced_parent_hashes,
 		pending_create_inherent_data_providers,
+		pending_consensus_data_provider
 	} = deps;
 
 	let mut signers = Vec::new();
@@ -166,7 +171,7 @@ where
 			execute_gas_limit_multiplier,
 			forced_parent_hashes,
 			pending_create_inherent_data_providers,
-			Some(pending_consenus_data_provider),
+			pending_consensus_data_provider.map(|p| Box::new(p) as _), // TODO
 		)
 		.replace_config::<EC>()
 		.into_rpc(),

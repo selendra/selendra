@@ -5,6 +5,7 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 
 [dependencies]
+thiserror = "1.0.59"
 jsonrpsee = { version = "0.16.2", features = ["server"] }
 sc-client-api = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
 sp-blockchain = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
@@ -38,7 +39,6 @@ substrate-state-trie-migration-rpc = { git = "https://github.com/paritytech/polk
 
 selendra-primitives = { path = "../primitives" }
 selendra-runtime = { path = "../runtime/selendra", features = ["std"] }
-
 
 # Frontier
 fc-cli = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.1.0" }

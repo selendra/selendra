@@ -53,7 +53,8 @@ use sp_inherents::CreateInherentDataProviders;
 pub use fc_rpc::pending::ConsensusDataProvider;
 
 mod eth;
-pub use self::eth::{create_eth, overrides_handle, EthDeps};
+
+pub use self::eth::{create_eth, overrides_handle, EthDeps, consensus_data_provider::BabeConsensusDataProvider};
 
 /// Extra dependencies for BABE.
 pub struct BabeDeps {
@@ -119,7 +120,6 @@ pub fn create_full<C, P, SC, B, A, CT, CIDP>(
 			fc_mapping_sync::EthereumBlockNotification<Block>,
 		>,
 	>,
-	pending_consenus_data_provider: Box<dyn ConsensusDataProvider<Block>>,
 ) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
 where
 	C: ProvideRuntimeApi<Block>
@@ -199,23 +199,12 @@ where
 	io.merge(StateMigration::new(client.clone(), backend, deny_unsafe).into_rpc())?;
 	io.merge(Dev::new(client, deny_unsafe).into_rpc())?;
 
-	// // Ethereum compatibility RPCs
-	// // Ethereum compatibility RPCs
-	// let io = create_eth::<_, _, _, _, _, _, _, DefaultEthConfig<C, B>>(
-	// 	io,
-	// 	eth,
-	// 	subscription_task_executor,
-	// 	pubsub_notification_sinks,
-	// 	pending_consenus_data_provider,
-	// )?;
-
 	// Ethereum compatibility RPCs
 	let io = create_eth::<_, _, _, _, _, _, _, DefaultEthConfig<C, B>>(
 		io,
 		eth,
 		subscription_task_executor,
 		pubsub_notification_sinks,
-		pending_consenus_data_provider,
 	)?;
 
 	Ok(io)
