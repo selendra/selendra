@@ -20,7 +20,7 @@ use pallet_evm::{
 	ExitRevert, IsPrecompileResult, Precompile, PrecompileFailure, PrecompileHandle,
 	PrecompileResult, PrecompileSet,
 };
-use pallet_evm_precompile_batch::BatchPrecompile;
+
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
 use pallet_evm_precompile_dispatch::Dispatch;
@@ -54,7 +54,6 @@ impl<R> SelendraPrecompiles<R> {
 /// 1024-2047 Precompiles that are not in Ethereum Mainnet
 impl<R> PrecompileSet for SelendraPrecompiles<R>
 where
-	BatchPrecompile<R>: Precompile,
 	Dispatch<R>: Precompile,
 {
 	fn execute(&self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
@@ -85,8 +84,6 @@ where
 			a if a == hash(1025) => Some(Dispatch::<R>::execute(handle)),
 			a if a == hash(1026) => Some(ECRecoverPublicKey::execute(handle)),
 			a if a == hash(1027) => Some(Ed25519Verify::execute(handle)),
-			// Batch 0x5006
-			a if a == hash(20486) => Some(BatchPrecompile::<R>::execute(handle)),
 			// Default
 			_ => None,
 		}

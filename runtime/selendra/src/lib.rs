@@ -23,6 +23,7 @@
 use pallet_ethereum::Transaction as EthereumTransaction;
 use pallet_evm::{FeeCalculator, GasWeightMapping, Runner};
 use pallet_transaction_payment::CurrencyAdapter;
+use pallet_identity::simple::IdentityInfo;
 pub use runtime_common::{
 	impl_runtime_weights, impls::DealWithFees, prod_or_fast, BlockHashCount, BlockLength,
 	CurrencyToVote, SlowAdjustingFeeUpdate,
@@ -36,8 +37,8 @@ use frame_election_provider_support::{
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, EitherOf, EitherOfDiverse, KeyOwnerProofSystem,
-		OnFinalize, PrivilegeCmp, WithdrawReasons,
+		fungible::HoldConsideration, ConstU32, EitherOf, EitherOfDiverse, KeyOwnerProofSystem,
+		OnFinalize, PrivilegeCmp, WithdrawReasons, LinearStoragePrice, tokens::{PayFromAccount, UnityAssetBalanceConversion}
 	},
 	weights::ConstantMultiplier,
 	PalletId,
@@ -77,7 +78,7 @@ pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
 // #[cfg(feature = "runtime-benchmarks")]
 // use pallet_contracts::NoopMigration;
-pub use pallet_election_provider_multi_phase::Call as EPMCall;
+pub use pallet_election_provider_multi_phase::{GeometricDepositBase, Call as EPMCall};
 #[cfg(feature = "std")]
 pub use pallet_staking::StakerStatus;
 use pallet_staking::UseValidatorsMap;
@@ -231,18 +232,22 @@ impl pallet_scheduler::Config for Runtime {
 }
 
 parameter_types! {
-	pub const PreimageMaxSize: u32 = 4096 * 1024;
 	pub const PreimageBaseDeposit: Balance = deposit(2, 64);
 	pub const PreimageByteDeposit: Balance = deposit(0, 1);
+	pub const PreimageHoldReason: RuntimeHoldReason = RuntimeHoldReason::Preimage(pallet_preimage::HoldReason::Preimage);
 }
 
 impl pallet_preimage::Config for Runtime {
-	type WeightInfo = weights::pallet_preimage::WeightInfo<Runtime>;
+	type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureRoot<AccountId>;
-	type BaseDeposit = PreimageBaseDeposit;
-	type ByteDeposit = PreimageByteDeposit;
+	type Consideration = HoldConsideration<
+		AccountId,
+		Balances,
+		PreimageHoldReason,
+		LinearStoragePrice<PreimageBaseDeposit, PreimageByteDeposit, Balance>,
+	>;
 }
 
 parameter_types! {
@@ -307,6 +312,7 @@ impl pallet_balances::Config for Runtime {
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = weights::pallet_balances::WeightInfo<Runtime>;
 	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type FreezeIdentifier = ();
 	type MaxHolds = ConstU32<0>;
 	type MaxFreezes = ConstU32<0>;
@@ -386,8 +392,9 @@ parameter_types! {
 	// signed config
 	pub const SignedMaxSubmissions: u32 = 16;
 	pub const SignedMaxRefunds: u32 = 16 / 4;
-	pub const SignedDepositBase: Balance = deposit(2, 0);
+	pub const SignedFixedDeposit: Balance = deposit(2, 0);
 	pub const SignedDepositByte: Balance = deposit(0, 10) / 1024;
+	pub const SignedDepositIncreaseFactor: Percent = Percent::from_percent(10);
 	pub SignedRewardBase: Balance = 1 * DOLLARS;
 	pub BetterUnsignedThreshold: Perbill = Perbill::from_rational(5u32, 10_000);
 
@@ -491,7 +498,7 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
 	type SignedMaxSubmissions = SignedMaxSubmissions;
 	type SignedMaxRefunds = SignedMaxRefunds;
 	type SignedRewardBase = SignedRewardBase;
-	type SignedDepositBase = SignedDepositBase;
+	type SignedDepositBase = GeometricDepositBase<Balance, SignedFixedDeposit, SignedDepositIncreaseFactor>;
 	type SignedDepositByte = SignedDepositByte;
 	type SignedDepositWeight = ();
 	type SignedMaxWeight =
@@ -619,6 +626,7 @@ impl pallet_identity::Config for Runtime {
 	type MaxSubAccounts = MaxSubAccounts;
 	type MaxAdditionalFields = MaxAdditionalFields;
 	type MaxRegistrars = MaxRegistrars;
+	type IdentityInformation = IdentityInfo<MaxAdditionalFields>;
 	type Slashed = Treasury;
 	type ForceOrigin = EitherOf<EnsureRoot<Self::AccountId>, GeneralAdmin>;
 	type RegistrarOrigin = EitherOf<EnsureRoot<Self::AccountId>, GeneralAdmin>;
@@ -626,6 +634,7 @@ impl pallet_identity::Config for Runtime {
 }
 
 parameter_types! {
+	pub TreasuryAccount: AccountId = Treasury::account_id();
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = 100 * DOLLARS;
 	pub const ProposalBondMaximum: Balance = 500 * DOLLARS;
@@ -641,6 +650,7 @@ parameter_types! {
 	pub const MaxAuthorities: u32 = 100_000;
 	pub const MaxKeys: u32 = 10_000;
 	pub const MaxPeerInHeartbeats: u32 = 10_000;
+	pub const SpendPayoutPeriod: BlockNumber = 30 * DAYS;
 }
 
 impl pallet_treasury::Config for Runtime {
@@ -656,9 +666,15 @@ impl pallet_treasury::Config for Runtime {
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
+	type AssetKind = ();
+	type Beneficiary = AccountId;
+	type BeneficiaryLookup = Indices;
+	type Paymaster = PayFromAccount<Balances, TreasuryAccount>;
+	type BalanceConverter = UnityAssetBalanceConversion;
+	type PayoutPeriod = SpendPayoutPeriod;
 	type SpendFunds = Bounties;
 	type MaxApprovals = MaxApprovals;
-	type WeightInfo = weights::pallet_treasury::WeightInfo<Runtime>;
+	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
 	type SpendOrigin = TreasurySpender;
 }
 

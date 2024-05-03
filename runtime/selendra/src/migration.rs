@@ -13,6 +13,7 @@ pub mod migrations {
 	/// Unreleased migrations. Add new ones here:
 	pub type Unreleased = (
 		pallet_im_online::migration::v1::Migration<Runtime>,
+		pallet_referenda::migration::v1::MigrateV0ToV1<Runtime, ()>,
 	);
 }
 
