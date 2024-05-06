@@ -33,6 +33,7 @@ sp-core = { git = "https://github.com/paritytech/polkadot-sdk", branch = "releas
 sp-session = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
 sp-version = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
 sp-npos-elections = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
+sp-genesis-builder = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
 
 frame-election-provider-support = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
 frame-executive = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
@@ -92,6 +93,7 @@ selendra-runtime-constants = { package = "selendra-runtime-constants", path = ".
 
 # Evm and Frontier
 fp-rpc = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.6.0", default-features = false }
+fp-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.6.0", default-features = false }
 fp-self-contained = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.6.0", default-features = false, features = ["serde"] }
 
 pallet-base-fee = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.6.0", default-features = false }
@@ -147,9 +149,11 @@ std = [
 	"sp-staking/std",
 	"sp-version/std",
 	"sp-npos-elections/std",
+	"sp-genesis-builder/std",
 	"babe-primitives/std",
 	"sp-session/std",
 	"fp-rpc/std",
+	"fp-evm/std",
 	"fp-self-contained/std",
 	"frame-try-runtime/std",
 	"frame-election-provider-support/std",

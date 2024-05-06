@@ -20,8 +20,7 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "512"]
 
-use pallet_ethereum::Transaction as EthereumTransaction;
-use pallet_evm::{FeeCalculator, GasWeightMapping, Runner};
+use pallet_evm::{FeeCalculator, Runner};
 use pallet_transaction_payment::CurrencyAdapter;
 use pallet_identity::legacy::IdentityInfo;
 pub use runtime_common::{
@@ -36,6 +35,7 @@ use frame_election_provider_support::{
 };
 use frame_support::{
 	construct_runtime, parameter_types, derive_impl,
+	genesis_builder_helper::{build_config, create_default_config},
 	traits::{
 		fungible::HoldConsideration, ConstU32, EitherOf, EitherOfDiverse, KeyOwnerProofSystem, EverythingBut, Contains,
 		OnFinalize, PrivilegeCmp, WithdrawReasons, LinearStoragePrice, tokens::{PayFromAccount, UnityAssetBalanceConversion}
@@ -61,7 +61,7 @@ use sp_runtime::{
 	traits::{
 		AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, DispatchInfoOf, Dispatchable,
 		Extrinsic as ExtrinsicT, OpaqueKeys, PostDispatchInfoOf, SaturatedConversion,
-		UniqueSaturatedInto, Verify, 
+		UniqueSaturatedInto, Verify, One
 	},
 	transaction_validity::{
 		TransactionPriority, TransactionSource, TransactionValidity, TransactionValidityError,
@@ -86,6 +86,11 @@ pub use pallet_timestamp::Call as TimestampCall;
 use sp_runtime::traits::Get;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
+
+use pallet_ethereum::{
+	Transaction  as EthereumTransaction, TransactionAction,
+	TransactionData,
+};
 
 /// Constant values used within the runtime.
 use selendra_runtime_constants::{currency::*, fee::*, time::*};
@@ -329,21 +334,35 @@ impl pallet_balances::Config for Runtime {
 	type MaxFreezes = ConstU32<0>;
 }
 
+// parameter_types! {
+// 	pub const TransactionByteFee: Balance = 100 * MICROCENT;
+// 	/// This value increases the priority of `Operational` transactions by adding
+// 	/// a "virtual tip" that's equal to the `OperationalFeeMultiplier * final_fee`.
+// 	pub const OperationalFeeMultiplier: u8 = 5;
+// }
+
+// impl pallet_transaction_payment::Config for Runtime {
+// 	type RuntimeEvent = RuntimeEvent;
+// 	type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees<Runtime>>;
+// 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+// 	type WeightToFee = WeightToFee;
+// 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
+// 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+// }
+
 parameter_types! {
-	pub const TransactionByteFee: Balance = 100 * MICROCENT;
-	/// This value increases the priority of `Operational` transactions by adding
-	/// a "virtual tip" that's equal to the `OperationalFeeMultiplier * final_fee`.
-	pub const OperationalFeeMultiplier: u8 = 5;
+	pub FeeMultiplier: Multiplier = Multiplier::one();
 }
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-	type WeightToFee = WeightToFee;
-	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
+	type WeightToFee = frame_support::weights::IdentityFee<Balance>;
+	type LengthToFee = frame_support::weights::IdentityFee<Balance>;
+	type FeeMultiplierUpdate = pallet_transaction_payment::ConstFeeMultiplier<FeeMultiplier>;
+	type OperationalFeeMultiplier = frame_support::traits::ConstU8<5>;
 }
+
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
@@ -1338,9 +1357,19 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl sp_genesis_builder::GenesisBuilder<Block> for Runtime {
+		fn create_default_config() -> Vec<u8> {
+			create_default_config::<RuntimeGenesisConfig>()
+		}
+
+		fn build_config(config: Vec<u8>) -> sp_genesis_builder::Result {
+			build_config::<RuntimeGenesisConfig>(config)
+		}
+	}
+
 	impl fp_rpc::EthereumRuntimeRPCApi<Block> for Runtime {
 		fn chain_id() -> u64 {
-			evm::ChainId::get()
+			<Runtime as pallet_evm::Config>::ChainId::get()
 		}
 
 		fn account_basic(address: H160) -> pallet_evm::Account {
@@ -1387,43 +1416,20 @@ sp_api::impl_runtime_apis! {
 				None
 			};
 
-			let is_transactional = false;
-			let validate = true;
-			let evm_config = config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config());
-
-			let mut estimated_transaction_len = data.len() +
-				20 + // to
-				20 + // from
-				32 + // value
-				32 + // gas_limit
-				32 + // nonce
-				1 + // TransactionAction
-				8 + // chain id
-				65; // signature
-
-			if max_fee_per_gas.is_some() {
-				estimated_transaction_len += 32;
-			}
-			if max_priority_fee_per_gas.is_some() {
-				estimated_transaction_len += 32;
-			}
-			if access_list.is_some() {
-				estimated_transaction_len += access_list.encoded_size();
-			}
-
-			let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
-			let without_base_extrinsic_weight = true;
-
-			let (weight_limit, proof_size_base_cost) =
-				match <Runtime as pallet_evm::Config>::GasWeightMapping::gas_to_weight(
-					gas_limit,
-					without_base_extrinsic_weight
-				) {
-					weight_limit if weight_limit.proof_size() > 0 => {
-						(Some(weight_limit), Some(estimated_transaction_len as u64))
-					}
-					_ => (None, None),
-				};
+			let gas_limit = gas_limit.min(u64::MAX.into());
+			let transaction_data = TransactionData::new(
+				TransactionAction::Call(to),
+				data.clone(),
+				nonce.unwrap_or_default(),
+				gas_limit,
+				None,
+				max_fee_per_gas,
+				max_priority_fee_per_gas,
+				value,
+				Some(<Runtime as pallet_evm::Config>::ChainId::get()),
+				access_list.clone().unwrap_or_default(),
+			);
+			let (weight_limit, proof_size_base_cost) = pallet_ethereum::Pallet::<Runtime>::transaction_weight(&transaction_data);
 
 			<Runtime as pallet_evm::Config>::Runner::call(
 				from,
@@ -1435,11 +1441,11 @@ sp_api::impl_runtime_apis! {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list.unwrap_or_default(),
-				is_transactional,
-				validate,
+				false,
+				true,
 				weight_limit,
 				proof_size_base_cost,
-				evm_config,
+				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
 
@@ -1462,46 +1468,19 @@ sp_api::impl_runtime_apis! {
 				None
 			};
 
-			let is_transactional = false;
-			let validate = true;
-			let evm_config = config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config());
-
-			let mut estimated_transaction_len = data.len() +
-				20 + // from
-				32 + // value
-				32 + // gas_limit
-				32 + // nonce
-				1 + // TransactionAction
-				8 + // chain id
-				65; // signature
-
-			if max_fee_per_gas.is_some() {
-				estimated_transaction_len += 32;
-			}
-			if max_priority_fee_per_gas.is_some() {
-				estimated_transaction_len += 32;
-			}
-			if access_list.is_some() {
-				estimated_transaction_len += access_list.encoded_size();
-			}
-
-			let gas_limit = if gas_limit > U256::from(u64::MAX) {
-				u64::MAX
-			} else {
-				gas_limit.low_u64()
-			};
-			let without_base_extrinsic_weight = true;
-
-			let (weight_limit, proof_size_base_cost) =
-				match <Runtime as pallet_evm::Config>::GasWeightMapping::gas_to_weight(
-					gas_limit,
-					without_base_extrinsic_weight
-				) {
-					weight_limit if weight_limit.proof_size() > 0 => {
-						(Some(weight_limit), Some(estimated_transaction_len as u64))
-					}
-					_ => (None, None),
-				};
+			let transaction_data = TransactionData::new(
+				TransactionAction::Create,
+				data.clone(),
+				nonce.unwrap_or_default(),
+				gas_limit,
+				None,
+				max_fee_per_gas,
+				max_priority_fee_per_gas,
+				value,
+				Some(<Runtime as pallet_evm::Config>::ChainId::get()),
+				access_list.clone().unwrap_or_default(),
+			);
+			let (weight_limit, proof_size_base_cost) = pallet_ethereum::Pallet::<Runtime>::transaction_weight(&transaction_data);
 
 			<Runtime as pallet_evm::Config>::Runner::create(
 				from,
@@ -1512,11 +1491,11 @@ sp_api::impl_runtime_apis! {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list.unwrap_or_default(),
-				is_transactional,
-				validate,
+				false,
+				true,
 				weight_limit,
 				proof_size_base_cost,
-				evm_config,
+				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
 
@@ -1546,11 +1525,11 @@ sp_api::impl_runtime_apis! {
 
 		fn extrinsic_filter(
 			xts: Vec<<Block as BlockT>::Extrinsic>,
-		) -> Vec<pallet_ethereum::Transaction> {
+		) -> Vec<EthereumTransaction> {
 			xts.into_iter().filter_map(|xt| match xt.0.function {
 				RuntimeCall::Ethereum(pallet_ethereum::Call::transact { transaction }) => Some(transaction),
 				_ => None
-			}).collect::<Vec<pallet_ethereum::Transaction>>()
+			}).collect::<Vec<EthereumTransaction>>()
 		}
 
 		fn elasticity() -> Option<Permill> {

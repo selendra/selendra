@@ -21,12 +21,12 @@
 use grandpa_primitives::AuthorityId as GrandpaId;
 use selendra_runtime::{
     wasm_binary_unwrap, Block, MaxNominations, SessionKeys,
-	StakerStatus
+	StakerStatus, SS58Prefix
 };
 use selendra_runtime_constants::currency::*;
 
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
-use sc_chain_spec::ChainSpecExtension;
+use sc_chain_spec::{ChainSpecExtension, Properties};
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use serde::{Deserialize, Serialize};
@@ -71,16 +71,14 @@ pub fn selendra_testnet_config() -> Result<ChainSpec, String> {
 	ChainSpec::from_json_bytes(&include_bytes!("../res/selendra-testnet.json")[..])
 }
 
-/// Returns the properties for the [`SelendraChainSpec`].
-pub fn selendra_chain_spec_properties() -> serde_json::map::Map<String, serde_json::Value> {
-	serde_json::json!({
-		"tokenDecimals": 18,
-		"tokenSymbol": "SEL"
-	})
-	.as_object()
-	.expect("Map given; qed")
-	.clone()
+fn selendra_chain_spec_properties() -> Properties {
+	let mut properties = Properties::new();
+	properties.insert("tokenDecimals".into(), 18.into());
+	properties.insert("tokenSymbol".into(), "SEL".into());
+	properties.insert("ss58Format".into(), SS58Prefix::get().into());
+	properties
 }
+
 
 fn session_keys(
 	grandpa: GrandpaId,
@@ -397,6 +395,7 @@ pub fn development_config() -> ChainSpec {
 		.with_id("dev")
 		.with_chain_type(ChainType::Development)
 		.with_genesis_config_patch(development_config_genesis_json())
+		.with_properties(selendra_chain_spec_properties())
 		.build()
 }
 
