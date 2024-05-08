@@ -108,6 +108,9 @@ pallet-evm-precompile-modexp = { git = "https://github.com/polkadot-evm/frontier
 pallet-evm-precompile-sha3fips = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false }
 pallet-evm-precompile-simple = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false }
 
+#
+pallet-starknet = { path = "../../pallets/starknet", default-features = false  }
+
 [dev-dependencies]
 hex-literal = "0.3.4"
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
@@ -208,6 +211,7 @@ std = [
 	"pallet-evm-precompile-modexp/std",
 	"pallet-evm-precompile-sha3fips/std",
 	"pallet-evm-precompile-simple/std",
+	"pallet-starknet/std",
 	"selendra-runtime-constants/std",
 	"runtime-common/std",
 ]
