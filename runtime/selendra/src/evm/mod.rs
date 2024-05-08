@@ -107,6 +107,7 @@ impl pallet_evm::Config for Runtime {
 	type OnCreate = ();
 	type FindAuthor = FindAuthorTruncated<Babe>;
 	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
+	type SuicideQuickClearLimit = ConstU32<0>;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
 }
 
