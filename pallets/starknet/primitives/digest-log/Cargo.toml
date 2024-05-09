@@ -1,0 +1,24 @@
+[package]
+name = "mp-digest-log"
+version = "0.7.0"
+license = "MIT"
+description = "Primitives for Madara digest logs"
+authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
+edition = "2021"
+
+[dependencies]
+mp-block = { path = "../block", default-features = false, features = ["parity-scale-codec"] }
+parity-scale-codec = {  version = "3.6.1", default-features = false }
+sp-runtime = {git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
+
+[dev-dependencies]
+assert_matches = "1.5.0"
+blockifier = { git = "https://github.com/bidzyyys/blockifier", branch = "feature/scale-codec" }
+
+[features]
+default = ["std"]
+std = [
+  "parity-scale-codec/std",
+  "sp-runtime/std",
+  "mp-block/std",
+]

@@ -1,0 +1,22 @@
+[package]
+name = "mp-program-hash"
+version = "0.7.0"
+license = "MIT"
+description = "Starknet program hashes"
+authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
+edition = "2021"
+
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+
+mp-felt = { path = "../felt", default-features = false }
+starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
+
+[features]
+default = ["std"]
+std = [
+  "mp-felt/std",
+]

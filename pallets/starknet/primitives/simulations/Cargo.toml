@@ -1,0 +1,32 @@
+[package]
+name = "mp-simulations"
+version = "0.7.0"
+license = "MIT"
+authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
+edition = "2021"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+blockifier = { git = "https://github.com/bidzyyys/blockifier", branch = "feature/scale-codec" }
+starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
+starknet_api = { git = "https://github.com/bidzyyys/starknet-api", branch = "feature/scale-codec", features = [
+  "testing",
+  "parity-scale-codec",
+] }
+
+
+# Optional dependencies
+parity-scale-codec = { version = "3.6.1", default-features = false, optional = true }
+scale-info = { version = "2.5.0", default-features = false, optional = true }
+
+[features]
+default = ["std"]
+std = [
+  "parity-scale-codec/std",
+  "scale-info/std",
+]
+
+parity-scale-codec = ["dep:parity-scale-codec"]
+scale-info = ["dep:scale-info"]
