@@ -35,7 +35,7 @@ mp-simulations = { path = "./primitives/simulations", default-features = false, 
   "scale-info",
 ] }
 mp-storage = { path = "./primitives/storage", default-features = false, features = ["parity-scale-codec"] }
-mp-transactions = { path = "./primitives/transactions", features = ["scale-info"] }
+mp-transactions = { path = "./primitives/transactions", default-features = false, features = ["scale-info"] }
 
 blockifier = { git = "https://github.com/bidzyyys/blockifier", features = ["testing"] }
 cairo-vm = { git = "https://github.com/bidzyyys/cairo-vm", branch = "feature/scale-codec", features = [
@@ -69,6 +69,12 @@ std = [
     "serde/std",
     "parity-scale-codec/std",
     "scale-info/std",
+    "sp-core/std",
+    "sp-io/std",
+    "sp-runtime/std",
+    "sp-std/std",
+    "frame-support/std",
+    "frame-system/std",
     "mp-block/std",
     "mp-chain-id/std",
     "mp-digest-log/std",
@@ -80,12 +86,6 @@ std = [
     "mp-simulations/std",
     "mp-storage/std",
     "mp-transactions/std",
-    "sp-core/std",
-    "sp-io/std",
-    "sp-runtime/std",
-    "sp-std/std",
-    "frame-support/std",
-    "frame-system/std",
 ]
 genesis-loader = ["dep:cairo-lang-starknet-classes"]
 runtime-benchmarks = []
