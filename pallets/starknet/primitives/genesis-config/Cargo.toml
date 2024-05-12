@@ -1,20 +1,19 @@
 [package]
 name = "mp-genesis-config"
-version = "0.7.0"
-license = "MIT"
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
-edition = "2021"
+edition.workspace = true
+repository = "https://github.com/keep-starknet-strange/madara/"
+version = "0.7.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hex = { version = "0.4.3" }
-serde = { version = "1.0.192", default-features = false, features = ["derive"] }
-serde_with = { version = "2.3.3" }
-
-mp-felt = { path = "../felt", default-features = false, features = ["parity-scale-codec", "serde"] }
-starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
-starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e", features = ["alloc"] }
+hex = { workspace = true }
+mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
+serde = { workspace = true, features = ["derive"] }
+serde_with = { workspace = true }
+starknet-core = { workspace = true }
+starknet-crypto = { workspace = true, features = ["alloc"] }
 
 [features]
 default = ["std"]

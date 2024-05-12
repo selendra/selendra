@@ -18,7 +18,7 @@
 
 //! Substrate chain configurations.
 
-use grandpa_primitives::AuthorityId as GrandpaId;
+use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use selendra_runtime::{
 	evm::Precompiles, wasm_binary_unwrap, BabeConfig, BalancesConfig, BaseFeeConfig, Block,
 	EVMConfig, ImOnlineConfig, IndicesConfig, MaxNominations, SessionConfig, SessionKeys,

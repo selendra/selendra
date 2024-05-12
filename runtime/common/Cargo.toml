@@ -1,8 +1,8 @@
 [package]
 name = "selendra-runtime-common"
-version = "1.0.1"
-authors = ["Selendra <info@selendra.org>"]
-edition = "2021"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
 
 [dependencies]
 libsecp256k1 = { version = "0.7.0", default-features = false }
@@ -16,44 +16,44 @@ serde = { version = "1.0.163", default-features = false, features = ["alloc"] }
 serde_derive = { version = "1.0.117" }
 static_assertions = "1.1.0"
 
-sp-api = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-inherents = { package = "sp-inherents", git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-sp-std = { package = "sp-std", git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-sp-io = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false, features=["serde"] }
-sp-session = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-sp-staking = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false, features=["serde"] }
-sp-core = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false , features=["serde"] }
-sp-npos-elections = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false, features=["serde"] }
+sp-api = { workspace = true }
+sp-inherents = { workspace = true }
+sp-std = { workspace = true }
+sp-io = { workspace = true }
+sp-runtime = { workspace = true, features=["serde"] }
+sp-session = { workspace = true }
+sp-staking = { workspace = true, features=["serde"] }
+sp-core = { workspace = true , features=["serde"] }
+sp-npos-elections = { workspace = true, features=["serde"] }
 
-pallet-babe = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, optional = true , branch = "release-polkadot-v1.3.0" }
-pallet-authorship = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-pallet-balances = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-pallet-fast-unstake = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-pallet-session = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-frame-support = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-pallet-staking = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-pallet-staking-reward-fn = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-frame-system = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-pallet-timestamp = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-pallet-vesting = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-pallet-transaction-payment = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-pallet-treasury = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-pallet-election-provider-multi-phase = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-frame-election-provider-support = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, optional = true , branch = "release-polkadot-v1.3.0" }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+frame-election-provider-support = { workspace = true }
+frame-benchmarking = { workspace = true, optional = true }
+pallet-babe = { workspace = true, optional = true }
+pallet-authorship = { workspace = true }
+pallet-balances = { workspace = true }
+pallet-fast-unstake = { workspace = true }
+pallet-session = { workspace = true }
+pallet-staking = { workspace = true }
+pallet-staking-reward-fn = { workspace = true }
+pallet-timestamp = { workspace = true }
+pallet-vesting = { workspace = true }
+pallet-transaction-payment = { workspace = true }
+pallet-treasury = { workspace = true }
+pallet-election-provider-multi-phase = { workspace = true }
 
-primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
+selendra-primitives = { workspace = true }
 
 [dev-dependencies]
-hex-literal = "0.4.1"
-serde_json = "1.0.96"
-libsecp256k1 = "0.7.0"
-frame-support-test = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
-pallet-babe = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
-pallet-treasury = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
-sp-keystore = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
-sp-keyring = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
+hex-literal = { workspace = true }
+serde_json = { workspace = true }
+libsecp256k1 = { workspace = true }
+frame-support-test = { workspace = true }
+pallet-babe = { workspace = true }
+pallet-treasury = { workspace = true }
+sp-keystore = { workspace = true }
+sp-keyring = { workspace = true }
 
 [features]
 default = ["std"]
@@ -65,8 +65,8 @@ std = [
 	"log/std",
 	"rustc-hex/std",
 	"serde/std",
-	"primitives/std",
-	"inherents/std",
+	"selendra-primitives/std",
+	"sp-inherents/std",
 	"sp-core/std",
 	"sp-api/std",
 	"sp-std/std",

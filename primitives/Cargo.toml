@@ -1,17 +1,14 @@
 [package]
 name = "selendra-primitives"
-version = "1.0.1"
-authors = ["Selendra <info@selendra.org>"]
-edition = "2021"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
 
 [dependencies]
-sp-core = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-sp-std = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-
-frame-support = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-
-pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false }
+sp-core = { workspace = true }
+sp-std = { workspace = true }
+sp-runtime = { workspace = true }
+frame-support = { workspace = true }
 
 [features]
 default = [ "std" ]
@@ -20,5 +17,4 @@ std = [
 	"sp-runtime/std",
 	"sp-std/std",
 	"frame-support/std",
-	"pallet-evm/std",
 ]

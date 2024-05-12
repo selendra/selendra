@@ -27,7 +27,7 @@ use frame_support::{
 	weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight},
 };
 use frame_system::limits;
-use primitives::{Balance, BlockNumber};
+use selendra_primitives::{Balance, BlockNumber};
 use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
 use static_assertions::const_assert;
 
@@ -100,7 +100,7 @@ macro_rules! impl_runtime_weights {
 		use frame_support::{dispatch::DispatchClass, weights::Weight};
 		use frame_system::limits;
 		use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
-		pub use runtime_common::{
+		pub use selendra_runtime_common::{
 			impl_elections_weights, AVERAGE_ON_INITIALIZE_RATIO, MAXIMUM_BLOCK_WEIGHT,
 			NORMAL_DISPATCH_RATIO,
 		};
@@ -142,7 +142,7 @@ macro_rules! impl_runtime_weights {
 ///
 /// This must only be used as long as the balance type is `u128`.
 pub type CurrencyToVote = sp_staking::currency_to_vote::U128CurrencyToVote;
-static_assertions::assert_eq_size!(primitives::Balance, u128);
+static_assertions::assert_eq_size!(selendra_primitives::Balance, u128);
 
 /// A reasonable benchmarking config for staking pallet.
 pub struct StakingBenchmarkingConfig;

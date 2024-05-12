@@ -24,8 +24,8 @@ pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for ToAuthor<R>
 where
 	R: pallet_balances::Config + pallet_authorship::Config,
-	<R as frame_system::Config>::AccountId: From<primitives::AccountId>,
-	<R as frame_system::Config>::AccountId: Into<primitives::AccountId>,
+	<R as frame_system::Config>::AccountId: From<selendra_primitives::AccountId>,
+	<R as frame_system::Config>::AccountId: Into<selendra_primitives::AccountId>,
 {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
 		if let Some(author) = <pallet_authorship::Pallet<R>>::author() {
@@ -38,8 +38,8 @@ pub struct DealWithFees<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
 where
 	R: pallet_balances::Config + pallet_authorship::Config,
-	<R as frame_system::Config>::AccountId: From<primitives::AccountId>,
-	<R as frame_system::Config>::AccountId: Into<primitives::AccountId>,
+	<R as frame_system::Config>::AccountId: From<selendra_primitives::AccountId>,
+	<R as frame_system::Config>::AccountId: Into<selendra_primitives::AccountId>,
 {
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
 		if let Some(fees) = fees_then_tips.next() {

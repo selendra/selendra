@@ -1,21 +1,24 @@
 [package]
 name = "mp-storage"
 version = "0.7.0"
+edition.workspace = true
 license = "MIT"
 description = "Starknet substrate storage const and types"
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
-edition = "2021"
+repository = "https://github.com/keep-starknet-strange/madara/"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-lazy_static = { version = "1.4.0" }
-sp-io  = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-
 # Optional
-parity-scale-codec = { version = "3.6.1", default-features = false, features = ["derive"], optional = true }
-serde = {  version = "1.0.192", default-features = false, features = ["derive"], optional = true }
+lazy_static = { workspace = true }
+parity-scale-codec = { workspace = true, features = [
+  "derive",
+], optional = true }
+serde = { workspace = true, optional = true, features = ["derive"] }
+sp-io = { workspace = true }
+
 
 [features]
 default = ["std"]

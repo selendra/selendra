@@ -1,70 +1,67 @@
 [package]
 name = "pallet-starknet"
-version = "1.0.0"
+version = "0.7.0"
+edition.workspace = true
 description = "FRAME pallet to execute Starknet contracts."
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
-edition = "2021"
+repository = "https://github.com/keep-starknet-strange/madara/"
+license = "MIT"
+
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-log = { version = "0.4.20" }
-parity-scale-codec = { version = "3.6.1", default-features = false, features = ["derive"] }
-scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
-serde = { version = "1.0.192", default-features = false, features = ["derive"] }
-serde_json = { version = "1.0.108" }
-
-sp-core = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-sp-io = {  git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-sp-runtime = {  git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-sp-std = {  git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-frame-support = {  git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-frame-system = {  git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
-
-mp-block = { path = "./primitives/block", default-features = false }
-mp-chain-id = { path = "./primitives/chain-id", default-features = false }
-mp-digest-log = { path = "./primitives/digest-log", default-features = false }
-mp-felt = { path = "./primitives/felt", features = ["parity-scale-codec", "serde"], default-features = false }
-mp-genesis-config = { path = "./primitives/genesis-config", default-features = false }
-mp-hashers = { path = "./primitives/hashers", default-features = false }
-mp-program-hash = { path = "./primitives/program-hash", default-features = false }
-mp-sequencer-address = { path = "./primitives/sequencer-address", default-features = false, features = ["parity-scale-codec"] }
-mp-simulations = { path = "./primitives/simulations", default-features = false, features = [
+# Madara primitives
+mp-block = { workspace = true }
+mp-chain-id = { workspace = true }
+mp-digest-log = { workspace = true }
+mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
+mp-genesis-config = { workspace = true }
+mp-hashers = { workspace = true }
+mp-program-hash = { workspace = true }
+mp-sequencer-address = { workspace = true, features = ["parity-scale-codec"] }
+mp-simulations = { workspace = true, features = [
   "parity-scale-codec",
   "scale-info",
 ] }
-mp-storage = { path = "./primitives/storage", default-features = false, features = ["parity-scale-codec"] }
-mp-transactions = { path = "./primitives/transactions", default-features = false, features = ["scale-info"] }
+mp-storage = { workspace = true, features = ["parity-scale-codec"] }
+mp-transactions = { workspace = true, features = ["scale-info"] }
 
-blockifier = { git = "https://github.com/bidzyyys/blockifier", features = ["testing"] }
-cairo-vm = { git = "https://github.com/bidzyyys/cairo-vm", branch = "feature/scale-codec", features = [
-  "cairo-1-hints",
-  "parity-scale-codec",
-] }
+blockifier = { workspace = true, features = ["testing"] }
+cairo-vm = { workspace = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+starknet-core = { workspace = true }
+starknet-crypto = { workspace = true, features = ["alloc"] }
+starknet_api = { workspace = true }
 
-starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
-starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
-starknet_api = { git = "https://github.com/bidzyyys/starknet-api", branch = "feature/scale-codec", features = [
-  "testing",
-  "parity-scale-codec",
-] }
+# Other third party dependencies
+log = { workspace = true }
+parity-scale-codec = { workspace = true, features = ["derive"] }
+scale-info = { workspace = true, features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 
 # Optional deps
-cairo-lang-starknet-classes = { git = "https://github.com/bidzyyys/cairo.git", branch = "feature/scale-codec", optional = true }
+cairo-lang-starknet-classes = { workspace = true, optional = true }
 
 [dev-dependencies]
-pallet-timestamp = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
-starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
-pretty_assertions = "1.4.0"
+pallet-timestamp = { workspace = true }
+pretty_assertions = { workspace = true }
 test-case = "3.1.0"
 lazy_static = "1.4.0"
 hexlit = "0.5.5"
 assert_matches = "1.5.0"
+starknet-ff = { workspace = true }
 project-root = "0.2.2"
 
 [features]
-default = ["std"]
+default = ["std", "genesis-loader"]
 std = [
     "serde/std",
     "parity-scale-codec/std",
@@ -75,6 +72,7 @@ std = [
     "sp-std/std",
     "frame-support/std",
     "frame-system/std",
+    "pallet-timestamp/std",
     "mp-block/std",
     "mp-chain-id/std",
     "mp-digest-log/std",
