@@ -108,7 +108,15 @@ pallet-evm-precompile-simple = { workspace = true }
 pallet-custom-signatures= { workspace = true } 
 
 # starknet
+blockifier = { workspace = true  }
+starknet_api = { workspace = true }
+
 pallet-starknet = { workspace = true  }
+pallet-starknet-runtime-api = { workspace = true }
+
+mp-program-hash = { workspace = true }
+mp-felt = { workspace = true }
+mp-simulations = { workspace = true }
 
 # Selendra
 selendra-runtime-common = { workspace = true }
@@ -211,6 +219,10 @@ std = [
 	"pallet-evm-precompile-sha3fips/std",
 	"pallet-evm-precompile-simple/std",
 	"pallet-starknet/std",
+	"pallet-starknet-runtime-api/std",
+	"mp-program-hash/std",
+	"mp-felt/std",
+	"mp-simulations/std",
 	"selendra-runtime-constants/std",
 	"selendra-runtime-common/std",
 	"selendra-primitives/std",

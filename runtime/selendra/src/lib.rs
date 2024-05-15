@@ -20,8 +20,6 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "512"]
 
-use pallet_ethereum::Transaction as EthereumTransaction;
-use pallet_evm::{FeeCalculator, GasWeightMapping, Runner};
 use pallet_transaction_payment::CurrencyAdapter;
 use pallet_identity::simple::IdentityInfo;
 pub use selendra_runtime_common::{
@@ -38,7 +36,7 @@ use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
 		fungible::HoldConsideration, ConstU32, EitherOf, EitherOfDiverse, KeyOwnerProofSystem,
-		OnFinalize, PrivilegeCmp, WithdrawReasons, LinearStoragePrice, tokens::{PayFromAccount, UnityAssetBalanceConversion}
+		PrivilegeCmp, WithdrawReasons, LinearStoragePrice, tokens::{PayFromAccount, UnityAssetBalanceConversion}
 	},
 	weights::ConstantMultiplier,
 	PalletId,
@@ -53,20 +51,20 @@ use selendra_primitives::{
 	AccountId, AccountIndex, Balance, BlockNumber, Hash,
 	Moment, Nonce, Signature,
 };
-use sp_core::{OpaqueMetadata, H160, H256, U256};
+use sp_core::OpaqueMetadata;
 use sp_runtime::{
 	create_runtime_str,
 	curve::PiecewiseLinear,
 	generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, DispatchInfoOf, Dispatchable,
-		Extrinsic as ExtrinsicT, OpaqueKeys, PostDispatchInfoOf, SaturatedConversion,
-		UniqueSaturatedInto, Verify,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
+		Extrinsic as ExtrinsicT, OpaqueKeys, SaturatedConversion,
+		Verify,
 	},
 	transaction_validity::{
-		TransactionPriority, TransactionSource, TransactionValidity, TransactionValidityError,
+		TransactionPriority, TransactionSource, TransactionValidity,
 	},
-	ApplyExtrinsicResult, KeyTypeId, Perbill, Percent, Permill, RuntimeDebug
+	ApplyExtrinsicResult, KeyTypeId, Perbill, Percent, Permill, RuntimeDebug, DispatchError
 };
 use sp_staking::SessionIndex;
 use sp_std::{cmp::Ordering, prelude::*};
@@ -87,6 +85,31 @@ use sp_runtime::traits::Get;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 
+use blockifier::{
+	context::FeeTokenAddresses,
+	execution::contract_class::ContractClass,
+	state::cached_state::CommitmentStateDiff,
+	transaction::{
+		account_transaction::AccountTransaction,
+		objects::TransactionExecutionInfo,
+		transaction_execution::Transaction,
+		transactions::L1HandlerTransaction,
+	},
+};
+
+use mp_felt::Felt252Wrapper;
+use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
+
+use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
+use pallet_starknet::pallet::Error as PalletError;
+use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
+use starknet_api::{
+	core::{ClassHash, ContractAddress, EntryPointSelector},
+	hash::{StarkFelt, StarkHash},
+	state::StorageKey,
+	transaction::{Calldata, Event as StarknetEvent, MessageToL1, TransactionHash},
+};
+
 /// Constant values used within the runtime.
 use selendra_runtime_constants::{currency::*, fee::*, time::*};
 
@@ -95,7 +118,6 @@ mod weights;
 mod bag_thresholds;
 mod migration;
 
-pub mod evm;
 pub mod governance;
 pub mod proxy_config;
 pub mod starknet;
@@ -929,13 +951,6 @@ construct_runtime! {
 		Identity: pallet_identity = 65,
 		Vesting: pallet_vesting = 66,
 
-		// Ethereum compatibility.
-		EVM: pallet_evm = 70,
-		Ethereum: pallet_ethereum = 71,
-		BaseFee: pallet_base_fee = 72,
-		EthCall: pallet_custom_signatures = 73,
-		DynamicFee: pallet_dynamic_fee = 74,
-
 		// Starkent
 		Starknet: pallet_starknet = 80,
 
@@ -965,12 +980,11 @@ pub type SignedExtra = (
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
 
+
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
-	fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
-/// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic =
-	fp_self_contained::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra, H160>;
+	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
@@ -984,87 +998,6 @@ pub type Executive = frame_executive::Executive<
 
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
-
-impl fp_self_contained::SelfContainedCall for RuntimeCall {
-	type SignedInfo = H160;
-
-	fn is_self_contained(&self) -> bool {
-		match self {
-			RuntimeCall::Ethereum(call) => call.is_self_contained(),
-			_ => false,
-		}
-	}
-
-	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
-		match self {
-			RuntimeCall::Ethereum(call) => call.check_self_contained(),
-			_ => None,
-		}
-	}
-
-	fn validate_self_contained(
-		&self,
-		info: &Self::SignedInfo,
-		dispatch_info: &DispatchInfoOf<RuntimeCall>,
-		len: usize,
-	) -> Option<TransactionValidity> {
-		match self {
-			RuntimeCall::Ethereum(call) => call.validate_self_contained(info, dispatch_info, len),
-			_ => None,
-		}
-	}
-
-	fn pre_dispatch_self_contained(
-		&self,
-		info: &Self::SignedInfo,
-		dispatch_info: &DispatchInfoOf<RuntimeCall>,
-		len: usize,
-	) -> Option<Result<(), TransactionValidityError>> {
-		match self {
-			RuntimeCall::Ethereum(call) =>
-				call.pre_dispatch_self_contained(info, dispatch_info, len),
-			_ => None,
-		}
-	}
-
-	fn apply_self_contained(
-		self,
-		info: Self::SignedInfo,
-	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
-		match self {
-			call @ RuntimeCall::Ethereum(pallet_ethereum::Call::transact { .. }) =>
-				Some(call.dispatch(RuntimeOrigin::from(
-					pallet_ethereum::RawOrigin::EthereumTransaction(info),
-				))),
-			_ => None,
-		}
-	}
-}
-
-#[derive(Clone)]
-pub struct TransactionConverter;
-
-impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> UncheckedExtrinsic {
-		UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
-		)
-	}
-}
-
-impl fp_rpc::ConvertTransaction<selendra_primitives::UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(
-		&self,
-		transaction: pallet_ethereum::Transaction,
-	) -> selendra_primitives::UncheckedExtrinsic {
-		let extrinsic = UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
-		);
-		let encoded = extrinsic.encode();
-		selendra_primitives::UncheckedExtrinsic::decode(&mut &encoded[..])
-			.expect("Encoded extrinsic is always valid")
-	}
-}
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benches {
@@ -1317,251 +1250,6 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl fp_rpc::EthereumRuntimeRPCApi<Block> for Runtime {
-		fn chain_id() -> u64 {
-			evm::ChainId::get()
-		}
-
-		fn account_basic(address: H160) -> pallet_evm::Account {
-			let (account, _) = pallet_evm::Pallet::<Runtime>::account_basic(&address);
-			account
-		}
-
-		fn gas_price() -> U256 {
-			let (gas_price, _) = <Runtime as pallet_evm::Config>::FeeCalculator::min_gas_price();
-			gas_price
-		}
-
-		fn account_code_at(address: H160) -> Vec<u8> {
-			pallet_evm::AccountCodes::<Runtime>::get(address)
-		}
-
-		fn author() -> H160 {
-			<pallet_evm::Pallet<Runtime>>::find_author()
-		}
-
-		fn storage_at(address: H160, index: U256) -> H256 {
-			let mut tmp = [0u8; 32];
-			index.to_big_endian(&mut tmp);
-			pallet_evm::AccountStorages::<Runtime>::get(address, H256::from_slice(&tmp[..]))
-		}
-
-		fn call(
-			from: H160,
-			to: H160,
-			data: Vec<u8>,
-			value: U256,
-			gas_limit: U256,
-			max_fee_per_gas: Option<U256>,
-			max_priority_fee_per_gas: Option<U256>,
-			nonce: Option<U256>,
-			estimate: bool,
-			access_list: Option<Vec<(H160, Vec<H256>)>>,
-		) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
-			let config = if estimate {
-				let mut config = <Runtime as pallet_evm::Config>::config().clone();
-				config.estimate = true;
-				Some(config)
-			} else {
-				None
-			};
-
-			let is_transactional = false;
-			let validate = true;
-			let evm_config = config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config());
-
-			let mut estimated_transaction_len = data.len() +
-				20 + // to
-				20 + // from
-				32 + // value
-				32 + // gas_limit
-				32 + // nonce
-				1 + // TransactionAction
-				8 + // chain id
-				65; // signature
-
-			if max_fee_per_gas.is_some() {
-				estimated_transaction_len += 32;
-			}
-			if max_priority_fee_per_gas.is_some() {
-				estimated_transaction_len += 32;
-			}
-			if access_list.is_some() {
-				estimated_transaction_len += access_list.encoded_size();
-			}
-
-			let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
-			let without_base_extrinsic_weight = true;
-
-			let (weight_limit, proof_size_base_cost) =
-				match <Runtime as pallet_evm::Config>::GasWeightMapping::gas_to_weight(
-					gas_limit,
-					without_base_extrinsic_weight
-				) {
-					weight_limit if weight_limit.proof_size() > 0 => {
-						(Some(weight_limit), Some(estimated_transaction_len as u64))
-					}
-					_ => (None, None),
-				};
-
-			<Runtime as pallet_evm::Config>::Runner::call(
-				from,
-				to,
-				data,
-				value,
-				gas_limit.unique_saturated_into(),
-				max_fee_per_gas,
-				max_priority_fee_per_gas,
-				nonce,
-				access_list.unwrap_or_default(),
-				is_transactional,
-				validate,
-				weight_limit,
-				proof_size_base_cost,
-				evm_config,
-			).map_err(|err| err.error.into())
-		}
-
-		fn create(
-			from: H160,
-			data: Vec<u8>,
-			value: U256,
-			gas_limit: U256,
-			max_fee_per_gas: Option<U256>,
-			max_priority_fee_per_gas: Option<U256>,
-			nonce: Option<U256>,
-			estimate: bool,
-			access_list: Option<Vec<(H160, Vec<H256>)>>,
-		) -> Result<pallet_evm::CreateInfo, sp_runtime::DispatchError> {
-			let config = if estimate {
-				let mut config = <Runtime as pallet_evm::Config>::config().clone();
-				config.estimate = true;
-				Some(config)
-			} else {
-				None
-			};
-
-			let is_transactional = false;
-			let validate = true;
-			let evm_config = config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config());
-
-			let mut estimated_transaction_len = data.len() +
-				20 + // from
-				32 + // value
-				32 + // gas_limit
-				32 + // nonce
-				1 + // TransactionAction
-				8 + // chain id
-				65; // signature
-
-			if max_fee_per_gas.is_some() {
-				estimated_transaction_len += 32;
-			}
-			if max_priority_fee_per_gas.is_some() {
-				estimated_transaction_len += 32;
-			}
-			if access_list.is_some() {
-				estimated_transaction_len += access_list.encoded_size();
-			}
-
-			let gas_limit = if gas_limit > U256::from(u64::MAX) {
-				u64::MAX
-			} else {
-				gas_limit.low_u64()
-			};
-			let without_base_extrinsic_weight = true;
-
-			let (weight_limit, proof_size_base_cost) =
-				match <Runtime as pallet_evm::Config>::GasWeightMapping::gas_to_weight(
-					gas_limit,
-					without_base_extrinsic_weight
-				) {
-					weight_limit if weight_limit.proof_size() > 0 => {
-						(Some(weight_limit), Some(estimated_transaction_len as u64))
-					}
-					_ => (None, None),
-				};
-
-			<Runtime as pallet_evm::Config>::Runner::create(
-				from,
-				data,
-				value,
-				gas_limit.unique_saturated_into(),
-				max_fee_per_gas,
-				max_priority_fee_per_gas,
-				nonce,
-				access_list.unwrap_or_default(),
-				is_transactional,
-				validate,
-				weight_limit,
-				proof_size_base_cost,
-				evm_config,
-			).map_err(|err| err.error.into())
-		}
-
-		fn current_transaction_statuses() -> Option<Vec<fp_rpc::TransactionStatus>> {
-			pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
-		}
-
-		fn current_block() -> Option<pallet_ethereum::Block> {
-			pallet_ethereum::CurrentBlock::<Runtime>::get()
-		}
-
-		fn current_receipts() -> Option<Vec<pallet_ethereum::Receipt>> {
-			pallet_ethereum::CurrentReceipts::<Runtime>::get()
-		}
-
-		fn current_all() -> (
-			Option<pallet_ethereum::Block>,
-			Option<Vec<pallet_ethereum::Receipt>>,
-			Option<Vec<fp_rpc::TransactionStatus>>
-		) {
-			(
-				pallet_ethereum::CurrentBlock::<Runtime>::get(),
-				pallet_ethereum::CurrentReceipts::<Runtime>::get(),
-				pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
-			)
-		}
-
-		fn extrinsic_filter(
-			xts: Vec<<Block as BlockT>::Extrinsic>,
-		) -> Vec<pallet_ethereum::Transaction> {
-			xts.into_iter().filter_map(|xt| match xt.0.function {
-				RuntimeCall::Ethereum(pallet_ethereum::Call::transact { transaction }) => Some(transaction),
-				_ => None
-			}).collect::<Vec<pallet_ethereum::Transaction>>()
-		}
-
-		fn elasticity() -> Option<Permill> {
-			Some(pallet_base_fee::Elasticity::<Runtime>::get())
-		}
-
-		fn gas_limit_multiplier_support() {}
-
-		fn pending_block(
-			xts: Vec<<Block as BlockT>::Extrinsic>,
-		) -> (Option<pallet_ethereum::Block>, Option<Vec<fp_rpc::TransactionStatus>>) {
-			for ext in xts.into_iter() {
-				let _ = Executive::apply_extrinsic(ext);
-			}
-
-			Ethereum::on_finalize(System::block_number() + 1);
-
-			(
-				pallet_ethereum::CurrentBlock::<Runtime>::get(),
-				pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
-			)
-		}
-	}
-
-	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
-		fn convert_transaction(transaction: EthereumTransaction) -> <Block as BlockT>::Extrinsic {
-			UncheckedExtrinsic::new_unsigned(
-				pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
-			)
-		}
-	}
-
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade(checks: frame_try_runtime::UpgradeCheckSelect) -> (Weight, Weight) {
@@ -1581,6 +1269,165 @@ sp_api::impl_runtime_apis! {
 			Executive::try_execute_block(block, state_root_check, signature_check, select).unwrap()
 		}
 	}
+
+	impl pallet_starknet_runtime_api::StarknetRuntimeApi<Block> for Runtime {
+
+        fn get_storage_at(address: ContractAddress, key: StorageKey) -> Result<StarkFelt, DispatchError> {
+            Starknet::get_storage_at(address, key)
+        }
+
+        fn call(address: ContractAddress, function_selector: EntryPointSelector, calldata: Calldata) -> Result<Vec<Felt252Wrapper>, DispatchError> {
+            Starknet::call_contract(address, function_selector, calldata)
+        }
+
+        fn nonce(address: ContractAddress) -> starknet_api::core::Nonce{
+            Starknet::nonce(address)
+        }
+
+        fn contract_class_hash_by_address(address: ContractAddress) -> ClassHash {
+            ClassHash(Starknet::contract_class_hash_by_address(address))
+        }
+
+        fn contract_class_by_class_hash(class_hash: ClassHash) -> Option<ContractClass> {
+            Starknet::contract_class_by_class_hash(class_hash.0)
+        }
+
+        fn chain_id() -> Felt252Wrapper {
+            Starknet::chain_id()
+        }
+
+        fn program_hash() -> Felt252Wrapper {
+            Starknet::program_hash()
+        }
+
+        fn config_hash() -> StarkHash {
+            Starknet::config_hash()
+        }
+
+        fn fee_token_addresses() -> FeeTokenAddresses {
+            Starknet::fee_token_addresses()
+        }
+
+        fn is_transaction_fee_disabled() -> bool {
+            Starknet::is_transaction_fee_disabled()
+        }
+
+        fn estimate_fee(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(u128, u128)>, DispatchError> {
+            Starknet::estimate_fee(transactions, &simulation_flags)
+        }
+
+        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool) -> Result<Result<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
+            Starknet::re_execute_transactions(transactions_before, transactions_to_trace, with_state_diff)
+        }
+
+        fn estimate_message_fee(message: L1HandlerTransaction) -> Result<(u128, u128, u128), DispatchError> {
+            Starknet::estimate_message_fee(message)
+        }
+
+        fn simulate_transactions(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, DispatchError> {
+            Starknet::simulate_transactions(transactions, &simulation_flags)
+        }
+
+        fn simulate_message(message: L1HandlerTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
+            Starknet::simulate_message(message, &simulation_flags)
+        }
+
+        fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction> {
+            xts.into_iter().filter_map(|xt| match xt.function {
+                RuntimeCall::Starknet( invoke { transaction }) => Some(Transaction::AccountTransaction(AccountTransaction::Invoke(transaction))),
+                RuntimeCall::Starknet( declare { transaction }) => Some(Transaction::AccountTransaction(AccountTransaction::Declare(transaction))),
+                RuntimeCall::Starknet( deploy_account { transaction }) => Some(Transaction::AccountTransaction(AccountTransaction::DeployAccount(transaction))),
+                RuntimeCall::Starknet( consume_l1_message { transaction }) => Some(Transaction::L1HandlerTransaction(transaction)),
+                _ => None,
+            }).collect::<Vec<Transaction>>()
+        }
+
+        fn get_index_and_tx_for_tx_hash(extrinsics: Vec<<Block as BlockT>::Extrinsic>, tx_hash: TransactionHash) -> Option<(u32, Transaction)> {
+            // Find our tx and it's index
+            let (tx_index, tx) =  extrinsics.into_iter().enumerate().find(|(_, xt)| {
+                let computed_tx_hash = match &xt.function {
+                    RuntimeCall::Starknet( invoke { transaction }) => transaction.tx_hash,
+                    RuntimeCall::Starknet( declare { transaction, .. }) => transaction.tx_hash,
+                    RuntimeCall::Starknet( deploy_account { transaction }) => transaction.tx_hash,
+                    RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => transaction.tx_hash,
+                    _ => return false
+                };
+
+                computed_tx_hash == tx_hash
+            })?;
+            let transaction = match tx.function {
+                RuntimeCall::Starknet( invoke { transaction }) => Transaction::AccountTransaction(AccountTransaction::Invoke(transaction)),
+                RuntimeCall::Starknet( declare { transaction }) => Transaction::AccountTransaction(AccountTransaction::Declare(transaction)),
+                RuntimeCall::Starknet( deploy_account { transaction }) => Transaction::AccountTransaction(AccountTransaction::DeployAccount(transaction)),
+                RuntimeCall::Starknet( consume_l1_message { transaction }) => Transaction::L1HandlerTransaction(transaction),
+                _ => unreachable!("The previous match made sure that at this point tx is one of those starknet calls"),
+            };
+
+            let tx_index = u32::try_from(tx_index).expect("More that u32::MAX extrinsics have been passed. That's too much. You should not be doing that.");
+            Some((tx_index, transaction))
+        }
+
+        fn get_tx_messages_to_l1(tx_hash: TransactionHash) -> Vec<MessageToL1> {
+            Starknet::tx_messages(tx_hash)
+        }
+
+        fn get_events_for_tx_by_hash(tx_hash: TransactionHash) -> Vec<StarknetEvent> {
+            Starknet::tx_events(tx_hash)
+        }
+
+        fn get_tx_execution_outcome(tx_hash: TransactionHash) -> Option<Vec<u8>> {
+            Starknet::tx_revert_error(tx_hash).map(|s| s.into_bytes())
+        }
+
+        fn get_block_context() -> blockifier::context::BlockContext {
+           Starknet::get_block_context()
+        }
+
+        fn l1_nonce_unused(nonce: starknet_api::core::Nonce) -> bool {
+            Starknet::ensure_l1_message_not_executed(&nonce).is_ok()
+        }
+    }
+
+	impl pallet_starknet_runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
+        fn convert_account_transaction(transaction: AccountTransaction) -> UncheckedExtrinsic {
+            let call = match transaction {
+                AccountTransaction::Declare(tx) => {
+                    pallet_starknet::Call::declare { transaction: tx }
+                }
+                AccountTransaction::DeployAccount(tx) => {
+                    pallet_starknet::Call::deploy_account { transaction: tx  }
+                }
+                AccountTransaction::Invoke(tx) => {
+                    pallet_starknet::Call::invoke { transaction: tx  }
+                }
+            };
+
+            UncheckedExtrinsic::new_unsigned(call.into())
+        }
+
+        fn convert_l1_transaction(transaction: L1HandlerTransaction) -> UncheckedExtrinsic {
+            let call =  pallet_starknet::Call::<Runtime>::consume_l1_message { transaction };
+
+            UncheckedExtrinsic::new_unsigned(call.into())
+        }
+
+        fn convert_error(error: DispatchError) -> StarknetTransactionExecutionError {
+            if error == PalletError::<Runtime>::ContractNotFound.into() {
+                return StarknetTransactionExecutionError::ContractNotFound;
+            }
+            if error == PalletError::<Runtime>::ClassHashAlreadyDeclared.into() {
+                return StarknetTransactionExecutionError::ClassAlreadyDeclared;
+            }
+            if error == PalletError::<Runtime>::ContractClassHashUnknown.into() {
+                return StarknetTransactionExecutionError::ClassHashNotFound;
+            }
+            if error == PalletError::<Runtime>::InvalidContractClass.into() {
+                return StarknetTransactionExecutionError::InvalidContractClass;
+            }
+
+            StarknetTransactionExecutionError::ContractError
+        }
+    }
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {

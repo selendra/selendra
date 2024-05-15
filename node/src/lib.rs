@@ -29,7 +29,6 @@
 //! hasn't been tested.
 
 pub mod chain_spec;
-pub mod eth;
 
 #[macro_use]
 pub mod service;

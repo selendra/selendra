@@ -78,3 +78,5 @@ pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 
 /// Digest item type.
 pub type DigestItem = generic::DigestItem;
+
+pub type StarknetHasher = mp_hashers::pedersen::PedersenHasher;

@@ -33,28 +33,21 @@
 use std::sync::Arc;
 
 use jsonrpsee::RpcModule;
-use sc_client_api::{client::BlockchainEvents, AuxStore, Backend, StorageProvider, UsageProvider,};
+use sc_client_api::{client::BlockchainEvents, AuxStore, StorageProvider, UsageProvider,};
 use sc_consensus_babe::BabeWorkerHandle;
 use sc_consensus_grandpa::{
 	FinalityProofProvider, GrandpaJustificationStream, SharedAuthoritySet, SharedVoterState,
 };
 use sc_rpc::SubscriptionTaskExecutor;
 pub use sc_rpc_api::DenyUnsafe;
-use sc_transaction_pool::ChainApi;
 use selendra_primitives::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
-use sp_api::{BlockT, CallApiAt, ProvideRuntimeApi};
+use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus::SelectChain;
 use sp_consensus_babe::BabeApi;
 use sp_keystore::KeystorePtr;
 use sc_transaction_pool_api::TransactionPool;
-use sp_inherents::CreateInherentDataProviders;
-pub use fc_rpc::pending::ConsensusDataProvider;
-
-mod eth;
-
-pub use self::eth::{create_eth, overrides_handle, EthDeps, consensus_data_provider::BabeConsensusDataProvider};
 
 /// Extra dependencies for BABE.
 pub struct BabeDeps {
@@ -79,7 +72,7 @@ pub struct GrandpaDeps<B> {
 }
 
 /// Full client dependencies.
-pub struct FullDeps<C, P, SC, B, A: ChainApi, CT, CIDP> {
+pub struct FullDeps<C, P, SC, B> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
@@ -96,13 +89,10 @@ pub struct FullDeps<C, P, SC, B, A: ChainApi, CT, CIDP> {
 	pub grandpa: GrandpaDeps<B>,
 	/// The backend used by the node.
 	pub backend: Arc<B>,
-	/// Ethereum-compatibility specific dependencies.
-	// pub eth: EthDeps<C, P, A, CT, Block, CIDP>,
-	pub eth: EthDeps<Block, C, P, A, CT, CIDP>,
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, SC, B, A, CT, CIDP>(
+pub fn create_full<C, P, SC, B>(
 	FullDeps {
 		client,
 		pool,
@@ -112,14 +102,7 @@ pub fn create_full<C, P, SC, B, A, CT, CIDP>(
 		babe,
 		grandpa,
 		backend,
-		eth,
-	}: FullDeps<C, P, SC, B, A, CT, CIDP>,
-	subscription_task_executor: SubscriptionTaskExecutor,
-	pubsub_notification_sinks: Arc<
-		fc_mapping_sync::EthereumBlockNotificationSinks<
-			fc_mapping_sync::EthereumBlockNotification<Block>,
-		>,
-	>,
+	}: FullDeps<C, P, SC, B>,
 ) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
 where
 	C: ProvideRuntimeApi<Block>
@@ -139,15 +122,10 @@ where
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: BabeApi<Block>,
 	C::Api: BlockBuilder<Block>,
-	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
-	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	P: TransactionPool<Block = Block> + 'static,
 	SC: SelectChain<Block> + 'static,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashingFor<Block>>,
-	A: ChainApi<Block = Block> + 'static,
-	CIDP: CreateInherentDataProviders<Block, ()> + Send + 'static,
-	CT: fp_rpc::ConvertTransaction<<Block as BlockT>::Extrinsic> + Send + Sync + 'static,
 {
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
@@ -199,25 +177,5 @@ where
 	io.merge(StateMigration::new(client.clone(), backend, deny_unsafe).into_rpc())?;
 	io.merge(Dev::new(client, deny_unsafe).into_rpc())?;
 
-	// Ethereum compatibility RPCs
-	let io = create_eth::<_, _, _, _, _, _, _, DefaultEthConfig<C, B>>(
-		io,
-		eth,
-		subscription_task_executor,
-		pubsub_notification_sinks,
-	)?;
-
 	Ok(io)
-}
-
-pub struct DefaultEthConfig<C, BE>(std::marker::PhantomData<(C, BE)>);
-
-impl<C, BE> fc_rpc::EthConfig<Block, C> for DefaultEthConfig<C, BE>
-where
-	C: sc_client_api::StorageProvider<Block, BE> + Sync + Send + 'static,
-	BE: Backend<Block> + 'static,
-{
-	type EstimateGasAdapter = ();
-	type RuntimeStorageOverride =
-		fc_rpc::frontier_backend_client::SystemAccountId20StorageOverride<Block, C, BE>;
 }

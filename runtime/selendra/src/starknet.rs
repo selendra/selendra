@@ -1,9 +1,13 @@
 //! Configuration of the pallets used in the runtime.
 //! The pallets used in the runtime are configured here.
 //! This file is used to generate the `construct_runtime!` macro.
-use std::num::NonZeroU128;
+use crate::{Runtime, Timestamp};
 
-use blockifier::blockifier::block::GasPrices;
+use std::num::NonZeroU128;
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
+pub use sp_runtime::{Perbill, Permill};
+
 pub use frame_support::traits::{
     ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, OnTimestampSet, Randomness, StorageInfo,
 };
@@ -13,17 +17,18 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
-pub use mp_chain_id::SN_GOERLI_CHAIN_ID;
-pub use mp_program_hash::SN_OS_PROGRAM_HASH;
+
+use blockifier::blockifier::block::GasPrices;
+
+use mp_program_hash::SN_OS_PROGRAM_HASH;
+use mp_felt::Felt252Wrapper;
+
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
 pub use pallet_timestamp::Call as TimestampCall;
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_runtime::traits::{AccountIdLookup, BlakeTwo256};
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{Perbill, Permill};
-use sp_std::marker::PhantomData;
+
+use selendra_primitives::StarknetHasher;
+
 
 parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;

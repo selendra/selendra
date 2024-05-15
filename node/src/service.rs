@@ -21,14 +21,12 @@
 //! Service implementation. Specialized wrapper over substrate service.
 
 use crate::{
-	eth::{db_config_dir, new_frontier_partial, FrontierBackend, FrontierPartialComponents},
 	BackendType, Cli, EthConfiguration,
 };
 use parity_scale_codec::Encode;
 use frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE;
 use frame_system_rpc_runtime_api::AccountNonceApi;
 use futures::prelude::*;
-use fc_rpc::EthTask;
 use sc_client_api::{Backend, BlockBackend};
 use sc_consensus_babe::{self, SlotProportion};
 use sc_executor::NativeElseWasmExecutor;
@@ -171,9 +169,6 @@ pub fn new_partial(
 			sc_consensus_babe::BabeLink<Block>,
 			sc_consensus_babe::BabeWorkerHandle<Block>,
 			Option<Telemetry>,
-			// Option<FilterPool>,
-			FrontierBackend,
-			Arc<fc_rpc::OverrideHandle<Block>>,
 		),
 	>,
 	ServiceError,
@@ -232,36 +227,6 @@ pub fn new_partial(
 
 	let slot_duration = babe_link.config().slot_duration();
 
-	let overrides = selendra_rpc::overrides_handle(client.clone());
-	let frontier_backend = match eth_config.frontier_backend_type {
-		BackendType::KeyValue => FrontierBackend::KeyValue(fc_db::kv::Backend::open(
-			Arc::clone(&client),
-			&config.database,
-			&db_config_dir(config),
-		)?),
-		BackendType::Sql => {
-			let db_path = db_config_dir(config).join("sql");
-			std::fs::create_dir_all(&db_path).expect("failed creating sql db directory");
-			let backend = futures::executor::block_on(fc_db::sql::Backend::new(
-				fc_db::sql::BackendConfig::Sqlite(fc_db::sql::SqliteBackendConfig {
-					path: Path::new("sqlite:///")
-						.join(db_path)
-						.join("frontier.db3")
-						.to_str()
-						.unwrap(),
-					create_if_missing: true,
-					thread_count: eth_config.frontier_sql_backend_thread_count,
-					cache_size: eth_config.frontier_sql_backend_cache_size,
-				}),
-				eth_config.frontier_sql_backend_pool_size,
-				std::num::NonZeroU32::new(eth_config.frontier_sql_backend_num_ops_timeout),
-				overrides.clone(),
-			))
-			.unwrap_or_else(|err| panic!("failed creating sql backend: {:?}", err));
-			FrontierBackend::Sql(backend)
-		},
-	};
-
 	let (import_queue, babe_worker_handle) =
 		sc_consensus_babe::import_queue(sc_consensus_babe::ImportQueueParams {
 			link: babe_link.clone(),
@@ -301,8 +266,6 @@ pub fn new_partial(
 			babe_link,
 			babe_worker_handle,
 			telemetry,
-			frontier_backend,
-			overrides,
 		),
 	})
 }
@@ -326,7 +289,6 @@ pub struct NewFullBase {
 /// Creates a full service from the configuration.
 pub fn new_full_base(
 	mut config: Configuration,
-	eth_config: EthConfiguration,
 	disable_hardware_benchmarks: bool,
 	with_startup_data: impl FnOnce(
 		&sc_consensus_babe::BabeBlockImport<Block, FullClient, FullGrandpaBlockImport>,
@@ -355,8 +317,6 @@ pub fn new_full_base(
 				babe_link,
 				babe_worker_handle,
 				mut telemetry,
-				frontier_backend,
-				overrides,
 			),
 	} = new_partial(&config, &eth_config)?;
 
@@ -399,70 +359,7 @@ pub fn new_full_base(
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let enable_offchain_worker = config.offchain_worker.enabled;
 
-	let FrontierPartialComponents { filter_pool, fee_history_cache, fee_history_cache_limit } =
-		new_frontier_partial(&eth_config)?;
-
-	// Sinks for pubsub notifications.
-	// Everytime a new subscription is created, a new mpsc channel is added to the sink pool.
-	// The MappingSyncWorker sends through the channel on block import and the subscription emits a notification to the subscriber on receiving a message through this channel.
-	// This way we avoid race conditions when using native substrate block import notification stream.
-	let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
-		fc_mapping_sync::EthereumBlockNotification<Block>,
-	> = Default::default();
-	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
-
-	let pubsub_notification = pubsub_notification_sinks.clone();
-
-	let enable_dev_signer = eth_config.enable_dev_signer;
-
 	let slot_duration = babe_link.config().slot_duration();
-
-	let target_gas_price = eth_config.target_gas_price;
-
-	let pending_create_inherent_data_providers = move |_, ()| async move {
-		let current = sp_timestamp::InherentDataProvider::from_system_time();
-		let next_slot = current.timestamp().as_millis() + slot_duration.as_millis();
-		let timestamp = sp_timestamp::InherentDataProvider::new(next_slot.into());
-		let slot = sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-			*timestamp,
-			slot_duration,
-		);
-		let dynamic_fee = fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
-		Ok((slot, timestamp, dynamic_fee))
-	};
-
-	// for ethereum-compatibility rpc.
-	config.rpc_id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
-	let eth_rpc_params = selendra_rpc::EthDeps {
-		client: client.clone(),
-		pool: transaction_pool.clone(),
-		graph: transaction_pool.pool().clone(),
-		converter: Some(TransactionConverter),
-		is_authority: config.role.is_authority(),
-		enable_dev_signer,
-		network: network.clone(),
-		sync: sync_service.clone(),
-		frontier_backend: match frontier_backend.clone() {
-			fc_db::Backend::KeyValue(b) => Arc::new(b),
-			fc_db::Backend::Sql(b) => Arc::new(b),
-		},
-		overrides: overrides.clone(),
-		block_data_cache: Arc::new(fc_rpc::EthBlockDataCacheTask::new(
-			task_manager.spawn_handle(),
-			overrides.clone(),
-			eth_config.eth_log_block_cache,
-			eth_config.eth_statuses_cache,
-			prometheus_registry.clone(),
-		)),
-		filter_pool: filter_pool.clone(),
-		max_past_logs: eth_config.max_past_logs,
-		fee_history_cache: fee_history_cache.clone(),
-		fee_history_cache_limit,
-		execute_gas_limit_multiplier: eth_config.execute_gas_limit_multiplier,
-		forced_parent_hashes: None,
-		pending_create_inherent_data_providers: pending_create_inherent_data_providers.clone(),
-		pending_consensus_data_provider: Some(selendra_rpc::BabeConsensusDataProvider::new()),
-	};
 
 	let (rpc_extensions_builder, rpc_setup) = {
 		let justification_stream = grandpa_link.justification_stream();
@@ -502,15 +399,9 @@ pub fn new_full_base(
 						finality_provider: finality_proof_provider.clone(),
 					},
 					backend: rpc_backend.clone(),
-					eth: eth_rpc_params.clone(),
 				};
 
-				selendra_rpc::create_full(
-					deps,
-					subscription_task_executor,
-					pubsub_notification_sinks.clone(),
-				)
-				.map_err(Into::into)
+				selendra_rpc::create_full(deps).map_err(Into::into)
 			};
 
 		(rpc_extensions_builder, shared_voter_state2)
@@ -607,67 +498,6 @@ pub fn new_full_base(
 			babe,
 		);
 	}
-	
-	// Spawn main mapping sync worker background task.
-	match frontier_backend {
-		fc_db::Backend::KeyValue(b) => {
-			task_manager.spawn_essential_handle().spawn(
-				"frontier-mapping-sync-worker",
-				Some("frontier"),
-				fc_mapping_sync::kv::MappingSyncWorker::new(
-					client.import_notification_stream(),
-					Duration::new(6, 0),
-					client.clone(),
-					backend.clone(),
-					overrides.clone(),
-					Arc::new(b),
-					3,
-					0,
-					fc_mapping_sync::SyncStrategy::Normal,
-					sync_service.clone(),
-					pubsub_notification.clone(),
-				)
-				.for_each(|()| future::ready(())),
-			);
-		},
-		fc_db::Backend::Sql(b) => {
-			task_manager.spawn_essential_handle().spawn_blocking(
-				"frontier-mapping-sync-worker",
-				Some("frontier"),
-				fc_mapping_sync::sql::SyncWorker::run(
-					client.clone(),
-					backend.clone(),
-					Arc::new(b),
-					client.import_notification_stream(),
-					fc_mapping_sync::sql::SyncWorkerConfig {
-						read_notification_timeout: Duration::from_secs(10),
-						check_indexed_blocks_interval: Duration::from_secs(60),
-					},
-					fc_mapping_sync::SyncStrategy::Parachain,
-					sync_service.clone(),
-					pubsub_notification.clone(),
-				),
-			);
-		},
-	}
-
-	// Spawn Frontier EthFilterApi maintenance task.
-	if let Some(filter_pool) = filter_pool {
-		// Each filter is allowed to stay in the pool for 100 blocks.
-		const FILTER_RETAIN_THRESHOLD: u64 = 100;
-		task_manager.spawn_essential_handle().spawn(
-			"frontier-filter-pool",
-			Some("frontier"),
-			EthTask::filter_pool_task(client.clone(), filter_pool, FILTER_RETAIN_THRESHOLD),
-		);
-	}
-
-	// Spawn Frontier FeeHistory cache maintenance task.
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-fee-history",
-		Some("frontier"),
-		EthTask::fee_history_task(client.clone(), overrides, fee_history_cache, fee_history_cache_limit),
-	);
 
 	// Spawn authority discovery module.
 	if role.is_authority() {
@@ -779,7 +609,7 @@ pub fn new_full_base(
 /// Builds a new service for a full client.
 pub fn new_full(config: Configuration, cli: Cli) -> Result<TaskManager, ServiceError> {
 	let database_source = config.database.clone();
-	let task_manager = new_full_base(config, cli.eth, cli.no_hardware_benchmarks, |_, _| ())
+	let task_manager = new_full_base(config, cli.no_hardware_benchmarks, |_, _| ())
 		.map(|NewFullBase { task_manager, .. }| task_manager)?;
 
 	sc_storage_monitor::StorageMonitorService::try_spawn(
