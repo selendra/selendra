@@ -98,6 +98,7 @@ mod migration;
 pub mod evm;
 pub mod governance;
 pub mod proxy_config;
+pub mod starknet;
 
 use governance::{pallet_custom_origins, GeneralAdmin, StakingAdmin, Treasurer, TreasurySpender};
 
@@ -934,6 +935,9 @@ construct_runtime! {
 		BaseFee: pallet_base_fee = 72,
 		EthCall: pallet_custom_signatures = 73,
 		DynamicFee: pallet_dynamic_fee = 74,
+
+		// Starkent
+		Starknet: pallet_starknet = 80,
 
 		Sudo: pallet_sudo = 200,
 	}
