@@ -1,0 +1,30 @@
+[package]
+name = "mc-commitment-state-diff"
+version = "0.7.0"
+edition.workspace = true
+authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
+repository = "https://github.com/keep-starknet-strange/madara/"
+license = "MIT"
+
+[dependencies]
+# Substrate
+sc-client-api = { workspace = true }
+sp-api = { workspace = true }
+sp-blockchain = { workspace = true }
+sp-runtime = { workspace = true }
+
+# Madara
+mc-db = { workspace = true }
+mp-digest-log = { workspace = true }
+mp-hashers = { workspace = true }
+mp-storage = { workspace = true }
+pallet-starknet-runtime-api = { workspace = true }
+starknet_api = { workspace = true }
+
+# Async
+futures = { workspace = true }
+
+# Others
+indexmap = { workspace = true }
+log = { workspace = true }
+thiserror = { workspace = true }

@@ -1,0 +1,53 @@
+[package]
+name = "mc-rpc"
+version = "0.7.0"
+edition.workspace = true
+description = "Starknet RPC compatibility layer for Substrate"
+authors = [
+  "Timothée Delabrouille <https://github.com/tdelabro>",
+  "Substrate DevHub <https://github.com/substrate-developer-hub>",
+]
+homepage = "https://github.com/keep-starknet-strange/madara"
+license = "MIT"
+
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+# Madara utils
+mc-db = { workspace = true }
+mc-genesis-data-provider = { workspace = true }
+mc-rpc-core = { workspace = true }
+mc-storage = { workspace = true }
+pallet-starknet-runtime-api = { workspace = true }
+sc-transaction-pool = { workspace = true }
+sc-transaction-pool-api = { workspace = true }
+sp-api = { workspace = true }
+sp-arithmetic = { workspace = true }
+sp-blockchain = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-timestamp = { workspace = true }
+
+# Substrate client
+sc-client-api = { workspace = true }
+sc-network-sync = { workspace = true }
+# Starknet
+blockifier = { workspace = true }
+cairo-vm = { workspace = true }
+jsonrpsee = { workspace = true, features = ["server", "macros"] }
+log = { workspace = true }
+mp-block = { workspace = true }
+mp-felt = { workspace = true }
+mp-hashers = { workspace = true }
+mp-simulations = { workspace = true }
+mp-transactions = { workspace = true, features = ["client"] }
+starknet-core = { workspace = true }
+starknet-ff = { workspace = true }
+starknet_api = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+rstest = { workspace = true }
+pretty_assertions = { workspace = true }

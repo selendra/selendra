@@ -1,0 +1,45 @@
+[package]
+name = "mc-l1-messages"
+version = "0.1.0"
+description = "L1 Messages processing library."
+homepage = "https://github.com/keep-starknet-strange/madara"
+edition = "2021"
+license = "MIT"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+log = { workspace = true }
+url = "2.5.0"
+
+# Madara RuntimeApi
+pallet-starknet-runtime-api = { workspace = true }
+
+# Starknet dependencies
+blockifier = { workspace = true }
+starknet_api = { workspace = true }
+
+# Starknet
+mc-db = { workspace = true }
+mc-eth-client = { workspace = true }
+
+# Madara Primitives
+mp-felt = { workspace = true }
+mp-transactions = { workspace = true }
+
+# Substrate Primitives
+sp-api = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+
+# Substrate client dependencies
+sc-client-api = { workspace = true }
+sc-transaction-pool-api = { workspace = true }
+
+# Zaun
+starknet-core-contract-client = { workspace = true }
+
+# Other third party dependencies
+ethers = { workspace = true }
+thiserror = { workspace = true }
