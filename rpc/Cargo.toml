@@ -37,6 +37,13 @@ sp-core = { workspace = true }
 sp-statement-store = { workspace = true }
 substrate-state-trie-migration-rpc = { workspace = true }
 
+pallet-starknet = { workspace = true, features = ["genesis-loader"] }
+pallet-starknet-runtime-api = { workspace = true }
+mc-db = { workspace = true }
+mc-genesis-data-provider = { workspace = true }
+mc-storage = { workspace = true }
+mc-rpc = { workspace = true }
+
 selendra-primitives = { workspace = true }
 selendra-runtime = { workspace = true, features = ["std"] }
 

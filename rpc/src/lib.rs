@@ -30,6 +30,8 @@
 
 // #![warn(unused_crate_dependencies)]
 
+mod starknet;
+
 use std::sync::Arc;
 
 use jsonrpsee::RpcModule;
@@ -40,7 +42,7 @@ use sc_consensus_grandpa::{
 };
 use sc_rpc::SubscriptionTaskExecutor;
 pub use sc_rpc_api::DenyUnsafe;
-use selendra_primitives::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
+use selendra_primitives::{AccountId, Balance, Block, BlockNumber, Hash, Nonce, StarknetHasher};
 use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
@@ -48,6 +50,14 @@ use sp_consensus::SelectChain;
 use sp_consensus_babe::BabeApi;
 use sp_keystore::KeystorePtr;
 use sc_transaction_pool_api::TransactionPool;
+use sc_transaction_pool::{ChainApi, Pool};
+
+pub use starknet::StarknetDeps;
+use mc_genesis_data_provider::GenesisProvider;
+use mc_rpc::{
+	starknetrpcwrapper::StarknetRpcWrapper,
+	MadaraRpcApiServer, Starknet, StarknetReadRpcApiServer, StarknetTraceRpcApiServer, StarknetWriteRpcApiServer,
+};
 
 /// Extra dependencies for BABE.
 pub struct BabeDeps {
@@ -72,11 +82,13 @@ pub struct GrandpaDeps<B> {
 }
 
 /// Full client dependencies.
-pub struct FullDeps<C, P, SC, B> {
+pub struct FullDeps<C, P, SC, B, G: GenesisProvider,A: ChainApi,> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
+	/// Extrinsic pool graph instance.
+    pub graph: Arc<Pool<A>>,
 	/// The SelectChain Strategy
 	pub select_chain: SC,
 	/// A copy of the chain spec.
@@ -89,22 +101,27 @@ pub struct FullDeps<C, P, SC, B> {
 	pub grandpa: GrandpaDeps<B>,
 	/// The backend used by the node.
 	pub backend: Arc<B>,
+	/// Starknet dependencies
+	pub starknet: StarknetDeps<C, G, Block>,
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, SC, B>(
+pub fn create_full<C, P, SC, B, G, A>(
 	FullDeps {
 		client,
 		pool,
+		graph,
 		select_chain,
 		chain_spec,
 		deny_unsafe,
 		babe,
 		grandpa,
 		backend,
-	}: FullDeps<C, P, SC, B>,
+		starknet: starknet_params
+	}: FullDeps<C, P, SC, B, G, A>,
 ) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
 where
+	A: ChainApi<Block = Block> + 'static,
 	C: ProvideRuntimeApi<Block>
 		+ sc_client_api::BlockBackend<Block>
 		+ CallApiAt<Block>
@@ -120,12 +137,15 @@ where
 		+ 'static,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
+	C::Api: pallet_starknet_runtime_api::StarknetRuntimeApi<Block>
+        + pallet_starknet_runtime_api::ConvertTransactionRuntimeApi<Block>,
 	C::Api: BabeApi<Block>,
 	C::Api: BlockBuilder<Block>,
 	P: TransactionPool<Block = Block> + 'static,
 	SC: SelectChain<Block> + 'static,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashingFor<Block>>,
+	G: GenesisProvider + Send + Sync + 'static,
 {
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
@@ -150,8 +170,25 @@ where
 	let chain_name = chain_spec.name().to_string();
 	let genesis_hash = client.block_hash(0).ok().flatten().expect("Genesis block exists; qed");
 	let properties = chain_spec.properties();
-	io.merge(ChainSpec::new(chain_name, genesis_hash, properties).into_rpc())?;
 
+	let rpc_instance: StarknetRpcWrapper<_, _, _, _, _, _, StarknetHasher> =
+	StarknetRpcWrapper(Arc::new(Starknet::<_, _, _, _, _, _, StarknetHasher>::new(
+		client.clone(),
+		starknet_params.madara_backend,
+		starknet_params.overrides,
+		pool.clone(),
+		graph,
+		starknet_params.sync_service,
+		starknet_params.starting_block,
+		starknet_params.genesis_provider,
+	)));
+
+	io.merge(MadaraRpcApiServer::into_rpc(rpc_instance.clone()))?;
+	io.merge(StarknetReadRpcApiServer::into_rpc(rpc_instance.clone()))?;
+	io.merge(StarknetWriteRpcApiServer::into_rpc(rpc_instance.clone()))?;
+	io.merge(StarknetTraceRpcApiServer::into_rpc(rpc_instance.clone()))?;
+
+	io.merge(ChainSpec::new(chain_name, genesis_hash, properties).into_rpc())?;
 	io.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
 	io.merge(TransactionPayment::new(client.clone()).into_rpc())?;
 	io.merge(

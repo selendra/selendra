@@ -9681,6 +9681,12 @@ name = "selendra-rpc"
 version = "1.0.5"
 dependencies = [
  "jsonrpsee",
+ "mc-db",
+ "mc-genesis-data-provider",
+ "mc-rpc",
+ "mc-storage",
+ "pallet-starknet",
+ "pallet-starknet-runtime-api",
  "pallet-transaction-payment-rpc",
  "sc-chain-spec",
  "sc-client-api",
