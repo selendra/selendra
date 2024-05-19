@@ -40,14 +40,3 @@ substrate-state-trie-migration-rpc = { workspace = true }
 selendra-primitives = { workspace = true }
 selendra-runtime = { workspace = true, features = ["std"] }
 
-# Frontier
-fc-cli = { workspace = true }
-fc-consensus = { workspace = true }
-fc-db = { workspace = true }
-fc-mapping-sync = { workspace = true }
-fc-rpc = { workspace = true }
-fc-rpc-core = { workspace = true }
-fc-storage = { workspace = true }
-fc-api = { workspace = true }
-fp-dynamic-fee= { workspace = true }
-fp-rpc = { workspace = true, features = ["default"] }

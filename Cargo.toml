@@ -7,6 +7,15 @@ members = [
   "runtime/common",
   "runtime/selendra",
   "runtime/selendra/constants",
+  "node/client/genesis-data-provider",
+  "node/client/db",
+  "node/client/rpc-core",
+  "node/client/rpc",
+  "node/client/mapping-sync",
+  "node/client/storage",
+  "node/client/commitment-state-diff",
+  "node/client/eth-client",
+  "node/client/starknet-block-import",
   "pallets/custom-signatures",
   "pallets/starknet",
   "pallets/starknet/runtime_api/",
@@ -109,6 +118,33 @@ soketto = "0.7.1"
 criterion = { version = "0.4.0", features = ["async_tokio"] }
 tokio-util = { version = "0.7.4", features = ["compat"] }
 wait-timeout = "0.2"
+
+# Cairo Virtual Machine
+blockifier = { git = "https://github.com/bidzyyys/blockifier", branch = "feature/scale-codec" }
+starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
+starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
+starknet-providers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
+starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
+starknet-signers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
+starknet-accounts = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
+starknet-contract = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
+starknet_api = { git = "https://github.com/bidzyyys/starknet-api", branch = "feature/scale-codec", features = [
+  "testing",
+  "parity-scale-codec",
+] }
+cairo-vm = { git = "https://github.com/bidzyyys/cairo-vm", branch = "feature/scale-codec", features = [
+  "cairo-1-hints",
+  "parity-scale-codec",
+] }
+# Cairo lang
+cairo-lang-starknet = { git = "https://github.com/bidzyyys/cairo.git", branch = "feature/scale-codec" }
+cairo-lang-starknet-classes = { git = "https://github.com/bidzyyys/cairo.git", branch = "feature/scale-codec" }
+cairo-lang-casm = { git = "https://github.com/bidzyyys/cairo.git", branch = "feature/scale-codec" }
+cairo-lang-utils = { git = "https://github.com/bidzyyys/cairo.git", branch = "feature/scale-codec" }
+
+# Ethers: using the same versions as in Anvil
+ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "f0e5b194f09c533feb10d1a686ddb9e5946ec107" }
+ethers-solc = { git = "https://github.com/gakonst/ethers-rs", rev = "f0e5b194f09c533feb10d1a686ddb9e5946ec107" }
 
 # Substrate primitives dependencies
 sp-core = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
@@ -253,63 +289,16 @@ pallet-vesting = { git = "https://github.com/paritytech/polkadot-sdk", branch = 
 pallet-whitelist = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
 pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
 
-# Frontier 
-fp-rpc = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false }
-fp-self-contained = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false, features = ["serde"] }
-fp-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", features = ["std"] }
-fc-cli = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0" }
-fc-consensus = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0" }
-fc-db = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0" }
-fc-mapping-sync = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0" }
-fc-rpc = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0" }
-fc-rpc-core = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0" }
-fc-storage = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0" }
-fc-api = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0" }
-fp-dynamic-fee= { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0" }
-pallet-base-fee = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false }
-pallet-dynamic-fee = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false }
-pallet-ethereum = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false }
-pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false }
-pallet-evm-precompile-blake2 = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false }
-pallet-evm-precompile-bn128 = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false }
-pallet-evm-precompile-dispatch = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false }
-pallet-evm-precompile-ed25519 = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false }
-pallet-evm-precompile-modexp = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false }
-pallet-evm-precompile-sha3fips = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false }
-pallet-evm-precompile-simple = { git = "https://github.com/polkadot-evm/frontier", branch = "polkadot-v1.3.0", default-features = false }
-
 # Substrate build & tools dependencies
 substrate-build-script-utils = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
 substrate-wasm-builder = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
 substrate-prometheus-endpoint = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", default-features = false }
 
-# Cairo Virtual Machine
-blockifier = { git = "https://github.com/bidzyyys/blockifier", branch = "feature/scale-codec" }
-starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
-starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
-starknet-providers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
-starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
-starknet-signers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
-starknet-accounts = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
-starknet-contract = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
-starknet_api = { git = "https://github.com/bidzyyys/starknet-api", branch = "feature/scale-codec", features = [
-  "testing",
-  "parity-scale-codec",
-] }
-cairo-vm = { git = "https://github.com/bidzyyys/cairo-vm", branch = "feature/scale-codec", features = [
-  "cairo-1-hints",
-  "parity-scale-codec",
-] }
-# Cairo lang
-cairo-lang-starknet = { git = "https://github.com/bidzyyys/cairo.git", branch = "feature/scale-codec" }
-cairo-lang-starknet-classes = { git = "https://github.com/bidzyyys/cairo.git", branch = "feature/scale-codec" }
-cairo-lang-casm = { git = "https://github.com/bidzyyys/cairo.git", branch = "feature/scale-codec" }
-cairo-lang-utils = { git = "https://github.com/bidzyyys/cairo.git", branch = "feature/scale-codec" }
-
-# Local pallets
-pallet-custom-signatures = { path = "pallets/custom-signatures", default-features = false  }
+# starknet pallets
 pallet-starknet = { path = "pallets/starknet", default-features = false }
 pallet-starknet-runtime-api = { path = "pallets/starknet/runtime_api", default-features = false }
+
+# starkent primitive
 mp-genesis-config = { path = "pallets/starknet/primitives/genesis-config", default-features = false }
 mp-digest-log = { path = "pallets/starknet/primitives/digest-log", default-features = false }
 mp-block = { path = "pallets/starknet/primitives/block", default-features = false }
@@ -322,6 +311,18 @@ mp-transactions = { path = "pallets/starknet/primitives/transactions", default-f
 mp-chain-id = { path = "pallets/starknet/primitives/chain-id", default-features = false }
 mp-simulations = { path = "pallets/starknet/primitives/simulations", default-features = false }
 mp-program-hash = { path = "pallets/starknet/primitives/program-hash", default-features = false }
+
+# starkent client
+mc-genesis-data-provider = { path = "node/client/genesis-data-provider" }
+mc-mapping-sync = { path = "node/client/mapping-sync" }
+mc-db = { path = "node/client/db" }
+mc-storage = { path = "node/client/storage" }
+mc-rpc = { path = "node/client/rpc" }
+mc-rpc-core = { path = "node/client/rpc-core" }
+mc-commitment-state-diff = { path = "node/client/commitment-state-diff" }
+mc-l1-messages = { path = "node/client/l1-messages" }
+mc-eth-client = { path = "node/client/eth-client" }
+mc-starknet-block-import = { path = "node/client/starknet-block-import" }
 
 # Selendra
 selendra-node = { path = "node", default-features = false } 

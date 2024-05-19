@@ -20,8 +20,8 @@
 
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use selendra_runtime::{
-	evm::Precompiles, wasm_binary_unwrap, BabeConfig, BalancesConfig, BaseFeeConfig, Block,
-	EVMConfig, ImOnlineConfig, IndicesConfig, MaxNominations, SessionConfig, SessionKeys,
+	wasm_binary_unwrap, BabeConfig, BalancesConfig, BaseFeeConfig, Block,
+	ImOnlineConfig, IndicesConfig, MaxNominations, SessionConfig, SessionKeys,
 	StakerStatus, StakingConfig, SudoConfig, SystemConfig,
 };
 use selendra_runtime_constants::currency::*;
@@ -346,30 +346,6 @@ pub fn testnet_genesis(
 		treasury: Default::default(),
 		vesting: Default::default(),
 		transaction_payment: Default::default(),
-		evm: EVMConfig {
-			// We need _some_ code inserted at the precompile address so that
-			// the evm will actually call the address.
-			accounts: Precompiles::used_addresses()
-				.map(|addr| {
-					(
-						addr,
-						fp_evm::GenesisAccount {
-							balance: Default::default(),
-							code: revert_bytecode.clone(),
-							nonce: Default::default(),
-							storage: Default::default(),
-						},
-					)
-				})
-				.collect(),
-			_marker: Default::default(),
-		},
-		base_fee: BaseFeeConfig::new(
-			sp_core::U256::from(1_000_000_000),
-			sp_runtime::Permill::zero(),
-		),
-		dynamic_fee: Default::default(),
-		ethereum: Default::default(),
 	}
 }
 

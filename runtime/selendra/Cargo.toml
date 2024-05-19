@@ -91,22 +91,6 @@ pallet-election-provider-support-benchmarking = { workspace = true, optional = t
 pallet-offences-benchmarking = { workspace = true, optional = true }
 pallet-session-benchmarking = { workspace = true, optional = true }
 
-# Evm and Frontier
-fp-rpc = { workspace = true }
-fp-self-contained = { workspace = true }
-pallet-base-fee = { workspace = true }
-pallet-dynamic-fee = { workspace = true }
-pallet-ethereum = { workspace = true }
-pallet-evm = { workspace = true }
-pallet-evm-precompile-blake2 = { workspace = true }
-pallet-evm-precompile-bn128 = { workspace = true }
-pallet-evm-precompile-dispatch = { workspace = true }
-pallet-evm-precompile-ed25519 = { workspace = true }
-pallet-evm-precompile-modexp = { workspace = true }
-pallet-evm-precompile-sha3fips = { workspace = true }
-pallet-evm-precompile-simple = { workspace = true }
-pallet-custom-signatures= { workspace = true } 
-
 # starknet
 blockifier = { workspace = true  }
 starknet_api = { workspace = true }
@@ -204,20 +188,6 @@ std = [
 	"pallet-staking-runtime-api/std",
 	"pallet-sudo/std",
 	"pallet-recovery/std",
-	"fp-rpc/std",
-	"fp-self-contained/std",
-	"pallet-base-fee/std",
-	"pallet-ethereum/std",
-	"pallet-dynamic-fee/std",
-	"pallet-evm/std",
-	"pallet-custom-signatures/std",
-	"pallet-evm-precompile-blake2/std",
-	"pallet-evm-precompile-bn128/std",
-	"pallet-evm-precompile-dispatch/std",
-	"pallet-evm-precompile-ed25519/std",
-	"pallet-evm-precompile-modexp/std",
-	"pallet-evm-precompile-sha3fips/std",
-	"pallet-evm-precompile-simple/std",
 	"pallet-starknet/std",
 	"pallet-starknet-runtime-api/std",
 	"mp-program-hash/std",
@@ -269,7 +239,6 @@ runtime-benchmarks = [
 	"frame-election-provider-support/runtime-benchmarks",
 ]
 try-runtime = [
-	"fp-self-contained/try-runtime",
 	"frame-executive/try-runtime",
 	"frame-try-runtime",
 	"frame-system/try-runtime",
@@ -302,15 +271,11 @@ try-runtime = [
 	"pallet-session/try-runtime",
 	"pallet-staking/try-runtime",
 	"pallet-timestamp/try-runtime",
-	"pallet-custom-signatures/try-runtime",
 	"pallet-treasury/try-runtime",
 	"pallet-babe/try-runtime",
 	"pallet-referenda/try-runtime",
 	"pallet-vesting/try-runtime",
 	"pallet-utility/try-runtime",
-	"pallet-evm/try-runtime",
-	"pallet-base-fee/try-runtime",
-	"pallet-ethereum/try-runtime",
 ]
 # When enabled, the runtime API will not be build.
 #
