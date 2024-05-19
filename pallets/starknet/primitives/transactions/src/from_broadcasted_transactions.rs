@@ -582,7 +582,7 @@ mod tests {
     const CAIRO_1_NO_VALIDATE_ACCOUNT_COMPILED_CLASS_HASH: &str =
         "0xdf4d3042eec107abe704619f13d92bbe01a58029311b7a1886b23dcbb4ea87";
     fn get_compressed_legacy_contract_class() -> CompressedLegacyContractClass {
-        let contract_class_bytes = include_bytes!("../../../../cairo-contracts/build/test.json");
+        let contract_class_bytes = include_bytes!("../../../../../cairo-contracts/build/test.json");
 
         let contract_class: LegacyContractClass = serde_json::from_slice(contract_class_bytes).unwrap();
         let compressed_contract_class: CompressedLegacyContractClass = contract_class.compress().unwrap();
@@ -594,7 +594,7 @@ mod tests {
         // when HelloStarknet is compiled into Sierra, the output does not have inputs: [] in the events ABI
         // this has been manually added right now because starknet-rs expects it
         let contract_class_bytes =
-            include_bytes!("../../../../cairo-contracts/build/cairo_1/HelloStarknet.sierra.json");
+            include_bytes!("../../../../../cairo-contracts/build/cairo_1/HelloStarknet.sierra.json");
 
         let contract_class: SierraClass = serde_json::from_slice(contract_class_bytes).unwrap();
         let flattened_contract_class: FlattenedSierraClass = contract_class.flatten().unwrap();
