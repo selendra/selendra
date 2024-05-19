@@ -48,7 +48,9 @@ sp-keystore = { workspace = true }
 sp-consensus = { workspace = true }
 sp-transaction-storage-proof = { workspace = true }
 sp-io = { workspace = true }
+sp-blockchain = { workspace = true }
 sp-statement-store = { workspace = true }
+sp-offchain = { workspace = true }
 
 # client dependencies
 sc-client-api = { workspace = true }
@@ -75,10 +77,26 @@ sc-sysinfo = { workspace = true }
 sc-storage-monitor = { workspace = true }
 sc-offchain = { workspace = true }
 
+# starknet
+mp-block = { workspace = true }
+mp-digest-log = { workspace = true }
+mp-felt = { workspace = true }
+mp-sequencer-address = { workspace = true, features = ["client"] }
+
+mc-db = { workspace = true }
+mc-mapping-sync = { workspace = true }
+mc-genesis-data-provider = { workspace = true }
+mc-storage = { workspace = true }
+mc-rpc = { workspace = true }
+
+blockifier = { workspace = true }
+
 # frame dependencies
 frame-system = { workspace = true }
 frame-benchmarking = { workspace = true }
 frame-system-rpc-runtime-api = { workspace = true }
+
+pallet-starknet = { workspace = true }
 pallet-transaction-payment = { workspace = true }
 pallet-im-online = { workspace = true }
 

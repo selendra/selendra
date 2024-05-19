@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
   "rpc",
-  # "node",
+  "node",
   "primitives",
   "runtime/common",
   "runtime/selendra",

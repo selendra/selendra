@@ -21,33 +21,47 @@
 //! Service implementation. Specialized wrapper over substrate service.
 
 use crate::{
-	BackendType, Cli, EthConfiguration,
+	Cli,
+	starknet::{
+		db_config_dir, MadaraBackend,
+		genesis_block::MadaraGenesisBlockBuilder
+	}
 };
 use parity_scale_codec::Encode;
 use frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE;
 use frame_system_rpc_runtime_api::AccountNonceApi;
 use futures::prelude::*;
-use sc_client_api::{Backend, BlockBackend};
+use sc_client_api::{Backend, BlockBackend, HeaderBackend};
 use sc_consensus_babe::{self, SlotProportion};
 use sc_executor::NativeElseWasmExecutor;
 use sc_network::{event::Event, NetworkEventStream, NetworkService};
 use sc_network_sync::warp::WarpSyncParams;
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
-use sc_service::{config::Configuration, error::Error as ServiceError, RpcHandlers, TaskManager};
+use sc_service::{new_db_backend, config::Configuration, error::Error as ServiceError, RpcHandlers, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryWorker};
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
-use selendra_primitives::Block;
-use selendra_runtime::{RuntimeApi, TransactionConverter};
-use sp_api::ProvideRuntimeApi;
+use selendra_primitives::{Block, StarknetHasher};
+use selendra_runtime::RuntimeApi;
+use sp_api::{ProvideRuntimeApi, offchain::OffchainStorage};
 use sc_client_api::BlockchainEvents;
-use sp_core::{U256, crypto::Pair};
+use sp_core::crypto::Pair;
 use sp_runtime::{generic, traits::Block as BlockT, SaturatedConversion};
 use std::{
-	path::Path,
+	path::PathBuf,
 	sync::Arc,
 	time::Duration,
 };
+use sp_offchain::STORAGE_PREFIX;
+
+use mc_storage::overrides_handle;
+use mc_mapping_sync::MappingSyncWorker;
+use mp_sequencer_address::{
+    InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
+};
+use mc_genesis_data_provider::OnDiskGenesisConfig;
+
+const MADARA_TASK_GROUP: &str = "madara";
 
 // Declare an instance of the native executor named `ExecutorDispatch`. Include the wasm binary as
 // the equivalent wasm code.
@@ -155,7 +169,6 @@ pub fn create_extrinsic(
 /// Creates a new partial node.
 pub fn new_partial(
 	config: &Configuration,
-	eth_config: &EthConfiguration,
 ) -> Result<
 	sc_service::PartialComponents<
 		FullClient,
@@ -168,6 +181,7 @@ pub fn new_partial(
 			sc_consensus_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
 			sc_consensus_babe::BabeLink<Block>,
 			sc_consensus_babe::BabeWorkerHandle<Block>,
+			Arc<MadaraBackend>,
 			Option<Telemetry>,
 		),
 	>,
@@ -186,11 +200,28 @@ pub fn new_partial(
 
 	let executor = sc_service::new_native_or_wasm_executor(&config);
 
+	let backend = new_db_backend(config.db_config())?;
+
+    let genesis_block_builder = MadaraGenesisBlockBuilder::<Block, _, _>::new(
+        config.chain_spec.as_storage_builder(),
+        true,
+        backend.clone(),
+        executor.clone(),
+    )
+    .unwrap();
+
 	let (client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts::<Block, RuntimeApi, _>(
+		sc_service::new_full_parts_with_genesis_builder::<
+		Block, 
+		RuntimeApi,
+		 _,
+		 MadaraGenesisBlockBuilder<Block, FullBackend, NativeElseWasmExecutor<ExecutorDispatch>>,
+		>(
 			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 			executor,
+			backend.clone(),
+        	genesis_block_builder,
 		)?;
 	let client = Arc::new(client);
 
@@ -209,6 +240,8 @@ pub fn new_partial(
 		task_manager.spawn_essential_handle(),
 		client.clone(),
 	);
+
+	let madara_backend = Arc::new(MadaraBackend::open(&config.database, &db_config_dir(config))?);
 
 	let (grandpa_block_import, grandpa_link) = sc_consensus_grandpa::block_import(
 		client.clone(),
@@ -265,6 +298,7 @@ pub fn new_partial(
 			grandpa_link,
 			babe_link,
 			babe_worker_handle,
+			madara_backend,
 			telemetry,
 		),
 	})
@@ -288,7 +322,7 @@ pub struct NewFullBase {
 
 /// Creates a full service from the configuration.
 pub fn new_full_base(
-	mut config: Configuration,
+	config: Configuration,
 	disable_hardware_benchmarks: bool,
 	with_startup_data: impl FnOnce(
 		&sc_consensus_babe::BabeBlockImport<Block, FullClient, FullGrandpaBlockImport>,
@@ -316,9 +350,10 @@ pub fn new_full_base(
 				grandpa_link,
 				babe_link,
 				babe_worker_handle,
+				madara_backend,
 				mut telemetry,
 			),
-	} = new_partial(&config, &eth_config)?;
+	} = new_partial(&config)?;
 
 	let auth_disc_publish_non_global_ips = config.network.allow_non_globals_in_dht;
 	let mut net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
@@ -358,8 +393,9 @@ pub fn new_full_base(
 	let enable_grandpa = !config.disable_grandpa;
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let enable_offchain_worker = config.offchain_worker.enabled;
+	let starting_block = client.info().best_number;
 
-	let slot_duration = babe_link.config().slot_duration();
+	// let slot_duration = babe_link.config().slot_duration();
 
 	let (rpc_extensions_builder, rpc_setup) = {
 		let justification_stream = grandpa_link.justification_stream();
@@ -374,9 +410,22 @@ pub fn new_full_base(
 
 		let client = client.clone();
 		let pool = transaction_pool.clone();
+		let graph = transaction_pool.pool().clone();
 		let select_chain = select_chain.clone();
 		let keystore = keystore_container.keystore();
 		let chain_spec = config.chain_spec.cloned_box();
+
+		let overrides = overrides_handle(client.clone());
+		let config_dir: PathBuf = config.data_path.clone();
+		let genesis_data = OnDiskGenesisConfig(config_dir);
+		let starknet_rpc_params = selendra_rpc::StarknetDeps {
+			client: client.clone(),
+			madara_backend: madara_backend.clone(),
+			overrides,
+			sync_service: sync_service.clone(),
+			starting_block,
+			genesis_provider: genesis_data.into(),
+		};
 
 		let rpc_backend = backend.clone();
 		let rpc_extensions_builder =
@@ -384,6 +433,7 @@ pub fn new_full_base(
 				let deps = selendra_rpc::FullDeps {
 					client: client.clone(),
 					pool: pool.clone(),
+					graph: graph.clone(),
 					select_chain: select_chain.clone(),
 					chain_spec: chain_spec.cloned_box(),
 					deny_unsafe,
@@ -399,6 +449,7 @@ pub fn new_full_base(
 						finality_provider: finality_proof_provider.clone(),
 					},
 					backend: rpc_backend.clone(),
+					starknet: starknet_rpc_params.clone(),
 				};
 
 				selendra_rpc::create_full(deps).map_err(Into::into)
@@ -455,6 +506,7 @@ pub fn new_full_base(
 
 		let client_clone = client.clone();
 		let slot_duration = babe_link.config().slot_duration();
+		let offchain_storage_backend = backend.clone();
 		let babe_config = sc_consensus_babe::BabeParams {
 			keystore: keystore_container.keystore(),
 			client: client.clone(),
@@ -465,6 +517,7 @@ pub fn new_full_base(
 			justification_sync_link: sync_service.clone(),
 			create_inherent_data_providers: move |parent, ()| {
 				let client_clone = client_clone.clone();
+				let offchain_storage = offchain_storage_backend.offchain_storage();
 				async move {
 					let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
@@ -480,7 +533,21 @@ pub fn new_full_base(
 							&parent,
 						)?;
 
-					Ok((slot, timestamp, storage_proof))
+					
+					let ocw_storage = offchain_storage.clone();
+					let prefix = &STORAGE_PREFIX;
+					let key = SEQ_ADDR_STORAGE_KEY;
+
+					let sequencer_address = if let Some(storage) = ocw_storage {
+						SeqAddrInherentDataProvider::try_from(
+							storage.get(prefix, key).unwrap_or(DEFAULT_SEQUENCER_ADDRESS.to_vec()),
+						)
+						.unwrap_or_default()
+					} else {
+						SeqAddrInherentDataProvider::default()
+					};
+
+					Ok((slot, timestamp, storage_proof, sequencer_address))
 				}
 			},
 			force_authoring,
@@ -498,6 +565,22 @@ pub fn new_full_base(
 			babe,
 		);
 	}
+
+	task_manager.spawn_essential_handle().spawn(
+        "mc-mapping-sync-worker",
+        Some(MADARA_TASK_GROUP),
+        MappingSyncWorker::<_, _, _, StarknetHasher>::new(
+            client.import_notification_stream(),
+            Duration::new(6, 0),
+            client.clone(),
+            backend.clone(),
+            madara_backend.clone(),
+            3,
+            0,
+            prometheus_registry.clone(),
+        )
+        .for_each(|()| future::ready(())),
+    );
 
 	// Spawn authority discovery module.
 	if role.is_authority() {

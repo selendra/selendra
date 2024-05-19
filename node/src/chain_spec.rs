@@ -18,17 +18,21 @@
 
 //! Substrate chain configurations.
 
+use std::path::PathBuf;
+
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use selendra_runtime::{
-	wasm_binary_unwrap, BabeConfig, BalancesConfig, BaseFeeConfig, Block,
+	wasm_binary_unwrap, BabeConfig, BalancesConfig, Block,
 	ImOnlineConfig, IndicesConfig, MaxNominations, SessionConfig, SessionKeys,
 	StakerStatus, StakingConfig, SudoConfig, SystemConfig,
 };
 use selendra_runtime_constants::currency::*;
 
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
+use pallet_starknet::genesis_loader::{GenesisData, GenesisLoader, HexFelt};
+
 use sc_chain_spec::ChainSpecExtension;
-use sc_service::ChainType;
+use sc_service::{BasePath, ChainType};
 use sc_telemetry::TelemetryEndpoints;
 use serde::{Deserialize, Serialize};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
@@ -42,8 +46,14 @@ use sp_runtime::{
 pub use selendra_primitives::{AccountId, Balance, Signature};
 pub use selendra_runtime::RuntimeGenesisConfig;
 
+use mp_felt::Felt252Wrapper;
+
+use crate::starknet::constants::DEV_CHAIN_ID;
+
 type AccountPublic = <Signature as Verify>::Signer;
 
+pub const GENESIS_ASSETS_DIR: &str = "genesis-assets/";
+pub const GENESIS_ASSETS_FILE: &str = "genesis.json";
 const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// Node `ChainSpec` extensions.
@@ -92,7 +102,17 @@ fn session_keys(
 	SessionKeys { grandpa, babe, im_online, authority_discovery }
 }
 
-fn staging_testnet_config_genesis() -> RuntimeGenesisConfig {
+fn load_genesis(data_path: PathBuf) -> GenesisLoader {
+    let genesis_path = data_path.join(GENESIS_ASSETS_DIR).join(GENESIS_ASSETS_FILE);
+
+    log::debug!("🧪 Loading genesis data at : {}", genesis_path.display());
+    let genesis_file_content = std::fs::read_to_string(genesis_path)
+        .expect("Failed to read genesis file. Please run `madara setup` before opening an issue.");
+    let genesis_data: GenesisData = serde_json::from_str(&genesis_file_content).expect("Failed loading genesis");
+    GenesisLoader::new(data_path, genesis_data)
+}
+
+fn staging_testnet_config_genesis(base_path: BasePath) -> RuntimeGenesisConfig {
 	#[rustfmt::skip]
 	// stash, controller, session-key
 	// generated with secret:
@@ -191,12 +211,14 @@ fn staging_testnet_config_genesis() -> RuntimeGenesisConfig {
 	);
 
 	let endowed_accounts: Vec<AccountId> = vec![root_key.clone()];
+	let chain_id = DEV_CHAIN_ID;
+	let genesis_loader = load_genesis(base_path.config_dir(chain_id));
 
-	testnet_genesis(initial_authorities, vec![], root_key, Some(endowed_accounts))
+	testnet_genesis(genesis_loader, initial_authorities, vec![], root_key, Some(endowed_accounts))
 }
 
 /// Staging testnet config.
-pub fn staging_testnet_config() -> ChainSpec {
+pub fn staging_testnet_config(data_path: BasePath) -> ChainSpec {
 	let boot_nodes = vec![];
 	ChainSpec::from_genesis(
 		"Staging Testnet",
@@ -246,6 +268,7 @@ pub fn authority_keys_from_seed(
 
 /// Helper function to create RuntimeGenesisConfig for testing
 pub fn testnet_genesis(
+	genesis_loader: GenesisLoader,
 	initial_authorities: Vec<(
 		AccountId,
 		AccountId,
@@ -304,10 +327,10 @@ pub fn testnet_genesis(
 		}))
 		.collect::<Vec<_>>();
 
+	let starknet_genesis_config: selendra_runtime::starknet::pallet_starknet::GenesisConfig<_> = genesis_loader.into();
+
 	const ENDOWMENT: Balance = 10_000_000 * DOLLARS;
 	const STASH: Balance = ENDOWMENT / 1000;
-
-	let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 
 	RuntimeGenesisConfig {
 		system: SystemConfig { code: wasm_binary_unwrap().to_vec(), ..Default::default() },
@@ -346,11 +369,17 @@ pub fn testnet_genesis(
 		treasury: Default::default(),
 		vesting: Default::default(),
 		transaction_payment: Default::default(),
+		/// Starknet Genesis configuration.
+        starknet: starknet_genesis_config,
 	}
 }
 
-fn development_config_genesis() -> RuntimeGenesisConfig {
+fn development_config_genesis(base_path: BasePath) -> RuntimeGenesisConfig {
+	let chain_id = DEV_CHAIN_ID;
+	let genesis_loader = load_genesis(base_path.config_dir(chain_id));
+
 	testnet_genesis(
+		genesis_loader,
 		vec![authority_keys_from_seed("Alice")],
 		vec![],
 		get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -359,12 +388,12 @@ fn development_config_genesis() -> RuntimeGenesisConfig {
 }
 
 /// Development config (single validator Alice)
-pub fn development_config() -> ChainSpec {
+pub fn development_config(data_path: BasePath) -> ChainSpec {
 	ChainSpec::from_genesis(
 		"Development",
 		"dev",
 		ChainType::Development,
-		development_config_genesis,
+		development_config_genesis(data_path),
 		vec![],
 		None,
 		None,
@@ -374,8 +403,11 @@ pub fn development_config() -> ChainSpec {
 	)
 }
 
-fn local_testnet_genesis() -> RuntimeGenesisConfig {
+fn local_testnet_genesis(base_path: BasePath) -> RuntimeGenesisConfig {
+	let chain_id = DEV_CHAIN_ID;
+	let genesis_loader = load_genesis(base_path.config_dir(chain_id));
 	testnet_genesis(
+		genesis_loader,
 		vec![authority_keys_from_seed("Alice"), authority_keys_from_seed("Bob")],
 		vec![],
 		get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -384,12 +416,12 @@ fn local_testnet_genesis() -> RuntimeGenesisConfig {
 }
 
 /// Local testnet config (multivalidator Alice + Bob)
-pub fn local_testnet_config() -> ChainSpec {
+pub fn local_testnet_config(data_path:BasePath) -> ChainSpec {
 	ChainSpec::from_genesis(
 		"Local Testnet",
 		"local_testnet",
 		ChainType::Local,
-		local_testnet_genesis,
+		local_testnet_genesis(data_path),
 		vec![],
 		None,
 		None,
