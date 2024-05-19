@@ -18,9 +18,7 @@
 
 use super::benchmarking::{inherent_benchmark_data, RemarkBuilder, TransferKeepAliveBuilder};
 use crate::{
-	chain_spec, service,
-	service::{new_partial, FullClient},
-	Cli, Subcommand,
+	chain_spec, commands::run_node, service::{self, new_partial, FullClient}, Cli, Subcommand
 };
 use frame_benchmarking_cli::*;
 use sc_cli::{Result, SubstrateCli};
@@ -64,11 +62,20 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		let spec = match id {
-			"selendra-dev" | "dev" => Box::new(chain_spec::development_config()),
-			"selendra-loal" | "local" => Box::new(chain_spec::local_testnet_config()),
+			"selendra-dev" | "dev" => {
+				let base_path = self.run.base_path().map_err(|e| e.to_string()).unwrap();
+				Box::new(chain_spec::development_config(base_path))
+			},
+			"selendra-loal" | "local" => {
+				let base_path = self.run.base_path().map_err(|e| e.to_string()).unwrap();
+				Box::new(chain_spec::local_testnet_config(base_path, id))
+			},
+			"staging" => {
+				let base_path = self.run.base_path().map_err(|e| e.to_string()).unwrap();
+				Box::new(chain_spec::staging_testnet_config(base_path, id))
+			},
 			"selendra" | "" => Box::new(chain_spec::selendra_config()?),
 			"selendra-testnet" | "testnet" => Box::new(chain_spec::selendra_testnet_config()?),
-			"staging" => Box::new(chain_spec::staging_testnet_config()),
 			path =>
 				Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
 		};
@@ -87,13 +94,70 @@ pub fn run() -> Result<()> {
 
 	match &cli.subcommand {
 		None => {
-			let runner = cli.create_runner(&cli.run)?;
-	
 			set_default_ss58_version();
-
-			runner.run_node_until_exit(|config| async move {
-				service::new_full(config, cli).map_err(sc_cli::Error::Service)
+			run_node(cli)
+		},
+		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
+		Some(Subcommand::Sign(cmd)) => cmd.run(),
+		Some(Subcommand::Verify(cmd)) => cmd.run(),
+		Some(Subcommand::Vanity(cmd)) => cmd.run(),
+		Some(Subcommand::BuildSpec(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
+		},
+		Some(Subcommand::CheckBlock(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|config| {
+				let PartialComponents { client, task_manager, import_queue, .. } =
+					new_partial(&config)?;
+				Ok((cmd.run(client, import_queue), task_manager))
 			})
+		},
+		Some(Subcommand::ExportBlocks(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|config| {
+				let PartialComponents { client, task_manager, .. } =
+					new_partial(&config)?;
+				Ok((cmd.run(client, config.database), task_manager))
+			})
+		},
+		Some(Subcommand::ExportState(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|config| {
+				let PartialComponents { client, task_manager, .. } =
+					new_partial(&config)?;
+				Ok((cmd.run(client, config.chain_spec), task_manager))
+			})
+		},
+		Some(Subcommand::ImportBlocks(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|config| {
+				let PartialComponents { client, task_manager, import_queue, .. } =
+					new_partial(&config)?;
+				Ok((cmd.run(client, import_queue), task_manager))
+			})
+		},
+		Some(Subcommand::PurgeChain(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|config| cmd.run(config.database))
+		},
+		Some(Subcommand::Revert(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|config| {
+				let PartialComponents { client, task_manager, backend, .. } =
+					new_partial(&config)?;
+				let aux_revert = Box::new(|client: Arc<FullClient>, backend, blocks| {
+					sc_consensus_babe::revert(client.clone(), backend, blocks)?;
+					sc_consensus_grandpa::revert(client, blocks)?;
+					Ok(())
+				});
+				Ok((cmd.run(client, backend, Some(aux_revert)), task_manager))
+			})
+		},
+		Some(Subcommand::Setup(ref cmd)) => cmd.run(),
+		Some(Subcommand::ChainInfo(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|config| cmd.run::<Block>(&config))
 		},
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
@@ -172,63 +236,6 @@ pub fn run() -> Result<()> {
 				}
 			})
 		},
-		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
-		Some(Subcommand::Sign(cmd)) => cmd.run(),
-		Some(Subcommand::Verify(cmd)) => cmd.run(),
-		Some(Subcommand::Vanity(cmd)) => cmd.run(),
-		Some(Subcommand::BuildSpec(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
-		},
-		Some(Subcommand::CheckBlock(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents { client, task_manager, import_queue, .. } =
-					new_partial(&config)?;
-				Ok((cmd.run(client, import_queue), task_manager))
-			})
-		},
-		Some(Subcommand::ExportBlocks(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents { client, task_manager, .. } =
-					new_partial(&config)?;
-				Ok((cmd.run(client, config.database), task_manager))
-			})
-		},
-		Some(Subcommand::ExportState(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents { client, task_manager, .. } =
-					new_partial(&config)?;
-				Ok((cmd.run(client, config.chain_spec), task_manager))
-			})
-		},
-		Some(Subcommand::ImportBlocks(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents { client, task_manager, import_queue, .. } =
-					new_partial(&config)?;
-				Ok((cmd.run(client, import_queue), task_manager))
-			})
-		},
-		Some(Subcommand::PurgeChain(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.sync_run(|config| cmd.run(config.database))
-		},
-		Some(Subcommand::Revert(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents { client, task_manager, backend, .. } =
-					new_partial(&config)?;
-				let aux_revert = Box::new(|client: Arc<FullClient>, backend, blocks| {
-					sc_consensus_babe::revert(client.clone(), backend, blocks)?;
-					sc_consensus_grandpa::revert(client, blocks)?;
-					Ok(())
-				});
-				Ok((cmd.run(client, backend, Some(aux_revert)), task_manager))
-			})
-		},
 		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
 			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
@@ -256,9 +263,5 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::TryRuntime) => Err("TryRuntime wasn't enabled when building the node. \
 				You can enable it with `--features try-runtime`."
 			.into()),
-		Some(Subcommand::ChainInfo(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.sync_run(|config| cmd.run::<Block>(&config))
-		},
 	}
 }

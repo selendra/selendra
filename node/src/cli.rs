@@ -17,6 +17,9 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 /// An overarching CLI command definition.
+
+use crate::*;
+
 #[derive(Debug, clap::Parser)]
 pub struct Cli {
 	/// Possible subcommand with parameters.
@@ -25,7 +28,7 @@ pub struct Cli {
 
 	#[allow(missing_docs)]
 	#[clap(flatten)]
-	pub run: sc_cli::RunCmd,
+    pub run: ExtendedRunCmd,
 
 	/// Disable automatic hardware benchmarks.
 	///
@@ -94,6 +97,9 @@ pub enum Subcommand {
 
 	/// Db meta columns information.
 	ChainInfo(sc_cli::ChainInfoCmd),
+
+	/// Setup madara node
+	Setup(SetupCmd),
 }
 
 /// Avalailable frontier backend types.

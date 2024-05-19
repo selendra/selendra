@@ -29,10 +29,13 @@ clap = { workspace = true, features = ["derive"], optional = true }
 parity-scale-codec = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 jsonrpsee = { workspace = true, features = ["server"] }
+reqwest = { workspace = true, features = ["blocking"] }
 futures = { workspace = true}
 log = { workspace = true}
 serde_json = { workspace = true}
 rand = { workspace = true}
+sha3 = { workspace = true }
+url = { workspace = true }
 
 # primitives
 sp-authority-discovery = { workspace = true }
@@ -172,11 +175,3 @@ runtime-benchmarks = [
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future.
 try-runtime = ["selendra-runtime/try-runtime", "try-runtime-cli/try-runtime"]
-
-# [[bench]]
-# name = "transaction_pool"
-# harness = false
-
-# [[bench]]
-# name = "block_production"
-# harness = false

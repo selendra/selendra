@@ -30,6 +30,7 @@
 
 pub mod chain_spec;
 mod starknet;
+mod commands;
 
 #[macro_use]
 pub mod service;
@@ -37,11 +38,14 @@ pub mod service;
 mod benchmarking;
 #[cfg(feature = "cli")]
 mod cli;
-// #[cfg(feature = "cli")]
-// mod command;
+#[cfg(feature = "cli")]
+mod command;
 
 
 #[cfg(feature = "cli")]
 pub use cli::*;
-// #[cfg(feature = "cli")]
-// pub use command::*;
+#[cfg(feature = "cli")]
+pub use command::*;
+
+pub use commands::{ExtendedRunCmd, SetupCmd};
+
