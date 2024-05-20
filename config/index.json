@@ -3,55 +3,55 @@
   "genesis_assets": [
     {
       "name": "ArgentAccount.json",
-      "sha3_256": "c84648bb4ef70513be3aacea5f5a1bc64dd9dcad0662978e0acc7590754d8bd9"
+      "sha3_256": "43c97cc96d6fbe4b6e553747a9ce4fb7f36fad063f6bba0085d7a28fe2756ecb"
     },
     {
       "name": "ERC20.json",
-      "sha3_256": "4855ca0abaf813d36eec3a556de5314ac700646ba28becda4632b1c7748283b2"
+      "sha3_256": "badebfeed29d2c0e96311b2d694902cf534546374fc6956023e01c6520883a87"
     },
     {
       "name": "ERC721.json",
-      "sha3_256": "8189c5f2448bfe96343d98681313597e2c732c25a601f46948f0837fa99d0c10"
+      "sha3_256": "ec90b0ea71957910923872e8f03244d0a8e7c591ba6ffda73268a5a775db5b1a"
     },
     {
       "name": "genesis.json",
-      "sha3_256": "ec869153b70b838f5c58d602948145552bf9e8fcc1e22f28bd9250d3cf321993"
+      "sha3_256": "275ec63c66ee359d1b7f47667e00f25903744c79efb76a5504715ca2d14b8a9d"
     },
     {
       "name": "NoValidateAccount.casm.json",
-      "sha3_256": "023592635fd3a534ec6c45b49e442b72d24994e2b19524dfbff4bb8540c53876"
+      "sha3_256": "17e8996b46d33dd24e15435262a122dff720bf8c437a52800d1b53f4148545a4"
     },
     {
       "name": "NoValidateAccount.json",
-      "sha3_256": "c33991e486f6afb575fcaa8c643e0978444422801a92d5173c108b1726a94a52"
+      "sha3_256": "4c4c23d8e5d4ad211838570ae4a267f6b1f4c72de5eaa255d994b8c5b479d45e"
     },
     {
       "name": "OpenzeppelinAccount.json",
-      "sha3_256": "71eba832aee6e48bb1028c62c9862ef75f5811044331100582192d2a20e5b65b"
+      "sha3_256": "93979570ff3b62319eba3c0f01db8f61f152b85b0c69fc2e2ae675e4d41ff396"
     },
     {
       "name": "test.json",
-      "sha3_256": "0687b75f03b6c3c998fd51b0748bc0dde875080a69095b39e3987bd6fd425c2a"
+      "sha3_256": "a358c79377ff425a7362487c8c91516d79c7d0c0a76c847b3ee51da9ddd590bb"
     },
     {
       "name": "UniversalDeployer.json",
-      "sha3_256": "ba6680986e5ec7590ec8205bbfb0b71bc93a8d221faeb3d597ed293d1a6f9206"
+      "sha3_256": "ff1ac254d2bcb3e842e0b7bde0887772df1871dd5ad9ef2f21d6bd88acbe519f"
     },
     {
       "name": "ArgentAccountCairoOne.json",
-      "sha3_256": "6cd527da0953b22f5af3613c248133777a3d08408a2c1e8bb4e23b4c96f7d006"
+      "sha3_256": "7157ffe6542923c2b335855435eadc7bc16b418af3cc38bfeb395b90a0db5459"
     },
     {
       "name": "ArgentAccountCairoOne.casm.json",
-      "sha3_256": "65cc25c726ae33deb94c8e9f6ac1cbe526d40dcdda8e7b0ebbed56cc19ed61d9"
+      "sha3_256": "27304f946eadeabe0612658e2068d1c1d89cba8065c6d3a0f9d109983f49dcbe"
     },
     {
       "name": "OpenZeppelinAccountCairoOne.casm.json",
-      "sha3_256": "906e3ff2522fa7c70072da2ee4cf6462ad4604f1748347fd53eccb035d80af40"
+      "sha3_256": "347b27619b364e112e6ae516b8536fb7a256e85c06b59836103e7669177caba0"
     },
     {
       "name": "OpenZeppelinAccountCairoOne.sierra.json",
-      "sha3_256": "145fdf2668cf6c36deb295ceea57c6005e43dd7b36be26d020928d1cc3462b5e"
+      "sha3_256": "c6d4f393783c2e27438e980ea6551188e7c9607366fcfb8b1f42d7898cd9187d"
     }
   ]
 }
