@@ -3,16 +3,23 @@ name = "selendra-runtime"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
-build = "build.rs"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[package.metadata.cargo-machete]
+ignored = ["scale-info"] # Used in the macros
 
 [dependencies]
-parity-scale-codec = { version = "3.6.1", default-features = false, features = ["derive", "max-encoded-len"] }
+lazy_static = { workspace = true }
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 hex-literal = { workspace = true, optional = true }
 bitvec = { workspace = true, features = ["alloc"] }
-scale-info = { workspace = true, features = ["derive"] }
 log = { workspace = true }
 rustc-hex = { workspace = true }
-serde = { workspace = true }
 serde_derive = { workspace = true, optional = true }
 static_assertions = { workspace = true }
 smallvec = { workspace = true }
@@ -94,33 +101,31 @@ pallet-session-benchmarking = { workspace = true, optional = true }
 # starknet
 blockifier = { workspace = true  }
 starknet_api = { workspace = true }
-
 pallet-starknet = { workspace = true  }
 pallet-starknet-runtime-api = { workspace = true }
-
 mp-program-hash = { workspace = true }
 mp-felt = { workspace = true }
 mp-simulations = { workspace = true }
+mp-chain-id = { workspace = true }
+mp-hashers = { workspace = true }
 
 # Selendra
 selendra-runtime-common = { workspace = true }
 selendra-primitives = { workspace = true }
 selendra-runtime-constants = { workspace = true }
 
-[dev-dependencies]
-hex-literal = { workspace = true }
-serde_json = { workspace = true }
-separator = { workspace = true }
-tiny-keccak = { version = "2.0.2", features = ["keccak"] }
-tokio = { version = "1.19.2", features = ["macros"] }
-
-[build-dependencies]
-substrate-wasm-builder = { workspace = true }
-
 [features]
 default = ["std"]
-no_std = []
-only-staking = []
+madara-state-root = []
+disable-transaction-fee = []
+disable-runtime-api = []
+on-chain-release-build = [
+	"sp-api/disable-logging",
+]
+fast-runtime = []
+runtime-testnet = []
+runtime-metrics = ["sp-io/with-tracing"]
+dev = []
 std = [
 	"serde_derive",
 	"serde/std",
@@ -193,10 +198,13 @@ std = [
 	"mp-program-hash/std",
 	"mp-felt/std",
 	"mp-simulations/std",
-	"selendra-runtime-constants/std",
+	"mp-chain-id/std",
+	"mp-hashers/std",
 	"selendra-runtime-common/std",
 	"selendra-primitives/std",
+	"selendra-runtime-constants/std",
 ]
+
 runtime-benchmarks = [
 	"selendra-runtime-common/runtime-benchmarks",
 	"frame-benchmarking/runtime-benchmarks",
@@ -277,23 +285,3 @@ try-runtime = [
 	"pallet-vesting/try-runtime",
 	"pallet-utility/try-runtime",
 ]
-# When enabled, the runtime API will not be build.
-#
-# This is required by Cumulus to access certain types of the
-# runtime without clashing with the runtime API exported functions
-# in WASM.
-disable-runtime-api = []
-
-# A feature that should be enabled when the runtime should be build for on-chain
-# deployment. This will disable stuff that shouldn't be part of the on-chain wasm
-# to make it smaller like logging for example.
-on-chain-release-build = [
-	"sp-api/disable-logging",
-]
-
-# Set timing constants (e.g. session period) to faster versions to speed up testing.
-fast-runtime = []
-
-runtime-testnet = []
-
-runtime-metrics = ["sp-io/with-tracing"]

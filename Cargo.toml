@@ -16,7 +16,6 @@ members = [
   "node/client/commitment-state-diff",
   "node/client/eth-client",
   "node/client/starknet-block-import",
-  "pallets/custom-signatures",
   "pallets/starknet",
   "pallets/starknet/runtime_api/",
   "pallets/starknet/primitives/genesis-config/",

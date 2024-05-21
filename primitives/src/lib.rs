@@ -80,3 +80,5 @@ pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 pub type DigestItem = generic::DigestItem;
 
 pub type StarknetHasher = mp_hashers::pedersen::PedersenHasher;
+
+pub const EXECUTION_CONSTANTS_STR: &str = include_str!("../resources/versioned_constants.json");

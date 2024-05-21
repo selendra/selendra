@@ -64,15 +64,15 @@ impl SubstrateCli for Cli {
 		let spec = match id {
 			"selendra-dev" | "dev" => {
 				let base_path = self.run.base_path().map_err(|e| e.to_string()).unwrap();
-				Box::new(chain_spec::development_config(base_path))
+				Box::new(chain_spec::development_config(base_path)?)
 			},
 			"selendra-loal" | "local" => {
 				let base_path = self.run.base_path().map_err(|e| e.to_string()).unwrap();
-				Box::new(chain_spec::local_testnet_config(base_path, id))
+				Box::new(chain_spec::local_testnet_config(base_path, id)?)
 			},
 			"staging" => {
 				let base_path = self.run.base_path().map_err(|e| e.to_string()).unwrap();
-				Box::new(chain_spec::staging_testnet_config(base_path, id))
+				Box::new(chain_spec::staging_testnet_config(base_path, id)?)
 			},
 			"selendra" | "" => Box::new(chain_spec::selendra_config()?),
 			"selendra-testnet" | "testnet" => Box::new(chain_spec::selendra_testnet_config()?),

@@ -64,7 +64,7 @@ use sp_runtime::{
 	transaction_validity::{
 		TransactionPriority, TransactionSource, TransactionValidity,
 	},
-	ApplyExtrinsicResult, KeyTypeId, Perbill, Percent, Permill, RuntimeDebug, DispatchError
+	ApplyExtrinsicResult, KeyTypeId, Perbill, Percent, Permill, RuntimeDebug
 };
 use sp_staking::SessionIndex;
 use sp_std::{cmp::Ordering, prelude::*};
@@ -98,14 +98,12 @@ use blockifier::{
 };
 
 use mp_felt::Felt252Wrapper;
-use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
+use mp_simulations::{InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult};
 
-use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
-use pallet_starknet::pallet::Error as PalletError;
 use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
 use starknet_api::{
 	core::{ClassHash, ContractAddress, EntryPointSelector},
-	hash::{StarkFelt, StarkHash},
+	hash::StarkFelt,
 	state::StorageKey,
 	transaction::{Calldata, Event as StarknetEvent, MessageToL1, TransactionHash},
 };
@@ -128,17 +126,8 @@ impl_runtime_weights!(selendra_runtime_constants);
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
-
-/// Wasm binary unwrapped. If built with `SKIP_WASM_BUILD`, the function panics.
-#[cfg(feature = "std")]
-pub fn wasm_binary_unwrap() -> &'static [u8] {
-	WASM_BINARY.expect(
-		"Development wasm binary is not available. This means the client is built with \
-		 `SKIP_WASM_BUILD` flag and it is only usable for production chains. Please rebuild with \
-		 the flag disabled.",
-	)
-}
+// include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+pub const WASM_BINARY: Option<&[u8]> = Some(&[]);
 
 #[cfg(not(feature = "runtime-testnet"))]
 #[sp_version::runtime_version]
@@ -146,7 +135,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
 	impl_name: create_runtime_str!("selendra"),
 	authoring_version: 1,
-	spec_version: 10020,
+	spec_version: 10030,
 	impl_version: 0,
 	#[cfg(not(feature = "disable-runtime-api"))]
 	apis: RUNTIME_API_VERSIONS,
@@ -1272,11 +1261,11 @@ sp_api::impl_runtime_apis! {
 
 	impl pallet_starknet_runtime_api::StarknetRuntimeApi<Block> for Runtime {
 
-        fn get_storage_at(address: ContractAddress, key: StorageKey) -> Result<StarkFelt, DispatchError> {
+        fn get_storage_at(address: ContractAddress, key: StorageKey) -> Result<StarkFelt, SimulationError> {
             Starknet::get_storage_at(address, key)
         }
 
-        fn call(address: ContractAddress, function_selector: EntryPointSelector, calldata: Calldata) -> Result<Vec<Felt252Wrapper>, DispatchError> {
+        fn call(address: ContractAddress, function_selector: EntryPointSelector, calldata: Calldata) -> Result<Vec<Felt252Wrapper>, SimulationError> {
             Starknet::call_contract(address, function_selector, calldata)
         }
 
@@ -1300,10 +1289,6 @@ sp_api::impl_runtime_apis! {
             Starknet::program_hash()
         }
 
-        fn config_hash() -> StarkHash {
-            Starknet::config_hash()
-        }
-
         fn fee_token_addresses() -> FeeTokenAddresses {
             Starknet::fee_token_addresses()
         }
@@ -1312,23 +1297,23 @@ sp_api::impl_runtime_apis! {
             Starknet::is_transaction_fee_disabled()
         }
 
-        fn estimate_fee(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(u128, u128)>, DispatchError> {
+        fn estimate_fee(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Result<Vec<(u128, u128)>, SimulationError>, InternalSubstrateError> {
             Starknet::estimate_fee(transactions, &simulation_flags)
         }
 
-        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool) -> Result<Result<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
+        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool) -> Result<Result<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, SimulationError>, InternalSubstrateError> {
             Starknet::re_execute_transactions(transactions_before, transactions_to_trace, with_state_diff)
         }
 
-        fn estimate_message_fee(message: L1HandlerTransaction) -> Result<(u128, u128, u128), DispatchError> {
+        fn estimate_message_fee(message: L1HandlerTransaction) -> Result<Result<(u128, u128, u128), SimulationError>, InternalSubstrateError> {
             Starknet::estimate_message_fee(message)
         }
 
-        fn simulate_transactions(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, DispatchError> {
+        fn simulate_transactions(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, SimulationError>, InternalSubstrateError> {
             Starknet::simulate_transactions(transactions, &simulation_flags)
         }
 
-        fn simulate_message(message: L1HandlerTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
+        fn simulate_message(message: L1HandlerTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, SimulationError>, InternalSubstrateError> {
             Starknet::simulate_message(message, &simulation_flags)
         }
 
@@ -1388,7 +1373,7 @@ sp_api::impl_runtime_apis! {
         }
     }
 
-	impl pallet_starknet_runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
+    impl pallet_starknet_runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
         fn convert_account_transaction(transaction: AccountTransaction) -> UncheckedExtrinsic {
             let call = match transaction {
                 AccountTransaction::Declare(tx) => {
@@ -1411,22 +1396,6 @@ sp_api::impl_runtime_apis! {
             UncheckedExtrinsic::new_unsigned(call.into())
         }
 
-        fn convert_error(error: DispatchError) -> StarknetTransactionExecutionError {
-            if error == PalletError::<Runtime>::ContractNotFound.into() {
-                return StarknetTransactionExecutionError::ContractNotFound;
-            }
-            if error == PalletError::<Runtime>::ClassHashAlreadyDeclared.into() {
-                return StarknetTransactionExecutionError::ClassAlreadyDeclared;
-            }
-            if error == PalletError::<Runtime>::ContractClassHashUnknown.into() {
-                return StarknetTransactionExecutionError::ClassHashNotFound;
-            }
-            if error == PalletError::<Runtime>::InvalidContractClass.into() {
-                return StarknetTransactionExecutionError::InvalidContractClass;
-            }
-
-            StarknetTransactionExecutionError::ContractError
-        }
     }
 
 	#[cfg(feature = "runtime-benchmarks")]

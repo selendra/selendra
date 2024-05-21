@@ -22,7 +22,7 @@ use std::path::PathBuf;
 
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use selendra_runtime::{
-	wasm_binary_unwrap, BabeConfig, BalancesConfig, Block,
+	BabeConfig, BalancesConfig, Block, WASM_BINARY, 
 	ImOnlineConfig, IndicesConfig, MaxNominations, SessionConfig, SessionKeys,
 	StakerStatus, StakingConfig, SudoConfig, SystemConfig,
 };
@@ -142,6 +142,7 @@ pub fn authority_keys_from_seed(
 /// Helper function to create RuntimeGenesisConfig for testing
 pub fn testnet_genesis(
 	genesis_loader: GenesisLoader,
+	wasm_binary: &[u8],
 	initial_authorities: Vec<(
 		AccountId,
 		AccountId,
@@ -154,6 +155,7 @@ pub fn testnet_genesis(
 	root_key: AccountId,
 	endowed_accounts: Option<Vec<AccountId>>,
 ) -> RuntimeGenesisConfig {
+
 	let mut endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(|| {
 		vec![
 			get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -206,7 +208,7 @@ pub fn testnet_genesis(
 	const STASH: Balance = ENDOWMENT / 1000;
 
 	RuntimeGenesisConfig {
-		system: SystemConfig { code: wasm_binary_unwrap().to_vec(), ..Default::default() },
+		system: SystemConfig { code: wasm_binary.to_vec(), ..Default::default() },
 		balances: BalancesConfig {
 			balances: endowed_accounts.iter().cloned().map(|x| (x, ENDOWMENT)).collect(),
 		},
@@ -248,16 +250,18 @@ pub fn testnet_genesis(
 }
 
 /// Development config (single validator Alice)
-pub fn development_config(base_path: BasePath) -> ChainSpec {
+pub fn development_config(base_path: BasePath) -> Result<ChainSpec, String> {
 	let chain_id = DEV_CHAIN_ID;
+	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
-	ChainSpec::from_genesis(
+	Ok(ChainSpec::from_genesis(
 		"Development",
 		"dev",
 		ChainType::Development,
 		move || {
             testnet_genesis(
 				load_genesis(base_path.config_dir(&chain_id)),
+				wasm_binary,
 				vec![authority_keys_from_seed("Alice")],
 				vec![],
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -270,20 +274,22 @@ pub fn development_config(base_path: BasePath) -> ChainSpec {
 		None,
 		Some(selendra_chain_spec_properties()),
 		Default::default(),
-	)
+	))
 }
 
 /// Local testnet config (multivalidator Alice + Bob)
-pub fn local_testnet_config(base_path: BasePath, chain_id: &str) -> ChainSpec {
+pub fn local_testnet_config(base_path: BasePath, chain_id: &str) -> Result<ChainSpec, String>  {
 	let owned_chain_id = chain_id.to_owned();
+	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
-	ChainSpec::from_genesis(
+	Ok(ChainSpec::from_genesis(
 		"Local Testnet",
 		"local_testnet",
 		ChainType::Local,
 		move || {
 			testnet_genesis(
 				load_genesis(base_path.config_dir(&owned_chain_id)),
+				wasm_binary,
 				vec![authority_keys_from_seed("Alice"), authority_keys_from_seed("Bob")],
 				vec![],
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -296,24 +302,24 @@ pub fn local_testnet_config(base_path: BasePath, chain_id: &str) -> ChainSpec {
 		None,
 		Some(selendra_chain_spec_properties()),
 		Default::default(),
-	)
+	))
 }
 
 /// Staging testnet config.
 #[rustfmt::skip]
-pub fn staging_testnet_config(base_path: BasePath, chain_id: &str) -> ChainSpec {
-
+pub fn staging_testnet_config(base_path: BasePath, chain_id: &str) -> Result<ChainSpec, String> {
 	let boot_nodes = vec![];
-
 	let owned_chain_id = chain_id.to_owned();
+	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 	
-	ChainSpec::from_genesis(
+	Ok(ChainSpec::from_genesis(
 		"Staging Testnet",
 		"staging_testnet",
 		ChainType::Live,
 		move || {
 			testnet_genesis(
 				load_genesis(base_path.config_dir(&owned_chain_id)), 
+				wasm_binary,
 				vec![
 					(
 						// 5Fbsd6WXDGiLTxunqeK5BATNiocfCqu9bS1yArVjCgeBLkVy
@@ -407,5 +413,5 @@ pub fn staging_testnet_config(base_path: BasePath, chain_id: &str) -> ChainSpec 
 		None,
 		Some(selendra_chain_spec_properties()),
 		Default::default(),
-	)
+	))
 }

@@ -6065,7 +6065,7 @@ dependencies = [
 
 [[package]]
 name = "mc-commitment-state-diff"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "futures",
  "indexmap 2.2.5",
@@ -6085,7 +6085,7 @@ dependencies = [
 
 [[package]]
 name = "mc-db"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "kvdb-rocksdb",
  "log",
@@ -6101,7 +6101,7 @@ dependencies = [
 
 [[package]]
 name = "mc-eth-client"
-version = "0.7.0"
+version = "0.1.0"
 dependencies = [
  "ethers",
  "rustc-hex",
@@ -6113,7 +6113,7 @@ dependencies = [
 
 [[package]]
 name = "mc-genesis-data-provider"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "anyhow",
  "jsonrpsee",
@@ -6125,7 +6125,7 @@ dependencies = [
 
 [[package]]
 name = "mc-mapping-sync"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "anyhow",
  "futures",
@@ -6147,7 +6147,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "blockifier",
  "cairo-vm",
@@ -6169,6 +6169,8 @@ dependencies = [
  "sc-network-sync",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
+ "serde",
+ "serde_json",
  "sp-api",
  "sp-arithmetic",
  "sp-blockchain",
@@ -6183,7 +6185,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc-core"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "anyhow",
  "assert_matches",
@@ -6210,7 +6212,7 @@ dependencies = [
 
 [[package]]
 name = "mc-starknet-block-import"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "async-trait",
  "blockifier",
@@ -6241,7 +6243,7 @@ dependencies = [
 
 [[package]]
 name = "mc-storage"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "blockifier",
  "frame-support",
@@ -6472,7 +6474,7 @@ dependencies = [
 
 [[package]]
 name = "mp-block"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "blockifier",
  "mp-felt",
@@ -6488,7 +6490,7 @@ dependencies = [
 
 [[package]]
 name = "mp-chain-id"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "mp-felt",
  "starknet-ff 0.3.7 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=2d59636911628260fa460179010bbd00e89de06e)",
@@ -6496,7 +6498,7 @@ dependencies = [
 
 [[package]]
 name = "mp-digest-log"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "assert_matches",
  "blockifier",
@@ -6507,7 +6509,7 @@ dependencies = [
 
 [[package]]
 name = "mp-felt"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "cairo-vm",
  "hex",
@@ -6524,7 +6526,7 @@ dependencies = [
 
 [[package]]
 name = "mp-genesis-config"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "hex",
  "mp-felt",
@@ -6536,7 +6538,7 @@ dependencies = [
 
 [[package]]
 name = "mp-hashers"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "mp-felt",
  "parity-scale-codec",
@@ -6548,7 +6550,7 @@ dependencies = [
 
 [[package]]
 name = "mp-program-hash"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "mp-felt",
  "starknet-ff 0.3.7 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=2d59636911628260fa460179010bbd00e89de06e)",
@@ -6556,7 +6558,7 @@ dependencies = [
 
 [[package]]
 name = "mp-sequencer-address"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -6567,17 +6569,18 @@ dependencies = [
 
 [[package]]
 name = "mp-simulations"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "blockifier",
  "parity-scale-codec",
  "scale-info",
  "starknet-core",
+ "starknet_api",
 ]
 
 [[package]]
 name = "mp-storage"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "lazy_static",
  "parity-scale-codec",
@@ -6587,7 +6590,7 @@ dependencies = [
 
 [[package]]
 name = "mp-transactions"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "assert_matches",
  "blockifier",
@@ -6596,6 +6599,7 @@ dependencies = [
  "cairo-vm",
  "flate2",
  "indexmap 2.2.5",
+ "log",
  "mp-felt",
  "mp-hashers",
  "num-bigint",
@@ -7767,26 +7771,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-custom-signatures"
-version = "4.6.0"
-dependencies = [
- "assert_matches",
- "frame-support",
- "frame-system",
- "hex-literal",
- "libsecp256k1",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-keyring",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-democracy"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0#401f8a3e9448db854f5605b679fa085b8f445039"
@@ -8524,7 +8508,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-starknet"
-version = "0.7.0"
+version = "1.0.5"
 dependencies = [
  "assert_matches",
  "blockifier",
@@ -11719,8 +11703,11 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
+ "lazy_static",
  "log",
+ "mp-chain-id",
  "mp-felt",
+ "mp-hashers",
  "mp-program-hash",
  "mp-simulations",
  "pallet-authority-discovery",
@@ -11773,7 +11760,6 @@ dependencies = [
  "selendra-primitives",
  "selendra-runtime-common",
  "selendra-runtime-constants",
- "separator",
  "serde",
  "serde_derive",
  "serde_json",
@@ -11796,9 +11782,6 @@ dependencies = [
  "sp-version",
  "starknet_api",
  "static_assertions",
- "substrate-wasm-builder",
- "tiny-keccak",
- "tokio",
 ]
 
 [[package]]
@@ -11905,12 +11888,6 @@ name = "send_wrapper"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd0b0ec5f1c1ca621c432a25813d8d60c88abe6d3e08a3eb9cf37d97a0fe3d73"
-
-[[package]]
-name = "separator"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f97841a747eef040fcd2e7b3b9a220a7205926e60488e673d9e4926d27772ce5"
 
 [[package]]
 name = "serde"
