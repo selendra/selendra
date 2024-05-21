@@ -1,10 +1,9 @@
 [package]
 name = "mc-genesis-data-provider"
-version = "0.7.0"
+authors.workspace = true
 edition.workspace = true
-authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
-repository = "https://github.com/keep-starknet-strange/madara/"
-license = "MIT"
+repository.workspace = true
+version.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }

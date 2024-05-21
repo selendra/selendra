@@ -1,6 +1,6 @@
 [package]
 name = "mc-mapping-sync"
-version = "0.7.0"
+version.workspace = true
 edition.workspace = true
 description = "Mapping sync logic for Madara"
 authors = [
@@ -9,6 +9,8 @@ authors = [
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 license = "MIT"
+publish = false
+repository = "https://github.com/keep-starknet-strange/madara"
 
 [dependencies]
 anyhow = { workspace = true }

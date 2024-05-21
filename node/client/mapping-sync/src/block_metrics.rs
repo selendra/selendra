@@ -1,7 +1,5 @@
-use substrate_prometheus_endpoint::{
-    prometheus::{ Counter, Gauge },
-    register, PrometheusError, Registry
-    };
+use substrate_prometheus_endpoint::prometheus::{Counter, Gauge};
+use substrate_prometheus_endpoint::{register, PrometheusError, Registry};
 
 #[derive(Clone, Debug)]
 pub struct BlockMetrics {

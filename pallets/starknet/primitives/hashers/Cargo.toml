@@ -1,11 +1,11 @@
 [package]
 name = "mp-hashers"
-version = "0.7.0"
+version.workspace = true
 edition.workspace = true
 license = "MIT"
 description = "Starknet hashers"
-authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
-repository = "https://github.com/keep-starknet-strange/madara/"
+authors = { workspace = true }
+repository = { workspace = true }
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -28,7 +28,6 @@ std = [
   "scale-info/std",
   "mp-felt/std",
 ]
-
 parity-scale-codec = ["dep:parity-scale-codec", "mp-felt/parity-scale-codec"]
 scale-info = ["dep:scale-info", "mp-felt/scale-info"]
 serde = ["dep:serde", "mp-felt/serde"]

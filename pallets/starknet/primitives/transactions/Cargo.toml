@@ -1,11 +1,11 @@
 [package]
 name = "mp-transactions"
-version = "0.7.0"
+version.workspace = true
 edition.workspace = true
 license = "MIT"
 description = "Starknet primitives for Substrate."
-authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
-repository = "https://github.com/keep-starknet-strange/madara/"
+authors = { workspace = true }
+repository = { workspace = true }
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -32,6 +32,7 @@ serde_json = { workspace = true, optional = true }
 thiserror = { workspace = true, optional = true }
 
 # Other optional
+log = "0.4.20"
 parity-scale-codec = { workspace = true, features = [
   "derive",
 ], optional = true }
@@ -71,4 +72,3 @@ scale-info = [
   "starknet_api/scale-info",
   "blockifier/scale-info",
 ]
-serde = ["dep:serde", "mp-felt/serde"]

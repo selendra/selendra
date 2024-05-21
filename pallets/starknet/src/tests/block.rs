@@ -12,9 +12,9 @@ use starknet_api::hash::StarkFelt;
 
 use super::mock::default_mock::*;
 use super::mock::*;
-use crate::tests::constants::FEE_TOKEN_ADDRESS;
+use crate::tests::constants::ETH_FEE_TOKEN_ADDRESS;
 use crate::tests::get_invoke_dummy;
-use crate::{Config, SeqAddrUpdate, SequencerAddress};
+use crate::{SeqAddrUpdate, SequencerAddress};
 
 #[test]
 fn store_block_no_pending_transactions_works() {
@@ -34,7 +34,7 @@ fn store_block_no_pending_transactions_works() {
         assert_eq!(0, block.transactions().len());
 
         // check BlockHash correct
-        let blockhash = block.header().hash::<<MockRuntime as Config>::SystemHash>();
+        let blockhash = block.header().hash();
         assert_eq!(blockhash, Starknet::block_hash(BLOCK_NUMBER));
         // check pending storage killed
         assert_eq!(0, Starknet::pending().len());
@@ -77,7 +77,7 @@ fn store_block_with_pending_transactions_works() {
         assert_eq!(2, block.transactions().len());
 
         // check BlockHash correct
-        let blockhash = block.header().hash::<<MockRuntime as Config>::SystemHash>();
+        let blockhash = block.header().hash();
         assert_eq!(blockhash, Starknet::block_hash(BLOCK_NUMBER));
         // check pending storage killed
         assert_eq!(0, Starknet::pending().len());
@@ -108,7 +108,7 @@ fn get_block_context_works() {
         assert_eq!(default_addr, block_context.block_info().sequencer_address);
         // correct fee_token_address
         assert_eq!(
-            ContractAddress::try_from(StarkFelt::try_from(FEE_TOKEN_ADDRESS).unwrap()).unwrap(),
+            ContractAddress::try_from(StarkFelt::try_from(ETH_FEE_TOKEN_ADDRESS).unwrap()).unwrap(),
             block_context.chain_info().fee_token_address(&FeeType::Eth)
         );
         // correct gas_price,

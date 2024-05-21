@@ -6,7 +6,6 @@ use async_trait::async_trait;
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::transaction_execution::Transaction;
 use selendra_primitives::{Block, Hash};
-
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_consensus::{BlockCheckParams, BlockImport, BlockImportParams, ImportResult, JustificationImport};
 use sp_api::{HeaderT, ProvideRuntimeApi};

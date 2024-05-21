@@ -1,14 +1,16 @@
 [package]
 name = "mc-db"
-version = "0.7.0"
+version.workspace = true
 edition.workspace = true
+description = "Starknet database backend"
 authors = [
   "Timothée Delabrouille <https://github.com/tdelabro>",
   "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
-repository = "https://github.com/keep-starknet-strange/madara/"
+homepage = "https://github.com/keep-starknet-strange/madara"
 license = "MIT"
-description = "Starknet database backend"
+publish = false
+repository = "https://github.com/keep-starknet-strange/madara"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]

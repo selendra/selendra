@@ -2,8 +2,6 @@
 name = "pallet-starknet-runtime-api"
 version = "0.1.0"
 edition = "2021"
-authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
-repository = "https://github.com/keep-starknet-strange/madara/"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -24,7 +22,6 @@ parity-scale-codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 sp-api = { workspace = true }
 sp-runtime = { workspace = true }
-
 
 [features]
 default = ["std"]

@@ -1,6 +1,6 @@
 [package]
 name = "mc-rpc-core"
-version = "0.7.0"
+version.workspace = true
 edition.workspace = true
 description = "RPC trait of Starknet"
 authors = [
@@ -9,6 +9,8 @@ authors = [
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 license = "MIT"
+publish = false
+repository = "https://github.com/keep-starknet-strange/madara"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
