@@ -165,4 +165,4 @@ pallet-hotfix-sufficients = { git = "https://github.com/selendra/frontier", bran
 
 # Selendra
 selendra-runtime = { path = "runtime"}
-selendra-primitives = { path = "./primitives"}
+selendra-primitives = { path = "./primitives", default-features = false}

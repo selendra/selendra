@@ -10,6 +10,7 @@ sp-std = { workspace = true }
 sp-runtime = { workspace = true }
 fp-account = { workspace = true }
 frame-support = { workspace = true }
+frame-system = { workspace = true }
 
 [features]
 default = [ "std" ]
@@ -19,4 +20,5 @@ std = [
 	"sp-std/std",
     "fp-account/std",
 	"frame-support/std",
+	"frame-system/std"
 ]

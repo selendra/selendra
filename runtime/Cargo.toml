@@ -59,7 +59,7 @@ pallet-evm-precompile-sha3fips = { workspace = true }
 pallet-evm-precompile-simple = { workspace = true }
 pallet-hotfix-sufficients = { workspace = true }
 
-# Selendra
+# # Selendra
 selendra-primitives = { workspace = true }
 
 [build-dependencies]
