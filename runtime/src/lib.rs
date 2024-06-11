@@ -10,7 +10,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use scale_codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
@@ -331,7 +331,6 @@ frame_support::construct_runtime!(
 		DynamicFee: pallet_dynamic_fee = 83,
 		BaseFee: pallet_base_fee = 84,
 		HotfixSufficients: pallet_hotfix_sufficients = 85,
-
 
 		Sudo: pallet_sudo = 200,
 	}
