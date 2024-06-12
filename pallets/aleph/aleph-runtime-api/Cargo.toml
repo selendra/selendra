@@ -1,0 +1,20 @@
+[package]
+name = "pallet-aleph-runtime-api"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+sp-api = { workspace = true }
+sp-std = { workspace = true }
+sp-consensus-aura = { workspace = true }
+
+selendra-primitives = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+    "sp-api/std",
+    "sp-std/std",
+    "selendra-primitives/std"
+]

@@ -1,0 +1,42 @@
+[package]
+name = "pallet-aleph"
+version = "0.6.0"
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
+log = { workspace = true }
+
+sp-std = { workspace = true }
+sp-runtime = { workspace = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-session = { workspace = true }
+
+selendra-primitives = { workspace = true }
+
+[dev-dependencies]
+pallet-balances = { workspace = true }
+pallet-timestamp = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+[features]
+default = ["std"]
+std = [
+    "parity-scale-codec/std",
+    "scale-info/std",
+    "frame-support/std",
+    "frame-system/std",
+    "pallet-session/std",
+    "sp-std/std",
+    "pallet-balances/std",
+    "sp-runtime/std",
+    "sp-io/std",
+    "log/std",
+    "selendra-primitives/std"
+]
+try-runtime = [
+    "frame-support/try-runtime",
+]

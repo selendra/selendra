@@ -12,3 +12,8 @@ pub mod time {
 	pub const WEEKS: BlockNumber = DAYS * 7;
 
 }
+
+pub mod currency {
+	pub const TOKEN_DECIMALS: u32 = 18;
+	pub const TOKEN: u128 = 10u128.pow(TOKEN_DECIMALS);
+}

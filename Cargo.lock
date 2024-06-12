@@ -2545,6 +2545,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "frame-election-provider-solution-type"
+version = "4.0.0-dev"
+source = "git+https://github.com/selendra/polkadot-sdk?branch=selendra-1.6.0#95875d001279c88398001d87c94bb68225a1dc15"
+dependencies = [
+ "proc-macro-crate 3.1.0",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.65",
+]
+
+[[package]]
+name = "frame-election-provider-support"
+version = "4.0.0-dev"
+source = "git+https://github.com/selendra/polkadot-sdk?branch=selendra-1.6.0#95875d001279c88398001d87c94bb68225a1dc15"
+dependencies = [
+ "frame-election-provider-solution-type",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-npos-elections",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "frame-executive"
 version = "4.0.0-dev"
 source = "git+https://github.com/selendra/polkadot-sdk?branch=selendra-1.6.0#95875d001279c88398001d87c94bb68225a1dc15"
@@ -4984,6 +5012,35 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
+name = "pallet-aleph"
+version = "0.6.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-balances",
+ "pallet-session",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "selendra-primitives",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-aleph-runtime-api"
+version = "0.1.0"
+dependencies = [
+ "selendra-primitives",
+ "sp-api",
+ "sp-consensus-aura",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-aura"
 version = "4.0.0-dev"
 source = "git+https://github.com/selendra/polkadot-sdk?branch=selendra-1.6.0#95875d001279c88398001d87c94bb68225a1dc15"
@@ -5044,6 +5101,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-committee-management"
+version = "0.2.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-authorship",
+ "pallet-session",
+ "pallet-staking",
+ "parity-scale-codec",
+ "rand",
+ "rand_pcg",
+ "scale-info",
+ "selendra-primitives",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-dynamic-fee"
 version = "4.0.0-dev"
 source = "git+https://github.com/selendra/frontier?branch=selendra-1.6.0#235167a6a5d8fa530cc31d8752e37a6e0c674a83"
@@ -5056,6 +5134,28 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-inherents",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-elections"
+version = "0.6.0"
+dependencies = [
+ "frame-election-provider-support",
+ "frame-support",
+ "frame-system",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-staking",
+ "parity-scale-codec",
+ "rand",
+ "rand_pcg",
+ "scale-info",
+ "selendra-primitives",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
  "sp-std",
 ]
 
@@ -5206,6 +5306,28 @@ dependencies = [
  "sp-state-machine",
  "sp-std",
  "sp-trie",
+]
+
+[[package]]
+name = "pallet-staking"
+version = "4.0.0-dev"
+source = "git+https://github.com/selendra/polkadot-sdk?branch=selendra-1.6.0#95875d001279c88398001d87c94bb68225a1dc15"
+dependencies = [
+ "frame-benchmarking",
+ "frame-election-provider-support",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-authorship",
+ "pallet-session",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-application-crypto",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
 ]
 
 [[package]]
@@ -7643,8 +7765,13 @@ dependencies = [
  "fp-account",
  "frame-support",
  "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-application-crypto",
  "sp-core",
  "sp-runtime",
+ "sp-staking",
  "sp-std",
 ]
 
@@ -7662,10 +7789,15 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "pallet-aleph",
+ "pallet-aleph-runtime-api",
  "pallet-aura",
+ "pallet-authorship",
  "pallet-balances",
  "pallet-base-fee",
+ "pallet-committee-management",
  "pallet-dynamic-fee",
+ "pallet-elections",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-chain-id",
@@ -8326,6 +8458,20 @@ dependencies = [
  "scale-info",
  "sp-api",
  "sp-application-crypto",
+ "sp-std",
+]
+
+[[package]]
+name = "sp-npos-elections"
+version = "4.0.0-dev"
+source = "git+https://github.com/selendra/polkadot-sdk?branch=selendra-1.6.0#95875d001279c88398001d87c94bb68225a1dc15"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-runtime",
  "sp-std",
 ]
 
