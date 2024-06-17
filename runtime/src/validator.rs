@@ -143,7 +143,7 @@ impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
 	type MaxNominators = ConstU32<1000>;
 }
 
-const MAX_NOMINATORS: u32 = 1;
+pub const MAX_NOMINATORS: u32 = 1;
 
 impl pallet_staking::Config for Runtime {
 	// Do not change this!!! It guarantees that we have DPoS instead of NPoS.

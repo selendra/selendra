@@ -10,9 +10,10 @@ mod evm;
 mod governace;
 mod validator;
 
-use parity_scale_codec::{Decode, Encode};
 use validator::SessionPeriod;
+use validator::MAX_NOMINATORS;
 
+use parity_scale_codec::{Decode, Encode};
 use sp_api::impl_runtime_apis;
 use sp_application_crypto::key_types::AURA;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
@@ -417,68 +418,72 @@ impl_runtime_apis! {
 	}
 
 	impl pallet_aleph_runtime_api::AlephSessionApi<Block> for Runtime {
-		fn millisecs_per_block() -> u64 {
-			MILLISECS_PER_BLOCK
-		}
+        fn millisecs_per_block() -> u64 {
+            MILLISECS_PER_BLOCK
+        }
 
-		fn session_period() -> u32 {
-			SessionPeriod::get()
-		}
+        fn session_period() -> u32 {
+            SessionPeriod::get()
+        }
 
-		fn authorities() -> Vec<AlephId> {
-			Aleph::authorities()
-		}
+        fn authorities() -> Vec<AlephId> {
+            Aleph::authorities()
+        }
 
-		fn next_session_authorities() -> Result<Vec<AlephId>, AlephApiError> {
-			let next_authorities = Aleph::next_authorities();
-			if next_authorities.is_empty() {
-				return Err(AlephApiError::DecodeKey)
-			}
+        fn next_session_authorities() -> Result<Vec<AlephId>, AlephApiError> {
+            let next_authorities = Aleph::next_authorities();
+            if next_authorities.is_empty() {
+                return Err(AlephApiError::DecodeKey)
+            }
 
-			Ok(next_authorities)
-		}
+            Ok(next_authorities)
+        }
 
-		fn authority_data() -> SessionAuthorityData {
-			SessionAuthorityData::new(Aleph::authorities(), Aleph::emergency_finalizer())
-		}
+        fn authority_data() -> SessionAuthorityData {
+            SessionAuthorityData::new(Aleph::authorities(), Aleph::emergency_finalizer())
+        }
 
-		fn next_session_authority_data() -> Result<SessionAuthorityData, AlephApiError> {
-			Ok(SessionAuthorityData::new(
-				Self::next_session_authorities()?,
-				Aleph::queued_emergency_finalizer(),
-			))
-		}
+        fn next_session_authority_data() -> Result<SessionAuthorityData, AlephApiError> {
+            Ok(SessionAuthorityData::new(
+                Self::next_session_authorities()?,
+                Aleph::queued_emergency_finalizer(),
+            ))
+        }
 
-		fn finality_version() -> FinalityVersion {
-			Aleph::finality_version()
-		}
+        fn finality_version() -> FinalityVersion {
+            Aleph::finality_version()
+        }
 
-		fn next_session_finality_version() -> FinalityVersion {
-			Aleph::next_session_finality_version()
-		}
+        fn next_session_finality_version() -> FinalityVersion {
+            Aleph::next_session_finality_version()
+        }
 
-		fn predict_session_committee(
-			session: SessionIndex,
-		) -> Result<SessionCommittee<AccountId>, SessionValidatorError> {
-			CommitteeManagement::predict_session_committee_for_session(session)
-		}
+        fn predict_session_committee(
+            session: SessionIndex,
+        ) -> Result<SessionCommittee<AccountId>, SessionValidatorError> {
+            CommitteeManagement::predict_session_committee_for_session(session)
+        }
 
-		fn next_session_aura_authorities() -> Vec<(AccountId, AuraId)> {
-			let queued_keys = QueuedKeys::<Runtime>::get();
+        fn next_session_aura_authorities() -> Vec<(AccountId, AuraId)> {
+            let queued_keys = QueuedKeys::<Runtime>::get();
 
-			queued_keys.into_iter().filter_map(|(account_id, keys)| keys.get(AURA).map(|key| (account_id, key))).collect()
-		}
+            queued_keys.into_iter().filter_map(|(account_id, keys)| keys.get(AURA).map(|key| (account_id, key))).collect()
+        }
 
-		fn key_owner(key: AlephId) -> Option<AccountId> {
-			Session::key_owner(selendra_primitives::KEY_TYPE, key.as_ref())
-		}
-	}
+        fn key_owner(key: AlephId) -> Option<AccountId> {
+            Session::key_owner(selendra_primitives::KEY_TYPE, key.as_ref())
+        }
+    }
 
-	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce> for Runtime {
-		fn account_nonce(account: AccountId) -> Nonce {
-			System::account_nonce(account)
-		}
-	}
+	impl pallet_staking_runtime_api::StakingApi<Block, Balance, AccountId> for Runtime {
+        fn nominations_quota(_balance: Balance) -> u32 {
+            MAX_NOMINATORS
+        }
+
+        fn eras_stakers_page_count(era: sp_staking::EraIndex, account: AccountId) -> sp_staking::Page {
+            Staking::api_eras_stakers_page_count(era, account)
+        }
+    }
 
 	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<
 		Block,
@@ -699,6 +704,12 @@ impl_runtime_apis! {
 			UncheckedExtrinsic::new_unsigned(
 				pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
 			)
+		}
+	}
+
+	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce> for Runtime {
+		fn account_nonce(account: AccountId) -> Nonce {
+			System::account_nonce(account)
 		}
 	}
 
