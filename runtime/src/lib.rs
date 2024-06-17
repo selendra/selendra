@@ -1,82 +1,63 @@
-//! The Substrate Node Template runtime. This can be compiled with `#[no_std]`, ready for Wasm.
-
 #![cfg_attr(not(feature = "std"), no_std)]
-// `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit = "256"]
-#![allow(clippy::new_without_default, clippy::or_fun_call)]
-#![cfg_attr(feature = "runtime-benchmarks", warn(unused_crate_dependencies))]
+#![recursion_limit = "512"]
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use parity_scale_codec::{Decode, Encode};
+mod consensus;
+mod evm;
+mod governace;
+mod validator;
 
-pub use frame_system::Call as SystemCall;
-pub use pallet_balances::Call as BalancesCall;
-pub use pallet_timestamp::Call as TimestampCall;
-use pallet_transaction_payment::Multiplier;
+use parity_scale_codec::{Decode, Encode};
+use validator::SessionPeriod;
 
 use sp_api::impl_runtime_apis;
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_consensus_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
-use sp_core::{
-	crypto::{ByteArray, KeyTypeId},
-	OpaqueMetadata, H160, H256, U256,
-};
+use sp_application_crypto::key_types::AURA;
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
+	create_runtime_str, generic,
 	traits::{
-		BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable, Get,
-		IdentityLookup, NumberFor, One, PostDispatchInfoOf, UniqueSaturatedInto,
+		BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable, Get, IdentityLookup, One,
+		OpaqueKeys, PostDispatchInfoOf, UniqueSaturatedInto,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
-	ApplyExtrinsicResult, ConsensusEngineId, Permill,
+	ApplyExtrinsicResult, Permill,
 };
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
 
-// Substrate FRAME
-#[cfg(feature = "with-paritydb-weights")]
-use frame_support::weights::constants::ParityDbWeight as RuntimeDbWeight;
-#[cfg(feature = "with-rocksdb-weights")]
 use frame_support::weights::constants::RocksDbWeight as RuntimeDbWeight;
 use frame_support::{
 	genesis_builder_helper::{build_config, create_default_config},
 	parameter_types,
-	traits::{ConstBool, ConstU32, ConstU8, FindAuthor, OnFinalize, OnTimestampSet},
+	traits::{ConstU32, ConstU8, OnFinalize},
 	weights::{IdentityFee, Weight},
 };
+
+use pallet_session::QueuedKeys;
+use pallet_transaction_payment::Multiplier;
 use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter};
 
-use fp_evm::weight_per_gas;
 use fp_rpc::TransactionStatus;
 use pallet_ethereum::{
-	Call::transact, PostLogContent, Transaction as EthereumTransaction, TransactionAction,
-	TransactionData,
+	Call::transact, Transaction as EthereumTransaction, TransactionAction, TransactionData,
 };
-use pallet_evm::{
-	Account as EVMAccount, EnsureAccountId20, FeeCalculator, IdentityAddressMapping, Runner,
-};
+use pallet_evm::{Account as EVMAccount, FeeCalculator, Runner};
 
 use selendra_primitives::{
-	common::{BlockHashCount, BlockLength, BlockWeights, NORMAL_DISPATCH_RATIO, WEIGHT_MILLISECS_PER_BLOCK}, constants::time::*, AccountId, Balance, BlockNumber, Hash, Nonce, Signature
+	common::{BlockHashCount, BlockLength, BlockWeights},
+	constants::time::*,
+	AccountId, AlephNodeSessionKeys as SessionKeys, ApiError as AlephApiError, AuraId,
+	AuthorityId as AlephId, Balance, BlockNumber, Hash, Nonce, SessionAuthorityData,
+	SessionCommittee, SessionIndex, SessionValidatorError, Signature, Version as FinalityVersion,
 };
-
-mod precompiles;
-use precompiles::FrontierPrecompiles;
-
-impl_opaque_keys! {
-	pub struct SessionKeys {
-		pub aura: Aura,
-		pub grandpa: Grandpa,
-	}
-}
 
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("selendra"),
-	impl_name: create_runtime_str!("selendra"),
+	spec_name: create_runtime_str!("frontier-template"),
+	impl_name: create_runtime_str!("frontier-template"),
 	authoring_version: 1,
 	spec_version: 11000,
 	impl_version: 1,
@@ -85,16 +66,11 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	state_version: 1,
 };
 
-
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> sp_version::NativeVersion {
-	sp_version::NativeVersion {
-		runtime_version: VERSION,
-		can_author_with: Default::default(),
-	}
+	sp_version::NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
-
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
@@ -129,44 +105,12 @@ impl frame_system::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MaxAuthorities: u32 = 100;
-}
-
-impl pallet_aura::Config for Runtime {
-	type AuthorityId = AuraId;
-	type MaxAuthorities = MaxAuthorities;
-	type DisabledValidators = ();
-	type AllowMultipleBlocksPerSlot = ConstBool<false>;
-}
-
-impl pallet_grandpa::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
-	type MaxAuthorities = ConstU32<32>;
-	type MaxNominators = ConstU32<0>;
-	type MaxSetIdSessionEntries = ();
-	type KeyOwnerProof = sp_core::Void;
-	type EquivocationReportSystem = ();
-}
-
-parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
-	pub storage EnableManualSeal: bool = false;
-}
-
-pub struct ConsensusOnTimestampSet<T>(PhantomData<T>);
-impl<T: pallet_aura::Config> OnTimestampSet<T::Moment> for ConsensusOnTimestampSet<T> {
-	fn on_timestamp_set(moment: T::Moment) {
-		if EnableManualSeal::get() {
-			return;
-		}
-		<pallet_aura::Pallet<T> as OnTimestampSet<T::Moment>>::on_timestamp_set(moment)
-	}
 }
 
 impl pallet_timestamp::Config for Runtime {
 	type Moment = u64;
-	type OnTimestampSet = ConsensusOnTimestampSet<Self>;
+	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
@@ -209,121 +153,22 @@ impl pallet_transaction_payment::Config for Runtime {
 	type OperationalFeeMultiplier = ConstU8<5>;
 }
 
-impl pallet_sudo::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeCall = RuntimeCall;
-	type WeightInfo = pallet_sudo::weights::SubstrateWeight<Self>;
-}
-
-impl pallet_evm_chain_id::Config for Runtime {}
-
-pub struct FindAuthorTruncated<F>(PhantomData<F>);
-impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
-	fn find_author<'a, I>(digests: I) -> Option<H160>
-	where
-		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
-	{
-		if let Some(author_index) = F::find_author(digests) {
-			let authority_id = Aura::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]));
-		}
-		None
-	}
-}
-
-const BLOCK_GAS_LIMIT: u64 = 75_000_000;
-const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
-
-parameter_types! {
-	pub BlockGasLimit: U256 = U256::from(BLOCK_GAS_LIMIT);
-	pub const GasLimitPovSizeRatio: u64 = BLOCK_GAS_LIMIT.saturating_div(MAX_POV_SIZE);
-	pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
-	pub WeightPerGas: Weight = Weight::from_parts(weight_per_gas(BLOCK_GAS_LIMIT, NORMAL_DISPATCH_RATIO, WEIGHT_MILLISECS_PER_BLOCK), 0);
-	pub SuicideQuickClearLimit: u32 = 0;
-}
-
-impl pallet_evm::Config for Runtime {
-	type FeeCalculator = BaseFee;
-	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
-	type WeightPerGas = WeightPerGas;
-	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
-	type CallOrigin = EnsureAccountId20;
-	type WithdrawOrigin = EnsureAccountId20;
-	type AddressMapping = IdentityAddressMapping;
-	type Currency = Balances;
-	type RuntimeEvent = RuntimeEvent;
-	type PrecompilesType = FrontierPrecompiles<Self>;
-	type PrecompilesValue = PrecompilesValue;
-	type ChainId = EVMChainId;
-	type BlockGasLimit = BlockGasLimit;
-	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type OnChargeTransaction = ();
-	type OnCreate = ();
-	type FindAuthor = FindAuthorTruncated<Aura>;
-	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
-	type SuicideQuickClearLimit = SuicideQuickClearLimit;
-	type Timestamp = Timestamp;
-	type WeightInfo = pallet_evm::weights::SubstrateWeight<Self>;
-}
-
-parameter_types! {
-	pub const PostBlockAndTxnHashes: PostLogContent = PostLogContent::BlockAndTxnHashes;
-}
-
-impl pallet_ethereum::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
-	type PostLogContent = PostBlockAndTxnHashes;
-	type ExtraDataLength = ConstU32<30>;
-}
-
-parameter_types! {
-	pub BoundDivision: U256 = U256::from(1024);
-}
-
-impl pallet_dynamic_fee::Config for Runtime {
-	type MinGasPriceBoundDivisor = BoundDivision;
-}
-
-parameter_types! {
-	pub DefaultBaseFeePerGas: U256 = U256::from(1_000_000_000);
-	pub DefaultElasticity: Permill = Permill::from_parts(125_000);
-}
-
-pub struct BaseFeeThreshold;
-impl pallet_base_fee::BaseFeeThreshold for BaseFeeThreshold {
-	fn lower() -> Permill {
-		Permill::zero()
-	}
-	fn ideal() -> Permill {
-		Permill::from_parts(500_000)
-	}
-	fn upper() -> Permill {
-		Permill::from_parts(1_000_000)
-	}
-}
-
-impl pallet_base_fee::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Threshold = BaseFeeThreshold;
-	type DefaultBaseFeePerGas = DefaultBaseFeePerGas;
-	type DefaultElasticity = DefaultElasticity;
-}
-
-impl pallet_hotfix_sufficients::Config for Runtime {
-	type AddressMapping = IdentityAddressMapping;
-	type WeightInfo = pallet_hotfix_sufficients::weights::SubstrateWeight<Self>;
-}
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 frame_support::construct_runtime!(
 	pub enum Runtime {
 		System: frame_system = 0,
-		Aura: pallet_aura = 3,
-		Timestamp: pallet_timestamp = 4,
-		Grandpa: pallet_grandpa = 5,
-		Balances: pallet_balances = 6,
-		TransactionPayment: pallet_transaction_payment = 7,
+		Aura: pallet_aura = 1,
+		Aleph: pallet_aleph = 2,
+		Timestamp: pallet_timestamp = 3,
+		Balances: pallet_balances = 4,
+		TransactionPayment: pallet_transaction_payment = 5,
+
+		Authorship: pallet_authorship = 10,
+		Staking: pallet_staking = 11,
+		History: pallet_session::historical = 12,
+		Session: pallet_session = 13,
+		Elections: pallet_elections = 14,
+		CommitteeManagement: pallet_committee_management = 15,
 
 		Ethereum: pallet_ethereum = 80,
 		EVM: pallet_evm = 81,
@@ -437,7 +282,7 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		match self {
 			RuntimeCall::Ethereum(call) => {
 				call.pre_dispatch_self_contained(info, dispatch_info, len)
-			}
+			},
 			_ => None,
 		}
 	}
@@ -451,7 +296,7 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 				Some(call.dispatch(RuntimeOrigin::from(
 					pallet_ethereum::RawOrigin::EthereumTransaction(info),
 				)))
-			}
+			},
 			_ => None,
 		}
 	}
@@ -571,33 +416,61 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl sp_consensus_grandpa::GrandpaApi<Block> for Runtime {
-		fn grandpa_authorities() -> GrandpaAuthorityList {
-			Grandpa::grandpa_authorities()
+	impl pallet_aleph_runtime_api::AlephSessionApi<Block> for Runtime {
+		fn millisecs_per_block() -> u64 {
+			MILLISECS_PER_BLOCK
 		}
 
-		fn current_set_id() -> sp_consensus_grandpa::SetId {
-			Grandpa::current_set_id()
+		fn session_period() -> u32 {
+			SessionPeriod::get()
 		}
 
-		fn submit_report_equivocation_unsigned_extrinsic(
-			_equivocation_proof: sp_consensus_grandpa::EquivocationProof<
-				<Block as BlockT>::Hash,
-				NumberFor<Block>,
-			>,
-			_key_owner_proof: sp_consensus_grandpa::OpaqueKeyOwnershipProof,
-		) -> Option<()> {
-			None
+		fn authorities() -> Vec<AlephId> {
+			Aleph::authorities()
 		}
 
-		fn generate_key_ownership_proof(
-			_set_id: sp_consensus_grandpa::SetId,
-			_authority_id: GrandpaId,
-		) -> Option<sp_consensus_grandpa::OpaqueKeyOwnershipProof> {
-			// NOTE: this is the only implementation possible since we've
-			// defined our key owner proof type as a bottom type (i.e. a type
-			// with no values).
-			None
+		fn next_session_authorities() -> Result<Vec<AlephId>, AlephApiError> {
+			let next_authorities = Aleph::next_authorities();
+			if next_authorities.is_empty() {
+				return Err(AlephApiError::DecodeKey)
+			}
+
+			Ok(next_authorities)
+		}
+
+		fn authority_data() -> SessionAuthorityData {
+			SessionAuthorityData::new(Aleph::authorities(), Aleph::emergency_finalizer())
+		}
+
+		fn next_session_authority_data() -> Result<SessionAuthorityData, AlephApiError> {
+			Ok(SessionAuthorityData::new(
+				Self::next_session_authorities()?,
+				Aleph::queued_emergency_finalizer(),
+			))
+		}
+
+		fn finality_version() -> FinalityVersion {
+			Aleph::finality_version()
+		}
+
+		fn next_session_finality_version() -> FinalityVersion {
+			Aleph::next_session_finality_version()
+		}
+
+		fn predict_session_committee(
+			session: SessionIndex,
+		) -> Result<SessionCommittee<AccountId>, SessionValidatorError> {
+			CommitteeManagement::predict_session_committee_for_session(session)
+		}
+
+		fn next_session_aura_authorities() -> Vec<(AccountId, AuraId)> {
+			let queued_keys = QueuedKeys::<Runtime>::get();
+
+			queued_keys.into_iter().filter_map(|(account_id, keys)| keys.get(AURA).map(|key| (account_id, key))).collect()
+		}
+
+		fn key_owner(key: AlephId) -> Option<AccountId> {
+			Session::key_owner(selendra_primitives::KEY_TYPE, key.as_ref())
 		}
 	}
 
@@ -878,7 +751,7 @@ impl_runtime_apis! {
 
 #[cfg(test)]
 mod tests {
-	use super::{Runtime, WeightPerGas};
+	use super::{evm::WeightPerGas, Runtime};
 	#[test]
 	fn configured_base_extrinsic_weight_is_evm_compatible() {
 		let min_ethereum_transaction_weight = WeightPerGas::get() * 21_000;

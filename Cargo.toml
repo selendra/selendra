@@ -1,7 +1,7 @@
 [workspace]
 members = [
 	"runtime",
-	"node",
+	# "node",
 	"pallets/aleph",
 	"pallets/aleph/aleph-runtime-api",
 	"pallets/committee-management",
@@ -127,6 +127,7 @@ pallet-balances = { git = "https://github.com/selendra/polkadot-sdk", branch = "
 pallet-grandpa = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
 pallet-session = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
 pallet-staking = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
+pallet-staking-runtime-api = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
 pallet-sudo = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
 pallet-timestamp = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
 pallet-transaction-payment = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }

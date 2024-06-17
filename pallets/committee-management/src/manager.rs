@@ -6,9 +6,9 @@ use sp_staking::{EraIndex, SessionIndex};
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use crate::{
-    pallet::{Config, Pallet, SessionValidatorBlockCount},
-    traits::EraInfoProvider,
-    LOG_TARGET,
+	pallet::{Config, Pallet, SessionValidatorBlockCount},
+	traits::EraInfoProvider,
+	LOG_TARGET,
 };
 
 /// We assume that block `B` ends session nr `S`, and current era index is `E`.
@@ -27,13 +27,13 @@ use crate::{
 
 impl<T> pallet_authorship::EventHandler<T::AccountId, BlockNumberFor<T>> for Pallet<T>
 where
-    T: Config,
+	T: Config,
 {
-    fn note_author(validator: T::AccountId) {
-        SessionValidatorBlockCount::<T>::mutate(&validator, |count| {
-            *count += 1;
-        });
-    }
+	fn note_author(validator: T::AccountId) {
+		SessionValidatorBlockCount::<T>::mutate(&validator, |count| {
+			*count += 1;
+		});
+	}
 }
 
 /// SessionManager that also fires EraManager functions. It is responsible for rotation of the committee,
@@ -57,100 +57,98 @@ where
 /// In the runtime we set EM to pallet_elections and T to combination of staking and historical_session.
 pub struct SessionAndEraManager<E, EM, T, C>(PhantomData<(E, EM, T, C)>)
 where
-    E: EraInfoProvider,
-    EM: EraManager,
-    T: SessionManager<C::AccountId>,
-    C: Config;
+	E: EraInfoProvider,
+	EM: EraManager,
+	T: SessionManager<C::AccountId>,
+	C: Config;
 
 impl<E, EM, T, C> SessionAndEraManager<E, EM, T, C>
 where
-    E: EraInfoProvider,
-    EM: EraManager,
-    T: SessionManager<C::AccountId>,
-    C: Config,
+	E: EraInfoProvider,
+	EM: EraManager,
+	T: SessionManager<C::AccountId>,
+	C: Config,
 {
-    fn session_starts_era(session: SessionIndex) -> Option<EraIndex> {
-        let active_era = match E::active_era() {
-            Some(ae) => ae,
-            // no active era, session can't start it
-            _ => return None,
-        };
+	fn session_starts_era(session: SessionIndex) -> Option<EraIndex> {
+		let active_era = match E::active_era() {
+			Some(ae) => ae,
+			// no active era, session can't start it
+			_ => return None,
+		};
 
-        if Self::is_start_of_the_era(active_era, session) {
-            return Some(active_era);
-        }
+		if Self::is_start_of_the_era(active_era, session) {
+			return Some(active_era);
+		}
 
-        None
-    }
+		None
+	}
 
-    fn session_starts_next_era(session: SessionIndex) -> Option<EraIndex> {
-        let active_era = match E::active_era() {
-            Some(ae) => ae + 1,
-            // no active era, session can't start it
-            _ => return None,
-        };
+	fn session_starts_next_era(session: SessionIndex) -> Option<EraIndex> {
+		let active_era = match E::active_era() {
+			Some(ae) => ae + 1,
+			// no active era, session can't start it
+			_ => return None,
+		};
 
-        if Self::is_start_of_the_era(active_era, session) {
-            return Some(active_era);
-        }
+		if Self::is_start_of_the_era(active_era, session) {
+			return Some(active_era);
+		}
 
-        None
-    }
+		None
+	}
 
-    fn is_start_of_the_era(era: EraIndex, session: SessionIndex) -> bool {
-        if let Some(era_start_index) = E::era_start_session_index(era) {
-            return era_start_index == session;
-        }
+	fn is_start_of_the_era(era: EraIndex, session: SessionIndex) -> bool {
+		if let Some(era_start_index) = E::era_start_session_index(era) {
+			return era_start_index == session;
+		}
 
-        false
-    }
+		false
+	}
 }
 
 impl<E, EM, T, C> SessionManager<C::AccountId> for SessionAndEraManager<E, EM, T, C>
 where
-    E: EraInfoProvider,
-    EM: EraManager,
-    T: SessionManager<C::AccountId>,
-    C: Config,
+	E: EraInfoProvider,
+	EM: EraManager,
+	T: SessionManager<C::AccountId>,
+	C: Config,
 {
-    fn new_session(new_index: SessionIndex) -> Option<Vec<C::AccountId>> {
-        T::new_session(new_index);
-        if let Some(era) = Self::session_starts_next_era(new_index) {
-            EM::on_new_era(era);
-            Pallet::<C>::emit_fresh_bans_event();
-        }
+	fn new_session(new_index: SessionIndex) -> Option<Vec<C::AccountId>> {
+		T::new_session(new_index);
+		if let Some(era) = Self::session_starts_next_era(new_index) {
+			EM::on_new_era(era);
+			Pallet::<C>::emit_fresh_bans_event();
+		}
 
-        let SessionCommittee {
-            finality_committee,
-            block_producers,
-        } = Pallet::<C>::rotate_committee(new_index)?;
-        // Notify about elected next session finality committee
-        C::FinalityCommitteeManager::on_next_session_finality_committee(finality_committee);
+		let SessionCommittee { finality_committee, block_producers } =
+			Pallet::<C>::rotate_committee(new_index)?;
+		// Notify about elected next session finality committee
+		C::FinalityCommitteeManager::on_next_session_finality_committee(finality_committee);
 
-        Some(block_producers)
-    }
+		Some(block_producers)
+	}
 
-    fn end_session(end_index: SessionIndex) {
-        T::end_session(end_index);
-        Pallet::<C>::adjust_rewards_for_session();
-        Pallet::<C>::calculate_underperforming_validators();
-        // clear block count after calculating stats for underperforming validators, as they use
-        // SessionValidatorBlockCount for that
-        let result = SessionValidatorBlockCount::<C>::clear(u32::MAX, None);
-        debug!(
-            target: LOG_TARGET,
-            "Result of clearing the `SessionValidatorBlockCount`, {:?}",
-            result.deconstruct()
-        );
-    }
+	fn end_session(end_index: SessionIndex) {
+		T::end_session(end_index);
+		Pallet::<C>::adjust_rewards_for_session();
+		Pallet::<C>::calculate_underperforming_validators();
+		// clear block count after calculating stats for underperforming validators, as they use
+		// SessionValidatorBlockCount for that
+		let result = SessionValidatorBlockCount::<C>::clear(u32::MAX, None);
+		debug!(
+			target: LOG_TARGET,
+			"Result of clearing the `SessionValidatorBlockCount`, {:?}",
+			result.deconstruct()
+		);
+	}
 
-    fn start_session(start_index: SessionIndex) {
-        T::start_session(start_index);
-        Pallet::<C>::clear_underperformance_session_counter(start_index);
+	fn start_session(start_index: SessionIndex) {
+		T::start_session(start_index);
+		Pallet::<C>::clear_underperformance_session_counter(start_index);
 
-        if let Some(era) = Self::session_starts_era(start_index) {
-            Pallet::<C>::update_validator_total_rewards(era);
-            Pallet::<C>::clear_expired_bans(era);
-        }
-    }
+		if let Some(era) = Self::session_starts_era(start_index) {
+			Pallet::<C>::update_validator_total_rewards(era);
+			Pallet::<C>::clear_expired_bans(era);
+		}
+	}
 }
