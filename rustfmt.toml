@@ -1,9 +1,6 @@
 edition = "2021"
 use_field_init_shorthand = true
 reorder_modules = true
-
-imports_granularity = "Crate"
-group_imports = "StdExternalCrate"
 reorder_imports = true
 
 # Basic
@@ -14,11 +11,5 @@ use_small_heuristics = "Max"
 newline_style = "Unix"
 # Misc
 chain_width = 80
-spaces_around_ranges = false
-binop_separator = "Back"
-reorder_impl_items = false
-match_arm_leading_pipes = "Preserve"
 match_arm_blocks = false
 match_block_trailing_comma = true
-trailing_comma = "Vertical"
-trailing_semicolon = false
