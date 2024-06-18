@@ -3,16 +3,13 @@ use std::{collections::BTreeMap, str::FromStr};
 use hex_literal::hex;
 // Substrate
 use sc_chain_spec::{ChainType, Properties};
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 #[allow(unused_imports)]
 use sp_core::ecdsa;
 use sp_core::{Pair, Public, H160, U256};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 // Frontier
-use selendra_primitives::{
-	AccountId, Balance, Signature
-};
+use selendra_primitives::{AccountId, Balance, Signature, AuraId};
 use selendra_runtime::{RuntimeGenesisConfig, SS58Prefix, WASM_BINARY};
 
 // The URL for the telemetry server.
@@ -55,7 +52,7 @@ fn properties() -> Properties {
 
 const UNITS: Balance = 1_000_000_000_000_000_000;
 
-pub fn development_config(enable_manual_seal: bool) -> ChainSpec {
+pub fn development_config() -> ChainSpec {
 	ChainSpec::builder(WASM_BINARY.expect("WASM not available"), Default::default())
 		.with_name("Development")
 		.with_id("dev")
@@ -77,7 +74,6 @@ pub fn development_config(enable_manual_seal: bool) -> ChainSpec {
 			vec![authority_keys_from_seed("Alice")],
 			// Ethereum chain ID
 			SS58Prefix::get() as u64,
-			enable_manual_seal,
 		))
 		.build()
 }
@@ -100,12 +96,8 @@ pub fn local_testnet_config() -> ChainSpec {
 				AccountId::from(hex!("Ff64d3F6efE2317EE2807d223a0Bdc4c0c49dfDB")), // Ethan
 				AccountId::from(hex!("C0F0f4ab324C46e55D02D0033343B4Be8A55532d")), // Faith
 			],
-			vec![
-				authority_keys_from_seed("Alice"),
-				authority_keys_from_seed("Bob"),
-			],
+			vec![authority_keys_from_seed("Alice"), authority_keys_from_seed("Bob")],
 			42,
-			false,
 		))
 		.build()
 }
@@ -116,7 +108,6 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	initial_authorities: Vec<(AuraId, GrandpaId)>,
 	chain_id: u64,
-	enable_manual_seal: bool,
 ) -> serde_json::Value {
 	let evm_accounts = {
 		let mut map = BTreeMap::new();
@@ -175,6 +166,5 @@ fn testnet_genesis(
 		"grandpa": { "authorities": initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect::<Vec<_>>() },
 		"evmChainId": { "chainId": chain_id },
 		"evm": { "accounts": evm_accounts },
-		"manualSeal": { "enable": enable_manual_seal }
 	})
 }

@@ -15,10 +15,10 @@ use frame_support::{
 	weights::Weight,
 };
 use pallet_ethereum::PostLogContent;
-use pallet_evm::{EnsureAccountId20, IdentityAddressMapping};
+// use pallet_evm::{EnsureAccountId20, IdentityAddressMapping};
 
 use precompiles::FrontierPrecompiles;
-use selendra_primitives::common::{NORMAL_DISPATCH_RATIO, WEIGHT_MILLISECS_PER_BLOCK};
+use selendra_primitives::{common::{NORMAL_DISPATCH_RATIO, WEIGHT_MILLISECS_PER_BLOCK}, AccountId, BlakeTwo256};
 
 impl pallet_evm_chain_id::Config for Runtime {}
 
@@ -52,9 +52,9 @@ impl pallet_evm::Config for Runtime {
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 	type WeightPerGas = WeightPerGas;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
-	type CallOrigin = EnsureAccountId20;
-	type WithdrawOrigin = EnsureAccountId20;
-	type AddressMapping = IdentityAddressMapping;
+	type CallOrigin = pallet_evm::EnsureAddressRoot<AccountId>;
+	type WithdrawOrigin = pallet_evm::EnsureAddressTruncated;
+	type AddressMapping = pallet_evm::HashedAddressMapping<BlakeTwo256>;
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type PrecompilesType = FrontierPrecompiles<Self>;
@@ -116,6 +116,6 @@ impl pallet_base_fee::Config for Runtime {
 }
 
 impl pallet_hotfix_sufficients::Config for Runtime {
-	type AddressMapping = IdentityAddressMapping;
+	type AddressMapping = pallet_evm::HashedAddressMapping<BlakeTwo256>;
 	type WeightInfo = pallet_hotfix_sufficients::weights::SubstrateWeight<Self>;
 }

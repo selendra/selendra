@@ -21,7 +21,7 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_inherents::CreateInherentDataProviders;
 use sp_runtime::traits::Block as BlockT;
 // Runtime
-use selendra_primitives::{Block, AccountId, Balance, Hash, Nonce};
+use selendra_primitives::{AccountId, Balance, Block, Hash, Nonce};
 
 mod eth;
 pub use self::eth::{create_eth, overrides_handle, EthDeps};
@@ -83,13 +83,7 @@ where
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 
 	let mut io = RpcModule::new(());
-	let FullDeps {
-		client,
-		pool,
-		deny_unsafe,
-		command_sink,
-		eth,
-	} = deps;
+	let FullDeps { client, pool, deny_unsafe, command_sink, eth } = deps;
 
 	io.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
 	io.merge(TransactionPayment::new(client).into_rpc())?;

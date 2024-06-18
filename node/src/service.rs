@@ -102,9 +102,7 @@ where
 	let client = Arc::new(client);
 
 	let telemetry = telemetry.map(|(worker, telemetry)| {
-		task_manager
-			.spawn_handle()
-			.spawn("telemetry", None, worker.run());
+		task_manager.spawn_handle().spawn("telemetry", None, worker.run());
 		telemetry
 	});
 
@@ -144,7 +142,7 @@ where
 			))
 			.unwrap_or_else(|err| panic!("failed creating sql backend: {:?}", err));
 			FrontierBackend::Sql(backend)
-		}
+		},
 	};
 
 	let (import_queue, block_import) = build_import_queue(
@@ -172,13 +170,7 @@ where
 		select_chain,
 		import_queue,
 		transaction_pool,
-		other: (
-			telemetry,
-			block_import,
-			grandpa_link,
-			frontier_backend,
-			overrides,
-		),
+		other: (telemetry, block_import, grandpa_link, frontier_backend, overrides),
 	})
 }
 
@@ -286,11 +278,8 @@ where
 		other: (mut telemetry, block_import, grandpa_link, frontier_backend, overrides),
 	} = new_partial(&config, &eth_config, build_import_queue)?;
 
-	let FrontierPartialComponents {
-		filter_pool,
-		fee_history_cache,
-		fee_history_cache_limit,
-	} = new_frontier_partial(&eth_config)?;
+	let FrontierPartialComponents { filter_pool, fee_history_cache, fee_history_cache_limit } =
+		new_frontier_partial(&eth_config)?;
 
 	let mut net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
 	let grandpa_protocol_name = sc_consensus_grandpa::protocol_standard_name(
@@ -433,11 +422,7 @@ where
 				client: client.clone(),
 				pool: pool.clone(),
 				deny_unsafe,
-				command_sink: if sealing.is_some() {
-					Some(command_sink.clone())
-				} else {
-					None
-				},
+				command_sink: if sealing.is_some() { Some(command_sink.clone()) } else { None },
 				eth: eth_deps,
 			};
 			crate::rpc::create_full(
@@ -548,11 +533,7 @@ where
 	if enable_grandpa {
 		// if the node isn't actively participating in consensus then it doesn't
 		// need a keystore, regardless of which protocol we use below.
-		let keystore = if role.is_authority() {
-			Some(keystore_container.keystore())
-		} else {
-			None
-		};
+		let keystore = if role.is_authority() { Some(keystore_container.keystore()) } else { None };
 
 		let grandpa_config = sc_consensus_grandpa::Config {
 			// FIXME #1578 make this available through chainspec
@@ -696,37 +677,23 @@ pub async fn build_full(
 	eth_config: EthConfiguration,
 	sealing: Option<Sealing>,
 ) -> Result<TaskManager, ServiceError> {
-	new_full::<selendra_runtime::RuntimeApi, TemplateRuntimeExecutor>(
-		config, eth_config, sealing,
-	)
-	.await
+	new_full::<selendra_runtime::RuntimeApi, TemplateRuntimeExecutor>(config, eth_config, sealing)
+		.await
 }
 
 pub fn new_chain_ops(
 	config: &mut Configuration,
 	eth_config: &EthConfiguration,
 ) -> Result<
-	(
-		Arc<Client>,
-		Arc<FullBackend>,
-		BasicQueue<Block>,
-		TaskManager,
-		FrontierBackend,
-	),
+	(Arc<Client>, Arc<FullBackend>, BasicQueue<Block>, TaskManager, FrontierBackend),
 	ServiceError,
 > {
 	config.keystore = sc_service::config::KeystoreConfig::InMemory;
-	let PartialComponents {
-		client,
-		backend,
-		import_queue,
-		task_manager,
-		other,
-		..
-	} = new_partial::<selendra_runtime::RuntimeApi, TemplateRuntimeExecutor, _>(
-		config,
-		eth_config,
-		build_aura_grandpa_import_queue,
-	)?;
+	let PartialComponents { client, backend, import_queue, task_manager, other, .. } =
+		new_partial::<selendra_runtime::RuntimeApi, TemplateRuntimeExecutor, _>(
+			config,
+			eth_config,
+			build_aura_grandpa_import_queue,
+		)?;
 	Ok((client, backend, import_queue, task_manager, other.3))
 }

@@ -21,6 +21,9 @@
 pub mod common;
 pub mod constants;
 
+pub use constants::*;
+pub use common::*;
+
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -29,9 +32,7 @@ pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, ConstU32};
 pub use sp_runtime::traits::{BlakeTwo256, Hash as HashT};
 use sp_runtime::{
-	generic, impl_opaque_keys,
-	traits::{IdentifyAccount, Verify},
-	BoundedVec, Perbill, Perquintill,
+	generic, impl_opaque_keys, traits::{Header as HeaderT, IdentifyAccount, Verify}, BoundedVec, ConsensusEngineId, MultiSignature, Perbill, Perquintill
 };
 pub use sp_staking::{EraIndex, SessionIndex};
 use sp_std::vec::Vec;
@@ -48,7 +49,8 @@ pub type Moment = u64;
 // pub type Signature = MultiSignature;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = fp_account::EthereumSignature;
+// pub type Signature = fp_account::EthereumSignature;
+pub type Signature = MultiSignature;
 
 /// Alias to the public key used for this chain, actually a `MultiSigner`. Like the signature, this
 /// also isn't a fixed size when encoded, as different cryptos have different size public keys.
@@ -92,6 +94,9 @@ pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// Block ID.
 pub type BlockId = generic::BlockId<Block>;
 
+/// Block Hash type
+pub type BlockHash = <Header as HeaderT>::Hash;
+
 /// Opaque, encoded, unchecked extrinsic.
 pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 
@@ -99,6 +104,20 @@ pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 pub type DigestItem = generic::DigestItem;
 
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"alp0");
+
+// Same as GRANDPA_ENGINE_ID because as of right now substrate sends only
+// grandpa justifications over the network.
+// TODO: change this once https://github.com/paritytech/substrate/issues/8172 will be resolved.
+pub const ALEPH_ENGINE_ID: ConsensusEngineId = *b"FRNK";
+
+/// A hash of extrinsic.
+pub type TransactionHash = Hash;
+
+pub type AuthoritySignature = app::Signature;
+
+sp_application_crypto::with_pair! {
+    pub type AuthorityPair = app::Pair;
+}
 
 impl_opaque_keys! {
 	pub struct AlephNodeSessionKeys {
