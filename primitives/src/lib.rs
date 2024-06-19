@@ -21,8 +21,8 @@
 pub mod common;
 pub mod constants;
 
-pub use constants::*;
 pub use common::*;
+pub use constants::*;
 
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
@@ -32,7 +32,9 @@ pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, ConstU32};
 pub use sp_runtime::traits::{BlakeTwo256, Hash as HashT};
 use sp_runtime::{
-	generic, impl_opaque_keys, traits::{Header as HeaderT, IdentifyAccount, Verify}, BoundedVec, ConsensusEngineId, MultiSignature, Perbill, Perquintill
+	generic, impl_opaque_keys,
+	traits::{Header as HeaderT, IdentifyAccount, Verify},
+	BoundedVec, ConsensusEngineId, MultiSignature, Perbill, Perquintill,
 };
 pub use sp_staking::{EraIndex, SessionIndex};
 use sp_std::vec::Vec;
@@ -116,7 +118,7 @@ pub type TransactionHash = Hash;
 pub type AuthoritySignature = app::Signature;
 
 sp_application_crypto::with_pair! {
-    pub type AuthorityPair = app::Pair;
+	pub type AuthorityPair = app::Pair;
 }
 
 impl_opaque_keys! {

@@ -1,12 +1,13 @@
 [workspace]
 members = [
 	"runtime",
-	# "node",
+	"node",
 	"pallets/aleph",
 	"pallets/aleph/aleph-runtime-api",
 	"pallets/committee-management",
 	"pallets/elections",
 	"crate/finality-aleph",
+	"crate/chain-bootstrapper"
 ]
 resolver = "2"
 
@@ -107,6 +108,7 @@ sc-utils = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendr
 # Substrate Primitive
 sp-api = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
 sp-application-crypto = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
+sp-arithmetic = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
 sp-block-builder = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
 sp-blockchain = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0" }
 sp-consensus = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0" }
@@ -215,4 +217,4 @@ mock-runtime-api = { path = "crate/mock-runtime-api", default-features = false }
 
 # Selendra
 selendra-runtime = { path = "runtime"}
-selendra-primitives = { path = "./primitives", default-features = false}
+selendra-primitives = { path = "primitives", default-features = false}

@@ -28,8 +28,6 @@ use sc_client_api::BlockBackend;
 use sp_core::{ecdsa, Pair};
 use sp_inherents::{InherentData, InherentDataProvider};
 use sp_runtime::{generic::Era, OpaqueExtrinsic, SaturatedConversion};
-// Frontier
-use fp_account::AccountId20;
 use selendra_runtime::{self as runtime, AccountId, Balance, BalancesCall, SystemCall};
 
 use crate::client::Client;
@@ -155,14 +153,14 @@ pub fn create_benchmark_extrinsic(
 			(),
 		),
 	);
-	let signature = raw_payload.using_encoded(|e| sender.sign(e));
-
+	let signature = payload.using_encoded(|p| acc.sign(p));
 	runtime::UncheckedExtrinsic::new_signed(
 		call,
-		AccountId20::from(sender.public()),
-		runtime::Signature::new(signature),
+		sp_runtime::AccountId32::from(acc.public()).into(),
+		runtime::Signature::Sr25519(signature.clone()),
 		extra,
 	)
+	.into()
 }
 
 /// Generates inherent data for the `benchmark overhead` command.

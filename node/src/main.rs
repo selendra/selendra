@@ -6,14 +6,16 @@
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-mod chain_spec;
-mod cli;
-mod client;
-mod command;
-mod eth;
+// mod cli;
+// mod client;
+// mod command;
+// mod eth;
 mod rpc;
-mod service;
+// mod service;
 
-fn main() -> sc_cli::Result<()> {
-	command::run()
+// fn main() -> sc_cli::Result<()> {
+// 	command::run()
+// }
+
+fn main() {
 }

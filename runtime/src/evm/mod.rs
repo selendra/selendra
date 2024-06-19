@@ -18,7 +18,10 @@ use pallet_ethereum::PostLogContent;
 // use pallet_evm::{EnsureAccountId20, IdentityAddressMapping};
 
 use precompiles::FrontierPrecompiles;
-use selendra_primitives::{common::{NORMAL_DISPATCH_RATIO, WEIGHT_MILLISECS_PER_BLOCK}, AccountId, BlakeTwo256};
+use selendra_primitives::{
+	common::{NORMAL_DISPATCH_RATIO, WEIGHT_MILLISECS_PER_BLOCK},
+	AccountId, BlakeTwo256,
+};
 
 impl pallet_evm_chain_id::Config for Runtime {}
 

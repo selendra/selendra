@@ -151,3 +151,5 @@ runtime-benchmarks = [
 	"pallet-evm/runtime-benchmarks",
 	"pallet-hotfix-sufficients/runtime-benchmarks",
 ]
+
+short_session = []
