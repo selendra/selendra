@@ -4,5 +4,5 @@ use parity_scale_codec::{Decode, Encode};
 pub struct Version(pub u16);
 
 pub trait Versioned {
-    const VERSION: Version;
+	const VERSION: Version;
 }

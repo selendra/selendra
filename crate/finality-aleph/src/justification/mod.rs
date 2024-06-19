@@ -1,10 +1,7 @@
+use crate::{abft::SignatureSet, crypto::Signature};
 use parity_scale_codec::{Decode, Encode};
-use sp_runtime::Justification;
 use selendra_primitives::{AuthoritySignature, ALEPH_ENGINE_ID};
-use crate::{
-    abft::SignatureSet,
-    crypto::Signature,
-};
+use sp_runtime::Justification;
 
 mod compatibility;
 
@@ -16,12 +13,12 @@ const LOG_TARGET: &str = "aleph-justification";
 /// sudo signature of a block for emergency finalization.
 #[derive(Clone, Encode, Decode, Debug, PartialEq, Eq)]
 pub enum AlephJustification {
-    CommitteeMultisignature(SignatureSet<Signature>),
-    EmergencySignature(AuthoritySignature),
+	CommitteeMultisignature(SignatureSet<Signature>),
+	EmergencySignature(AuthoritySignature),
 }
 
 impl From<AlephJustification> for Justification {
-    fn from(val: AlephJustification) -> Self {
-        (ALEPH_ENGINE_ID, versioned_encode(val))
-    }
+	fn from(val: AlephJustification) -> Self {
+		(ALEPH_ENGINE_ID, versioned_encode(val))
+	}
 }

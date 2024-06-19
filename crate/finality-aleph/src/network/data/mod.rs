@@ -7,12 +7,12 @@ pub mod split;
 /// Returned when something went wrong when sending data using a Network.
 #[derive(Debug)]
 pub enum SendError {
-    SendFailed,
+	SendFailed,
 }
 
 /// A generic interface for sending and receiving data.
 #[async_trait::async_trait]
 pub trait Network<D: Data>: Send + Sync {
-    fn send(&self, data: D, recipient: Recipient) -> Result<(), SendError>;
-    async fn next(&mut self) -> Option<D>;
+	fn send(&self, data: D, recipient: Recipient) -> Result<(), SendError>;
+	async fn next(&mut self) -> Option<D>;
 }
