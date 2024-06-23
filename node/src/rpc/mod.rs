@@ -11,7 +11,6 @@ use sc_client_api::{
 	client::BlockchainEvents,
 	AuxStore, UsageProvider,
 };
-use sc_consensus_manual_seal::rpc::EngineCommand;
 use sc_rpc::SubscriptionTaskExecutor;
 use sc_rpc_api::DenyUnsafe;
 use sc_service::TransactionPool;
@@ -27,10 +26,10 @@ use sp_consensus::SyncOracle;
 use finality_aleph::{Justification, JustificationTranslator, ValidatorAddressCache};
 
 // Runtime
-use selendra_primitives::{AccountId, Balance, Block, Hash, Nonce};
+use selendra_primitives::{AccountId, Balance, Block, Nonce};
 
 mod eth;
-mod aleph_node_rpc;
+pub mod aleph_node_rpc;
 pub use aleph_node_rpc::{AlephNode, AlephNodeApiServer};
 pub use self::eth::{create_eth, overrides_handle, EthDeps};
 
@@ -50,8 +49,6 @@ pub struct FullDeps<C, P, A: ChainApi, CT, CIDP, SO> {
     pub sync_oracle: SO,
 	/// validator address cache
 	pub validator_address_cache: Option<ValidatorAddressCache>,
-	/// Manual seal command sink
-	pub command_sink: Option<mpsc::Sender<EngineCommand<Hash>>>,
 	/// Ethereum-compatibility specific dependencies.
 	pub eth: EthDeps<Block, C, P, A, CT, CIDP>,
 }
@@ -104,7 +101,6 @@ where
 	SO: SyncOracle + Send + Sync + 'static,
 {
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
-	use sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 
 	let mut io = RpcModule::new(());
@@ -116,20 +112,11 @@ where
         justification_translator,
         sync_oracle,
         validator_address_cache,
-		command_sink,
 		eth,
 	} = deps;
 
 	io.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
 	io.merge(TransactionPayment::new(client.clone()).into_rpc())?;
-
-	if let Some(command_sink) = command_sink {
-		io.merge(
-			// We provide the rpc handler with the sending end of the channel to allow the rpc
-			// send EngineCommands to the background block authorship task.
-			ManualSeal::new(command_sink).into_rpc(),
-		)?;
-	}
 
     io.merge(
         AlephNode::new(

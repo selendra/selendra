@@ -7,7 +7,8 @@ members = [
 	"pallets/committee-management",
 	"pallets/elections",
 	"crate/finality-aleph",
-	"crate/chain-bootstrapper"
+	"crate/chain-bootstrapper",
+	"crate/runtime-interfaces",
 ]
 resolver = "2"
 
@@ -88,6 +89,7 @@ sc-client-api = { git = "https://github.com/selendra/polkadot-sdk", branch = "se
 sc-client-db = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
 sc-consensus = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0" }
 sc-consensus-aura = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0" }
+sc-consensus-slots = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0" }
 sc-consensus-manual-seal = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0" }
 sc-executor = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0" }
 sc-keystore = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0" }
@@ -203,6 +205,8 @@ pallet-evm-precompile-simple = { git = "https://github.com/selendra/frontier", b
 pallet-evm-test-vector-support = { git = "https://github.com/selendra/frontier", branch = "selendra-1.6.0" }
 pallet-hotfix-sufficients = { git = "https://github.com/selendra/frontier", branch = "selendra-1.6.0", default-features = false }
 
+halo2_proofs = { git = "https://github.com/Cardinal-Cryptography/pse-halo2", branch = "aleph", default-features = false }
+
 # Pallet
 pallet-aleph = { path = "pallets/aleph", default-features = false }
 pallet-aleph-runtime-api = { path = "pallets/aleph/aleph-runtime-api", default-features = false }
@@ -214,6 +218,7 @@ finality-aleph = { path = "crate/finality-aleph" }
 rate-limiter = { path = "crate/rate-limiter" }
 network-clique = { path = "crate/clique" }
 mock-runtime-api = { path = "crate/mock-runtime-api", default-features = false }
+selendra-runtime-interfaces = { path = "crate/runtime-interfaces", default-features = false }
 
 # Selendra
 selendra-runtime = { path = "runtime"}
