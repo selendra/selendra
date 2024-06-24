@@ -1,5 +1,6 @@
-pub mod aleph_cli;
+#![allow(missing_docs)]
 
+pub mod aleph_cli;
 use aleph_cli::AlephCli;
 
 use crate::eth::EthConfiguration;

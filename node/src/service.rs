@@ -1,4 +1,5 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
+#![allow(missing_docs)]
 
 use std::{
     path::{Path, PathBuf},
@@ -29,6 +30,7 @@ use sp_arithmetic::traits::BaseArithmetic;
 use sp_consensus::DisableProofRecording;
 use sp_consensus_aura::{sr25519::AuthorityPair as AuraPair, Slot};
 use sp_core::U256;
+use sc_consensus::BasicQueue;
 
 use crate::{
     cli::aleph_cli::AlephCli, eth::{
@@ -44,7 +46,8 @@ pub type FullBackend = sc_service::TFullBackend<Block>;
 type FullPool = sc_transaction_pool::FullPool<Block, FullClient>;
 type FullImportQueue = sc_consensus::DefaultImportQueue<Block>;
 type FullProposerFactory = ProposerFactory<FullPool, FullClient, DisableProofRecording>;
-type BoxBlockImport = sc_consensus::BoxBlockImport<Block>;
+
+/// ServiceComponents.
 pub struct ServiceComponents {
     pub client: Arc<FullClient>,
     pub backend: Arc<FullBackend>,
@@ -296,7 +299,7 @@ impl Link<Block> for NoopLink {}
 pub async fn new_authority(
     mut config: Configuration,
     aleph_config: AlephCli,
-    eth_config: &EthConfiguration,
+    eth_config: EthConfiguration,
 ) -> Result<TaskManager, ServiceError> {
     if aleph_config.external_addresses().is_empty() {
         panic!("Cannot run a validator node without external addresses, stopping.");
@@ -548,4 +551,43 @@ pub async fn new_authority(
         .spawn_blocking("aleph", None, run_validator_node(aleph_config));
 
     Ok(service_components.task_manager)
+}
+
+pub fn new_chain_ops(
+	config: &mut Configuration,
+	eth_config: &EthConfiguration,
+) -> Result<
+	(
+		Arc<FullClient>,
+		Arc<FullBackend>,
+		BasicQueue<Block>,
+		TaskManager,
+		FrontierBackend,
+	),
+	ServiceError,
+> {
+	config.keystore = sc_service::config::KeystoreConfig::InMemory;
+	let ServiceComponents {
+		client,
+		backend,
+		import_queue,
+		task_manager,
+        frontier_backend,
+		..
+	} = new_partial(
+		config,
+		eth_config,
+	)?;
+	Ok((client, backend, import_queue, task_manager, frontier_backend))
+}
+
+pub async fn build_full(
+	config: Configuration,
+    aleph_config: AlephCli,
+    eth_config: EthConfiguration,
+) -> Result<TaskManager, ServiceError> {
+	new_authority(
+		config, aleph_config, eth_config,
+	)
+	.await
 }

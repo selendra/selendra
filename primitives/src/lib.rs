@@ -181,6 +181,9 @@ pub const DEFAULT_MAX_NON_FINALIZED_BLOCKS: u32 = 20;
 /// A relative folder where to store ABFT backups
 pub const DEFAULT_BACKUP_FOLDER: &str = "backup-stash";
 
+/// Default number of heap pages. That gives a limit of 256MB for a runtime instance, since each page is 64KB
+pub const HEAP_PAGES: u64 = 4096;
+
 /// Hold set of validators that produce blocks and set of validators that participate in finality
 /// during session.
 #[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq)]

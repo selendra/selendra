@@ -18,6 +18,7 @@ jsonrpsee = { workspace = true, features = ["server", "macros"] }
 log = { workspace = true }
 parity-scale-codec = { workspace = true, features = ["derive"]  }
 serde_json = { workspace = true, features = ["arbitrary_precision"] }
+static_assertions = { workspace = true }
 
 # Substrate
 prometheus-endpoint = { workspace = true }

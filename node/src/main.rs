@@ -13,10 +13,19 @@ mod executor;
 mod rpc;
 mod service;
 mod chain_spec;
+mod config;
 
-// fn main() -> sc_cli::Result<()> {
-// 	command::run()
-// }
+pub use cli::{Cli, Subcommand};
+pub use config::Validator as ConfigValidator;
+#[cfg(any(
+    feature = "runtime-benchmarks",
+    feature = "aleph-native-runtime",
+    feature = "try-runtime"
+))]
+pub use executor::aleph_executor::ExecutorDispatch;
+pub use service::{new_authority, new_partial, ServiceComponents};
 
-fn main() {
+fn main() -> sc_cli::Result<()> {
+	command::run()
 }
+
