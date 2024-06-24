@@ -17,8 +17,8 @@ pub struct Cli {
 	#[command(flatten)]
 	pub eth: EthConfiguration,
 
-    #[command(flatten)]
-    pub aleph: AlephCli,
+	#[command(flatten)]
+	pub aleph: AlephCli,
 }
 
 #[derive(Debug, clap::Subcommand)]

@@ -19,8 +19,8 @@ use futures::TryFutureExt;
 use log::info;
 // Substrate
 use sc_cli::SubstrateCli;
-use sc_service::{DatabaseSource, Configuration};
 use sc_network::config::Role;
+use sc_service::{Configuration, DatabaseSource};
 
 // Frontier
 use fc_db::kv::frontier_database_dir;
@@ -28,21 +28,23 @@ use fc_db::kv::frontier_database_dir;
 use selendra_primitives::HEAP_PAGES;
 
 use crate::{
-	chain_spec::testnet_chainspec, cli::{Cli, Subcommand}, eth::db_config_dir, service, ConfigValidator,
-	ServiceComponents, new_partial
+	chain_spec::testnet_chainspec,
+	cli::{Cli, Subcommand},
+	eth::db_config_dir,
+	new_partial, service, ConfigValidator, ServiceComponents,
 };
 
 #[cfg(feature = "runtime-benchmarks")]
 use crate::chain_spec::get_account_id_from_seed;
 
 fn enforce_heap_pages(config: &mut Configuration) {
-    config.default_heap_pages = Some(HEAP_PAGES);
+	config.default_heap_pages = Some(HEAP_PAGES);
 }
 
 pub type AlephNodeChainSpec = sc_service::GenericChainSpec<()>;
 
 pub fn testnet_config() -> Result<AlephNodeChainSpec, String> {
-    AlephNodeChainSpec::from_json_bytes(testnet_chainspec())
+	AlephNodeChainSpec::from_json_bytes(testnet_chainspec())
 }
 
 impl SubstrateCli for Cli {
@@ -71,17 +73,17 @@ impl SubstrateCli for Cli {
 	}
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
-        let default_chain = "testnet";
-        let id = id.trim();
-        let id = if id.is_empty() { default_chain } else { id };
+		let default_chain = "testnet";
+		let id = id.trim();
+		let id = if id.is_empty() { default_chain } else { id };
 
-        let chainspec = match id {
-            "mainnet" => testnet_config(),
+		let chainspec = match id {
+			"mainnet" => testnet_config(),
 
-            _ => AlephNodeChainSpec::from_json_file(id.into()),
-        };
-        Ok(Box::new(chainspec?))
-    }
+			_ => AlephNodeChainSpec::from_json_file(id.into()),
+		};
+		Ok(Box::new(chainspec?))
+	}
 }
 
 /// Parse and run command line arguments
@@ -93,51 +95,37 @@ pub fn run() -> sc_cli::Result<()> {
 	match &cli.subcommand {
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
 		Some(Subcommand::CheckBlock(cmd)) => {
-            let runner = cli.create_runner(cmd)?;
-            runner.async_run(|mut config| {
-                let ServiceComponents {
-                    client,
-                    task_manager,
-                    import_queue,
-                    ..
-                } = new_partial(&mut config, &cli.eth)?;
-                Ok((cmd.run(client, import_queue), task_manager))
-            })
-        },
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|mut config| {
+				let ServiceComponents { client, task_manager, import_queue, .. } =
+					new_partial(&mut config, &cli.eth)?;
+				Ok((cmd.run(client, import_queue), task_manager))
+			})
+		},
 		Some(Subcommand::ExportBlocks(cmd)) => {
-            let runner = cli.create_runner(cmd)?;
-            runner.async_run(|mut config| {
-                let ServiceComponents {
-                    client,
-                    task_manager,
-                    ..
-                } = new_partial(&mut config, &cli.eth)?;
-                Ok((cmd.run(client, config.database), task_manager))
-            })
-        },
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|mut config| {
+				let ServiceComponents { client, task_manager, .. } =
+					new_partial(&mut config, &cli.eth)?;
+				Ok((cmd.run(client, config.database), task_manager))
+			})
+		},
 		Some(Subcommand::ExportState(cmd)) => {
-            let runner = cli.create_runner(cmd)?;
-            runner.async_run(|mut config| {
-                let ServiceComponents {
-                    client,
-                    task_manager,
-                    ..
-                } = new_partial(&mut config, &cli.eth)?;
-                Ok((cmd.run(client, config.chain_spec), task_manager))
-            })
-        },
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|mut config| {
+				let ServiceComponents { client, task_manager, .. } =
+					new_partial(&mut config, &cli.eth)?;
+				Ok((cmd.run(client, config.chain_spec), task_manager))
+			})
+		},
 		Some(Subcommand::ImportBlocks(cmd)) => {
-            let runner = cli.create_runner(cmd)?;
-            runner.async_run(|mut config| {
-                let ServiceComponents {
-                    client,
-                    task_manager,
-                    import_queue,
-                    ..
-                } = new_partial(&mut config, &cli.eth)?;
-                Ok((cmd.run(client, import_queue), task_manager))
-            })
-        }
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|mut config| {
+				let ServiceComponents { client, task_manager, import_queue, .. } =
+					new_partial(&mut config, &cli.eth)?;
+				Ok((cmd.run(client, import_queue), task_manager))
+			})
+		},
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
@@ -190,17 +178,13 @@ pub fn run() -> sc_cli::Result<()> {
 			})
 		},
 		Some(Subcommand::Revert(cmd)) => {
-            let runner = cli.create_runner(cmd)?;
-            runner.async_run(|mut config| {
-                let ServiceComponents {
-                    client,
-                    task_manager,
-                    backend,
-                    ..
-                } = new_partial(&mut config, &cli.eth)?;
-                Ok((cmd.run(client, backend, None), task_manager))
-            })
-        }
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|mut config| {
+				let ServiceComponents { client, task_manager, backend, .. } =
+					new_partial(&mut config, &cli.eth)?;
+				Ok((cmd.run(client, backend, None), task_manager))
+			})
+		},
 		#[cfg(feature = "runtime-benchmarks")]
 		Some(Subcommand::Benchmark(cmd)) => {
 			use crate::benchmarking::{
@@ -249,9 +233,11 @@ pub fn run() -> sc_cli::Result<()> {
 			}
 		},
 		#[cfg(not(feature = "runtime-benchmarks"))]
-		Some(Subcommand::Benchmark) => Err("Benchmarking wasn't enabled when building the node. selendra_primitives
+		Some(Subcommand::Benchmark) => {
+			Err("Benchmarking wasn't enabled when building the node. selendra_primitives
 			You can enable it with `--features runtime-benchmarks`."
-			.into()),
+				.into())
+		},
 		Some(Subcommand::FrontierDb(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|mut config| {
@@ -267,24 +253,24 @@ pub fn run() -> sc_cli::Result<()> {
 		None => {
 			let runner = cli.create_runner(&cli.run)?;
 
-            config_validation_result.report();
+			config_validation_result.report();
 			let mut aleph_cli_config = cli.aleph;
 
 			runner.run_node_until_exit(|mut config| async move {
 				if matches!(config.role, Role::Full) {
 					if !aleph_cli_config.external_addresses().is_empty() {
-                        panic!(
-                            "A non-validator node cannot be run with external addresses specified."
-                        );
-                    }
+						panic!(
+							"A non-validator node cannot be run with external addresses specified."
+						);
+					}
 					// We ensure that external addresses for non-validator nodes are set, but to a
-                    // value that is not routable. This will no longer be neccessary once we have
-                    // proper support for non-validator nodes, but this requires a major
-                    // refactor.
-                    info!(
-                        "Running as a non-validator node, setting dummy addressing configuration."
-                    );
-                    aleph_cli_config.set_dummy_external_addresses();
+					// value that is not routable. This will no longer be neccessary once we have
+					// proper support for non-validator nodes, but this requires a major
+					// refactor.
+					info!(
+						"Running as a non-validator node, setting dummy addressing configuration."
+					);
+					aleph_cli_config.set_dummy_external_addresses();
 				}
 				enforce_heap_pages(&mut config);
 				service::build_full(config, aleph_cli_config, cli.eth).map_err(Into::into).await

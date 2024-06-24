@@ -17,10 +17,10 @@ use sc_service::TransactionPool;
 use sc_transaction_pool::ChainApi;
 use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use sp_consensus::SyncOracle;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_inherents::CreateInherentDataProviders;
 use sp_runtime::traits::Block as BlockT;
-use sp_consensus::SyncOracle;
 
 // Aleph
 use finality_aleph::{Justification, JustificationTranslator, ValidatorAddressCache};
@@ -28,10 +28,10 @@ use finality_aleph::{Justification, JustificationTranslator, ValidatorAddressCac
 // Runtime
 use selendra_primitives::{AccountId, Balance, Block, Nonce};
 
-mod eth;
 pub mod aleph_node_rpc;
-pub use aleph_node_rpc::{AlephNode, AlephNodeApiServer};
+mod eth;
 pub use self::eth::{create_eth, overrides_handle, EthDeps};
+pub use aleph_node_rpc::{AlephNode, AlephNodeApiServer};
 
 /// Full client dependencies.
 pub struct FullDeps<C, P, A: ChainApi, CT, CIDP, SO> {
@@ -44,9 +44,9 @@ pub struct FullDeps<C, P, A: ChainApi, CT, CIDP, SO> {
 	/// import justification transaction
 	pub import_justification_tx: mpsc::UnboundedSender<Justification>,
 	/// import jjustification translator
-    pub justification_translator: JustificationTranslator,
+	pub justification_translator: JustificationTranslator,
 	/// syn oracle
-    pub sync_oracle: SO,
+	pub sync_oracle: SO,
 	/// validator address cache
 	pub validator_address_cache: Option<ValidatorAddressCache>,
 	/// Ethereum-compatibility specific dependencies.
@@ -76,16 +76,16 @@ pub fn create_full<C, P, BE, A, CT, CIDP, SO>(
 	>,
 ) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
 where
-	C: CallApiAt<Block> 
+	C: CallApiAt<Block>
 		+ ProvideRuntimeApi<Block>
-		+ HeaderBackend<Block> 
-		+ HeaderMetadata<Block, Error = BlockChainError> 
-		+ BlockchainEvents<Block> 
-		+ UsageProvider<Block> 
+		+ HeaderBackend<Block>
+		+ HeaderMetadata<Block, Error = BlockChainError>
+		+ BlockchainEvents<Block>
+		+ UsageProvider<Block>
 		+ StorageProvider<Block, BE>
 		+ AuxStore
 		+ Send
-        + Sync
+		+ Sync
 		+ 'static,
 	C::Api: sp_block_builder::BlockBuilder<Block>,
 	C::Api: sp_consensus_aura::AuraApi<Block, AuraId>,
@@ -104,30 +104,30 @@ where
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 
 	let mut io = RpcModule::new(());
-	let FullDeps { 
+	let FullDeps {
 		client,
 		pool,
 		deny_unsafe,
 		import_justification_tx,
-        justification_translator,
-        sync_oracle,
-        validator_address_cache,
+		justification_translator,
+		sync_oracle,
+		validator_address_cache,
 		eth,
 	} = deps;
 
 	io.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
 	io.merge(TransactionPayment::new(client.clone()).into_rpc())?;
 
-    io.merge(
-        AlephNode::new(
-            import_justification_tx,
-            justification_translator,
-            client,
-            sync_oracle,
-            validator_address_cache,
-        )
-        .into_rpc(),
-    )?;
+	io.merge(
+		AlephNode::new(
+			import_justification_tx,
+			justification_translator,
+			client,
+			sync_oracle,
+			validator_address_cache,
+		)
+		.into_rpc(),
+	)?;
 
 	// Ethereum compatibility RPCs
 	let io = create_eth::<_, _, _, _, _, _, _, DefaultEthConfig<C, BE>>(
