@@ -19,6 +19,7 @@ sc-keystore = { workspace = true }
 sp-application-crypto = { workspace = true }
 sp-runtime = { workspace = true }
 sp-core = { workspace = true }
+fp-evm = { workspace = true }
 
 pallet-staking = { workspace = true }
 
