@@ -25,3 +25,4 @@ polkadot.*
 # NixOS development environment
 .envrc
 .local
+run-nodes-local
