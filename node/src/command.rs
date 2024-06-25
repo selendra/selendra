@@ -1,20 +1,3 @@
-// This file is part of Substrate.
-
-// Copyright (C) 2017-2021 Parity Technologies (UK) Ltd.
-// SPDX-License-Identifier: Apache-2.0
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// 	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 use futures::TryFutureExt;
 use log::info;
 // Substrate
@@ -28,7 +11,7 @@ use fc_db::kv::frontier_database_dir;
 use selendra_primitives::HEAP_PAGES;
 
 use crate::{
-	chain_spec::testnet_chainspec,
+	chain_spec::{testnet_config, SelendraNodeChainSpec},
 	cli::{Cli, Subcommand},
 	eth::db_config_dir,
 	new_partial, service, ConfigValidator, ServiceComponents,
@@ -39,12 +22,6 @@ use crate::chain_spec::get_account_id_from_seed;
 
 fn enforce_heap_pages(config: &mut Configuration) {
 	config.default_heap_pages = Some(HEAP_PAGES);
-}
-
-pub type AlephNodeChainSpec = sc_service::GenericChainSpec<()>;
-
-pub fn testnet_config() -> Result<AlephNodeChainSpec, String> {
-	AlephNodeChainSpec::from_json_bytes(testnet_chainspec())
 }
 
 impl SubstrateCli for Cli {
@@ -80,7 +57,7 @@ impl SubstrateCli for Cli {
 		let chainspec = match id {
 			"mainnet" => testnet_config(),
 
-			_ => AlephNodeChainSpec::from_json_file(id.into()),
+			_ => SelendraNodeChainSpec::from_json_file(id.into()),
 		};
 		Ok(Box::new(chainspec?))
 	}
