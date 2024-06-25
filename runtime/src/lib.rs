@@ -57,8 +57,8 @@ use selendra_primitives::{
 
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("frontier-template"),
-	impl_name: create_runtime_str!("frontier-template"),
+	spec_name: create_runtime_str!("selendra"),
+	impl_name: create_runtime_str!("selendra"),
 	authoring_version: 1,
 	spec_version: 11000,
 	impl_version: 1,
