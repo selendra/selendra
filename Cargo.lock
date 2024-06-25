@@ -1094,6 +1094,7 @@ dependencies = [
 name = "chain-bootstrapper"
 version = "0.1.0"
 dependencies = [
+ "fp-evm",
  "hex",
  "libp2p",
  "pallet-staking",
@@ -1209,6 +1210,32 @@ name = "clap_lex"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "98cc8fbded0c607b7ba9dd60cd98df59af97e84d24e49c8557331cfc26d301ce"
+
+[[package]]
+name = "client-runtime-api"
+version = "0.1.0"
+dependencies = [
+ "fp-rpc",
+ "frame-support",
+ "frame-system-rpc-runtime-api",
+ "pallet-aleph-runtime-api",
+ "pallet-ethereum",
+ "pallet-evm",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "selendra-primitives",
+ "sp-api",
+ "sp-block-builder",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-inherents",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-version",
+]
 
 [[package]]
 name = "codespan-reporting"
@@ -2460,6 +2487,7 @@ dependencies = [
  "array-bytes 6.2.3",
  "async-trait",
  "bytes",
+ "client-runtime-api",
  "derive_more",
  "env_logger",
  "frame-support",
@@ -2470,7 +2498,6 @@ dependencies = [
  "ip_network",
  "log",
  "lru",
- "mock-runtime-api",
  "network-clique",
  "pallet-aleph-runtime-api",
  "parity-scale-codec",
@@ -4853,32 +4880,6 @@ dependencies = [
  "subtle 2.5.0",
  "thiserror",
  "zeroize",
-]
-
-[[package]]
-name = "mock-runtime-api"
-version = "0.1.0"
-dependencies = [
- "fp-rpc",
- "frame-support",
- "frame-system-rpc-runtime-api",
- "pallet-aleph-runtime-api",
- "pallet-ethereum",
- "pallet-evm",
- "pallet-transaction-payment",
- "pallet-transaction-payment-rpc-runtime-api",
- "selendra-primitives",
- "sp-api",
- "sp-block-builder",
- "sp-consensus-aura",
- "sp-core",
- "sp-inherents",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-std",
- "sp-transaction-pool",
- "sp-version",
 ]
 
 [[package]]
@@ -8067,6 +8068,7 @@ version = "1.1.0"
 dependencies = [
  "async-trait",
  "clap",
+ "client-runtime-api",
  "fc-api",
  "fc-cli",
  "fc-consensus",
@@ -8088,7 +8090,6 @@ dependencies = [
  "hex-literal",
  "jsonrpsee",
  "log",
- "mock-runtime-api",
  "pallet-aleph-runtime-api",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",

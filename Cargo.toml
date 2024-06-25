@@ -217,7 +217,7 @@ pallet-elections = { path = "pallets/elections", default-features = false }
 finality-aleph = { path = "crate/finality-aleph" }
 rate-limiter = { path = "crate/rate-limiter" }
 network-clique = { path = "crate/clique" }
-mock-runtime-api = { path = "crate/mock-runtime-api", default-features = false }
+client-runtime-api = { path = "crate/client-runtime-api", default-features = false }
 selendra-runtime-interfaces = { path = "crate/runtime-interfaces", default-features = false }
 
 # Selendra

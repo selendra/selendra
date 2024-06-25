@@ -90,7 +90,7 @@ pallet-aleph-runtime-api = { workspace = true }
 # Selendra
 selendra-runtime = { workspace = true, features = ["std"] }
 selendra-primitives = { workspace = true }
-mock-runtime-api = { workspace = true }
+client-runtime-api = { workspace = true }
 
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }

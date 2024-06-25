@@ -13,7 +13,7 @@ use finality_aleph::{
 	SessionPeriod, SubstrateChainStatus, SyncOracle, ValidatorAddressCache,
 };
 use log::warn;
-use mock_runtime_api::mock_runtime::RuntimeApi;
+use client_runtime_api::mock_runtime::RuntimeApi;
 use pallet_aleph_runtime_api::AlephSessionApi;
 use sc_basic_authorship::ProposerFactory;
 use sc_client_api::HeaderBackend;

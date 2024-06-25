@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use mock_runtime_api::mock_runtime;
+use client_runtime_api::mock_runtime;
 use selendra_primitives::{BlockHash, BlockNumber};
 use sp_blockchain::HeaderBackend;
 use substrate_test_client::{client, sc_client_db, sc_executor};

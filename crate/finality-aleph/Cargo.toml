@@ -37,7 +37,7 @@ current-aleph-aggregator = { package = "aggregator", path = "../aggregator"}
 rate-limiter = { workspace = true }
 network-clique = { workspace = true }
 selendra-primitives = { workspace = true }
-mock-runtime-api = { workspace = true, features = ["std"] }
+client-runtime-api = { workspace = true, features = ["std"] }
 pallet-aleph-runtime-api = { workspace = true, features = ["std"] }
 
 prometheus-endpoint = { workspace = true }
