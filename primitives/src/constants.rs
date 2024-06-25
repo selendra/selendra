@@ -2,7 +2,7 @@
 pub mod time {
 	use crate::{BlockNumber, Moment};
 
-	pub const MILLISECS_PER_BLOCK: Moment = 6000;
+	pub const MILLISECS_PER_BLOCK: Moment = 1000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
 
 	// These time units are defined in number of blocks.
