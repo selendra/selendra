@@ -13,6 +13,13 @@ pub mod time {
 }
 
 pub mod currency {
+    use crate::Balance;
+
 	pub const TOKEN_DECIMALS: u32 = 18;
-	pub const TOKEN: u128 = 10u128.pow(TOKEN_DECIMALS);
+	pub const TOKEN: Balance = 10u128.pow(TOKEN_DECIMALS);
+
+	pub const MILLI_SEL: Balance = TOKEN / 1000;
+	pub const MICRO_SEL: Balance = MILLI_SEL / 1000;
+	pub const NANO_SEL: Balance = MICRO_SEL / 1000;
+	pub const PICO_SEL: Balance = NANO_SEL / 1000;
 }
