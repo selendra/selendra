@@ -5521,6 +5521,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-custom-signatures"
+version = "4.6.0"
+dependencies = [
+ "assert_matches",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "libsecp256k1",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-keyring",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-dynamic-fee"
 version = "4.0.0-dev"
 source = "git+https://github.com/selendra/frontier?branch=selendra-1.6.0#235167a6a5d8fa530cc31d8752e37a6e0c674a83"
@@ -8178,6 +8198,7 @@ dependencies = [
  "pallet-balances",
  "pallet-base-fee",
  "pallet-committee-management",
+ "pallet-custom-signatures",
  "pallet-dynamic-fee",
  "pallet-elections",
  "pallet-ethereum",

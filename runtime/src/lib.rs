@@ -177,6 +177,7 @@ frame_support::construct_runtime!(
 		DynamicFee: pallet_dynamic_fee = 83,
 		BaseFee: pallet_base_fee = 84,
 		HotfixSufficients: pallet_hotfix_sufficients = 85,
+		EthCall: pallet_custom_signatures = 86,
 
 		Sudo: pallet_sudo = 200,
 	}

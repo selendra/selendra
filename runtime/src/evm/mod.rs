@@ -2,11 +2,11 @@
 
 mod precompiles;
 
-use crate::{Aura, Balances, BaseFee, EVMChainId, Runtime, RuntimeEvent, Timestamp};
+use crate::{Aura, Balances, BaseFee, EVMChainId, Runtime, RuntimeEvent, RuntimeCall, Timestamp};
 
 use fp_evm::weight_per_gas;
 use sp_core::{crypto::ByteArray, H160, U256};
-use sp_runtime::{ConsensusEngineId, Permill};
+use sp_runtime::{ConsensusEngineId, Permill, transaction_validity::TransactionPriority, traits::Verify};
 use sp_std::{marker::PhantomData, prelude::*};
 
 use frame_support::{
@@ -19,8 +19,7 @@ use pallet_ethereum::PostLogContent;
 
 use precompiles::FrontierPrecompiles;
 use selendra_primitives::{
-	common::{NORMAL_DISPATCH_RATIO, WEIGHT_MILLISECS_PER_BLOCK},
-	AccountId, BlakeTwo256,
+	common::{NORMAL_DISPATCH_RATIO, WEIGHT_MILLISECS_PER_BLOCK}, currency::TOKEN, AccountId, Balance, BlakeTwo256, Signature
 };
 
 impl pallet_evm_chain_id::Config for Runtime {}
@@ -121,4 +120,22 @@ impl pallet_base_fee::Config for Runtime {
 impl pallet_hotfix_sufficients::Config for Runtime {
 	type AddressMapping = pallet_evm::HashedAddressMapping<BlakeTwo256>;
 	type WeightInfo = pallet_hotfix_sufficients::weights::SubstrateWeight<Self>;
+}
+
+parameter_types! {
+	pub const EcdsaUnsignedPriority: TransactionPriority = TransactionPriority::MAX / 2;
+	pub const CallFee: Balance = TOKEN / 10;
+	pub const CallMagicNumber: u16 = 0x0250;
+}
+
+impl pallet_custom_signatures::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+	type Signature = pallet_custom_signatures::ethereum::EthereumSignature;
+	type Signer = <Signature as Verify>::Signer;
+	type CallMagicNumber = CallMagicNumber;
+	type Currency = Balances;
+	type CallFee = CallFee;
+	type OnChargeTransaction = ();
+	type UnsignedPriority = EcdsaUnsignedPriority;
 }

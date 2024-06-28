@@ -62,6 +62,7 @@ pallet-evm-precompile-modexp = { workspace = true }
 pallet-evm-precompile-sha3fips = { workspace = true }
 pallet-evm-precompile-simple = { workspace = true }
 pallet-hotfix-sufficients = { workspace = true }
+pallet-custom-signatures = { workspace = true }
 
 # Alep Pallet
 pallet-aleph = { workspace = true }
@@ -130,6 +131,7 @@ std = [
 	"pallet-evm-precompile-sha3fips/std",
 	"pallet-evm-precompile-simple/std",
 	"pallet-hotfix-sufficients/std",
+	"pallet-custom-signatures/std",
 
 	# Alep Pallet
 	"pallet-aleph/std",
