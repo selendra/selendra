@@ -35,9 +35,16 @@ frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-system-benchmarking = { workspace = true, optional = true }
 frame-system-rpc-runtime-api = { workspace = true }
+
+# Substrate Pallet
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { workspace = true, features = ["insecure_zero_ed"] }
+pallet-identity = { workspace = true }
+pallet-indices = { workspace = true }
+pallet-multisig = { workspace = true }
+pallet-proxy = { workspace = true }
+pallet-recovery = { workspace = true }
 pallet-session = { workspace = true }
 pallet-staking = { workspace = true }
 pallet-staking-runtime-api = { workspace = true }
@@ -45,14 +52,15 @@ pallet-sudo = { workspace = true }
 pallet-timestamp = { workspace = true }
 pallet-transaction-payment = { workspace = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
+pallet-utility = { workspace = true }
 
-# Frontier
+# Frontier Primitive
 fp-account = { workspace = true, features = ["serde"] }
 fp-evm = { workspace = true, features = ["serde"] }
 fp-rpc = { workspace = true }
 fp-self-contained = { workspace = true, features = ["serde"] }
 
-# Frontier FRAME
+# Frontier Pallet
 pallet-base-fee = { workspace = true }
 pallet-dynamic-fee = { workspace = true }
 pallet-ethereum = { workspace = true }
@@ -106,9 +114,15 @@ std = [
 	"frame-system/std",
 	"frame-system-rpc-runtime-api/std",
 	"frame-system-benchmarking?/std",
+	# Substrate Pallet
 	"pallet-aura/std",
 	"pallet-authorship/std",
 	"pallet-balances/std",
+	"pallet-identity/std",
+	"pallet-indices/std",
+	"pallet-multisig/std",
+	"pallet-proxy/std",
+	"pallet-recovery/std",
 	"pallet-session/std",
 	"pallet-staking/std",
 	"pallet-staking-runtime-api/std",
@@ -116,6 +130,7 @@ std = [
 	"pallet-timestamp/std",
 	"pallet-transaction-payment/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
+	"pallet-utility/std",
 	# Frontier
 	"fp-account/std",
 	"fp-evm/std",

@@ -156,7 +156,12 @@ frame-system-rpc-runtime-api = { git = "https://github.com/selendra/polkadot-sdk
 pallet-aura = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
 pallet-authorship = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
 pallet-balances = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
+pallet-identity = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
+pallet-indices = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
+pallet-multisig = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
 pallet-session = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
+pallet-proxy = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
+pallet-recovery = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
 pallet-staking = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
 pallet-staking-runtime-api = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
 pallet-sudo = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0", default-features = false }
