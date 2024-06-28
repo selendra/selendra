@@ -9,7 +9,10 @@ mod consensus;
 mod evm;
 mod governace;
 mod validator;
+mod migration;
+mod utility;
 
+use selendra_primitives::impls::DealWithFees;
 use validator::SessionPeriod;
 use validator::MAX_NOMINATORS;
 
@@ -147,7 +150,7 @@ parameter_types! {
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
+	type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees<Runtime>>;
 	type WeightToFee = IdentityFee<Balance>;
 	type LengthToFee = IdentityFee<Balance>;
 	type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
@@ -170,6 +173,13 @@ frame_support::construct_runtime!(
 		Session: pallet_session = 13,
 		Elections: pallet_elections = 14,
 		CommitteeManagement: pallet_committee_management = 15,
+
+		Utility: pallet_utility = 50,
+		Multisig: pallet_multisig = 51,
+		Identity: pallet_identity = 52,
+		Indices: pallet_indices = 53,
+		Recovery: pallet_recovery = 54,
+		Proxy: pallet_proxy = 59,
 
 		Ethereum: pallet_ethereum = 80,
 		EVM: pallet_evm = 81,
@@ -244,6 +254,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	migration::Migrations,
 >;
 
 impl fp_self_contained::SelfContainedCall for RuntimeCall {
