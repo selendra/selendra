@@ -6,6 +6,7 @@ use std::{
 	sync::Arc,
 };
 
+use client_runtime_api::mock_runtime::RuntimeApi;
 use finality_aleph::{
 	build_network, get_aleph_block_import, run_validator_node, AlephConfig, BlockImporter,
 	BuildNetworkOutput, ChannelProvider, FavouriteSelectChainProvider, Justification,
@@ -13,7 +14,6 @@ use finality_aleph::{
 	SessionPeriod, SubstrateChainStatus, SyncOracle, ValidatorAddressCache,
 };
 use log::warn;
-use client_runtime_api::mock_runtime::RuntimeApi;
 use pallet_aleph_runtime_api::AlephSessionApi;
 use sc_basic_authorship::ProposerFactory;
 use sc_client_api::HeaderBackend;

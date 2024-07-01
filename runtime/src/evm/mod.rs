@@ -2,11 +2,13 @@
 
 mod precompiles;
 
-use crate::{Aura, Balances, BaseFee, EVMChainId, Runtime, RuntimeEvent, RuntimeCall, Timestamp};
+use crate::{Aura, Balances, BaseFee, EVMChainId, Runtime, RuntimeCall, RuntimeEvent, Timestamp};
 
 use fp_evm::weight_per_gas;
 use sp_core::{crypto::ByteArray, H160, U256};
-use sp_runtime::{ConsensusEngineId, Permill, transaction_validity::TransactionPriority, traits::Verify};
+use sp_runtime::{
+	traits::Verify, transaction_validity::TransactionPriority, ConsensusEngineId, Permill,
+};
 use sp_std::{marker::PhantomData, prelude::*};
 
 use frame_support::{
@@ -19,7 +21,9 @@ use pallet_ethereum::PostLogContent;
 
 use precompiles::FrontierPrecompiles;
 use selendra_primitives::{
-	common::{NORMAL_DISPATCH_RATIO, WEIGHT_MILLISECS_PER_BLOCK}, currency::TOKEN, AccountId, Balance, BlakeTwo256, Signature
+	common::{NORMAL_DISPATCH_RATIO, WEIGHT_MILLISECS_PER_BLOCK},
+	currency::TOKEN,
+	AccountId, Balance, BlakeTwo256, Signature,
 };
 
 impl pallet_evm_chain_id::Config for Runtime {}

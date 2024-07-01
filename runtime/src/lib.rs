@@ -8,9 +8,9 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 mod consensus;
 mod evm;
 mod governace;
-mod validator;
 mod migration;
 mod utility;
+mod validator;
 
 use selendra_primitives::impls::DealWithFees;
 use validator::SessionPeriod;

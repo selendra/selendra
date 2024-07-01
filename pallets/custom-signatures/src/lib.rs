@@ -187,7 +187,7 @@ pub mod pallet {
 
 			// Check that tx isn't stale
 			if *nonce != frame_system::Pallet::<T>::account_nonce(signer.clone()) {
-				return InvalidTransaction::Stale.into()
+				return InvalidTransaction::Stale.into();
 			}
 
 			// Check signature encoding

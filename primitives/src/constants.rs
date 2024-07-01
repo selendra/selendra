@@ -13,7 +13,7 @@ pub mod time {
 }
 
 pub mod currency {
-    use crate::Balance;
+	use crate::Balance;
 
 	pub const TOKEN_DECIMALS: u32 = 18;
 	pub const TOKEN: Balance = 10u128.pow(TOKEN_DECIMALS);
