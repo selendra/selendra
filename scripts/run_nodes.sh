@@ -19,7 +19,7 @@
 # We assume RPC nodes have ids //0, //1, //2, ... //N-1, where N is number of RPC nodes, and
 # validators have ids //N, //N+1, ...
 # Obviously, this is just for testing reasons and such seeds must be never used in production.
-# Also, each AlephNode chain has sudo account. Here we assume it is //Alice.
+# Also, each SelendraNode chain has sudo account. Here we assume it is //Alice.
 #
 # Make sure a machine on which you're running your script has enough RAM memory. For testing nodes
 # with empty db, a 1.5 GB per node would be enough.
@@ -39,7 +39,7 @@ set -euo pipefail
 
 # ------------------------ constants --------------------------------------
 
-ALEPH_NODE="target/release/selendra-node"
+SELENDRA_NODE="target/release/selendra-node"
 CHAINSPEC_GENERATOR="target/release/chain-bootstrapper"
 NODE_P2P_PORT_RANGE_START=30333
 NODE_VALIDATOR_PORT_RANGE_START=30343
@@ -49,8 +49,8 @@ NODE_RPC_PORT_RANGE_START=9944
 
 script_path="${BASH_SOURCE[0]}"
 script_dir=$(dirname "${script_path}")
-aleph_node_root_dir=$(realpath "${script_dir}/..")
-pushd "${aleph_node_root_dir}" > /dev/null
+selendra_node_root_dir=$(realpath "${script_dir}/..")
+pushd "${selendra_node_root_dir}" > /dev/null
 source ./scripts/common.sh
 
 function usage(){
@@ -82,7 +82,7 @@ VALIDATORS=${VALIDATORS:-6}
 RPC_NODES=${RPC_NODES:-1}
 BASE_PATH=${BASE_PATH:-"./run-nodes-local"}
 DONT_BOOTSTRAP=${DONT_BOOTSTRAP:-""}
-DONT_BUILD_ALEPH_NODE=${DONT_BUILD_ALEPH_NODE:-""}
+DONT_BUILD_SELENDRA_NODE=${DONT_BUILD_SELENDRA_NODE:-""}
 DONT_DELETE_DB=${DONT_DELETE_DB:-""}
 DONT_REMOVE_ABFT_BACKUPS=${DONT_REMOVE_ABFT_BACKUPS:-""}
 
@@ -105,7 +105,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --dont-build)
-      DONT_BUILD_ALEPH_NODE="true"
+      DONT_BUILD_SELENDRA_NODE="true"
       shift
       ;;
     --dont-delete-db)
@@ -145,9 +145,9 @@ function get_backup_folders() {
 
 function get_ss58_address_from_seed() {
   local seed="$1"
-  local aleph_node_path="$2"
+  local selendra_node_path="$2"
+  echo $(${selendra_node_path} key inspect --output-type json ${seed} | jq -r '.ss58Address')
 
-  echo $(${aleph_node_path} key inspect --output-type json ${seed} | jq -r '.ss58Address')
 }
 
 function run_node() {
@@ -230,25 +230,22 @@ if ! killall -9 selendra-node 2> /dev/null; then
   info "No selendra-node processes found."
 fi
 
-if [[ -z "${DONT_BUILD_ALEPH_NODE}" ]]; then
+if [[ -z "${DONT_BUILD_SELENDRA_NODE}" ]]; then
   info "Building testing selendra-node binary (short session) and chain-bootstrapper binary."
   cargo build --release
-#   if [[ -z "${DONT_BOOTSTRAP}" ]]; then
-#     cargo build --release -p chain-bootstrapper 
-#   fi
-elif [[ ! -x "${ALEPH_NODE}" || ! -x "${CHAINSPEC_GENERATOR}" ]]; then
-  error "${ALEPH_NODE} or ${CHAINSPEC_GENERATOR} does not exist or it's not an executable file!"
+elif [[ ! -x "${SELENDRA_NODE}" || ! -x "${CHAINSPEC_GENERATOR}" ]]; then
+  error "${SELENDRA_NODE} or ${CHAINSPEC_GENERATOR} does not exist or it's not an executable file!"
 fi
 
 NUMBER_OF_NODES_TO_BOOTSTRAP=$(( VALIDATORS + RPC_NODES ))
 info "Generating ${NUMBER_OF_NODES_TO_BOOTSTRAP} stash accounts identities."
 declare -a rpc_node_account_ids
 for i in $(seq 0 "$(( RPC_NODES - 1 ))"); do
-  rpc_node_account_ids+=($(get_ss58_address_from_seed "//${i}" "${ALEPH_NODE}"))
+  rpc_node_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
 done
 declare -a validator_account_ids
 for i in $(seq "${RPC_NODES}" "$(( NUMBER_OF_NODES_TO_BOOTSTRAP - 1 ))"); do
-  validator_account_ids+=($(get_ss58_address_from_seed "//${i}" "${ALEPH_NODE}"))
+  validator_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
 done
 
 info "Following identities were generated:"
@@ -290,7 +287,7 @@ if [[ -z "${DONT_BOOTSTRAP}" ]]; then
 fi
 
 info "Creating bootnode p2p multiaddress."
-p2p_key_public=$("${ALEPH_NODE}" key inspect-node-key --file "${BASE_PATH}/${rpc_node_account_ids[0]}/p2p_secret")
+p2p_key_public=$("${SELENDRA_NODE}" key inspect-node-key --file "${BASE_PATH}/${rpc_node_account_ids[0]}/p2p_secret")
 bootnode_multiaddress="/dns4/localhost/tcp/$((NODE_P2P_PORT_RANGE_START))/p2p/${p2p_key_public}"
 info "Bootnode p2p multiaddress is ${bootnode_multiaddress}"
 
@@ -298,11 +295,11 @@ if [[ -z "${DONT_DELETE_DB}" ]] ; then
   info "Removing database for all nodes (aka purging chain)."
   for i in $(seq 0 "$(( RPC_NODES - 1 ))"); do
     rpc_node_account_id=${rpc_node_account_ids[$i]}
-    "${ALEPH_NODE}" purge-chain --base-path "${BASE_PATH}/${rpc_node_account_id}" --chain "${BASE_PATH}/chainspec.json" -y > /dev/null 2>&1
+    "${SELENDRA_NODE}" purge-chain --base-path "${BASE_PATH}/${rpc_node_account_id}" --chain "${BASE_PATH}/chainspec.json" -y > /dev/null 2>&1
   done
   for i in $(seq 0 "$(( VALIDATORS - 1 ))"); do
     validator_account_id="${validator_account_ids[$i]}"
-    "${ALEPH_NODE}" purge-chain --base-path "${BASE_PATH}/${validator_account_id}" --chain "${BASE_PATH}/chainspec.json" -y > /dev/null 2>&1
+    "${SELENDRA_NODE}" purge-chain --base-path "${BASE_PATH}/${validator_account_id}" --chain "${BASE_PATH}/chainspec.json" -y > /dev/null 2>&1
   done
 fi
 

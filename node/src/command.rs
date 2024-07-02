@@ -11,7 +11,7 @@ use fc_db::kv::frontier_database_dir;
 use selendra_primitives::HEAP_PAGES;
 
 use crate::{
-	chain_spec::{testnet_config, SelendraNodeChainSpec},
+	chain_spec::{selendra_config, SelendraNodeChainSpec},
 	cli::{Cli, Subcommand},
 	eth::db_config_dir,
 	new_partial, service, ConfigValidator, ServiceComponents,
@@ -55,7 +55,7 @@ impl SubstrateCli for Cli {
 		let id = if id.is_empty() { default_chain } else { id };
 
 		let chainspec = match id {
-			"mainnet" => testnet_config(),
+			"mainnet" | "selendra" => selendra_config(),
 
 			_ => SelendraNodeChainSpec::from_json_file(id.into()),
 		};

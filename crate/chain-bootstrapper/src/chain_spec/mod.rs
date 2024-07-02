@@ -12,7 +12,7 @@ use sp_runtime::Perbill;
 
 use selendra_primitives::{
 	currency::TOKEN_DECIMALS,
-	staking::{MIN_NOMINATOR_BOND, MIN_VALIDATOR_BOND},
+	staking::{MIN_NOMINATOR_BOND, MIN_VALIDATOR_BOND}, Balance,
 	AccountId, AlephNodeSessionKeys, Version as FinalityVersion, ADDRESSES_ENCODING,
 };
 use selendra_runtime::WASM_BINARY;
@@ -66,10 +66,7 @@ pub fn build_chain_spec(
 
 /// Calculate initial endowments such that total issuance is kept approximately constant.
 fn calculate_initial_endowment(accounts: &[AccountId]) -> u128 {
-	let total_issuance = 300_000_000u128 * 10u128.pow(TOKEN_DECIMALS);
-	// (A0-4258) due to known issue https://github.com/paritytech/polkadot-sdk/pull/2987/files,
-	// we need to make sure returned number is in u64 range, otherwise serde_json::json macro fails
-	// this is fixed in polkadot-sdk 1.6.0
+	let total_issuance: Balance = 227_887_547u128 * 10u128.pow(TOKEN_DECIMALS);
 	total_issuance / (accounts.len() as u128) / 10
 }
 
