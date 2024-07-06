@@ -19,7 +19,7 @@ pub mod session;
 mod substrate;
 pub mod tcp;
 
-const LOG_TARGET: &str = "aleph-network";
+const LOG_TARGET: &str = "selendra-network";
 
 /// A basic alias for properties we expect basic data to satisfy.
 pub trait Data: Clone + Codec + Send + Sync + 'static {}

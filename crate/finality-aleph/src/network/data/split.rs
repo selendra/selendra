@@ -153,18 +153,18 @@ async fn forward_or_wait<
 	match receiver.lock().await.next().await {
 		Some(Split::Left(data)) => {
 			if left_sender.unbounded_send(data).is_err() {
-				debug!(target: "aleph-network", "Unable to send to LeftNetwork ({}) - already disabled", name);
+				debug!(target: "selendra-network", "Unable to send to LeftNetwork ({}) - already disabled", name);
 			}
 			true
 		},
 		Some(Split::Right(data)) => {
 			if right_sender.unbounded_send(data).is_err() {
-				debug!(target: "aleph-network", "Unable to send to RightNetwork ({}) - already disabled", name);
+				debug!(target: "selendra-network", "Unable to send to RightNetwork ({}) - already disabled", name);
 			}
 			true
 		},
 		None => {
-			trace!(target: "aleph-network", "Split data channel ended");
+			trace!(target: "selendra-network", "Split data channel ended");
 			left_sender.close_channel();
 			right_sender.close_channel();
 			false

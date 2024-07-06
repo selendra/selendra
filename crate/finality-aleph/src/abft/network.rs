@@ -25,7 +25,7 @@ impl<D: Data, DN: Network<D>> NetworkWrapper<D, DN> {
 		R: Into<Recipient>,
 	{
 		if let Err(e) = self.inner.send(data, recipient.into()) {
-			warn!(target: "aleph-network", "Error '{:?}' while sending an AlephBFT message to the network.", e);
+			warn!(target: "selendra-network", "Error '{:?}' while sending an AlephBFT message to the network.", e);
 		}
 	}
 
