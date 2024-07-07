@@ -44,7 +44,7 @@ use crate::{
 // so the actual size probably needs to be increased by one.
 pub const VERIFIER_CACHE_SIZE: usize = 3;
 
-const LOG_TARGET: &str = "aleph-party";
+const LOG_TARGET: &str = "selendra-party";
 
 pub fn new_pen(mnemonic: &str, keystore: Arc<LocalKeystore>) -> AuthorityPen {
 	let validator_peer_id = keystore

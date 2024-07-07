@@ -11,7 +11,7 @@ use crate::{
 	BlockId,
 };
 
-const LOG_TARGET: &str = "aleph-data-store";
+const LOG_TARGET: &str = "selendra-data-store";
 
 pub trait ChainInfoProvider: Send + Sync + 'static {
 	fn is_block_imported(&mut self, block: &BlockId) -> bool;

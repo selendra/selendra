@@ -7,7 +7,7 @@ mod compatibility;
 
 pub use compatibility::{backwards_compatible_decode, versioned_encode, Error as DecodeError};
 
-const LOG_TARGET: &str = "aleph-justification";
+const LOG_TARGET: &str = "selendra-justification";
 
 /// A proof of block finality, currently in the form of a sufficiently long list of signatures or a
 /// sudo signature of a block for emergency finalization.

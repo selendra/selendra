@@ -128,7 +128,7 @@ where
 		block_id: BlockId,
 		justification: SubstrateJustification,
 	) -> Result<(), SendJustificationError<TranslateError>> {
-		debug!(target: "aleph-justification", "Importing justification for block {}.", block_id);
+		debug!(target: "selendra-justification", "Importing justification for block {}.", block_id);
 		if justification.0 != ALEPH_ENGINE_ID {
 			return Err(SendJustificationError::Consensus(Box::new(ConsensusError::ClientImport(
 				"Aleph can import only Aleph justifications.".into(),
@@ -170,20 +170,20 @@ where
 
 		let justifications = block.justifications.take();
 
-		debug!(target: "aleph-justification", "Importing block {:?} {:?} {:?}", number, block.header.hash(), block.post_hash());
+		debug!(target: "selendra-justification", "Importing block {:?} {:?} {:?}", number, block.header.hash(), block.post_hash());
 		let result = self.inner.import_block(block).await;
 
 		if let Ok(ImportResult::Imported(_)) = result {
 			if let Some(justification) =
 				justifications.and_then(|just| just.into_justification(ALEPH_ENGINE_ID))
 			{
-				debug!(target: "aleph-justification", "Got justification along imported block {:?}", number);
+				debug!(target: "selendra-justification", "Got justification along imported block {:?}", number);
 
 				if let Err(e) = self.send_justification(
 					BlockId::new(post_hash, number),
 					(ALEPH_ENGINE_ID, justification),
 				) {
-					warn!(target: "aleph-justification", "Error while receiving justification for block {:?}: {:?}", post_hash, e);
+					warn!(target: "selendra-justification", "Error while receiving justification for block {:?}: {:?}", post_hash, e);
 				}
 			}
 		}
@@ -200,7 +200,7 @@ where
 	type Error = ConsensusError;
 
 	async fn on_start(&mut self) -> Vec<(BlockHash, BlockNumber)> {
-		debug!(target: "aleph-justification", "On start called");
+		debug!(target: "selendra-justification", "On start called");
 		Vec::new()
 	}
 
@@ -211,7 +211,7 @@ where
 		justification: SubstrateJustification,
 	) -> Result<(), Self::Error> {
 		use SendJustificationError::*;
-		debug!(target: "aleph-justification", "import_justification called on {:?}", justification);
+		debug!(target: "selendra-justification", "import_justification called on {:?}", justification);
 		self.send_justification(BlockId::new(hash, number), justification)
 			.map_err(|error| match error {
 				Send(_) => ConsensusError::ClientImport(String::from(

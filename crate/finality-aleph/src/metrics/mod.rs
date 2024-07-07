@@ -9,7 +9,7 @@ pub use timing::{Checkpoint, DefaultClock};
 pub type TimingBlockMetrics = timing::TimingBlockMetrics<DefaultClock>;
 use prometheus_endpoint::{exponential_buckets, prometheus};
 
-const LOG_TARGET: &str = "aleph-metrics";
+const LOG_TARGET: &str = "selendra-metrics";
 
 /// Create `count_below` + 1 + `count_above` buckets, where (`count_below` + 1)th bucket
 /// has an upper bound `start`. The buckets are exponentially distributed with a factor `factor`.

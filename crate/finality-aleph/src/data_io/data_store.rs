@@ -37,7 +37,7 @@ use crate::{
 	BlockId, SessionBoundaries,
 };
 
-const LOG_TARGET: &str = "aleph-data-store";
+const LOG_TARGET: &str = "selendra-data-store";
 
 type MessageId = u64;
 

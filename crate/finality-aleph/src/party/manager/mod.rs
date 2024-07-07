@@ -490,11 +490,11 @@ where
 		let our_consensus_keys: HashSet<_> = match self.keystore.keys(KEY_TYPE) {
 			Ok(keys) => keys.into_iter().collect(),
 			Err(e) => {
-				warn!(target: "aleph-data-store", "Error accessing keystore: {}", e);
+				warn!(target: "selendra-data-store", "Error accessing keystore: {}", e);
 				return None;
 			},
 		};
-		trace!(target: "aleph-data-store", "Found {:?} consensus keys in our local keystore {:?}", our_consensus_keys.len(), our_consensus_keys);
+		trace!(target: "selendra-data-store", "Found {:?} consensus keys in our local keystore {:?}", our_consensus_keys.len(), our_consensus_keys);
 		authorities
 			.iter()
 			.position(|pkey| our_consensus_keys.contains(&pkey.to_raw_vec()))

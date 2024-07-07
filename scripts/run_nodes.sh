@@ -178,14 +178,14 @@ function run_node() {
     --max-runtime-instances 8
     --enable-log-reloading
     --detailed-log-output
-    -laleph-party=debug
-    -laleph-network=debug
+    -lselendra-party=debug
+    -lselendra-network=debug
     -lnetwork-clique=debug
-    -laleph-finality=debug
-    -laleph-justification=debug
-    -laleph-data-store=debug
-    -laleph-updater=debug
-    -laleph-metrics=debug
+    -lselendra-finality=debug
+    -lselendra-justification=debug
+    -lselendra-data-store=debug
+    -lselendra-updater=debug
+    -lselendra-metrics=debug
   )
 
   info "Running node ${index}..."

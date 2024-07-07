@@ -14,7 +14,7 @@ use crate::{
 	BlockId, SessionBoundaries,
 };
 
-const LOG_TARGET: &str = "aleph-data-store";
+const LOG_TARGET: &str = "selendra-data-store";
 
 // Reduce block header to the level given by num, by traversing down via parents.
 pub fn reduce_header_to_num<H, C>(client: &C, header: H, num: BlockNumber) -> H

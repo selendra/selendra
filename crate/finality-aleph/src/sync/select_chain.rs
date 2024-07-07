@@ -7,7 +7,7 @@ use sp_runtime::traits::Block as BlockT;
 
 use crate::{Block, BlockHash};
 
-const LOG_TARGET: &str = "aleph-select-chain";
+const LOG_TARGET: &str = "selendra-select-chain";
 
 #[derive(Clone)]
 pub struct FavouriteSelectChainInner<B: Block> {

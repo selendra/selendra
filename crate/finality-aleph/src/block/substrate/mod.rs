@@ -25,7 +25,7 @@ use crate::{
 	metrics::Checkpoint,
 };
 
-const LOG_TARGET: &str = "aleph-substrate";
+const LOG_TARGET: &str = "selendra-substrate";
 
 impl UnverifiedHeader for Header {
 	fn id(&self) -> BlockId {

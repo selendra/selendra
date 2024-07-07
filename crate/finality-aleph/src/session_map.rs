@@ -18,7 +18,7 @@ use crate::{
 	ClientForAleph, SessionId, SessionPeriod,
 };
 const PRUNING_THRESHOLD: u32 = 10;
-const LOG_TARGET: &str = "aleph-session-updater";
+const LOG_TARGET: &str = "selendra-session-updater";
 type SessionMap = HashMap<SessionId, SessionAuthorityData>;
 type SessionSubscribers = HashMap<SessionId, Vec<OneShotSender<SessionAuthorityData>>>;
 
