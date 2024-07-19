@@ -11,6 +11,12 @@ members = [
 	"crate/chain-bootstrapper",
 	"crate/runtime-interfaces",
 ]
+
+exclude = [
+    "crate/finalizer",
+	"crate/selendra-client"
+]
+
 resolver = "2"
 
 [workspace.package]

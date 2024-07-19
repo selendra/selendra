@@ -67,7 +67,7 @@ pub fn build_chain_spec(
 /// Calculate initial endowments such that total issuance is kept approximately constant.
 fn calculate_initial_endowment(accounts: &[AccountId]) -> u128 {
 	let total_issuance: Balance = 227_887_547u128 * 10u128.pow(TOKEN_DECIMALS);
-	total_issuance / (accounts.len() as u128) / 10
+	total_issuance / (accounts.len() as u128)
 }
 
 /// Configure initial storage state for FRAME modules.
