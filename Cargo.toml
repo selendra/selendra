@@ -14,6 +14,7 @@ members = [
 
 exclude = [
     "crate/finalizer",
+	"crate/fork-off",
 	"crate/selendra-client"
 ]
 
