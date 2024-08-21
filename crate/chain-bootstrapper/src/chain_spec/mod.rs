@@ -12,8 +12,8 @@ use sp_runtime::Perbill;
 
 use selendra_primitives::{
 	currency::TOKEN_DECIMALS,
-	staking::{MIN_NOMINATOR_BOND, MIN_VALIDATOR_BOND}, Balance,
-	AccountId, AlephNodeSessionKeys, Version as FinalityVersion, ADDRESSES_ENCODING,
+	staking::{MIN_NOMINATOR_BOND, MIN_VALIDATOR_BOND},
+	AccountId, AlephNodeSessionKeys, Balance, Version as FinalityVersion, ADDRESSES_ENCODING,
 };
 use selendra_runtime::WASM_BINARY;
 

@@ -5502,20 +5502,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-base-fee"
-version = "1.0.0"
-source = "git+https://github.com/selendra/frontier?branch=selendra-1.6.0#235167a6a5d8fa530cc31d8752e37a6e0c674a83"
-dependencies = [
- "fp-evm",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-runtime",
-]
-
-[[package]]
 name = "pallet-committee-management"
 version = "0.2.0"
 dependencies = [
@@ -5557,18 +5543,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-dynamic-fee"
-version = "4.0.0-dev"
-source = "git+https://github.com/selendra/frontier?branch=selendra-1.6.0#235167a6a5d8fa530cc31d8752e37a6e0c674a83"
+name = "pallet-dynamic-evm-base-fee"
+version = "0.1.0"
 dependencies = [
- "fp-dynamic-fee",
  "fp-evm",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "num-traits",
+ "pallet-balances",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
- "sp-inherents",
+ "sp-io",
+ "sp-runtime",
  "sp-std",
 ]
 
@@ -5680,22 +5670,6 @@ dependencies = [
  "fp-evm",
  "ripemd",
  "sp-io",
-]
-
-[[package]]
-name = "pallet-hotfix-sufficients"
-version = "1.0.0"
-source = "git+https://github.com/selendra/frontier?branch=selendra-1.6.0#235167a6a5d8fa530cc31d8752e37a6e0c674a83"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-evm",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -8319,10 +8293,9 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
- "pallet-base-fee",
  "pallet-committee-management",
  "pallet-custom-signatures",
- "pallet-dynamic-fee",
+ "pallet-dynamic-evm-base-fee",
  "pallet-elections",
  "pallet-ethereum",
  "pallet-evm",
@@ -8330,7 +8303,6 @@ dependencies = [
  "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
- "pallet-hotfix-sufficients",
  "pallet-identity",
  "pallet-indices",
  "pallet-multisig",
@@ -8347,6 +8319,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "selendra-primitives",
+ "smallvec",
  "sp-api",
  "sp-application-crypto",
  "sp-block-builder",

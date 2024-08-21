@@ -76,7 +76,7 @@ pub struct EthConfiguration {
 	pub frontier_sql_backend_pool_size: u32,
 
 	/// Sets the SQL backend's query timeout in number of VM ops.
-	#[arg(long, default_value = "10000000")]
+	#[arg(long, default_value = "100000000")]
 	pub frontier_sql_backend_num_ops_timeout: u32,
 
 	/// Sets the SQL backend's auxiliary thread limit.

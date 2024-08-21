@@ -11,6 +11,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 parity-scale-codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true }
+smallvec = { workspace = true }
 
 # Substrate
 sp-api = { workspace = true }
@@ -61,16 +62,17 @@ fp-rpc = { workspace = true }
 fp-self-contained = { workspace = true, features = ["serde"] }
 
 # Frontier Pallet
-pallet-base-fee = { workspace = true }
-pallet-dynamic-fee = { workspace = true }
+# pallet-base-fee = { workspace = true }
+# pallet-dynamic-fee = { workspace = true }
 pallet-ethereum = { workspace = true }
 pallet-evm = { workspace = true }
 pallet-evm-chain-id = { workspace = true }
 pallet-evm-precompile-modexp = { workspace = true }
 pallet-evm-precompile-sha3fips = { workspace = true }
 pallet-evm-precompile-simple = { workspace = true }
-pallet-hotfix-sufficients = { workspace = true }
+# pallet-hotfix-sufficients = { workspace = true }
 pallet-custom-signatures = { workspace = true }
+pallet-dynamic-evm-base-fee = { workspace = true }
 
 # Alep Pallet
 pallet-aleph = { workspace = true }
@@ -137,16 +139,17 @@ std = [
 	"fp-rpc/std",
 	"fp-self-contained/std",
 	# Frontier FRAME
-	"pallet-base-fee/std",
-	"pallet-dynamic-fee/std",
+	# "pallet-base-fee/std",
+	# "pallet-dynamic-fee/std",
 	"pallet-ethereum/std",
 	"pallet-evm/std",
 	"pallet-evm-chain-id/std",
 	"pallet-evm-precompile-modexp/std",
 	"pallet-evm-precompile-sha3fips/std",
 	"pallet-evm-precompile-simple/std",
-	"pallet-hotfix-sufficients/std",
+	# "pallet-hotfix-sufficients/std",
 	"pallet-custom-signatures/std",
+	"pallet-dynamic-evm-base-fee/std",
 
 	# Alep Pallet
 	"pallet-aleph/std",
@@ -166,7 +169,7 @@ runtime-benchmarks = [
 	"pallet-sudo/runtime-benchmarks",
 	"pallet-ethereum/runtime-benchmarks",
 	"pallet-evm/runtime-benchmarks",
-	"pallet-hotfix-sufficients/runtime-benchmarks",
+	# "pallet-hotfix-sufficients/runtime-benchmarks",
 ]
 
 short_session = []

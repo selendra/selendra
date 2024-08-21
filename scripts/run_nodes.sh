@@ -43,7 +43,7 @@ SELENDRA_NODE="target/release/selendra-node"
 CHAINSPEC_GENERATOR="target/release/chain-bootstrapper"
 NODE_P2P_PORT_RANGE_START=30333
 NODE_VALIDATOR_PORT_RANGE_START=30343
-NODE_RPC_PORT_RANGE_START=9944
+NODE_RPC_PORT_RANGE_START=9946
 
 # ------------------------ argument parsing and usage -----------------------
 
@@ -241,11 +241,13 @@ NUMBER_OF_NODES_TO_BOOTSTRAP=$(( VALIDATORS + RPC_NODES ))
 info "Generating ${NUMBER_OF_NODES_TO_BOOTSTRAP} stash accounts identities."
 declare -a rpc_node_account_ids
 for i in $(seq 0 "$(( RPC_NODES - 1 ))"); do
-  rpc_node_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
+  # rpc_node_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
+  rpc_node_account_ids="5DM7PJEFPbcYViEzFXu5GjF96JgoSJ3rb6jfXLsmXqrPVG2o"
 done
 declare -a validator_account_ids
 for i in $(seq "${RPC_NODES}" "$(( NUMBER_OF_NODES_TO_BOOTSTRAP - 1 ))"); do
-  validator_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
+  # validator_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
+  validator_account_ids=("5G1MS9ewwQVJsQE8HRPeHLcxSRabQefq7eSAHXpPpq5noxZT" "5CGVrJDrC1Ey2wRwmH55dWXzLYab8yqtTFNX3oNuDoyDPVrb" "5CaSeVW9EEpZg6ktQMQAj1Jj6QnE7w8k3BgBTrgwcQQxBZWR" "5EeqTNH1DCJYmwbhNnCr2jnGeqH5WZ4G9SXVxPzDPfGV9mVH")
 done
 
 info "Following identities were generated:"
@@ -271,7 +273,11 @@ if [[ -z "${DONT_BOOTSTRAP}" ]]; then
     --raw \
     --base-path "${BASE_PATH}" \
     --account-ids "${all_account_ids_string}" \
+    --token-symbol "SEL" \
+    --chain-id "selendra" \
+    --chain-name "Selendra Network" \
     --authorities-account-ids "${validator_ids_string}" \
+    --sudo-account-id 5G1MS9ewwQVJsQE8HRPeHLcxSRabQefq7eSAHXpPpq5noxZT \
     --chain-type local > "${BASE_PATH}/chainspec.json"
 
   if [[ "${DONT_REMOVE_ABFT_BACKUPS}" == "true" ]]; then

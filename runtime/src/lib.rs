@@ -12,7 +12,10 @@ mod migration;
 mod utility;
 mod validator;
 
+use frame_support::weights::constants::ExtrinsicBaseWeight;
+use frame_support::weights::WeightToFeePolynomial;
 use selendra_primitives::impls::DealWithFees;
+use sp_runtime::FixedPointNumber;
 use validator::SessionPeriod;
 use validator::MAX_NOMINATORS;
 
@@ -27,7 +30,7 @@ use sp_runtime::{
 		OpaqueKeys, PostDispatchInfoOf, UniqueSaturatedInto,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
-	ApplyExtrinsicResult, Permill,
+	ApplyExtrinsicResult, Perbill, Permill, Perquintill,
 };
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
@@ -36,13 +39,15 @@ use frame_support::weights::constants::RocksDbWeight as RuntimeDbWeight;
 use frame_support::{
 	genesis_builder_helper::{build_config, create_default_config},
 	parameter_types,
-	traits::{ConstU32, ConstU8, OnFinalize},
-	weights::{IdentityFee, Weight},
+	traits::{ConstU32, OnFinalize},
+	weights::{
+		ConstantMultiplier, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+	},
 };
 
 use pallet_session::QueuedKeys;
 use pallet_transaction_payment::Multiplier;
-use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter};
+use pallet_transaction_payment::TargetedFeeAdjustment;
 
 use fp_rpc::TransactionStatus;
 use pallet_ethereum::{
@@ -144,17 +149,67 @@ impl pallet_balances::Config for Runtime {
 	type MaxFreezes = ConstU32<1>;
 }
 
+/// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
+/// node's balance type.
+///
+/// This should typically create a mapping between the following ranges:
+///   - [0, MAXIMUM_BLOCK_WEIGHT]
+///   - [Balance::min, Balance::max]
+///
+/// Yet, it can be used for any other sort of change to weight-fee. Some examples being:
+///   - Setting it to `0` will essentially disable the weight fee.
+///   - Setting it to `1` will cause the literal `#[weight = x]` values to be charged.
+pub struct WeightToFee;
+impl WeightToFeePolynomial for WeightToFee {
+	type Balance = Balance;
+	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+		let p = WeightFeeFactor::get();
+		let q = Balance::from(ExtrinsicBaseWeight::get().ref_time());
+		smallvec::smallvec![WeightToFeeCoefficient {
+			degree: 0,
+			negative: false,
+			coeff_frac: Perbill::from_rational(p % q, q),
+			coeff_integer: p / q,
+		}]
+	}
+}
+
 parameter_types! {
+	pub const OperationalFeeMultiplier: u8 = 5;
 	pub FeeMultiplier: Multiplier = Multiplier::one();
+	/// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
+	/// than this will decrease the weight and more will increase.
+	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(35);
+	/// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
+	/// change the fees more rapidly. This low value causes changes to occur slowly over time.
+	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(4, 1_000);
+	/// Minimum amount of the multiplier. This value cannot be too low. A test case should ensure
+	/// that combined with `AdjustmentVariable`, we can recover from the minimum.
+	/// See `multiplier_can_grow_from_zero` in integration_tests.rs.
+	/// This value is currently only used by pallet-transaction-payment as an assertion that the
+	/// next multiplier is always > min value.
+	pub MinimumMultiplier: Multiplier = Multiplier::from(1u128);
+	/// Maximum multiplier. We pick a value that is expensive but not impossibly so; it should act
+	/// as a safety net.
+	pub MaximumMultiplier: Multiplier = Multiplier::from(100_000u128);
+	pub const WeightFeeFactor: Balance = 10_000_000_000_000;
+	pub const TransactionLengthFeeFactor: Balance = 10_000_000_000_000; // 0.0000235 SEL per byte
 }
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type WeightToFee = IdentityFee<Balance>;
-	type LengthToFee = IdentityFee<Balance>;
-	type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
-	type OperationalFeeMultiplier = ConstU8<5>;
+	type OnChargeTransaction =
+		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
+	type WeightToFee = WeightToFee;
+	type LengthToFee = ConstantMultiplier<Balance, TransactionLengthFeeFactor>;
+	type FeeMultiplierUpdate = TargetedFeeAdjustment<
+		Self,
+		TargetBlockFullness,
+		AdjustmentVariable,
+		MinimumMultiplier,
+		MaximumMultiplier,
+	>;
+	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -184,9 +239,10 @@ frame_support::construct_runtime!(
 		Ethereum: pallet_ethereum = 80,
 		EVM: pallet_evm = 81,
 		EVMChainId: pallet_evm_chain_id = 82,
-		DynamicFee: pallet_dynamic_fee = 83,
-		BaseFee: pallet_base_fee = 84,
-		HotfixSufficients: pallet_hotfix_sufficients = 85,
+		DynamicEvmBaseFee: pallet_dynamic_evm_base_fee = 83,
+		// DynamicFee: pallet_dynamic_fee = 83,
+		// BaseFee: pallet_base_fee = 84,
+		// HotfixSufficients: pallet_hotfix_sufficients = 85,
 		EthCall: pallet_custom_signatures = 86,
 
 		Sudo: pallet_sudo = 200,
@@ -690,7 +746,7 @@ impl_runtime_apis! {
 		}
 
 		fn elasticity() -> Option<Permill> {
-			Some(pallet_base_fee::Elasticity::<Runtime>::get())
+			Some(Permill::zero())
 		}
 
 		fn gas_limit_multiplier_support() {}

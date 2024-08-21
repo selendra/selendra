@@ -2,28 +2,29 @@
 
 mod precompiles;
 
-use crate::{Aura, Balances, BaseFee, EVMChainId, Runtime, RuntimeCall, RuntimeEvent, Timestamp};
+use crate::{
+	Aura, Balances, DynamicEvmBaseFee, EVMChainId, Runtime, RuntimeCall, RuntimeEvent, Timestamp,
+	WeightFeeFactor,
+};
 
-use fp_evm::weight_per_gas;
-use sp_core::{crypto::ByteArray, H160, U256};
+use pallet_transaction_payment::Multiplier;
+use sp_core::{crypto::ByteArray, Get, H160, U256};
 use sp_runtime::{
-	traits::Verify, transaction_validity::TransactionPriority, ConsensusEngineId, Permill,
+	traits::Verify, transaction_validity::TransactionPriority, ConsensusEngineId, Perquintill,
 };
 use sp_std::{marker::PhantomData, prelude::*};
 
 use frame_support::{
 	parameter_types,
 	traits::{ConstU32, FindAuthor},
-	weights::Weight,
+	weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight},
 };
 use pallet_ethereum::PostLogContent;
 // use pallet_evm::{EnsureAccountId20, IdentityAddressMapping};
 
 use precompiles::FrontierPrecompiles;
 use selendra_primitives::{
-	common::{NORMAL_DISPATCH_RATIO, WEIGHT_MILLISECS_PER_BLOCK},
-	currency::TOKEN,
-	AccountId, Balance, BlakeTwo256, Signature,
+	common::NORMAL_DISPATCH_RATIO, currency::TOKEN, AccountId, Balance, BlakeTwo256, Signature,
 };
 
 impl pallet_evm_chain_id::Config for Runtime {}
@@ -42,19 +43,29 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	}
 }
 
-const BLOCK_GAS_LIMIT: u64 = 75_000_000;
-const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
+/// Current approximation of the gas/s consumption considering
+/// EVM execution over compiled WASM (on 4.4Ghz CPU).
+/// Given the 500ms Weight, from which 75% only are used for transactions,
+/// the total EVM execution gas limit is: GAS_PER_SECOND * 0.500 * 0.75 ~= 15_000_000.
+pub const GAS_PER_SECOND: u64 = 40_000_000;
+
+/// Approximate ratio of the amount of Weight per Gas.
+/// u64 works for approximations because Weight is a very small unit compared to gas.
+pub const WEIGHT_PER_GAS: u64 = WEIGHT_REF_TIME_PER_SECOND.saturating_div(GAS_PER_SECOND);
 
 parameter_types! {
-	pub BlockGasLimit: U256 = U256::from(BLOCK_GAS_LIMIT);
-	pub const GasLimitPovSizeRatio: u64 = BLOCK_GAS_LIMIT.saturating_div(MAX_POV_SIZE);
+	/// EVM gas limit
+	pub BlockGasLimit: U256 = U256::from(
+		NORMAL_DISPATCH_RATIO * WEIGHT_REF_TIME_PER_SECOND / WEIGHT_PER_GAS
+	);
 	pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
-	pub WeightPerGas: Weight = Weight::from_parts(weight_per_gas(BLOCK_GAS_LIMIT, NORMAL_DISPATCH_RATIO, WEIGHT_MILLISECS_PER_BLOCK), 0);
+	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, 0);
+	pub const GasLimitPovSizeRatio: u64 = 16;
 	pub SuicideQuickClearLimit: u32 = 0;
 }
 
 impl pallet_evm::Config for Runtime {
-	type FeeCalculator = BaseFee;
+	type FeeCalculator = DynamicEvmBaseFee;
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 	type WeightPerGas = WeightPerGas;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
@@ -88,43 +99,43 @@ impl pallet_ethereum::Config for Runtime {
 	type ExtraDataLength = ConstU32<30>;
 }
 
-parameter_types! {
-	pub BoundDivision: U256 = U256::from(1024);
-}
+// parameter_types! {
+// 	pub BoundDivision: U256 = U256::from(1024);
+// }
 
-impl pallet_dynamic_fee::Config for Runtime {
-	type MinGasPriceBoundDivisor = BoundDivision;
-}
+// impl pallet_dynamic_fee::Config for Runtime {
+// 	type MinGasPriceBoundDivisor = BoundDivision;
+// }
 
-parameter_types! {
-	pub DefaultBaseFeePerGas: U256 = U256::from(1_000_000_000);
-	pub DefaultElasticity: Permill = Permill::from_parts(125_000);
-}
+// parameter_types! {
+// 	pub DefaultBaseFeePerGas: U256 = U256::from(1_000_000_000);
+// 	pub DefaultElasticity: Permill = Permill::from_parts(125_000);
+// }
 
-pub struct BaseFeeThreshold;
-impl pallet_base_fee::BaseFeeThreshold for BaseFeeThreshold {
-	fn lower() -> Permill {
-		Permill::zero()
-	}
-	fn ideal() -> Permill {
-		Permill::from_parts(500_000)
-	}
-	fn upper() -> Permill {
-		Permill::from_parts(1_000_000)
-	}
-}
+// pub struct BaseFeeThreshold;
+// impl pallet_base_fee::BaseFeeThreshold for BaseFeeThreshold {
+// 	fn lower() -> Permill {
+// 		Permill::zero()
+// 	}
+// 	fn ideal() -> Permill {
+// 		Permill::from_parts(500_000)
+// 	}
+// 	fn upper() -> Permill {
+// 		Permill::from_parts(1_000_000)
+// 	}
+// }
 
-impl pallet_base_fee::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Threshold = BaseFeeThreshold;
-	type DefaultBaseFeePerGas = DefaultBaseFeePerGas;
-	type DefaultElasticity = DefaultElasticity;
-}
+// impl pallet_base_fee::Config for Runtime {
+// 	type RuntimeEvent = RuntimeEvent;
+// 	type Threshold = BaseFeeThreshold;
+// 	type DefaultBaseFeePerGas = DefaultBaseFeePerGas;
+// 	type DefaultElasticity = DefaultElasticity;
+// }
 
-impl pallet_hotfix_sufficients::Config for Runtime {
-	type AddressMapping = pallet_evm::HashedAddressMapping<BlakeTwo256>;
-	type WeightInfo = pallet_hotfix_sufficients::weights::SubstrateWeight<Self>;
-}
+// impl pallet_hotfix_sufficients::Config for Runtime {
+// 	type AddressMapping = pallet_evm::HashedAddressMapping<BlakeTwo256>;
+// 	type WeightInfo = pallet_hotfix_sufficients::weights::SubstrateWeight<Self>;
+// }
 
 parameter_types! {
 	pub const EcdsaUnsignedPriority: TransactionPriority = TransactionPriority::MAX / 2;
@@ -142,4 +153,30 @@ impl pallet_custom_signatures::Config for Runtime {
 	type CallFee = CallFee;
 	type OnChargeTransaction = ();
 	type UnsignedPriority = EcdsaUnsignedPriority;
+}
+
+parameter_types! {
+	pub DefaultBaseFeePerGas: U256 = U256::from(1_470_000_000_000_u128);
+	pub MinBaseFeePerGas: U256 = U256::from(800_000_000_000_u128);
+	pub MaxBaseFeePerGas: U256 = U256::from(80_000_000_000_000_u128);
+	pub StepLimitRatio: Perquintill = Perquintill::from_rational(93_u128, 1_000_000);
+}
+
+/// Simple wrapper for fetching current native transaction fee weight fee multiplier.
+pub struct AdjustmentFactorGetter;
+impl Get<Multiplier> for AdjustmentFactorGetter {
+	fn get() -> Multiplier {
+		pallet_transaction_payment::NextFeeMultiplier::<Runtime>::get()
+	}
+}
+
+impl pallet_dynamic_evm_base_fee::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type DefaultBaseFeePerGas = DefaultBaseFeePerGas;
+	type MinBaseFeePerGas = MinBaseFeePerGas;
+	type MaxBaseFeePerGas = MaxBaseFeePerGas;
+	type AdjustmentFactor = AdjustmentFactorGetter;
+	type WeightFactor = WeightFeeFactor;
+	type StepLimitRatio = StepLimitRatio;
+	type WeightInfo = pallet_dynamic_evm_base_fee::weights::SubstrateWeight<Runtime>;
 }
