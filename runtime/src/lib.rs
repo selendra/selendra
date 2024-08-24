@@ -41,7 +41,7 @@ use frame_support::{
 	parameter_types,
 	traits::{ConstU32, OnFinalize},
 	weights::{
-		ConstantMultiplier, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		ConstantMultiplier, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 	},
 };
 

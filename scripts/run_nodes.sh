@@ -242,7 +242,6 @@ info "Generating ${NUMBER_OF_NODES_TO_BOOTSTRAP} stash accounts identities."
 declare -a rpc_node_account_ids
 for i in $(seq 0 "$(( RPC_NODES - 1 ))"); do
   rpc_node_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
-  rpc_node_account_ids="5DM7PJEFPbcYViEzFXu5GjF96JgoSJ3rb6jfXLsmXqrPVG2o"
 done
 declare -a validator_account_ids
 for i in $(seq "${RPC_NODES}" "$(( NUMBER_OF_NODES_TO_BOOTSTRAP - 1 ))"); do
@@ -272,11 +271,7 @@ if [[ -z "${DONT_BOOTSTRAP}" ]]; then
     --raw \
     --base-path "${BASE_PATH}" \
     --account-ids "${all_account_ids_string}" \
-    --token-symbol "SEL" \
-    --chain-id "selendra" \
-    --chain-name "Selendra Network" \
     --authorities-account-ids "${validator_ids_string}" \
-    --sudo-account-id 5G1MS9ewwQVJsQE8HRPeHLcxSRabQefq7eSAHXpPpq5noxZT \
     --chain-type local > "${BASE_PATH}/chainspec.json"
 
   if [[ "${DONT_REMOVE_ABFT_BACKUPS}" == "true" ]]; then
