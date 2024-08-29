@@ -1,0 +1,14 @@
+[package]
+name = "aggregator"
+version = "0.7.0"
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+parity-scale-codec = { workspace = true, features = ["derive"] }
+tokio = { workspace = true, features = [ "sync", "macros", "time", "rt-multi-thread" ] }
+aleph-bft-rmc = { workspace = true }
+aleph-bft-types = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+log = { workspace = true }

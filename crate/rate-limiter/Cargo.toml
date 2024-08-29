@@ -1,0 +1,10 @@
+[package]
+name = "rate-limiter"
+version = "0.1.0"
+authors = ["Cardinal", "Aleph Zero Foundation"]
+edition.workspace = true
+
+[dependencies]
+futures = { workspace = true }
+log = { workspace = true }
+tokio = { workspace = true, features = ["time"] }
