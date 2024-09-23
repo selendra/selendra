@@ -25,3 +25,5 @@ open-runtime-module-library
 v0.*
 
 .vscode
+run-nodes-local
+chainspec.json
