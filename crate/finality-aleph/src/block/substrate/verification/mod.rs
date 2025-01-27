@@ -20,7 +20,6 @@ mod cache;
 mod verifier;
 
 pub use cache::VerifierCache;
-pub use verifier::SessionVerifier;
 
 /// Substrate specific implementation of `FinalizationInfo`
 pub struct SubstrateFinalizationInfo<BE: HeaderBackend<Block>>(Arc<BE>);
