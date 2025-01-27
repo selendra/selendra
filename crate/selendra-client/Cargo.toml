@@ -24,4 +24,4 @@ pallet-contracts = { git = "https://github.com/selendra/polkadot-sdk", branch = 
 primitives = { package = "selendra-primitives", path = "../../primitives" }
 
 [dev-dependencies]
-tokio = "1.21"
+tokio = "1.39"
