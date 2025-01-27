@@ -40,9 +40,7 @@ use frame_support::{
 	genesis_builder_helper::{build_config, create_default_config},
 	parameter_types,
 	traits::{ConstU32, OnFinalize},
-	weights::{
-		ConstantMultiplier, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
-	},
+	weights::{ConstantMultiplier, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients},
 };
 
 use pallet_session::QueuedKeys;
