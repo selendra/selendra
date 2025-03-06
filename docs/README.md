@@ -14,34 +14,36 @@ Select your preferred language from the language selector above.
 ## Table of Contents
 
 ### 1. Introduction
-- [About Selendra](introduction/ABOUT.md)
-- [Architecture Overview](introduction/ARCHITECTURE.md)
-- [Key Features](introduction/FEATURES.md)
-- [Getting Started](introduction/GETTING_STARTED.md)
+- [About Selendra](01-introduction/01-ABOUT.md)
+- [Quick Start](01-introduction/02-QUICK_START.md)
+- [Architecture Overview](01-introduction/03-ARCHITECTURE.md)
+
 
 ### 2. Network
-- [Network Overview](network/OVERVIEW.md)
-- [Consensus Mechanism](network/CONSENSUS.md)
-- [Performance Metrics](network/PERFORMANCE.md)
-- [Network Parameters](network/PARAMETERS.md)
+- [Network Overview](02-network/01-OVERVIEW.md)
+- [Consensus Mechanism](02-network/02-CONSENSUS.md)
+- [Network Parameters](02-network/03-PARAMETERS.md)
+- [Performance Metrics](02-network/04-PERFORMANCE.md)     
+
 
 ### 3. Tokenomics
-- [Token Overview](tokenomics/OVERVIEW.md)
-- [Token Distribution](tokenomics/DISTRIBUTION.md)
-- [Economic Model](tokenomics/ECONOMIC_MODEL.md)
-- [Technical Implementation](tokenomics/TECHNICAL.md)
+- [Token Overview](03-tokenomics/01-OVERVIEW.md)
+- [Token Distribution](03-tokenomics/02-DISTRIBUTION.md)
+- [Economic Model](03-tokenomics/03-ECONOMIC_MODEL.md)
+- [Technical Implementation](03-tokenomics/04-TECHNICAL.md)
 
 ### 4. User Guides
-- [Wallet Guide](guides/user/WALLET_GUIDE.md)
-- [Staking Guide](guides/user/STAKING_GUIDE.md)
-- [Governance Guide](guides/user/GOVERNANCE_GUIDE.md)
-- [Cross-chain Operations](guides/user/CROSS_CHAIN_GUIDE.md)
+- [Getting Start](04-guides/user/INDEX.md)
+- [Wallet Guide](04-guides/user/WALLET_GUIDE.md)
+- [Staking Guide](04-guides/user/STAKING_GUIDE.md)
+- [Governance Guide](04-guides/user/GOVERNANCE_GUIDE.md)
+- [Cross-chain Operations](04-guides/user/CROSS_CHAIN_GUIDE.md)
 
 ### 5. Developer Guides
-- [Smart Contract Development](guides/developer/SMART_CONTRACTS.md)
-- [Hardhat Integration](guides/developer/HARDHAT_GUIDE.md)
-- [Foundry Integration](guides/developer/FOUNDRY_GUIDE.md)
-- [Network Integration](guides/developer/NETWORK_INTEGRATION.md)
+- [Smart Contract Development](04-guides/developer/SMART_CONTRACTS.md)
+- [Hardhat Integration](04-guides/developer/HARDHAT_GUIDE.md)
+- [Foundry Integration](04-guides/developer/FOUNDRY_GUIDE.md)
+- [Network Integration](04-guides/developer/NETWORK_INTEGRATION.md)
 
 ### 6. Node Operation
 - [Validator Setup](guides/node/VALIDATOR_SETUP.md)
