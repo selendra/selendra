@@ -32,15 +32,15 @@ Select your preferred language from the language selector above.
 - [Economic Model](03-tokenomics/03-ECONOMIC_MODEL.md)
 - [Technical Implementation](03-tokenomics/04-TECHNICAL.md)
 
-### 4. User Guides
-- [Getting Start](04-guides/user/INDEX.md)
-- [Wallet Guide](04-guides/user/WALLET_GUIDE.md)
-- [Staking Guide](04-guides/user/STAKING_GUIDE.md)
-- [Governance Guide](04-guides/user/GOVERNANCE_GUIDE.md)
-- [Cross-chain Operations](04-guides/user/CROSS_CHAIN_GUIDE.md)
-
+### 4.User Guides
+- [Getting Started](04-user-guides/INDEX.md)
+- [Wallet Guide](04-user-guides/WALLET_GUIDE.md)
+- [Staking Guide](04-user-guides/STAKING_GUIDE.md)
+- [Wallet Guide](04-user-guides/WALLET_GUIDE.md)
+<!-- - [Cross-chain Operations](04-user-guides/CROSS_CHAIN_GUIDE.md) -->
 ### 5. Developer Guides
-- [Smart Contract Development](04-guides/developer/SMART_CONTRACTS.md)
+- [Getting Started](05-developers-guide/01-GETTING_STARTED.md)
+- [INTERGRATIONS](05-developers-guide/02-INTEGRATION.md)
 - [Hardhat Integration](04-guides/developer/HARDHAT_GUIDE.md)
 - [Foundry Integration](04-guides/developer/FOUNDRY_GUIDE.md)
 - [Network Integration](04-guides/developer/NETWORK_INTEGRATION.md)
