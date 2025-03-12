@@ -17,7 +17,9 @@ LABEL description="Multistage Docker image for Selendra: a platform for web3" \
 	io.parity.image.source="https://github.com/selendra/selendra/blob/${VCS_REF}/scripts/dockerfiles/selendra_builder.Dockerfile" \
 	io.parity.image.documentation="https://github.com/selendra/selendra/"
 
-COPY --from=builder /selendra/target/release/selendra /usr/local/bin
+# Copy binary and ensure execution permission
+COPY --from=builder /selendra/target/release/selendra-node /usr/local/bin/selendra
+RUN chmod +x /usr/local/bin/selendra
 
 RUN useradd -m -u 1000 -U -s /bin/sh -d /selendra selendra && \
 	mkdir -p /data /selendra/.local/share && \
