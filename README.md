@@ -6,11 +6,11 @@ Selendra Network is an EVM-compatible Layer 1 blockchain built on Substrate with
 
 ## Key Features
 
-- **EVM Compatibility**: Run Ethereum smart contracts on Selendra
-- **AlephBFT Consensus**: Provides fast finality with Proof-of-Stake security
-- **Privacy Features**: Zero-knowledge proofs and confidential transactions
-- **Cross-Chain Compatibility**: Designed for interoperability
-- **SEL Token**: Native utility token for gas fees, staking, and governance
+- **Hybrid Consensus**: Combines Aura for block production with Aleph for finality
+- **Dual VM Support**: Compatible with both EVM and WebAssembly
+- **Enterprise Focus**: Built-in identity, committee management, and recovery systems
+- **Fast Finality**: 1-second block time with quick transaction finality
+- **Economic Model**: Dynamic fee adjustment and multi-tiered token system
 
 ## Codebase Structure
 
@@ -114,3 +114,9 @@ We are grateful and would like to thank the following projects and individuals f
 ## License
 
 Selendra Network is released under the GPL-3.0 License.
+
+<div align="center">
+
+Built with ❤️ for a decentralized future.
+
+</div>
