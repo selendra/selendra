@@ -36,5 +36,5 @@ jobs:
           file: ./scripts/dockerfiles/selendra_builder.Dockerfile  # Path to your Dockerfile
           push: true
           tags: |
-            selendrachain/selendra:latest
-            selendrachain/selendra:${{ github.sha }} 
+            selendra/selendra:latest
+            selendra/selendra:${{ github.sha }}
