@@ -1,0 +1,40 @@
+name: Build and Push Docker Image
+
+# When to run this workflow
+on:
+  push:
+    branches: [ main ]  # Change to your main branch name if different
+  
+  # Optional: Enable manual trigger from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  docker-build-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Check out the repository code
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      # Step 2: Set up Docker
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      # Step 3: Login to Docker Hub
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      # Step 4: Build and push Docker image
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .  # The context is the current directory
+          file: ./scripts/dockerfiles/selendra_builder.Dockerfile  # Path to your Dockerfile
+          push: true
+          tags: |
+            selendrachain/selendra:latest
+            selendrachain/selendra:${{ github.sha }} 
