@@ -25,7 +25,7 @@ use crate::{
 	},
 	Hasher, Keychain, LegacyNetworkData, NodeIndex, SessionId, SignatureSet, UnitCreationDelay,
 };
-pub use selendra_primitives::{BlockHash, BlockNumber, LEGACY_FINALITY_VERSION as VERSION};
+pub use selendra_primitives::{LEGACY_FINALITY_VERSION as VERSION};
 
 type WrappedNetwork<H, ADN> = NetworkWrapper<
 	legacy_aleph_bft::NetworkData<Hasher, AlephData<H>, Signature, SignatureSet<Signature>>,

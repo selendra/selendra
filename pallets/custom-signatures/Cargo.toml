@@ -3,7 +3,7 @@ name = "pallet-custom-signatures"
 version = "4.6.0"
 license = "Apache-2.0"
 description = "FRAME pallet for user defined extrinsic signatures"
-edition = "2021"
+edition.workspace = true
 
 [dependencies]
 serde = { workspace = true, optional = true }

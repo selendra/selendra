@@ -97,6 +97,7 @@ where
 	translator: JustificationTranslator,
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 enum SendJustificationError<TE: Debug> {
 	Send(Box<TrySendError<Justification>>),

@@ -161,6 +161,7 @@ impl Dialer<SignedTcpAddressingInformation> for TcpDialer {
 }
 
 /// Possible errors when creating a TCP network.
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum Error {
 	Io(IoError),

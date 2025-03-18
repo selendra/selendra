@@ -8,6 +8,7 @@ use parity_scale_codec::{Codec, Decode, Encode};
 use sc_service::SpawnTaskHandle;
 use sp_runtime::traits::Hash as SpHash;
 
+#[allow(dead_code)]
 /// A convenience trait for gathering all of the desired hash characteristics.
 pub trait Hash: AsRef<[u8]> + StdHash + Eq + Clone + Codec + Debug + Send + Sync {}
 

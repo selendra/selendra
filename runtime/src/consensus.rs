@@ -1,6 +1,6 @@
 use crate::{AlephId, AuraId, Elections, Runtime, RuntimeEvent, Session, Staking};
 
-pub use frame_support::{parameter_types, traits::EstimateNextSessionRotation, weights::Weight};
+pub use frame_support::{parameter_types, traits::EstimateNextSessionRotation};
 use sp_core::ConstBool;
 
 use pallet_committee_management::SessionAndEraManager;

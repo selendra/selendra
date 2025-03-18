@@ -9,6 +9,7 @@ use sp_runtime::RuntimeAppPublic;
 
 use crate::abft::{NodeCount, NodeIndex, SignatureSet};
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum Error {
 	KeyMissing(AuthorityId),

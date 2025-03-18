@@ -40,3 +40,5 @@ std = [
     "fp-rpc/std",
 ]
 short_session = []
+runtime-benchmarks = []
+try-runtime = []

@@ -1,6 +1,6 @@
 [toolchain]
 # Stable
-channel = "1.74"
+channel = "1.85"
 # Nightly
 # channel    = "nightly-2023-11-01" # rustc 1.75.0-nightly (9d83ac217 2023-10-31)
 components = ["cargo", "clippy", "rustc", "rustfmt", "rust-src"]

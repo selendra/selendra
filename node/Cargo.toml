@@ -2,8 +2,8 @@
 name = "selendra-node"
 version = "2.0.0"
 build = "build.rs"
-authors = { workspace = true }
-edition = { workspace = true }
+authors.workspace = true
+edition.workspace = true
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -139,3 +139,6 @@ runtime-benchmarks = [
 	"sc-service/runtime-benchmarks",
 	"selendra-runtime/runtime-benchmarks",
 ]
+
+aleph-native-runtime = []
+try-runtime = []
