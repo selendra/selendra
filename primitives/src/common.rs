@@ -6,7 +6,7 @@ use sp_runtime::Perbill;
 
 use crate::BlockNumber;
 
-pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(99);
 
 // The whole process for a single block should take 1s, of which 400ms is for creation,
 // 200ms for propagation and 400ms for validation. Hence the block weight should be within 400ms.
