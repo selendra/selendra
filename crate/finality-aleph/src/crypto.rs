@@ -5,17 +5,15 @@ use std::{
 
 use parity_scale_codec::{Decode, Encode};
 use sc_keystore::{Keystore, LocalKeystore};
+use selendra_primitives::{
+	crypto::AuthorityVerifier as PrimitivesAuthorityVerifier, AuthorityId, AuthoritySignature,
+	KEY_TYPE,
+};
 use sp_core::crypto::KeyTypeId;
 use sp_keystore::Error as KeystoreError;
 use sp_runtime::RuntimeAppPublic;
 
-use crate::{
-	abft::{NodeCount, NodeIndex, SignatureSet},
-	selendra_primitives::{
-		crypto::AuthorityVerifier as PrimitivesAuthorityVerifier, AuthorityId, AuthoritySignature,
-		KEY_TYPE,
-	},
-};
+use crate::abft::{NodeCount, NodeIndex, SignatureSet};
 
 #[derive(Debug)]
 pub enum Error {
@@ -108,7 +106,7 @@ impl AuthorityPen {
 /// session.
 #[derive(PartialEq, Clone, Debug)]
 pub struct AuthorityVerifier(
-	PrimitivesAuthorityVerifier<AuthorityId, primitives::AuthoritySignature>,
+	PrimitivesAuthorityVerifier<AuthorityId, selendra_primitives::AuthoritySignature>,
 );
 
 impl AuthorityVerifier {

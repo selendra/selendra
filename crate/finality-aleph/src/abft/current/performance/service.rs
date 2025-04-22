@@ -7,6 +7,9 @@ use futures::{
 };
 use log::{debug, error, warn};
 use parity_scale_codec::Encode;
+use selendra_primitives::{
+	crypto::SignatureSet, AuthoritySignature, Hash, Hashing, RawScore, Score, ScoreNonce,
+};
 use sp_runtime::traits::Hash as _;
 
 use crate::{
@@ -18,9 +21,6 @@ use crate::{
 	metrics::ScoreMetrics,
 	party::manager::Runnable,
 	runtime_api::RuntimeApi,
-	selendra_primitives::{
-		crypto::SignatureSet, AuthoritySignature, Hash, Hashing, RawScore, Score, ScoreNonce,
-	},
 	Hasher, SessionId, UnverifiedHeader,
 };
 

@@ -7,7 +7,7 @@ mod mock;
 mod tests;
 
 mod impls;
-mod traits;
+pub mod traits;
 
 use frame_support::{
 	sp_runtime::BoundToRuntimeAppPublic,
@@ -15,8 +15,12 @@ use frame_support::{
 };
 pub use pallet::*;
 use selendra_primitives::{
-	SessionIndex, Version, VersionChange, DEFAULT_FINALITY_VERSION, LEGACY_FINALITY_VERSION,
+	crypto::{AuthorityVerifier, SignatureSet},
+	currency::TOKEN,
+	Balance, SessionIndex, Version, VersionChange, DEFAULT_FINALITY_VERSION,
+	LEGACY_FINALITY_VERSION,
 };
+use sp_runtime::Perbill;
 use sp_std::prelude::*;
 
 /// The current storage version.
@@ -26,13 +30,18 @@ pub(crate) const LOG_TARGET: &str = "pallet-aleph";
 #[frame_support::pallet]
 #[pallet_doc("../README.md")]
 pub mod pallet {
-	use frame_support::{pallet_prelude::*, sp_runtime::RuntimeAppPublic};
+	use frame_support::{
+		dispatch::{DispatchResult, DispatchResultWithPostInfo, Pays},
+		pallet_prelude::{TransactionSource, TransactionValidityError, ValueQuery, *},
+		sp_runtime::RuntimeAppPublic,
+	};
 	use frame_system::{
-		ensure_root,
+		ensure_none, ensure_root,
 		pallet_prelude::{BlockNumberFor, OriginFor},
 	};
 	use pallet_session::SessionManager;
-	use selendra_primitives::SessionInfoProvider;
+	use selendra_primitives::{Score, ScoreNonce, SessionInfoProvider, TotalIssuanceProvider};
+	use sp_runtime::traits::{Hash, ValidateUnsigned};
 	use sp_std::collections::btree_map::BTreeMap;
 	#[cfg(feature = "std")]
 	use sp_std::marker::PhantomData;
@@ -41,13 +50,20 @@ pub mod pallet {
 	use crate::traits::NextSessionAuthorityProvider;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config:
+		frame_system::Config + frame_system::offchain::SendTransactionTypes<Call<Self>>
+	{
 		type AuthorityId: Member + Parameter + RuntimeAppPublic + MaybeSerializeDeserialize;
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type SessionInfoProvider: SessionInfoProvider<BlockNumberFor<Self>>;
 		type SessionManager: SessionManager<<Self as frame_system::Config>::AccountId>;
 		type NextSessionAuthorityProvider: NextSessionAuthorityProvider<Self>;
+		type TotalIssuanceProvider: TotalIssuanceProvider;
+		#[pallet::constant]
+		type ScoreSubmissionPeriod: Get<u32>;
 	}
+
+	pub type Signature<T> = <<T as Config>::AuthorityId as RuntimeAppPublic>::Signature;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (super) fn deposit_event)]
@@ -55,6 +71,7 @@ pub mod pallet {
 		ChangeEmergencyFinalizer(T::AuthorityId),
 		ScheduleFinalityVersionChange(VersionChange),
 		FinalityVersionChange(VersionChange),
+		InflationParametersChange(Balance, u64),
 	}
 
 	#[pallet::pallet]
@@ -68,20 +85,33 @@ pub mod pallet {
 		DEFAULT_FINALITY_VERSION
 	}
 
-	/// Default value for `NextAuthorities` storage.
+	/// Default AZERO Cap. Relevant for eras before we set this value by hand.
 	#[pallet::type_value]
-	pub(crate) fn DefaultNextAuthorities<T: Config>() -> Vec<T::AuthorityId> {
-		T::NextSessionAuthorityProvider::next_authorities()
+	pub fn DefaultAzeroCap() -> Balance {
+		520_000_000 * TOKEN
+	}
+
+	/// Default length of the exponential inflation horizon.
+	/// Relevant for eras before we set this value by hand.
+	#[pallet::type_value]
+	pub fn DefaultExponentialInflationHorizon() -> u64 {
+		154_283_512_497
 	}
 
 	#[pallet::storage]
+	pub type AzeroCap<T: Config> = StorageValue<_, Balance, ValueQuery, DefaultAzeroCap>;
+
+	#[pallet::storage]
+	pub type ExponentialInflationHorizon<T: Config> =
+		StorageValue<_, u64, ValueQuery, DefaultExponentialInflationHorizon>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn authorities)]
-	pub(super) type Authorities<T: Config> = StorageValue<_, Vec<T::AuthorityId>, ValueQuery>;
+	pub type Authorities<T: Config> = StorageValue<_, Vec<T::AuthorityId>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn next_authorities)]
-	pub(super) type NextAuthorities<T: Config> =
-		StorageValue<_, Vec<T::AuthorityId>, ValueQuery, DefaultNextAuthorities<T>>;
+	pub(super) type NextAuthorities<T: Config> = StorageValue<_, Vec<T::AuthorityId>, ValueQuery>;
 
 	/// Set of account ids that will be used as authorities in the next session
 	#[pallet::storage]
@@ -110,6 +140,15 @@ pub mod pallet {
 	#[pallet::getter(fn finality_version_change)]
 	pub(super) type FinalityScheduledVersionChange<T: Config> =
 		StorageValue<_, VersionChange, OptionQuery>;
+
+	// clear this storage on session end
+	#[pallet::storage]
+	#[pallet::getter(fn abft_scores)]
+	pub type AbftScores<T: Config> = StorageMap<_, Twox64Concat, SessionIndex, Score>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn last_score_nonce)]
+	pub(super) type LastScoreNonce<T: Config> = StorageValue<_, ScoreNonce, ValueQuery>;
 
 	impl<T: Config> Pallet<T> {
 		pub(crate) fn initialize_authorities(
@@ -213,6 +252,118 @@ pub mod pallet {
 
 			Self::finality_version()
 		}
+
+		pub fn check_horizon_upper_bound(
+			new_horizon: u64,
+			current_horizon: u64,
+		) -> Result<(), &'static str> {
+			match new_horizon > current_horizon.saturating_mul(2).saturating_add(1) {
+				true => {
+					Err("Horizon too large, should be at most twice the current value plus one!")
+				},
+				false => Ok(()),
+			}
+		}
+
+		pub fn check_horizon_lower_bound(
+			new_horizon: u64,
+			current_horizon: u64,
+		) -> Result<(), &'static str> {
+			match new_horizon < current_horizon / 2 {
+				true => Err("Horizon too small, should be at least half the current value!"),
+				false => Ok(()),
+			}
+		}
+
+		pub fn check_azero_cap_upper_bound(
+			new_cap: Balance,
+			current_cap: Balance,
+			total_issuance: Balance,
+		) -> Result<(), &'static str> {
+			let current_gap = current_cap.saturating_sub(total_issuance);
+			let new_gap = match new_cap.checked_sub(total_issuance) {
+				Some(new_gap) => new_gap,
+				None => return Err("AZERO Cap cannot be lower than the current total issuance!"),
+			};
+			match (new_gap > current_gap.saturating_mul(2).saturating_add(1))
+                && (new_gap > total_issuance / 128)
+            {
+                true => Err("Future issuance too large, should be at most the current total issuance divided by 128, or at most twice the current value plus one!"),
+                false => Ok(()),
+            }
+		}
+
+		pub fn check_azero_cap_lower_bound(
+			new_cap: Balance,
+			current_cap: Balance,
+			total_issuance: Balance,
+		) -> Result<(), &'static str> {
+			let current_gap = current_cap.saturating_sub(total_issuance);
+			let new_gap = match new_cap.checked_sub(total_issuance) {
+				Some(new_gap) => new_gap,
+				None => return Err("AZERO Cap cannot be lower than the current total issuance!"),
+			};
+			match new_gap < current_gap / 2 {
+				true => {
+					Err("Future issuance too small, should be at least half the current value!")
+				},
+				false => Ok(()),
+			}
+		}
+
+		fn check_session_id(session_id: SessionIndex) -> Result<(), TransactionValidityError> {
+			let current_session_id = Self::current_session();
+			if current_session_id < session_id {
+				return Err(InvalidTransaction::Future.into());
+			}
+			if current_session_id > session_id {
+				return Err(InvalidTransaction::Stale.into());
+			}
+
+			Ok(())
+		}
+
+		fn check_nonce(nonce: ScoreNonce) -> Result<(), TransactionValidityError> {
+			let last_nonce = Self::last_score_nonce();
+			if nonce <= last_nonce {
+				return Err(InvalidTransaction::Stale.into());
+			}
+
+			Ok(())
+		}
+
+		fn check_score(
+			score: &Score,
+			signature: &SignatureSet<Signature<T>>,
+		) -> Result<(), TransactionValidityError> {
+			Self::check_session_id(score.session_id)?;
+			Self::check_nonce(score.nonce)?;
+			Self::verify_score(score, signature)?;
+
+			Ok(())
+		}
+
+		pub fn verify_score(
+			score: &Score,
+			signature: &SignatureSet<Signature<T>>,
+		) -> Result<(), TransactionValidityError> {
+			let msg = T::Hashing::hash_of(&score.encode()).encode();
+			let authority_verifier = AuthorityVerifier::new(Self::authorities());
+			if !AuthorityVerifier::is_complete(&authority_verifier, &msg, signature) {
+				return Err(InvalidTransaction::BadProof.into());
+			}
+			Ok(())
+		}
+
+		pub fn submit_abft_score(
+			score: Score,
+			signature: SignatureSet<Signature<T>>,
+		) -> Option<()> {
+			use frame_system::offchain::SubmitTransaction;
+
+			let call = Call::unsigned_submit_abft_score { score, signature };
+			SubmitTransaction::<T, Call<T>>::submit_unsigned_transaction(call.into()).ok()
+		}
 	}
 
 	#[pallet::call]
@@ -255,6 +406,75 @@ pub mod pallet {
 			Self::deposit_event(Event::ScheduleFinalityVersionChange(version_change));
 			Ok(())
 		}
+
+		/// Sets the values of inflation parameters.
+		#[pallet::call_index(2)]
+		#[pallet::weight((T::BlockWeights::get().max_block, DispatchClass::Operational))]
+		pub fn set_inflation_parameters(
+			origin: OriginFor<T>,
+			azero_cap: Option<Balance>,
+			horizon_millisecs: Option<u64>,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+
+			let current_azero_cap = AzeroCap::<T>::get();
+			let current_horizon_millisecs = ExponentialInflationHorizon::<T>::get();
+			let total_issuance = T::TotalIssuanceProvider::get();
+
+			let azero_cap = azero_cap.unwrap_or(current_azero_cap);
+			let horizon_millisecs = horizon_millisecs.unwrap_or(current_horizon_millisecs);
+
+			Self::check_horizon_lower_bound(horizon_millisecs, current_horizon_millisecs)
+				.map_err(DispatchError::Other)?;
+			Self::check_horizon_upper_bound(horizon_millisecs, current_horizon_millisecs)
+				.map_err(DispatchError::Other)?;
+			Self::check_azero_cap_upper_bound(azero_cap, current_azero_cap, total_issuance)
+				.map_err(DispatchError::Other)?;
+			Self::check_azero_cap_lower_bound(azero_cap, current_azero_cap, total_issuance)
+				.map_err(DispatchError::Other)?;
+
+			AzeroCap::<T>::put(azero_cap);
+			ExponentialInflationHorizon::<T>::put(horizon_millisecs);
+
+			Self::deposit_event(Event::InflationParametersChange(azero_cap, horizon_millisecs));
+
+			Ok(())
+		}
+
+		// fix weight, take into account validate_unsigned
+		#[pallet::call_index(3)]
+		#[pallet::weight(T::BlockWeights::get().max_block * Perbill::from_percent(10))]
+		/// Stores abft score
+		pub fn unsigned_submit_abft_score(
+			origin: OriginFor<T>,
+			score: Score,
+			_signature: SignatureSet<Signature<T>>, // We don't check signature as it was checked by ValidateUnsigned trait
+		) -> DispatchResultWithPostInfo {
+			ensure_none(origin)?;
+
+			<LastScoreNonce<T>>::put(score.nonce);
+			AbftScores::<T>::insert(score.session_id, score);
+
+			Ok(Pays::No.into())
+		}
+	}
+
+	#[pallet::validate_unsigned]
+	impl<T: Config> ValidateUnsigned for Pallet<T> {
+		type Call = Call<T>;
+
+		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
+			if let Call::unsigned_submit_abft_score { score, signature } = call {
+				Self::check_score(score, signature)?;
+				ValidTransaction::with_tag_prefix("AbftScore")
+					.priority(score.nonce as u64) // this ensures that later nonces are first in tx queue
+					.longevity(TransactionLongevity::MAX) // consider restricting longevity
+					.propagate(true)
+					.build()
+			} else {
+				InvalidTransaction::Call.into()
+			}
+		}
 	}
 
 	impl<T: Config> BoundToRuntimeAppPublic for Pallet<T> {
@@ -264,9 +484,9 @@ pub mod pallet {
 	impl<T: Config> OneSessionHandler<T::AccountId> for Pallet<T> {
 		type Key = T::AuthorityId;
 
-		fn on_genesis_session<'a, I: 'a>(validators: I)
+		fn on_genesis_session<'a, I>(validators: I)
 		where
-			I: Iterator<Item = (&'a T::AccountId, T::AuthorityId)>,
+			I: 'a + Iterator<Item = (&'a T::AccountId, T::AuthorityId)>,
 			T::AccountId: 'a,
 		{
 			let (_, authorities): (Vec<_>, Vec<_>) = validators.unzip();
@@ -274,9 +494,9 @@ pub mod pallet {
 			Self::initialize_authorities(authorities.as_slice(), authorities.as_slice());
 		}
 
-		fn on_new_session<'a, I: 'a>(changed: bool, _: I, queued_validators: I)
+		fn on_new_session<'a, I>(changed: bool, _: I, queued_validators: I)
 		where
-			I: Iterator<Item = (&'a T::AccountId, T::AuthorityId)>,
+			I: 'a + Iterator<Item = (&'a T::AccountId, T::AuthorityId)>,
 			T::AccountId: 'a,
 		{
 			Self::update_emergency_finalizer();

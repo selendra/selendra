@@ -234,6 +234,7 @@ pub fn new_partial(
 struct AlephRuntimeVars {
 	pub session_period: SessionPeriod,
 	pub millisecs_per_block: MillisecsPerBlock,
+	pub score_submission_period: u32,
 }
 
 fn get_aleph_runtime_vars(client: &Arc<FullClient>) -> AlephRuntimeVars {
@@ -253,7 +254,12 @@ fn get_aleph_runtime_vars(client: &Arc<FullClient>) -> AlephRuntimeVars {
 			.expect("should always be available"),
 	);
 
-	AlephRuntimeVars { session_period, millisecs_per_block }
+	let score_submission_period = client
+		.runtime_api()
+		.score_submission_period(finalized)
+		.expect("should always be available");
+
+	AlephRuntimeVars { session_period, millisecs_per_block, score_submission_period }
 }
 
 fn get_validator_address_cache(aleph_config: &AlephCli) -> Option<ValidatorAddressCache> {
@@ -505,7 +511,7 @@ pub async fn new_authority(
 
 	let rate_limiter_config = get_rate_limit_config(&aleph_config);
 
-	let AlephRuntimeVars { millisecs_per_block, session_period } =
+	let AlephRuntimeVars { millisecs_per_block, session_period, score_submission_period } =
 		get_aleph_runtime_vars(&service_components.client);
 
 	let aleph_config = AlephConfig {
@@ -517,6 +523,7 @@ pub async fn new_authority(
 		select_chain_provider: service_components.select_chain_provider,
 		session_period,
 		millisecs_per_block,
+		score_submission_period,
 		spawn_handle: service_components.task_manager.spawn_handle().into(),
 		keystore: service_components.keystore_container.local_keystore(),
 		justification_channel_provider: service_components.justification_channel_provider,

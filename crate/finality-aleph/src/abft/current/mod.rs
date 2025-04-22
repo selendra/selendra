@@ -11,7 +11,6 @@ mod traits;
 pub use network::NetworkData;
 pub use performance::{Service as PerformanceService, ServiceIO as PerformanceServiceIO};
 
-pub use crate::selendra_primitives::CURRENT_FINALITY_VERSION as VERSION;
 use crate::{
 	abft::{
 		common::{unit_creation_delay_fn, MAX_ROUNDS, SESSION_LEN_LOWER_BOUND_MS},
@@ -28,6 +27,7 @@ use crate::{
 	},
 	CurrentNetworkData, Hasher, Keychain, NodeIndex, SessionId, SignatureSet, UnitCreationDelay,
 };
+pub use selendra_primitives::CURRENT_FINALITY_VERSION as VERSION;
 
 type WrappedNetwork<H, ADN> = NetworkWrapper<
 	current_aleph_bft::NetworkData<Hasher, AlephData<H>, Signature, SignatureSet<Signature>>,

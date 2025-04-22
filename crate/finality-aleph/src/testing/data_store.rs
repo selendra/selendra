@@ -7,6 +7,7 @@ use futures::{
 	},
 	StreamExt,
 };
+use selendra_primitives::BlockNumber;
 use sp_core::hash::H256;
 use tokio::time::timeout;
 
@@ -17,7 +18,6 @@ use crate::{
 		data::{component::Network as ComponentNetwork, Network as DataNetwork},
 		Data,
 	},
-	selendra_primitives::BlockNumber,
 	session::{SessionBoundaries, SessionBoundaryInfo, SessionId, SessionPeriod},
 	sync::RequestBlocks,
 	testing::{

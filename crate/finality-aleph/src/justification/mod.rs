@@ -1,11 +1,8 @@
 use parity_scale_codec::{Decode, Encode};
+use selendra_primitives::{AuthoritySignature, ALEPH_ENGINE_ID};
 use sp_runtime::Justification;
 
-use crate::{
-	abft::SignatureSet,
-	crypto::Signature,
-	selendra_primitives::{AuthoritySignature, ALEPH_ENGINE_ID},
-};
+use crate::{abft::SignatureSet, crypto::Signature};
 
 mod compatibility;
 

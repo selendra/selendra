@@ -1,4 +1,5 @@
 use log::{debug, warn};
+use selendra_primitives::BlockNumber;
 use sp_runtime::SaturatedConversion;
 
 use crate::{
@@ -7,7 +8,6 @@ use crate::{
 		chain_info::ChainInfoProvider,
 		proposal::{AlephProposal, PendingProposalStatus, ProposalStatus},
 	},
-	selendra_primitives::BlockNumber,
 };
 
 pub fn get_proposal_status<CIP, H, V>(

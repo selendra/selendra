@@ -1,13 +1,13 @@
-use primitives::BlockNumber;
 use sc_consensus::import_queue::{ImportQueueService, IncomingBlock};
+use selendra_primitives::BlockNumber;
 use sp_consensus::BlockOrigin;
 use sp_runtime::traits::{CheckedSub, Header as _, One};
 
 use crate::{
 	block::{Block as BlockT, BlockId, BlockImport, Header as HeaderT, UnverifiedHeader},
 	metrics::TimingBlockMetrics,
-	selendra_primitives::{Block, Header},
 };
+use selendra_primitives::{Block, Header};
 
 mod chain_status;
 mod finalizer;

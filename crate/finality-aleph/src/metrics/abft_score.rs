@@ -1,4 +1,4 @@
-use substrate_prometheus_endpoint::{register, Gauge, PrometheusError, Registry, U64};
+use prometheus_endpoint::{register, Gauge, PrometheusError, Registry, U64};
 
 #[derive(Clone)]
 pub enum ScoreMetrics {

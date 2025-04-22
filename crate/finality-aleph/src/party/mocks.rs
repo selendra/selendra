@@ -6,6 +6,7 @@ use std::{
 };
 
 use async_trait::async_trait;
+use selendra_primitives::BlockNumber;
 
 use crate::{
 	oneshot,
@@ -14,7 +15,6 @@ use crate::{
 		manager::AuthorityTask,
 		traits::{ChainState, NodeSessionManager},
 	},
-	selendra_primitives::BlockNumber,
 	AuthorityId, NodeIndex, SessionId,
 };
 

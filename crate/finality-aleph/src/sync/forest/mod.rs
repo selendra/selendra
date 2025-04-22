@@ -1,3 +1,5 @@
+use selendra_primitives::DEFAULT_SESSION_PERIOD;
+use static_assertions::const_assert;
 use std::{
 	collections::{
 		hash_map::{Entry, OccupiedEntry, VacantEntry},
@@ -6,11 +8,8 @@ use std::{
 	fmt::{Display, Error as FmtError, Formatter},
 };
 
-use static_assertions::const_assert;
-
 use crate::{
 	block::{Block, ChainStatus, Header, Justification, UnverifiedHeaderFor},
-	selendra_primitives::DEFAULT_SESSION_PERIOD,
 	sync::{data::BranchKnowledge, BlockId, PeerId},
 	BlockNumber,
 };

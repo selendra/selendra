@@ -1,7 +1,12 @@
 use frame_system::pallet_prelude::BlockNumberFor;
 use log::debug;
 use pallet_session::SessionManager;
-use selendra_primitives::{EraManager, FinalityCommitteeManager, SessionCommittee};
+use rand::{prelude::SliceRandom, SeedableRng};
+use rand_pcg::Pcg32;
+use selendra_primitives::{
+	AbftScoresProvider, EraManager, FinalityCommitteeManager, SessionCommittee,
+};
+use sp_runtime::traits::Get;
 use sp_staking::{EraIndex, SessionIndex};
 use sp_std::{marker::PhantomData, vec::Vec};
 
@@ -120,18 +125,25 @@ where
 			Pallet::<C>::emit_fresh_bans_event();
 		}
 
-		let SessionCommittee { finality_committee, block_producers } =
-			Pallet::<C>::rotate_committee(new_index)?;
+		let SessionCommittee { producers, finalizers } = Pallet::<C>::rotate_committee(new_index)?;
 		// Notify about elected next session finality committee
-		C::FinalityCommitteeManager::on_next_session_finality_committee(finality_committee);
+		C::FinalityCommitteeManager::on_next_session_finality_committee(finalizers);
 
-		Some(block_producers)
+		// Prepare a list of all block authors for the next session. We shuffle to minimize
+		// the impact of slow producer on his followers.
+		let full_size = C::SessionPeriod::get() as usize;
+		let mut full_aura: Vec<_> = producers.into_iter().cycle().take(full_size).collect();
+		let mut rng = Pcg32::seed_from_u64(new_index as u64);
+		full_aura.shuffle(&mut rng);
+
+		Some(full_aura)
 	}
 
 	fn end_session(end_index: SessionIndex) {
 		T::end_session(end_index);
-		Pallet::<C>::adjust_rewards_for_session();
 		Pallet::<C>::calculate_underperforming_validators();
+		let underperfs = Pallet::<C>::calculate_underperforming_finalizers(end_index);
+		Pallet::<C>::adjust_rewards_for_session(underperfs);
 		// clear block count after calculating stats for underperforming validators, as they use
 		// SessionValidatorBlockCount for that
 		let result = SessionValidatorBlockCount::<C>::clear(u32::MAX, None);
@@ -140,6 +152,8 @@ where
 			"Result of clearing the `SessionValidatorBlockCount`, {:?}",
 			result.deconstruct()
 		);
+
+		C::AbftScoresProvider::clear_nonce();
 	}
 
 	fn start_session(start_index: SessionIndex) {

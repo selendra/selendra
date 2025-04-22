@@ -12,6 +12,8 @@ mod migration;
 mod utility;
 mod validator;
 
+use crate::{consensus::ScoreSubmissionPeriod, validator::ExponentialEraPayout};
+
 use frame_support::weights::constants::ExtrinsicBaseWeight;
 use frame_support::weights::WeightToFeePolynomial;
 use selendra_primitives::impls::DealWithFees;
@@ -59,6 +61,7 @@ use selendra_primitives::{
 	AccountId, AlephNodeSessionKeys as SessionKeys, ApiError as AlephApiError, AuraId,
 	AuthorityId as AlephId, Balance, BlockNumber, Hash, Nonce, SessionAuthorityData,
 	SessionCommittee, SessionIndex, SessionValidatorError, Signature, Version as FinalityVersion,
+	Score,DEFAULT_SESSIONS_PER_ERA
 };
 
 #[sp_version::runtime_version]
@@ -386,64 +389,64 @@ mod benches {
 }
 
 impl_runtime_apis! {
-	impl sp_api::Core<Block> for Runtime {
-		fn version() -> RuntimeVersion {
-			VERSION
-		}
+    impl sp_api::Core<Block> for Runtime {
+        fn version() -> RuntimeVersion {
+            VERSION
+        }
 
-		fn execute_block(block: Block) {
-			Executive::execute_block(block)
-		}
+        fn execute_block(block: Block) {
+            Executive::execute_block(block)
+        }
 
-		fn initialize_block(header: &<Block as BlockT>::Header) {
-			Executive::initialize_block(header)
-		}
-	}
+        fn initialize_block(header: &<Block as BlockT>::Header) {
+            Executive::initialize_block(header)
+        }
+    }
 
-	impl sp_api::Metadata<Block> for Runtime {
-		fn metadata() -> OpaqueMetadata {
-			OpaqueMetadata::new(Runtime::metadata().into())
-		}
+    impl sp_api::Metadata<Block> for Runtime {
+        fn metadata() -> OpaqueMetadata {
+            OpaqueMetadata::new(Runtime::metadata().into())
+        }
 
-		fn metadata_at_version(version: u32) -> Option<OpaqueMetadata> {
-			Runtime::metadata_at_version(version)
-		}
+        fn metadata_at_version(version: u32) -> Option<OpaqueMetadata> {
+            Runtime::metadata_at_version(version)
+        }
 
-		fn metadata_versions() -> Vec<u32> {
-			Runtime::metadata_versions()
-		}
-	}
+        fn metadata_versions() -> sp_std::vec::Vec<u32> {
+            Runtime::metadata_versions()
+        }
+    }
 
-	impl sp_block_builder::BlockBuilder<Block> for Runtime {
-		fn apply_extrinsic(extrinsic: <Block as BlockT>::Extrinsic) -> ApplyExtrinsicResult {
-			Executive::apply_extrinsic(extrinsic)
-		}
+    impl sp_block_builder::BlockBuilder<Block> for Runtime {
+        fn apply_extrinsic(extrinsic: <Block as BlockT>::Extrinsic) -> ApplyExtrinsicResult {
+            Executive::apply_extrinsic(extrinsic)
+        }
 
-		fn finalize_block() -> <Block as BlockT>::Header {
-			Executive::finalize_block()
-		}
+        fn finalize_block() -> <Block as BlockT>::Header {
+            Executive::finalize_block()
+        }
 
-		fn inherent_extrinsics(data: sp_inherents::InherentData) -> Vec<<Block as BlockT>::Extrinsic> {
-			data.create_extrinsics()
-		}
+        fn inherent_extrinsics(data: sp_inherents::InherentData) -> Vec<<Block as BlockT>::Extrinsic> {
+            data.create_extrinsics()
+        }
 
-		fn check_inherents(
-			block: Block,
-			data: sp_inherents::InherentData,
-		) -> sp_inherents::CheckInherentsResult {
-			data.check_extrinsics(&block)
-		}
-	}
+        fn check_inherents(
+            block: Block,
+            data: sp_inherents::InherentData,
+        ) -> sp_inherents::CheckInherentsResult {
+            data.check_extrinsics(&block)
+        }
+    }
 
-	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
-		fn validate_transaction(
-			source: TransactionSource,
-			tx: <Block as BlockT>::Extrinsic,
-			block_hash: <Block as BlockT>::Hash,
-		) -> TransactionValidity {
-			Executive::validate_transaction(source, tx, block_hash)
-		}
-	}
+    impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
+        fn validate_transaction(
+            source: TransactionSource,
+            tx: <Block as BlockT>::Extrinsic,
+            block_hash: <Block as BlockT>::Hash,
+        ) -> TransactionValidity {
+            Executive::validate_transaction(source, tx, block_hash)
+        }
+    }
 
 	impl sp_offchain::OffchainWorkerApi<Block> for Runtime {
 		fn offchain_worker(header: &<Block as BlockT>::Header) {
@@ -461,95 +464,121 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl sp_session::SessionKeys<Block> for Runtime {
-		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
-			SessionKeys::generate(seed)
-		}
+    impl sp_session::SessionKeys<Block> for Runtime {
+        fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
+            SessionKeys::generate(seed)
+        }
 
-		fn decode_session_keys(
-			encoded: Vec<u8>,
-		) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
-			SessionKeys::decode_into_raw_public_keys(&encoded)
-		}
-	}
+        fn decode_session_keys(
+            encoded: Vec<u8>,
+        ) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
+            SessionKeys::decode_into_raw_public_keys(&encoded)
+        }
+    }
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
-		fn slot_duration() -> sp_consensus_aura::SlotDuration {
-			sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
-		}
+        fn slot_duration() -> sp_consensus_aura::SlotDuration {
+            sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
+        }
 
-		fn authorities() -> Vec<AuraId> {
-			Aura::authorities().to_vec()
-		}
-	}
+        fn authorities() -> Vec<AuraId> {
+            Aura::authorities().to_vec()
+        }
+    }
 
-	impl pallet_aleph_runtime_api::AlephSessionApi<Block> for Runtime {
-		fn millisecs_per_block() -> u64 {
-			MILLISECS_PER_BLOCK
-		}
+    impl pallet_aleph_runtime_api::AlephSessionApi<Block> for Runtime {
+        fn millisecs_per_block() -> u64 {
+            MILLISECS_PER_BLOCK
+        }
 
-		fn session_period() -> u32 {
-			SessionPeriod::get()
-		}
+        fn score_submission_period() -> u32 {
+            ScoreSubmissionPeriod::get()
+        }
 
-		fn authorities() -> Vec<AlephId> {
-			Aleph::authorities()
-		}
+        fn session_period() -> u32 {
+            SessionPeriod::get()
+        }
 
-		fn next_session_authorities() -> Result<Vec<AlephId>, AlephApiError> {
-			let next_authorities = Aleph::next_authorities();
-			if next_authorities.is_empty() {
-				return Err(AlephApiError::DecodeKey)
-			}
+        fn authorities() -> Vec<AlephId> {
+            Aleph::authorities()
+        }
 
-			Ok(next_authorities)
-		}
+        fn next_session_authorities() -> Result<Vec<AlephId>, AlephApiError> {
+            let next_authorities = Aleph::next_authorities();
+            if next_authorities.is_empty() {
+                return Err(AlephApiError::DecodeKey)
+            }
 
-		fn authority_data() -> SessionAuthorityData {
-			SessionAuthorityData::new(Aleph::authorities(), Aleph::emergency_finalizer())
-		}
+            Ok(next_authorities)
+        }
 
-		fn next_session_authority_data() -> Result<SessionAuthorityData, AlephApiError> {
-			Ok(SessionAuthorityData::new(
-				Self::next_session_authorities()?,
-				Aleph::queued_emergency_finalizer(),
-			))
-		}
+        fn authority_data() -> SessionAuthorityData {
+            SessionAuthorityData::new(Aleph::authorities(), Aleph::emergency_finalizer())
+        }
 
-		fn finality_version() -> FinalityVersion {
-			Aleph::finality_version()
-		}
+        fn next_session_authority_data() -> Result<SessionAuthorityData, AlephApiError> {
+            Ok(SessionAuthorityData::new(
+                Self::next_session_authorities()?,
+                Aleph::queued_emergency_finalizer(),
+            ))
+        }
 
-		fn next_session_finality_version() -> FinalityVersion {
-			Aleph::next_session_finality_version()
-		}
+        fn finality_version() -> FinalityVersion {
+            Aleph::finality_version()
+        }
 
-		fn predict_session_committee(
-			session: SessionIndex,
-		) -> Result<SessionCommittee<AccountId>, SessionValidatorError> {
-			CommitteeManagement::predict_session_committee_for_session(session)
-		}
+        fn next_session_finality_version() -> FinalityVersion {
+            Aleph::next_session_finality_version()
+        }
 
-		fn next_session_aura_authorities() -> Vec<(AccountId, AuraId)> {
-			let queued_keys = QueuedKeys::<Runtime>::get();
+        fn predict_session_committee(
+            session: SessionIndex,
+        ) -> Result<SessionCommittee<AccountId>, SessionValidatorError> {
+            CommitteeManagement::predict_session_committee_for_session(session)
+        }
 
-			queued_keys.into_iter().filter_map(|(account_id, keys)| keys.get(AURA).map(|key| (account_id, key))).collect()
-		}
+        fn next_session_aura_authorities() -> Vec<(AccountId, AuraId)> {
+            let queued_keys = QueuedKeys::<Runtime>::get();
 
-		fn key_owner(key: AlephId) -> Option<AccountId> {
-			Session::key_owner(selendra_primitives::KEY_TYPE, key.as_ref())
-		}
-	}
+            queued_keys.into_iter().filter_map(|(account_id, keys)| keys.get(AURA).map(|key| (account_id, key))).collect()
+        }
 
-	impl pallet_staking_runtime_api::StakingApi<Block, Balance, AccountId> for Runtime {
-		fn nominations_quota(_balance: Balance) -> u32 {
-			MAX_NOMINATORS
-		}
+        fn key_owner(key: AlephId) -> Option<AccountId> {
+            Session::key_owner(primitives::KEY_TYPE, key.as_ref())
+        }
 
-		fn eras_stakers_page_count(era: sp_staking::EraIndex, account: AccountId) -> sp_staking::Page {
-			Staking::api_eras_stakers_page_count(era, account)
-		}
-	}
+        fn yearly_inflation() -> Perbill {
+            // Milliseconds per year for the Julian year (365.25 days).
+            const MILLISECONDS_PER_YEAR: u64 = 1000 * 3600 * 24 * 36525 / 100;
+            let total_issuance = pallet_balances::Pallet::<Runtime>::total_issuance();
+
+            let (validator_payout, rest)
+                = ExponentialEraPayout::era_payout(total_issuance, MILLISECONDS_PER_YEAR);
+
+            Perbill::from_rational(validator_payout + rest, total_issuance)
+        }
+
+        fn current_era_payout() -> (Balance, Balance) {
+            const MILLISECONDS_PER_ERA: u64 = MILLISECS_PER_BLOCK * (DEFAULT_SESSION_PERIOD * DEFAULT_SESSIONS_PER_ERA) as u64;
+            let total_issuance = pallet_balances::Pallet::<Runtime>::total_issuance();
+
+            ExponentialEraPayout::era_payout(total_issuance, MILLISECONDS_PER_ERA)
+        }
+
+        fn submit_abft_score(score: Score, signature: SignatureSet<AuthoritySignature>) -> Option<()> {
+            Aleph::submit_abft_score(score, signature)
+        }
+    }
+
+    impl pallet_staking_runtime_api::StakingApi<Block, Balance, AccountId> for Runtime {
+        fn nominations_quota(_balance: Balance) -> u32 {
+            MAX_NOMINATORS
+        }
+
+        fn eras_stakers_page_count(era: sp_staking::EraIndex, account: AccountId) -> sp_staking::Page {
+            Staking::api_eras_stakers_page_count(era, account)
+        }
+    }
 
 	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<
 		Block,
@@ -779,7 +808,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	#[cfg(feature = "runtime-benchmarks")]
+    #[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (
 			Vec<frame_benchmarking::BenchmarkList>,

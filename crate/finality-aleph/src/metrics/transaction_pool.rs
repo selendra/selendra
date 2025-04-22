@@ -6,7 +6,7 @@ use std::{
 
 use lru::LruCache;
 use parking_lot::Mutex;
-use substrate_prometheus_endpoint::{
+use prometheus_endpoint::{
 	register, Counter, Histogram, HistogramOpts, PrometheusError, Registry, U64,
 };
 
@@ -111,6 +111,7 @@ pub mod test {
 
 	use futures::{future, FutureExt, Stream, StreamExt};
 	use parity_scale_codec::Encode;
+	use prometheus_endpoint::{Histogram, Registry};
 	use sc_basic_authorship::ProposerFactory;
 	use sc_block_builder::BlockBuilderBuilder;
 	use sc_client_api::{
@@ -123,7 +124,6 @@ pub mod test {
 	};
 	use sp_consensus::{BlockOrigin, DisableProofRecording, Environment, Proposer as _};
 	use sp_runtime::{traits::Block as BlockT, transaction_validity::TransactionSource};
-	use substrate_prometheus_endpoint::{Histogram, Registry};
 	use substrate_test_client::TestClientBuilder;
 	use substrate_test_runtime::{Extrinsic, ExtrinsicBuilder, Transfer};
 	use substrate_test_runtime_client::{AccountKeyring, ClientBlockImportExt, ClientExt};

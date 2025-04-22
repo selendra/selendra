@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use libp2p::{core::StreamMuxer, PeerId, Transport};
+use prometheus_endpoint::Registry;
 use sc_client_api::Backend;
 use sc_network::{
 	config::{
@@ -17,7 +18,6 @@ use sc_network_sync::state_request_handler::StateRequestHandler;
 use sc_network_transactions::TransactionsHandlerPrototype;
 use sc_service::SpawnTaskHandle;
 use sp_runtime::traits::{Block, Header};
-use substrate_prometheus_endpoint::Registry;
 
 use crate::{
 	network::build::{

@@ -9,15 +9,13 @@ use pallet_aleph_runtime_api::AlephSessionApi;
 use parity_scale_codec::{Decode, DecodeAll, Encode, Error as DecodeError};
 use sc_client_api::Backend;
 use sc_transaction_pool_api::{LocalTransactionPool, OffchainTransactionPoolFactory};
+use selendra_primitives::{crypto::SignatureSet, AccountId, AuraId, AuthoritySignature, Score};
 use sp_api::ApiExt;
 use sp_application_crypto::key_types::AURA;
 use sp_core::twox_128;
 use sp_runtime::traits::{Block, OpaqueKeys};
 
-use crate::{
-	selendra_primitives::{crypto::SignatureSet, AccountId, AuraId, AuthoritySignature, Score},
-	BlockHash, ClientForAleph,
-};
+use crate::{BlockHash, ClientForAleph};
 
 /// Trait handling connection between host code and runtime storage
 pub trait RuntimeApi: Clone + Send + Sync + 'static {
@@ -157,7 +155,7 @@ impl Display for ApiError {
 	}
 }
 
-type QueuedKeys = Vec<(AccountId, primitives::AlephNodeSessionKeys)>;
+type QueuedKeys = Vec<(AccountId, selendra_primitives::AlephNodeSessionKeys)>;
 
 impl<C, B, BE> RuntimeApi for RuntimeApiImpl<C, B, BE>
 where

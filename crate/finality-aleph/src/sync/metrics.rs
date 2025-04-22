@@ -6,7 +6,7 @@ use std::{
 	},
 };
 
-use substrate_prometheus_endpoint::{
+use prometheus_endpoint::{
 	register, Counter, MetricSource, Opts, PrometheusError, Registry, SourcedGauge, U64,
 };
 

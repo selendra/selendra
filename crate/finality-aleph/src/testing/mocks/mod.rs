@@ -6,12 +6,10 @@ pub use client::{Backend, TestClient, TestClientBuilder, TestClientBuilderExt};
 pub use proposal::{
 	aleph_data_from_blocks, aleph_data_from_headers, unvalidated_proposal_from_headers,
 };
+use selendra_primitives::{Block, Header};
 use sp_core::H256;
 
-use crate::{
-	block::{EquivocationProof, HeaderVerifier, VerifiedHeader},
-	selendra_primitives::{Block, Header},
-};
+use crate::block::{EquivocationProof, HeaderVerifier, VerifiedHeader};
 
 pub type TBlock = Block;
 pub type THeader = Header;

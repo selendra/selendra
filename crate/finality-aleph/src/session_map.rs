@@ -5,6 +5,7 @@ use log::{debug, error, trace};
 use pallet_aleph_runtime_api::AlephSessionApi;
 use sc_client_api::{Backend, FinalityNotification};
 use sc_utils::mpsc::TracingUnboundedReceiver;
+use selendra_primitives::{AccountId, AuraId, BlockHash, BlockNumber, SessionAuthorityData};
 use sp_consensus_aura::AuraApi;
 use sp_runtime::traits::{Block, Header};
 use tokio::sync::{
@@ -13,10 +14,7 @@ use tokio::sync::{
 };
 
 use crate::{
-	block::substrate::FinalizationInfo,
-	runtime_api::RuntimeApi,
-	selendra_primitives::{AccountId, AuraId, BlockHash, BlockNumber, SessionAuthorityData},
-	session::SessionBoundaryInfo,
+	block::substrate::FinalizationInfo, runtime_api::RuntimeApi, session::SessionBoundaryInfo,
 	ClientForAleph, SessionId, SessionPeriod,
 };
 const PRUNING_THRESHOLD: u32 = 10;

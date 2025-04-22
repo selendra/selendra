@@ -15,6 +15,7 @@ use futures::channel::{
 use futures_timer::Delay;
 use log::{debug, error, info, trace, warn};
 use lru::LruCache;
+use selendra_primitives::BlockNumber;
 
 use crate::{
 	block::{
@@ -32,7 +33,6 @@ use crate::{
 		Network as DataNetwork,
 	},
 	party::manager::Runnable,
-	selendra_primitives::BlockNumber,
 	sync::RequestBlocks,
 	BlockId, SessionBoundaries,
 };

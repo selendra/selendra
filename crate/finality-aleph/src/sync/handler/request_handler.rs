@@ -1,7 +1,7 @@
 use core::{default::Default, marker::PhantomData};
 use std::fmt::{Display, Formatter};
 
-use primitives::BlockNumber;
+use selendra_primitives::BlockNumber;
 
 use crate::{
 	block::{

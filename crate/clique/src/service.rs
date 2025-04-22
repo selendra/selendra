@@ -9,7 +9,7 @@ use futures::{
 	Future, StreamExt, TryFutureExt,
 };
 use log::{info, trace, warn};
-use substrate_prometheus_endpoint::Registry;
+use prometheus_endpoint::Registry;
 use tokio::time;
 
 use crate::{

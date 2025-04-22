@@ -10,9 +10,9 @@ use crate::{
 	data_io::{proposal::UnvalidatedAlephProposal, AlephData, MAX_DATA_BRANCH_LEN},
 	metrics::{Checkpoint, TimingBlockMetrics},
 	party::manager::Runnable,
-	selendra_primitives::BlockNumber,
 	BlockId, SessionBoundaries,
 };
+use selendra_primitives::BlockNumber;
 
 const LOG_TARGET: &str = "aleph-data-store";
 

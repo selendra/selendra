@@ -5,6 +5,9 @@ use std::{
 
 use parity_scale_codec::Encode;
 use sc_consensus_aura::standalone::{check_header_slot_and_seal, slot_author};
+use selendra_primitives::{
+	time::MILLISECS_PER_BLOCK, AccountId, AuraId, Block, BlockNumber, Header,
+};
 use sp_consensus_aura::sr25519::AuthorityPair;
 use sp_consensus_slots::Slot;
 use sp_runtime::{traits::Header as SubstrateHeader, SaturatedConversion};
@@ -20,7 +23,6 @@ use crate::{
 		},
 		BlockId, Header as HeaderT, HeaderVerifier, JustificationVerifier, VerifiedHeader,
 	},
-	selendra_primitives::{AccountId, AuraId, Block, BlockNumber, Header, MILLISECS_PER_BLOCK},
 	session::{SessionBoundaryInfo, SessionId},
 	session_map::{AuthorityProvider, FinalizedBlocksProvider},
 };
@@ -436,11 +438,11 @@ mod tests {
 	};
 	use crate::{
 		block::mock::MockHeader,
-		selendra_primitives::SessionAuthorityData,
 		session::{testing::authority_data, SessionBoundaryInfo, SessionId},
 		session_map::FinalizedBlocksProvider,
 		SessionPeriod,
 	};
+	use selendra_primitives::SessionAuthorityData;
 
 	const SESSION_PERIOD: u32 = 30;
 	const CACHE_SIZE: usize = 3;

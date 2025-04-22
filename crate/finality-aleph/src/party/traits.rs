@@ -1,10 +1,10 @@
 use std::fmt::Display;
 
 use async_trait::async_trait;
+use selendra_primitives::BlockNumber;
 
 use crate::{
 	party::{backup::ABFTBackup, manager::AuthorityTask},
-	selendra_primitives::BlockNumber,
 	AuthorityId, NodeIndex, SessionId,
 };
 

@@ -1,6 +1,7 @@
 use std::sync::{atomic::AtomicBool, Arc};
 
 use log::error;
+use prometheus_endpoint::Registry;
 use rate_limiter::SharedRateLimiter;
 use sc_client_api::Backend;
 use sc_network::{
@@ -15,7 +16,6 @@ use sc_service::SpawnTaskHandle;
 use sc_transaction_pool_api::TransactionPool;
 use sc_utils::mpsc::TracingUnboundedSender;
 use sp_runtime::traits::{Block, Header};
-use substrate_prometheus_endpoint::Registry;
 
 use crate::{
 	network::{

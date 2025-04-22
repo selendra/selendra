@@ -1,4 +1,5 @@
 use sc_client_api::{Backend, Finalizer as SubstrateFinalizer, HeaderBackend, LockImportRun};
+use selendra_primitives::Block;
 use sp_blockchain::Error as ClientError;
 use sp_runtime::traits::Header as SubstrateHeader;
 
@@ -8,7 +9,6 @@ use crate::{
 		Finalizer,
 	},
 	finalization::{AlephFinalizer, BlockFinalizer},
-	selendra_primitives::Block,
 };
 
 impl<BE, C> Finalizer<Justification> for AlephFinalizer<Block, BE, C>

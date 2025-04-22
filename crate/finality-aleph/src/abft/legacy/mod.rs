@@ -9,7 +9,6 @@ mod traits;
 
 pub use network::NetworkData;
 
-pub use crate::selendra_primitives::LEGACY_FINALITY_VERSION as VERSION;
 use crate::{
 	abft::{
 		common::{unit_creation_delay_fn, MAX_ROUNDS, SESSION_LEN_LOWER_BOUND_MS},
@@ -26,6 +25,7 @@ use crate::{
 	},
 	Hasher, Keychain, LegacyNetworkData, NodeIndex, SessionId, SignatureSet, UnitCreationDelay,
 };
+pub use selendra_primitives::LEGACY_FINALITY_VERSION as VERSION;
 
 type WrappedNetwork<H, ADN> = NetworkWrapper<
 	legacy_aleph_bft::NetworkData<Hasher, AlephData<H>, Signature, SignatureSet<Signature>>,

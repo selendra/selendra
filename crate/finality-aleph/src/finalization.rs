@@ -3,16 +3,14 @@ use std::{marker::PhantomData, sync::Arc};
 
 use log::{debug, warn};
 use sc_client_api::{Backend, Finalizer, HeaderBackend, LockImportRun};
+use selendra_primitives::{BlockHash, BlockNumber};
 use sp_blockchain::Error;
 use sp_runtime::{
 	traits::{Block, Header},
 	Justification,
 };
 
-use crate::{
-	selendra_primitives::{BlockHash, BlockNumber},
-	BlockId,
-};
+use crate::BlockId;
 
 pub trait BlockFinalizer {
 	fn finalize_block(&self, block: BlockId, justification: Justification) -> Result<(), Error>;

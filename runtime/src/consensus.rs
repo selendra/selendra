@@ -1,11 +1,13 @@
-use crate::{AlephId, AuraId, Elections, Runtime, RuntimeEvent, Session, Staking};
+use crate::{AlephId, AuraId, Elections, Runtime, RuntimeEvent, Session, Staking, Balance};
 
 pub use frame_support::{parameter_types, traits::EstimateNextSessionRotation};
 use sp_core::ConstBool;
 
 use pallet_committee_management::SessionAndEraManager;
 
-use selendra_primitives::{BlockNumber, SessionIndex, SessionInfoProvider};
+use selendra_primitives::{
+	BlockNumber, SessionIndex, SessionInfoProvider, SCORE_SUBMISSION_PERIOD,
+};
 
 parameter_types! {
 	pub const MaxAuthorities: u32 = 100;
@@ -31,6 +33,17 @@ impl SessionInfoProvider<BlockNumber> for SessionInfoImpl {
 	}
 }
 
+pub struct TotalIssuanceProvider;
+impl TotalIssuanceProviderT for TotalIssuanceProvider {
+	fn get() -> Balance {
+		pallet_balances::Pallet::<Runtime>::total_issuance()
+	}
+}
+
+parameter_types! {
+	pub const ScoreSubmissionPeriod: u32 = SCORE_SUBMISSION_PERIOD;
+}
+
 impl pallet_aleph::Config for Runtime {
 	type AuthorityId = AlephId;
 	type RuntimeEvent = RuntimeEvent;
@@ -42,4 +55,6 @@ impl pallet_aleph::Config for Runtime {
 		Runtime,
 	>;
 	type NextSessionAuthorityProvider = Session;
+	type TotalIssuanceProvider = TotalIssuanceProvider;
+	type ScoreSubmissionPeriod = ScoreSubmissionPeriod;
 }

@@ -9,14 +9,12 @@ use std::{
 use log::{trace, warn};
 use lru::LruCache;
 use parking_lot::Mutex;
+use prometheus_endpoint::{register, Histogram, HistogramOpts, PrometheusError, Registry};
 use sc_service::Arc;
-use substrate_prometheus_endpoint::{
-	register, Histogram, HistogramOpts, PrometheusError, Registry,
-};
+use selendra_primitives::BlockHash;
 
 use crate::{
 	metrics::{exponential_buckets_two_sided, LOG_TARGET},
-	selendra_primitives::BlockHash,
 	Display,
 };
 

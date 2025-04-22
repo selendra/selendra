@@ -5,6 +5,7 @@ use std::{hash::Hash as StdHash, marker::PhantomData};
 use current_aleph_aggregator::NetworkError as CurrentNetworkError;
 use legacy_aleph_aggregator::NetworkError as LegacyNetworkError;
 use parity_scale_codec::{Decode, Encode};
+use selendra_primitives::Hash;
 
 use crate::{
 	abft::SignatureSet,
@@ -13,7 +14,6 @@ use crate::{
 		data::{Network, SendError},
 		Data,
 	},
-	selendra_primitives::Hash,
 	Keychain,
 };
 

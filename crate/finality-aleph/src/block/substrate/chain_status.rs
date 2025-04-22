@@ -6,6 +6,9 @@ use std::{
 use log::warn;
 use sc_client_api::{blockchain::HeaderBackend as _, Backend as _};
 use sc_service::TFullBackend;
+use selendra_primitives::{
+	Block, BlockNumber, Hash as AlephHash, Header as AlephHeader, ALEPH_ENGINE_ID,
+};
 use sp_blockchain::{Backend as _, Error as BackendError, Info};
 use sp_runtime::traits::{Block as SubstrateBlock, Header as SubstrateHeader};
 
@@ -16,9 +19,6 @@ use crate::{
 		Justification as _,
 	},
 	justification::backwards_compatible_decode,
-	selendra_primitives::{
-		Block, BlockNumber, Hash as AlephHash, Header as AlephHeader, ALEPH_ENGINE_ID,
-	},
 	BlockId,
 };
 

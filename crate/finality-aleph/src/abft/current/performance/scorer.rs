@@ -1,6 +1,7 @@
 use current_aleph_bft::{NodeCount, NodeMap, Round};
 
-use crate::{abft::current::performance::Batch, selendra_primitives::RawScore, UnverifiedHeader};
+use crate::{abft::current::performance::Batch, UnverifiedHeader};
+use selendra_primitives::RawScore;
 
 /// Scoring ABFT performance based on returned ordered unit batches.
 pub struct Scorer {

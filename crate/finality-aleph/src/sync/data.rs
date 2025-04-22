@@ -2,12 +2,12 @@ use std::{collections::HashSet, marker::PhantomData, mem::size_of};
 
 use log::{debug, warn};
 use parity_scale_codec::{Decode, Encode, Error as CodecError, Input as CodecInput};
+use selendra_primitives::MAXIMUM_BLOCK_LENGTH;
 use static_assertions::const_assert;
 
 use crate::{
 	block::{Block, Header, Justification, UnverifiedHeader, UnverifiedHeaderFor},
 	network::GossipNetwork,
-	selendra_primitives::MAX_BLOCK_SIZE,
 	sync::{PeerId, LOG_TARGET},
 	BlockId, Version,
 };
@@ -155,7 +155,7 @@ type ByteCount = u32;
 // We agreed to 15mb + some wiggle room for sync message.
 // Maximum block size is 5mb so we have spare for at least 3 blocks.
 pub const MAX_SYNC_MESSAGE_SIZE: u32 = 15 * 1024 * 1024 + 1024;
-const_assert!(MAX_SYNC_MESSAGE_SIZE > 3 * MAX_BLOCK_SIZE);
+const_assert!(MAX_SYNC_MESSAGE_SIZE > 3 * MAXIMUM_BLOCK_LENGTH);
 /// The toal maximal message size that should be accepted, slighly
 /// larger than the above to include the version plus some wiggle-room.
 pub const MAX_MESSAGE_SIZE: u64 = 16 * 1024 * 1024;

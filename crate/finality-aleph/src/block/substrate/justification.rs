@@ -1,6 +1,6 @@
-use std::fmt::{Debug, Display, Error as FmtError, Formatter};
-
 use parity_scale_codec::{Decode, Encode};
+use selendra_primitives::Header;
+use std::fmt::{Debug, Display, Error as FmtError, Formatter};
 
 use crate::{
 	block::{
@@ -11,7 +11,6 @@ use crate::{
 		BlockStatus, ChainStatus, Justification as JustificationT, UnverifiedJustification,
 	},
 	justification::AlephJustification,
-	selendra_primitives::Header,
 };
 
 /// Proper `AlephJustification` or a variant indicating virtual justification

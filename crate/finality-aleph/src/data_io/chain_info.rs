@@ -2,11 +2,11 @@ use std::marker::PhantomData;
 
 use log::{debug, info};
 use lru::LruCache;
+use selendra_primitives::{BlockHash, BlockNumber};
 
 use crate::{
 	block::{Header, HeaderBackend},
 	data_io::ChainInfoCacheConfig,
-	selendra_primitives::{BlockHash, BlockNumber},
 	BlockId,
 };
 

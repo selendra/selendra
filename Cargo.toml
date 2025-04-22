@@ -1,7 +1,7 @@
 [workspace]
 members = [
 	"runtime",
-	"node",
+	# "node",
 	"pallets/aleph",
 	"pallets/aleph/aleph-runtime-api",
 	"pallets/committee-management",
@@ -36,61 +36,43 @@ codegen-units = 1
 
 [workspace.dependencies]
 aleph-bft-crypto = { version = "0.9" }
-aleph-bft-mock = { version = "0.14" }
-aleph-bft-rmc = { version = "0.13" }
-aleph-bft-types = { version = "0.13" }
-async-trait = "0.1.80"
-assert_matches = "1.3.0"
-bn = { package = "substrate-bn", version = "0.6", default-features = false }
-clap = { version = "4.4.12", features = ["derive", "deprecated"] }
-derive_more = "0.99"
-environmental = { version = "1.1.4", default-features = false }
-ethereum = { version = "0.15.0", default-features = false }
-ethereum-types = { version = "0.14.1", default-features = false }
-evm = { version = "0.41.1", default-features = false }
-futures = "0.3.30"
-hash-db = { version = "0.16.0", default-features = false }
-hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
-hex-literal = "0.4.1"
-impl-serde = { version = "0.4.0", default-features = false }
-impl-trait-for-tuples = "0.2.1"
-jsonrpsee = "0.16.3"
-kvdb-rocksdb = "0.19.0"
-libsecp256k1 = { version = "0.7.1", default-features = false }
-log = { version = "0.4.20", default-features = false }
-num_enum = { version = "0.7.0", default-features = false }
-num-traits = { version = "0.2", default-features = false }
-parity-db = "0.4.12"
-parking_lot = "0.12.1"
-rand = { version = "0.8.5", default-features = false }
-rand_pcg = { version = "0.3.1", default-features = false }
-rlp = { version = "0.5.2", default-features = false }
-parity-scale-codec = { version = "3.6.4", default-features = false, features = ["derive"] }
-scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
-serde = { version = "1.0.203", default-features = false, features = ["derive", "alloc"] }
-serde_json = "1.0.117"
-similar-asserts = "1.5.0"
-sqlx = { version = "0.7.3", default-features = false, features = ["macros"] }
-thiserror = "1.0.61"
-tokio = "1.35.1"
-anyhow = "1.0.86"
-codec = { package = 'parity-scale-codec', version = "3.0.0", features = ['derive'] }
-contract-transcode = "3.2.0"
-ink_metadata = { version = "4.3.0" }
-subxt = { version = "0.30.1", features = ["substrate-compat"] }
+aleph-bft-mock = { version = "0.15" }
+aleph-bft-rmc = { version = "0.14" }
+aleph-bft-types = { version = "0.14" }
+async-trait = { version = "0.1" }
 array-bytes = { version = "6" }
-bytes = { version = "1.6" }
+bytes = { version = "1.8" }
+derive_more = { version = "1.0", features = ["from", "into", "as_ref", "display"] }
 env_logger = { version = "0.10" }
+futures = { version = "0.3" }
 futures-timer = { version = "3.0" }
+hash-db = { version = "0.16", default-features = false }
+hex = { version = "0.4" }
+hex-literal = { version = "0.3" }
 ink = { version = "5.0.0-rc", default-features = false }
 ip_network = { version = "0.4" }
+jsonrpsee = { version = "0.16.3" }
 libp2p = { version = "0.51" }
+log = { version = "0.4", default-features = false }
 lru = { version = "0.10" }
+parity-scale-codec = { version = "3.6", default-features = false }
+parking_lot = { version = "0.12" }
 paste = { version = "1.0" }
+rand = { version = "0.8.5", default-features = false }
+scale-info = { version = "2.11", default-features = false }
+serde = { version = "1.0", default-features = false }
+serde_json = { version = "1.0", default-features = false }
 smallvec = { version = "1", default-features = false }
 static_assertions = { version = "1.1" }
+thiserror = { version = "1.0" }
 tiny-bip39 = { version = "1.0" }
-ethers = { version = "2.0.9", default_features = false }
+tokio = { version = "1.41" }
+rand_pcg = { version = "0.3.1", default-features = false }
+
+assert_matches = "1.3.0"
+libsecp256k1 = { version = "0.7.1", default-features = false }
+num-traits = { version = "0.2.18", default-features = false }
+clap = { version = "4.4.12", features = ["derive", "deprecated"] }
 
 # Substrate Client
 sc-basic-authorship = { git = "https://github.com/selendra/polkadot-sdk", branch = "selendra-1.6.0" }
@@ -229,7 +211,7 @@ halo2_proofs = { git = "https://github.com/Cardinal-Cryptography/pse-halo2", bra
 # Pallet
 pallet-aleph = { path = "pallets/aleph", default-features = false }
 pallet-aleph-runtime-api = { path = "pallets/aleph/aleph-runtime-api", default-features = false }
-pallet-committee-management = { path = "pallets/committee-management", default-features = false } 
+pallet-committee-management = { path = "pallets/committee-management", default-features = false }
 pallet-elections = { path = "pallets/elections", default-features = false }
 
 # crate

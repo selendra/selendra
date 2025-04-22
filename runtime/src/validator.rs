@@ -47,22 +47,52 @@ impl pallet_authorship::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BondingDuration: EraIndex = 14;
-	pub const SlashDeferDuration: EraIndex = 13;
-	// this is coupled with weights for payout_stakers() call
-	// see custom implementation of WeightInfo below
-	pub const MaxExposurePageSize: u32 = MAX_NOMINATORS_REWARDED_PER_VALIDATOR;
-	pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(33);
-	pub const SessionsPerEra: EraIndex = DEFAULT_SESSIONS_PER_ERA;
-	pub HistoryDepth: u32 = 84;
+    pub const BondingDuration: EraIndex = 14;
+    pub const SlashDeferDuration: EraIndex = 13;
+    // this is coupled with weights for payout_stakers() call
+    // see custom implementation of WeightInfo below
+    pub const MaxExposurePageSize: u32 = MAX_NOMINATORS_REWARDED_PER_VALIDATOR;
+    pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(33);
+    pub const SessionsPerEra: EraIndex = DEFAULT_SESSIONS_PER_ERA;
+    pub HistoryDepth: u32 = 84;
 }
 
-pub struct UniformEraPayout;
+pub struct ExponentialEraPayout;
 
-impl pallet_staking::EraPayout<Balance> for UniformEraPayout {
-	fn era_payout(_: Balance, _: Balance, era_duration_millis: u64) -> (Balance, Balance) {
-		selendra_primitives::staking::era_payout(era_duration_millis)
-	}
+impl ExponentialEraPayout {
+    fn era_payout(total_issuance: Balance, era_duration_millis: u64) -> (Balance, Balance) {
+        const VALIDATOR_REWARD: Perbill = Perbill::from_percent(90);
+
+        let azero_cap = pallet_aleph::AzeroCap::<Runtime>::get();
+        let horizon = pallet_aleph::ExponentialInflationHorizon::<Runtime>::get();
+
+        let total_payout: Balance =
+            exp_helper(Perbill::from_rational(era_duration_millis, horizon))
+                * (azero_cap.saturating_sub(total_issuance));
+        let validators_payout = VALIDATOR_REWARD * total_payout;
+        let rest = total_payout - validators_payout;
+
+        (validators_payout, rest)
+    }
+}
+
+/// Calculates 1 - exp(-x) for small positive x
+fn exp_helper(x: Perbill) -> Perbill {
+    let x2 = x * x;
+    let x3 = x2 * x;
+    let x4 = x2 * x2;
+    let x5 = x4 * x;
+    (x - x2 / 2 + x3 / 6 - x4 / 24 + x5 / 120).min(x)
+}
+
+impl pallet_staking::EraPayout<Balance> for ExponentialEraPayout {
+    fn era_payout(
+        _: Balance,
+        total_issuance: Balance,
+        era_duration_millis: u64,
+    ) -> (Balance, Balance) {
+        ExponentialEraPayout::era_payout(total_issuance, era_duration_millis)
+    }
 }
 
 type SubstrateStakingWeights = pallet_staking::weights::SubstrateWeight<Runtime>;
@@ -70,111 +100,111 @@ type SubstrateStakingWeights = pallet_staking::weights::SubstrateWeight<Runtime>
 pub struct PayoutStakersDecreasedWeightInfo;
 
 impl pallet_staking::WeightInfo for PayoutStakersDecreasedWeightInfo {
-	// To make possible to change nominators per validator we need to decrease weight for payout_stakers
-	fn payout_stakers_alive_staked(n: u32) -> Weight {
-		SubstrateStakingWeights::payout_stakers_alive_staked(n) / 2
-	}
-	wrap_methods!(
-		(bond(), SubstrateStakingWeights, Weight),
-		(bond_extra(), SubstrateStakingWeights, Weight),
-		(unbond(), SubstrateStakingWeights, Weight),
-		(
-			withdraw_unbonded_update(s: u32),
-			SubstrateStakingWeights,
-			Weight
-		),
-		(
-			withdraw_unbonded_kill(s: u32),
-			SubstrateStakingWeights,
-			Weight
-		),
-		(validate(), SubstrateStakingWeights, Weight),
-		(kick(k: u32), SubstrateStakingWeights, Weight),
-		(nominate(n: u32), SubstrateStakingWeights, Weight),
-		(chill(), SubstrateStakingWeights, Weight),
-		(set_payee(), SubstrateStakingWeights, Weight),
-		(update_payee(), SubstrateStakingWeights, Weight),
-		(set_controller(), SubstrateStakingWeights, Weight),
-		(set_validator_count(), SubstrateStakingWeights, Weight),
-		(force_no_eras(), SubstrateStakingWeights, Weight),
-		(force_new_era(), SubstrateStakingWeights, Weight),
-		(force_new_era_always(), SubstrateStakingWeights, Weight),
-		(set_invulnerables(v: u32), SubstrateStakingWeights, Weight),
-		(deprecate_controller_batch(i: u32), SubstrateStakingWeights, Weight),
-		(force_unstake(s: u32), SubstrateStakingWeights, Weight),
-		(
-			cancel_deferred_slash(s: u32),
-			SubstrateStakingWeights,
-			Weight
-		),
-		(rebond(l: u32), SubstrateStakingWeights, Weight),
-		(reap_stash(s: u32), SubstrateStakingWeights, Weight),
-		(new_era(v: u32, n: u32), SubstrateStakingWeights, Weight),
-		(
-			get_npos_voters(v: u32, n: u32),
-			SubstrateStakingWeights,
-			Weight
-		),
-		(get_npos_targets(v: u32), SubstrateStakingWeights, Weight),
-		(chill_other(), SubstrateStakingWeights, Weight),
-		(
-			set_staking_configs_all_set(),
-			SubstrateStakingWeights,
-			Weight
-		),
-		(
-			set_staking_configs_all_remove(),
-			SubstrateStakingWeights,
-			Weight
-		),
-		(
-			force_apply_min_commission(),
-			SubstrateStakingWeights,
-			Weight
-		),
-		(set_min_commission(), SubstrateStakingWeights, Weight)
-	);
+    // To make possible to change nominators per validator we need to decrease weight for payout_stakers
+    fn payout_stakers_alive_staked(n: u32) -> Weight {
+        SubstrateStakingWeights::payout_stakers_alive_staked(n) / 2
+    }
+    wrap_methods!(
+        (bond(), SubstrateStakingWeights, Weight),
+        (bond_extra(), SubstrateStakingWeights, Weight),
+        (unbond(), SubstrateStakingWeights, Weight),
+        (
+            withdraw_unbonded_update(s: u32),
+            SubstrateStakingWeights,
+            Weight
+        ),
+        (
+            withdraw_unbonded_kill(s: u32),
+            SubstrateStakingWeights,
+            Weight
+        ),
+        (validate(), SubstrateStakingWeights, Weight),
+        (kick(k: u32), SubstrateStakingWeights, Weight),
+        (nominate(n: u32), SubstrateStakingWeights, Weight),
+        (chill(), SubstrateStakingWeights, Weight),
+        (set_payee(), SubstrateStakingWeights, Weight),
+        (update_payee(), SubstrateStakingWeights, Weight),
+        (set_controller(), SubstrateStakingWeights, Weight),
+        (set_validator_count(), SubstrateStakingWeights, Weight),
+        (force_no_eras(), SubstrateStakingWeights, Weight),
+        (force_new_era(), SubstrateStakingWeights, Weight),
+        (force_new_era_always(), SubstrateStakingWeights, Weight),
+        (set_invulnerables(v: u32), SubstrateStakingWeights, Weight),
+        (deprecate_controller_batch(i: u32), SubstrateStakingWeights, Weight),
+        (force_unstake(s: u32), SubstrateStakingWeights, Weight),
+        (
+            cancel_deferred_slash(s: u32),
+            SubstrateStakingWeights,
+            Weight
+        ),
+        (rebond(l: u32), SubstrateStakingWeights, Weight),
+        (reap_stash(s: u32), SubstrateStakingWeights, Weight),
+        (new_era(v: u32, n: u32), SubstrateStakingWeights, Weight),
+        (
+            get_npos_voters(v: u32, n: u32),
+            SubstrateStakingWeights,
+            Weight
+        ),
+        (get_npos_targets(v: u32), SubstrateStakingWeights, Weight),
+        (chill_other(), SubstrateStakingWeights, Weight),
+        (
+            set_staking_configs_all_set(),
+            SubstrateStakingWeights,
+            Weight
+        ),
+        (
+            set_staking_configs_all_remove(),
+            SubstrateStakingWeights,
+            Weight
+        ),
+        (
+            force_apply_min_commission(),
+            SubstrateStakingWeights,
+            Weight
+        ),
+        (set_min_commission(), SubstrateStakingWeights, Weight)
+    );
 }
 
 pub struct StakingBenchmarkingConfig;
 
 impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
-	type MaxValidators = ConstU32<1000>;
-	type MaxNominators = ConstU32<1000>;
+    type MaxValidators = ConstU32<1000>;
+    type MaxNominators = ConstU32<1000>;
 }
 
-pub const MAX_NOMINATORS: u32 = 16;
+const MAX_NOMINATORS: u32 = 1;
 
 impl pallet_staking::Config for Runtime {
-	// Do not change this!!! It guarantees that we have DPoS instead of NPoS.
-	type Currency = Balances;
-	type UnixTime = Timestamp;
-	type CurrencyToVote = U128CurrencyToVote;
-	type ElectionProvider = Elections;
-	type GenesisElectionProvider = Elections;
-	type NominationsQuota = pallet_staking::FixedNominationsQuota<MAX_NOMINATORS>;
-	type RewardRemainder = (); //Treasury
-	type RuntimeEvent = RuntimeEvent;
-	type Slash = (); //Treasury
-	type Reward = ();
-	type SessionsPerEra = SessionsPerEra;
-	type BondingDuration = BondingDuration;
-	type SlashDeferDuration = SlashDeferDuration;
-	type SessionInterface = Self;
-	type EraPayout = UniformEraPayout;
-	type NextNewSession = Session;
-	type MaxExposurePageSize = MaxExposurePageSize;
-	type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
-	type VoterList = pallet_staking::UseNominatorsAndValidatorsMap<Runtime>;
-	type MaxUnlockingChunks = ConstU32<16>;
-	type MaxControllersInDeprecationBatch = ConstU32<4084>;
-	type BenchmarkingConfig = StakingBenchmarkingConfig;
-	type WeightInfo = PayoutStakersDecreasedWeightInfo;
-	type CurrencyBalance = Balance;
-	type HistoryDepth = HistoryDepth;
-	type TargetList = pallet_staking::UseValidatorsMap<Self>;
-	type AdminOrigin = EnsureRoot<AccountId>;
-	type EventListeners = ();
+    // Do not change this!!! It guarantees that we have DPoS instead of NPoS.
+    type Currency = Balances;
+    type UnixTime = Timestamp;
+    type CurrencyToVote = U128CurrencyToVote;
+    type ElectionProvider = Elections;
+    type GenesisElectionProvider = Elections;
+    type NominationsQuota = pallet_staking::FixedNominationsQuota<MAX_NOMINATORS>;
+    type RewardRemainder = (); //Treasury
+    type RuntimeEvent = RuntimeEvent;
+    type Slash = (); //Treasury
+    type Reward = ();
+    type SessionsPerEra = SessionsPerEra;
+    type BondingDuration = BondingDuration;
+    type SlashDeferDuration = SlashDeferDuration;
+    type SessionInterface = Self;
+    type EraPayout = ExponentialEraPayout;
+    type NextNewSession = Session;
+    type MaxExposurePageSize = MaxExposurePageSize;
+    type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
+    type VoterList = pallet_staking::UseNominatorsAndValidatorsMap<Runtime>;
+    type MaxUnlockingChunks = ConstU32<16>;
+    type MaxControllersInDeprecationBatch = ConstU32<4084>;
+    type BenchmarkingConfig = StakingBenchmarkingConfig;
+    type WeightInfo = PayoutStakersDecreasedWeightInfo;
+    type CurrencyBalance = Balance;
+    type HistoryDepth = HistoryDepth;
+    type TargetList = pallet_staking::UseValidatorsMap<Self>;
+    type AdminOrigin = EnsureRoot<AccountId>;
+    type EventListeners = ();
 }
 
 parameter_types! {

@@ -9,7 +9,7 @@ pub use abft_score::ScoreMetrics;
 pub use slo::{run_metrics_service, SloMetrics};
 pub use timing::{Checkpoint, DefaultClock};
 pub type TimingBlockMetrics = timing::TimingBlockMetrics<DefaultClock>;
-use substrate_prometheus_endpoint::{exponential_buckets, prometheus};
+use prometheus_endpoint::{exponential_buckets, prometheus};
 
 const LOG_TARGET: &str = "aleph-metrics";
 

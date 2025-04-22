@@ -3,7 +3,7 @@ use std::{default::Default, path::PathBuf, time::Duration};
 use futures::FutureExt;
 use futures_timer::Delay;
 use log::{debug, error, info, trace, warn};
-use primitives::AuthorityId;
+use selendra_primitives::AuthorityId;
 use tokio::{task::spawn_blocking, time::sleep};
 
 use crate::{
@@ -259,6 +259,7 @@ mod tests {
 		time::Duration,
 	};
 
+	use selendra_primitives::{AuthorityId, SessionAuthorityData};
 	use sp_runtime::testing::UintAuthorityId;
 	use tokio::{task::JoinHandle, time::sleep};
 
@@ -267,7 +268,6 @@ mod tests {
 			mocks::{MockChainState, MockNodeSessionManager},
 			ConsensusParty, ConsensusPartyParams, SESSION_STATUS_CHECK_PERIOD,
 		},
-		selendra_primitives::{AuthorityId, SessionAuthorityData},
 		session::SessionBoundaryInfo,
 		session_map::SharedSessionMap,
 		SessionId, SessionPeriod, SyncOracle,

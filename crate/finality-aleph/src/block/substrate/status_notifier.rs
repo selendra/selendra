@@ -2,11 +2,9 @@ use std::fmt::{Display, Error as FmtError, Formatter};
 
 use futures::{stream::FusedStream, StreamExt};
 use sc_client_api::client::{FinalityNotifications, ImportNotifications};
+use selendra_primitives::{Block, Header};
 
-use crate::{
-	block::{ChainStatusNotification, ChainStatusNotifier},
-	selendra_primitives::{Block, Header},
-};
+use crate::block::{ChainStatusNotification, ChainStatusNotifier};
 
 /// What can go wrong when waiting for next chain status notification.
 #[derive(Debug)]

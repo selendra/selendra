@@ -15,9 +15,9 @@ use sp_runtime::{traits::Header as HeaderT, Justification as SubstrateJustificat
 use crate::{
 	block::substrate::{Justification, JustificationTranslator, TranslateError},
 	justification::{backwards_compatible_decode, DecodeError},
-	selendra_primitives::{Block, BlockHash, BlockNumber, ALEPH_ENGINE_ID},
 	BlockId,
 };
+use selendra_primitives::{Block, BlockHash, BlockNumber, ALEPH_ENGINE_ID};
 
 /// Constructs block import specific for aleph consensus.
 pub fn get_aleph_block_import<I, SC>(

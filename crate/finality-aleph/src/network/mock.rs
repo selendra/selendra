@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use sc_keystore::LocalKeystore;
+use selendra_primitives::KEY_TYPE;
 use sp_keystore::Keystore as _;
 
 use crate::{
 	crypto::{AuthorityPen, AuthorityVerifier},
-	selendra_primitives::KEY_TYPE,
 	AuthorityId, NodeIndex,
 };
 

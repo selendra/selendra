@@ -30,12 +30,16 @@ use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, ConstU32};
-pub use sp_runtime::traits::{BlakeTwo256, Hash as HashT};
+use sp_core::crypto::KeyTypeId;
+pub use sp_runtime::{
+	generic,
+	traits::{BlakeTwo256, ConstU32, Header as HeaderT},
+	BoundedVec, ConsensusEngineId, OpaqueExtrinsic as UncheckedExtrinsic, Perbill,
+};
 use sp_runtime::{
-	generic, impl_opaque_keys,
-	traits::{Header as HeaderT, IdentifyAccount, Verify},
-	BoundedVec, ConsensusEngineId, MultiSignature, Perbill, Perquintill,
+	impl_opaque_keys,
+	traits::{IdentifyAccount, Verify},
+	MultiSignature, Perquintill,
 };
 pub use sp_staking::{EraIndex, SessionIndex};
 use sp_std::vec::Vec;
@@ -69,7 +73,10 @@ pub type AccountIndex = u32;
 /// Identifier for a chain. 32-bit should be plenty.
 pub type ChainId = u32;
 
-/// A hash of some data used by the relay chain.
+/// The hashing algorithm we use for everything.
+pub type Hashing = BlakeTwo256;
+
+/// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
 
 /// Index of a transaction in the relay chain. 32-bit should be plenty.
@@ -91,7 +98,7 @@ pub type SessionCount = u32;
 pub type BlockCount = u32;
 
 /// Header type.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+pub type Header = generic::Header<BlockNumber, Hashing>;
 /// Block type.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// Block ID.
@@ -100,10 +107,6 @@ pub type BlockId = generic::BlockId<Block>;
 /// Block Hash type
 pub type BlockHash = <Header as HeaderT>::Hash;
 
-/// Opaque, encoded, unchecked extrinsic.
-pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-
-/// Digest item type.
 pub type DigestItem = generic::DigestItem;
 
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"alp0");
@@ -144,6 +147,12 @@ pub const DEFAULT_SESSION_PERIOD: u32 = 30;
 #[cfg(feature = "short_session")]
 pub const DEFAULT_SESSIONS_PER_ERA: SessionIndex = 3;
 
+/// Gather ABFT score every SCORE_SUBMISSION_PERIOD rounds
+#[cfg(feature = "short_session")]
+pub const SCORE_SUBMISSION_PERIOD: u32 = 15;
+// --------------- Test build end  ---------------------
+
+// --------------- Production build ---------------------
 /// How many blocks is in single session
 #[cfg(not(feature = "short_session"))]
 pub const DEFAULT_SESSION_PERIOD: u32 = 900;
@@ -151,6 +160,10 @@ pub const DEFAULT_SESSION_PERIOD: u32 = 900;
 /// How many sessions is in single era
 #[cfg(not(feature = "short_session"))]
 pub const DEFAULT_SESSIONS_PER_ERA: SessionIndex = 96;
+
+/// Gather ABFT score every SCORE_SUBMISSION_PERIOD rounds
+#[cfg(not(feature = "short_session"))]
+pub const SCORE_SUBMISSION_PERIOD: u32 = 300;
 
 /// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 pub const ADDRESSES_ENCODING: u8 = 42;
@@ -171,7 +184,7 @@ pub const DEFAULT_FINALITY_VERSION: Version = 0;
 pub const CURRENT_FINALITY_VERSION: u16 = LEGACY_FINALITY_VERSION + 1;
 
 /// Legacy version of abft.
-pub const LEGACY_FINALITY_VERSION: u16 = 3;
+pub const LEGACY_FINALITY_VERSION: u16 = 4;
 
 /// Percentage of validator performance that is treated as 100% performance
 pub const LENIENT_THRESHOLD: Perquintill = Perquintill::from_percent(90);
@@ -189,8 +202,8 @@ pub const HEAP_PAGES: u64 = 4096;
 /// during session.
 #[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq)]
 pub struct SessionCommittee<T> {
-	pub finality_committee: Vec<T>,
-	pub block_producers: Vec<T>,
+	pub finalizers: Vec<T>,
+	pub producers: Vec<T>,
 }
 
 /// Openness of the process of the elections
@@ -233,9 +246,43 @@ pub trait FinalityCommitteeManager<T> {
 	fn on_next_session_finality_committee(committee: Vec<T>);
 }
 
+pub trait AbftScoresProvider {
+	fn scores_for_session(session_id: SessionIndex) -> Option<Score>;
+	fn clear_scores();
+	fn clear_nonce();
+}
+
 /// Configurable parameters for ban validator mechanism
 #[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct BanConfig {
+pub struct FinalityBanConfig {
+	/// Number representing how many rounds a parent of a head of an abft round is allowed to be behind the head.
+	pub minimal_expected_performance: u16,
+	/// How many bad sessions force validator to be removed from the committee
+	pub underperformed_session_count_threshold: SessionCount,
+	/// how many eras a validator is banned for
+	pub ban_period: EraIndex,
+	/// underperformed session counter is cleared every subsequent `clean_session_counter_delay` sessions
+	pub clean_session_counter_delay: SessionCount,
+}
+
+pub const DEFAULT_FINALITY_BAN_MINIMAL_EXPECTED_PERFORMANCE: u16 = 11;
+// The value of the following param effectively turns off bans and rewords.
+pub const DEFAULT_FINALITY_BAN_SESSION_COUNT_THRESHOLD: SessionCount = SessionCount::MAX;
+
+impl Default for FinalityBanConfig {
+	fn default() -> Self {
+		FinalityBanConfig {
+			minimal_expected_performance: DEFAULT_FINALITY_BAN_MINIMAL_EXPECTED_PERFORMANCE,
+			underperformed_session_count_threshold: DEFAULT_FINALITY_BAN_SESSION_COUNT_THRESHOLD,
+			ban_period: DEFAULT_BAN_PERIOD,
+			clean_session_counter_delay: DEFAULT_CLEAN_SESSION_COUNTER_DELAY,
+		}
+	}
+}
+
+/// Configurable parameters for ban validator mechanism related to block production
+#[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProductionBanConfig {
 	/// performance ratio threshold in a session
 	/// calculated as ratio of number of blocks produced to expected number of blocks for a single validator
 	pub minimal_expected_performance: Perbill,
@@ -252,9 +299,9 @@ pub const DEFAULT_BAN_SESSION_COUNT_THRESHOLD: SessionCount = 3;
 pub const DEFAULT_BAN_REASON_LENGTH: u32 = 300;
 pub const DEFAULT_MAX_WINNERS: u32 = u32::MAX;
 
-impl Default for BanConfig {
+impl Default for ProductionBanConfig {
 	fn default() -> Self {
-		BanConfig {
+		ProductionBanConfig {
 			minimal_expected_performance: DEFAULT_BAN_MINIMAL_EXPECTED_PERFORMANCE,
 			underperformed_session_count_threshold: DEFAULT_BAN_SESSION_COUNT_THRESHOLD,
 			clean_session_counter_delay: DEFAULT_CLEAN_SESSION_COUNTER_DELAY,
@@ -266,9 +313,11 @@ impl Default for BanConfig {
 /// Represent any possible reason a validator can be removed from the committee due to
 #[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, Debug)]
 pub enum BanReason {
-	/// Validator has been removed from the committee due to insufficient uptime in a given number
-	/// of sessions
-	InsufficientUptime(u32),
+	/// Validator has been removed from the committee due to insufficient production in a given number of sessions
+	InsufficientProduction(u32),
+
+	/// Validator has been removed from the committee due to insufficient abft performance in a given number of sessions
+	InsufficientFinalization(u32),
 
 	/// Any arbitrary reason
 	OtherReason(BoundedVec<u8, ConstU32<DEFAULT_BAN_REASON_LENGTH>>),
@@ -284,7 +333,7 @@ pub struct BanInfo {
 }
 
 /// Represent committee, ie set of nodes that produce and finalize blocks in the session
-#[derive(Eq, PartialEq, Decode, Encode, TypeInfo)]
+#[derive(Eq, Clone, PartialEq, Decode, Encode, TypeInfo)]
 pub struct EraValidators<AccountId> {
 	/// Validators that are chosen to be in committee every single session.
 	pub reserved: Vec<AccountId>,
@@ -309,7 +358,7 @@ pub enum SessionValidatorError {
 	Other(Vec<u8>),
 }
 
-/// All the data needed to verify block finalization justifications.
+/// All the data needed to verify block finality justifications.
 #[derive(Clone, Debug, TypeInfo, Encode, Decode, PartialEq, Eq)]
 pub struct SessionAuthorityData {
 	authorities: Vec<AuthorityId>,
@@ -354,13 +403,14 @@ pub trait ValidatorProvider {
 
 #[derive(Decode, Encode, TypeInfo, Clone, Serialize, Deserialize)]
 pub struct SessionValidators<T> {
-	pub committee: Vec<T>,
+	pub producers: Vec<T>,
+	pub finalizers: Vec<T>,
 	pub non_committee: Vec<T>,
 }
 
 impl<T> Default for SessionValidators<T> {
 	fn default() -> Self {
-		Self { committee: Vec::new(), non_committee: Vec::new() }
+		Self { producers: Vec::new(), finalizers: Vec::new(), non_committee: Vec::new() }
 	}
 }
 
@@ -381,29 +431,18 @@ pub trait EraManager {
 	fn on_new_era(era: EraIndex);
 }
 
-pub mod staking {
-	use sp_runtime::Perbill;
+/// Provides the current total issuance.
+pub trait TotalIssuanceProvider {
+	/// Get the current total issuance.
+	fn get() -> Balance;
+}
 
-	use super::Balance;
+pub mod staking {
 	use crate::constants::currency::TOKEN;
 
 	pub const MIN_VALIDATOR_BOND: u128 = 10_000 * TOKEN;
 	pub const MIN_NOMINATOR_BOND: u128 = 100 * TOKEN;
 	pub const MAX_NOMINATORS_REWARDED_PER_VALIDATOR: u32 = 1024;
-	pub const YEARLY_INFLATION: Balance = 21_000_000 * TOKEN;
-	pub const VALIDATOR_REWARD: Perbill = Perbill::from_percent(90);
-
-	pub fn era_payout(miliseconds_per_era: u64) -> (Balance, Balance) {
-		// Milliseconds per year for the Julian year (365.25 days).
-		const MILLISECONDS_PER_YEAR: u64 = 1000 * 3600 * 24 * 36525 / 100;
-
-		let portion = Perbill::from_rational(miliseconds_per_era, MILLISECONDS_PER_YEAR);
-		let total_payout = portion * YEARLY_INFLATION;
-		let validators_payout = VALIDATOR_REWARD * total_payout;
-		let rest = total_payout - validators_payout;
-
-		(validators_payout, rest)
-	}
 
 	/// Macro for making a default implementation of non-self methods from given class.
 	///
@@ -433,4 +472,100 @@ pub mod staking {
             )*
         };
     }
+}
+
+pub type ScoreNonce = u32;
+
+pub type RawScore = Vec<u16>;
+
+#[derive(PartialEq, Decode, Encode, TypeInfo, Debug, Clone)]
+pub struct Score {
+	pub session_id: SessionIndex,
+	pub nonce: ScoreNonce,
+	pub points: RawScore,
+}
+
+pub mod crypto {
+	use core::marker::PhantomData;
+
+	use parity_scale_codec::{Decode, Encode};
+	use scale_info::TypeInfo;
+	use sp_runtime::RuntimeAppPublic;
+	use sp_std::vec::Vec;
+
+	use super::AuthoritySignature;
+
+	#[derive(PartialEq, Decode, Encode, TypeInfo, Debug, Clone)]
+	pub struct IndexedSignature<S> {
+		pub index: u64,
+		pub signature: S,
+	}
+
+	#[derive(PartialEq, Decode, Encode, TypeInfo, Debug, Clone)]
+	pub struct SignatureSet<S>(pub Vec<IndexedSignature<S>>);
+
+	#[cfg_attr(feature = "std", derive(Hash))]
+	#[derive(PartialEq, Eq, Clone, Debug, Decode, Encode, TypeInfo)]
+	pub struct Signature(pub AuthoritySignature);
+
+	impl From<AuthoritySignature> for Signature {
+		fn from(authority_signature: AuthoritySignature) -> Signature {
+			Signature(authority_signature)
+		}
+	}
+
+	impl From<Signature> for AuthoritySignature {
+		fn from(signature: Signature) -> AuthoritySignature {
+			signature.0
+		}
+	}
+
+	/// Holds the public authority keys for a session allowing for verification of messages from that
+	/// session.
+	#[derive(PartialEq, Clone, Debug, Default, Decode, Encode, TypeInfo)]
+	pub struct AuthorityVerifier<AID, S> {
+		authorities: Vec<AID>,
+		_phantom: PhantomData<S>,
+	}
+
+	impl<AID: RuntimeAppPublic<Signature = S>, S> AuthorityVerifier<AID, S> {
+		/// Constructs a new authority verifier from a set of public keys.
+		pub fn new(authorities: Vec<AID>) -> Self {
+			AuthorityVerifier { authorities, _phantom: PhantomData }
+		}
+
+		/// Verifies whether the message is correctly signed with the signature assumed to be made by a
+		/// node of the given index.
+		pub fn verify(&self, msg: &Vec<u8>, sgn: &S, index: u64) -> bool {
+			match self.authorities.get(index as usize) {
+				Some(authority) => authority.verify(msg, sgn),
+				None => false,
+			}
+		}
+
+		pub fn node_count(&self) -> usize {
+			self.authorities.len()
+		}
+
+		fn threshold(&self) -> usize {
+			2 * self.node_count() / 3 + 1
+		}
+
+		/// Verifies whether the given signature set is a correct and complete multisignature of the
+		/// message. Completeness requires more than 2/3 of all authorities.
+		pub fn is_complete(
+			verifier: &AuthorityVerifier<AID, S>,
+			msg: &Vec<u8>,
+			partial: &SignatureSet<S>,
+		) -> bool {
+			let signature_count = partial.0.len();
+			if signature_count < verifier.threshold() {
+				return false;
+			}
+			partial
+				.0
+				.iter()
+				.all(|i_sgn| verifier.verify(msg, &i_sgn.signature, i_sgn.index))
+		}
+	}
 }

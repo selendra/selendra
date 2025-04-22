@@ -7,6 +7,9 @@ use futures::{
 	StreamExt,
 };
 use log::{debug, error, trace};
+use selendra_primitives::{
+	crypto::SignatureSet as PrimitivesSignatureSet, AuthoritySignature, BlockHash, Hash,
+};
 use tokio::time;
 
 use crate::{
@@ -23,9 +26,6 @@ use crate::{
 	party::{
 		manager::aggregator::AggregatorVersion::{Current, Legacy},
 		AuthoritySubtaskCommon, Task, LOG_TARGET,
-	},
-	selendra_primitives::{
-		crypto::SignatureSet as PrimitivesSignatureSet, AuthoritySignature, BlockHash, Hash,
 	},
 	sync::JustificationSubmissions,
 	BlockId, CurrentRmcNetworkData, Keychain, LegacyRmcNetworkData, SessionBoundaries,

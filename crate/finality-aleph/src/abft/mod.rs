@@ -29,7 +29,7 @@ pub use legacy::{
 };
 pub use network::NetworkWrapper;
 use parity_scale_codec::{Decode, Encode};
-use primitives::{
+use selendra_primitives::{
 	crypto::{IndexedSignature, SignatureSet as PrimitivesSignatureSet},
 	AuthoritySignature,
 };

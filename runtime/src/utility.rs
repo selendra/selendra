@@ -150,7 +150,6 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 					| RuntimeCall::Session(..)
 					| RuntimeCall::Utility(..)
 					| RuntimeCall::Multisig(..)
-					| RuntimeCall::Identity(..)
 					| RuntimeCall::Recovery(pallet_recovery::Call::as_recovered { .. })
 					| RuntimeCall::Recovery(pallet_recovery::Call::vouch_recovery { .. })
 					| RuntimeCall::Recovery(pallet_recovery::Call::claim_recovery { .. })

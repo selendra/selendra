@@ -1,27 +1,26 @@
-use frame_support::pallet_prelude::Get;
 use log::info;
 use parity_scale_codec::Encode;
-use rand::{seq::SliceRandom, SeedableRng};
-use rand_pcg::Pcg32;
 use selendra_primitives::{
-	BanHandler, BanInfo, BanReason, BannedValidators, CommitteeSeats, EraValidators,
-	SessionCommittee, SessionValidatorError, SessionValidators, ValidatorProvider,
+	AbftScoresProvider, BanHandler, BanInfo, BanReason, BannedValidators, CommitteeSeats,
+	EraValidators, SessionCommittee, SessionValidatorError, SessionValidators, ValidatorProvider,
 };
-use sp_runtime::{Perbill, Perquintill};
+use sp_runtime::{traits::Get, Perbill, Perquintill};
 use sp_staking::{EraIndex, SessionIndex};
 use sp_std::{
 	collections::{btree_map::BTreeMap, btree_set::BTreeSet},
+	vec,
 	vec::Vec,
 };
 
 use crate::{
 	pallet::{
-		BanConfig, Banned, Config, CurrentAndNextSessionValidatorsStorage, Event, Pallet,
-		SessionValidatorBlockCount, UnderperformedValidatorSessionCount, ValidatorEraTotalReward,
+		Banned, Config, CurrentAndNextSessionValidatorsStorage, Event, Pallet,
+		SessionValidatorBlockCount, UnderperformedFinalizerSessionCount,
+		UnderperformedValidatorSessionCount, ValidatorEraTotalReward,
 	},
 	traits::{EraInfoProvider, ValidatorRewardsHandler},
-	BanConfigStruct, CurrentAndNextSessionValidators, LenientThreshold, ValidatorExtractor,
-	ValidatorTotalRewards, LOG_TARGET,
+	CurrentAndNextSessionValidators, LenientThreshold, ProductionBanConfigStruct,
+	ValidatorExtractor, ValidatorTotalRewards, LOG_TARGET,
 };
 
 const MAX_REWARD: u32 = 1_000_000_000;
@@ -31,7 +30,7 @@ impl<T: Config> BannedValidators for Pallet<T> {
 
 	fn banned() -> Vec<Self::AccountId> {
 		let active_era = T::EraInfoProvider::active_era().unwrap_or(0);
-		let ban_period = BanConfig::<T>::get().ban_period;
+		let ban_period = Self::production_ban_config().ban_period;
 
 		Banned::<T>::iter()
 			.filter(|(_, info)| !ban_expired(info.start, ban_period, active_era + 1))
@@ -54,17 +53,6 @@ fn choose_for_session<T: Clone>(validators: &[T], count: usize, session: usize) 
 	}
 
 	Some(chosen)
-}
-
-fn shuffle_order_for_session<T>(
-	producers: &mut Vec<T>,
-	validators: &mut Vec<T>,
-	session: SessionIndex,
-) {
-	let mut rng = Pcg32::seed_from_u64(session as u64);
-
-	producers.shuffle(&mut rng);
-	validators.shuffle(&mut rng);
 }
 
 /// Choose all items from `reserved` if present and extend it by #`non_reserved_seats` from
@@ -104,24 +92,21 @@ fn select_committee_inner<AccountId: Clone + PartialEq>(
 	let non_reserved_committee =
 		choose_for_session(non_reserved, non_reserved_seats, current_session as usize);
 
-	let mut finality_committee = choose_finality_committee(
+	let finalizers = choose_finality_committee(
 		&reserved_committee,
 		&non_reserved_committee,
 		non_reserved_finality_seats,
 		current_session as usize,
 	);
 
-	let mut block_producers = match (reserved_committee, non_reserved_committee) {
+	let producers = match (reserved_committee, non_reserved_committee) {
 		(Some(rc), Some(nrc)) => Some(rc.into_iter().chain(nrc.into_iter()).collect()),
 		(Some(rc), _) => Some(rc),
 		(_, Some(nrc)) => Some(nrc),
 		_ => None,
 	}?;
 
-	// randomize order of the producers and committee
-	shuffle_order_for_session(&mut block_producers, &mut finality_committee, current_session);
-
-	Some(SessionCommittee { block_producers, finality_committee })
+	Some(SessionCommittee { producers, finalizers })
 }
 
 fn calculate_adjusted_session_points(
@@ -175,7 +160,7 @@ impl<T: Config> Pallet<T> {
 		ValidatorEraTotalReward::<T>::put(ValidatorTotalRewards(scaled_totals.collect()));
 	}
 
-	fn reward_for_session_non_committee(
+	fn rewards_for_session_non_committee(
 		non_committee: Vec<T::AccountId>,
 		nr_of_sessions: SessionIndex,
 		blocks_per_session: u32,
@@ -197,37 +182,42 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	fn reward_for_session_committee(
-		committee: Vec<T::AccountId>,
+	fn rewards_for_session_committee(
+		producers: Vec<T::AccountId>,
 		nr_of_sessions: SessionIndex,
 		blocks_per_session: u32,
 		validator_totals: &BTreeMap<T::AccountId, u32>,
 		threshold: Perquintill,
+		underperf_finalizers: BTreeSet<T::AccountId>,
 	) -> impl IntoIterator<Item = (T::AccountId, u32)> + '_ {
-		committee.into_iter().map(move |validator| {
+		producers.into_iter().map(move |validator| {
 			let total = BTreeMap::<_, _>::get(validator_totals, &validator).unwrap_or(&0);
 			let blocks_created = SessionValidatorBlockCount::<T>::get(&validator);
-			(
-				validator,
-				calculate_adjusted_session_points(
-					nr_of_sessions,
-					blocks_per_session,
-					blocks_created,
-					*total,
-					threshold,
-				),
-			)
+			let production_points = calculate_adjusted_session_points(
+				nr_of_sessions,
+				blocks_per_session,
+				blocks_created,
+				*total,
+				threshold,
+			);
+
+			let points = match underperf_finalizers.contains(&validator) {
+				true => 0,
+				false => production_points,
+			};
+
+			(validator, points)
 		})
 	}
 
-	fn blocks_to_produce_per_session() -> u32 {
+	pub(crate) fn blocks_to_produce_per_session() -> u32 {
 		T::SessionPeriod::get()
 			.saturating_div(T::ValidatorProvider::current_era_committee_size().size())
 	}
 
-	pub fn adjust_rewards_for_session() {
+	pub fn adjust_rewards_for_session(underperf_finalizers: Vec<T::AccountId>) {
 		let CurrentAndNextSessionValidators {
-			current: SessionValidators { committee, non_committee },
+			current: SessionValidators { producers, non_committee, .. },
 			..
 		} = CurrentAndNextSessionValidatorsStorage::<T>::get();
 		let nr_of_sessions = T::EraInfoProvider::sessions_per_era();
@@ -238,7 +228,7 @@ impl<T: Config> Pallet<T> {
 
 		let lenient_threshold = LenientThreshold::<T>::get();
 
-		let rewards = Self::reward_for_session_non_committee(
+		let rewards = Self::rewards_for_session_non_committee(
 			non_committee,
 			nr_of_sessions,
 			blocks_per_session,
@@ -246,35 +236,40 @@ impl<T: Config> Pallet<T> {
 			lenient_threshold,
 		)
 		.into_iter()
-		.chain(Self::reward_for_session_committee(
-			committee,
+		.chain(Self::rewards_for_session_committee(
+			producers,
 			nr_of_sessions,
 			blocks_per_session,
 			&validator_total_rewards,
 			lenient_threshold,
+			underperf_finalizers.into_iter().collect(),
 		));
 
 		T::ValidatorRewardsHandler::add_rewards(rewards);
 	}
 
 	fn store_session_validators(
-		committee: &[T::AccountId],
+		producers: &[T::AccountId],
+		finalizers: &[T::AccountId],
 		reserved: Vec<T::AccountId>,
 		non_reserved: Vec<T::AccountId>,
 	) {
-		let committee: BTreeSet<T::AccountId> = committee.iter().cloned().collect();
+		let producers_set: BTreeSet<T::AccountId> = producers.iter().cloned().collect();
 
 		let non_committee = non_reserved
 			.into_iter()
 			.chain(reserved)
-			.filter(|a| !committee.contains(a))
+			.filter(|a| !producers_set.contains(a))
 			.collect();
 
 		let mut session_validators = CurrentAndNextSessionValidatorsStorage::<T>::get();
 
 		session_validators.current = session_validators.next;
-		session_validators.next =
-			SessionValidators { committee: committee.into_iter().collect(), non_committee };
+		session_validators.next = SessionValidators {
+			producers: producers.to_vec(),
+			finalizers: finalizers.to_vec(),
+			non_committee,
+		};
 
 		CurrentAndNextSessionValidatorsStorage::<T>::put(session_validators);
 	}
@@ -312,7 +307,8 @@ impl<T: Config> Pallet<T> {
 
 		if let Some(c) = &committee {
 			Self::store_session_validators(
-				&c.block_producers,
+				&c.producers,
+				&c.finalizers,
 				era_validators.reserved,
 				era_validators.non_reserved,
 			);
@@ -321,14 +317,53 @@ impl<T: Config> Pallet<T> {
 		committee
 	}
 
-	pub(crate) fn calculate_underperforming_validators() {
-		let thresholds = BanConfig::<T>::get();
+	pub(crate) fn calculate_underperforming_finalizers(
+		session_id: SessionIndex,
+	) -> Vec<T::AccountId> {
 		let CurrentAndNextSessionValidators {
-			current: SessionValidators { committee: current_committee, .. },
-			..
+			current: SessionValidators { finalizers, .. }, ..
+		} = CurrentAndNextSessionValidatorsStorage::<T>::get();
+
+		let finality_ban_config = Self::finality_ban_config();
+		let underperformed_session_count_threshold =
+			finality_ban_config.underperformed_session_count_threshold;
+		let minimal_expected_performance = finality_ban_config.minimal_expected_performance;
+
+		let is_underperforming = |score| score > minimal_expected_performance;
+
+		let finalizers_perf = T::AbftScoresProvider::scores_for_session(session_id)
+			.map(|score| score.points)
+			.unwrap_or(vec![minimal_expected_performance; finalizers.len()])
+			.into_iter()
+			.map(is_underperforming);
+
+		let mut underperf_finalizers = Vec::new();
+		for (underperf, validator) in finalizers_perf.zip(finalizers.iter()) {
+			if underperf {
+				underperf_finalizers.push(validator.clone());
+				let counter =
+					UnderperformedFinalizerSessionCount::<T>::mutate(validator, |count| {
+						*count += 1;
+						*count
+					});
+				if counter >= underperformed_session_count_threshold {
+					let reason = BanReason::InsufficientFinalization(counter);
+					Self::ban_validator(validator, reason);
+					UnderperformedFinalizerSessionCount::<T>::remove(validator);
+				}
+			}
+		}
+
+		underperf_finalizers
+	}
+
+	pub(crate) fn calculate_underperforming_validators() {
+		let thresholds = Self::production_ban_config();
+		let CurrentAndNextSessionValidators {
+			current: SessionValidators { producers, .. }, ..
 		} = CurrentAndNextSessionValidatorsStorage::<T>::get();
 		let expected_blocks_per_validator = Self::blocks_to_produce_per_session();
-		for validator in current_committee {
+		for validator in producers {
 			let underperformance = match SessionValidatorBlockCount::<T>::try_get(&validator) {
 				Ok(block_count) => {
 					Perbill::from_rational(block_count, expected_blocks_per_validator)
@@ -342,20 +377,23 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn mark_validator_underperformance(thresholds: &BanConfigStruct, validator: &T::AccountId) {
+	pub(crate) fn mark_validator_underperformance(
+		thresholds: &ProductionBanConfigStruct,
+		validator: &T::AccountId,
+	) {
 		let counter = UnderperformedValidatorSessionCount::<T>::mutate(validator, |count| {
 			*count += 1;
 			*count
 		});
 		if counter >= thresholds.underperformed_session_count_threshold {
-			let reason = BanReason::InsufficientUptime(counter);
+			let reason = BanReason::InsufficientProduction(counter);
 			Self::ban_validator(validator, reason);
 			UnderperformedValidatorSessionCount::<T>::remove(validator);
 		}
 	}
 
 	pub(crate) fn clear_underperformance_session_counter(session: SessionIndex) {
-		let clean_session_counter_delay = BanConfig::<T>::get().clean_session_counter_delay;
+		let clean_session_counter_delay = Self::production_ban_config().clean_session_counter_delay;
 		if session % clean_session_counter_delay == 0 {
 			info!(
 				target: LOG_TARGET,
@@ -363,10 +401,19 @@ impl<T: Config> Pallet<T> {
 			);
 			let _result = UnderperformedValidatorSessionCount::<T>::clear(u32::MAX, None);
 		}
+		let clean_session_counter_delay = Self::finality_ban_config().clean_session_counter_delay;
+		if session % clean_session_counter_delay == 0 {
+			info!(
+				target: LOG_TARGET,
+				"Clearing UnderperformedFinalizerSessionCount"
+			);
+			let _result = UnderperformedFinalizerSessionCount::<T>::clear(u32::MAX, None);
+			T::AbftScoresProvider::clear_scores();
+		}
 	}
 
 	pub fn clear_expired_bans(active_era: EraIndex) {
-		let ban_period = BanConfig::<T>::get().ban_period;
+		let ban_period = Self::production_ban_config().ban_period;
 		let unban = Banned::<T>::iter().filter_map(|(v, ban_info)| {
 			if ban_expired(ban_info.start, ban_period, active_era) {
 				return Some(v);
@@ -563,7 +610,7 @@ mod tests {
 					&non_reserved,
 				)
 				.expect("Expected non-empty rotated committee!")
-				.block_producers,
+				.producers,
 			);
 
 			assert_eq!(expected_committee, committee,);

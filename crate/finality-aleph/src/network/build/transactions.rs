@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use prometheus_endpoint::Registry;
 use sc_client_api::Backend;
 use sc_network::{
 	config::{FullNetworkConfiguration, ProtocolId},
@@ -11,7 +12,6 @@ use sc_network_transactions::{TransactionsHandlerController, TransactionsHandler
 use sc_service::{SpawnTaskHandle, TransactionPoolAdapter};
 use sc_transaction_pool_api::TransactionPool;
 use sp_runtime::traits::Block;
-use substrate_prometheus_endpoint::Registry;
 
 use crate::{network::build::SPAWN_CATEGORY, BlockHash, ClientForAleph};
 

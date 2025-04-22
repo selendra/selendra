@@ -11,9 +11,9 @@ use pallet_transaction_payment::FeeDetails;
 use pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo;
 
 use selendra_primitives::{
-	AccountId, ApiError as AlephApiError, AuraId, AuthorityId as AlephId, Balance, Block, Nonce,
-	SessionAuthorityData, SessionCommittee, SessionIndex, SessionValidatorError,
-	Version as FinalityVersion,
+	crypto::SignatureSet, AccountId, ApiError as AlephApiError, AuraId, AuthorityId as AlephId,
+	AuthoritySignature, Balance, Block, Nonce, Perbill, Score, SessionAuthorityData,
+	SessionCommittee, SessionIndex, SessionValidatorError, Version as FinalityVersion,
 };
 
 use fp_rpc::TransactionStatus;

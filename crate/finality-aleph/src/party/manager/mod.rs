@@ -6,6 +6,9 @@ use log::{debug, info, trace, warn};
 use network_clique::SpawnHandleExt;
 use pallet_aleph_runtime_api::AlephSessionApi;
 use sc_keystore::{Keystore, LocalKeystore};
+use selendra_primitives::{
+	crypto::SignatureSet, AuthoritySignature, BlockHash, BlockNumber, Hash, KEY_TYPE,
+};
 use sp_application_crypto::RuntimeAppPublic;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 
@@ -34,9 +37,6 @@ use crate::{
 		LOG_TARGET,
 	},
 	runtime_api::RuntimeApi,
-	selendra_primitives::{
-		crypto::SignatureSet, AuthoritySignature, BlockHash, BlockNumber, Hash, KEY_TYPE,
-	},
 	sync::JustificationSubmissions,
 	AuthorityId, BlockId, CurrentRmcNetworkData, Keychain, LegacyRmcNetworkData, NodeIndex,
 	ProvideRuntimeApi, SessionBoundaries, SessionBoundaryInfo, SessionId, SessionPeriod,

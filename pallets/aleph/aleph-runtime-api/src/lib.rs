@@ -2,8 +2,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use selendra_primitives::{
-	AccountId, ApiError, AuthorityId, SessionAuthorityData, SessionCommittee, SessionIndex,
-	SessionValidatorError, Version,
+	crypto::SignatureSet, AccountId, ApiError, AuthorityId, AuthoritySignature, Balance, Perbill,
+	Score, SessionAuthorityData, SessionCommittee, SessionIndex, SessionValidatorError, Version,
 };
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_std::vec::Vec;
@@ -18,6 +18,7 @@ sp_api::decl_runtime_apis! {
 		fn millisecs_per_block() -> u64;
 		fn finality_version() -> Version;
 		fn next_session_finality_version() -> Version;
+		fn score_submission_period() -> u32;
 		/// Predict finality committee and block producers for the given session. `session` must be
 		/// within the current era (current, in the staking context).
 		///
@@ -33,5 +34,11 @@ sp_api::decl_runtime_apis! {
 		/// also as `aleph_key` - consensus engine's part of session keys) in the current session
 		/// of AlephBFT (finalisation committee).
 		fn key_owner(key: AuthorityId) -> Option<AccountId>;
+		/// Returns inflation from now to now + 1 year. Capped at 100%
+		fn yearly_inflation() -> Perbill;
+		/// Returns payout. First tuple item is a validators payout, 2nd is the rest.
+		fn current_era_payout() -> (Balance, Balance);
+		/// Submits score for a nonce in a session of performance of finality committee members.
+		fn submit_abft_score(score: Score, signature: SignatureSet<AuthoritySignature>) -> Option<()>;
 	}
 }

@@ -9,13 +9,13 @@ use derive_more::{AsRef, Display};
 use log::info;
 use network_clique::{Dialer, Listener, PeerId, PublicKey, SecretKey};
 use parity_scale_codec::{Decode, Encode};
+use selendra_primitives::AuthorityId;
 use sp_core::crypto::KeyTypeId;
 use tokio::net::{TcpListener, TcpStream, ToSocketAddrs};
 
 use crate::{
 	crypto::{verify, AuthorityPen, Signature},
 	network::{AddressingInformation, NetworkIdentity},
-	selendra_primitives::AuthorityId,
 };
 
 const LOG_TARGET: &str = "tcp-network";

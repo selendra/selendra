@@ -1,9 +1,9 @@
 use futures::{Stream, StreamExt};
 use log::warn;
 use parity_scale_codec::Encode;
-use primitives::Block;
+use prometheus_endpoint::Registry;
+use selendra_primitives::Block;
 use sp_runtime::traits::Block as _;
-use substrate_prometheus_endpoint::Registry;
 
 use super::{finality_rate::FinalityRateMetrics, timing::DefaultClock};
 use crate::{

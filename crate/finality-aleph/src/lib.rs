@@ -9,18 +9,17 @@ use futures::{
 	Future,
 };
 use parity_scale_codec::{Decode, Encode, Output};
-use primitives as selendra_primitives;
-use primitives::{AuthorityId, Block as AlephBlock, BlockHash, BlockNumber};
+use prometheus_endpoint::Registry;
 use sc_client_api::{
 	Backend, BlockBackend, BlockchainEvents, Finalizer, LockImportRun, ProofProvider,
 	StorageProvider,
 };
 use sc_consensus::BlockImport;
 use sc_keystore::LocalKeystore;
+use selendra_primitives::{AuthorityId, Block as AlephBlock, BlockHash, BlockNumber};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::{BlakeTwo256, Block};
-use substrate_prometheus_endpoint::Registry;
 use tokio::time::Duration;
 
 use crate::{
