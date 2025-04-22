@@ -1,12 +1,12 @@
 use std::{
-	fmt::{Debug, Display},
-	hash::Hash,
-	marker::Send,
+    fmt::{Debug, Display},
+    hash::Hash,
+    marker::Send,
 };
 
 use crate::{
-	block::{Justification, UnverifiedHeader},
-	BlockId,
+    block::{Justification, UnverifiedHeader},
+    BlockId,
 };
 
 mod data;
@@ -37,19 +37,19 @@ impl<T: Debug + Clone + Hash + Eq> PeerId for T {}
 /// The block corresponding to the submitted `Justification` MUST be obtained and
 /// imported into the Substrate database by the user, as soon as possible.
 pub trait JustificationSubmissions<J: Justification>: Clone + Send + 'static {
-	type Error: Display;
+    type Error: Display;
 
-	/// Submit a justification to the underlying justification sync.
-	fn submit(&mut self, justification: J::Unverified) -> Result<(), Self::Error>;
+    /// Submit a justification to the underlying justification sync.
+    fn submit(&mut self, justification: J::Unverified) -> Result<(), Self::Error>;
 }
 
 /// An interface for requesting specific blocks from the block sync.
 /// Required by the data availability mechanism in ABFT.
 pub trait RequestBlocks<UH: UnverifiedHeader>: Clone + Send + Sync + 'static {
-	type Error: Display;
+    type Error: Display;
 
-	/// Request the given block.
-	fn request_block(&self, header: UH) -> Result<(), Self::Error>;
+    /// Request the given block.
+    fn request_block(&self, header: UH) -> Result<(), Self::Error>;
 }
 
 #[cfg(test)]

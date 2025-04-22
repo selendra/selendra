@@ -1,0 +1,23 @@
+[package]
+name = "pallet-aleph-runtime-api"
+version = "0.1.0"
+license = "Apache 2.0"
+edition.workspace = true
+authors = ["Cardinal", "Aleph Zero Foundation"]
+homepage = "https://alephzero.org"
+repository = "https://github.com/Cardinal-Cryptography/aleph-node"
+
+[dependencies]
+sp-api = { workspace = true }
+sp-std = { workspace = true }
+sp-consensus-aura = { workspace = true }
+
+primitives = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+    "sp-api/std",
+    "sp-std/std",
+    "primitives/std",
+]

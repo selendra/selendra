@@ -1,15 +1,18 @@
 [package]
 name = "network-clique"
 version = "0.6.0"
+edition.workspace = true
 license = "Apache 2.0"
 authors = ["Cardinal", "Aleph Zero Foundation"]
-edition.workspace = true
+homepage = "https://alephzero.org"
+repository = "https://github.com/Cardinal-Cryptography/aleph-node"
 
 [dependencies]
+rate-limiter = { workspace = true }
+
 async-trait = { workspace = true }
 bytes = { workspace = true }
 parity-scale-codec = { workspace = true, features = ["std", "derive"] }
-derive_more = { workspace = true }
 env_logger = { workspace = true }
 futures = { workspace = true }
 futures-timer = { workspace = true }
@@ -19,7 +22,7 @@ log = { workspace = true }
 lru = { workspace = true }
 rand = { workspace = true }
 serde = { workspace = true }
-prometheus-endpoint = { workspace = true }
+substrate-prometheus-endpoint = { workspace = true }
 tiny-bip39 = { workspace = true }
 tokio = { workspace = true, features = [
     "sync",
@@ -29,8 +32,6 @@ tokio = { workspace = true, features = [
     "io-util",
     "net",
 ] }
-
-rate-limiter = { workspace = true }
 
 [dev-dependencies]
 aleph-bft-types = { workspace = true }

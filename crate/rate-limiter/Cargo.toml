@@ -1,8 +1,11 @@
 [package]
 name = "rate-limiter"
 version = "0.1.0"
-authors = ["Cardinal", "Aleph Zero Foundation"]
 edition.workspace = true
+license = "Apache 2.0"
+authors = ["Cardinal", "Aleph Zero Foundation"]
+homepage = "https://alephzero.org"
+repository = "https://github.com/Cardinal-Cryptography/aleph-node"
 
 [dependencies]
 futures = { workspace = true }

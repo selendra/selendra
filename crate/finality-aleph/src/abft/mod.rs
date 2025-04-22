@@ -19,19 +19,19 @@ use std::fmt::Debug;
 use aleph_bft_crypto::{PartialMultisignature, Signature as AbftSignature};
 pub use crypto::Keychain;
 pub use current::{
-	create_aleph_config as current_create_aleph_config, run_member as run_current_member,
-	NetworkData as CurrentNetworkData, PerformanceService as CurrentPerformanceService,
-	PerformanceServiceIO as CurrentPerformanceServiceIO, VERSION as CURRENT_VERSION,
+    create_aleph_config as current_create_aleph_config, run_member as run_current_member,
+    NetworkData as CurrentNetworkData, PerformanceService as CurrentPerformanceService,
+    PerformanceServiceIO as CurrentPerformanceServiceIO, VERSION as CURRENT_VERSION,
 };
 pub use legacy::{
-	create_aleph_config as legacy_create_aleph_config, run_member as run_legacy_member,
-	NetworkData as LegacyNetworkData, VERSION as LEGACY_VERSION,
+    create_aleph_config as legacy_create_aleph_config, run_member as run_legacy_member,
+    NetworkData as LegacyNetworkData, VERSION as LEGACY_VERSION,
 };
 pub use network::NetworkWrapper;
 use parity_scale_codec::{Decode, Encode};
-use selendra_primitives::{
-	crypto::{IndexedSignature, SignatureSet as PrimitivesSignatureSet},
-	AuthoritySignature,
+use primitives::{
+    crypto::{IndexedSignature, SignatureSet as PrimitivesSignatureSet},
+    AuthoritySignature,
 };
 pub use traits::{SpawnHandle, Wrapper as HashWrapper};
 pub use types::{NodeCount, NodeIndex, Recipient};
@@ -48,59 +48,62 @@ const LOG_TARGET: &str = "aleph-abft";
 pub struct SignatureSet<Signature>(pub aleph_bft_crypto::SignatureSet<Signature>);
 
 impl<S: Clone> SignatureSet<S> {
-	pub fn size(&self) -> NodeCount {
-		self.0.size().into()
-	}
+    pub fn size(&self) -> NodeCount {
+        self.0.size().into()
+    }
 
-	pub fn with_size(len: NodeCount) -> Self {
-		SignatureSet(aleph_bft_crypto::SignatureSet::with_size(len.into()))
-	}
+    pub fn with_size(len: NodeCount) -> Self {
+        SignatureSet(aleph_bft_crypto::SignatureSet::with_size(len.into()))
+    }
 
-	pub fn iter(&self) -> impl Iterator<Item = (NodeIndex, &S)> {
-		self.0.iter().map(|(idx, s)| (idx.into(), s))
-	}
+    pub fn iter(&self) -> impl Iterator<Item = (NodeIndex, &S)> {
+        self.0.iter().map(|(idx, s)| (idx.into(), s))
+    }
 
-	pub fn iter_mut(&mut self) -> impl Iterator<Item = (NodeIndex, &mut S)> {
-		self.0.iter_mut().map(|(idx, s)| (idx.into(), s))
-	}
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (NodeIndex, &mut S)> {
+        self.0.iter_mut().map(|(idx, s)| (idx.into(), s))
+    }
 
-	pub fn add_signature(self, signature: &S, index: NodeIndex) -> Self
-	where
-		S: AbftSignature,
-	{
-		SignatureSet(self.0.add_signature(signature, index.into()))
-	}
+    pub fn add_signature(self, signature: &S, index: NodeIndex) -> Self
+    where
+        S: AbftSignature,
+    {
+        SignatureSet(self.0.add_signature(signature, index.into()))
+    }
 }
 
 impl<S: 'static> IntoIterator for SignatureSet<S> {
-	type Item = (NodeIndex, S);
-	type IntoIter = Box<dyn Iterator<Item = (NodeIndex, S)>>;
+    type Item = (NodeIndex, S);
+    type IntoIter = Box<dyn Iterator<Item = (NodeIndex, S)>>;
 
-	fn into_iter(self) -> Self::IntoIter {
-		Box::new(self.0.into_iter().map(|(idx, s)| (idx.into(), s)))
-	}
+    fn into_iter(self) -> Self::IntoIter {
+        Box::new(self.0.into_iter().map(|(idx, s)| (idx.into(), s)))
+    }
 }
 
 impl From<SignatureSet<Signature>> for PrimitivesSignatureSet<AuthoritySignature> {
-	fn from(signature_set: SignatureSet<Signature>) -> PrimitivesSignatureSet<AuthoritySignature> {
-		let score_signatures: Vec<IndexedSignature<AuthoritySignature>> = signature_set
-			.0
-			.into_iter()
-			.map(|(idx, s)| IndexedSignature { index: idx.0 as u64, signature: s.0 })
-			.collect();
-		PrimitivesSignatureSet(score_signatures)
-	}
+    fn from(signature_set: SignatureSet<Signature>) -> PrimitivesSignatureSet<AuthoritySignature> {
+        let score_signatures: Vec<IndexedSignature<AuthoritySignature>> = signature_set
+            .0
+            .into_iter()
+            .map(|(idx, s)| IndexedSignature {
+                index: idx.0 as u64,
+                signature: s.0,
+            })
+            .collect();
+        PrimitivesSignatureSet(score_signatures)
+    }
 }
 
 // Currently the traits for legacy and current match, so only one implementation needed.
 impl<S: AbftSignature> legacy_aleph_bft::PartialMultisignature for SignatureSet<S> {
-	type Signature = S;
+    type Signature = S;
 
-	fn add_signature(
-		self,
-		signature: &Self::Signature,
-		index: legacy_aleph_bft::NodeIndex,
-	) -> Self {
-		SignatureSet::add_signature(self, signature, index.into())
-	}
+    fn add_signature(
+        self,
+        signature: &Self::Signature,
+        index: legacy_aleph_bft::NodeIndex,
+    ) -> Self {
+        SignatureSet::add_signature(self, signature, index.into())
+    }
 }

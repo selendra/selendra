@@ -4,11 +4,11 @@
 # validators (create blocks) or RPC nodes (read only nodes). By default, such consensus consist of
 # one RPC node that is a bootnode, and 6 validator nodes.
 #
-# Before run, a chainspec is generated that is an initial testing AlephZero chain configuration,
+# Before run, a chainspec is generated that is an initial testing Selendr chain configuration,
 # that is a starting point for all selendra-nodes. Together with the chainspec, we generate a keystore
 # that consist of two types of keys:
 #   * two session keys for each validator (one for authoring blocks called AURA key and one for
-#     participating in AlephBFT consensus called ALEPH key)
+#     participating in SelendraBFT consensus called SELENDRA key)
 #   * one key for participating in P2P network called p2p key
 # The keystore is stored in a filesystem altogether with database, and this is called base path.
 # Optionally, script can build testing selendra-node binary for you (short session meaning 30 blocks
@@ -27,7 +27,7 @@
 # They are 3 set of ports you need to have opened and free on your machine in order to run consensus:
 #  * RPC port - range [9944; 9954) - used for JSON RPC protocol
 #  * P2p port - range [30333; 30343) - used for P2P peer network
-#  * Validator port - range [30343; 30353) - used for consensus mechanism (AlephBFT)
+#  * Validator port - range [30343; 30353) - used for consensus mechanism (SelendraBFT)
 #
 # You need to have installed following prerequisites in order to use that script:
 #   * jq
@@ -44,6 +44,7 @@ CHAINSPEC_GENERATOR="target/release/chain-bootstrapper"
 NODE_P2P_PORT_RANGE_START=30333
 NODE_VALIDATOR_PORT_RANGE_START=30343
 NODE_RPC_PORT_RANGE_START=9944
+PROMETHEUS_PORT_RANGE_START=9615
 
 # ------------------------ argument parsing and usage -----------------------
 
@@ -64,6 +65,8 @@ Usage:
     [-p|--base-path BASE_PATH]
         if specified, use given base path (keystore, db, AlephBFT backups)
         if not specified, base path is ./run-nodes-local
+    [--finality-version]
+      which finality version should be used, default = legacy
     [--dont-bootstrap]
       set if you don't want to bootstrap chain, ie generate keystore and chainspec
     [--dont-build]
@@ -85,6 +88,7 @@ DONT_BOOTSTRAP=${DONT_BOOTSTRAP:-""}
 DONT_BUILD_SELENDRA_NODE=${DONT_BUILD_SELENDRA_NODE:-""}
 DONT_DELETE_DB=${DONT_DELETE_DB:-""}
 DONT_REMOVE_ABFT_BACKUPS=${DONT_REMOVE_ABFT_BACKUPS:-""}
+FINALITY_VERSION=${FINALITY_VERSION:-"legacy"}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -98,6 +102,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -p|--base-path)
       BASE_PATH="$2"
+      shift;shift
+      ;;
+    --finality-version)
+      FINALITY_VERSION="$2"
       shift;shift
       ;;
     --dont-bootstrap)
@@ -146,8 +154,8 @@ function get_backup_folders() {
 function get_ss58_address_from_seed() {
   local seed="$1"
   local selendra_node_path="$2"
-  echo $(${selendra_node_path} key inspect --output-type json ${seed} | jq -r '.ss58Address')
 
+  echo $(${selendra_node_path} key inspect --output-type json ${seed} | jq -r '.ss58Address')
 }
 
 function run_node() {
@@ -167,6 +175,7 @@ function run_node() {
     --name "${node_name}"
     --rpc-port $((NODE_RPC_PORT_RANGE_START + index))
     --port $((NODE_P2P_PORT_RANGE_START + index))
+    --prometheus-port $((PROMETHEUS_PORT_RANGE_START + index))
     --validator-port "${validator_port}"
     --node-key-file "${BASE_PATH}/${account_id}/p2p_secret"
     --backup-path "${BASE_PATH}/${account_id}/backup-stash"
@@ -178,14 +187,15 @@ function run_node() {
     --max-runtime-instances 8
     --enable-log-reloading
     --detailed-log-output
-    -lselendra-party=debug
-    -lselendra-network=debug
+    -laleph-party=debug
+    -laleph-network=debug
     -lnetwork-clique=debug
-    -lselendra-finality=debug
-    -lselendra-justification=debug
-    -lselendra-data-store=debug
-    -lselendra-updater=debug
-    -lselendra-metrics=debug
+    -laleph-finality=debug
+    -laleph-justification=debug
+    -laleph-data-store=debug
+    -laleph-updater=debug
+    -laleph-metrics=debug
+    -laleph-abft=debug
   )
 
   info "Running node ${index}..."
@@ -219,6 +229,9 @@ fi
 if ! command -v jq &> /dev/null; then
     error "jq could not be found on PATH!"
 fi
+if [[ "${FINALITY_VERSION}" != "current" && "${FINALITY_VERSION}" != "legacy" ]]; then
+  error "Flag finality-version should be either current or legacy."
+fi
 
 # ------------------- main script starts here ------------------------------
 
@@ -232,7 +245,10 @@ fi
 
 if [[ -z "${DONT_BUILD_SELENDRA_NODE}" ]]; then
   info "Building testing selendra-node binary (short session) and chain-bootstrapper binary."
-  cargo build --release
+  cargo build --release -p selendra-node
+  if [[ -z "${DONT_BOOTSTRAP}" ]]; then
+    cargo build --release -p chain-bootstrapper --features "short_session enable_treasury_proposals"
+  fi
 elif [[ ! -x "${SELENDRA_NODE}" || ! -x "${CHAINSPEC_GENERATOR}" ]]; then
   error "${SELENDRA_NODE} or ${CHAINSPEC_GENERATOR} does not exist or it's not an executable file!"
 fi
@@ -272,7 +288,9 @@ if [[ -z "${DONT_BOOTSTRAP}" ]]; then
     --base-path "${BASE_PATH}" \
     --account-ids "${all_account_ids_string}" \
     --authorities-account-ids "${validator_ids_string}" \
-    --chain-type local > "${BASE_PATH}/chainspec.json"
+    --chain-type local > "${BASE_PATH}/chainspec.json" \
+    --rich-account-ids "${all_account_ids_string}" \
+    --finality-version "${FINALITY_VERSION}"
 
   if [[ "${DONT_REMOVE_ABFT_BACKUPS}" == "true" ]]; then
     all_account_ids=(${validator_account_ids[@]} ${rpc_node_account_ids[@]})

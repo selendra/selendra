@@ -1,21 +1,24 @@
 [package]
 name = "pallet-aleph"
-version = "0.6.0"
-authors = ["Cardinal", "Aleph Zero Foundation"]
+version = "0.7.0"
+license = "Apache 2.0"
 edition.workspace = true
+authors = ["Cardinal", "Aleph Zero Foundation"]
+homepage = "https://alephzero.org"
+repository = "https://github.com/Cardinal-Cryptography/aleph-node"
 
 [dependencies]
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 log = { workspace = true }
 
-sp-std = { workspace = true }
-sp-runtime = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 pallet-session = { workspace = true }
+sp-std = { workspace = true }
+sp-runtime = { workspace = true }
 
-selendra-primitives = { workspace = true }
+primitives = { workspace = true }
 
 [dev-dependencies]
 pallet-balances = { workspace = true }
@@ -31,11 +34,11 @@ std = [
     "frame-system/std",
     "pallet-session/std",
     "sp-std/std",
+    "primitives/std",
     "pallet-balances/std",
     "sp-runtime/std",
     "sp-io/std",
-    "log/std",
-    "selendra-primitives/std"
+    "log/std"
 ]
 try-runtime = [
     "frame-support/try-runtime",

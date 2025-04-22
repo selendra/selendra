@@ -1,8 +1,11 @@
 [package]
 name = "aggregator"
 version = "0.7.0"
-authors.workspace = true
 edition.workspace = true
+license = "Apache 2.0"
+authors = ["Cardinal", "Aleph Zero Foundation"]
+homepage = "https://alephzero.org"
+repository = "https://github.com/Cardinal-Cryptography/aleph-node"
 
 [dependencies]
 aleph-bft-rmc = { workspace = true }
