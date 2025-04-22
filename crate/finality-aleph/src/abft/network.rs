@@ -25,7 +25,7 @@ impl<D: Data, DN: Network<D>> NetworkWrapper<D, DN> {
 		R: Into<Recipient>,
 	{
 		if let Err(e) = self.inner.send(data, recipient.into()) {
-			warn!(target: "selendra-network", "Error '{:?}' while sending an AlephBFT message to the network.", e);
+			warn!(target: "aleph-network", "Error '{:?}' while sending an AlephBFT message to the network.", e);
 		}
 	}
 
@@ -35,7 +35,7 @@ impl<D: Data, DN: Network<D>> NetworkWrapper<D, DN> {
 }
 
 #[async_trait::async_trait]
-impl<D: Data, DN: Network<D>> current_aleph_bft::Network<D> for NetworkWrapper<D, DN> {
+impl<D: Data, DN: Network<D> + 'static> current_aleph_bft::Network<D> for NetworkWrapper<D, DN> {
 	fn send(&self, data: D, recipient: current_aleph_bft::Recipient) {
 		NetworkWrapper::send(self, data, recipient)
 	}

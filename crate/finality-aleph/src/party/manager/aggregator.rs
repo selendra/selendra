@@ -7,12 +7,11 @@ use futures::{
 	StreamExt,
 };
 use log::{debug, error, trace};
-use selendra_primitives::BlockHash;
 use tokio::time;
 
 use crate::{
 	abft::SignatureSet,
-	aggregation::Aggregator,
+	aggregation::{Aggregator, SignableTypedHash},
 	block::{
 		substrate::{Justification, JustificationTranslator},
 		Header, HeaderBackend,
@@ -23,7 +22,10 @@ use crate::{
 	network::data::Network,
 	party::{
 		manager::aggregator::AggregatorVersion::{Current, Legacy},
-		AuthoritySubtaskCommon, Task,
+		AuthoritySubtaskCommon, Task, LOG_TARGET,
+	},
+	selendra_primitives::{
+		crypto::SignatureSet as PrimitivesSignatureSet, AuthoritySignature, BlockHash, Hash,
 	},
 	sync::JustificationSubmissions,
 	BlockId, CurrentRmcNetworkData, Keychain, LegacyRmcNetworkData, SessionBoundaries,
@@ -34,15 +36,20 @@ use crate::{
 pub enum Error {
 	MultisignaturesStreamTerminated,
 	UnableToProcessHash,
+	UnableToSendSignedPerformance,
 }
 
 impl Display for Error {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		use Error::*;
 		match self {
-			Error::MultisignaturesStreamTerminated => {
-				write!(f, "The stream of multisigned hashes has ended.")
+			MultisignaturesStreamTerminated => {
+				write!(f, "the stream of multisigned hashes has ended")
 			},
-			Error::UnableToProcessHash => write!(f, "Error while processing a hash."),
+			UnableToProcessHash => write!(f, "error while processing a block hash"),
+			UnableToSendSignedPerformance => {
+				write!(f, "failed to send a signed performance hash to the scorer")
+			},
 		}
 	}
 }
@@ -55,6 +62,9 @@ where
 	pub blocks_from_interpreter: mpsc::UnboundedReceiver<BlockId>,
 	pub justifications_for_chain: JS,
 	pub justification_translator: JustificationTranslator,
+	pub performance_from_scorer: mpsc::UnboundedReceiver<Hash>,
+	pub signed_performance_for_scorer:
+		mpsc::UnboundedSender<(Hash, PrimitivesSignatureSet<AuthoritySignature>)>,
 }
 
 async fn process_new_block_data<CN, LN>(
@@ -65,13 +75,13 @@ async fn process_new_block_data<CN, LN>(
 	CN: Network<CurrentRmcNetworkData>,
 	LN: Network<LegacyRmcNetworkData>,
 {
-	trace!(target: "aleph-party", "Received unit {:?} in aggregator.", block);
+	trace!(target: LOG_TARGET, "Received unit {:?} in aggregator.", block);
 	let hash = block.hash();
 	metrics.report_block(hash, Checkpoint::Ordered);
-	aggregator.start_aggregation(hash).await;
+	aggregator.start_aggregation(SignableTypedHash::Block(hash)).await;
 }
 
-fn process_hash<H, C, JS>(
+fn process_block_hash<H, C, JS>(
 	hash: BlockHash,
 	multisignature: SignatureSet<Signature>,
 	justifications_for_chain: &mut JS,
@@ -91,12 +101,12 @@ where
 	) {
 		Ok(justification) => justification,
 		Err(e) => {
-			error!(target: "aleph-party", "Issue with translating justification from Aggregator to Sync Justification: {}.", e);
+			error!(target: LOG_TARGET, "Issue with translating justification from Aggregator to Sync Justification: {}.", e);
 			return Err(());
 		},
 	};
 	if let Err(e) = justifications_for_chain.submit(justification) {
-		error!(target: "aleph-party", "Issue with sending justification from Aggregator to JustificationHandler {}.", e);
+		error!(target: LOG_TARGET, "Issue with sending justification from Aggregator to JustificationHandler {}.", e);
 		return Err(());
 	}
 	Ok(())
@@ -117,27 +127,36 @@ where
 	LN: Network<LegacyRmcNetworkData>,
 	CN: Network<CurrentRmcNetworkData>,
 {
-	let IO { blocks_from_interpreter, mut justifications_for_chain, justification_translator } = io;
+	use SignableTypedHash::*;
+	let IO {
+		blocks_from_interpreter,
+		mut justifications_for_chain,
+		justification_translator,
+		performance_from_scorer,
+		signed_performance_for_scorer,
+	} = io;
 
 	let blocks_from_interpreter = blocks_from_interpreter.take_while(|block| {
 		let block_num = block.number();
 		async move {
 			if block_num == session_boundaries.last_block() {
-				debug!(target: "aleph-party", "Aggregator is processing last block in session.");
+				debug!(target: LOG_TARGET, "Aggregator is processing last block in session.");
 			}
 			block_num <= session_boundaries.last_block()
 		}
 	});
 	pin_mut!(blocks_from_interpreter);
+	pin_mut!(performance_from_scorer);
 	let mut hash_of_last_block = None;
-	let mut no_more_blocks = blocks_from_interpreter.is_terminated();
+	let mut session_over = blocks_from_interpreter.is_terminated();
+	let mut no_more_performance = performance_from_scorer.is_terminated();
 
 	let mut status_ticker = time::interval(STATUS_REPORT_INTERVAL);
 
 	loop {
-		trace!(target: "aleph-party", "Aggregator Loop started a next iteration");
+		trace!(target: LOG_TARGET, "Aggregator Loop started a next iteration");
 		tokio::select! {
-			maybe_block = blocks_from_interpreter.next(), if !no_more_blocks => match maybe_block {
+			maybe_block = blocks_from_interpreter.next(), if !session_over => match maybe_block {
 				Some(block) => {
 					hash_of_last_block = Some(block.hash());
 					process_new_block_data::<CN, LN>(
@@ -147,31 +166,52 @@ where
 					).await;
 				},
 				None => {
-					debug!(target: "aleph-party", "Blocks ended in aggregator.");
-					no_more_blocks = true;
+					debug!(target: LOG_TARGET, "Blocks ended in aggregator.");
+					session_over = true;
+				},
+			},
+			maybe_performance_hash = performance_from_scorer.next(), if !no_more_performance && !session_over => match maybe_performance_hash {
+				Some(hash) => {
+					aggregator
+						.start_aggregation(SignableTypedHash::Performance(hash))
+						.await;
+				},
+				None => {
+					debug!(target: LOG_TARGET, "Performance hashes ended in aggregator.");
+					no_more_performance = true;
 				},
 			},
 			multisigned_hash = aggregator.next_multisigned_hash() => {
 				let (hash, multisignature) = multisigned_hash.ok_or(Error::MultisignaturesStreamTerminated)?;
-				process_hash(hash, multisignature, &mut justifications_for_chain, &justification_translator, &client).map_err(|_| Error::UnableToProcessHash)?;
-				if Some(hash) == hash_of_last_block {
-					hash_of_last_block = None;
+				match hash {
+					Block(hash) => {
+						process_block_hash(hash, multisignature, &mut justifications_for_chain, &justification_translator, &client).map_err(|_| Error::UnableToProcessHash)?;
+						if Some(hash) == hash_of_last_block {
+							hash_of_last_block = None;
+						}
+					},
+					Performance(hash) => {
+						if let Err(e) = signed_performance_for_scorer.unbounded_send((hash, multisignature.into())) {
+							error!(target: LOG_TARGET, "Issue with sending signed performance hash from Aggregator to Scorer {}.", e);
+							return Err(Error::UnableToSendSignedPerformance);
+						}
+					}
 				}
 			},
 			_ = status_ticker.tick() => {
 				aggregator.status_report();
 			},
 			_ = &mut exit_rx => {
-				debug!(target: "aleph-party", "Aggregator received exit signal. Terminating.");
+				debug!(target: LOG_TARGET, "Aggregator received exit signal. Terminating.");
 				break;
 			}
 		}
-		if hash_of_last_block.is_none() && no_more_blocks {
-			debug!(target: "aleph-party", "Aggregator processed all provided blocks. Terminating.");
+		if hash_of_last_block.is_none() && session_over {
+			debug!(target: LOG_TARGET, "Aggregator processed all provided blocks. Terminating.");
 			break;
 		}
 	}
-	debug!(target: "aleph-party", "Aggregator finished its work.");
+	debug!(target: LOG_TARGET, "Aggregator finished its work.");
 	Ok(())
 }
 
@@ -205,17 +245,17 @@ where
 				Current(rmc_network) => Aggregator::new_current(&multikeychain, rmc_network),
 				Legacy(rmc_network) => Aggregator::new_legacy(&multikeychain, rmc_network),
 			};
-			debug!(target: "aleph-party", "Running the aggregator task for {:?}", session_id);
+			debug!(target: LOG_TARGET, "Running the aggregator task for {:?}", session_id);
 			let result =
 				run_aggregator(aggregator_io, io, client, &session_boundaries, metrics, exit).await;
 			let result = match result {
 				Ok(_) => Ok(()),
 				Err(err) => {
-					error!(target: "aleph-party", "Aggregator exited with error: {err}");
+					error!(target: LOG_TARGET, "Aggregator exited with error: {err}");
 					Err(())
 				},
 			};
-			debug!(target: "aleph-party", "Aggregator task stopped for {:?}", session_id);
+			debug!(target: LOG_TARGET, "Aggregator task stopped for {:?}", session_id);
 			result
 		}
 	};

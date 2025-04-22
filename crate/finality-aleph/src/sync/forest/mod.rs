@@ -8,10 +8,9 @@ use std::{
 
 use static_assertions::const_assert;
 
-use selendra_primitives::DEFAULT_SESSION_PERIOD;
-
 use crate::{
 	block::{Block, ChainStatus, Header, Justification, UnverifiedHeaderFor},
+	selendra_primitives::DEFAULT_SESSION_PERIOD,
 	sync::{data::BranchKnowledge, BlockId, PeerId},
 	BlockNumber,
 };
@@ -46,6 +45,8 @@ enum VertexHandle<'a, I: PeerId, J: Justification> {
 pub enum Interest<H: Header, I: PeerId> {
 	/// We are not interested in requesting this branch.
 	Uninterested,
+	/// We might be interested in requesting this later.
+	MaybeLater,
 	/// We would like to have this branch.
 	Required { header: H, know_most: HashSet<I>, branch_knowledge: BranchKnowledge },
 }
@@ -528,41 +529,40 @@ where
 
 	/// Prepare additional info required to create a request for the branch.
 	/// Returns `None` if we're not interested in the branch.
-	/// Can be forced to fake interest, but only for blocks we have headers for.
-	fn prepare_request_info(
-		&self,
-		id: &BlockId,
-		force: bool,
-	) -> Option<(J::Header, HashSet<I>, BranchKnowledge)> {
+	/// Can be forced to fake interest, but only for blocks we have headers for, that are not
+	/// importing.
+	fn prepare_request_info(&self, id: &BlockId, force: bool) -> Interest<J::Header, I> {
+		use Interest::*;
 		use VertexHandle::Candidate;
 		match self.get(id) {
 			Candidate(vertex) => {
+				// if we are currently importing this vertex don't send a request, but don't drop
+				// the task in case there is an error
+				if vertex.vertex.importing() {
+					return MaybeLater;
+				}
 				// request only requestable blocks, unless forced
 				if !(force || vertex.vertex.requestable()) {
-					return None;
+					return Uninterested;
 				}
 				let header = match vertex.vertex.header() {
 					Some(header) => header,
-					None => return None,
+					None => return Uninterested,
 				};
 				let know_most = vertex.vertex.know_most();
 				// should always return Some, as the branch of a Candidate always exists
 				self.branch_knowledge(id.clone())
-					.map(|branch_knowledge| (header, know_most, branch_knowledge))
+					.map(|branch_knowledge| Required { header, know_most, branch_knowledge })
+					.unwrap_or(Uninterested)
 			},
 			// request only Candidates
-			_ => None,
+			_ => Uninterested,
 		}
 	}
 
 	/// How much interest we have for requesting the block.
 	pub fn request_interest(&self, id: &BlockId) -> Interest<J::Header, I> {
-		match self.prepare_request_info(id, false) {
-			Some((header, know_most, branch_knowledge)) => {
-				Interest::Required { header, know_most, branch_knowledge }
-			},
-			None => Interest::Uninterested,
-		}
+		self.prepare_request_info(id, false)
 	}
 
 	/// Whether we would like to eventually import this block.
@@ -574,6 +574,31 @@ where
 			},
 			_ => false,
 		}
+	}
+
+	/// Start an import of a block. Returns whether this is possible, i.e. the parent block is
+	/// imported.
+	pub fn start_import(&mut self, id: &BlockId) -> bool {
+		let parent_id = match self.get(id) {
+			VertexHandle::Candidate(vertex) => vertex.vertex.parent(),
+			_ => return false,
+		};
+		let parent_id = match parent_id {
+			Some(parent_id) => parent_id,
+			None => return false,
+		};
+		// At this point this is equivalent to being imported, as we never get here for blocks that
+		// are below minimal.
+		if !self.skippable(&parent_id) {
+			return false;
+		}
+		use VertexHandleMut::Candidate;
+		if let Candidate(mut vertex) = self.get_mut(id) {
+			vertex.get_mut().vertex.start_import();
+			return true;
+		}
+		// This should never happen in practice.
+		false
 	}
 
 	fn know_most(&self, id: &BlockId) -> HashSet<I> {
@@ -596,7 +621,7 @@ where
 		use VertexHandle::*;
 		if self.behind_finalization() > 0 {
 			// This should always happen, but if it doesn't falling back to other forms of extension requests is acceptable.
-			if let Some((_, know_most, branch_knowledge)) =
+			if let Interest::Required { know_most, branch_knowledge, .. } =
 				self.prepare_request_info(&self.highest_justified.id(), true)
 			{
 				return HighestJustified {
@@ -906,6 +931,14 @@ mod tests {
 	}
 
 	#[test]
+	fn accepts_first_import() {
+		let (initial_header, mut forest) = setup();
+		let child = initial_header.random_child();
+		assert!(forest.update_header(&child, None, true).expect("header was correct"));
+		assert!(forest.start_import(&child.id()));
+	}
+
+	#[test]
 	fn accepts_first_body() {
 		let (initial_header, mut forest) = setup();
 		let child = initial_header.random_child();
@@ -915,6 +948,15 @@ mod tests {
 		assert!(!forest.importable(&child.id()));
 		assert_eq!(forest.favourite_block(), child);
 		assert_eq!(forest.extension_request(), Noop);
+	}
+
+	#[test]
+	fn rejects_import_when_parent_unimported() {
+		let (initial_header, mut forest) = setup();
+		let child = initial_header.random_child();
+		let grandchild = child.random_child();
+		assert!(forest.update_header(&child, None, false).expect("header was correct"));
+		assert!(!forest.start_import(&grandchild.id()));
 	}
 
 	#[test]

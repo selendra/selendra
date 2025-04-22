@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use prometheus_endpoint::{
+use substrate_prometheus_endpoint::{
 	register, Gauge, Histogram, HistogramOpts, PrometheusError, Registry, U64,
 };
 

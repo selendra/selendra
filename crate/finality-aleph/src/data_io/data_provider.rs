@@ -3,7 +3,6 @@ use std::{marker::PhantomData, sync::Arc, time::Duration};
 use futures::channel::oneshot;
 use log::{debug, error, warn};
 use parking_lot::Mutex;
-use selendra_primitives::BlockNumber;
 use sp_runtime::{traits::Zero, SaturatedConversion};
 
 use crate::{
@@ -11,10 +10,11 @@ use crate::{
 	data_io::{proposal::UnvalidatedAlephProposal, AlephData, MAX_DATA_BRANCH_LEN},
 	metrics::{Checkpoint, TimingBlockMetrics},
 	party::manager::Runnable,
+	selendra_primitives::BlockNumber,
 	BlockId, SessionBoundaries,
 };
 
-const LOG_TARGET: &str = "selendra-data-store";
+const LOG_TARGET: &str = "aleph-data-store";
 
 // Reduce block header to the level given by num, by traversing down via parents.
 pub fn reduce_header_to_num<H, C>(client: &C, header: H, num: BlockNumber) -> H

@@ -293,7 +293,7 @@ where
 					self.manager.update_validator_session(pre_session)?;
 				if let Some(result_for_user) = result_for_user {
 					if result_for_user.send(data_from_network).is_err() {
-						warn!(target: "selendra-network", "Failed to send started session.")
+						warn!(target: "aleph-network", "Failed to send started session.")
 					}
 				}
 				Ok(actions)
@@ -315,46 +315,46 @@ where
 
 		let mut status_ticker = time::interval(STATUS_REPORT_INTERVAL);
 		loop {
-			trace!(target: "selendra-network", "Manager Loop started a next iteration");
+			trace!(target: "aleph-network", "Manager Loop started a next iteration");
 			tokio::select! {
 				maybe_command = self.commands_from_user.next() => {
-					trace!(target: "selendra-network", "Manager received a command from user");
+					trace!(target: "aleph-network", "Manager received a command from user");
 					let command = maybe_command.ok_or(Error::CommandsChannel)?;
 					match self.handle_command(command) {
 						Ok(to_send) => self.handle_manager_actions(to_send)?,
-						Err(e) => warn!(target: "selendra-network", "Failed to update handler: {:?}", e),
+						Err(e) => warn!(target: "aleph-network", "Failed to update handler: {:?}", e),
 					}
 				},
 				maybe_message = self.messages_from_user.next() => {
-					trace!(target: "selendra-network", "Manager received a message from user");
+					trace!(target: "aleph-network", "Manager received a message from user");
 					let (message, session_id, recipient) = maybe_message.ok_or(Error::MessageChannel)?;
 					for message in self.manager.on_user_message(message, session_id, recipient) {
 						self.send_data(message);
 					}
 				},
 				maybe_data = self.validator_network.next() => {
-					trace!(target: "selendra-network", "Manager received some data from network");
+					trace!(target: "aleph-network", "Manager received some data from network");
 					let DataInSession{data, session_id} = maybe_data.ok_or(Error::ValidatorNetwork)?;
 					if let Err(e) = self.manager.send_session_data(&session_id, data) {
 						match e {
-							SendError::UserSend => trace!(target: "selendra-network", "Failed to send to user in session."),
-							SendError::NoSession => trace!(target: "selendra-network", "Received message for unknown session."),
+							SendError::UserSend => trace!(target: "aleph-network", "Failed to send to user in session."),
+							SendError::NoSession => trace!(target: "aleph-network", "Received message for unknown session."),
 						}
 					}
 				},
 				maybe_authentication = self.gossip_network.next() => {
 					let (authentication, _) = maybe_authentication.map_err(Error::GossipNetwork)?;
-					trace!(target: "selendra-network", "Manager received an authentication from network");
+					trace!(target: "aleph-network", "Manager received an authentication from network");
 					match authentication.try_into() {
 						Ok(message) => {
 							let manager_actions = self.manager.on_discovery_message(message);
 							self.handle_manager_actions(manager_actions)?
 						},
-						Err(e) => debug!(target: "selendra-network", "Could not cast versioned authentication in discovery message: {:?}", e),
+						Err(e) => debug!(target: "aleph-network", "Could not cast versioned authentication in discovery message: {:?}", e),
 					}
 				},
 				_ = maintenance.tick() => {
-					debug!(target: "selendra-network", "Manager starts maintenence");
+					debug!(target: "aleph-network", "Manager starts maintenence");
 					for to_send in self.manager.discovery() {
 						self.send_authentications(to_send.into())?;
 					}

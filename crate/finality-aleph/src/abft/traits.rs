@@ -4,15 +4,9 @@ use std::{cmp::Ordering, fmt::Debug, hash::Hash as StdHash, marker::PhantomData,
 
 use futures::{channel::oneshot, Future};
 use network_clique::{SpawnHandleExt, SpawnHandleT};
-use parity_scale_codec::{Codec, Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use sc_service::SpawnTaskHandle;
 use sp_runtime::traits::Hash as SpHash;
-
-#[allow(dead_code)]
-/// A convenience trait for gathering all of the desired hash characteristics.
-pub trait Hash: AsRef<[u8]> + StdHash + Eq + Clone + Codec + Debug + Send + Sync {}
-
-impl<T: AsRef<[u8]> + StdHash + Eq + Clone + Codec + Debug + Send + Sync> Hash for T {}
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Wrapper<H: SpHash> {
@@ -53,6 +47,13 @@ impl<O: Eq + Copy + Clone + Send + Sync + Debug + StdHash + Encode + Decode + As
 impl<H: SpHash> Wrapper<H> {
 	fn hash(s: &[u8]) -> OrdForHash<H::Output> {
 		OrdForHash { inner: <H as SpHash>::hash(s) }
+	}
+
+	#[cfg(test)]
+	pub fn random_hash() -> OrdForHash<H::Output> {
+		use rand::distributions::{Alphanumeric, DistString};
+		let string = Alphanumeric.sample_string(&mut rand::thread_rng(), 137);
+		Self::hash(string.as_ref())
 	}
 }
 

@@ -9,12 +9,14 @@ use std::{
 use log::{trace, warn};
 use lru::LruCache;
 use parking_lot::Mutex;
-use prometheus_endpoint::{register, Histogram, HistogramOpts, PrometheusError, Registry};
 use sc_service::Arc;
-use selendra_primitives::BlockHash;
+use substrate_prometheus_endpoint::{
+	register, Histogram, HistogramOpts, PrometheusError, Registry,
+};
 
 use crate::{
 	metrics::{exponential_buckets_two_sided, LOG_TARGET},
+	selendra_primitives::BlockHash,
 	Display,
 };
 
@@ -80,7 +82,12 @@ impl<C: Clock> TimingBlockMetrics<C> {
 							format!("aleph_timing_{}", key.to_string().to_ascii_lowercase()),
 							"no help",
 						)
-						.buckets(exponential_buckets_two_sided(target, BUCKETS_FACTOR, 4, 6)?),
+						.buckets(exponential_buckets_two_sided(
+							target,
+							BUCKETS_FACTOR,
+							4,
+							6,
+						)?),
 					)?,
 					registry,
 				)?,
@@ -216,7 +223,7 @@ fn warn_about_monotonicity_violation(
 ) {
 	warn!(
 		target: LOG_TARGET,
-		"Earlier metrics time {:?} is later that current one selendra_primitives
+		"Earlier metrics time {:?} is later that current one \
 	{:?}. Checkpoint type {:?}, block: {:?}",
 		start,
 		checkpoint_time,

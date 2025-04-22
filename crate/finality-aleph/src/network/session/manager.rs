@@ -291,7 +291,7 @@ impl<NI: NetworkIdentity, D: Data, VCU: ValidatorAddressCacheUpdater> Manager<NI
 						},
 					);
 					if handler.is_validator() {
-						debug!(target: "selendra-network", "Adding addresses for session {:?} to reserved: {:?}", session_id, address);
+						debug!(target: "aleph-network", "Adding addresses for session {:?} to reserved: {:?}", session_id, address);
 						self.connections.add_peers(session_id, [address.peer_id()]);
 						maybe_command = Some(ConnectionCommand::AddReserved([address].into()));
 					}
@@ -299,7 +299,7 @@ impl<NI: NetworkIdentity, D: Data, VCU: ValidatorAddressCacheUpdater> Manager<NI
 				ManagerActions { maybe_command, maybe_message }
 			},
 			None => {
-				debug!(target: "selendra-network", "Received message from unknown session: {:?}", message);
+				debug!(target: "aleph-network", "Received message from unknown session: {:?}", message);
 				ManagerActions::noop()
 			},
 		}
@@ -376,7 +376,7 @@ impl<NI: NetworkIdentity, D: Data, VCU: ValidatorAddressCacheUpdater> Manager<NI
 		}
 
 		if !authenticated.is_empty() || !missing.is_empty() {
-			info!(target: "selendra-network", "{}", status);
+			info!(target: "aleph-network", "{}", status);
 		}
 	}
 }

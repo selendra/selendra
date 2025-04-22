@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use pallet_aleph_runtime_api::AlephSessionApi;
+use primitives::{AccountId, AuraId, BlockHash, BlockNumber};
 use sc_client_api::Backend;
-use selendra_primitives::{AccountId, AuraId, BlockHash, BlockNumber};
 use sp_consensus_aura::AuraApi;
 use sp_runtime::traits::{Block, Header};
 

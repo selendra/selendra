@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use client_runtime_api::mock_runtime;
-use selendra_primitives::{BlockHash, BlockNumber};
+use fake_runtime_api::fake_runtime;
+use primitives::{BlockHash, BlockNumber};
 use sp_blockchain::HeaderBackend;
 use substrate_test_client::{client, sc_client_db, sc_executor};
 use substrate_test_runtime_client::{GenesisParameters, LocalExecutorDispatch};
@@ -27,7 +27,7 @@ pub type TestClient = client::Client<
 	Backend,
 	client::LocalCallExecutor<TBlock, Backend, ExecutorDispatch>,
 	TBlock,
-	mock_runtime::RuntimeApi,
+	fake_runtime::RuntimeApi,
 >;
 
 /// A `test-runtime` extensions to `TestClientBuilder`.

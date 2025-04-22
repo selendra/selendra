@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use std::{
 	collections::HashSet,
 	fmt::{Debug, Display, Error as FmtError, Formatter},
@@ -6,7 +5,7 @@ use std::{
 	sync::{Arc, Mutex},
 };
 
-use selendra_primitives::BlockNumber;
+use async_trait::async_trait;
 
 use crate::{
 	oneshot,
@@ -15,6 +14,7 @@ use crate::{
 		manager::AuthorityTask,
 		traits::{ChainState, NodeSessionManager},
 	},
+	selendra_primitives::BlockNumber,
 	AuthorityId, NodeIndex, SessionId,
 };
 
@@ -95,6 +95,7 @@ impl NodeSessionManager for Arc<MockNodeSessionManager> {
 	async fn spawn_authority_task_for_session(
 		&self,
 		session: SessionId,
+		_period: u32,
 		node_id: NodeIndex,
 		_backup: ABFTBackup,
 		_authorities: &[AuthorityId],

@@ -1,9 +1,4 @@
-use std::{
-	fmt::{Debug, Display},
-	hash::Hash,
-	path::PathBuf,
-	sync::Arc,
-};
+use std::{fmt::Debug, hash::Hash, path::PathBuf, sync::Arc};
 
 use derive_more::Display;
 use futures::{
@@ -14,17 +9,18 @@ use futures::{
 	Future,
 };
 use parity_scale_codec::{Decode, Encode, Output};
-use prometheus_endpoint::Registry;
+use primitives as selendra_primitives;
+use primitives::{AuthorityId, Block as AlephBlock, BlockHash, BlockNumber};
 use sc_client_api::{
 	Backend, BlockBackend, BlockchainEvents, Finalizer, LockImportRun, ProofProvider,
 	StorageProvider,
 };
 use sc_consensus::BlockImport;
 use sc_keystore::LocalKeystore;
-use selendra_primitives::{AuthorityId, Block as AlephBlock, BlockHash, BlockNumber};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::{BlakeTwo256, Block};
+use substrate_prometheus_endpoint::Registry;
 use tokio::time::Duration;
 
 use crate::{
@@ -71,7 +67,8 @@ pub use crate::{
 	justification::AlephJustification,
 	network::{
 		address_cache::{ValidatorAddressCache, ValidatorAddressingInfo},
-		build_network, BuildNetworkOutput, ProtocolNetwork, SubstratePeerId,
+		build_network, BuildNetworkOutput, ProtocolNetwork, SubstrateNetworkConfig,
+		SubstratePeerId,
 	},
 	nodes::run_validator_node,
 	session::SessionPeriod,
@@ -254,8 +251,10 @@ type Hasher = abft::HashWrapper<BlakeTwo256>;
 
 #[derive(Clone)]
 pub struct RateLimiterConfig {
-	/// Maximum bit-rate per node in bytes per second of the alephbft validator network.
-	pub alephbft_bit_rate_per_connection: usize,
+	/// Maximum bit-rate in bits per second of the alephbft validator network.
+	pub alephbft_network_bit_rate: u64,
+	/// Maximum bit-rate in bits per second of the substrate network (shared by sync, gossip, etc.).
+	pub substrate_network_bit_rate: u64,
 }
 
 pub struct AlephConfig<C, T> {
@@ -272,6 +271,7 @@ pub struct AlephConfig<C, T> {
 	pub registry: Option<Registry>,
 	pub session_period: SessionPeriod,
 	pub millisecs_per_block: MillisecsPerBlock,
+	pub score_submission_period: u32,
 	pub unit_creation_delay: UnitCreationDelay,
 	pub backup_saving_path: Option<PathBuf>,
 	pub external_addresses: Vec<String>,

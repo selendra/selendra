@@ -3,6 +3,12 @@ use std::{
 	fmt::{Debug, Display, Error as FmtError, Formatter},
 };
 
+use parity_scale_codec::Encode;
+use sc_consensus_aura::standalone::{check_header_slot_and_seal, slot_author};
+use sp_consensus_aura::sr25519::AuthorityPair;
+use sp_consensus_slots::Slot;
+use sp_runtime::{traits::Header as SubstrateHeader, SaturatedConversion};
+
 use crate::{
 	block::{
 		substrate::{
@@ -14,17 +20,10 @@ use crate::{
 		},
 		BlockId, Header as HeaderT, HeaderVerifier, JustificationVerifier, VerifiedHeader,
 	},
+	selendra_primitives::{AccountId, AuraId, Block, BlockNumber, Header, MILLISECS_PER_BLOCK},
 	session::{SessionBoundaryInfo, SessionId},
 	session_map::{AuthorityProvider, FinalizedBlocksProvider},
 };
-use parity_scale_codec::Encode;
-use sc_consensus_aura::standalone::{check_header_slot_and_seal, slot_author};
-use selendra_primitives::{
-	time::MILLISECS_PER_BLOCK, AccountId, AuraId, Block, BlockNumber, Header,
-};
-use sp_consensus_aura::sr25519::AuthorityPair;
-use sp_consensus_slots::Slot;
-use sp_runtime::{traits::Header as SubstrateHeader, SaturatedConversion};
 
 // How many slots in the future (according to the system time) can the verified header be.
 // Must be non-negative. Chosen arbitrarily by timorl.
@@ -254,7 +253,7 @@ where
 
 	fn slot_author(
 		slot: Slot,
-		aura_authorities: &Vec<AuraId>,
+		aura_authorities: &[AuraId],
 		authority_accounts: Option<&Vec<AccountId>>,
 	) -> Result<(AuraId, Option<AccountId>), ()> {
 		let expected_author = slot_author::<AuthorityPair>(slot, aura_authorities).ok_or(())?;
@@ -429,7 +428,6 @@ mod tests {
 		sync::{Arc, Mutex},
 	};
 
-	use selendra_primitives::SessionAuthorityData;
 	use sp_runtime::testing::UintAuthorityId;
 
 	use super::{
@@ -438,6 +436,7 @@ mod tests {
 	};
 	use crate::{
 		block::mock::MockHeader,
+		selendra_primitives::SessionAuthorityData,
 		session::{testing::authority_data, SessionBoundaryInfo, SessionId},
 		session_map::FinalizedBlocksProvider,
 		SessionPeriod,

@@ -39,7 +39,7 @@ impl<A: AddressingInformation> Discovery<A> {
 
 		let missing_authorities = handler.missing_nodes();
 		let node_count = handler.node_count();
-		info!(target: "selendra-network", "{}/{} authorities known for session {}.", node_count.0-missing_authorities.len(), node_count.0, handler.session_id().0);
+		info!(target: "aleph-network", "{}/{} authorities known for session {}.", node_count.0-missing_authorities.len(), node_count.0, handler.session_id().0);
 		Some(authentication)
 	}
 
@@ -58,7 +58,7 @@ impl<A: AddressingInformation> Discovery<A> {
 		authentication: Authentication<A>,
 		handler: &mut SessionHandler<A>,
 	) -> (Option<A>, Option<Authentication<A>>) {
-		debug!(target: "selendra-network", "Handling broadcast with authentication {:?}.", authentication);
+		debug!(target: "aleph-network", "Handling broadcast with authentication {:?}.", authentication);
 		let address = match handler.handle_authentication(authentication.clone()) {
 			Some(address) => Some(address),
 			None => return (None, None),
@@ -67,7 +67,7 @@ impl<A: AddressingInformation> Discovery<A> {
 		if !self.should_rebroadcast(&node_id) {
 			return (address, None);
 		}
-		trace!(target: "selendra-network", "Rebroadcasting {:?}.", authentication);
+		trace!(target: "aleph-network", "Rebroadcasting {:?}.", authentication);
 		self.last_broadcast.insert(node_id, Instant::now());
 		(address, Some(authentication))
 	}

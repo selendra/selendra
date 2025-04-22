@@ -8,19 +8,31 @@ use frame_support::StorageHasher;
 use pallet_aleph_runtime_api::AlephSessionApi;
 use parity_scale_codec::{Decode, DecodeAll, Encode, Error as DecodeError};
 use sc_client_api::Backend;
-use selendra_primitives::{AccountId, AuraId};
+use sc_transaction_pool_api::{LocalTransactionPool, OffchainTransactionPoolFactory};
+use sp_api::ApiExt;
 use sp_application_crypto::key_types::AURA;
 use sp_core::twox_128;
 use sp_runtime::traits::{Block, OpaqueKeys};
 
-use crate::{BlockHash, ClientForAleph};
+use crate::{
+	selendra_primitives::{crypto::SignatureSet, AccountId, AuraId, AuthoritySignature, Score},
+	BlockHash, ClientForAleph,
+};
 
 /// Trait handling connection between host code and runtime storage
 pub trait RuntimeApi: Clone + Send + Sync + 'static {
 	type Error: Display;
+
 	/// Returns aura authorities for the next session using state from block `at`
 	fn next_aura_authorities(&self, at: BlockHash)
 		-> Result<Vec<(AccountId, AuraId)>, Self::Error>;
+
+	/// Submits a signed ABFT performance score.
+	fn submit_abft_score(
+		&self,
+		score: Score,
+		signature: SignatureSet<AuthoritySignature>,
+	) -> Result<(), Self::Error>;
 }
 
 pub struct RuntimeApiImpl<C, B, BE>
@@ -31,7 +43,8 @@ where
 	BE: Backend<B> + 'static,
 {
 	client: Arc<C>,
-	_phantom: PhantomData<(B, BE)>,
+	transaction_pool_factory: OffchainTransactionPoolFactory<B>,
+	_phantom: PhantomData<BE>,
 }
 
 impl<C, B, BE> Clone for RuntimeApiImpl<C, B, BE>
@@ -42,7 +55,12 @@ where
 	BE: Backend<B> + 'static,
 {
 	fn clone(&self) -> Self {
-		RuntimeApiImpl::new(self.client.clone())
+		let RuntimeApiImpl { client, transaction_pool_factory, _phantom } = self;
+		RuntimeApiImpl {
+			client: client.clone(),
+			transaction_pool_factory: transaction_pool_factory.clone(),
+			_phantom: *_phantom,
+		}
 	}
 }
 
@@ -53,8 +71,12 @@ where
 	B: Block<Hash = BlockHash>,
 	BE: Backend<B> + 'static,
 {
-	pub fn new(client: Arc<C>) -> Self {
-		Self { client, _phantom: PhantomData }
+	pub fn new<TP: LocalTransactionPool<Block = B> + 'static>(
+		client: Arc<C>,
+		transaction_pool: TP,
+	) -> Self {
+		let transaction_pool_factory = OffchainTransactionPoolFactory::new(transaction_pool);
+		Self { client, transaction_pool_factory, _phantom: PhantomData }
 	}
 
 	fn access_storage<D: Decode>(
@@ -110,27 +132,32 @@ pub enum ApiError {
 	NoStorageMapEntry(String, String),
 	NoStorageValue(String, String),
 	DecodeError(DecodeError),
+	ScoreSubmissionFailure,
+	CallFailed,
 }
 
 impl Display for ApiError {
 	fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+		use ApiError::*;
 		match self {
-			ApiError::StorageAccessFailure => {
+			StorageAccessFailure => {
 				write!(f, "blockchain error during a storage read attempt")
 			},
-			ApiError::NoStorage => write!(f, "no storage found"),
-			ApiError::NoStorageMapEntry(pallet, item) => {
+			NoStorage => write!(f, "no storage found"),
+			NoStorageMapEntry(pallet, item) => {
 				write!(f, "storage map element not found under {}{}", pallet, item)
 			},
-			ApiError::NoStorageValue(pallet, item) => {
+			NoStorageValue(pallet, item) => {
 				write!(f, "storage value not found under {}{}", pallet, item)
 			},
-			ApiError::DecodeError(error) => write!(f, "decode error: {:?}", error),
+			DecodeError(error) => write!(f, "decode error: {:?}", error),
+			ScoreSubmissionFailure => write!(f, "failed to submit ABFT score"),
+			CallFailed => write!(f, "a call to the runtime failed"),
 		}
 	}
 }
 
-type QueuedKeys = Vec<(AccountId, selendra_primitives::AlephNodeSessionKeys)>;
+type QueuedKeys = Vec<(AccountId, primitives::AlephNodeSessionKeys)>;
 
 impl<C, B, BE> RuntimeApi for RuntimeApiImpl<C, B, BE>
 where
@@ -155,6 +182,25 @@ where
 			.filter_map(|(account_id, keys)| keys.get(AURA).map(|key| (account_id, key)))
 			.collect())
 	}
+
+	fn submit_abft_score(
+		&self,
+		score: Score,
+		signature: SignatureSet<AuthoritySignature>,
+	) -> Result<(), Self::Error> {
+		// Use top finalized as base for this submission.
+		let block_hash = self.client.info().finalized_hash;
+		let mut runtime_api = self.client.runtime_api();
+		runtime_api.register_extension(
+			self.transaction_pool_factory.offchain_transaction_pool(block_hash),
+		);
+
+		match runtime_api.submit_abft_score(block_hash, score, signature) {
+			Ok(Some(())) => Ok(()),
+			Ok(None) => Err(ApiError::ScoreSubmissionFailure),
+			Err(_) => Err(ApiError::CallFailed),
+		}
+	}
 }
 
 #[cfg(test)]
@@ -166,7 +212,8 @@ mod test {
 
 	use frame_support::Twox64Concat;
 	use parity_scale_codec::Encode;
-	use selendra_primitives::Hash;
+	use primitives::Hash;
+	use sc_transaction_pool_api::RejectAllTxPool;
 	use sp_runtime::Storage;
 	use substrate_test_client::ClientExt;
 
@@ -201,7 +248,7 @@ mod test {
 		*client_builder.genesis_init_mut().extra_storage() = storage;
 		let client = Arc::new(client_builder.build());
 		let genesis_hash = client.genesis_hash();
-		let runtime_api = RuntimeApiImpl::new(client);
+		let runtime_api = RuntimeApiImpl::new(client, RejectAllTxPool::default());
 
 		let map_value1 = runtime_api.read_storage_map::<Twox64Concat, u32, &str>(
 			"Pallet",
@@ -240,7 +287,7 @@ mod test {
 		*client_builder.genesis_init_mut().extra_storage() = storage;
 		let client = Arc::new(client_builder.build());
 		let genesis_hash = client.genesis_hash();
-		let runtime_api = RuntimeApiImpl::new(client);
+		let runtime_api = RuntimeApiImpl::new(client, RejectAllTxPool::default());
 
 		let result1 = runtime_api.read_storage_map::<Twox64Concat, u32, &str>(
 			"Pallet",
@@ -273,7 +320,7 @@ mod test {
 		*client_builder.genesis_init_mut().extra_storage() = storage;
 		let client = Arc::new(client_builder.build());
 		let genesis_hash = client.genesis_hash();
-		let runtime_api = RuntimeApiImpl::new(client);
+		let runtime_api = RuntimeApiImpl::new(client, RejectAllTxPool::default());
 
 		// parameterize function with String instead of u32
 		let result1 = runtime_api.read_storage_map::<Twox64Concat, String, &str>(
@@ -307,7 +354,7 @@ mod test {
 		let mut client_builder = TestClientBuilder::new();
 		*client_builder.genesis_init_mut().extra_storage() = storage;
 		let client = Arc::new(client_builder.build());
-		let runtime_api = RuntimeApiImpl::new(client);
+		let runtime_api = RuntimeApiImpl::new(client, RejectAllTxPool::default());
 
 		let result1 = runtime_api.read_storage_map::<Twox64Concat, u32, &str>(
 			"Pallet",

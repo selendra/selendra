@@ -5,7 +5,6 @@ use log::{debug, error, trace};
 use pallet_aleph_runtime_api::AlephSessionApi;
 use sc_client_api::{Backend, FinalityNotification};
 use sc_utils::mpsc::TracingUnboundedReceiver;
-use selendra_primitives::{AccountId, AuraId, BlockHash, BlockNumber, SessionAuthorityData};
 use sp_consensus_aura::AuraApi;
 use sp_runtime::traits::{Block, Header};
 use tokio::sync::{
@@ -14,11 +13,14 @@ use tokio::sync::{
 };
 
 use crate::{
-	block::substrate::FinalizationInfo, runtime_api::RuntimeApi, session::SessionBoundaryInfo,
+	block::substrate::FinalizationInfo,
+	runtime_api::RuntimeApi,
+	selendra_primitives::{AccountId, AuraId, BlockHash, BlockNumber, SessionAuthorityData},
+	session::SessionBoundaryInfo,
 	ClientForAleph, SessionId, SessionPeriod,
 };
 const PRUNING_THRESHOLD: u32 = 10;
-const LOG_TARGET: &str = "selendra-session-updater";
+const LOG_TARGET: &str = "aleph-session-updater";
 type SessionMap = HashMap<SessionId, SessionAuthorityData>;
 type SessionSubscribers = HashMap<SessionId, Vec<OneShotSender<SessionAuthorityData>>>;
 
@@ -437,11 +439,10 @@ mod tests {
 
 	use futures_timer::Delay;
 	use sc_utils::mpsc::tracing_unbounded;
-	use selendra_primitives::BlockNumber;
 	use tokio::sync::oneshot::error::TryRecvError;
 
 	use super::*;
-	use crate::session::testing::authority_data;
+	use crate::{selendra_primitives::BlockNumber, session::testing::authority_data};
 
 	const FIRST_THRESHOLD: u32 = PRUNING_THRESHOLD + 1;
 	const SECOND_THRESHOLD: u32 = 2 * PRUNING_THRESHOLD + 1;
@@ -518,7 +519,7 @@ mod tests {
 
 	#[tokio::test(flavor = "multi_thread")]
 	async fn genesis_catch_up() {
-		let (_sender, receiver) = tracing_unbounded("test", 1_000);
+		let (_, receiver) = tracing_unbounded("test", 1_000);
 		let mut mock_provider = MockProvider::new();
 		let mock_notifier = MockNotifier::new(receiver);
 
@@ -527,10 +528,7 @@ mod tests {
 		let updater = SessionMapUpdater::new(mock_provider, mock_notifier, SessionPeriod(1));
 		let session_map = updater.readonly_session_map();
 
-		let _handle = tokio::spawn(updater.run());
-
-		// wait a bit
-		Delay::new(Duration::from_millis(50)).await;
+		updater.run().await;
 
 		assert_eq!(session_map.get(SessionId(0)).await, Some(authority_data(0, 4)));
 		assert_eq!(session_map.get(SessionId(1)).await, Some(authority_data(4, 8)));
@@ -553,10 +551,8 @@ mod tests {
 			sender.unbounded_send(n).unwrap();
 		}
 
-		let _handle = tokio::spawn(updater.run());
-
-		// wait a bit
-		Delay::new(Duration::from_millis(50)).await;
+		drop(sender);
+		updater.run().await;
 
 		assert_eq!(session_map.get(SessionId(0)).await, Some(authority_data(0, 4)));
 		assert_eq!(session_map.get(SessionId(1)).await, Some(authority_data(4, 8)));
@@ -566,7 +562,7 @@ mod tests {
 
 	#[tokio::test(flavor = "multi_thread")]
 	async fn catch_up() {
-		let (_sender, receiver) = tracing_unbounded("test", 1_000);
+		let (_, receiver) = tracing_unbounded("test", 1_000);
 		let mut mock_provider = MockProvider::new();
 		let mut mock_notificator = MockNotifier::new(receiver);
 
@@ -579,10 +575,7 @@ mod tests {
 		let updater = SessionMapUpdater::new(mock_provider, mock_notificator, SessionPeriod(1));
 		let session_map = updater.readonly_session_map();
 
-		let _handle = tokio::spawn(updater.run());
-
-		// wait a bit
-		Delay::new(Duration::from_millis(50)).await;
+		updater.run().await;
 
 		assert_eq!(session_map.get(SessionId(0)).await, Some(authority_data_for_session(0)));
 		assert_eq!(session_map.get(SessionId(1)).await, Some(authority_data_for_session(1)));
@@ -592,7 +585,7 @@ mod tests {
 
 	#[tokio::test(flavor = "multi_thread")]
 	async fn catch_up_old_sessions() {
-		let (_sender, receiver) = tracing_unbounded("test", 1_000);
+		let (_, receiver) = tracing_unbounded("test", 1_000);
 		let mut mock_provider = MockProvider::new();
 		let mut mock_notificator = MockNotifier::new(receiver);
 
@@ -605,10 +598,7 @@ mod tests {
 		let updater = SessionMapUpdater::new(mock_provider, mock_notificator, SessionPeriod(1));
 		let session_map = updater.readonly_session_map();
 
-		let _handle = tokio::spawn(updater.run());
-
-		// wait a bit
-		Delay::new(Duration::from_millis(50)).await;
+		updater.run().await;
 
 		for i in 0..FIRST_THRESHOLD {
 			assert_eq!(session_map.get(SessionId(i)).await, None, "Session {i:?} should be pruned");
@@ -624,7 +614,7 @@ mod tests {
 
 	#[tokio::test(flavor = "multi_thread")]
 	async fn deals_with_database_pruned_authorities() {
-		let (_sender, receiver) = tracing_unbounded("test", 1_000);
+		let (_, receiver) = tracing_unbounded("test", 1_000);
 		let mut mock_provider = MockProvider::new();
 		let mut mock_notificator = MockNotifier::new(receiver);
 
@@ -634,10 +624,7 @@ mod tests {
 		let updater = SessionMapUpdater::new(mock_provider, mock_notificator, SessionPeriod(1));
 		let session_map = updater.readonly_session_map();
 
-		let _handle = tokio::spawn(updater.run());
-
-		// wait a bit
-		Delay::new(Duration::from_millis(50)).await;
+		updater.run().await;
 
 		for i in 0..5 {
 			assert_eq!(
@@ -664,14 +651,14 @@ mod tests {
 		let updater = SessionMapUpdater::new(mock_provider, mock_notificator, SessionPeriod(1));
 		let session_map = updater.readonly_session_map();
 
-		let _handle = tokio::spawn(updater.run());
+		let handle = tokio::spawn(updater.run());
 
 		for n in 1..FIRST_THRESHOLD {
 			sender.unbounded_send(n).unwrap();
 		}
 
 		// wait a bit
-		Delay::new(Duration::from_millis(50)).await;
+		Delay::new(Duration::from_millis(100)).await;
 
 		for i in 0..=FIRST_THRESHOLD {
 			assert_eq!(
@@ -685,7 +672,7 @@ mod tests {
 			assert_eq!(
 				session_map.get(SessionId(i)).await,
 				None,
-				"Session {i:?} should not be avalable yet"
+				"Session {i:?} should not be available yet"
 			);
 		}
 
@@ -693,7 +680,8 @@ mod tests {
 			sender.unbounded_send(n).unwrap();
 		}
 
-		Delay::new(Duration::from_millis(50)).await;
+		drop(sender);
+		handle.await.unwrap();
 
 		for i in 0..(FIRST_THRESHOLD - 1) {
 			assert_eq!(session_map.get(SessionId(i)).await, None, "Session {i:?} should be pruned");
@@ -703,7 +691,7 @@ mod tests {
 			assert_eq!(
 				session_map.get(SessionId(i)).await,
 				Some(authority_data_for_session(i)),
-				"Session {i:?} should be avalable"
+				"Session {i:?} should be available"
 			);
 		}
 	}

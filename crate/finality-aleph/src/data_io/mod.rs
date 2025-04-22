@@ -19,6 +19,8 @@ pub use chain_info::{ChainInfoProvider, SubstrateChainInfoProvider};
 pub use data_interpreter::OrderedDataInterpreter;
 pub use data_provider::{ChainTracker, DataProvider};
 pub use data_store::DataStore;
+#[cfg(test)]
+pub use data_store::DataStoreConfig;
 pub use proposal::UnvalidatedAlephProposal;
 
 // Maximum number of blocks above the last finalized allowed in an AlephBFT proposal.

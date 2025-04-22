@@ -3,7 +3,7 @@ use std::{default::Default, path::PathBuf, time::Duration};
 use futures::FutureExt;
 use futures_timer::Delay;
 use log::{debug, error, info, trace, warn};
-use selendra_primitives::AuthorityId;
+use primitives::AuthorityId;
 use tokio::{task::spawn_blocking, time::sleep};
 
 use crate::{
@@ -24,6 +24,8 @@ pub mod traits;
 #[cfg(test)]
 mod mocks;
 
+const LOG_TARGET: &str = "aleph-party";
+
 pub(crate) struct ConsensusPartyParams<CS, NSM> {
 	pub session_authorities: ReadOnlySessionMap,
 	pub chain_state: CS,
@@ -31,6 +33,7 @@ pub(crate) struct ConsensusPartyParams<CS, NSM> {
 	pub backup_saving_path: Option<PathBuf>,
 	pub session_manager: NSM,
 	pub session_info: SessionBoundaryInfo,
+	pub score_submission_period: u32,
 }
 
 pub(crate) struct ConsensusParty<CS, NSM>
@@ -44,6 +47,7 @@ where
 	backup_saving_path: Option<PathBuf>,
 	session_manager: NSM,
 	session_info: SessionBoundaryInfo,
+	score_submission_period: u32,
 }
 
 const SESSION_STATUS_CHECK_PERIOD: Duration = Duration::from_millis(1000);
@@ -61,6 +65,7 @@ where
 			chain_state,
 			session_manager,
 			session_info,
+			score_submission_period,
 			..
 		} = params;
 		Self {
@@ -70,6 +75,7 @@ where
 			chain_state,
 			session_manager,
 			session_info,
+			score_submission_period,
 		}
 	}
 
@@ -151,6 +157,7 @@ where
 						self.session_manager
 							.spawn_authority_task_for_session(
 								session_id,
+								self.score_submission_period,
 								node_id,
 								backup,
 								authorities,
@@ -252,7 +259,6 @@ mod tests {
 		time::Duration,
 	};
 
-	use selendra_primitives::{AuthorityId, SessionAuthorityData};
 	use sp_runtime::testing::UintAuthorityId;
 	use tokio::{task::JoinHandle, time::sleep};
 
@@ -261,6 +267,7 @@ mod tests {
 			mocks::{MockChainState, MockNodeSessionManager},
 			ConsensusParty, ConsensusPartyParams, SESSION_STATUS_CHECK_PERIOD,
 		},
+		selendra_primitives::{AuthorityId, SessionAuthorityData},
 		session::SessionBoundaryInfo,
 		session_map::SharedSessionMap,
 		SessionId, SessionPeriod, SyncOracle,
@@ -445,6 +452,7 @@ mod tests {
 	}
 
 	const SESSION_PERIOD: u32 = 30;
+	const SCORE_SUBMISSION_PERIOD: u32 = 15;
 
 	#[derive(Debug)]
 	struct MockController {
@@ -461,7 +469,7 @@ mod tests {
 		let readonly_session_authorities = shared_map.read_only();
 
 		let chain_state = Arc::new(MockChainState::new());
-		let (sync_oracle, _) = SyncOracle::new();
+		let sync_oracle = SyncOracle::new();
 		let session_manager = Arc::new(MockNodeSessionManager::new());
 		let session_info = SessionBoundaryInfo::new(session_period);
 
@@ -478,6 +486,7 @@ mod tests {
 			backup_saving_path: None,
 			session_manager,
 			session_info,
+			score_submission_period: SCORE_SUBMISSION_PERIOD,
 		};
 
 		(ConsensusParty::new(params), controller)

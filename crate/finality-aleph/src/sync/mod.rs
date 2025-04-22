@@ -25,7 +25,7 @@ pub use handler::DatabaseIO;
 pub use select_chain::FavouriteSelectChainProvider;
 pub use service::{Service, IO};
 
-const LOG_TARGET: &str = "selendra-block-sync";
+const LOG_TARGET: &str = "aleph-block-sync";
 
 /// The identifier of a connected peer.
 pub trait PeerId: Debug + Clone + Hash + Eq {}

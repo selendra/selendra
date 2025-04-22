@@ -1,4 +1,4 @@
-use std::{pin::Pin, time::Duration};
+use std::time::Duration;
 
 use legacy_aleph_bft::{create_config, default_delay_config, Config, LocalIO, Terminator};
 use log::debug;
@@ -9,6 +9,7 @@ mod traits;
 
 pub use network::NetworkData;
 
+pub use crate::selendra_primitives::LEGACY_FINALITY_VERSION as VERSION;
 use crate::{
 	abft::{
 		common::{unit_creation_delay_fn, MAX_ROUNDS, SESSION_LEN_LOWER_BOUND_MS},
@@ -25,7 +26,6 @@ use crate::{
 	},
 	Hasher, Keychain, LegacyNetworkData, NodeIndex, SessionId, SignatureSet, UnitCreationDelay,
 };
-pub use selendra_primitives::{LEGACY_FINALITY_VERSION as VERSION};
 
 type WrappedNetwork<H, ADN> = NetworkWrapper<
 	legacy_aleph_bft::NetworkData<Hasher, AlephData<H>, Signature, SignatureSet<Signature>>,
@@ -36,7 +36,7 @@ pub fn run_member<H, C, ADN, V>(
 	multikeychain: Keychain,
 	config: Config,
 	network: WrappedNetwork<H::Unverified, ADN>,
-	data_provider: impl legacy_aleph_bft::DataProvider<AlephData<H::Unverified>> + Send + 'static,
+	data_provider: impl legacy_aleph_bft::DataProvider<AlephData<H::Unverified>> + 'static,
 	ordered_data_interpreter: OrderedDataInterpreter<SubstrateChainInfoProvider<H, C>, H, V>,
 	backup: ABFTBackup,
 ) -> Task
@@ -49,12 +49,7 @@ where
 	let TaskCommon { spawn_handle, session_id } = subtask_common;
 	let (stop, exit) = oneshot::channel();
 	let member_terminator = Terminator::create_root(exit, "member");
-	let local_io = LocalIO::new(
-		data_provider,
-		ordered_data_interpreter,
-		Pin::into_inner(backup.0),
-		Pin::into_inner(backup.1),
-	);
+	let local_io = LocalIO::new(data_provider, ordered_data_interpreter, backup.0, backup.1);
 
 	let task = {
 		let spawn_handle = spawn_handle.clone();

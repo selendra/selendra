@@ -1,7 +1,7 @@
 use std::sync::{atomic::AtomicBool, Arc};
 
 use log::error;
-use prometheus_endpoint::Registry;
+use rate_limiter::SharedRateLimiter;
 use sc_client_api::Backend;
 use sc_network::{
 	config::{NetworkConfiguration, ProtocolId},
@@ -15,6 +15,7 @@ use sc_service::SpawnTaskHandle;
 use sc_transaction_pool_api::TransactionPool;
 use sc_utils::mpsc::TracingUnboundedSender;
 use sp_runtime::traits::{Block, Header};
+use substrate_prometheus_endpoint::Registry;
 
 use crate::{
 	network::{
@@ -28,6 +29,7 @@ mod base;
 mod own_protocols;
 mod rpc;
 mod transactions;
+mod transport;
 
 use base::network as base_network;
 use own_protocols::Networks;
@@ -47,10 +49,17 @@ pub struct NetworkOutput<TP: TransactionPool + 'static> {
 	pub system_rpc_tx: TracingUnboundedSender<RpcRequest<TP::Block>>,
 }
 
+pub struct SubstrateNetworkConfig {
+	/// Maximum bit-rate in bits per second of the substrate network (shared by sync, gossip, etc.).
+	pub substrate_network_bit_rate: u64,
+	/// Configuration of the network service.
+	pub network_config: NetworkConfiguration,
+}
+
 /// Start everything necessary to run the inter-node network and return the interfaces for it.
 /// This includes everything in the base network, the base protocol service, and services for handling transactions and RPCs.
 pub fn network<TP, BE, C>(
-	network_config: &NetworkConfiguration,
+	network_config: SubstrateNetworkConfig,
 	protocol_id: ProtocolId,
 	client: Arc<C>,
 	major_sync: Arc<AtomicBool>,
@@ -68,9 +77,15 @@ where
 	let genesis_hash = client.hash(0).ok().flatten().expect("Genesis block exists.");
 	let (base_protocol_config, events_from_network) =
 		setup_base_protocol::<TP::Block>(genesis_hash);
+
+	let network_rate_limit = network_config.substrate_network_bit_rate;
+	let rate_limiter = SharedRateLimiter::new(network_rate_limit.into());
+	let transport_builder = |config| transport::build_transport(rate_limiter, config);
+
 	let (network, Networks { block_sync_network, authentication_network }, transaction_prototype) =
 		base_network(
-			network_config,
+			&network_config.network_config,
+			transport_builder,
 			protocol_id,
 			client.clone(),
 			spawn_handle,
@@ -81,7 +96,7 @@ where
 	let (base_service, syncing_service) = BaseProtocolService::new(
 		major_sync,
 		genesis_hash,
-		network_config,
+		&network_config.network_config,
 		protocol_names,
 		network.clone(),
 		events_from_network,

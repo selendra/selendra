@@ -3,10 +3,10 @@ use std::num::NonZeroUsize;
 use log::warn;
 use lru::LruCache;
 use parking_lot::Mutex;
-use prometheus_endpoint::{register, Counter, PrometheusError, Registry, U64};
+use primitives::{BlockHash, BlockNumber};
 use sc_service::Arc;
-use selendra_primitives::{BlockHash, BlockNumber};
 use sp_core::{bounded_vec::BoundedVec, ConstU32};
+use substrate_prometheus_endpoint::{register, Counter, PrometheusError, Registry, U64};
 
 use crate::{metrics::LOG_TARGET, BlockId};
 
@@ -92,8 +92,8 @@ impl FinalityRateMetrics {
 mod tests {
 	use std::collections::HashMap;
 
-	use prometheus_endpoint::{Counter, Registry, U64};
-	use selendra_primitives::{BlockHash, BlockNumber};
+	use primitives::{BlockHash, BlockNumber};
+	use substrate_prometheus_endpoint::{Counter, Registry, U64};
 
 	use super::{FinalityRateMetrics, ImportedHashesCache};
 

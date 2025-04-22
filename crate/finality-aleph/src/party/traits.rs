@@ -1,10 +1,10 @@
-use async_trait::async_trait;
 use std::fmt::Display;
 
-use selendra_primitives::BlockNumber;
+use async_trait::async_trait;
 
 use crate::{
 	party::{backup::ABFTBackup, manager::AuthorityTask},
+	selendra_primitives::BlockNumber,
 	AuthorityId, NodeIndex, SessionId,
 };
 
@@ -25,6 +25,7 @@ pub trait NodeSessionManager {
 	async fn spawn_authority_task_for_session(
 		&self,
 		session: SessionId,
+		score_submission_period: u32,
 		node_id: NodeIndex,
 		backup: ABFTBackup,
 		authorities: &[AuthorityId],

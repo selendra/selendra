@@ -10,8 +10,6 @@ use futures::{
 use sp_core::hash::H256;
 use tokio::time::timeout;
 
-use selendra_primitives::BlockNumber;
-
 use crate::{
 	block::{Block, Header},
 	data_io::{AlephData, AlephNetworkMessage, DataStore, DataStoreConfig, MAX_DATA_BRANCH_LEN},
@@ -19,6 +17,7 @@ use crate::{
 		data::{component::Network as ComponentNetwork, Network as DataNetwork},
 		Data,
 	},
+	selendra_primitives::BlockNumber,
 	session::{SessionBoundaries, SessionBoundaryInfo, SessionId, SessionPeriod},
 	sync::RequestBlocks,
 	testing::{

@@ -4,7 +4,9 @@ use std::{
 	hash::Hash,
 };
 
-pub use build::{network as build_network, NetworkOutput as BuildNetworkOutput};
+pub use build::{
+	network as build_network, NetworkOutput as BuildNetworkOutput, SubstrateNetworkConfig,
+};
 use network_clique::{AddressingInformation, NetworkIdentity, PeerId};
 use parity_scale_codec::Codec;
 pub use substrate::{PeerId as SubstratePeerId, ProtocolNetwork};
@@ -19,7 +21,7 @@ pub mod session;
 mod substrate;
 pub mod tcp;
 
-const LOG_TARGET: &str = "selendra-network";
+const LOG_TARGET: &str = "aleph-network";
 
 /// A basic alias for properties we expect basic data to satisfy.
 pub trait Data: Clone + Codec + Send + Sync + 'static {}

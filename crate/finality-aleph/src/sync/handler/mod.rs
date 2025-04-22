@@ -159,7 +159,7 @@ where
 	Finalizer(F::Error),
 	Forest(ForestError),
 	ForestInitialization(ForestInitializationError<B, J, CS>),
-	RequestHandlerError(RequestHandlerError<CS::Error>),
+	RequestHandler(RequestHandlerError<CS::Error>),
 	MissingJustification,
 	BlockNotImportable(BlockId),
 	HeaderNotRequired(BlockId),
@@ -183,7 +183,7 @@ where
 			Finalizer(e) => write!(f, "finalized error: {e}"),
 			Forest(e) => write!(f, "forest error: {e}"),
 			ForestInitialization(e) => write!(f, "forest initialization error: {e}"),
-			RequestHandlerError(e) => write!(f, "request handler error: {e}"),
+			RequestHandler(e) => write!(f, "request handler error: {e}"),
 			MissingJustification => {
 				write!(f, "justification for the last block of a past session missing")
 			},
@@ -222,7 +222,7 @@ where
 	F: Finalizer<J>,
 {
 	fn from(e: RequestHandlerError<CS::Error>) -> Self {
-		Error::RequestHandlerError(e)
+		Error::RequestHandler(e)
 	}
 }
 
@@ -376,7 +376,7 @@ where
 			// or our favourite is not a descendant of theirs.
 			// Either way, at least try sending some justifications.
 			Ok((Action::Noop, _))
-			| Err(Error::RequestHandlerError(RequestHandlerError::RootMismatch)) => {
+			| Err(Error::RequestHandler(RequestHandlerError::RootMismatch)) => {
 				let request = Request::new(
 					state.top_justification().header().clone(),
 					BranchKnowledge::TopImported(state.top_justification().header().id()),
@@ -528,7 +528,15 @@ where
 							}),
 						);
 					}
-					last_imported = Some(b.header().id());
+					let block_id = b.header().id();
+					if !self.forest.start_import(&block_id) {
+						return (
+							new_highest,
+							equivocation_proofs,
+							Some(Error::BlockNotImportable(block_id)),
+						);
+					}
+					last_imported = Some(block_id);
 					self.block_importer.import_block(b, false);
 				},
 			}
@@ -698,9 +706,8 @@ mod tests {
 		let (backend, notifier) = Backend::setup(SESSION_BOUNDARY_INFO);
 		let verifier = backend.clone();
 		let database_io = DatabaseIO::new(backend.clone(), backend.clone(), backend.clone());
-		let handler =
-			Handler::new(database_io, verifier, SyncOracle::new().0, SESSION_BOUNDARY_INFO)
-				.expect("mock backend works");
+		let handler = Handler::new(database_io, verifier, SyncOracle::new(), SESSION_BOUNDARY_INFO)
+			.expect("mock backend works");
 		let genesis = backend.top_finalized().expect("genesis").header().id();
 		(handler, backend, notifier, genesis)
 	}
@@ -1492,7 +1499,7 @@ mod tests {
 		let mut handler = Handler::new(
 			database_io,
 			verifier,
-			SyncOracle::new().0,
+			SyncOracle::new(),
 			SessionBoundaryInfo::new(SessionPeriod(20)),
 		)
 		.expect("mock backend works");
@@ -2271,6 +2278,20 @@ mod tests {
 			notifier.next().await.expect("should receive notification"),
 			BlockImported(block.header().clone())
 		);
+	}
+
+	#[tokio::test]
+	async fn rejects_parentless_block() {
+		let (mut handler, _backend, _notifier, genesis) = setup();
+
+		// Create 2 new blocks and make the handler aware of them.
+		let mut branch = grow_light_branch(&mut handler, &genesis, 2, 0);
+
+		// Give only the latter to handler.
+		let parentless_block = MockBlock::new(branch.pop().expect("just created"), true);
+		let (_, _, e) =
+			handler.handle_request_response(vec![ResponseItem::Block(parentless_block)], 1);
+		assert!(matches!(e, Some(Error::BlockNotImportable(_))));
 	}
 
 	#[tokio::test]

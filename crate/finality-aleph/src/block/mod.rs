@@ -226,10 +226,6 @@ where
 	/// the request is above the top finalized.
 	fn finalized_at(&self, number: BlockNumber) -> Result<FinalizationStatus<J>, Self::Error>;
 
-	#[allow(dead_code)]
-	/// The header of the best block.
-	fn best_block(&self) -> Result<J::Header, Self::Error>;
-
 	/// The justification of the top finalized block.
 	fn top_finalized(&self) -> Result<J, Self::Error>;
 

@@ -3,15 +3,14 @@ use std::marker::PhantomData;
 use log::{debug, info};
 use lru::LruCache;
 
-use selendra_primitives::{BlockHash, BlockNumber};
-
 use crate::{
 	block::{Header, HeaderBackend},
 	data_io::ChainInfoCacheConfig,
+	selendra_primitives::{BlockHash, BlockNumber},
 	BlockId,
 };
 
-const LOG_TARGET: &str = "selendra-data-store";
+const LOG_TARGET: &str = "aleph-data-store";
 
 pub trait ChainInfoProvider: Send + Sync + 'static {
 	fn is_block_imported(&mut self, block: &BlockId) -> bool;

@@ -151,6 +151,10 @@ pub mod mock_runtime {
 				unimplemented!()
 			}
 
+			fn score_submission_period() -> u32 {
+				unimplemented!()
+			}
+
 			fn session_period() -> u32 {
 				unimplemented!()
 			}
@@ -190,6 +194,18 @@ pub mod mock_runtime {
 			}
 
 			fn key_owner(_key: AlephId) -> Option<AccountId> {
+				unimplemented!()
+			}
+
+			fn yearly_inflation() -> Perbill {
+				unimplemented!()
+			}
+
+			fn current_era_payout() -> (Balance, Balance) {
+				unimplemented!()
+			}
+
+			fn submit_abft_score(_score: Score, _signature: SignatureSet<AuthoritySignature>) -> Option<()>{
 				unimplemented!()
 			}
 		}
@@ -294,7 +310,6 @@ pub mod mock_runtime {
 				unimplemented!()
 			}
 		}
-
 
 		/// There’s an important remark on how this fake runtime must be implemented - it does not need to
 		/// have all the same entries like `impl_runtime_apis!` has - in particular, it does not need an

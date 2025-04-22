@@ -5,10 +5,14 @@ use std::{
 };
 
 use parity_scale_codec::{Decode, Encode};
-use selendra_primitives::{BlockHash, BlockNumber};
 use sp_runtime::SaturatedConversion;
 
-use crate::{block::UnverifiedHeader, data_io::MAX_DATA_BRANCH_LEN, BlockId, SessionBoundaries};
+use crate::{
+	block::UnverifiedHeader,
+	data_io::MAX_DATA_BRANCH_LEN,
+	selendra_primitives::{BlockHash, BlockNumber},
+	BlockId, SessionBoundaries,
+};
 
 /// Represents a proposal we obtain from another node. Note that since the proposal might come from
 /// a malicious node there is no guarantee that the block hashes in the proposal correspond to real blocks

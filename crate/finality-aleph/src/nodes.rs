@@ -5,11 +5,11 @@ use futures::channel::oneshot;
 use log::{debug, error};
 use network_clique::{RateLimitingDialer, RateLimitingListener, Service, SpawnHandleT};
 use pallet_aleph_runtime_api::AlephSessionApi;
-use rate_limiter::SleepingRateLimiter;
+use primitives::TransactionHash;
+use rate_limiter::SharedRateLimiter;
 use sc_client_api::Backend;
 use sc_keystore::{Keystore, LocalKeystore};
-use sc_transaction_pool_api::TransactionPool;
-use selendra_primitives::{AuraId, Block, TransactionHash};
+use sc_transaction_pool_api::{LocalTransactionPool, TransactionPool};
 use sp_consensus_aura::AuraApi;
 
 use crate::{
@@ -20,7 +20,7 @@ use crate::{
 	crypto::AuthorityPen,
 	finalization::AlephFinalizer,
 	idx_to_account::ValidatorIndexToAccountIdConverterImpl,
-	metrics::{run_metrics_service, SloMetrics},
+	metrics::{run_metrics_service, ScoreMetrics, SloMetrics},
 	network::{
 		address_cache::validator_address_cache_updater,
 		session::{ConnectionManager, ConnectionManagerConfig},
@@ -31,6 +31,7 @@ use crate::{
 		ConsensusPartyParams,
 	},
 	runtime_api::RuntimeApiImpl,
+	selendra_primitives::{AuraId, Block},
 	session::SessionBoundaryInfo,
 	session_map::{
 		AuthorityProviderImpl, FinalityNotifierImpl, FinalizedBlockProviderImpl, SessionMapUpdater,
@@ -44,7 +45,7 @@ use crate::{
 // so the actual size probably needs to be increased by one.
 pub const VERIFIER_CACHE_SIZE: usize = 3;
 
-const LOG_TARGET: &str = "selendra-party";
+const LOG_TARGET: &str = "aleph-party";
 
 pub fn new_pen(mnemonic: &str, keystore: Arc<LocalKeystore>) -> AuthorityPen {
 	let validator_peer_id = keystore
@@ -59,7 +60,9 @@ where
 	C: crate::ClientForAleph<Block, BE> + Send + Sync + 'static,
 	C::Api: AlephSessionApi<Block> + AuraApi<Block, AuraId>,
 	BE: Backend<Block> + 'static,
-	TP: TransactionPool<Block = Block, Hash = TransactionHash> + 'static,
+	TP: LocalTransactionPool<Block = Block>
+		+ TransactionPool<Block = Block, Hash = TransactionHash>
+		+ 'static,
 {
 	let AlephConfig {
 		authentication_network,
@@ -74,6 +77,7 @@ where
 		unit_creation_delay,
 		session_period,
 		millisecs_per_block,
+		score_submission_period,
 		justification_channel_provider,
 		block_rx,
 		backup_saving_path,
@@ -94,7 +98,7 @@ where
 	debug!(
 		target: LOG_TARGET,
 		"Initializing rate-limiter for the validator-network with {} byte(s) per second.",
-		rate_limiter_config.alephbft_bit_rate_per_connection
+		rate_limiter_config.alephbft_network_bit_rate
 	);
 
 	let (dialer, listener, network_identity) =
@@ -103,8 +107,8 @@ where
 			.expect("we should have working networking");
 
 	let alephbft_rate_limiter =
-		SleepingRateLimiter::new(rate_limiter_config.alephbft_bit_rate_per_connection);
-	let dialer = RateLimitingDialer::new(dialer, alephbft_rate_limiter.clone());
+		SharedRateLimiter::new(rate_limiter_config.alephbft_network_bit_rate.into());
+	let dialer = RateLimitingDialer::new(dialer, alephbft_rate_limiter.share());
 	let listener = RateLimitingListener::new(listener, alephbft_rate_limiter);
 
 	let (validator_network_service, validator_network) = Service::new(
@@ -126,8 +130,10 @@ where
 		}
 	});
 
+	let runtime_api = RuntimeApiImpl::new(client.clone(), transaction_pool.clone());
+
 	let map_updater = SessionMapUpdater::new(
-		AuthorityProviderImpl::new(client.clone(), RuntimeApiImpl::new(client.clone())),
+		AuthorityProviderImpl::new(client.clone(), runtime_api.clone()),
 		FinalityNotifierImpl::new(client.clone()),
 		session_period,
 	);
@@ -139,6 +145,11 @@ where
 	});
 
 	let chain_events = client.chain_status_notifier();
+
+	let score_metrics = ScoreMetrics::new(registry.clone()).unwrap_or_else(|e| {
+		debug!(target: LOG_TARGET, "Failed to create metrics: {}.", e);
+		ScoreMetrics::noop()
+	});
 
 	let slo_metrics = SloMetrics::new(registry.as_ref(), chain_status.clone());
 	let timing_metrics = slo_metrics.timing_metrics().clone();
@@ -164,7 +175,7 @@ where
 	);
 
 	let session_authority_provider =
-		AuthorityProviderImpl::new(client.clone(), RuntimeApiImpl::new(client.clone()));
+		AuthorityProviderImpl::new(client.clone(), runtime_api.clone());
 	let verifier = VerifierCache::new(
 		session_info.clone(),
 		SubstrateFinalizationInfo::new(client.clone()),
@@ -190,7 +201,7 @@ where
 		verifier.clone(),
 		session_info.clone(),
 		sync_io,
-		registry.clone(),
+		registry,
 		slo_metrics,
 		favourite_block_user_requests,
 	) {
@@ -211,7 +222,7 @@ where
 		ValidatorIndexToAccountIdConverterImpl::new(
 			client.clone(),
 			session_info.clone(),
-			RuntimeApiImpl::new(client.clone()),
+			runtime_api.clone(),
 		),
 	);
 
@@ -254,8 +265,11 @@ where
 			spawn_handle,
 			connection_manager,
 			keystore,
+			runtime_api,
+			score_metrics,
 		),
 		session_info,
+		score_submission_period,
 	});
 
 	debug!(target: LOG_TARGET, "Consensus party has started.");

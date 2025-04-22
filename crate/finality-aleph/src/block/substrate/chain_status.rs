@@ -3,6 +3,12 @@ use std::{
 	sync::Arc,
 };
 
+use log::warn;
+use sc_client_api::{blockchain::HeaderBackend as _, Backend as _};
+use sc_service::TFullBackend;
+use sp_blockchain::{Backend as _, Error as BackendError, Info};
+use sp_runtime::traits::{Block as SubstrateBlock, Header as SubstrateHeader};
+
 use crate::{
 	block::{
 		substrate::{Justification, LOG_TARGET},
@@ -10,16 +16,11 @@ use crate::{
 		Justification as _,
 	},
 	justification::backwards_compatible_decode,
+	selendra_primitives::{
+		Block, BlockNumber, Hash as AlephHash, Header as AlephHeader, ALEPH_ENGINE_ID,
+	},
 	BlockId,
 };
-use log::warn;
-use sc_client_api::{blockchain::HeaderBackend as _, Backend as _};
-use sc_service::TFullBackend;
-use selendra_primitives::{
-	Block, BlockNumber, Hash as AlephHash, Header as AlephHeader, ALEPH_ENGINE_ID,
-};
-use sp_blockchain::{Backend as _, Error as BackendError, Info};
-use sp_runtime::traits::{Block as SubstrateBlock, Header as SubstrateHeader};
 
 /// What can go wrong when checking chain status
 #[derive(Debug)]
@@ -137,10 +138,6 @@ impl SubstrateChainStatus {
 		}
 	}
 
-	fn best_hash(&self) -> AlephHash {
-		self.info().best_hash
-	}
-
 	fn finalized_hash(&self) -> AlephHash {
 		self.info().finalized_hash
 	}
@@ -206,12 +203,6 @@ impl ChainStatus<Block, Justification> for SubstrateChainStatus {
 		} else {
 			Ok(BlockStatus::Present(header))
 		}
-	}
-
-	fn best_block(&self) -> Result<AlephHeader, Self::Error> {
-		let best_hash = self.best_hash();
-
-		self.header_for_hash(best_hash)?.ok_or(Error::MissingHash(best_hash))
 	}
 
 	fn top_finalized(&self) -> Result<Justification, Self::Error> {

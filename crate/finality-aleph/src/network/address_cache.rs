@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Debug, num::NonZeroUsize, sync::Arc};
 
 use lru::LruCache;
 use parking_lot::Mutex;
-use selendra_primitives::AccountId;
+use primitives::AccountId;
 use serde::{Deserialize, Serialize};
 
 use crate::{

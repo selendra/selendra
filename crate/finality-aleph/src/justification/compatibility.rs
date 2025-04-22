@@ -200,7 +200,6 @@ pub fn versioned_encode(justification: AlephJustification) -> Vec<u8> {
 #[cfg(test)]
 mod test {
 	use parity_scale_codec::{Decode, Encode};
-	use selendra_primitives::{AuthorityPair, AuthoritySignature};
 	use sp_core::Pair;
 
 	use super::{
@@ -210,6 +209,7 @@ mod test {
 	use crate::{
 		crypto::{Signature, SignatureV1},
 		justification::AlephJustification,
+		selendra_primitives::{AuthorityPair, AuthoritySignature},
 		NodeCount, SignatureSet, Version,
 	};
 

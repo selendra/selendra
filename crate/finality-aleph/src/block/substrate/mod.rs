@@ -1,11 +1,13 @@
+use primitives::BlockNumber;
+use sc_consensus::import_queue::{ImportQueueService, IncomingBlock};
+use sp_consensus::BlockOrigin;
+use sp_runtime::traits::{CheckedSub, Header as _, One};
+
 use crate::{
 	block::{Block as BlockT, BlockId, BlockImport, Header as HeaderT, UnverifiedHeader},
 	metrics::TimingBlockMetrics,
+	selendra_primitives::{Block, Header},
 };
-use sc_consensus::import_queue::{ImportQueueService, IncomingBlock};
-use selendra_primitives::{Block, BlockNumber, Header};
-use sp_consensus::BlockOrigin;
-use sp_runtime::traits::{CheckedSub, Header as _, One};
 
 mod chain_status;
 mod finalizer;
@@ -25,7 +27,7 @@ use crate::{
 	metrics::Checkpoint,
 };
 
-const LOG_TARGET: &str = "selendra-substrate";
+const LOG_TARGET: &str = "aleph-substrate";
 
 impl UnverifiedHeader for Header {
 	fn id(&self) -> BlockId {

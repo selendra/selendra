@@ -6,7 +6,7 @@ use futures::{
 	StreamExt,
 };
 use log::{debug, error, info, trace, warn};
-use prometheus_endpoint::Registry;
+use substrate_prometheus_endpoint::Registry;
 use tokio::time;
 
 use crate::{
@@ -194,12 +194,13 @@ where
 			database_io,
 		} = io;
 		let network = VersionWrapper::new(network);
+		let is_major_syncing = sync_oracle.underlying_atomic();
 		let handler = Handler::new(database_io, verifier, sync_oracle, session_info)?;
 		let tasks = TaskQueue::new();
 		let broadcast_ticker = Ticker::new(TICK_PERIOD, BROADCAST_COOLDOWN);
 		let chain_extension_ticker = Ticker::new(TICK_PERIOD, CHAIN_EXTENSION_COOLDOWN);
 		let (block_requests_for_sync, block_requests_from_user) = mpsc::unbounded();
-		let metrics = Metrics::new(metrics_registry).unwrap_or_else(|e| {
+		let metrics = Metrics::new(is_major_syncing, metrics_registry).unwrap_or_else(|e| {
 			warn!(target: LOG_TARGET, "Failed to create metrics: {}.", e);
 			Metrics::noop()
 		});
@@ -564,11 +565,16 @@ where
 
 	fn handle_task(&mut self, task: RequestTask) {
 		trace!(target: LOG_TARGET, "Handling task {}.", task);
-		if let TaskAction::Request(pre_request, (task, delay)) =
-			task.process(self.handler.interest_provider())
-		{
-			self.send_request(pre_request);
-			self.tasks.schedule_in(task, delay);
+		match task.process(self.handler.interest_provider()) {
+			TaskAction::Request(pre_request, (task, delay)) => {
+				if !self.major_sync_last_status {
+					// don't actually send requests if we are in major sync anyway, but keep them
+					self.send_request(pre_request);
+				}
+				self.tasks.schedule_in(task, delay);
+			},
+			TaskAction::Delay((task, delay)) => self.tasks.schedule_in(task, delay),
+			TaskAction::Ignore => (),
 		}
 		self.metrics.report_event(Event::HandleTask);
 	}

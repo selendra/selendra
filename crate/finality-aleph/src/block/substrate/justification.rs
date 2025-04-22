@@ -1,5 +1,7 @@
 use std::fmt::{Debug, Display, Error as FmtError, Formatter};
 
+use parity_scale_codec::{Decode, Encode};
+
 use crate::{
 	block::{
 		substrate::{
@@ -9,9 +11,8 @@ use crate::{
 		BlockStatus, ChainStatus, Justification as JustificationT, UnverifiedJustification,
 	},
 	justification::AlephJustification,
+	selendra_primitives::Header,
 };
-use parity_scale_codec::{Decode, Encode};
-use selendra_primitives::Header;
 
 /// Proper `AlephJustification` or a variant indicating virtual justification
 /// for the genesis block, which is the only block that can be the top finalized

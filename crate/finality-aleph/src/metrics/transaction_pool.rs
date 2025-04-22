@@ -6,7 +6,7 @@ use std::{
 
 use lru::LruCache;
 use parking_lot::Mutex;
-use prometheus_endpoint::{
+use substrate_prometheus_endpoint::{
 	register, Counter, Histogram, HistogramOpts, PrometheusError, Registry, U64,
 };
 
@@ -35,39 +35,34 @@ impl<TxHash: std::hash::Hash + Eq, C: Clock> TransactionPoolMetrics<TxHash, C> {
 		};
 
 		Ok(Self::Prometheus {
-            time_till_block_inclusion: register(
-                Histogram::with_opts(
-                    HistogramOpts::new(
-                        "aleph_transaction_to_block_time",
-                        "Time from becoming ready in the pool to inclusion in some valid block.",
-                    )
-                    .buckets(exponential_buckets_two_sided(
-                        2000.0,
-                        BUCKETS_FACTOR,
-                        2,
-                        8,
-                    )?),
-                )?,
-                registry,
-            )?,
-            transactions_not_seen_in_the_pool: register(
-                Counter::new(
-                    "selendra_transactions_not_seen_in_the_pool",
-                    "selendra_primitives
-                Number of transactions that were reported to be in block before reporting of selendra_primitives
-                being in the ready queue in the transaction pool. This could happen selendra_primitives
-                for many reasons, e.g. when a transaction has been added to the future pool, selendra_primitives
-                has been submitted locally, or because of a race condition selendra_primitives
+			time_till_block_inclusion: register(
+				Histogram::with_opts(
+					HistogramOpts::new(
+						"aleph_transaction_to_block_time",
+						"Time from becoming ready in the pool to inclusion in some valid block.",
+					)
+					.buckets(exponential_buckets_two_sided(2000.0, BUCKETS_FACTOR, 2, 8)?),
+				)?,
+				registry,
+			)?,
+			transactions_not_seen_in_the_pool: register(
+				Counter::new(
+					"aleph_transactions_not_seen_in_the_pool",
+					"\
+                Number of transactions that were reported to be in block before reporting of \
+                being in the ready queue in the transaction pool. This could happen \
+                for many reasons, e.g. when a transaction has been added to the future pool, \
+                has been submitted locally, or because of a race condition \
                 (especially probable when there is an increased transaction load)",
-                )?,
-                registry,
-            )?,
-            cache: Arc::new(Mutex::new(LruCache::new(
-                NonZeroUsize::new(TRANSACTION_CACHE_SIZE)
-                    .expect("the cache size is a non-zero constant"),
-            ))),
-            clock,
-        })
+				)?,
+				registry,
+			)?,
+			cache: Arc::new(Mutex::new(LruCache::new(
+				NonZeroUsize::new(TRANSACTION_CACHE_SIZE)
+					.expect("the cache size is a non-zero constant"),
+			))),
+			clock,
+		})
 	}
 
 	pub fn report_in_pool(&self, hash: TxHash) {
@@ -116,7 +111,6 @@ pub mod test {
 
 	use futures::{future, FutureExt, Stream, StreamExt};
 	use parity_scale_codec::Encode;
-	use prometheus_endpoint::{Histogram, Registry};
 	use sc_basic_authorship::ProposerFactory;
 	use sc_block_builder::BlockBuilderBuilder;
 	use sc_client_api::{
@@ -129,6 +123,7 @@ pub mod test {
 	};
 	use sp_consensus::{BlockOrigin, DisableProofRecording, Environment, Proposer as _};
 	use sp_runtime::{traits::Block as BlockT, transaction_validity::TransactionSource};
+	use substrate_prometheus_endpoint::{Histogram, Registry};
 	use substrate_test_client::TestClientBuilder;
 	use substrate_test_runtime::{Extrinsic, ExtrinsicBuilder, Transfer};
 	use substrate_test_runtime_client::{AccountKeyring, ClientBlockImportExt, ClientExt};

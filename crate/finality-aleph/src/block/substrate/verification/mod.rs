@@ -3,18 +3,21 @@ use std::{
 	sync::Arc,
 };
 
-use crate::block::{
-	substrate::{
-		verification::{cache::CacheError, verifier::SessionVerificationError},
-		FinalizationInfo,
-	},
-	EquivocationProof as EquivocationProofT, Header as HeaderT,
-};
 use hex::ToHex;
 use sc_client_api::HeaderBackend;
 use sc_consensus_aura::standalone::{PreDigestLookupError, SealVerificationError};
-use selendra_primitives::{AccountId, AuraId, Block, BlockNumber, Header};
 use sp_consensus_slots::Slot;
+
+use crate::{
+	block::{
+		substrate::{
+			verification::{cache::CacheError, verifier::SessionVerificationError},
+			FinalizationInfo,
+		},
+		EquivocationProof as EquivocationProofT, Header as HeaderT,
+	},
+	selendra_primitives::{AccountId, AuraId, Block, BlockNumber, Header},
+};
 
 mod cache;
 mod verifier;

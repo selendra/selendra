@@ -21,7 +21,6 @@ fp-rpc = { workspace = true }
 
 frame-support = { workspace = true }
 frame-system-rpc-runtime-api = { workspace = true }
-
 pallet-transaction-payment = { workspace = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-aleph-runtime-api = { workspace = true }

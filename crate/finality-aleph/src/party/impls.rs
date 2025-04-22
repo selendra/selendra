@@ -1,10 +1,9 @@
 use std::{marker::PhantomData, sync::Arc};
 
 use sc_client_api::Backend;
-use selendra_primitives::BlockNumber;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 
-use crate::{party::traits::ChainState, ClientForAleph};
+use crate::{party::traits::ChainState, selendra_primitives::BlockNumber, ClientForAleph};
 
 pub struct ChainStateImpl<B, BE, CFA>
 where

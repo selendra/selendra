@@ -15,7 +15,6 @@ use futures::channel::{
 use futures_timer::Delay;
 use log::{debug, error, info, trace, warn};
 use lru::LruCache;
-use selendra_primitives::BlockNumber;
 
 use crate::{
 	block::{
@@ -33,11 +32,12 @@ use crate::{
 		Network as DataNetwork,
 	},
 	party::manager::Runnable,
+	selendra_primitives::BlockNumber,
 	sync::RequestBlocks,
 	BlockId, SessionBoundaries,
 };
 
-const LOG_TARGET: &str = "selendra-data-store";
+const LOG_TARGET: &str = "aleph-data-store";
 
 type MessageId = u64;
 
@@ -97,8 +97,8 @@ impl Default for DataStoreConfig {
 			max_proposals_pending: 80_000,
 			max_messages_pending: 40_000,
 			available_proposals_cache_capacity: NonZeroUsize::new(8000).unwrap(),
-			periodic_maintenance_interval: Duration::from_secs(25),
-			request_block_after: Duration::from_secs(20),
+			periodic_maintenance_interval: Duration::from_secs(10),
+			request_block_after: Duration::from_secs(5),
 		}
 	}
 }
@@ -148,7 +148,8 @@ impl Display for Error {
 //    In case any of them is not, the message `m` receives a fresh `MessageId` and the message and all the pending
 //    proposals are added to our "pending list". The dependencies between the message and the proposals it waits for
 //    are also tracked. At the very first moment when the last pending proposal of the message becomes available, the
-//    message is removed from the pending list and is output on "the other side" of DataStore.
+//    message is removed from the pending list and is output on "the other side" of DataStore. We
+//    also immediately request any missing blocks.
 // 3) It is crucial for DataStore to use a bounded amount of memory, which is perhaps the hardest challenge when implementing it.
 //    There are constants in the `DataStoreConfig` that determine maximum possible amounts of messages and proposals that
 //    can be pending at the same time. When any of the limits is exceeded, we keep dropping messages (starting from
@@ -301,6 +302,31 @@ where
 		self.on_block_finalized(highest_finalized);
 	}
 
+	fn acquire_highest_block(
+		&mut self,
+		proposal: &AlephProposal<H::Unverified>,
+		time_waiting: &Duration,
+	) -> bool {
+		let header = proposal.top_block_header();
+		let block_id = proposal.top_block();
+		if self.chain_info_provider.is_block_imported(&block_id) {
+			return false;
+		}
+		debug!(
+			target: LOG_TARGET,
+			"Requesting a block {:?} after it has been missing for {:?} secs.",
+			block_id,
+			time_waiting.as_secs()
+		);
+		if let Err(e) = self.block_requester.request_block(header) {
+			warn!(
+				target: LOG_TARGET,
+				"Error requesting block {:?}, {}.", block_id, e
+			);
+		}
+		true
+	}
+
 	fn run_maintenance(&mut self) {
 		self.update_highest_finalized();
 
@@ -340,21 +366,9 @@ where
 				_ => continue,
 			};
 
-			let header = proposal.top_block_header();
-			let block_id = proposal.top_block();
-			if !self.chain_info_provider.is_block_imported(&block_id) {
-				debug!(
-					target: LOG_TARGET,
-					"Requesting a block {:?} after it has been missing for {:?} secs.",
-					block_id,
-					time_waiting.as_secs()
-				);
-				if let Err(e) = self.block_requester.request_block(header) {
-					warn!(
-						target: LOG_TARGET,
-						"Error requesting block {:?}, {}.", block_id, e
-					);
-				}
+			if self.acquire_highest_block(&proposal, &time_waiting) {
+				// We need the highest block in this proposal and have just now sent a request for
+				// it.
 				continue;
 			}
 			// The top block (thus the whole branch, in the honest case) has been imported. What's holding us
@@ -376,7 +390,7 @@ where
 				if parent_hash != finalized_block.hash() {
 					warn!(
 						target: LOG_TARGET,
-						"The proposal {:?} is pending because the parent: selendra_primitives
+						"The proposal {:?} is pending because the parent: \
 						{:?}, does not agree with the block finalized at this height: {:?}.",
 						proposal,
 						parent_hash,
@@ -385,7 +399,7 @@ where
 				} else {
 					warn!(
 						target: LOG_TARGET,
-						"The proposal {:?} is pending even though blocks selendra_primitives
+						"The proposal {:?} is pending even though blocks \
 							have been imported and parent was finalized.",
 						proposal
 					);
@@ -393,7 +407,7 @@ where
 			} else {
 				debug!(
 					target: LOG_TARGET,
-					"Justification for block {:?} {:?} selendra_primitives
+					"Justification for block {:?} {:?} \
 						still not present after {:?} secs.",
 					parent_num,
 					parent_hash,
@@ -561,6 +575,8 @@ where
 			let status = self.check_proposal_availability(proposal, None);
 			match &status {
 				Pending(PendingTopBlock) => {
+					// Immediately request the missing block.
+					self.acquire_highest_block(proposal, &Duration::ZERO);
 					self.pending_proposals
 						.insert(proposal.clone(), PendingProposalInfo::new(status));
 					self.register_block_import_trigger(proposal, &proposal.top_block());
@@ -718,7 +734,7 @@ where
 				Err(error) => {
 					warn!(
 						target: LOG_TARGET,
-						"Message {:?} dropped as it contains selendra_primitives
+						"Message {:?} dropped as it contains \
 							proposal {:?} not within bounds ({:?}).",
 						message,
 						unvalidated_proposal,
