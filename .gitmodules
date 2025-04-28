@@ -1,0 +1,3 @@
+[submodule "vendors/frontier"]
+	path = vendors/frontier
+	url = https://github.com/selendra/frontier
