@@ -21,7 +21,8 @@ members = [
 exclude = [
     "vendors/selendra-client",
     "vendors/finalizer",
-    "vendors/flooder"
+    "vendors/flooder",
+    "vendors/frontier",
 ]
 
 [profile.release]
@@ -182,3 +183,34 @@ pallet-operations = { path = "pallets/operations", default-features = false }
 finality-aleph = { path = "crate/finality-aleph" }
 network-clique = { path = "crate/clique" }
 rate-limiter = { path = "crate/rate-limiter" }
+
+# Frontier Client
+fc-api = { path = "vendors/frontier/client/api", default-features = false }
+fc-cli = { path = "vendors/frontier/client/cli", default-features = false }
+fc-consensus = { path = "vendors/frontier/client/consensus", default-features = false }
+fc-db = { path = "vendors/frontier/client/db", default-features = false }
+fc-mapping-sync = {path = "vendors/frontier/client/mapping-sync", default-features = false }
+fc-rpc = { path = "vendors/frontier/client/rpc", default-features = false }
+fc-rpc-core = { path = "vendors/frontier/client/rpc-core", default-features = false }
+fc-storage = {path = "vendors/frontier/client/storage", default-features = false }
+
+# Frontier Primitive
+fp-account = { path = "vendors/frontier/primitives/account", default-features = false }
+fp-consensus = { path = "vendors/frontier/primitives/consensus", default-features = false }
+fp-dynamic-fee = { path = "vendors/frontier/primitives/dynamic-fee", default-features = false }
+fp-ethereum = { path = "vendors/frontier/primitives/ethereum", default-features = false }
+fp-evm = { path = "vendors/frontier/primitives/evm", default-features = false }
+fp-rpc = { path = "vendors/frontier/primitives/rpc", default-features = false }
+fp-self-contained = {path = "vendors/frontier/primitives/self-contained", default-features = false }
+fp-storage = { path = "vendors/frontier/primitives/storage", default-features = false }
+
+# Frontier FRAME
+pallet-base-fee = { path = "vendors/frontier/frame/base-fee", default-features = false }
+pallet-dynamic-fee = { path = "vendors/frontier/frame/dynamic-fee", default-features = false }
+pallet-ethereum = { path = "vendors/frontier/frame/ethereum", default-features = false }
+pallet-evm = { path = "vendors/frontier/frame/evm", default-features = false }
+pallet-evm-chain-id = { path = "vendors/frontier/frame/evm-chain-id", default-features = false }
+pallet-evm-precompile-modexp = { path = "vendors/frontier/frame/evm/precompile/modexp", default-features = false }
+pallet-evm-precompile-sha3fips = { path = "vendors/frontier/frame/evm/precompile/sha3fips", default-features = false }
+pallet-evm-precompile-simple = { path = "vendors/frontier/frame/evm/precompile/simple", default-features = false }
+pallet-hotfix-sufficients = { path = "vendors/frontier/frame/hotfix-sufficients", default-features = false }
