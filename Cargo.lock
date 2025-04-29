@@ -2499,7 +2499,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-state-machine",
- "sp-std",
 ]
 
 [[package]]
