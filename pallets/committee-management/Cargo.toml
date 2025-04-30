@@ -1,8 +1,10 @@
 [package]
 name = "pallet-committee-management"
-version = "0.2.0"
-authors = ["Cardinal", "Aleph Zero Foundation"]
+version = "0.3.0"
 edition.workspace = true
+authors = ["Cardinal", "Aleph Zero Foundation"]
+homepage = "https://alephzero.org"
+repository = "https://github.com/Cardinal-Cryptography/aleph-node"
 
 [dependencies]
 parity-scale-codec = { workspace = true, features = ["derive"] }
@@ -11,16 +13,22 @@ rand_pcg = { workspace = true }
 scale-info = { workspace = true, features = ["derive"] }
 log = { workspace = true }
 
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-authorship = { workspace = true }
+pallet-balances = { workspace = true }
+pallet-session = { workspace = true }
+pallet-staking = { workspace = true }
+pallet-timestamp = { workspace = true }
+sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-staking = { workspace = true }
 sp-std = { workspace = true }
-frame-support = { workspace = true }
-frame-system = { workspace = true }
-pallet-authorship = { workspace = true }
-pallet-session = { workspace = true }
-pallet-staking = { workspace = true }
-selendra-primitives = { workspace = true }
+
+pallet-aleph = { workspace = true }
+pallet-elections = { workspace = true }
+primitives = { workspace = true }
 
 [features]
 default = ["std"]
@@ -29,16 +37,22 @@ std = [
     "rand/std",
     "scale-info/std",
     "log/std",
+
+    "frame-support/std",
+    "frame-system/std",
+    "pallet-authorship/std",
+    "pallet-balances/std",
+    "pallet-session/std",
+    "pallet-staking/std",
+    "pallet-timestamp/std",
+    "sp-core/std",
     "sp-io/std",
     "sp-runtime/std",
     "sp-staking/std",
     "sp-std/std",
-    "frame-support/std",
-    "frame-system/std",
-    "pallet-authorship/std",
-    "pallet-session/std",
-    "pallet-staking/std",
-    "selendra-primitives/std",
+    "primitives/std",
+    "pallet-aleph/std",
+    "pallet-elections/std",
 ]
 
 try-runtime = [

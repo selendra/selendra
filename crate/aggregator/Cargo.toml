@@ -1,14 +1,17 @@
 [package]
 name = "aggregator"
 version = "0.7.0"
-authors.workspace = true
 edition.workspace = true
+license = "Apache 2.0"
+authors = ["Cardinal", "Aleph Zero Foundation"]
+homepage = "https://alephzero.org"
+repository = "https://github.com/Cardinal-Cryptography/aleph-node"
 
 [dependencies]
-parity-scale-codec = { workspace = true, features = ["derive"] }
-tokio = { workspace = true, features = [ "sync", "macros", "time", "rt-multi-thread" ] }
 aleph-bft-rmc = { workspace = true }
 aleph-bft-types = { workspace = true }
 async-trait = { workspace = true }
 futures = { workspace = true }
 log = { workspace = true }
+parity-scale-codec = { workspace = true, features = ["derive"] }
+tokio = { workspace = true, features = [ "sync", "macros", "time", "rt-multi-thread" ] }

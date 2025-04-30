@@ -9,26 +9,26 @@ use crate::{network::Data, SessionId};
 /// this will allow us to retrofit versioning here if we ever need to change this structure.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DataInSession<D: Data> {
-	pub data: D,
-	pub session_id: SessionId,
+    pub data: D,
+    pub session_id: SessionId,
 }
 
 impl<D: Data> Decode for DataInSession<D> {
-	fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
-		let data = D::decode(input)?;
-		let session_id = SessionId::decode(input)?;
+    fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+        let data = D::decode(input)?;
+        let session_id = SessionId::decode(input)?;
 
-		Ok(Self { data, session_id })
-	}
+        Ok(Self { data, session_id })
+    }
 }
 
 impl<D: Data> Encode for DataInSession<D> {
-	fn size_hint(&self) -> usize {
-		self.data.size_hint() + self.session_id.size_hint()
-	}
+    fn size_hint(&self) -> usize {
+        self.data.size_hint() + self.session_id.size_hint()
+    }
 
-	fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
-		self.data.encode_to(dest);
-		self.session_id.encode_to(dest);
-	}
+    fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
+        self.data.encode_to(dest);
+        self.session_id.encode_to(dest);
+    }
 }

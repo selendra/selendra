@@ -1,43 +1,63 @@
 [package]
-name = "selendra-primitives"
-version = "2.0.0"
+name = "primitives"
+version = "0.14.0+dev"
+license = "Apache 2.0"
 authors.workspace = true
 edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
 
 [dependencies]
-parity-scale-codec = { workspace = true }
-scale-info = { workspace = true }
-serde = { workspace = true }
+parity-scale-codec = { workspace = true, features = ["derive"] }
+scale-info = { workspace = true, features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
 
+sp-api = { workspace = true }
 sp-application-crypto = { workspace = true }
-sp-consensus-aura = { workspace = true }
 sp-core = { workspace = true }
+sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 sp-staking = { workspace = true }
-sp-runtime = { workspace = true }
-fp-account = { workspace = true }
+sp-consensus-aura = { workspace = true }
 
 frame-support = { workspace = true }
-frame-system = { workspace = true }
-pallet-authorship = { workspace = true }
-pallet-balances = { workspace = true }
+frame-system-rpc-runtime-api = { workspace = true }
+
+pallet-transaction-payment = { workspace = true }
+pallet-transaction-payment-rpc-runtime-api = { workspace = true }
+
+sp-version = { workspace = true }
+sp-block-builder = { workspace = true }
+sp-offchain = { workspace = true }
+sp-transaction-pool = { workspace = true }
+sp-session = { workspace = true }
+sp-inherents = { workspace = true }
 
 [features]
-default = [ "std" ]
+default = ["std"]
 std = [
-	"parity-scale-codec/std",
-	"scale-info/std",
-	"serde/std",
-	"sp-application-crypto/std",
-	"sp-consensus-aura/std",
-	"sp-core/std",
-	"sp-runtime/std",
-	"sp-staking/std",
-	"sp-std/std",
-    "fp-account/std",
-	"frame-support/std",
-	"frame-system/std",
-	"pallet-authorship/std",
-	"pallet-balances/std",
+    "parity-scale-codec/std",
+    "serde/std",
+
+    "sp-api/std",
+    "sp-application-crypto/std",
+    "sp-core/std",
+    "sp-runtime/std",
+    "sp-std/std",
+    "sp-staking/std",
+    "sp-consensus-aura/std",
+    "sp-version/std",
+    "sp-block-builder/std",
+    "sp-offchain/std",
+    "sp-transaction-pool/std",
+    "sp-session/std",
+    "sp-inherents/std",
+
+    "frame-support/std",
+    "frame-system-rpc-runtime-api/std",
+
+    "pallet-transaction-payment-rpc-runtime-api/std",
+    "pallet-transaction-payment/std",
+
 ]
 short_session = []
