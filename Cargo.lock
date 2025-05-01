@@ -557,6 +557,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "assert_matches"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b34d609dfbaf33d6889b2b7106d3ca345eacad44200913df5ba02bfd31d2ba9"
+
+[[package]]
 name = "async-channel"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2132,9 +2138,9 @@ dependencies = [
 
 [[package]]
 name = "evm"
-version = "0.41.1"
+version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "767f43e9630cc36cf8ff2777cbb0121b055f0d1fd6eaaa13b46a1808f0d0e7e9"
+checksum = "8d4b86ab0845a40c27ce2a54e01f4c1aa356bd2658028ae87c570e469a2286d6"
 dependencies = [
  "auto_impl",
  "environmental",
@@ -2153,9 +2159,9 @@ dependencies = [
 
 [[package]]
 name = "evm-core"
-version = "0.41.0"
+version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1da6cedc5cedb4208e59467106db0d1f50db01b920920589f8e672c02fdc04f"
+checksum = "67c39818f9bc4cbd39fce2ed63c2707c3685b15e877796f730a1ff72a49dc094"
 dependencies = [
  "parity-scale-codec",
  "primitive-types",
@@ -2165,9 +2171,9 @@ dependencies = [
 
 [[package]]
 name = "evm-gasometer"
-version = "0.41.0"
+version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1dc0eb591abc5cd7b05bef6a036c2bb6c66ab6c5e0c5ce94bfe377ab670b1fd7"
+checksum = "f8c114afd9f616fac0cfa7cbd0af139bef11b9e1901781d8a1620657ba49f37e"
 dependencies = [
  "environmental",
  "evm-core",
@@ -2177,9 +2183,9 @@ dependencies = [
 
 [[package]]
 name = "evm-runtime"
-version = "0.41.0"
+version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84bbe09b64ae13a29514048c1bb6fda6374ac0b4f6a1f15a443348ab88ef42cd"
+checksum = "56a7f1d44af271868a63f66e724c2da74f661dbada2a1d5da87aa51231c218f3"
 dependencies = [
  "auto_impl",
  "environmental",
@@ -2475,6 +2481,7 @@ dependencies = [
 name = "fp-evm"
 version = "3.0.0-dev"
 dependencies = [
+ "environmental",
  "evm",
  "frame-support",
  "num_enum",
@@ -3176,6 +3183,12 @@ name = "hex-conservative"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "212ab92002354b4819390025006c897e8140934349e8635c9b077f47b4dcbd20"
+
+[[package]]
+name = "hex-literal"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
 
 [[package]]
 name = "hex-literal"
@@ -5104,7 +5117,7 @@ version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af1844ef2428cc3e1cb900be36181049ef3d3193c63e43026cfe202983b27a56"
 dependencies = [
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate 3.2.0",
  "proc-macro2",
  "quote",
  "syn 2.0.89",
@@ -5350,6 +5363,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-custom-signatures"
+version = "4.6.0"
+dependencies = [
+ "assert_matches",
+ "frame-support",
+ "frame-system",
+ "hex-literal 0.3.4",
+ "libsecp256k1",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-keyring",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-elections"
 version = "0.6.0"
 dependencies = [
@@ -5405,7 +5438,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hash-db",
- "hex-literal",
+ "hex-literal 0.4.1",
  "impl-trait-for-tuples",
  "log",
  "parity-scale-codec",
@@ -5414,16 +5447,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "pallet-evm-chain-id"
-version = "1.0.0-dev"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
 ]
 
 [[package]]
@@ -8142,10 +8165,10 @@ dependencies = [
  "pallet-balances",
  "pallet-committee-management",
  "pallet-contracts",
+ "pallet-custom-signatures",
  "pallet-elections",
  "pallet-ethereum",
  "pallet-evm",
- "pallet-evm-chain-id",
  "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
