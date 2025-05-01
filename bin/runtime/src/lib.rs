@@ -6,6 +6,8 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+pub mod evm;
+
 pub use frame_support::{
     construct_runtime,
     genesis_builder_helper::{build_config, create_default_config},
@@ -29,7 +31,7 @@ use frame_support::{
         ConstBool, ConstU32, Contains, EqualPrivilegeOnly, EstimateNextSessionRotation, InsideBoth,
         InstanceFilter, SortedMembers, WithdrawReasons,
     },
-    weights::{constants::WEIGHT_REF_TIME_PER_MILLIS, WeightToFee},
+    weights::{WeightToFeePolynomial, ConstantMultiplier, WeightToFeeCoefficients, WeightToFeeCoefficient, constants::WEIGHT_REF_TIME_PER_MILLIS},
     PalletId,
 };
 use frame_system::{EnsureRoot, EnsureRootWithSuccess, EnsureSignedBy};
@@ -67,7 +69,7 @@ use sp_runtime::{
         IdentityLookup, One, OpaqueKeys, Verify,
     },
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, FixedU128, RuntimeDebug, SaturatedConversion,
+    ApplyExtrinsicResult, FixedU128, RuntimeDebug,
 };
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Saturating};
 use sp_staking::{currency_to_vote::U128CurrencyToVote, EraIndex};
@@ -78,15 +80,16 @@ use sp_version::RuntimeVersion;
 
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-    spec_name: create_runtime_str!("selendra-node"),
-    impl_name: create_runtime_str!("selendra-node"),
-    authoring_version: 1,
-    spec_version: 30000,
-    impl_version: 1,
-    apis: RUNTIME_API_VERSIONS,
-    transaction_version: 1,
-    state_version: 0,
+	spec_name: create_runtime_str!("selendra"),
+	impl_name: create_runtime_str!("selendra"),
+	authoring_version: 1,
+	spec_version: 20002,
+	impl_version: 1,
+	apis: RUNTIME_API_VERSIONS,
+	transaction_version: 1,
+	state_version: 1,
 };
+
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -98,7 +101,6 @@ pub fn native_version() -> NativeVersion {
 }
 
 pub const DAYS: u32 = 24 * 60 * 60 * 1000 / (MILLISECS_PER_BLOCK as u32);
-
 pub const BLOCKS_PER_HOUR: u32 = 60 * 60 * 1000 / (MILLISECS_PER_BLOCK as u32);
 
 pub const MILLI_SEL: Balance = TOKEN / 1000;
@@ -184,7 +186,6 @@ impl frame_system::Config for Runtime {
 }
 
 parameter_types! {
-    // https://github.com/paritytech/polkadot/blob/9ce5f7ef5abb1a4291454e8c9911b304d80679f9/runtime/polkadot/src/lib.rs#L784
     pub const MaxAuthorities: u32 = 100_000;
 }
 
@@ -253,6 +254,8 @@ parameter_types! {
     pub const OperationalFeeMultiplier: u8 = 5;
     // We expect that on average 50% of the normal capacity will be occupied with normal txs.
     pub const TargetSaturationLevel: Perquintill = Perquintill::from_percent(50);
+    pub const WeightFeeFactor: Balance = 585_500_000_000_000; // Around 0.0005 SEL per unit of ref time.
+    pub const TransactionLengthFeeFactor: Balance = 10_000_000_000_000; // 0.00001 SEL per byte
     // During 20 blocks the fee may not change more than by 100%. This, together with the
     // `TargetSaturationLevel` value, results in variability ~0.067. For the corresponding
     // formulas please refer to Substrate code at `frame/transaction-payment/src/lib.rs`.
@@ -260,23 +263,39 @@ parameter_types! {
     // Fee should never be lower than the computational cost.
     pub MinimumMultiplier: Multiplier = Multiplier::one();
     pub MaximumMultiplier: Multiplier = Bounded::max_value();
+
 }
 
-pub struct DivideFeeBy<const N: Balance>;
-
-impl<const N: Balance> WeightToFee for DivideFeeBy<N> {
+/// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
+/// node's balance type.
+///
+/// This should typically create a mapping between the following ranges:
+///   - [0, MAXIMUM_BLOCK_WEIGHT]
+///   - [Balance::min, Balance::max]
+///
+/// Yet, it can be used for any other sort of change to weight-fee. Some examples being:
+///   - Setting it to `0` will essentially disable the weight fee.
+///   - Setting it to `1` will cause the literal `#[weight = x]` values to be charged.
+pub struct WeightToFee;
+impl WeightToFeePolynomial for WeightToFee {
     type Balance = Balance;
-
-    fn weight_to_fee(weight: &Weight) -> Self::Balance {
-        Balance::saturated_from(weight.ref_time()).saturating_div(N)
+    fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+        let p = WeightFeeFactor::get();
+        let q = Balance::from(ExtrinsicBaseWeight::get().ref_time());
+        smallvec::smallvec![WeightToFeeCoefficient {
+            degree: 1,
+            negative: false,
+            coeff_frac: Perbill::from_rational(p % q, q),
+            coeff_integer: p / q,
+        }]
     }
 }
 
 impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnChargeTransaction = CurrencyAdapter<Balances, EverythingToTheTreasury>;
-    type LengthToFee = DivideFeeBy<10>;
-    type WeightToFee = DivideFeeBy<10>;
+    type LengthToFee = ConstantMultiplier<Balance, TransactionLengthFeeFactor>;
+    type WeightToFee = WeightToFee;
     type FeeMultiplierUpdate = TargetedFeeAdjustment<
         Self,
         TargetSaturationLevel,
@@ -986,31 +1005,41 @@ impl pallet_tx_pause::Config for Runtime {
 construct_runtime!(
     pub struct Runtime {
         System: frame_system = 0,
-        RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip = 1,
-        Scheduler: pallet_scheduler = 2,
-        Aura: pallet_aura = 3,
-        Timestamp: pallet_timestamp = 4,
-        Balances: pallet_balances = 5,
-        TransactionPayment: pallet_transaction_payment = 6,
-        Authorship: pallet_authorship = 7,
-        Staking: pallet_staking = 8,
-        History: pallet_session::historical = 9,
-        Session: pallet_session = 10,
-        Aleph: pallet_aleph = 11,
-        Elections: pallet_elections = 12,
-        Treasury: pallet_treasury = 13,
-        Vesting: pallet_vesting = 14,
-        Utility: pallet_utility = 15,
-        Multisig: pallet_multisig = 16,
-        Sudo: pallet_sudo = 17,
-        Contracts: pallet_contracts = 18,
-        NominationPools: pallet_nomination_pools = 19,
-        Identity: pallet_identity = 20,
-        CommitteeManagement: pallet_committee_management = 21,
-        Proxy: pallet_proxy = 22,
-        SafeMode: pallet_safe_mode = 23,
-        TxPause: pallet_tx_pause = 24,
-        Operations: pallet_operations = 255,
+		Aura: pallet_aura = 1,
+		Aleph: pallet_aleph = 2,
+		Timestamp: pallet_timestamp = 3,
+		Balances: pallet_balances = 4,
+		TransactionPayment: pallet_transaction_payment = 5,
+        Scheduler: pallet_scheduler = 6,
+        RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip = 7,
+
+        Authorship: pallet_authorship = 10,
+		Staking: pallet_staking = 11,
+		History: pallet_session::historical = 12,
+		Session: pallet_session = 13,
+		Elections: pallet_elections = 14,
+		CommitteeManagement: pallet_committee_management = 15,
+        Treasury: pallet_treasury = 16,
+        NominationPools: pallet_nomination_pools = 18,
+
+        Utility: pallet_utility = 50,
+		Multisig: pallet_multisig = 51,
+		Identity: pallet_identity = 52,
+        Vesting: pallet_vesting = 53,
+		Proxy: pallet_proxy = 59,
+
+        Ethereum: pallet_ethereum = 80,
+		EVM: pallet_evm = 81,
+		DynamicEvmBaseFee: pallet_dynamic_evm_base_fee = 83,
+		EthCall: pallet_custom_signatures = 86,
+        
+        Contracts: pallet_contracts = 90,
+       
+        SafeMode: pallet_safe_mode = 100,
+        TxPause: pallet_tx_pause = 101,
+        
+        Operations: pallet_operations = 155,
+        Sudo: pallet_sudo = 200,
     }
 );
 
