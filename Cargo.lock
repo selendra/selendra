@@ -5383,6 +5383,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-dynamic-evm-base-fee"
+version = "0.1.0"
+dependencies = [
+ "fp-evm",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "num-traits",
+ "pallet-balances",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-elections"
 version = "0.6.0"
 dependencies = [
@@ -8166,6 +8186,7 @@ dependencies = [
  "pallet-committee-management",
  "pallet-contracts",
  "pallet-custom-signatures",
+ "pallet-dynamic-evm-base-fee",
  "pallet-elections",
  "pallet-ethereum",
  "pallet-evm",
