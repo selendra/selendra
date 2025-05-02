@@ -8,10 +8,11 @@ pub type SelendraNodeChainSpec = sc_service::GenericChainSpec<()>;
 use crate::{
     aleph_cli::AlephCli,
     resources::{mainnet_chainspec, testnet_chainspec},
+    eth::EthConfiguration
 };
 
 #[derive(Debug, Parser)]
-#[clap(subcommand_negates_reqs(true), version(env!("SUBSTRATE_CLI_IMPL_VERSION")))]
+#[command(subcommand_negates_reqs(true), version(env!("SUBSTRATE_CLI_IMPL_VERSION")))]
 pub struct Cli {
     #[command(subcommand)]
     pub subcommand: Option<Subcommand>,
@@ -21,6 +22,9 @@ pub struct Cli {
 
     #[command(flatten)]
     pub run: RunCmd,
+
+    #[command(flatten)]
+	pub eth: EthConfiguration,
 }
 
 pub fn mainnet_config() -> Result<SelendraNodeChainSpec, String> {
@@ -95,6 +99,12 @@ pub enum Subcommand {
 
     /// Revert the chain to a previous state.
     Revert(sc_cli::RevertCmd),
+
+    /// Build a chain specification.
+	BuildSpec(sc_cli::BuildSpecCmd),
+
+    /// Db meta columns information.
+	FrontierDb(fc_cli::FrontierDbCmd),
 
     /// The custom benchmark subcommand benchmarking runtime pallets.
     #[cfg(feature = "runtime-benchmarks")]
