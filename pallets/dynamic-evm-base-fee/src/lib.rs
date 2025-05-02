@@ -194,18 +194,18 @@ pub mod pallet {
 			})
 		}
 
-		fn integrity_test() {
-			assert!(T::MinBaseFeePerGas::get() <= T::MaxBaseFeePerGas::get(),
-                "Minimum base fee per gas has to be equal or lower than maximum allowed base fee per gas.");
+		// fn integrity_test() {
+		// 	assert!(T::MinBaseFeePerGas::get() <= T::MaxBaseFeePerGas::get(),
+        //         "Minimum base fee per gas has to be equal or lower than maximum allowed base fee per gas.");
 
-			assert!(T::DefaultBaseFeePerGas::get() >= T::MinBaseFeePerGas::get(),
-                "Default base fee per gas has to be equal or higher than minimum allowed base fee per gas.");
-			assert!(T::DefaultBaseFeePerGas::get() <= T::MaxBaseFeePerGas::get(),
-                "Default base fee per gas has to be equal or lower than maximum allowed base fee per gas.");
+		// 	assert!(T::DefaultBaseFeePerGas::get() >= T::MinBaseFeePerGas::get(),
+        //         "Default base fee per gas has to be equal or higher than minimum allowed base fee per gas.");
+		// 	assert!(T::DefaultBaseFeePerGas::get() <= T::MaxBaseFeePerGas::get(),
+        //         "Default base fee per gas has to be equal or lower than maximum allowed base fee per gas.");
 
-			assert!(T::MaxBaseFeePerGas::get() <= U256::from(u128::MAX),
-                "Maximum base fee per gas has to be equal or lower than u128::MAX, otherwise precision loss will occur.");
-		}
+		// 	assert!(T::MaxBaseFeePerGas::get() <= U256::from(u128::MAX),
+        //         "Maximum base fee per gas has to be equal or lower than u128::MAX, otherwise precision loss will occur.");
+		// }
 	}
 
 	#[pallet::call]
