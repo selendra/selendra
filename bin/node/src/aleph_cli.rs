@@ -6,25 +6,25 @@ use primitives::{DEFAULT_MAX_NON_FINALIZED_BLOCKS, DEFAULT_UNIT_CREATION_DELAY};
 use sc_cli::clap::{self, ArgGroup, Parser};
 
 #[derive(Debug, Parser, Clone)]
-#[clap(group(ArgGroup::new("backup")))]
+#[command(group(ArgGroup::new("backup")))]
 pub struct AlephCli {
-    #[clap(long, default_value_t = DEFAULT_UNIT_CREATION_DELAY)]
+    #[arg(long, default_value_t = DEFAULT_UNIT_CREATION_DELAY)]
     unit_creation_delay: u64,
 
     /// The addresses at which the node will be externally reachable for validator network
     /// purposes. Have to be provided for validators.
-    #[clap(long)]
+    #[arg(long)]
     public_validator_addresses: Option<Vec<String>>,
 
     /// The port on which to listen to validator network connections.
-    #[clap(long, default_value_t = 30343)]
+    #[arg(long, default_value_t = 30343)]
     validator_port: u16,
 
     /// Turn off backups, at the cost of limiting crash recoverability.
     ///
     /// If backups are turned off and the node crashes, it most likely will not be able to continue
     /// the session during which it crashed. It will join AlephBFT consensus in the next session.
-    #[clap(long, group = "backup")]
+    #[arg(long, group = "backup")]
     no_backup: bool,
     /// The path to save backups to.
     ///
@@ -32,32 +32,32 @@ pub struct AlephCli {
     /// the backups will be used to recover the node's state, helping prevent auto-forks. The layout
     /// of the directory is unspecified. This flag must be specified unless backups are turned off
     /// with `--no-backup`, but note that that limits crash recoverability.
-    #[clap(long, value_name = "PATH", group = "backup")]
+    #[arg(long, value_name = "PATH", group = "backup")]
     backup_path: Option<PathBuf>,
 
     /// The maximum number of nonfinalized blocks, after which block production should be locally
     /// stopped. DO NOT CHANGE THIS, PRODUCING MORE OR FEWER BLOCKS MIGHT BE CONSIDERED MALICIOUS
     /// BEHAVIOUR AND PUNISHED ACCORDINGLY!
-    #[clap(long, default_value_t = DEFAULT_MAX_NON_FINALIZED_BLOCKS)]
+    #[arg(long, default_value_t = DEFAULT_MAX_NON_FINALIZED_BLOCKS)]
     max_nonfinalized_blocks: u32,
 
     /// Enable database pruning. It removes older entries in the state-database. Pruning of blocks is not supported.
     /// Note that we only support pruning with ParityDB database backend.
     /// See also `--state-pruning` option for more details.
-    #[clap(long, default_value_t = false)]
+    #[arg(long, default_value_t = false)]
     enable_pruning: bool,
 
     /// Maximum bit-rate in bits per second of the alephbft validator network.
-    #[clap(long, default_value_t = 768 * 1024)]
+    #[arg(long, default_value_t = 768 * 1024)]
     alephbft_network_bit_rate: u64,
 
     /// Maximum bit-rate in bits per second of the substrate network.
-    #[clap(long, default_value_t = 5*1024*1024)]
+    #[arg(long, default_value_t = 5*1024*1024)]
     substrate_network_bit_rate: u64,
 
     /// Don't spend some extra time to collect more debugging data (e.g. validator network details).
     /// By default collecting is enabled, as the impact on performance is negligible, if any.
-    #[clap(long, default_value_t = true)]
+    #[arg(long, default_value_t = true)]
     collect_validator_network_data: bool,
 }
 

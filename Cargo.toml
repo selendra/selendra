@@ -16,6 +16,8 @@ members = [
     "pallets/elections",
     "pallets/committee-management",
     "pallets/operations",
+    "pallets/custom-signatures",
+    "pallets/dynamic-evm-base-fee",
 ]
 
 exclude = [
@@ -47,6 +49,7 @@ aleph-bft-rmc = { version = "0.14" }
 aleph-bft-types = { version = "0.14" }
 async-trait = { version = "0.1" }
 array-bytes = { version = "6" }
+assert_matches = "1.3.0"
 bytes = { version = "1.8" }
 derive_more = { version = "1.0", features = ["from", "into", "as_ref", "display"] }
 env_logger = { version = "0.10" }
@@ -59,8 +62,10 @@ ink = { version = "5.0.0-rc", default-features = false }
 ip_network = { version = "0.4" }
 jsonrpsee = { version = "0.16.3" }
 libp2p = { version = "0.51" }
+libsecp256k1 = { version = "0.7.1", default-features = false }
 log = { version = "0.4", default-features = false }
 lru = { version = "0.10" }
+num-traits = { version = "0.2", default-features = false }
 parity-scale-codec = { version = "3.6", default-features = false }
 parking_lot = { version = "0.12" }
 paste = { version = "1.0" }
@@ -145,6 +150,7 @@ sp-core = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", b
 sp-genesis-builder = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 sp-inherents = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 sp-io = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
+sp-keyring = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 sp-keystore = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 sp-offchain = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 sp-runtime = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
@@ -214,3 +220,6 @@ pallet-evm-precompile-modexp = { path = "vendors/frontier/frame/evm/precompile/m
 pallet-evm-precompile-sha3fips = { path = "vendors/frontier/frame/evm/precompile/sha3fips", default-features = false }
 pallet-evm-precompile-simple = { path = "vendors/frontier/frame/evm/precompile/simple", default-features = false }
 pallet-hotfix-sufficients = { path = "vendors/frontier/frame/hotfix-sufficients", default-features = false }
+
+pallet-custom-signatures = { path = "pallets/custom-signatures", default-features = false }
+pallet-dynamic-evm-base-fee = { path = "pallets/dynamic-evm-base-fee", default-features = false }

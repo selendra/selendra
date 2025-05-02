@@ -29,6 +29,7 @@ sc-client-api = { workspace = true }
 sc-consensus = { workspace = true }
 sc-consensus-aura = { workspace = true }
 sc-consensus-slots = { workspace = true }
+sp-inherents = { workspace = true }
 sc-executor = { workspace = true }
 sc-network = { workspace = true }
 sc-network-sync = { workspace = true }
@@ -55,6 +56,20 @@ primitives = { workspace = true }
 client-runtime-api = { workspace = true, features = ["std"] }
 pallet-aleph-runtime-api = { workspace = true, features = ["std"] }
 
+# Frontier
+fc-api = { workspace = true }
+fc-cli = { workspace = true }
+fc-consensus = { workspace = true }
+fc-db = { workspace = true }
+fc-mapping-sync = { workspace = true }
+fc-rpc = { workspace = true }
+fc-rpc-core = { workspace = true }
+fc-storage = { workspace = true }
+fp-account = { workspace = true }
+fp-dynamic-fee = { workspace = true, features = ["default"] }
+fp-evm = { workspace = true, features = ["default"] }
+fp-rpc = { workspace = true, features = ["default"] }
+
 # These dependencies are used for the node's RPCs
 jsonrpsee = { workspace = true, features = ["server"] }
 sc-rpc = { workspace = true }
@@ -65,13 +80,19 @@ sp-blockchain = { workspace = true }
 substrate-frame-rpc-system = { workspace = true }
 pallet-transaction-payment-rpc = { workspace = true }
 
-selendra-runtime = { workspace = true, optional = true }
+selendra-runtime = { workspace = true }
 
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }
 
 [features]
-default = ["std", "rocksdb"]
+default = [
+    "std",
+    "rocksdb",
+    "sql",
+	"txpool",
+	"rpc-binary-search-estimate",
+]
 std = [
     "parity-scale-codec/std",
     "sp-api/std",
@@ -84,20 +105,26 @@ std = [
     "sp-io/std",
 ]
 runtime-benchmarks = [
-    "selendra-runtime-native",
     "frame-benchmarking",
     "frame-benchmarking-cli/runtime-benchmarks",
-    "selendra-runtime?/runtime-benchmarks",
+    "selendra-runtime/runtime-benchmarks",
 ]
 rocksdb = [
     "sc-cli/rocksdb",
     "sc-client-db/rocksdb",
     "sc-service/rocksdb",
-]
-selendra-runtime-native = [
-    "dep:selendra-runtime"
+    "fc-cli/rocksdb",
+	"fc-db/rocksdb",
+	"fc-mapping-sync/rocksdb",
+	"fc-rpc/rocksdb",
 ]
 
 only_legacy = [
     "finality-aleph/only_legacy"
 ]
+sql = [
+	"fc-db/sql",
+	"fc-mapping-sync/sql",
+]
+txpool = ["fc-rpc/txpool"]
+rpc-binary-search-estimate = ["fc-rpc/rpc-binary-search-estimate"]

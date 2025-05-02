@@ -13,12 +13,15 @@ sp-core = { workspace = true }
 sp-std = { workspace = true }
 sp-runtime = { workspace = true }
 sp-consensus-aura = { workspace = true }
+fp-rpc = { workspace = true }
 
 frame-support = { workspace = true }
 frame-system-rpc-runtime-api = { workspace = true }
 
 pallet-transaction-payment = { workspace = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
+pallet-ethereum = { workspace = true }
+pallet-evm = { workspace = true }
 
 sp-version = { workspace = true }
 sp-block-builder = { workspace = true }
@@ -35,5 +38,8 @@ default = ["std"]
 std = [
     "primitives/std",
     "pallet-aleph-runtime-api/std",
+    "pallet-ethereum/std",
+    "pallet-evm/std",
+    "fp-rpc/std",
 ]
 short_session = []
