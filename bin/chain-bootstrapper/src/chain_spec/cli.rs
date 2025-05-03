@@ -22,8 +22,8 @@ pub struct ChainSpecParams {
     #[arg(long, default_value = "Selendra Development")]
     chain_name: String,
 
-    /// Token symbol. Default is DZERO
-    #[arg(long, default_value = "DZERO")]
+    /// Token symbol. Default is TSEL
+    #[arg(long, default_value = "TSEL")]
     token_symbol: String,
 
     /// all account ids that needs to have session keys generated when bootstraping chain (comma delimited)
