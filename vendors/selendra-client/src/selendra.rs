@@ -20963,45 +20963,53 @@ pub mod api {
                 #[codec(index = 0)]
                 System(runtime_types::frame_system::pallet::Call),
                 #[codec(index = 2)]
-                Scheduler(runtime_types::pallet_scheduler::pallet::Call),
-                #[codec(index = 4)]
-                Timestamp(runtime_types::pallet_timestamp::pallet::Call),
-                #[codec(index = 5)]
-                Balances(runtime_types::pallet_balances::pallet::Call),
-                #[codec(index = 8)]
-                Staking(runtime_types::pallet_staking::pallet::pallet::Call),
-                #[codec(index = 10)]
-                Session(runtime_types::pallet_session::pallet::Call),
-                #[codec(index = 11)]
                 Aleph(runtime_types::pallet_aleph::pallet::Call),
-                #[codec(index = 12)]
-                Elections(runtime_types::pallet_elections::pallet::Call),
+                #[codec(index = 3)]
+                Timestamp(runtime_types::pallet_timestamp::pallet::Call),
+                #[codec(index = 4)]
+                Balances(runtime_types::pallet_balances::pallet::Call),
+                #[codec(index = 6)]
+                Scheduler(runtime_types::pallet_scheduler::pallet::Call),
+                #[codec(index = 11)]
+                Staking(runtime_types::pallet_staking::pallet::pallet::Call),
                 #[codec(index = 13)]
-                Treasury(runtime_types::pallet_treasury::pallet::Call),
+                Session(runtime_types::pallet_session::pallet::Call),
                 #[codec(index = 14)]
-                Vesting(runtime_types::pallet_vesting::pallet::Call),
-                #[codec(index = 15)]
-                Utility(runtime_types::pallet_utility::pallet::Call),
-                #[codec(index = 16)]
-                Multisig(runtime_types::pallet_multisig::pallet::Call),
-                #[codec(index = 17)]
-                Sudo(runtime_types::pallet_sudo::pallet::Call),
-                #[codec(index = 18)]
-                Contracts(runtime_types::pallet_contracts::pallet::Call),
-                #[codec(index = 19)]
-                NominationPools(runtime_types::pallet_nomination_pools::pallet::Call),
-                #[codec(index = 20)]
-                Identity(runtime_types::pallet_identity::pallet::Call),
-                #[codec(index = 21)]
+                Elections(runtime_types::pallet_elections::pallet::Call),
+                #[codec(index = 14)]
                 CommitteeManagement(runtime_types::pallet_committee_management::pallet::Call),
-                #[codec(index = 22)]
+                #[codec(index = 16)]
+                Treasury(runtime_types::pallet_treasury::pallet::Call),
+                #[codec(index = 18)]
+                NominationPools(runtime_types::pallet_nomination_pools::pallet::Call),
+                #[codec(index = 50)]
+                Utility(runtime_types::pallet_utility::pallet::Call),
+                #[codec(index = 51)]
+                Multisig(runtime_types::pallet_multisig::pallet::Call),
+                #[codec(index = 52)]
+                Identity(runtime_types::pallet_identity::pallet::Call),
+                #[codec(index = 53)]
+                Vesting(runtime_types::pallet_vesting::pallet::Call),
+                #[codec(index = 59)]
                 Proxy(runtime_types::pallet_proxy::pallet::Call),
-                #[codec(index = 23)]
+                #[codec(index = 80)]
+                Ethereum(runtime_types::pallet_ethereum::pallet::Call),
+                #[codec(index = 81)]
+                EVM(runtime_types::pallet_evm::pallet::Call),
+                #[codec(index = 83)]
+                DynamicEvmBaseFee(runtime_types::pallet_dynamic_evm_base_fee::pallet::Call),
+                #[codec(index = 86)]
+                EthCall(runtime_types::pallet_custom_signatures::pallet::Call),
+                #[codec(index = 90)]
+                Contracts(runtime_types::pallet_contracts::pallet::Call),
+                #[codec(index = 100)]
                 SafeMode(runtime_types::pallet_safe_mode::pallet::Call),
-                #[codec(index = 24)]
+                #[codec(index = 101)]
                 TxPause(runtime_types::pallet_tx_pause::pallet::Call),
-                #[codec(index = 255)]
+                #[codec(index = 155)]
                 Operations(runtime_types::pallet_operations::pallet::Call),
+                #[codec(index = 200)]
+                Sudo(runtime_types::pallet_sudo::pallet::Call),
             }
             #[derive(
                 :: subxt :: ext :: codec :: Decode,
@@ -21019,40 +21027,48 @@ pub mod api {
             pub enum RuntimeError {
                 #[codec(index = 0)]
                 System(runtime_types::frame_system::pallet::Error),
-                #[codec(index = 2)]
-                Scheduler(runtime_types::pallet_scheduler::pallet::Error),
-                #[codec(index = 5)]
+                #[codec(index = 4)]
                 Balances(runtime_types::pallet_balances::pallet::Error),
-                #[codec(index = 8)]
+                #[codec(index = 6)]
+                Scheduler(runtime_types::pallet_scheduler::pallet::Error),
+                #[codec(index = 11)]
                 Staking(runtime_types::pallet_staking::pallet::pallet::Error),
-                #[codec(index = 10)]
-                Session(runtime_types::pallet_session::pallet::Error),
-                #[codec(index = 12)]
-                Elections(runtime_types::pallet_elections::pallet::Error),
                 #[codec(index = 13)]
-                Treasury(runtime_types::pallet_treasury::pallet::Error),
+                Session(runtime_types::pallet_session::pallet::Error),
                 #[codec(index = 14)]
-                Vesting(runtime_types::pallet_vesting::pallet::Error),
+                Elections(runtime_types::pallet_elections::pallet::Error),
                 #[codec(index = 15)]
-                Utility(runtime_types::pallet_utility::pallet::Error),
-                #[codec(index = 16)]
-                Multisig(runtime_types::pallet_multisig::pallet::Error),
-                #[codec(index = 17)]
-                Sudo(runtime_types::pallet_sudo::pallet::Error),
-                #[codec(index = 18)]
-                Contracts(runtime_types::pallet_contracts::pallet::Error),
-                #[codec(index = 19)]
-                NominationPools(runtime_types::pallet_nomination_pools::pallet::Error),
-                #[codec(index = 20)]
-                Identity(runtime_types::pallet_identity::pallet::Error),
-                #[codec(index = 21)]
                 CommitteeManagement(runtime_types::pallet_committee_management::pallet::Error),
-                #[codec(index = 22)]
+                #[codec(index = 16)]
+                Treasury(runtime_types::pallet_treasury::pallet::Error),
+                #[codec(index = 18)]
+                NominationPools(runtime_types::pallet_nomination_pools::pallet::Error),
+                #[codec(index = 50)]
+                Utility(runtime_types::pallet_utility::pallet::Error),
+                #[codec(index = 51)]
+                Multisig(runtime_types::pallet_multisig::pallet::Error),
+                #[codec(index = 52)]
+                Identity(runtime_types::pallet_identity::pallet::Error),
+                #[codec(index = 53)]
+                Vesting(runtime_types::pallet_vesting::pallet::Error),
+                #[codec(index = 59)]
                 Proxy(runtime_types::pallet_proxy::pallet::Error),
-                #[codec(index = 23)]
+                #[codec(index = 80)]
+                Ethereum(runtime_types::pallet_ethereum::pallet::Error),
+                #[codec(index = 81)]
+                EVM(runtime_types::pallet_evm::pallet::Error),
+                #[codec(index = 83)]
+                DynamicEvmBaseFee(runtime_types::pallet_dynamic_evm_base_fee::pallet::Error),
+                #[codec(index = 86)]
+                EthCall(runtime_types::pallet_custom_signatures::pallet::Error),
+                #[codec(index = 90)]
+                Contracts(runtime_types::pallet_contracts::pallet::Error),
+                #[codec(index = 100)]
                 SafeMode(runtime_types::pallet_safe_mode::pallet::Error),
-                #[codec(index = 24)]
+                #[codec(index = 101)]
                 TxPause(runtime_types::pallet_tx_pause::pallet::Error),
+                #[codec(index = 200)]
+                Sudo(runtime_types::pallet_sudo::pallet::Error),
             }
             #[derive(
                 :: subxt :: ext :: codec :: Decode,
@@ -21071,45 +21087,53 @@ pub mod api {
                 #[codec(index = 0)]
                 System(runtime_types::frame_system::pallet::Event),
                 #[codec(index = 2)]
-                Scheduler(runtime_types::pallet_scheduler::pallet::Event),
-                #[codec(index = 5)]
-                Balances(runtime_types::pallet_balances::pallet::Event),
-                #[codec(index = 6)]
-                TransactionPayment(runtime_types::pallet_transaction_payment::pallet::Event),
-                #[codec(index = 8)]
-                Staking(runtime_types::pallet_staking::pallet::pallet::Event),
-                #[codec(index = 10)]
-                Session(runtime_types::pallet_session::pallet::Event),
-                #[codec(index = 11)]
                 Aleph(runtime_types::pallet_aleph::pallet::Event),
-                #[codec(index = 12)]
-                Elections(runtime_types::pallet_elections::pallet::Event),
+                #[codec(index = 4)]
+                Balances(runtime_types::pallet_balances::pallet::Event),
+                #[codec(index = 5)]
+                TransactionPayment(runtime_types::pallet_transaction_payment::pallet::Event),
+                #[codec(index = 6)]
+                Scheduler(runtime_types::pallet_scheduler::pallet::Event),
+                #[codec(index = 11)]
+                Staking(runtime_types::pallet_staking::pallet::pallet::Event),
                 #[codec(index = 13)]
-                Treasury(runtime_types::pallet_treasury::pallet::Event),
+                Session(runtime_types::pallet_session::pallet::Event),
                 #[codec(index = 14)]
-                Vesting(runtime_types::pallet_vesting::pallet::Event),
+                Elections(runtime_types::pallet_elections::pallet::Event),
                 #[codec(index = 15)]
-                Utility(runtime_types::pallet_utility::pallet::Event),
-                #[codec(index = 16)]
-                Multisig(runtime_types::pallet_multisig::pallet::Event),
-                #[codec(index = 17)]
-                Sudo(runtime_types::pallet_sudo::pallet::Event),
-                #[codec(index = 18)]
-                Contracts(runtime_types::pallet_contracts::pallet::Event),
-                #[codec(index = 19)]
-                NominationPools(runtime_types::pallet_nomination_pools::pallet::Event),
-                #[codec(index = 20)]
-                Identity(runtime_types::pallet_identity::pallet::Event),
-                #[codec(index = 21)]
                 CommitteeManagement(runtime_types::pallet_committee_management::pallet::Event),
-                #[codec(index = 22)]
+                #[codec(index = 16)]
+                Treasury(runtime_types::pallet_treasury::pallet::Event),
+                #[codec(index = 18)]
+                NominationPools(runtime_types::pallet_nomination_pools::pallet::Event),
+                #[codec(index = 50)]
+                Utility(runtime_types::pallet_utility::pallet::Event),
+                #[codec(index = 51)]
+                Multisig(runtime_types::pallet_multisig::pallet::Event),
+                #[codec(index = 52)]
+                Identity(runtime_types::pallet_identity::pallet::Event),
+                #[codec(index = 53)]
+                Vesting(runtime_types::pallet_vesting::pallet::Event),
+                #[codec(index = 59)]
                 Proxy(runtime_types::pallet_proxy::pallet::Event),
-                #[codec(index = 23)]
+                #[codec(index = 80)]
+                Ethereum(runtime_types::pallet_ethereum::pallet::Event),
+                #[codec(index = 81)]
+                EVM(runtime_types::pallet_evm::pallet::Event),
+                #[codec(index = 83)]
+                DynamicEvmBaseFee(runtime_types::pallet_dynamic_evm_base_fee::pallet::Event),
+                #[codec(index = 86)]
+                EthCall(runtime_types::pallet_custom_signatures::pallet::Event),
+                #[codec(index = 90)]
+                Contracts(runtime_types::pallet_contracts::pallet::Event),
+                #[codec(index = 100)]
                 SafeMode(runtime_types::pallet_safe_mode::pallet::Event),
-                #[codec(index = 24)]
+                #[codec(index = 101)]
                 TxPause(runtime_types::pallet_tx_pause::pallet::Event),
-                #[codec(index = 255)]
+                #[codec(index = 155)]
                 Operations(runtime_types::pallet_operations::pallet::Event),
+                #[codec(index = 200)]
+                Sudo(runtime_types::pallet_sudo::pallet::Event),
             }
             #[derive(
                 :: subxt :: ext :: codec :: Decode,
