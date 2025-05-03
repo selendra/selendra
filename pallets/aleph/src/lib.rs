@@ -87,7 +87,7 @@ pub mod pallet {
     /// Default SEL Cap. Relevant for eras before we set this value by hand.
     #[pallet::type_value]
     pub fn DefaultSelCap() -> Balance {
-        520_000_000 * TOKEN
+        320_000_000 * TOKEN
     }
 
     /// Default length of the exponential inflation horizon.
