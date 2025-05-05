@@ -27,3 +27,4 @@ v0.*
 .vscode
 run-nodes-local
 chainspec.json
+snapshot.json
