@@ -25,6 +25,7 @@ exclude = [
     "vendors/finalizer",
     "vendors/flooder",
     "vendors/frontier",
+    "vendors/fork-off",
 ]
 
 [profile.release]
