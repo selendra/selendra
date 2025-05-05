@@ -81,14 +81,14 @@ EOF
   exit 0
 }
 
-VALIDATORS=${VALIDATORS:-6}
+VALIDATORS=${VALIDATORS:-4}
 RPC_NODES=${RPC_NODES:-1}
 BASE_PATH=${BASE_PATH:-"./run-nodes-local"}
 DONT_BOOTSTRAP=${DONT_BOOTSTRAP:-""}
 DONT_BUILD_SELENDRA_NODE=${DONT_BUILD_SELENDRA_NODE:-""}
 DONT_DELETE_DB=${DONT_DELETE_DB:-""}
 DONT_REMOVE_ABFT_BACKUPS=${DONT_REMOVE_ABFT_BACKUPS:-""}
-FINALITY_VERSION=${FINALITY_VERSION:-"legacy"}
+FINALITY_VERSION=${FINALITY_VERSION:-"current"}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -245,10 +245,10 @@ fi
 
 if [[ -z "${DONT_BUILD_SELENDRA_NODE}" ]]; then
   info "Building testing selendra-node binary (short session) and chain-bootstrapper binary."
-  cargo build --release -p selendra-node
-  if [[ -z "${DONT_BOOTSTRAP}" ]]; then
-    cargo build --release -p chain-bootstrapper --features "short_session enable_treasury_proposals"
-  fi
+  # cargo build --release -p selendra-node
+  # if [[ -z "${DONT_BOOTSTRAP}" ]]; then
+  #   cargo build --release -p chain-bootstrapper --features "short_session enable_treasury_proposals"
+  # fi
 elif [[ ! -x "${SELENDRA_NODE}" || ! -x "${CHAINSPEC_GENERATOR}" ]]; then
   error "${SELENDRA_NODE} or ${CHAINSPEC_GENERATOR} does not exist or it's not an executable file!"
 fi
@@ -257,12 +257,30 @@ NUMBER_OF_NODES_TO_BOOTSTRAP=$(( VALIDATORS + RPC_NODES ))
 info "Generating ${NUMBER_OF_NODES_TO_BOOTSTRAP} stash accounts identities."
 declare -a rpc_node_account_ids
 for i in $(seq 0 "$(( RPC_NODES - 1 ))"); do
-  rpc_node_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
+  # rpc_node_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
+  rpc_node_account_ids="5DM7PJEFPbcYViEzFXu5GjF96JgoSJ3rb6jfXLsmXqrPVG2o"
 done
+
+# declare -a validator_account_ids
+# for i in $(seq "${RPC_NODES}" "$(( NUMBER_OF_NODES_TO_BOOTSTRAP - 1 ))"); do
+#   # validator_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
+#   validator_account_ids=("5G1MS9ewwQVJsQE8HRPeHLcxSRabQefq7eSAHXpPpq5noxZT" "5CGVrJDrC1Ey2wRwmH55dWXzLYab8yqtTFNX3oNuDoyDPVrb" "5CaSeVW9EEpZg6ktQMQAj1Jj6QnE7w8k3BgBTrgwcQQxBZWR" "5EeqTNH1DCJYmwbhNnCr2jnGeqH5WZ4G9SXVxPzDPfGV9mVH")
+# done
+
 declare -a validator_account_ids
-for i in $(seq "${RPC_NODES}" "$(( NUMBER_OF_NODES_TO_BOOTSTRAP - 1 ))"); do
-  validator_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
-done
+# Hardcoded list of addresses (must match or exceed VALIDATORS)
+validator_account_ids=(
+  "5G1MS9ewwQVJsQE8HRPeHLcxSRabQefq7eSAHXpPpq5noxZT"
+  "5CGVrJDrC1Ey2wRwmH55dWXzLYab8yqtTFNX3oNuDoyDPVrb"
+  "5CaSeVW9EEpZg6ktQMQAj1Jj6QnE7w8k3BgBTrgwcQQxBZWR"
+  "5EeqTNH1DCJYmwbhNnCr2jnGeqH5WZ4G9SXVxPzDPfGV9mVH"
+)
+# Check if there are enough addresses
+if [[ ${#validator_account_ids[@]} -lt ${VALIDATORS} ]]; then
+  error "Not enough hardcoded validator account IDs for ${VALIDATORS} validators!"
+fi
+# Trim the array to the number of validators needed
+validator_account_ids=("${validator_account_ids[@]:0:${VALIDATORS}}")
 
 info "Following identities were generated:"
 info "RPC nodes: ${rpc_node_account_ids[@]}"
@@ -288,7 +306,11 @@ if [[ -z "${DONT_BOOTSTRAP}" ]]; then
     --base-path "${BASE_PATH}" \
     --account-ids "${all_account_ids_string}" \
     --authorities-account-ids "${validator_ids_string}" \
-    --chain-type local > "${BASE_PATH}/chainspec.json" \
+    --token-symbol "SEL" \
+    --chain-id "selendra" \
+    --chain-name "Selendra Network" \
+    --chain-type live > "${BASE_PATH}/chainspec.json" \
+    --sudo-account-id 5G1MS9ewwQVJsQE8HRPeHLcxSRabQefq7eSAHXpPpq5noxZT \
     --rich-account-ids "${all_account_ids_string}" \
     --finality-version "${FINALITY_VERSION}"
 
