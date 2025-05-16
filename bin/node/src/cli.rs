@@ -66,7 +66,7 @@ impl SubstrateCli for Cli {
         let id = if id.is_empty() { default_chain } else { id };
 
         let chainspec = match id {
-            "mainnet" => mainnet_config(),
+            "mainnet" | "selendra" => mainnet_config(),
 
             "testnet" => testnet_config(),
             _ => SelendraNodeChainSpec::from_json_file(id.into()),
