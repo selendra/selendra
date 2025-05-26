@@ -105,27 +105,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "selendra_client"
-version = "3.16.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "contract-transcode",
- "futures",
- "hex",
- "ink_metadata",
- "log",
- "pallet-contracts",
- "parity-scale-codec",
- "primitives",
- "serde",
- "serde_json",
- "subxt",
- "thiserror",
- "tokio",
-]
-
-[[package]]
 name = "android-tzdata"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4277,6 +4256,27 @@ checksum = "317936bbbd05227752583946b9e66d7ce3b489f84e11a94a510b4437fef407d7"
 dependencies = [
  "core-foundation-sys",
  "libc",
+]
+
+[[package]]
+name = "selendra_client"
+version = "3.16.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "contract-transcode",
+ "futures",
+ "hex",
+ "ink_metadata",
+ "log",
+ "pallet-contracts",
+ "parity-scale-codec",
+ "primitives",
+ "serde",
+ "serde_json",
+ "subxt",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]

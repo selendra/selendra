@@ -20992,14 +20992,6 @@ pub mod api {
                 Vesting(runtime_types::pallet_vesting::pallet::Call),
                 #[codec(index = 59)]
                 Proxy(runtime_types::pallet_proxy::pallet::Call),
-                #[codec(index = 80)]
-                Ethereum(runtime_types::pallet_ethereum::pallet::Call),
-                #[codec(index = 81)]
-                EVM(runtime_types::pallet_evm::pallet::Call),
-                #[codec(index = 83)]
-                DynamicEvmBaseFee(runtime_types::pallet_dynamic_evm_base_fee::pallet::Call),
-                #[codec(index = 86)]
-                EthCall(runtime_types::pallet_custom_signatures::pallet::Call),
                 #[codec(index = 90)]
                 Contracts(runtime_types::pallet_contracts::pallet::Call),
                 #[codec(index = 100)]
@@ -21053,14 +21045,6 @@ pub mod api {
                 Vesting(runtime_types::pallet_vesting::pallet::Error),
                 #[codec(index = 59)]
                 Proxy(runtime_types::pallet_proxy::pallet::Error),
-                #[codec(index = 80)]
-                Ethereum(runtime_types::pallet_ethereum::pallet::Error),
-                #[codec(index = 81)]
-                EVM(runtime_types::pallet_evm::pallet::Error),
-                #[codec(index = 83)]
-                DynamicEvmBaseFee(runtime_types::pallet_dynamic_evm_base_fee::pallet::Error),
-                #[codec(index = 86)]
-                EthCall(runtime_types::pallet_custom_signatures::pallet::Error),
                 #[codec(index = 90)]
                 Contracts(runtime_types::pallet_contracts::pallet::Error),
                 #[codec(index = 100)]
@@ -21116,14 +21100,6 @@ pub mod api {
                 Vesting(runtime_types::pallet_vesting::pallet::Event),
                 #[codec(index = 59)]
                 Proxy(runtime_types::pallet_proxy::pallet::Event),
-                #[codec(index = 80)]
-                Ethereum(runtime_types::pallet_ethereum::pallet::Event),
-                #[codec(index = 81)]
-                EVM(runtime_types::pallet_evm::pallet::Event),
-                #[codec(index = 83)]
-                DynamicEvmBaseFee(runtime_types::pallet_dynamic_evm_base_fee::pallet::Event),
-                #[codec(index = 86)]
-                EthCall(runtime_types::pallet_custom_signatures::pallet::Event),
                 #[codec(index = 90)]
                 Contracts(runtime_types::pallet_contracts::pallet::Event),
                 #[codec(index = 100)]
