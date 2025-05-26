@@ -20976,7 +20976,7 @@ pub mod api {
                 Session(runtime_types::pallet_session::pallet::Call),
                 #[codec(index = 14)]
                 Elections(runtime_types::pallet_elections::pallet::Call),
-                #[codec(index = 14)]
+                #[codec(index = 15)]
                 CommitteeManagement(runtime_types::pallet_committee_management::pallet::Call),
                 #[codec(index = 16)]
                 Treasury(runtime_types::pallet_treasury::pallet::Call),
