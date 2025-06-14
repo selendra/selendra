@@ -18,15 +18,30 @@ The Selendra Network codebase follows the typical Substrate node architecture:
 
 ```bash
 selendra/
-├── node/ # Selendra node implementation
-├── runtime/ # Runtime logic and pallets
+├── bin/ # Binary implementations
+│ ├── node/ # Selendra node implementation
+│ ├── runtime/ # Runtime logic and pallets
+│ ├── client-runtime-api/ # Client runtime API
+│ └── chain-bootstrapper/ # Chain bootstrapping utilities
 ├── pallets/ # Custom pallets
-│ ├── staking/ # PoS staking logic
-│ ├── evm/ # Ethereum Virtual Machine integration
-│ └── privacy/ # Privacy features implementation
+│ ├── aleph/ # AlephBFT consensus integration
+│ ├── committee-management/ # Validator committee management
+│ ├── elections/ # Validator elections
+│ ├── operations/ # Administrative operations
+│ ├── custom-signatures/ # Custom signature schemes
+│ ├── dynamic-evm-base-fee/ # EVM fee adjustment
+│ └── privacy/ # Privacy-enabled smart contracts (Planned)
 ├── primitives/ # Core types and traits
-├── client/ # Client implementation
-└── scripts/ # Utility scripts
+├── crate/ # Core crates
+│ ├── finality-aleph/ # AlephBFT finality implementation
+│ ├── clique/ # Clique consensus
+│ ├── aggregator/ # Block aggregation
+│ └── rate-limiter/ # Rate limiting utilities
+├── scripts/ # Utility scripts
+├── docs/ # Documentation
+├── vendors/ # Third-party dependencies
+│ └── frontier/ # Ethereum compatibility layer (EVM & WASM)
+└── target/ # Build artifacts (EVM & WASM runtimes)
 ```
 
 ## Getting Started
@@ -40,32 +55,38 @@ selendra/
 ### Installation Steps
 
 1. Install Rust:
+
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 2. Initialize your Rust environment:
+
 ```bash
 source $HOME/.cargo/env
 ```
 
 3. Add Wasm target:
+
 ```bash
 rustup target add wasm32-unknown-unknown
 ```
 
 4. Clone the repository:
+
 ```bash
 git clone https://github.com/selendra/selendra.git
 cd selendra
 ```
 
 5. Build the node:
+
 ```bash
 cargo build --release
 ```
 
 6. Run the node:
+
 ```bash
 ./target/release/selendra-node --dev
 ```
