@@ -1,4 +1,5 @@
-# Selendra: A Substrate-Based Blockchain Network with Hybrid Consensus
+# Selendra: Open Blockchain for Cambodia
+
 
 ## Abstract
 
