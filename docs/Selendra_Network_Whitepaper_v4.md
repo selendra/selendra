@@ -1,7 +1,7 @@
 # Selendra: Blockchain for Real-World Applications
 
 **Version 4.0**  
-**Date: January 2025**
+**Date: July 2025**
 
 ## Abstract
 
