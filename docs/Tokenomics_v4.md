@@ -5,11 +5,11 @@
 
 ## Executive Summary
 
-This document defines the enhanced tokenomics for SEL, the native utility token of Selendra Network v4, with comprehensive support for Native Account Abstraction. The tokenomics model addresses the unique challenges of smart contract accounts, fee delegation, gasless transactions, and multi-token fee payments while maintaining network security and sustainability.
+This document defines the tokenomics for SEL, the native utility token of Selendra Network v4, with support for Native Account Abstraction. The tokenomics model addresses smart contract accounts, fee delegation, gasless transactions, and multi-token fee payments while maintaining network security and sustainability.
 
 ## 1. Introduction
 
-Selendra Network v4 introduces Native Account Abstraction at the protocol level, fundamentally changing how users interact with the blockchain. This requires a sophisticated tokenomics model that supports:
+Selendra Network v4 introduces Native Account Abstraction at the protocol level, changing how users interact with the blockchain. This requires a tokenomics model that supports:
 
 - **Smart Contract Account Operations**: Every account is a programmable smart contract
 - **Fee Delegation & Sponsorship**: Applications can pay fees for their users
@@ -43,21 +43,21 @@ Selendra Network v4 introduces Native Account Abstraction at the protocol level,
 - Cross-chain bridge operations
 - Advanced developer tools and APIs
 
-### 2.2 Enhanced Utilities for Account Abstraction
+### 2.2 Additional Utilities for Account Abstraction
 
 **5. Paymaster Operations**
 - SEL required to operate as a paymaster (fee sponsor)
 - Minimum SEL bond for paymaster registration
-- Economic incentives for fee delegation services
+- Economic structure for fee delegation services
 
 **6. Session Key Management**
 - SEL fees for session key creation and management
-- Economic spam prevention for temporary permissions
+- Spam prevention for temporary permissions
 - Automated key rotation and security services
 
 **7. Social Recovery Services**
 - SEL fees for guardian setup and recovery operations
-- Economic incentives for recovery service providers
+- Incentive structure for recovery service providers
 - Dispute resolution and arbitration services
 
 ## 3. Native Account Abstraction Fee Architecture
@@ -92,7 +92,7 @@ account.pay_fees(transaction_cost_in_sel);
 account.pay_fees_with_token(
     token: USD_STABLECOIN,
     amount: usd_equivalent,
-    max_slippage: 2% // Protection against conversion fluctuation
+    max_slippage: 2% // Protection against conversion variation
 );
 ```
 
@@ -133,7 +133,7 @@ session_key.execute_with_limit(
 **3. Commercial Paymasters**
 - Third-party services offering fee sponsorship
 - Revenue model: Fee markup or service commissions
-- Market opportunity: Compete on conversion rates and UX
+- Market position: Compete on conversion rates and user experience
 
 ### 3.4 Paymaster Economic Requirements
 
@@ -168,7 +168,7 @@ Transaction Initiated (Base Fee: 0.001 SEL):
 Fee Payment Decision:
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   User Pays     │    │  Paymaster      │    │   Session Key   │
-│  (0.001 SEL)   │    │   Sponsors      │    │ (0.0005 SEL)   │
+│  (0.001 SEL)    │    │   Sponsors      │    │ (0.0005 SEL)    │
 └─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
           ↓                      ↓                      ↓
 Protocol Fee Settlement (0.001 SEL base fee):
@@ -182,19 +182,19 @@ Protocol Fee Settlement (0.001 SEL base fee):
 
 Daily Volume Example (10,000 TPS average):
 - Total daily fees: 864,000 SEL
-- Burned: 345,600 SEL (strong deflationary pressure)
-- Validators: 302,400 SEL (significant rewards boost)
+- Burned: 345,600 SEL (deflationary pressure)
+- Validators: 302,400 SEL (rewards increase)
 - Treasury: 129,600 SEL (ecosystem development)
-- Paymaster incentives: 86,400 SEL (UX innovation fund)
+- Paymaster incentives: 86,400 SEL (user experience fund)
 ```
 
 ### 4.2 Token Conversion Mechanism
 
 **Integrated DEX for Fee Conversion:**
-- Protocol-level DEX integration for seamless token conversion
+- Protocol-level DEX integration for token conversion
 - Automated Market Maker (AMM) pools for major tokens
 - Slippage protection and MEV resistance
-- Transparent conversion rates displayed to users
+- Conversion rates displayed to users
 
 **Supported Fee Tokens (Initial):**
 - SEL (native)
@@ -225,12 +225,12 @@ Daily Volume Example (10,000 TPS average):
 - At 10,000 TPS: 302,400 SEL daily from fees (110M SEL annually)
 - Combined with 21M SEL inflation = 131M SEL total annual rewards
 - 6.2x increase in validator income vs inflation-only model
-- Stable SEL demand from all fee conversions
+- SEL demand from all fee conversions
 
 **Network Benefits:**
-- Ultra-competitive fees drive mass adoption
-- Strong deflationary pressure: 126M SEL burned annually at 10K TPS
-- Sustainable economics: Low user costs + high validator rewards
+- Competitive fees support adoption
+- Deflationary pressure: 126M SEL burned annually at 10K TPS
+- Economic sustainability: Low user costs with validator rewards
 - Treasury funding: 47M SEL annually for development
 
 ## 5. Gasless Transaction Economics
@@ -269,19 +269,19 @@ Example: DEX Platform
 **Economic Viability Requirements:**
 
 1. **Customer Lifetime Value > Sponsorship Cost**
-   - At 0.001 SEL per transaction, sponsorship costs are minimal
-   - Even 1,000 sponsored transactions cost only 1 SEL (~$0.025)
-   - Extremely favorable LTV to CAC ratios achievable
+   - At 0.001 SEL per transaction, sponsorship costs are low
+   - 1,000 sponsored transactions cost 1 SEL (~$0.025)
+   - Favorable LTV to CAC ratios achievable
 
 2. **Predictable Fee Budgeting**
-   - Applications can easily budget: 1 SEL = 1,000 transactions
+   - Applications can budget: 1 SEL = 1,000 transactions
    - Monthly budget example: 100 SEL = 100,000 sponsored transactions
-   - Real-time monitoring shows precise transaction counts
+   - Real-time monitoring shows transaction counts
 
 3. **Value-Based Sponsorship**
-   - Low base fees enable sponsoring all user transactions
-   - Micro-transaction friendly (gaming, social media)
-   - No need for complex subsidy algorithms
+   - Base fees support sponsoring user transactions
+   - Micro-transaction compatible (gaming, social media)
+   - Simplified subsidy models
 
 ## 6. Session Key Economic Model
 
@@ -314,7 +314,7 @@ pub struct SessionKeyFees {
 
 **1. Gaming Applications**
 - Session keys for in-game actions (0.0005 SEL per transaction with 50% discount)
-- Players don't need to approve every move
+- Players avoid approving every move
 - Game sponsors session key creation (cost: 0.17 SEL setup)
 - Break-even: 340+ transactions per session
 - Revenue: In-app purchases and subscriptions
@@ -327,7 +327,7 @@ pub struct SessionKeyFees {
 
 **3. Social Applications**
 - Direct fee sponsorship more cost-effective than session keys
-- Social platforms can sponsor millions of interactions cheaply
+- Social platforms can sponsor interactions at scale
 - Example: 1 million likes = 1,000 SEL cost (~$25)
 - Revenue: Advertising and premium features
 
@@ -504,15 +504,15 @@ pub struct GuardianIncentives {
 
 ## 12. Conclusion
 
-Selendra Network v4's enhanced tokenomics creates a sustainable economic model that supports Native Account Abstraction while maintaining network security and decentralization. The multi-layered fee system, paymaster economics, and session key framework enable a user-friendly experience without compromising the fundamental properties of blockchain technology.
+Selendra Network v4's tokenomics creates an economic model that supports Native Account Abstraction while maintaining network security and decentralization. The multi-layered fee system, paymaster economics, and session key framework enable improved user experience without compromising blockchain fundamentals.
 
-Key innovations include:
-- **Seamless UX**: Users can pay fees in preferred tokens or enjoy gasless experiences
+Key features include:
+- **User Experience**: Users can pay fees in preferred tokens or use gasless experiences
 - **Economic Sustainability**: Multiple revenue streams and incentive mechanisms
-- **Developer Opportunities**: New business models through paymaster and guardian services
-- **Network Growth**: Enhanced adoption through reduced friction and improved accessibility
+- **Developer Opportunities**: Business models through paymaster and guardian services
+- **Network Growth**: Adoption through reduced friction and improved accessibility
 
-This tokenomics model positions Selendra v4 as a leader in user-centric blockchain design while maintaining the economic security and sustainability required for long-term success.
+This tokenomics model positions Selendra v4 for user-centric blockchain design while maintaining the economic security and sustainability required for long-term operation.
 
 ---
 

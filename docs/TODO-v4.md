@@ -5,12 +5,12 @@
 
 ## What We're Building
 
-Selendra v4 will eliminate the barriers that prevent regular people from using blockchain technology. We're transforming every account into a smart contract that supports:
+Selendra v4 aims to reduce barriers that prevent regular people from using blockchain technology. We're transforming every account into a smart contract that supports:
 
 - **No lost keys**: Family and friends can help recover accounts
 - **No gas fees**: Applications pay fees for users
 - **Simple interactions**: Session keys for seamless app usage
-- **Fast transactions**: Process multiple transactions at the same time
+- **Faster transactions**: Process multiple transactions at the same time
 - **Open network**: Anyone can become a validator
 
 ## Current State (v3)
@@ -19,21 +19,21 @@ Selendra v4 will eliminate the barriers that prevent regular people from using b
 - 1-second block times
 - EVM and WASM smart contracts
 - Basic staking system
-- Limited to ~1,000 transactions per second
+- Limited to 400-800 transactions per second
 - Requires permission to become validator
 - Users must manage private keys
 
 **What needs improvement:**
-- User experience is too complex for mainstream adoption
-- Network is too centralized
-- Transaction processing is too slow
+- User experience complexity limits broader adoption
+- Network validator participation is limited
+- Transaction processing could be faster
 - Private key management creates barriers
 
 ## Development Roadmap
 
 ### Phase 0: Open the Network (10 weeks)
 
-**Goal**: Let anyone participate as a validator while keeping enterprise features
+**Goal**: Allow broader validator participation while maintaining enterprise features
 
 #### Week 1-2: Democratic Governance
 - [ ] Add democracy pallet to runtime
@@ -109,7 +109,7 @@ Selendra v4 will eliminate the barriers that prevent regular people from using b
 
 ### Phase 2: Parallel Processing (6 months)
 
-**Goal**: Process 3-5x more transactions by running them in parallel
+**Goal**: Increase transaction throughput 3-5x through parallel processing
 
 #### Month 7-8: Parallel Framework
 - [ ] Design parallel execution system
@@ -133,14 +133,14 @@ Selendra v4 will eliminate the barriers that prevent regular people from using b
 - [ ] Complete security review
 
 **Success Criteria:**
-- [ ] Achieve 3,000+ transactions per second
+- [ ] Target 1,200-4,000 transactions per second
 - [ ] Maintain 1-second block times
 - [ ] Process 70%+ transactions in parallel
 - [ ] No performance issues for existing apps
 
 ### Phase 3: Mainstream Ready (6 months)
 
-**Goal**: Complete features needed for mainstream adoption
+**Goal**: Complete features needed for broader adoption
 
 #### Month 13-14: Advanced Scaling
 - [ ] Implement optional account sharding
@@ -164,9 +164,9 @@ Selendra v4 will eliminate the barriers that prevent regular people from using b
 - [ ] Prepare v4 mainnet launch
 
 **Success Criteria:**
-- [ ] Support 10,000+ transactions per second
+- [ ] Target up to 10,000 transactions per second
 - [ ] Connect to Ethereum and other chains
-- [ ] Developer tools with 95%+ satisfaction
+- [ ] Developer tools with high satisfaction ratings
 - [ ] 50+ applications built on v4
 
 ## Timeline Overview
@@ -230,14 +230,14 @@ Phase 3: Mainstream Ready [Months 13-18]
 ## Success Measurements
 
 **User Experience:**
-- [ ] Regular users can use blockchain without crypto knowledge
+- [ ] Users can interact with blockchain without crypto knowledge
 - [ ] Account recovery success rate > 99%
 - [ ] Session keys work with major applications
-- [ ] Gasless transactions for mainstream apps
+- [ ] Gasless transactions for applications
 
 **Performance:**
-- [ ] 3,000+ transactions per second (Phase 2)
-- [ ] 10,000+ transactions per second (Phase 3)
+- [ ] 1,200-4,000 transactions per second (Phase 2)
+- [ ] Target up to 10,000 transactions per second (Phase 3)
 - [ ] 1-second block times maintained
 - [ ] 99.9% network uptime
 
@@ -274,15 +274,15 @@ Phase 3: Mainstream Ready [Months 13-18]
 - Blockchain feels like web2
 
 **After Phase 2 (12 months):**
-- Network handles mainstream traffic
+- Network handles increased traffic
 - Fees are predictable and low
-- Performance rivals traditional systems
+- Performance approaches traditional systems
 
 **After Phase 3 (18 months):**
 - Selendra v4 launches to mainnet
-- Blockchain technology accessible to everyone
-- New standard for user-centric blockchains
+- Blockchain technology more accessible
+- Improved standard for user-centric blockchains
 
 ---
 
-*This roadmap transforms Selendra from a technical blockchain to a user-friendly platform that anyone can use, while maintaining the security and decentralization that makes blockchain valuable.*
+*This roadmap transforms Selendra from a technical blockchain to a more user-friendly platform, while maintaining the security and decentralization properties of blockchain technology.*

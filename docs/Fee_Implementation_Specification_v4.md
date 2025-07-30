@@ -5,7 +5,7 @@
 
 ## What We're Implementing
 
-We're updating Selendra's fee structure to support mainstream adoption while maintaining network sustainability. The new system will have a base fee of 0.001 SEL per transaction, targeting ~$0.000025 USD when SEL reaches our target price.
+We're updating Selendra's fee structure to support broader adoption while maintaining network sustainability. The new system will have a base fee of 0.001 SEL per transaction, targeting ~$0.000025 USD when SEL reaches the target price.
 
 ## Current vs New Fee Structure
 
@@ -17,7 +17,7 @@ We're updating Selendra's fee structure to support mainstream adoption while mai
 ### What We're Building
 - **New base fee**: 0.001 SEL per transaction (186x increase)
 - **Target USD**: $0.000025 USD
-- **Reason**: Ultra-competitive while ensuring validator rewards
+- **Reason**: Competitive while ensuring validator rewards
 
 ## Implementation Plan
 
@@ -30,7 +30,7 @@ We're updating Selendra's fee structure to support mainstream adoption while mai
 **Runtime Updates:**
 - [ ] Update `runtime/src/lib.rs` with new fee parameters
 - [ ] Set `TransactionBaseFee` to 1_000_000_000_000_000 (0.001 SEL)
-- [ ] Configure fee distribution: 40% burn, 35% validators, 15% treasury, 10% paymaster
+- [ ] Configure fee distribution: 40% burn, 35% validators, 15% treasury, 10% paymaster incentives
 - [ ] Add minimum fee enforcement
 
 **Fee Distribution System:**
@@ -85,20 +85,20 @@ We're updating Selendra's fee structure to support mainstream adoption while mai
 
 ## Economic Impact
 
-### Revenue Projections (10,000 TPS average)
+### Revenue Analysis (10,000 TPS average)
 - **Daily fees**: 864,000 SEL
 - **Annual fees**: 315,360,000 SEL
 
 ### Fee Distribution (Annual)
 - **Burned (40%)**: 126,144,000 SEL - Creates deflationary pressure
-- **Validators (35%)**: 110,376,000 SEL - Major reward increase
+- **Validators (35%)**: 110,376,000 SEL - Reward increase
 - **Treasury (15%)**: 47,304,000 SEL - Development funding
-- **Paymaster (10%)**: 31,536,000 SEL - UX innovation fund
+- **Paymaster (10%)**: 31,536,000 SEL - User experience fund
 
-### Validator Reward Enhancement
+### Validator Reward Analysis
 - **Current (inflation only)**: 21,000,000 SEL annually
 - **New (inflation + fees)**: 131,376,000 SEL annually
-- **Increase**: 6.25x more rewards for validators
+- **Increase**: 6.25x reward increase for validators
 
 ## Risk Management
 
@@ -189,19 +189,19 @@ We can update these through governance:
 - [ ] 100% uptime for fee system
 - [ ] <100ms fee calculation time
 - [ ] Zero fee-related failures
-- [ ] Support 10,000+ TPS
+- [ ] Support target 10,000+ TPS
 
 ### Economic Goals
 - [ ] 6x+ validator reward increase
 - [ ] 100M+ SEL burned annually
-- [ ] Viable paymaster ecosystem
-- [ ] Competitive vs other networks
+- [ ] Functional paymaster ecosystem
+- [ ] Competitive with other networks
 
 ### Adoption Metrics
 - [ ] 50%+ transactions use advanced features
 - [ ] 10+ active paymaster services
-- [ ] 90%+ user satisfaction
-- [ ] Maintained cost advantage
+- [ ] High user satisfaction scores
+- [ ] Maintained cost competitiveness
 
 ## Code Implementation Areas
 
@@ -245,13 +245,13 @@ We can update these through governance:
 ## Final Notes
 
 This fee system is designed to:
-1. **Support mainstream adoption** - Ultra-low fees remove barriers
-2. **Reward validators properly** - 6x increase in validator income
-3. **Create deflationary pressure** - Major token burning mechanism
+1. **Support broader adoption** - Low fees reduce barriers
+2. **Reward validators** - 6x increase in validator income
+3. **Create deflationary pressure** - Token burning mechanism
 4. **Enable advanced features** - Gasless transactions, session keys
-5. **Maintain competitiveness** - Cheapest fees in the market
+5. **Maintain competitiveness** - Competitive fees in the market
 
-We're building this system to make blockchain accessible to everyone while ensuring the network remains sustainable and secure for validators and users.
+We're building this system to make blockchain more accessible while ensuring the network remains sustainable and secure for validators and users.
 
 ---
 
