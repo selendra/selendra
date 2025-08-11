@@ -120,8 +120,8 @@ impl pallet_custom_signatures::Config for Runtime {
 
 parameter_types! {
 	pub DefaultBaseFeePerGas: U256 = U256::from(10_000_000_000_u128);
-	pub MinBaseFeePerGas: U256 = U256::from(80_000_000_000_u128);
-	pub MaxBaseFeePerGas: U256 = U256::from(8_000_000_000_000_u128);
+	pub MinBaseFeePerGas: U256 = U256::from(100_000_000_u128);
+	pub MaxBaseFeePerGas: U256 = U256::from(10_000_000_000_000_u128);
 	pub StepLimitRatio: Perquintill = Perquintill::from_rational(93_u128, 1_000_000);
 }
 
