@@ -85,6 +85,7 @@ pallet-dynamic-evm-base-fee = { workspace = true }
 pallet-evm-precompile-modexp = { workspace = true }
 pallet-evm-precompile-sha3fips = { workspace = true }
 pallet-evm-precompile-simple = { workspace = true }
+pallet-unified-accounts = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }
@@ -157,6 +158,7 @@ std = [
 	"pallet-evm-precompile-modexp/std",
 	"pallet-evm-precompile-sha3fips/std",
 	"pallet-evm-precompile-simple/std",
+    "pallet-unified-accounts/std",
 ]
 short_session = ["primitives/short_session"]
 try-runtime = [
