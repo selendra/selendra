@@ -154,7 +154,7 @@ impl frame_system::Config for Runtime {
     /// The aggregated Task type.
     type RuntimeTask = RuntimeTask;
     /// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-    type Lookup = AccountIdLookup<AccountId, ()>;
+    type Lookup = (AccountIdLookup<AccountId, ()>, UnifiedAccounts);
     /// The type for storing how many extrinsics an account has signed.
     type Nonce = Nonce;
     /// The block type.
@@ -1037,7 +1037,7 @@ construct_runtime!(
         Ethereum: pallet_ethereum = 80,
 		EVM: pallet_evm = 81,
 		DynamicEvmBaseFee: pallet_dynamic_evm_base_fee = 83,
-		EthCall: pallet_custom_signatures = 86,
+		UnifiedAccounts: pallet_unified_accounts = 87,
         
         Contracts: pallet_contracts = 90,
        

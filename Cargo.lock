@@ -9023,7 +9023,6 @@ dependencies = [
  "pallet-balances",
  "pallet-committee-management",
  "pallet-contracts",
- "pallet-custom-signatures",
  "pallet-dynamic-evm-base-fee",
  "pallet-elections",
  "pallet-ethereum",
