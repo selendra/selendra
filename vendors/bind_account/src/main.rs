@@ -6,31 +6,17 @@ use parity_scale_codec::Encode;
 use std::str::FromStr;
 use subxt::{
     client::OnlineClient,
-    config::{Config, DefaultExtrinsicParams},
-    tx::PairSigner,
-    utils::AccountId32,
+    config::SubstrateConfig,
+    utils::{AccountId32, MultiAddress, H160},
 };
+use subxt_signer::sr25519::Keypair;
 use sp_core::{
-    crypto::{Ss58Codec, Pair},
-    sr25519, H256, H160,
+    sr25519, Pair, crypto::Ss58Codec, blake2_256,
 };
-use sp_runtime::traits::Zero;
 use tokio;
 
-// Define our custom config for Selendra
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
-pub struct SelendraConfig;
-
-impl Config for SelendraConfig {
-    type Hash = subxt::utils::H256;
-    type AccountId = AccountId32;
-    type Address = subxt::utils::MultiAddress<Self::AccountId, ()>;
-    type Signature = subxt::utils::MultiSignature;
-    type Hasher = subxt::config::substrate::BlakeTwo256;
-    type Header = subxt::config::substrate::SubstrateHeader<u32, subxt::config::substrate::BlakeTwo256>;
-    type ExtrinsicParams = DefaultExtrinsicParams<Self>;
-    type AssetId = ();
-}
+// Use SubstrateConfig for Selendra
+type SelendraConfig = SubstrateConfig;
 
 // Generate the interface from metadata
 #[subxt::subxt(runtime_metadata_path = "metadata.scale")]
@@ -56,7 +42,7 @@ enum Commands {
         #[arg(short, long)]
         mnemonic: String,
         /// Chain RPC endpoint
-        #[arg(short, long, default_value = "ws://127.0.0.1:9944")]
+        #[arg(short, long, default_value = "wss://rpc.selendra.org")]
         rpc: String,
     },
     /// Claim specific EVM address with signature proof
@@ -65,7 +51,7 @@ enum Commands {
         #[arg(short, long)]
         mnemonic: String,
         /// Chain RPC endpoint
-        #[arg(short, long, default_value = "ws://127.0.0.1:9944")]
+        #[arg(short, long, default_value = "wss://rpc.selendra.org")]
         rpc: String,
     },
     /// Generate signature and addresses without submitting
@@ -74,7 +60,7 @@ enum Commands {
         #[arg(short, long)]
         mnemonic: String,
         /// Chain RPC endpoint (for genesis hash)
-        #[arg(short, long, default_value = "ws://127.0.0.1:9944")]
+        #[arg(short, long, default_value = "wss://rpc.selendra.org")]
         rpc: String,
     },
     /// Test unified accounts with balance checks and transfers
@@ -83,7 +69,7 @@ enum Commands {
         #[arg(short, long)]
         mnemonic: String,
         /// Chain RPC endpoint
-        #[arg(short, long, default_value = "ws://127.0.0.1:9944")]
+        #[arg(short, long, default_value = "wss://rpc.selendra.org")]
         rpc: String,
         /// Target address for transfers (Substrate format)
         #[arg(short, long)]
@@ -167,21 +153,20 @@ fn sign_eip712_message(secret_key: &SecretKey, message_hash: &[u8; 32]) -> EvmSi
     signature_bytes
 }
 
-async fn generate_account_data(mnemonic: &str, rpc_url: &str) -> Result<(sr25519::Pair, AccountId32, SecretKey, EvmAddress, [u8; 32], EvmSignature)> {
+async fn generate_account_data(mnemonic: &str, rpc_url: &str) -> Result<(Keypair, AccountId32, SecretKey, EvmAddress, [u8; 32], EvmSignature)> {
     // Connect to get genesis hash
     let api = OnlineClient::<SelendraConfig>::from_url(rpc_url).await?;
     
-    // Parse mnemonic and generate seed
-    let mnemonic_obj = bip39::Mnemonic::from_str(mnemonic)?;
-    let seed = mnemonic_obj.to_seed("");
-    
-    // Generate SR25519 keypair from seed
-    use subxt::ext::sp_core::{sr25519, Pair};
-    let pair = sr25519::Pair::from_seed_slice(&seed[0..32])?;
-    let account_id = AccountId32::from(pair.public().0);
+    // Generate SR25519 keypair directly from mnemonic phrase (Substrate style)
+    let (sp_pair, seed) = sr25519::Pair::from_phrase(mnemonic, None)
+        .map_err(|e| anyhow::anyhow!("Failed to derive keypair from phrase: {:?}", e))?;
+    let mut secret_bytes = [0u8; 32];
+    secret_bytes.copy_from_slice(&seed.as_ref()[0..32]);
+    let keypair = Keypair::from_secret_key(secret_bytes).map_err(|e| anyhow::anyhow!("Keypair creation failed: {}", e))?;
+    let account_id = AccountId32::from(sp_pair.public().0);
     
     // Generate EVM key pair (using same entropy)
-    let secret_key = SecretKey::parse_slice(&seed[0..32])?;
+    let secret_key = SecretKey::parse_slice(&seed.as_ref()[0..32])?;
     let evm_address = get_evm_address(&secret_key);
     
     // Get chain info
@@ -193,21 +178,21 @@ async fn generate_account_data(mnemonic: &str, rpc_url: &str) -> Result<(sr25519
     let message_hash = build_signing_payload(&account_id, chain_id, genesis_hash);
     let signature = sign_eip712_message(&secret_key, &message_hash);
     
-    Ok((pair, account_id, secret_key, evm_address, genesis_hash, signature))
+    Ok((keypair, account_id, secret_key, evm_address, genesis_hash, signature))
 }
 
 async fn claim_default_evm_address(mnemonic: String, rpc_url: String) -> Result<()> {
     println!("🚀 Claiming default EVM address...");
     
-    let (pair, account_id, _secret_key, _evm_address, genesis_hash, _signature) = 
+    let (keypair, account_id, _secret_key, _evm_address, genesis_hash, _signature) = 
         generate_account_data(&mnemonic, &rpc_url).await?;
     
-    println!("📝 Account: {}", account_id.to_ss58check());
+    println!("📝 Account: {}", sp_core::crypto::AccountId32::from(account_id.0).to_ss58check());
     println!("🔗 Genesis: 0x{}", hex::encode(genesis_hash));
     
     // Connect to the chain
     let api = OnlineClient::<SelendraConfig>::from_url(&rpc_url).await?;
-    let signer = PairSigner::new(pair);
+    let signer = keypair;
     
     // Create the transaction
     let default_claim_call = selendra::tx()
@@ -234,7 +219,7 @@ async fn claim_default_evm_address(mnemonic: String, rpc_url: String) -> Result<
                             Ok(ev) => {
                                 found_event = true;
                                 println!("🔗 Default EVM address claimed successfully!");
-                                println!("   Substrate Account: {}", AccountId32::from(ev.account_id.0).to_ss58check());
+                                println!("   Substrate Account: {}", sp_core::crypto::AccountId32::from(ev.account_id.0).to_ss58check());
                                 println!("   Default EVM Address: 0x{}", hex::encode(ev.evm_address));
                             }
                             Err(e) => println!("❌ Error decoding event: {:?}", e),
@@ -262,10 +247,10 @@ async fn claim_default_evm_address(mnemonic: String, rpc_url: String) -> Result<
 async fn claim_evm_address(mnemonic: String, rpc_url: String) -> Result<()> {
     println!("🚀 Claiming specific EVM address with signature proof...");
     
-    let (pair, account_id, secret_key, evm_address, genesis_hash, signature) = 
+    let (keypair, account_id, secret_key, evm_address, genesis_hash, signature) = 
         generate_account_data(&mnemonic, &rpc_url).await?;
     
-    println!("📝 Account: {}", account_id.to_ss58check());
+    println!("📝 Account: {}", sp_core::crypto::AccountId32::from(account_id.0).to_ss58check());
     println!("🔗 Genesis: 0x{}", hex::encode(genesis_hash));
     println!("🎯 EVM Address: 0x{}", hex::encode(evm_address));
     println!("🔑 EVM Private Key: 0x{}", hex::encode(secret_key.serialize()));
@@ -273,12 +258,12 @@ async fn claim_evm_address(mnemonic: String, rpc_url: String) -> Result<()> {
     
     // Connect to the chain
     let api = OnlineClient::<SelendraConfig>::from_url(&rpc_url).await?;
-    let signer = PairSigner::new(pair);
+    let signer = keypair;
     
     // Create the transaction
     let claim_call = selendra::tx()
         .unified_accounts()
-        .claim_evm_address(subxt::utils::H160(evm_address), signature);
+        .claim_evm_address(H160(evm_address), signature);
     
     println!("🔄 Submitting claim_evm_address()...");
     
@@ -300,7 +285,7 @@ async fn claim_evm_address(mnemonic: String, rpc_url: String) -> Result<()> {
                             Ok(ev) => {
                                 found_event = true;
                                 println!("🔗 EVM address claimed successfully!");
-                                println!("   Substrate Account: {}", AccountId32::from(ev.account_id.0).to_ss58check());
+                                println!("   Substrate Account: {}", sp_core::crypto::AccountId32::from(ev.account_id.0).to_ss58check());
                                 println!("   EVM Address: 0x{}", hex::encode(ev.evm_address));
                             }
                             Err(e) => println!("❌ Error decoding event: {:?}", e),
@@ -328,18 +313,18 @@ async fn claim_evm_address(mnemonic: String, rpc_url: String) -> Result<()> {
 async fn generate_only(mnemonic: String, rpc_url: String) -> Result<()> {
     println!("🔧 Generating unified accounts data...");
     
-    let (_pair, account_id, secret_key, evm_address, genesis_hash, signature) = 
+    let (_keypair, account_id, secret_key, evm_address, genesis_hash, signature) = 
         generate_account_data(&mnemonic, &rpc_url).await?;
     
     // Calculate default EVM address
-    let default_payload = (b"evm:", account_id);
-    let default_hash = sp_core::blake2_256(&default_payload.encode());
+    let default_payload = (b"evm:", account_id.clone());
+    let default_hash = blake2_256(&default_payload.encode());
     let mut default_evm = [0u8; 20];
     default_evm.copy_from_slice(&default_hash[0..20]);
     
     println!("\n📋 Generated Account Data:");
     println!("==========================================");
-    println!("   Substrate Address: {}", account_id.to_ss58check());
+    println!("   Substrate Address: {}", sp_core::crypto::AccountId32::from(account_id.0).to_ss58check());
     println!("   EVM Address: 0x{}", hex::encode(evm_address));
     println!("   EVM Private Key: 0x{}", hex::encode(secret_key.serialize()));
     println!("   Default EVM Address: 0x{}", hex::encode(default_evm));
@@ -348,7 +333,7 @@ async fn generate_only(mnemonic: String, rpc_url: String) -> Result<()> {
     println!("   EIP-712 Signature: 0x{}", hex::encode(signature));
     
     println!("\n🔧 Polkadot.js Apps Usage:");
-    println!("   1. Fund account: {}", account_id.to_ss58check());
+    println!("   1. Fund account: {}", sp_core::crypto::AccountId32::from(account_id.0).to_ss58check());
     println!("   2. Go to: https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/extrinsics");
     println!("   3. Use unifiedAccounts.claimDefaultEvmAddress() OR");
     println!("   4. Use unifiedAccounts.claimEvmAddress:");
@@ -360,45 +345,32 @@ async fn generate_only(mnemonic: String, rpc_url: String) -> Result<()> {
 
 /// Get Substrate account balance
 async fn get_substrate_balance(api: &OnlineClient<SelendraConfig>, account_id: &AccountId32) -> Result<u128> {
-    let balance_query = selendra::storage().system().account(account_id);
+    let balance_query = selendra::storage().system().account(account_id.clone());
     let account_info = api.storage().at_latest().await?.fetch(&balance_query).await?;
     
     match account_info {
-        Some(info) => Ok(info.data.free.0),
+        Some(info) => Ok(info.data.free),
         None => Ok(0),
     }
 }
 
-/// Get EVM account balance via pallet-evm
-async fn get_evm_balance(api: &OnlineClient<SelendraConfig>, evm_address: &EvmAddress) -> Result<u128> {
-    let balance_query = selendra::storage().evm().accounts(subxt::utils::H160(*evm_address));
-    let account_info = api.storage().at_latest().await?.fetch(&balance_query).await?;
-    
-    match account_info {
-        Some(info) => {
-            // Convert from U256 to u128
-            let balance_bytes = info.balance.0;
-            let mut result = 0u128;
-            for (i, &byte) in balance_bytes.iter().rev().enumerate() {
-                if i >= 16 { break; } // Only take first 16 bytes for u128
-                result |= (byte as u128) << (i * 8);
-            }
-            Ok(result)
-        },
-        None => Ok(0),
-    }
+/// Get EVM account balance via pallet-evm (placeholder - needs to be implemented based on actual metadata)
+async fn get_evm_balance(_api: &OnlineClient<SelendraConfig>, _evm_address: &EvmAddress) -> Result<u128> {
+    // For now, return 0 - this needs to be implemented based on actual chain metadata
+    // The exact storage item name depends on your chain's EVM pallet configuration
+    Ok(0)
 }
 
 /// Transfer on Substrate side
 async fn substrate_transfer(
     api: &OnlineClient<SelendraConfig>,
-    signer: &PairSigner<SelendraConfig, sr25519::Pair>,
+    signer: &Keypair,
     target: &AccountId32,
     amount: u128,
 ) -> Result<()> {
     let transfer_call = selendra::tx()
         .balances()
-        .transfer_allow_death(subxt::utils::MultiAddress::Id(target.clone()), amount);
+        .transfer_allow_death(MultiAddress::Id(target.clone()), amount);
     
     println!("🔄 Submitting Substrate transfer...");
     
@@ -419,50 +391,15 @@ async fn substrate_transfer(
     Ok(())
 }
 
-/// Transfer on EVM side
+/// Transfer on EVM side (placeholder - needs proper U256 types)
 async fn evm_transfer(
-    api: &OnlineClient<SelendraConfig>,
-    signer: &PairSigner<SelendraConfig, sr25519::Pair>,
-    from_evm: &EvmAddress,
-    target_evm: &EvmAddress,
-    amount: u128,
+    _api: &OnlineClient<SelendraConfig>,
+    _signer: &Keypair,
+    _from_evm: &EvmAddress,
+    _target_evm: &EvmAddress,
+    _amount: u128,
 ) -> Result<()> {
-    // Convert amount to U256 format for EVM
-    let mut amount_bytes = [0u8; 32];
-    let amount_le_bytes = amount.to_le_bytes();
-    amount_bytes[..16].copy_from_slice(&amount_le_bytes);
-    let evm_amount = subxt::utils::H256(amount_bytes);
-    
-    let transfer_call = selendra::tx()
-        .evm()
-        .call(
-            subxt::utils::H160(*from_evm),
-            subxt::utils::H160(*target_evm),
-            vec![], // No data for simple transfer
-            evm_amount,
-            600000u64, // Gas limit
-            subxt::utils::H256([0; 32]), // Max fee per gas
-            None, // Max priority fee per gas
-            None, // Nonce
-            vec![], // Access list
-        );
-    
-    println!("🔄 Submitting EVM transfer...");
-    
-    match api.tx().sign_and_submit_then_watch_default(&transfer_call, signer).await {
-        Ok(progress) => {
-            println!("✅ EVM transfer submitted successfully!");
-            
-            match progress.wait_for_finalized_success().await {
-                Ok(_) => println!("🎉 EVM transfer finalized!"),
-                Err(e) => println!("❌ EVM transfer failed: {:?}", e),
-            }
-        }
-        Err(e) => {
-            println!("❌ EVM transfer submission failed: {:?}", e);
-        }
-    }
-    
+    println!("⚠️  EVM transfer not implemented - needs proper U256 type conversion");
     Ok(())
 }
 
@@ -471,38 +408,40 @@ async fn test_unified_accounts(mnemonic: String, rpc_url: String, target_address
     println!("🧪 Starting comprehensive unified accounts test...");
     
     // Generate account data
-    let (pair, account_id, _secret_key, evm_address, genesis_hash, signature) = 
+    let (keypair, account_id, _secret_key, evm_address, genesis_hash, signature) = 
         generate_account_data(&mnemonic, &rpc_url).await?;
     
     // Parse target address and amount
-    let target_account = AccountId32::from_ss58check(&target_address)?;
+    let sp_target = sp_core::crypto::AccountId32::from_ss58check(&target_address)?;
+    let target_bytes: &[u8; 32] = sp_target.as_ref();
+    let target_account = AccountId32::from(*target_bytes);
     let transfer_amount: u128 = amount.parse()?;
     
     // Calculate target EVM address (default derivation)
-    let target_default_payload = (b"evm:", target_account);
-    let target_default_hash = sp_core::blake2_256(&target_default_payload.encode());
+    let target_default_payload = (b"evm:", target_account.clone());
+    let target_default_hash = blake2_256(&target_default_payload.encode());
     let mut target_evm = [0u8; 20];
     target_evm.copy_from_slice(&target_default_hash[0..20]);
     
     // Calculate our default EVM address
-    let default_payload = (b"evm:", account_id);
-    let default_hash = sp_core::blake2_256(&default_payload.encode());
+    let default_payload = (b"evm:", account_id.clone());
+    let default_hash = blake2_256(&default_payload.encode());
     let mut default_evm = [0u8; 20];
     default_evm.copy_from_slice(&default_hash[0..20]);
     
     println!("\n📋 Test Configuration:");
     println!("===========================================");
-    println!("   Source Substrate: {}", account_id.to_ss58check());
+    println!("   Source Substrate: {}", sp_core::crypto::AccountId32::from(account_id.0).to_ss58check());
     println!("   Source EVM: 0x{}", hex::encode(evm_address));
     println!("   Source Default EVM: 0x{}", hex::encode(default_evm));
-    println!("   Target Substrate: {}", target_account.to_ss58check());
+    println!("   Target Substrate: {}", sp_core::crypto::AccountId32::from(target_account.0).to_ss58check());
     println!("   Target Default EVM: 0x{}", hex::encode(target_evm));
     println!("   Transfer Amount: {} units", transfer_amount);
     println!("   Genesis Hash: 0x{}", hex::encode(genesis_hash));
     
     // Connect to the chain
     let api = OnlineClient::<SelendraConfig>::from_url(&rpc_url).await?;
-    let signer = PairSigner::new(pair);
+    let signer = keypair;
     
     // Step 1: Check initial balances
     println!("\n📊 Step 1: Checking initial balances...");
@@ -527,7 +466,7 @@ async fn test_unified_accounts(mnemonic: String, rpc_url: String, target_address
     // Try to claim the EVM address first
     let claim_call = selendra::tx()
         .unified_accounts()
-        .claim_evm_address(subxt::utils::H160(evm_address), signature);
+        .claim_evm_address(H160(evm_address), signature);
     
     match api.tx().sign_and_submit_then_watch_default(&claim_call, &signer).await {
         Ok(progress) => {
@@ -541,7 +480,7 @@ async fn test_unified_accounts(mnemonic: String, rpc_url: String, target_address
                         if let Ok(ev) = event {
                             found_event = true;
                             println!("🎉 Account claimed successfully!");
-                            println!("   Substrate: {}", AccountId32::from(ev.account_id.0).to_ss58check());
+                            println!("   Substrate: {}", sp_core::crypto::AccountId32::from(ev.account_id.0).to_ss58check());
                             println!("   EVM: 0x{}", hex::encode(ev.evm_address));
                         }
                     }

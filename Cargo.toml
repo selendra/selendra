@@ -19,7 +19,6 @@ members = [
     "pallets/custom-signatures",
     "pallets/dynamic-evm-base-fee",
     "pallets/unified-accounts",
-    # "vendors/bind_account"
 ]
 
 exclude = [
@@ -28,6 +27,7 @@ exclude = [
     "vendors/flooder",
     "vendors/frontier",
     "vendors/fork-off",
+    "vendors/bind_account"
 ]
 
 [profile.release]

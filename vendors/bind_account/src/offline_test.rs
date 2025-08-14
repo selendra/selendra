@@ -4,11 +4,10 @@ use hex;
 use libsecp256k1::{Message, SecretKey, sign};
 use parity_scale_codec::Encode;
 use std::str::FromStr;
-use sp_core::{
-    crypto::{Ss58Codec, Pair},
-    sr25519, H256, H160,
-};
 use subxt::utils::AccountId32;
+use sp_core::{
+    sr25519, Pair, crypto::Ss58Codec, blake2_256, H160, H256,
+};
 
 type EvmAddress = [u8; 20];
 type EvmSignature = [u8; 65];
@@ -107,7 +106,7 @@ fn test_account_generation(mnemonic: &str) -> Result<()> {
     
     // Calculate default EVM address
     let default_payload = (b"evm:", account_id);
-    let default_hash = sp_core::blake2_256(&default_payload.encode());
+    let default_hash = blake2_256(&default_payload.encode());
     let mut default_evm = [0u8; 20];
     default_evm.copy_from_slice(&default_hash[0..20]);
     
@@ -139,7 +138,7 @@ fn test_account_generation(mnemonic: &str) -> Result<()> {
     
     // Test 2: Verify default EVM address derivation
     let verification_default_payload = (b"evm:", account_id);
-    let verification_default_hash = sp_core::blake2_256(&verification_default_payload.encode());
+    let verification_default_hash = blake2_256(&verification_default_payload.encode());
     let mut verification_default_evm = [0u8; 20];
     verification_default_evm.copy_from_slice(&verification_default_hash[0..20]);
     let default_matches = verification_default_evm == default_evm;
@@ -153,7 +152,7 @@ fn test_account_generation(mnemonic: &str) -> Result<()> {
     // Test 4: Test with different target for address derivation
     let target_account = AccountId32::from_ss58check("5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty")?;
     let target_default_payload = (b"evm:", target_account);
-    let target_default_hash = sp_core::blake2_256(&target_default_payload.encode());
+    let target_default_hash = blake2_256(&target_default_payload.encode());
     let mut target_default_evm = [0u8; 20];
     target_default_evm.copy_from_slice(&target_default_hash[0..20]);
     println!("   Target EVM Derivation: ✅ PASS");

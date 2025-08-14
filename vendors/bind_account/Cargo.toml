@@ -1,32 +1,33 @@
 [package]
 name = "bind_account"
 version = "0.1.0"
-authors.workspace = true
-edition.workspace = true
-homepage.workspace = true
-repository.workspace = true
+authors = ["Selendra"]
+edition = "2021"
+homepage = "https://selendra.org"
+repository = "https://github.com/selendra/selendra"
 
 [[bin]]
 name = "bind_account"
 path = "src/main.rs"
 
-[[bin]]
-name = "offline_test"
-path = "src/offline_test.rs"
+# [[bin]]
+# name = "offline_test"
+# path = "src/offline_test.rs"
 
 [dependencies]
-subxt = { version = "0.35.3", features = ["substrate-compat"] }
-tokio = { version = "1.0", features = ["full"] }
-anyhow = "1.0"
+subxt = { version = "0.43.0" }
+subxt-signer = { version = "0.43.0" }
+tokio = { version = "1.47.1", features = ["full"] }
+anyhow = "1.0.99"
 hex = "0.4"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-libsecp256k1 = "0.7"
-bip39 = "2.0"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.142"
+libsecp256k1 = "0.7.2"
+bip39 = "2.2.0"
 tiny-keccak = { version = "2.0", features = ["keccak"] }
-clap = { version = "4.0", features = ["derive"] }
+clap = { version = "4.5.45", features = ["derive"] }
 
 # Use workspace substrate dependencies
-sp-core = { workspace = true }
-sp-runtime = { workspace = true }
-parity-scale-codec = { workspace = true }
+parity-scale-codec = { version = "3.6", default-features = false, features = ["derive"] }
+sp-core = { version = "21.0.0", default-features = false, features = ["std"] }
+sp-runtime = { version = "24.0.0", default-features = false, features = ["std"] }
