@@ -18,7 +18,8 @@ members = [
     "pallets/operations",
     "pallets/custom-signatures",
     "pallets/dynamic-evm-base-fee",
-    "pallets/unified-accounts"
+    "pallets/unified-accounts",
+    "vendors/bind_account"
 ]
 
 exclude = [
