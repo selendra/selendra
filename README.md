@@ -28,7 +28,6 @@ selendra/
 │ ├── committee-management/ # Validator committee management
 │ ├── elections/ # Validator elections
 │ ├── operations/ # Administrative operations
-│ ├── custom-signatures/ # Custom signature schemes
 │ ├── dynamic-evm-base-fee/ # EVM fee adjustment
 │ └── privacy/ # Privacy-enabled smart contracts (Planned)
 ├── primitives/ # Core types and traits

@@ -556,12 +556,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "assert_matches"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b34d609dfbaf33d6889b2b7106d3ca345eacad44200913df5ba02bfd31d2ba9"
-
-[[package]]
 name = "async-channel"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3829,12 +3823,6 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hex-literal"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
-
-[[package]]
-name = "hex-literal"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
@@ -5994,26 +5982,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-custom-signatures"
-version = "4.6.0"
-dependencies = [
- "assert_matches",
- "frame-support",
- "frame-system",
- "hex-literal 0.3.4",
- "libsecp256k1",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-keyring",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-dynamic-evm-base-fee"
 version = "0.1.0"
 dependencies = [
@@ -6089,7 +6057,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hash-db",
- "hex-literal 0.4.1",
+ "hex-literal",
  "impl-trait-for-tuples",
  "log",
  "parity-scale-codec",

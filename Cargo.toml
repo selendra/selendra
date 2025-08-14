@@ -16,7 +16,6 @@ members = [
     "pallets/elections",
     "pallets/committee-management",
     "pallets/operations",
-    "pallets/custom-signatures",
     "pallets/dynamic-evm-base-fee",
     "pallets/unified-accounts",
 ]
