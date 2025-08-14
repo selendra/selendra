@@ -112,7 +112,7 @@ impl FindAuthor<H160> for MockFindAuthor {
 parameter_types! {
     pub WeightPerGas: Weight = Weight::from_parts(1, 0);
     pub const BlockGasLimit: U256 = U256::MAX;
-    pub ChainId: u64 = 1024;
+    pub ChainId: u64 = 1961;
 }
 
 impl pallet_evm::Config for TestRuntime {

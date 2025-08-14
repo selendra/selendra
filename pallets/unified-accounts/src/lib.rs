@@ -313,7 +313,7 @@ impl<T: Config> Pallet<T> {
         let mut domain =
             keccak256!("EIP712Domain(string name,string version,uint256 chainId,bytes32 salt)")
                 .to_vec();
-        domain.extend_from_slice(&keccak256!("Astar EVM Claim")); // name
+        domain.extend_from_slice(&keccak256!("Selendra EVM Claim")); // name
         domain.extend_from_slice(&keccak256!("1")); // version
         let mut chain_id_bytes = [0u8; 32];
         U256::from(T::ChainId::get()).to_big_endian(&mut chain_id_bytes);

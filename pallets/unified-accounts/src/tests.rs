@@ -32,9 +32,9 @@ use sp_runtime::{traits::StaticLookup, AccountId32, MultiAddress};
 /// EIP712 Payload struct
 #[derive(Eip712, EthAbiType, Clone)]
 #[eip712(
-        name = "Astar EVM Claim",
+        name = "Selendra EVM Claim",
         version = "1",
-        chain_id = 1024,
+        chain_id = 1961,
         // mock genisis hash
         raw_salt = "0x4545454545454545454545454545454545454545454545454545454545454545"
     )]
