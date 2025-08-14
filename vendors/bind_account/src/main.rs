@@ -262,12 +262,13 @@ async fn claim_default_evm_address(mnemonic: String, rpc_url: String) -> Result<
 async fn claim_evm_address(mnemonic: String, rpc_url: String) -> Result<()> {
     println!("🚀 Claiming specific EVM address with signature proof...");
     
-    let (pair, account_id, _secret_key, evm_address, genesis_hash, signature) = 
+    let (pair, account_id, secret_key, evm_address, genesis_hash, signature) = 
         generate_account_data(&mnemonic, &rpc_url).await?;
     
     println!("📝 Account: {}", account_id.to_ss58check());
     println!("🔗 Genesis: 0x{}", hex::encode(genesis_hash));
     println!("🎯 EVM Address: 0x{}", hex::encode(evm_address));
+    println!("🔑 EVM Private Key: 0x{}", hex::encode(secret_key.serialize()));
     println!("✍️  Signature: 0x{}", hex::encode(signature));
     
     // Connect to the chain
@@ -327,7 +328,7 @@ async fn claim_evm_address(mnemonic: String, rpc_url: String) -> Result<()> {
 async fn generate_only(mnemonic: String, rpc_url: String) -> Result<()> {
     println!("🔧 Generating unified accounts data...");
     
-    let (_pair, account_id, _secret_key, evm_address, genesis_hash, signature) = 
+    let (_pair, account_id, secret_key, evm_address, genesis_hash, signature) = 
         generate_account_data(&mnemonic, &rpc_url).await?;
     
     // Calculate default EVM address
@@ -340,6 +341,7 @@ async fn generate_only(mnemonic: String, rpc_url: String) -> Result<()> {
     println!("==========================================");
     println!("   Substrate Address: {}", account_id.to_ss58check());
     println!("   EVM Address: 0x{}", hex::encode(evm_address));
+    println!("   EVM Private Key: 0x{}", hex::encode(secret_key.serialize()));
     println!("   Default EVM Address: 0x{}", hex::encode(default_evm));
     println!("   Chain ID: 1961");
     println!("   Genesis Hash: 0x{}", hex::encode(genesis_hash));
