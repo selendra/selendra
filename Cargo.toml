@@ -16,8 +16,8 @@ members = [
     "pallets/elections",
     "pallets/committee-management",
     "pallets/operations",
-    "pallets/custom-signatures",
     "pallets/dynamic-evm-base-fee",
+    "pallets/unified-accounts",
 ]
 
 exclude = [
@@ -26,6 +26,7 @@ exclude = [
     "vendors/flooder",
     "vendors/frontier",
     "vendors/fork-off",
+    "vendors/bind_account"
 ]
 
 [profile.release]
@@ -80,6 +81,8 @@ thiserror = { version = "1.0" }
 tiny-bip39 = { version = "1.0" }
 tokio = { version = "1.41" }
 rand_pcg = { version = "0.3.1", default-features = false }
+ethers = { version = "2.0.9", default-features = false }
+ethereum-types = { version = "0.14", default-features = false }
 
 frame-benchmarking = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 frame-benchmarking-cli = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
@@ -177,7 +180,6 @@ try-runtime-cli = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk
 
 # Local crates
 primitives = { path = "primitives", default-features = false }
-
 client-runtime-api = { path = "bin/client-runtime-api", default-features = false }
 selendra-runtime = { path = "bin/runtime" }
 
@@ -222,5 +224,10 @@ pallet-evm-precompile-sha3fips = { path = "vendors/frontier/frame/evm/precompile
 pallet-evm-precompile-simple = { path = "vendors/frontier/frame/evm/precompile/simple", default-features = false }
 pallet-hotfix-sufficients = { path = "vendors/frontier/frame/hotfix-sufficients", default-features = false }
 
+# local frontier
 pallet-custom-signatures = { path = "pallets/custom-signatures", default-features = false }
+pallet-unified-accounts = { path = "pallets/unified-accounts", default-features = false }
 pallet-dynamic-evm-base-fee = { path = "pallets/dynamic-evm-base-fee", default-features = false }
+
+# utils
+precompile-utils = { path = "vendors/frontier/precompiles", default-features = false }

@@ -11,6 +11,7 @@ repository.workspace = true
 parity-scale-codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
+ethereum-types = { workspace = true }
 
 sp-api = { workspace = true }
 sp-application-crypto = { workspace = true }
@@ -26,6 +27,10 @@ frame-system-rpc-runtime-api = { workspace = true }
 pallet-transaction-payment = { workspace = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 
+# Frontier
+pallet-evm = { workspace = true }
+fp-evm = { workspace = true }
+
 sp-version = { workspace = true }
 sp-block-builder = { workspace = true }
 sp-offchain = { workspace = true }
@@ -38,6 +43,7 @@ default = ["std"]
 std = [
     "parity-scale-codec/std",
     "serde/std",
+    "ethereum-types/std",
 
     "sp-api/std",
     "sp-application-crypto/std",
@@ -59,5 +65,8 @@ std = [
     "pallet-transaction-payment-rpc-runtime-api/std",
     "pallet-transaction-payment/std",
 
+    # Frontier
+    "pallet-evm/std",
+    "fp-evm/std",
 ]
 short_session = []

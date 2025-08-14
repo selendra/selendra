@@ -1,0 +1,73 @@
+[package]
+name = "pallet-unified-accounts"
+version = "0.1.0"
+edition = "2021"
+description = "Pallet for mapping VM accounts with native accounts"
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+libsecp256k1 = { workspace = true, optional = true, features = ["hmac", "static-context"] }
+log = { workspace = true }
+parity-scale-codec = { workspace = true, features = ["derive"] }
+scale-info = {  workspace = true, features = ["derive"] }
+
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-evm = { workspace = true }
+
+sp-std = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+sp-runtime = { workspace = true }
+
+precompile-utils = { workspace = true }
+primitives = { workspace = true }
+
+frame-benchmarking = { workspace = true, optional = true }
+
+[dev-dependencies]
+ethers = { workspace = true }
+hex = { workspace = true }
+pallet-balances = { workspace = true }
+pallet-ethereum = { workspace = true }
+pallet-evm = { workspace = true }
+pallet-timestamp = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+	"hex/std",
+	"log/std",
+	"libsecp256k1",
+	"libsecp256k1/std",
+	"parity-scale-codec/std",
+	"scale-info/std",
+	"sp-std/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"frame-support/std",
+	"frame-system/std",
+	"primitives/std",
+	"precompile-utils/std",
+	"pallet-evm/std",
+	"pallet-balances/std",
+	"pallet-timestamp/std",
+	"pallet-ethereum/std",
+]
+runtime-benchmarks = [
+	"libsecp256k1/hmac",
+	"frame-benchmarking",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"pallet-ethereum/runtime-benchmarks",
+	"pallet-evm/runtime-benchmarks",
+]
+try-runtime = ["frame-support/try-runtime", "pallet-evm/try-runtime"]
