@@ -3,14 +3,14 @@
 mod precompiles;
 
 use crate::{
-	Aura, Balances, DynamicEvmBaseFee, Runtime, RuntimeCall, RuntimeEvent, Timestamp,
+	Aura, Balances, DynamicEvmBaseFee, Runtime, RuntimeEvent, Timestamp,
 	NORMAL_DISPATCH_RATIO
 };
 
 use pallet_transaction_payment::Multiplier;
 use sp_core::{crypto::ByteArray, Get, H160, U256};
 use sp_runtime::{
-	traits::Verify, transaction_validity::TransactionPriority, ConsensusEngineId, Perquintill,
+	ConsensusEngineId, Perquintill,
 };
 use sp_std::{marker::PhantomData, prelude::*};
 
@@ -24,7 +24,8 @@ use pallet_ethereum::PostLogContent;
 
 use precompiles::FrontierPrecompiles;
 use primitives::{
-	TOKEN, AccountId, Balance, BlakeTwo256, Signature,
+	TOKEN, AccountId, Balance, BlakeTwo256,
+	evm::HashedDefaultMappings,
 };
 
 pub struct FindAuthorTruncated<F>(PhantomData<F>);
@@ -72,7 +73,7 @@ impl pallet_evm::Config for Runtime {
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = pallet_evm::EnsureAddressRoot<AccountId>;
 	type WithdrawOrigin = pallet_evm::EnsureAddressTruncated;
-	type AddressMapping = pallet_evm::HashedAddressMapping<BlakeTwo256>;
+	type AddressMapping = crate::UnifiedAccounts;
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type PrecompilesType = FrontierPrecompiles<Self>;
@@ -101,27 +102,22 @@ impl pallet_ethereum::Config for Runtime {
 }
 
 parameter_types! {
-	pub const EcdsaUnsignedPriority: TransactionPriority = TransactionPriority::MAX / 2;
-	pub const CallFee: Balance = TOKEN / 10;
-	pub const CallMagicNumber: u16 = 0x0250;
+	pub const AccountMappingStorageFee: Balance = TOKEN / 100; // 0.01 SEL storage fee
 }
 
-impl pallet_custom_signatures::Config for Runtime {
+impl pallet_unified_accounts::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type RuntimeCall = RuntimeCall;
-	type Signature = pallet_custom_signatures::ethereum::EthereumSignature;
-	type Signer = <Signature as Verify>::Signer;
-	type CallMagicNumber = CallMagicNumber;
 	type Currency = Balances;
-	type CallFee = CallFee;
-	type OnChargeTransaction = ();
-	type UnsignedPriority = EcdsaUnsignedPriority;
+	type DefaultMappings = HashedDefaultMappings<BlakeTwo256>;
+	type ChainId = ChainId;
+	type AccountMappingStorageFee = AccountMappingStorageFee;
+	type WeightInfo = pallet_unified_accounts::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
 	pub DefaultBaseFeePerGas: U256 = U256::from(10_000_000_000_u128);
-	pub MinBaseFeePerGas: U256 = U256::from(80_000_000_000_u128);
-	pub MaxBaseFeePerGas: U256 = U256::from(8_000_000_000_000_u128);
+	pub MinBaseFeePerGas: U256 = U256::from(100_000_000_u128);
+	pub MaxBaseFeePerGas: U256 = U256::from(10_000_000_000_000_u128);
 	pub StepLimitRatio: Perquintill = Perquintill::from_rational(93_u128, 1_000_000);
 }
 

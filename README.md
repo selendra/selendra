@@ -28,7 +28,6 @@ selendra/
 │ ├── committee-management/ # Validator committee management
 │ ├── elections/ # Validator elections
 │ ├── operations/ # Administrative operations
-│ ├── custom-signatures/ # Custom signature schemes
 │ ├── dynamic-evm-base-fee/ # EVM fee adjustment
 │ └── privacy/ # Privacy-enabled smart contracts (Planned)
 ├── primitives/ # Core types and traits
@@ -104,6 +103,37 @@ chmod +x selendra-rpc-setup.sh
 
 # Run with sudo
 sudo ./selendra-rpc-setup.sh
+```
+### With Docker + Domain + SSL (recommended):
+```bash
+curl -sSL https://raw.githubusercontent.com/selendra/selendra/main/scripts/deploy_rpc_node_ubuntu.sh -o deploy-selendra-rpc
+
+```
+
+```bash
+./deploy-selendra-rpc rpc.yourdomain.com your-email@gmail.com
+```
+
+* Replace `rpc.yourdomain.com` → your domain (must point to the server’s IP).
+* Replace `your-email@gmail.com` → for Let’s Encrypt SSL.
+
+---
+
+## 4. One-line quick deployment
+
+If you want to skip downloading:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/selendra/selendra/main/scripts/deploy_rpc_node_ubuntu.sh | bash -s -- rpc.yourdomain.com your-email@gmail.com
+```
+
+---
+
+✅ Done!
+After completion, your Selendra RPC node will be running at:
+
+```
+https://rpc.yourdomain.com
 ```
 
 For more information, see our [RPC node documentation](https://github.com/selendra/selendra-rpc).
