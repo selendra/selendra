@@ -29,4 +29,5 @@ run-nodes-local
 chainspec.json
 snapshot.json
 
+.claude
 CLAUDE.md 
