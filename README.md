@@ -43,7 +43,7 @@ Selendra is a next-generation Layer 1 blockchain that combines the best of Ether
 │  ├─ WASM (WebAssembly Contracts via pallet-contracts)│
 │  └─ Native Pallets (Substrate Runtime Logic)        │
 ├─────────────────────────────────────────────────────┤
-│  Core Pallets (27 Total)                            │
+│  Core Pallets (30 Total)                            │
 │  ├─ Staking & Governance (DPoS, Treasury, Council)  │
 │  ├─ EVM Integration (Ethereum, Dynamic Fees)        │
 │  ├─ Unified Accounts (Native ↔ EVM Mapping)         │
@@ -59,7 +59,7 @@ Selendra is a next-generation Layer 1 blockchain that combines the best of Ether
 | **Block Time** | ~1 second |
 | **Finality** | Sub-second (AlephBFT) |
 | **EVM Gas Limit** | ~15M gas/block |
-| **Runtime Version** | v20004 (v2.0.4) |
+| **Runtime Version** | v20004 (v3.0) |
 | **Native Token** | SEL |
 | **Decimals** | 18 |
 | **Consensus** | Aura + AlephBFT |
@@ -395,37 +395,36 @@ Selendra provides custom precompiles for accessing Substrate functionality from 
 
 ## 🗺️ Roadmap
 
-### Current Status (v2.0.4)
+### History
+- **2019**: Project started
+- **2020**: First testnet launched
+- **2022**: v1 mainnet launch
+- **2025**: v3 mainnet launch (current)
+
+### Current Status (v3.0 - October 2025)
 - ✅ Full EVM compatibility via Frontier
 - ✅ AlephBFT consensus (sub-second finality)
 - ✅ Unified accounts (native ↔ EVM)
 - ✅ DPoS staking with nomination pools
 - ✅ Dynamic EVM fee adjustment
+- ✅ 30 runtime pallets
+- ✅ Mainnet live and operational
 
-### Phase 1: Foundation & Security (Q4 2025 - Q1 2026)
+### Next Steps (Q4 2025 - Q2 2026)
 - 🔧 Fix critical security issues (randomness, storage bounds)
-- 📦 Basic TypeScript SDK (core functionality)
-- 🏛️ Governance preparation (Council setup)
-- 📚 Essential documentation (quickstart, API reference)
+- 📦 TypeScript SDK development
+- 🏛️ Remove sudo, implement governance
+- 🛠️ Enhanced developer tooling
+- 💱 DeFi infrastructure (DEX, oracles)
+- 📚 Comprehensive documentation
 
-### Phase 2: Developer Experience (Q2 2026)
-- 🛠️ Enhanced SDK & tooling (Hardhat plugin, examples)
-- 💱 Deploy proven DEX (Uniswap V2 fork)
-- 🔮 Basic oracle integration (Chainlink price feeds)
-- 💰 Launch small grants program ($500K initial)
+### Long-Term (2026+)
+- 🌉 Cross-chain bridges
+- 🏦 Expanded DeFi ecosystem
+- 🎯 Developer adoption in Cambodia and Southeast Asia
+- 🏢 Real-world use cases (remittance, supply chain)
 
-### Phase 3: Ecosystem Growth (Q3-Q4 2026)
-- 🌉 Ethereum bridge (via LayerZero or proven solution)
-- 🏦 Add lending protocol (if DEX successful)
-- 🔗 Stablecoin support (bridged USDC/USDT)
-- 📈 Community building & partnerships
-
-### Long-Term Goals (2027+)
-- ⚡ Performance optimizations
-- 🎯 Advanced features (based on market demand)
-- 🏢 Enterprise adoption (if opportunity emerges)
-
-See [Product Roadmap](selendra-product-and-chain-dev.md) for detailed plans.
+See [docs/chain-dev.md](docs/chain-dev.md) for detailed technical roadmap.
 
 ---
 
@@ -511,7 +510,7 @@ See [Security Advisory](https://github.com/selendra/selendra/security/advisories
 This project is licensed under the **GNU General Public License v3.0** - see [LICENSE](LICENSE) file.
 
 ```
-Copyright (C) 2024 Selendra
+Copyright (C) 2019-2025 Selendra
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
