@@ -31,3 +31,5 @@ snapshot.json
 
 .claude
 CLAUDE.md 
+.kiro
+node_modules
