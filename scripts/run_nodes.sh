@@ -245,10 +245,10 @@ fi
 
 if [[ -z "${DONT_BUILD_SELENDRA_NODE}" ]]; then
   info "Building testing selendra-node binary (short session) and chain-bootstrapper binary."
-  # cargo build --release -p selendra-node
-  # if [[ -z "${DONT_BOOTSTRAP}" ]]; then
-  #   cargo build --release -p chain-bootstrapper --features "short_session enable_treasury_proposals"
-  # fi
+  cargo build --release -p selendra-node
+  if [[ -z "${DONT_BOOTSTRAP}" ]]; then
+    cargo build --release -p chain-bootstrapper --features "short_session enable_treasury_proposals"
+  fi
 elif [[ ! -x "${SELENDRA_NODE}" || ! -x "${CHAINSPEC_GENERATOR}" ]]; then
   error "${SELENDRA_NODE} or ${CHAINSPEC_GENERATOR} does not exist or it's not an executable file!"
 fi
@@ -257,24 +257,23 @@ NUMBER_OF_NODES_TO_BOOTSTRAP=$(( VALIDATORS + RPC_NODES ))
 info "Generating ${NUMBER_OF_NODES_TO_BOOTSTRAP} stash accounts identities."
 declare -a rpc_node_account_ids
 for i in $(seq 0 "$(( RPC_NODES - 1 ))"); do
-  # rpc_node_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
-  rpc_node_account_ids="5DM7PJEFPbcYViEzFXu5GjF96JgoSJ3rb6jfXLsmXqrPVG2o"
+  rpc_node_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
+  # rpc_node_account_ids="5DM7PJEFPbcYViEzFXu5GjF96JgoSJ3rb6jfXLsmXqrPVG2o"
 done
 
-# declare -a validator_account_ids
-# for i in $(seq "${RPC_NODES}" "$(( NUMBER_OF_NODES_TO_BOOTSTRAP - 1 ))"); do
-#   # validator_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
-#   validator_account_ids=("5G1MS9ewwQVJsQE8HRPeHLcxSRabQefq7eSAHXpPpq5noxZT" "5CGVrJDrC1Ey2wRwmH55dWXzLYab8yqtTFNX3oNuDoyDPVrb" "5CaSeVW9EEpZg6ktQMQAj1Jj6QnE7w8k3BgBTrgwcQQxBZWR" "5EeqTNH1DCJYmwbhNnCr2jnGeqH5WZ4G9SXVxPzDPfGV9mVH")
-# done
-
 declare -a validator_account_ids
-# Hardcoded list of addresses (must match or exceed VALIDATORS)
-validator_account_ids=(
-  "5G1MS9ewwQVJsQE8HRPeHLcxSRabQefq7eSAHXpPpq5noxZT"
-  "5CGVrJDrC1Ey2wRwmH55dWXzLYab8yqtTFNX3oNuDoyDPVrb"
-  "5CaSeVW9EEpZg6ktQMQAj1Jj6QnE7w8k3BgBTrgwcQQxBZWR"
-  "5EeqTNH1DCJYmwbhNnCr2jnGeqH5WZ4G9SXVxPzDPfGV9mVH"
-)
+for i in $(seq "${RPC_NODES}" "$(( NUMBER_OF_NODES_TO_BOOTSTRAP - 1 ))"); do
+  validator_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
+done
+
+# # Hardcoded list of addresses (must match or exceed VALIDATORS)
+# validator_account_ids=(
+#   "5G1MS9ewwQVJsQE8HRPeHLcxSRabQefq7eSAHXpPpq5noxZT"
+#   "5CGVrJDrC1Ey2wRwmH55dWXzLYab8yqtTFNX3oNuDoyDPVrb"
+#   "5CaSeVW9EEpZg6ktQMQAj1Jj6QnE7w8k3BgBTrgwcQQxBZWR"
+#   "5EeqTNH1DCJYmwbhNnCr2jnGeqH5WZ4G9SXVxPzDPfGV9mVH"
+# )
+
 # Check if there are enough addresses
 if [[ ${#validator_account_ids[@]} -lt ${VALIDATORS} ]]; then
   error "Not enough hardcoded validator account IDs for ${VALIDATORS} validators!"
@@ -301,16 +300,25 @@ if [[ -z "${DONT_BOOTSTRAP}" ]]; then
   validator_ids_string="${validator_ids_string//${IFS:0:1}/,}"
 
   info "Populating keystore for all accounts with session keys and libp2p key, and generating chainspec"
+  # "${CHAINSPEC_GENERATOR}" bootstrap-chain \
+    # --raw \
+    # --base-path "${BASE_PATH}" \
+    # --account-ids "${all_account_ids_string}" \
+    # --authorities-account-ids "${validator_ids_string}" \
+    # --token-symbol "SEL" \
+    # --chain-id "selendra" \
+    # --chain-name "Selendra Network" \
+    # --chain-type live > "${BASE_PATH}/chainspec.json" \
+    # --sudo-account-id 5G1MS9ewwQVJsQE8HRPeHLcxSRabQefq7eSAHXpPpq5noxZT \
+    # --rich-account-ids "${all_account_ids_string}" \
+    # --finality-version "${FINALITY_VERSION}"
+
   "${CHAINSPEC_GENERATOR}" bootstrap-chain \
     --raw \
     --base-path "${BASE_PATH}" \
     --account-ids "${all_account_ids_string}" \
     --authorities-account-ids "${validator_ids_string}" \
-    --token-symbol "SEL" \
-    --chain-id "selendra" \
-    --chain-name "Selendra Network" \
-    --chain-type live > "${BASE_PATH}/chainspec.json" \
-    --sudo-account-id 5G1MS9ewwQVJsQE8HRPeHLcxSRabQefq7eSAHXpPpq5noxZT \
+    --chain-type local > "${BASE_PATH}/chainspec.json" \
     --rich-account-ids "${all_account_ids_string}" \
     --finality-version "${FINALITY_VERSION}"
 
