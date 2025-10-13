@@ -36,9 +36,12 @@ where
         let non_reserved_validators = NextEraNonReservedValidators::<T>::get();
         let committee_size = NextEraCommitteeSize::<T>::get();
 
+        let reserved_vec = retain_shuffle_elected(reserved_validators.to_vec());
+        let non_reserved_vec = retain_shuffle_elected(non_reserved_validators.to_vec());
+
         CurrentEraValidators::<T>::put(EraValidators {
-            reserved: retain_shuffle_elected(reserved_validators),
-            non_reserved: retain_shuffle_elected(non_reserved_validators),
+            reserved: reserved_vec.try_into().expect("Too many validators"),
+            non_reserved: non_reserved_vec.try_into().expect("Too many validators"),
         });
         CommitteeSize::<T>::put(committee_size);
     }
@@ -59,7 +62,8 @@ impl<T: Config> primitives::BanHandler for Pallet<T> {
 
 impl<T: Config + pallet_staking::Config> primitives::ValidatorProvider for Pallet<T> {
     type AccountId = T::AccountId;
-    fn current_era_validators() -> EraValidators<Self::AccountId> {
+    type MaxValidators = T::MaxValidators;
+    fn current_era_validators() -> EraValidators<Self::AccountId, Self::MaxValidators> {
         CurrentEraValidators::<T>::get()
     }
     fn current_era_committee_size() -> CommitteeSeats {

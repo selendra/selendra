@@ -12,30 +12,32 @@ mod mock;
 mod tests;
 mod traits;
 
-use frame_support::{pallet_prelude::Get, traits::StorageVersion};
+use frame_support::{pallet_prelude::Get, traits::StorageVersion, BoundedBTreeMap};
 pub use manager::SessionAndEraManager;
 pub use pallet::*;
-use parity_scale_codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use primitives::{
     BanInfo, FinalityBanConfig as FinalityBanConfigStruct,
     ProductionBanConfig as ProductionBanConfigStruct, SessionValidators, LENIENT_THRESHOLD,
 };
 use scale_info::TypeInfo;
 use sp_runtime::Perquintill;
-use sp_std::{collections::btree_map::BTreeMap, default::Default};
+use sp_std::default::Default;
 pub use traits::*;
 
 pub type TotalReward = u32;
-#[derive(Decode, Encode, TypeInfo, PartialEq, Eq)]
-pub struct ValidatorTotalRewards<T>(pub BTreeMap<T, TotalReward>);
+#[derive(Decode, Encode, TypeInfo, PartialEq, Eq, MaxEncodedLen)]
+#[scale_info(skip_type_params(S))]
+pub struct ValidatorTotalRewards<T: Ord, S: Get<u32>>(pub BoundedBTreeMap<T, TotalReward, S>);
 
-#[derive(Decode, Encode, TypeInfo)]
-pub struct CurrentAndNextSessionValidators<T> {
-    pub next: SessionValidators<T>,
-    pub current: SessionValidators<T>,
+#[derive(Decode, Encode, TypeInfo, parity_scale_codec::MaxEncodedLen)]
+#[scale_info(skip_type_params(S))]
+pub struct CurrentAndNextSessionValidators<T, S: Get<u32>> {
+    pub next: SessionValidators<T, S>,
+    pub current: SessionValidators<T, S>,
 }
 
-impl<T> Default for CurrentAndNextSessionValidators<T> {
+impl<T, S: Get<u32>> Default for CurrentAndNextSessionValidators<T, S> {
     fn default() -> Self {
         Self {
             next: Default::default(),
@@ -84,7 +86,7 @@ pub mod pallet {
         /// Something that provides information about era.
         type EraInfoProvider: EraInfoProvider<AccountId = Self::AccountId>;
         /// Something that provides information about validator.
-        type ValidatorProvider: ValidatorProvider<AccountId = Self::AccountId>;
+        type ValidatorProvider: ValidatorProvider<AccountId = Self::AccountId, MaxValidators = Self::MaxValidators>;
         /// Something that handles addition of rewards for validators.
         type ValidatorRewardsHandler: ValidatorRewardsHandler<AccountId = Self::AccountId>;
         /// Something that handles removal of the validators
@@ -94,11 +96,16 @@ pub mod pallet {
         /// Nr of blocks in the session.
         #[pallet::constant]
         type SessionPeriod: Get<u32>;
+        /// Maximum number of validators in a session
+        #[pallet::constant]
+        type MaxValidators: Get<u32>;
+        /// Maximum number of validator reward entries
+        #[pallet::constant]
+        type MaxValidatorRewards: Get<u32>;
     }
 
     #[pallet::pallet]
     #[pallet::storage_version(STORAGE_VERSION)]
-    #[pallet::without_storage_info]
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
@@ -113,7 +120,7 @@ pub mod pallet {
     /// Total possible reward per validator for the current era.
     #[pallet::storage]
     pub type ValidatorEraTotalReward<T: Config> =
-        StorageValue<_, ValidatorTotalRewards<T::AccountId>, OptionQuery>;
+        StorageValue<_, ValidatorTotalRewards<T::AccountId, T::MaxValidatorRewards>, OptionQuery>;
 
     /// Current era config for ban functionality related to block production.
     #[pallet::storage]
@@ -134,7 +141,7 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn current_session_validators)]
     pub(super) type CurrentAndNextSessionValidatorsStorage<T: Config> =
-        StorageValue<_, CurrentAndNextSessionValidators<T::AccountId>, ValueQuery>;
+        StorageValue<_, CurrentAndNextSessionValidators<T::AccountId, T::MaxValidators>, ValueQuery>;
 
     /// A lookup for a number of underperformance sessions in block finalization for a given validator
     #[pallet::storage]
@@ -336,7 +343,9 @@ pub mod pallet {
     pub struct GenesisConfig<T: Config> {
         pub committee_ban_config: ProductionBanConfigStruct,
         pub finality_ban_config: FinalityBanConfigStruct,
-        pub session_validators: SessionValidators<T::AccountId>,
+        pub producers: Vec<T::AccountId>,
+        pub finalizers: Vec<T::AccountId>,
+        pub non_committee: Vec<T::AccountId>,
     }
 
     #[pallet::genesis_build]
@@ -344,9 +353,16 @@ pub mod pallet {
         fn build(&self) {
             <ProductionBanConfig<T>>::put(self.committee_ban_config.clone());
             <FinalityBanConfig<T>>::put(self.finality_ban_config.clone());
+
+            let session_validators = SessionValidators {
+                producers: self.producers.clone().try_into().expect("Too many producers in genesis"),
+                finalizers: self.finalizers.clone().try_into().expect("Too many finalizers in genesis"),
+                non_committee: self.non_committee.clone().try_into().expect("Too many non-committee in genesis"),
+            };
+
             <CurrentAndNextSessionValidatorsStorage<T>>::put(CurrentAndNextSessionValidators {
-                current: self.session_validators.clone(),
-                next: self.session_validators.clone(),
+                current: session_validators.clone(),
+                next: session_validators,
             })
         }
     }

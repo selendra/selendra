@@ -58,6 +58,9 @@ pub mod pallet {
         #[pallet::constant]
         type MaxWinners: Get<u32>;
         type BannedValidators: BannedValidators<AccountId = Self::AccountId>;
+        /// Maximum number of validators
+        #[pallet::constant]
+        type MaxValidators: Get<u32>;
     }
 
     #[pallet::event]
@@ -88,18 +91,18 @@ pub mod pallet {
 
     /// Next era's list of reserved validators.
     #[pallet::storage]
-    pub type NextEraReservedValidators<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
+    pub type NextEraReservedValidators<T: Config> = StorageValue<_, BoundedVec<T::AccountId, T::MaxValidators>, ValueQuery>;
 
     /// Current era's list of reserved validators.
     #[pallet::storage]
     #[pallet::getter(fn current_era_validators)]
     pub type CurrentEraValidators<T: Config> =
-        StorageValue<_, EraValidators<T::AccountId>, ValueQuery>;
+        StorageValue<_, EraValidators<T::AccountId, T::MaxValidators>, ValueQuery>;
 
     /// Next era's list of non reserved validators.
     #[pallet::storage]
     pub type NextEraNonReservedValidators<T: Config> =
-        StorageValue<_, Vec<T::AccountId>, ValueQuery>;
+        StorageValue<_, BoundedVec<T::AccountId, T::MaxValidators>, ValueQuery>;
 
     /// Default value for elections openness.
     #[pallet::type_value]
@@ -125,9 +128,9 @@ pub mod pallet {
             ensure_root(origin)?;
             let committee_size = committee_size.unwrap_or_else(NextEraCommitteeSize::<T>::get);
             let reserved_validators =
-                reserved_validators.unwrap_or_else(NextEraReservedValidators::<T>::get);
+                reserved_validators.unwrap_or_else(|| NextEraReservedValidators::<T>::get().to_vec());
             let non_reserved_validators =
-                non_reserved_validators.unwrap_or_else(NextEraNonReservedValidators::<T>::get);
+                non_reserved_validators.unwrap_or_else(|| NextEraNonReservedValidators::<T>::get().to_vec());
 
             Self::ensure_validators_are_ok(
                 reserved_validators.clone(),
@@ -135,8 +138,13 @@ pub mod pallet {
                 committee_size,
             )?;
 
-            NextEraNonReservedValidators::<T>::put(non_reserved_validators.clone());
-            NextEraReservedValidators::<T>::put(reserved_validators.clone());
+            let reserved_bounded: BoundedVec<_, _> = reserved_validators.clone().try_into()
+                .expect("Too many reserved validators");
+            let non_reserved_bounded: BoundedVec<_, _> = non_reserved_validators.clone().try_into()
+                .expect("Too many non-reserved validators");
+
+            NextEraNonReservedValidators::<T>::put(non_reserved_bounded);
+            NextEraReservedValidators::<T>::put(reserved_bounded);
             NextEraCommitteeSize::<T>::put(committee_size);
 
             Self::deposit_event(Event::ChangeValidators(
@@ -169,14 +177,14 @@ pub mod pallet {
         fn try_state(_n: BlockNumberFor<T>) -> Result<(), DispatchError> {
             let current_validators = CurrentEraValidators::<T>::get();
             Self::ensure_validators_are_ok(
-                current_validators.reserved,
-                current_validators.non_reserved,
+                current_validators.reserved.to_vec(),
+                current_validators.non_reserved.to_vec(),
                 CommitteeSize::<T>::get(),
             )?;
 
             Self::ensure_validators_are_ok(
-                NextEraReservedValidators::<T>::get(),
-                NextEraNonReservedValidators::<T>::get(),
+                NextEraReservedValidators::<T>::get().to_vec(),
+                NextEraNonReservedValidators::<T>::get().to_vec(),
                 NextEraCommitteeSize::<T>::get(),
             )?;
 
@@ -197,11 +205,17 @@ pub mod pallet {
         fn build(&self) {
             <CommitteeSize<T>>::put(self.committee_seats);
             <NextEraCommitteeSize<T>>::put(self.committee_seats);
-            <NextEraNonReservedValidators<T>>::put(&self.non_reserved_validators);
-            <NextEraReservedValidators<T>>::put(&self.reserved_validators);
+
+            let non_reserved_bounded: BoundedVec<_, _> = self.non_reserved_validators.clone().try_into()
+                .expect("Too many non-reserved validators in genesis");
+            let reserved_bounded: BoundedVec<_, _> = self.reserved_validators.clone().try_into()
+                .expect("Too many reserved validators in genesis");
+
+            <NextEraNonReservedValidators<T>>::put(&non_reserved_bounded);
+            <NextEraReservedValidators<T>>::put(&reserved_bounded);
             <CurrentEraValidators<T>>::put(&EraValidators {
-                reserved: self.reserved_validators.clone(),
-                non_reserved: self.non_reserved_validators.clone(),
+                reserved: reserved_bounded,
+                non_reserved: non_reserved_bounded,
             });
         }
     }
@@ -322,7 +336,9 @@ pub mod pallet {
             // method are a disjoint union of NextEraReservedValidators and NextEraNonReservedValidators.
             // This condition is important since results of elect ends up in pallet staking while the above lists
             // are used in our session manager, so we have to ensure consistency between them.
-            NextEraNonReservedValidators::<T>::put(new_non_reserved_validators.clone());
+            let new_non_reserved_bounded: BoundedVec<_, _> = new_non_reserved_validators.clone().try_into()
+                .expect("Too many non-reserved validators");
+            NextEraNonReservedValidators::<T>::put(new_non_reserved_bounded);
 
             let eligible_validators = staking_reserved_validators
                 .into_iter()

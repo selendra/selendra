@@ -139,9 +139,9 @@ fn generate_genesis_config(
 			"finalityVersion": finality_version,
 		},
 		"committeeManagement": {
-			"sessionValidators": {
-				"committee": to_account_ids(&account_session_keys).collect::<Vec<_>>(),
-			},
+			"producers": to_account_ids(&account_session_keys).collect::<Vec<_>>(),
+			"finalizers": to_account_ids(&account_session_keys).collect::<Vec<_>>(),
+			"nonCommittee": Vec::<AccountId>::new(),
 		},
 	})
 }

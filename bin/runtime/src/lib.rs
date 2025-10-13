@@ -390,6 +390,7 @@ impl pallet_elections::Config for Runtime {
     type ValidatorProvider = Staking;
     type MaxWinners = MaxWinners;
     type BannedValidators = CommitteeManagement;
+    type MaxValidators = ConstU32<1000>;
 }
 
 impl pallet_operations::Config for Runtime {
@@ -411,6 +412,8 @@ impl pallet_committee_management::Config for Runtime {
     type FinalityCommitteeManager = Aleph;
     type SessionPeriod = SessionPeriod;
     type AbftScoresProvider = Aleph;
+    type MaxValidators = ConstU32<1000>;
+    type MaxValidatorRewards = ConstU32<1000>;
 }
 
 impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
