@@ -66,7 +66,7 @@ pub mod v2 {
                 let current_validators_legacy =
                     current_validators_legacy.expect("This storage exists");
 
-                let finalizers = pallet_aleph::NextFinalityCommittee::<T>::get();
+                let finalizers = pallet_aleph::NextFinalityCommittee::<T>::get().to_vec();
                 let current_validators = SessionValidators {
                     producers: current_validators_legacy.current.committee,
                     finalizers: finalizers.clone(), // we use next finalizers as it's hard to get current but we won't need them in current session.

@@ -369,7 +369,7 @@ impl SessionAuthorityData {
 
 pub type Version = u32;
 
-#[derive(Clone, Debug, Decode, Encode, PartialEq, Eq, TypeInfo)]
+#[derive(Clone, Debug, Decode, Encode, PartialEq, Eq, TypeInfo, parity_scale_codec::MaxEncodedLen)]
 pub struct VersionChange {
     pub version_incoming: Version,
     pub session: SessionIndex,
@@ -468,9 +468,9 @@ pub mod staking {
 
 pub type ScoreNonce = u32;
 
-pub type RawScore = Vec<u16>;
+pub type RawScore = BoundedVec<u16, ConstU32<1024>>;
 
-#[derive(PartialEq, Decode, Encode, TypeInfo, Debug, Clone)]
+#[derive(PartialEq, Decode, Encode, TypeInfo, Debug, Clone, parity_scale_codec::MaxEncodedLen)]
 pub struct Score {
     pub session_id: SessionIndex,
     pub nonce: ScoreNonce,

@@ -352,7 +352,7 @@ impl<T: Config> Pallet<T> {
         let is_underperforming = |score| score > minimal_expected_performance;
 
         let finalizers_perf = T::AbftScoresProvider::scores_for_session(session_id)
-            .map(|score| score.points)
+            .map(|score| score.points.to_vec())
             .unwrap_or(vec![minimal_expected_performance; finalizers.len()])
             .into_iter()
             .map(is_underperforming);

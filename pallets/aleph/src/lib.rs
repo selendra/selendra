@@ -33,6 +33,7 @@ pub mod pallet {
         dispatch::{DispatchResult, DispatchResultWithPostInfo, Pays},
         pallet_prelude::{TransactionSource, TransactionValidityError, ValueQuery, *},
         sp_runtime::RuntimeAppPublic,
+        BoundedVec,
     };
     use frame_system::{
         ensure_none, ensure_root,
@@ -52,7 +53,11 @@ pub mod pallet {
     pub trait Config:
         frame_system::Config + frame_system::offchain::SendTransactionTypes<Call<Self>>
     {
-        type AuthorityId: Member + Parameter + RuntimeAppPublic + MaybeSerializeDeserialize;
+        type AuthorityId: Member
+            + Parameter
+            + RuntimeAppPublic
+            + MaybeSerializeDeserialize
+            + MaxEncodedLen;
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         type SessionInfoProvider: SessionInfoProvider<BlockNumberFor<Self>>;
         type SessionManager: SessionManager<<Self as frame_system::Config>::AccountId>;
@@ -60,6 +65,12 @@ pub mod pallet {
         type TotalIssuanceProvider: TotalIssuanceProvider;
         #[pallet::constant]
         type ScoreSubmissionPeriod: Get<u32>;
+        /// Maximum number of authorities that can be in the authority set
+        #[pallet::constant]
+        type MaxAuthorities: Get<u32>;
+        /// Maximum size of the finality committee
+        #[pallet::constant]
+        type MaxCommitteeSize: Get<u32>;
     }
 
     pub type Signature<T> = <<T as Config>::AuthorityId as RuntimeAppPublic>::Signature;
@@ -75,7 +86,6 @@ pub mod pallet {
 
     #[pallet::pallet]
     #[pallet::storage_version(STORAGE_VERSION)]
-    #[pallet::without_storage_info]
     pub struct Pallet<T>(_);
 
     /// Default finality version. Relevant for sessions before the first version change occurs.
@@ -106,15 +116,18 @@ pub mod pallet {
 
     #[pallet::storage]
     #[pallet::getter(fn authorities)]
-    pub type Authorities<T: Config> = StorageValue<_, Vec<T::AuthorityId>, ValueQuery>;
+    pub type Authorities<T: Config> =
+        StorageValue<_, BoundedVec<T::AuthorityId, T::MaxAuthorities>, ValueQuery>;
 
     #[pallet::storage]
     #[pallet::getter(fn next_authorities)]
-    pub(super) type NextAuthorities<T: Config> = StorageValue<_, Vec<T::AuthorityId>, ValueQuery>;
+    pub(super) type NextAuthorities<T: Config> =
+        StorageValue<_, BoundedVec<T::AuthorityId, T::MaxAuthorities>, ValueQuery>;
 
     /// Set of account ids that will be used as authorities in the next session
     #[pallet::storage]
-    pub type NextFinalityCommittee<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
+    pub type NextFinalityCommittee<T: Config> =
+        StorageValue<_, BoundedVec<T::AccountId, T::MaxCommitteeSize>, ValueQuery>;
 
     #[pallet::storage]
     #[pallet::getter(fn emergency_finalizer)]
@@ -158,18 +171,26 @@ pub mod pallet {
                 if !<Authorities<T>>::get().is_empty() {
                     log::error!(target: LOG_TARGET, "Authorities are already initialized!");
                 } else {
-                    <Authorities<T>>::put(authorities);
+                    let bounded_authorities: BoundedVec<_, T::MaxAuthorities> = authorities
+                        .to_vec()
+                        .try_into()
+                        .expect("authorities count exceeds MaxAuthorities bound; qed");
+                    <Authorities<T>>::put(bounded_authorities);
                 }
             }
             if !next_authorities.is_empty() {
                 // Storage NextAuthorities has default value so should never be empty.
-                <NextAuthorities<T>>::put(next_authorities);
+                let bounded_next_authorities: BoundedVec<_, T::MaxAuthorities> = next_authorities
+                    .to_vec()
+                    .try_into()
+                    .expect("next_authorities count exceeds MaxAuthorities bound; qed");
+                <NextAuthorities<T>>::put(bounded_next_authorities);
             }
         }
 
         fn get_authorities_for_next_session(
             next_authorities: Vec<(&T::AccountId, T::AuthorityId)>,
-        ) -> Vec<T::AuthorityId> {
+        ) -> BoundedVec<T::AuthorityId, T::MaxAuthorities> {
             let mut account_to_authority: BTreeMap<_, _> = next_authorities.into_iter().collect();
             let next_committee_accounts = NextFinalityCommittee::<T>::get();
             let expected_len = next_committee_accounts.len();
@@ -186,6 +207,8 @@ pub mod pallet {
             }
 
             next_committee_authorities
+                .try_into()
+                .expect("committee size exceeds MaxAuthorities bound; qed")
         }
 
         pub(crate) fn update_authorities(next_authorities: Vec<(&T::AccountId, T::AuthorityId)>) {
@@ -347,7 +370,7 @@ pub mod pallet {
             signature: &SignatureSet<Signature<T>>,
         ) -> Result<(), TransactionValidityError> {
             let msg = T::Hashing::hash_of(&score.encode()).encode();
-            let authority_verifier = AuthorityVerifier::new(Self::authorities());
+            let authority_verifier = AuthorityVerifier::new(Self::authorities().to_vec());
             if !AuthorityVerifier::is_complete(&authority_verifier, &msg, signature) {
                 return Err(InvalidTransaction::BadProof.into());
             }

@@ -1,4 +1,4 @@
-use frame_support::{storage_alias, traits::OneSessionHandler};
+use frame_support::{storage_alias, traits::OneSessionHandler, BoundedVec};
 use primitives::VersionChange;
 
 use crate::{mock::*, NextFinalityCommittee};
@@ -15,7 +15,7 @@ fn test_update_authorities() {
         initialize_session();
         run_session(1);
 
-        NextFinalityCommittee::<Test>::put(vec![2, 3, 4]);
+        NextFinalityCommittee::<Test>::put(BoundedVec::try_from(vec![2, 3, 4]).unwrap());
         let authorities = [2, 3, 4].iter().zip(to_authorities(&[2, 3, 4])).collect();
 
         Aleph::update_authorities(authorities);
@@ -51,7 +51,7 @@ fn test_current_authorities() {
 
         run_session(1);
 
-        NextFinalityCommittee::<Test>::put(vec![2, 3, 4]);
+        NextFinalityCommittee::<Test>::put(BoundedVec::try_from(vec![2, 3, 4]).unwrap());
         let authorities = [2, 3, 4].iter().zip(to_authorities(&[2, 3, 4])).collect();
         Aleph::update_authorities(authorities);
 
@@ -60,7 +60,7 @@ fn test_current_authorities() {
 
         run_session(2);
 
-        NextFinalityCommittee::<Test>::put(vec![1, 2, 3]);
+        NextFinalityCommittee::<Test>::put(BoundedVec::try_from(vec![1, 2, 3]).unwrap());
         let authorities = [1, 2, 3].iter().zip(to_authorities(&[1, 2, 3])).collect();
         Aleph::update_authorities(authorities);
 
@@ -75,7 +75,7 @@ fn test_session_rotation() {
         initialize_session();
         run_session(1);
 
-        NextFinalityCommittee::<Test>::put(vec![5, 6]);
+        NextFinalityCommittee::<Test>::put(BoundedVec::try_from(vec![5, 6]).unwrap());
         let new_validators = new_session_validators(&[1, 2]);
         let queued_validators = new_session_validators(&[5, 6]);
         Aleph::on_new_session(true, new_validators, queued_validators);
@@ -90,7 +90,7 @@ fn test_session_rotation_with_larger_permuted_authorities() {
         initialize_session();
         run_session(1);
 
-        NextFinalityCommittee::<Test>::put(vec![5, 6]);
+        NextFinalityCommittee::<Test>::put(BoundedVec::try_from(vec![5, 6]).unwrap());
         let new_validators = new_session_validators(&[1, 2]);
         let queued_validators = new_session_validators(&[6, 4, 5]);
         Aleph::on_new_session(true, new_validators, queued_validators);

@@ -158,6 +158,8 @@ impl TotalIssuanceProviderT for TotalIssuanceProvider {
 
 parameter_types! {
     pub const ScoreSubmissionPeriod: u32 = 15;
+    pub const MaxAuthorities: u32 = 100;
+    pub const MaxCommitteeSize: u32 = 50;
 }
 
 impl Config for Test {
@@ -168,6 +170,8 @@ impl Config for Test {
     type NextSessionAuthorityProvider = Session;
     type TotalIssuanceProvider = TotalIssuanceProvider;
     type ScoreSubmissionPeriod = ScoreSubmissionPeriod;
+    type MaxAuthorities = MaxAuthorities;
+    type MaxCommitteeSize = MaxCommitteeSize;
 }
 
 pub fn to_authority(id: &u64) -> AuthorityId {
