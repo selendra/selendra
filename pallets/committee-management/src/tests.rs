@@ -23,18 +23,19 @@ fn gen_config() -> TestBuilderConfig {
 }
 
 fn add_underperformer(
-    validators: &mut Vec<AccountId>,
+    validators: &mut frame_support::BoundedVec<AccountId, frame_support::traits::ConstU32<100>>,
     underperformer: AccountId,
     reserved: &BTreeSet<AccountId>,
 ) -> Vec<AccountId> {
-    if !validators.contains(&underperformer) {
-        validators.retain(|p| !reserved.contains(p));
-        validators.pop();
-        validators.extend(reserved.iter());
-        validators.push(underperformer);
+    let mut vals = validators.to_vec();
+    if !vals.contains(&underperformer) {
+        vals.retain(|p| !reserved.contains(p));
+        vals.pop();
+        vals.extend(reserved.iter());
+        vals.push(underperformer);
     }
-
-    validators.clone()
+    *validators = vals.clone().try_into().expect("Should fit in BoundedVec");
+    vals
 }
 
 #[test]
@@ -190,7 +191,7 @@ fn ban_underperforming_finalizers() {
             let score = Score {
                 session_id: session_index,
                 nonce: 1,
-                points,
+                points: points.try_into().expect("Should fit in BoundedVec"),
             };
             AbftScores::<TestRuntime>::insert(session_index, score);
             underperf_count += 1;

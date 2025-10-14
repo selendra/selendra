@@ -358,6 +358,7 @@ impl TotalIssuanceProviderT for TotalIssuanceProvider {
 
 parameter_types! {
     pub const ScoreSubmissionPeriod: u32 = SCORE_SUBMISSION_PERIOD;
+    pub const MaxCommitteeSize: u32 = 1000;
 }
 
 impl pallet_aleph::Config for Runtime {
@@ -373,6 +374,8 @@ impl pallet_aleph::Config for Runtime {
     type NextSessionAuthorityProvider = Session;
     type TotalIssuanceProvider = TotalIssuanceProvider;
     type ScoreSubmissionPeriod = ScoreSubmissionPeriod;
+    type MaxAuthorities = MaxAuthorities;
+    type MaxCommitteeSize = MaxCommitteeSize;
 }
 
 parameter_types! {
@@ -387,6 +390,7 @@ impl pallet_elections::Config for Runtime {
     type ValidatorProvider = Staking;
     type MaxWinners = MaxWinners;
     type BannedValidators = CommitteeManagement;
+    type MaxValidators = ConstU32<1000>;
 }
 
 impl pallet_operations::Config for Runtime {
@@ -408,6 +412,8 @@ impl pallet_committee_management::Config for Runtime {
     type FinalityCommitteeManager = Aleph;
     type SessionPeriod = SessionPeriod;
     type AbftScoresProvider = Aleph;
+    type MaxValidators = ConstU32<1000>;
+    type MaxValidatorRewards = ConstU32<1000>;
 }
 
 impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
@@ -1308,7 +1314,7 @@ impl_runtime_apis! {
 		}
 		
         fn authorities() -> Vec<SelendraId> {
-            Aleph::authorities()
+            Aleph::authorities().to_vec()
         }
 
 		fn next_session_authorities() -> Result<Vec<SelendraId>, SelendraApiError> {
@@ -1317,11 +1323,11 @@ impl_runtime_apis! {
 				return Err(SelendraApiError::DecodeKey)
 			}
 
-			Ok(next_authorities)
+			Ok(next_authorities.to_vec())
 		}
 
 		fn authority_data() -> SessionAuthorityData {
-			SessionAuthorityData::new(Aleph::authorities(), Aleph::emergency_finalizer())
+			SessionAuthorityData::new(Aleph::authorities().to_vec(), Aleph::emergency_finalizer())
 		}
 
         fn next_session_authority_data() -> Result<SessionAuthorityData, SelendraApiError> {

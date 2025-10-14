@@ -36,7 +36,9 @@ impl Scorer {
                     // If we don't have a unit it's the same as having a unit of round equal to -1.
                     .unwrap_or(max_round.saturating_add(1))
             })
-            .collect()
+            .collect::<Vec<_>>()
+            .try_into()
+            .expect("score size should not exceed bound; qed")
     }
 }
 

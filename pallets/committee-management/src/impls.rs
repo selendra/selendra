@@ -165,7 +165,9 @@ impl<T: Config> Pallet<T> {
         let validator_totals = T::ValidatorRewardsHandler::validator_totals(era);
         let scaled_totals = compute_validator_scaled_total_rewards(validator_totals).into_iter();
 
-        ValidatorEraTotalReward::<T>::put(ValidatorTotalRewards(scaled_totals.collect()));
+        let rewards_map: BTreeMap<_, _> = scaled_totals.collect();
+        let bounded_rewards = rewards_map.try_into().expect("Too many validator rewards");
+        ValidatorEraTotalReward::<T>::put(ValidatorTotalRewards(bounded_rewards));
     }
 
     fn rewards_for_session_non_committee(
@@ -236,13 +238,13 @@ impl<T: Config> Pallet<T> {
         let nr_of_sessions = T::EraInfoProvider::sessions_per_era();
         let blocks_per_session = Self::blocks_to_produce_per_session();
         let validator_total_rewards = ValidatorEraTotalReward::<T>::get()
-            .unwrap_or_else(|| ValidatorTotalRewards(BTreeMap::new()))
-            .0;
+            .map(|v| v.0.into_iter().collect::<BTreeMap<_, _>>())
+            .unwrap_or_else(|| BTreeMap::new());
 
         let lenient_threshold = LenientThreshold::<T>::get();
 
         let rewards = Self::rewards_for_session_non_committee(
-            non_committee,
+            non_committee.to_vec(),
             nr_of_sessions,
             blocks_per_session,
             &validator_total_rewards,
@@ -250,7 +252,7 @@ impl<T: Config> Pallet<T> {
         )
         .into_iter()
         .chain(Self::rewards_for_session_committee(
-            producers,
+            producers.to_vec(),
             nr_of_sessions,
             blocks_per_session,
             &validator_total_rewards,
@@ -269,7 +271,7 @@ impl<T: Config> Pallet<T> {
     ) {
         let producers_set: BTreeSet<T::AccountId> = producers.iter().cloned().collect();
 
-        let non_committee = non_reserved
+        let non_committee: Vec<_> = non_reserved
             .into_iter()
             .chain(reserved)
             .filter(|a| !producers_set.contains(a))
@@ -277,18 +279,18 @@ impl<T: Config> Pallet<T> {
 
         let mut session_validators = CurrentAndNextSessionValidatorsStorage::<T>::get();
 
-        session_validators.current = session_validators.next;
+        session_validators.current = session_validators.next.clone();
         session_validators.next = SessionValidators {
-            producers: producers.to_vec(),
-            finalizers: finalizers.to_vec(),
-            non_committee,
+            producers: producers.to_vec().try_into().expect("Too many producers"),
+            finalizers: finalizers.to_vec().try_into().expect("Too many finalizers"),
+            non_committee: non_committee.try_into().expect("Too many non-committee members"),
         };
 
         CurrentAndNextSessionValidatorsStorage::<T>::put(session_validators);
     }
 
     pub(crate) fn select_committee(
-        era_validators: &EraValidators<T::AccountId>,
+        era_validators: &EraValidators<T::AccountId, T::MaxValidators>,
         committee_seats: CommitteeSeats,
         current_session: SessionIndex,
     ) -> Option<SessionCommittee<T::AccountId>> {
@@ -328,8 +330,8 @@ impl<T: Config> Pallet<T> {
             Self::store_session_validators(
                 &c.producers,
                 &c.finalizers,
-                era_validators.reserved,
-                era_validators.non_reserved,
+                era_validators.reserved.to_vec(),
+                era_validators.non_reserved.to_vec(),
             );
         }
 
@@ -352,7 +354,7 @@ impl<T: Config> Pallet<T> {
         let is_underperforming = |score| score > minimal_expected_performance;
 
         let finalizers_perf = T::AbftScoresProvider::scores_for_session(session_id)
-            .map(|score| score.points)
+            .map(|score| score.points.to_vec())
             .unwrap_or(vec![minimal_expected_performance; finalizers.len()])
             .into_iter()
             .map(is_underperforming);

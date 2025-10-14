@@ -28,3 +28,7 @@ v0.*
 run-nodes-local
 chainspec.json
 snapshot.json
+
+.claude
+CLAUDE.md 
+node_modules

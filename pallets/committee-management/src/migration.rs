@@ -66,16 +66,16 @@ pub mod v2 {
                 let current_validators_legacy =
                     current_validators_legacy.expect("This storage exists");
 
-                let finalizers = pallet_aleph::NextFinalityCommittee::<T>::get();
+                let finalizers = pallet_aleph::NextFinalityCommittee::<T>::get().to_vec();
                 let current_validators = SessionValidators {
-                    producers: current_validators_legacy.current.committee,
-                    finalizers: finalizers.clone(), // we use next finalizers as it's hard to get current but we won't need them in current session.
-                    non_committee: current_validators_legacy.current.non_committee,
+                    producers: current_validators_legacy.current.committee.try_into().expect("Too many producers in migration"),
+                    finalizers: finalizers.clone().try_into().expect("Too many finalizers in migration"), // we use next finalizers as it's hard to get current but we won't need them in current session.
+                    non_committee: current_validators_legacy.current.non_committee.try_into().expect("Too many non-committee in migration"),
                 };
                 let next_validators = SessionValidators {
-                    producers: current_validators_legacy.next.committee,
-                    finalizers,
-                    non_committee: current_validators_legacy.next.non_committee,
+                    producers: current_validators_legacy.next.committee.try_into().expect("Too many producers in migration"),
+                    finalizers: finalizers.try_into().expect("Too many finalizers in migration"),
+                    non_committee: current_validators_legacy.next.non_committee.try_into().expect("Too many non-committee in migration"),
                 };
 
                 Some(CurrentAndNextSessionValidators {

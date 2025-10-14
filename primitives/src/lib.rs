@@ -17,6 +17,8 @@ use sp_runtime::{
 };
 pub use sp_staking::{EraIndex, SessionIndex};
 use sp_std::vec::Vec;
+use parity_scale_codec::MaxEncodedLen;
+use frame_support::traits::Get;
 
 /// EVM primitives.
 pub mod evm;
@@ -186,14 +188,14 @@ pub struct SessionCommittee<T> {
 }
 
 /// Openness of the process of the elections
-#[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq)]
+#[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq, MaxEncodedLen)]
 pub enum ElectionOpenness {
     Permissioned,
     Permissionless,
 }
 
 /// Represent desirable size of a committee in a session
-#[derive(Decode, Encode, TypeInfo, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Decode, Encode, TypeInfo, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, MaxEncodedLen)]
 pub struct CommitteeSeats {
     /// Size of reserved validators in a session
     pub reserved_seats: u32,
@@ -232,7 +234,7 @@ pub trait AbftScoresProvider {
 }
 
 /// Configurable parameters for ban validator mechanism
-#[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, MaxEncodedLen)]
 pub struct FinalityBanConfig {
     /// Number representing how many rounds a parent of a head of an abft round is allowed to be behind the head.
     pub minimal_expected_performance: u16,
@@ -260,7 +262,7 @@ impl Default for FinalityBanConfig {
 }
 
 /// Configurable parameters for ban validator mechanism related to block production
-#[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, MaxEncodedLen)]
 pub struct ProductionBanConfig {
     /// performance ratio threshold in a session
     /// calculated as ratio of number of blocks produced to expected number of blocks for a single validator
@@ -290,7 +292,7 @@ impl Default for ProductionBanConfig {
 }
 
 /// Represent any possible reason a validator can be removed from the committee due to
-#[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, Debug)]
+#[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, Debug, MaxEncodedLen)]
 pub enum BanReason {
     /// Validator has been removed from the committee due to insufficient production in a given number of sessions
     InsufficientProduction(u32),
@@ -303,7 +305,7 @@ pub enum BanReason {
 }
 
 /// Details of why and for how long a validator is removed from the committee
-#[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, Debug)]
+#[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, Debug, MaxEncodedLen)]
 pub struct BanInfo {
     /// reason for banning a validator
     pub reason: BanReason,
@@ -312,19 +314,20 @@ pub struct BanInfo {
 }
 
 /// Represent committee, ie set of nodes that produce and finalize blocks in the session
-#[derive(Eq, Clone, PartialEq, Decode, Encode, TypeInfo)]
-pub struct EraValidators<AccountId> {
+#[derive(Eq, Clone, PartialEq, Decode, Encode, TypeInfo, MaxEncodedLen)]
+#[scale_info(skip_type_params(S))]
+pub struct EraValidators<AccountId, S: Get<u32>> {
     /// Validators that are chosen to be in committee every single session.
-    pub reserved: Vec<AccountId>,
+    pub reserved: BoundedVec<AccountId, S>,
     /// Validators that can be banned out from the committee, under the circumstances
-    pub non_reserved: Vec<AccountId>,
+    pub non_reserved: BoundedVec<AccountId, S>,
 }
 
-impl<AccountId> Default for EraValidators<AccountId> {
+impl<AccountId, S: Get<u32>> Default for EraValidators<AccountId, S> {
     fn default() -> Self {
         Self {
-            reserved: Vec::new(),
-            non_reserved: Vec::new(),
+            reserved: BoundedVec::default(),
+            non_reserved: BoundedVec::default(),
         }
     }
 }
@@ -369,7 +372,7 @@ impl SessionAuthorityData {
 
 pub type Version = u32;
 
-#[derive(Clone, Debug, Decode, Encode, PartialEq, Eq, TypeInfo)]
+#[derive(Clone, Debug, Decode, Encode, PartialEq, Eq, TypeInfo, parity_scale_codec::MaxEncodedLen)]
 pub struct VersionChange {
     pub version_incoming: Version,
     pub session: SessionIndex,
@@ -383,25 +386,38 @@ pub trait BanHandler {
 
 pub trait ValidatorProvider {
     type AccountId;
+    type MaxValidators: Get<u32>;
     /// returns validators for the current era.
-    fn current_era_validators() -> EraValidators<Self::AccountId>;
+    fn current_era_validators() -> EraValidators<Self::AccountId, Self::MaxValidators>;
     /// returns committee seats for the current era.
     fn current_era_committee_size() -> CommitteeSeats;
 }
 
-#[derive(Decode, Encode, TypeInfo, Clone, Serialize, Deserialize)]
-pub struct SessionValidators<T> {
-    pub producers: Vec<T>,
-    pub finalizers: Vec<T>,
-    pub non_committee: Vec<T>,
+#[derive(Decode, Encode, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[scale_info(skip_type_params(S))]
+pub struct SessionValidators<T, S: Get<u32>> {
+    pub producers: BoundedVec<T, S>,
+    pub finalizers: BoundedVec<T, S>,
+    pub non_committee: BoundedVec<T, S>,
 }
 
-impl<T> Default for SessionValidators<T> {
+impl<T: Clone, S: Get<u32>> Clone for SessionValidators<T, S> {
+    fn clone(&self) -> Self {
+        Self {
+            producers: self.producers.clone(),
+            finalizers: self.finalizers.clone(),
+            non_committee: self.non_committee.clone(),
+        }
+    }
+}
+
+impl<T, S: Get<u32>> Default for SessionValidators<T, S> {
     fn default() -> Self {
         Self {
-            producers: Vec::new(),
-            finalizers: Vec::new(),
-            non_committee: Vec::new(),
+            producers: BoundedVec::default(),
+            finalizers: BoundedVec::default(),
+            non_committee: BoundedVec::default(),
         }
     }
 }
@@ -468,9 +484,9 @@ pub mod staking {
 
 pub type ScoreNonce = u32;
 
-pub type RawScore = Vec<u16>;
+pub type RawScore = BoundedVec<u16, ConstU32<1024>>;
 
-#[derive(PartialEq, Decode, Encode, TypeInfo, Debug, Clone)]
+#[derive(PartialEq, Decode, Encode, TypeInfo, Debug, Clone, parity_scale_codec::MaxEncodedLen)]
 pub struct Score {
     pub session_id: SessionIndex,
     pub nonce: ScoreNonce,

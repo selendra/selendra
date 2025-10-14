@@ -1,3 +1,4 @@
+use frame_support::BoundedVec;
 use primitives::{AbftScoresProvider, FinalityCommitteeManager, Score, SessionIndex};
 use sp_std::vec::Vec;
 
@@ -56,7 +57,10 @@ where
 
 impl<T: Config> FinalityCommitteeManager<T::AccountId> for Pallet<T> {
     fn on_next_session_finality_committee(committee: Vec<T::AccountId>) {
-        NextFinalityCommittee::<T>::put(committee);
+        let bounded_committee: BoundedVec<T::AccountId, T::MaxCommitteeSize> = committee
+            .try_into()
+            .expect("committee size exceeds MaxCommitteeSize bound; qed");
+        NextFinalityCommittee::<T>::put(bounded_committee);
     }
 }
 
