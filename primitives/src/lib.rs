@@ -188,14 +188,14 @@ pub struct SessionCommittee<T> {
 }
 
 /// Openness of the process of the elections
-#[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq)]
+#[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq, MaxEncodedLen)]
 pub enum ElectionOpenness {
     Permissioned,
     Permissionless,
 }
 
 /// Represent desirable size of a committee in a session
-#[derive(Decode, Encode, TypeInfo, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Decode, Encode, TypeInfo, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, MaxEncodedLen)]
 pub struct CommitteeSeats {
     /// Size of reserved validators in a session
     pub reserved_seats: u32,
