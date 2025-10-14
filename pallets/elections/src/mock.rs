@@ -132,6 +132,7 @@ impl Config for Test {
     type ValidatorProvider = MockProvider;
     type MaxWinners = ConstU32<DEFAULT_MAX_WINNERS>;
     type BannedValidators = MockProvider;
+    type MaxValidators = ConstU32<100>;
 }
 
 type MaxVotesPerVoter = ConstU32<1>;

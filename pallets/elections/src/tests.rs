@@ -35,11 +35,11 @@ fn storage_is_initialized_already_in_genesis() {
         .execute_with(|| {
             assert_eq!(CommitteeSize::<Test>::get(), COMMITTEE_SEATS);
             assert_eq!(NextEraCommitteeSize::<Test>::get(), COMMITTEE_SEATS);
-            assert_eq!(NextEraReservedValidators::<Test>::get(), RESERVED);
-            assert_eq!(NextEraNonReservedValidators::<Test>::get(), NON_RESERVED);
-            assert_eq!(CurrentEraValidators::<Test>::get().reserved, RESERVED);
+            assert_eq!(NextEraReservedValidators::<Test>::get().as_slice(), RESERVED);
+            assert_eq!(NextEraNonReservedValidators::<Test>::get().as_slice(), NON_RESERVED);
+            assert_eq!(CurrentEraValidators::<Test>::get().reserved.as_slice(), RESERVED);
             assert_eq!(
-                CurrentEraValidators::<Test>::get().non_reserved,
+                CurrentEraValidators::<Test>::get().non_reserved.as_slice(),
                 NON_RESERVED
             );
             // We do not expect SessionValidatorBlockCount and ValidatorEraTotalReward to be

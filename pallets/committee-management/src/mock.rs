@@ -205,6 +205,8 @@ impl pallet_aleph::Config for TestRuntime {
     type NextSessionAuthorityProvider = Session;
     type TotalIssuanceProvider = TotalIssuanceProvider;
     type ScoreSubmissionPeriod = ScoreSubmissionPeriod;
+    type MaxAuthorities = ConstU32<100>;
+    type MaxCommitteeSize = ConstU32<100>;
 }
 
 impl<C> frame_system::offchain::SendTransactionTypes<C> for TestRuntime
@@ -239,6 +241,7 @@ impl pallet_elections::Config for TestRuntime {
     type ValidatorProvider = Staking;
     type MaxWinners = MaxWinners;
     type BannedValidators = CommitteeManagement;
+    type MaxValidators = ConstU32<100>;
 }
 
 impl Config for TestRuntime {
@@ -251,6 +254,8 @@ impl Config for TestRuntime {
     type FinalityCommitteeManager = Aleph;
     type SessionPeriod = SessionPeriod;
     type AbftScoresProvider = Aleph;
+    type MaxValidators = ConstU32<100>;
+    type MaxValidatorRewards = ConstU32<100>;
 }
 
 pub fn active_era() -> EraIndex {
