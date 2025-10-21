@@ -29,7 +29,6 @@ pallet-identity = { workspace = true }
 pallet-multisig = { workspace = true }
 pallet-nomination-pools = { workspace = true }
 pallet-nomination-pools-runtime-api = { workspace = true }
-pallet-insecure-randomness-collective-flip = { workspace = true }
 pallet-scheduler = { workspace = true }
 pallet-session = { workspace = true }
 pallet-staking = { workspace = true }
@@ -107,7 +106,6 @@ std = [
     "pallet-elections/std",
     "pallet-operations/std",
     "pallet-identity/std",
-    "pallet-insecure-randomness-collective-flip/std",
     "pallet-session/std",
     "pallet-staking/std",
     "pallet-staking-runtime-api/std",
@@ -173,7 +171,6 @@ try-runtime = [
     "pallet-elections/try-runtime",
     "pallet-operations/try-runtime",
     "pallet-identity/try-runtime",
-    "pallet-insecure-randomness-collective-flip/try-runtime",
     "pallet-session/try-runtime",
     "pallet-staking/try-runtime",
     "pallet-sudo/try-runtime",
