@@ -72,7 +72,7 @@ use sp_runtime::{
     create_runtime_str, generic,
     traits::{
         AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, Convert, ConvertInto, PostDispatchInfoOf,
-        IdentityLookup, One, OpaqueKeys, Verify, DispatchInfoOf, Dispatchable, UniqueSaturatedInto
+        IdentityLookup, One, OpaqueKeys, Verify, DispatchInfoOf, Dispatchable, UniqueSaturatedInto, Zero
     },
     transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
     ApplyExtrinsicResult, FixedU128, RuntimeDebug,
@@ -358,6 +358,7 @@ impl TotalIssuanceProviderT for TotalIssuanceProvider {
 
 parameter_types! {
     pub const ScoreSubmissionPeriod: u32 = SCORE_SUBMISSION_PERIOD;
+    pub const MaxCommitteeSize: u32 = 1000;
 }
 
 impl pallet_aleph::Config for Runtime {
@@ -373,6 +374,8 @@ impl pallet_aleph::Config for Runtime {
     type NextSessionAuthorityProvider = Session;
     type TotalIssuanceProvider = TotalIssuanceProvider;
     type ScoreSubmissionPeriod = ScoreSubmissionPeriod;
+    type MaxAuthorities = MaxAuthorities;
+    type MaxCommitteeSize = MaxCommitteeSize;
 }
 
 parameter_types! {
@@ -387,6 +390,7 @@ impl pallet_elections::Config for Runtime {
     type ValidatorProvider = Staking;
     type MaxWinners = MaxWinners;
     type BannedValidators = CommitteeManagement;
+    type MaxValidators = ConstU32<1000>;
 }
 
 impl pallet_operations::Config for Runtime {
@@ -408,9 +412,9 @@ impl pallet_committee_management::Config for Runtime {
     type FinalityCommitteeManager = Aleph;
     type SessionPeriod = SessionPeriod;
     type AbftScoresProvider = Aleph;
+    type MaxValidators = ConstU32<1000>;
+    type MaxValidatorRewards = ConstU32<1000>;
 }
-
-impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 
 parameter_types! {
     pub const Offset: u32 = 0;
@@ -779,9 +783,21 @@ impl Contains<RuntimeCall> for ContractsCallRuntimeFilter {
     }
 }
 
+/// Codes using the randomness functionality cannot be uploaded. Neither can contracts
+/// be instantiated from existing codes that use this deprecated functionality.
+///
+/// But since some `Randomness` config type is still required for `pallet-contracts`, we provide this dummy type.
+pub struct DummyDeprecatedRandomness;
+impl Randomness<Hash, SelendraBlockNumber> for DummyDeprecatedRandomness {
+    fn random(_: &[u8]) -> (Hash, SelendraBlockNumber) {
+        (Default::default(), Zero::zero())
+    }
+}
+
+
 impl pallet_contracts::Config for Runtime {
     type Time = Timestamp;
-    type Randomness = RandomnessCollectiveFlip;
+    type Randomness = DummyDeprecatedRandomness;
     type Currency = Balances;
     type RuntimeEvent = RuntimeEvent;
     type RuntimeCall = RuntimeCall;
@@ -1017,7 +1033,6 @@ construct_runtime!(
 		Balances: pallet_balances = 4,
 		TransactionPayment: pallet_transaction_payment = 5,
         Scheduler: pallet_scheduler = 6,
-        RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip = 7,
 
         Authorship: pallet_authorship = 10,
 		Staking: pallet_staking = 11,
@@ -1308,7 +1323,7 @@ impl_runtime_apis! {
 		}
 		
         fn authorities() -> Vec<SelendraId> {
-            Aleph::authorities()
+            Aleph::authorities().to_vec()
         }
 
 		fn next_session_authorities() -> Result<Vec<SelendraId>, SelendraApiError> {
@@ -1317,11 +1332,11 @@ impl_runtime_apis! {
 				return Err(SelendraApiError::DecodeKey)
 			}
 
-			Ok(next_authorities)
+			Ok(next_authorities.to_vec())
 		}
 
 		fn authority_data() -> SessionAuthorityData {
-			SessionAuthorityData::new(Aleph::authorities(), Aleph::emergency_finalizer())
+			SessionAuthorityData::new(Aleph::authorities().to_vec(), Aleph::emergency_finalizer())
 		}
 
         fn next_session_authority_data() -> Result<SessionAuthorityData, SelendraApiError> {
