@@ -99,6 +99,7 @@ pallet-balances = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk
 pallet-collective = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 pallet-contracts = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 pallet-democracy = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
+pallet-elections-phragmen = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 pallet-identity = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 pallet-multisig = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 pallet-preimage = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }

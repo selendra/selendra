@@ -366,8 +366,13 @@ Selendra provides custom precompiles for accessing Substrate functionality from 
 - `CommitteeManagement` - Validator committee
 - `Session` - Session management
 - `History` - Historical session data
-- `Treasury` - Community fund management
+- `Treasury` - Community fund management (Council-approved)
 - `NominationPools` - Liquid staking pools
+- `Council` - Community governance collective (13 members)
+- `TechnicalCommittee` - Technical governance collective (7 members)
+- `Democracy` - Public referendums and proposals
+- `CouncilElections` - Phragmen-based council elections
+- `Preimage` - Proposal preimage storage
 
 ### EVM Integration
 - `Ethereum` - Ethereum compatibility layer
@@ -387,7 +392,7 @@ Selendra provides custom precompiles for accessing Substrate functionality from 
 
 ### Administrative
 - `Operations` - Admin operations
-- `Sudo` - Superuser access (temporary, being phased out)
+- `Sudo` - Superuser access (transition period, to be removed post-governance maturity)
 - `SafeMode` - Emergency chain halt
 - `TxPause` - Transaction filtering
 
@@ -407,13 +412,17 @@ Selendra provides custom precompiles for accessing Substrate functionality from 
 - ✅ Unified accounts (native ↔ EVM)
 - ✅ DPoS staking with nomination pools
 - ✅ Dynamic EVM fee adjustment
-- ✅ 30 runtime pallets
+- ✅ Council governance (13-member council)
+- ✅ Democracy & referendum system
+- ✅ Treasury with Council approval
+- ✅ 35 runtime pallets
 - ✅ Mainnet live and operational
 
 ### Next Steps (Q4 2025 - Q2 2026)
 - 🔧 Fix critical security issues (randomness, storage bounds)
 - 📦 TypeScript SDK development
-- 🏛️ Remove sudo, implement governance
+- 🏛️ Transition governance (reduce sudo, increase council powers)
+- 🗳️ First council elections
 - 🛠️ Enhanced developer tooling
 - 💱 DeFi infrastructure (DEX, oracles)
 - 📚 Comprehensive documentation
@@ -498,8 +507,9 @@ We welcome contributions! Here's how to get involved:
 ### Known Issues
 
 - ⚠️ **Randomness**: Currently using insecure collective flip (fix in progress)
-- ⚠️ **Sudo**: Superuser key present (being phased out with governance)
+- ⚠️ **Sudo**: Superuser key present during governance transition period (removal planned after 6 months)
 - ⚠️ **Contract Calls**: Wasm contracts have limited runtime call access
+- ℹ️ **Governance**: Council system implemented, undergoing testing before sudo removal
 
 See [Security Advisory](https://github.com/selendra/selendra/security/advisories) for details.
 
@@ -542,6 +552,8 @@ the Free Software Foundation, either version 3 of the License, or
 - **WebSocket**: `wss://rpc.selendra.org`
 - **Testnet RPC**: `https://rpc-testnet.selendra.org`
 - **Faucet**: [faucet.selendra.org](https://faucet.selendra.org) *(coming soon)*
+- **Governance Guide**: [docs/GOVERNANCE_SETUP.md](docs/GOVERNANCE_SETUP.md)
+- **Governance Quick Start**: [docs/GOVERNANCE_QUICK_START.md](docs/GOVERNANCE_QUICK_START.md)
 
 ### Technical
 

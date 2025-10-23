@@ -5902,6 +5902,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-collective"
+version = "4.0.0-dev"
+source = "git+https://github.com/Cardinal-Cryptography/polkadot-sdk.git?branch=aleph-v1.6.0#e31391cc77babda6ffe9062527ab3f1f6208d22f"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-committee-management"
 version = "0.3.0"
 dependencies = [
@@ -5982,6 +5999,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-democracy"
+version = "4.0.0-dev"
+source = "git+https://github.com/Cardinal-Cryptography/polkadot-sdk.git?branch=aleph-v1.6.0#e31391cc77babda6ffe9062527ab3f1f6208d22f"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-dynamic-evm-base-fee"
 version = "0.1.0"
 dependencies = [
@@ -6018,6 +6053,25 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-elections-phragmen"
+version = "5.0.0-dev"
+source = "git+https://github.com/Cardinal-Cryptography/polkadot-sdk.git?branch=aleph-v1.6.0#e31391cc77babda6ffe9062527ab3f1f6208d22f"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-npos-elections",
  "sp-runtime",
  "sp-staking",
  "sp-std",
@@ -6178,6 +6232,23 @@ dependencies = [
  "sp-staking",
  "sp-std",
  "wat",
+]
+
+[[package]]
+name = "pallet-preimage"
+version = "4.0.0-dev"
+source = "git+https://github.com/Cardinal-Cryptography/polkadot-sdk.git?branch=aleph-v1.6.0#e31391cc77babda6ffe9062527ab3f1f6208d22f"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8957,10 +9028,13 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
+ "pallet-collective",
  "pallet-committee-management",
  "pallet-contracts",
+ "pallet-democracy",
  "pallet-dynamic-evm-base-fee",
  "pallet-elections",
+ "pallet-elections-phragmen",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-precompile-modexp",
@@ -8971,6 +9045,7 @@ dependencies = [
  "pallet-nomination-pools",
  "pallet-nomination-pools-runtime-api",
  "pallet-operations",
+ "pallet-preimage",
  "pallet-proxy",
  "pallet-safe-mode",
  "pallet-scheduler",
