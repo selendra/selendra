@@ -324,7 +324,10 @@ impl pallet_scheduler::Config for Runtime {
     type PalletsOrigin = OriginCaller;
     type RuntimeCall = RuntimeCall;
     type MaximumWeight = MaximumSchedulerWeight;
-    type ScheduleOrigin = frame_system::EnsureRoot<AccountId>;
+    type ScheduleOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
     type MaxScheduledPerBlock = MaxScheduledPerBlock;
     type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
     type OriginPrivilegeCmp = EqualPrivilegeOnly;
@@ -633,7 +636,10 @@ impl pallet_staking::Config for Runtime {
     type CurrencyBalance = Balance;
     type HistoryDepth = HistoryDepth;
     type TargetList = pallet_staking::UseValidatorsMap<Self>;
-    type AdminOrigin = EnsureRoot<AccountId>;
+    type AdminOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
     type EventListeners = NominationPools;
 }
 
@@ -704,7 +710,10 @@ impl pallet_preimage::Config for Runtime {
     type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
     type RuntimeEvent = RuntimeEvent;
     type Currency = Balances;
-    type ManagerOrigin = EnsureRoot<AccountId>;
+    type ManagerOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
     type Consideration = ();
 }
 
@@ -725,7 +734,10 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
     type MaxMembers = CouncilMaxMembers;
     type DefaultVote = pallet_collective::PrimeDefaultVote;
     type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
-    type SetMembersOrigin = EnsureRoot<AccountId>;
+    type SetMembersOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>,
+    >;
     type MaxProposalWeight = MaxCollectivesProposalWeight;
 }
 
@@ -746,7 +758,10 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
     type MaxMembers = TechnicalMaxMembers;
     type DefaultVote = pallet_collective::PrimeDefaultVote;
     type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
-    type SetMembersOrigin = EnsureRoot<AccountId>;
+    type SetMembersOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
     type MaxProposalWeight = MaxCollectivesProposalWeight;
 }
 
@@ -801,7 +816,7 @@ impl pallet_democracy::Config for Runtime {
     type BlacklistOrigin = EnsureRoot<AccountId>;
     type CancelProposalOrigin = frame_support::traits::EitherOfDiverse<
         EnsureRoot<AccountId>,
-        EnsureThreeFifthsCouncil,
+        pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>,
     >;
     type VetoOrigin = pallet_collective::EnsureMember<AccountId, TechnicalCollective>;
     type CooloffPeriod = CooloffPeriod;
@@ -1022,11 +1037,20 @@ impl pallet_identity::Config for Runtime {
     type MaxSubAccounts = MaxSubAccounts;
     type MaxRegistrars = MaxRegistrars;
     type Slashed = Treasury;
-    type ForceOrigin = EnsureRoot<AccountId>;
-    type RegistrarOrigin = EnsureRoot<AccountId>;
+    type ForceOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
+    type RegistrarOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
     type OffchainSignature = Signature;
     type SigningPublicKey = <Signature as Verify>::Signer;
-    type UsernameAuthorityOrigin = EnsureRoot<AccountId>;
+    type UsernameAuthorityOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
     type PendingUsernameExpiration = ConstU32<{ 7 * DAYS }>;
     type MaxSuffixLength = ConstU32<7>;
     type MaxUsernameLength = ConstU32<32>;
@@ -1193,8 +1217,14 @@ impl Contains<RuntimeCallNameOf<Runtime>> for TxPauseWhitelistedCalls {
 impl pallet_tx_pause::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeCall = RuntimeCall;
-    type PauseOrigin = EnsureRoot<AccountId>;
-    type UnpauseOrigin = EnsureRoot<AccountId>;
+    type PauseOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>,
+    >;
+    type UnpauseOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>,
+    >;
     type WhitelistedCalls = TxPauseWhitelistedCalls;
     type MaxNameLen = ConstU32<256>;
     type WeightInfo = pallet_tx_pause::weights::SubstrateWeight<Runtime>;
