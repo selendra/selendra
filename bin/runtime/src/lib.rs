@@ -1897,45 +1897,6 @@ impl_runtime_apis! {
         }
     }
 
-    // Governance Runtime API
-    sp_api::decl_runtime_apis! {
-        /// API for querying governance state
-        pub trait GovernanceApi {
-            /// Get council members
-            fn council_members() -> Vec<AccountId>;
-            /// Get technical committee members  
-            fn technical_committee_members() -> Vec<AccountId>;
-            /// Get active democracy proposals count
-            fn democracy_proposal_count() -> u32;
-            /// Get active council proposals count
-            fn council_proposal_count() -> u32;
-            /// Get active referendum count
-            fn referendum_count() -> u32;
-        }
-    }
-
-    impl self::GovernanceApi<Block> for Runtime {
-        fn council_members() -> Vec<AccountId> {
-            Council::members()
-        }
-
-        fn technical_committee_members() -> Vec<AccountId> {
-            TechnicalCommittee::members()
-        }
-
-        fn democracy_proposal_count() -> u32 {
-            pallet_democracy::PublicPropCount::<Runtime>::get()
-        }
-
-        fn council_proposal_count() -> u32 {
-            pallet_collective::ProposalCount::<Runtime, CouncilCollective>::get()
-        }
-
-        fn referendum_count() -> u32 {
-            pallet_democracy::ReferendumCount::<Runtime>::get()
-        }
-    }
-
     #[cfg(feature = "try-runtime")]
     impl frame_try_runtime::TryRuntime<Block> for Runtime {
         fn on_runtime_upgrade(checks: UpgradeCheckSelect) -> (Weight, Weight) {
