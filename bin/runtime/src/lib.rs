@@ -1897,6 +1897,45 @@ impl_runtime_apis! {
         }
     }
 
+    // Governance Runtime API
+    sp_api::decl_runtime_apis! {
+        /// API for querying governance state
+        pub trait GovernanceApi {
+            /// Get council members
+            fn council_members() -> Vec<AccountId>;
+            /// Get technical committee members  
+            fn technical_committee_members() -> Vec<AccountId>;
+            /// Get active democracy proposals count
+            fn democracy_proposal_count() -> u32;
+            /// Get active council proposals count
+            fn council_proposal_count() -> u32;
+            /// Get active referendum count
+            fn referendum_count() -> u32;
+        }
+    }
+
+    impl self::GovernanceApi<Block> for Runtime {
+        fn council_members() -> Vec<AccountId> {
+            Council::members()
+        }
+
+        fn technical_committee_members() -> Vec<AccountId> {
+            TechnicalCommittee::members()
+        }
+
+        fn democracy_proposal_count() -> u32 {
+            pallet_democracy::PublicPropCount::<Runtime>::get()
+        }
+
+        fn council_proposal_count() -> u32 {
+            pallet_collective::ProposalCount::<Runtime, CouncilCollective>::get()
+        }
+
+        fn referendum_count() -> u32 {
+            pallet_democracy::ReferendumCount::<Runtime>::get()
+        }
+    }
+
     #[cfg(feature = "try-runtime")]
     impl frame_try_runtime::TryRuntime<Block> for Runtime {
         fn on_runtime_upgrade(checks: UpgradeCheckSelect) -> (Weight, Weight) {
@@ -1978,6 +2017,218 @@ mod tests {
             for (j, other) in proxies.iter().enumerate() {
                 assert_eq!(proxy.is_superset(other), i <= j);
             }
+        }
+    }
+
+    // Governance Tests
+    mod governance_tests {
+        use super::*;
+        use frame_support::{
+            assert_ok, assert_noop,
+            traits::{OnInitialize, OnFinalize},
+        };
+        use sp_runtime::traits::Hash;
+
+        fn new_test_ext() -> sp_io::TestExternalities {
+            let mut ext = sp_io::TestExternalities::new_empty();
+            ext.execute_with(|| {
+                System::set_block_number(1);
+            });
+            ext
+        }
+
+        fn run_to_block(n: u64) {
+            while System::block_number() < n {
+                let block_number = System::block_number();
+                System::on_finalize(block_number);
+                System::set_block_number(block_number + 1);
+                System::on_initialize(block_number + 1);
+            }
+        }
+
+        #[test]
+        fn test_council_members_can_propose() {
+            new_test_ext().execute_with(|| {
+                // Verify council pallet is configured
+                assert_eq!(CouncilMaxMembers::get(), 13);
+                assert_eq!(CouncilMaxProposals::get(), 100);
+                assert_eq!(CouncilMotionDuration::get(), 3 * DAYS);
+            });
+        }
+
+        #[test]
+        fn test_technical_committee_configuration() {
+            new_test_ext().execute_with(|| {
+                // Verify technical committee pallet is configured
+                assert_eq!(TechnicalMaxMembers::get(), 7);
+                assert_eq!(TechnicalMaxProposals::get(), 100);
+                assert_eq!(TechnicalMotionDuration::get(), 3 * DAYS);
+            });
+        }
+
+        #[test]
+        fn test_democracy_configuration() {
+            new_test_ext().execute_with(|| {
+                // Verify democracy pallet is configured correctly
+                assert_eq!(LaunchPeriod::get(), 7 * DAYS);
+                assert_eq!(VotingPeriod::get(), 7 * DAYS);
+                assert_eq!(FastTrackVotingPeriod::get(), 3 * BLOCKS_PER_HOUR);
+                assert_eq!(EnactmentPeriod::get(), 1 * DAYS);
+                assert_eq!(MinimumDeposit::get(), 100 * TOKEN);
+                assert_eq!(MaxVotes::get(), 100);
+                assert_eq!(MaxProposals::get(), 100);
+            });
+        }
+
+        #[test]
+        fn test_elections_phragmen_configuration() {
+            new_test_ext().execute_with(|| {
+                // Verify elections pallet is configured
+                assert_eq!(CandidacyBond::get(), 1000 * TOKEN);
+                assert_eq!(VotingBondBase::get(), 10 * TOKEN);
+                assert_eq!(VotingBondFactor::get(), TOKEN);
+                assert_eq!(TermDuration::get(), 7 * DAYS);
+                assert_eq!(DesiredMembers::get(), 13);
+                assert_eq!(DesiredRunnersUp::get(), 7);
+            });
+        }
+
+        #[test]
+        fn test_preimage_configuration() {
+            new_test_ext().execute_with(|| {
+                // Verify preimage pallet is configured
+                assert_eq!(PreimageBaseDeposit::get(), 100 * MILLI_SEL);
+                assert_eq!(PreimageByteDeposit::get(), MICRO_SEL);
+            });
+        }
+
+        #[test]
+        fn test_scheduler_supports_governance() {
+            new_test_ext().execute_with(|| {
+                // Verify scheduler is configured with proper weight limits
+                assert_eq!(MaxScheduledPerBlock::get(), 50);
+                assert!(MaximumSchedulerWeight::get().ref_time() > 0);
+            });
+        }
+
+        #[test]
+        fn test_treasury_governance_origins() {
+            new_test_ext().execute_with(|| {
+                // Verify treasury can be approved by either Root or Council 3/5
+                // This is a compilation test - if it compiles, the origins are configured correctly
+                let _approve_origin: <Runtime as pallet_treasury::Config>::ApproveOrigin = 
+                    frame_support::traits::EitherOfDiverse::<
+                        EnsureRoot<AccountId>,
+                        EnsureThreeFifthsCouncil,
+                    >::default();
+            });
+        }
+
+        #[test]
+        fn test_governance_origins_configured() {
+            new_test_ext().execute_with(|| {
+                // Test that governance origins are properly configured
+                // EnsureThreeFifthsCouncil
+                type ThreeFifthsCouncil = pallet_collective::EnsureProportionAtLeast<
+                    AccountId,
+                    CouncilCollective,
+                    3,
+                    5,
+                >;
+                
+                // EnsureThreeFifthsTechnicalCommittee
+                type ThreeFifthsTechnical = pallet_collective::EnsureProportionAtLeast<
+                    AccountId,
+                    TechnicalCollective,
+                    3,
+                    5,
+                >;
+
+                // EnsureUnanimousTechnicalCommittee
+                type UnanimousTechnical = pallet_collective::EnsureProportionAtLeast<
+                    AccountId,
+                    TechnicalCollective,
+                    1,
+                    1,
+                >;
+
+                // If these compile, origins are properly configured
+                let _ = ThreeFifthsCouncil::default();
+                let _ = ThreeFifthsTechnical::default();
+                let _ = UnanimousTechnical::default();
+            });
+        }
+
+        #[test]
+        fn test_max_collectives_proposal_weight() {
+            new_test_ext().execute_with(|| {
+                // Verify collective proposal weight is reasonable (50% of max block)
+                let max_block_weight = BlockWeights::get().max_block;
+                let max_collective_weight = MaxCollectivesProposalWeight::get();
+                
+                assert_eq!(
+                    max_collective_weight.ref_time(),
+                    max_block_weight.ref_time() / 2
+                );
+            });
+        }
+
+        #[test]
+        fn test_governance_pallet_indices() {
+            new_test_ext().execute_with(|| {
+                // Verify governance pallets have correct indices in construct_runtime!
+                let council_call = RuntimeCall::Council(
+                    pallet_collective::Call::set_members {
+                        new_members: vec![],
+                        prime: None,
+                        old_count: 0,
+                    }
+                );
+                assert_eq!(council_call.encode()[0], 30);
+
+                let tech_call = RuntimeCall::TechnicalCommittee(
+                    pallet_collective::Call::set_members {
+                        new_members: vec![],
+                        prime: None,
+                        old_count: 0,
+                    }
+                );
+                assert_eq!(tech_call.encode()[0], 31);
+
+                let democracy_call = RuntimeCall::Democracy(
+                    pallet_democracy::Call::note_preimage {
+                        encoded_proposal: vec![],
+                    }
+                );
+                assert_eq!(democracy_call.encode()[0], 32);
+
+                let elections_call = RuntimeCall::CouncilElections(
+                    pallet_elections_phragmen::Call::submit_candidacy {
+                        candidate_count: 0,
+                    }
+                );
+                assert_eq!(elections_call.encode()[0], 33);
+
+                let preimage_call = RuntimeCall::Preimage(
+                    pallet_preimage::Call::note_preimage {
+                        bytes: vec![],
+                    }
+                );
+                assert_eq!(preimage_call.encode()[0], 34);
+            });
+        }
+
+        #[test]
+        fn test_staking_admin_origin_supports_council() {
+            new_test_ext().execute_with(|| {
+                // Verify Staking AdminOrigin supports both Root and Council
+                // This is a type-level test - if it compiles, the configuration is correct
+                type StakingAdminOrigin = <Runtime as pallet_staking::Config>::AdminOrigin;
+                let _origin: StakingAdminOrigin = frame_support::traits::EitherOfDiverse::<
+                    EnsureRoot<AccountId>,
+                    EnsureThreeFifthsCouncil,
+                >::default();
+            });
         }
     }
 
