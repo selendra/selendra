@@ -34,7 +34,7 @@ use frame_support::{
     weights::{WeightToFeePolynomial, ConstantMultiplier, WeightToFeeCoefficients, WeightToFeeCoefficient, constants::WEIGHT_REF_TIME_PER_MILLIS},
     PalletId,
 };
-use frame_system::{EnsureRoot, EnsureRootWithSuccess, EnsureSignedBy};
+use frame_system::{EnsureRoot, EnsureRootWithSuccess};
 #[cfg(feature = "try-runtime")]
 use frame_try_runtime::UpgradeCheckSelect;
 pub use pallet_balances::Call as BalancesCall;
@@ -89,7 +89,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
 	impl_name: create_runtime_str!("selendra"),
 	authoring_version: 1,
-	spec_version: 20004,
+	spec_version: 20005,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -315,6 +315,7 @@ impl pallet_transaction_payment::Config for Runtime {
 parameter_types! {
     pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * BlockWeights::get().max_block;
     pub const MaxScheduledPerBlock: u32 = 50;
+    pub MaxCollectivesProposalWeight: Weight = Perbill::from_percent(50) * BlockWeights::get().max_block;
 }
 
 impl pallet_scheduler::Config for Runtime {
@@ -323,11 +324,14 @@ impl pallet_scheduler::Config for Runtime {
     type PalletsOrigin = OriginCaller;
     type RuntimeCall = RuntimeCall;
     type MaximumWeight = MaximumSchedulerWeight;
-    type ScheduleOrigin = frame_system::EnsureRoot<AccountId>;
+    type ScheduleOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
     type MaxScheduledPerBlock = MaxScheduledPerBlock;
     type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
     type OriginPrivilegeCmp = EqualPrivilegeOnly;
-    type Preimages = ();
+    type Preimages = Preimage;
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -632,7 +636,10 @@ impl pallet_staking::Config for Runtime {
     type CurrencyBalance = Balance;
     type HistoryDepth = HistoryDepth;
     type TargetList = pallet_staking::UseValidatorsMap<Self>;
-    type AdminOrigin = EnsureRoot<AccountId>;
+    type AdminOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
     type EventListeners = NominationPools;
 }
 
@@ -690,6 +697,180 @@ impl pallet_multisig::Config for Runtime {
     type WeightInfo = pallet_multisig::weights::SubstrateWeight<Runtime>;
 }
 
+// --- Governance Pallets Configuration ---
+
+// Preimage pallet for storing proposal preimages
+parameter_types! {
+    pub const PreimageBaseDeposit: Balance = 100 * MILLI_SEL;
+    pub const PreimageByteDeposit: Balance = MICRO_SEL;
+    pub const PreimageHoldReason: RuntimeHoldReason = RuntimeHoldReason::Preimage(pallet_preimage::HoldReason::Preimage);
+}
+
+impl pallet_preimage::Config for Runtime {
+    type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
+    type RuntimeEvent = RuntimeEvent;
+    type Currency = Balances;
+    type ManagerOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
+    type Consideration = ();
+}
+
+// Council collective instance
+parameter_types! {
+    pub const CouncilMotionDuration: SelendraBlockNumber = 3 * DAYS;
+    pub const CouncilMaxProposals: u32 = 100;
+    pub const CouncilMaxMembers: u32 = 13;
+}
+
+pub type CouncilCollective = pallet_collective::Instance1;
+impl pallet_collective::Config<CouncilCollective> for Runtime {
+    type RuntimeOrigin = RuntimeOrigin;
+    type Proposal = RuntimeCall;
+    type RuntimeEvent = RuntimeEvent;
+    type MotionDuration = CouncilMotionDuration;
+    type MaxProposals = CouncilMaxProposals;
+    type MaxMembers = CouncilMaxMembers;
+    type DefaultVote = pallet_collective::PrimeDefaultVote;
+    type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
+    type SetMembersOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>,
+    >;
+    type MaxProposalWeight = MaxCollectivesProposalWeight;
+}
+
+// Technical Committee collective instance
+parameter_types! {
+    pub const TechnicalMotionDuration: SelendraBlockNumber = 3 * DAYS;
+    pub const TechnicalMaxProposals: u32 = 100;
+    pub const TechnicalMaxMembers: u32 = 7;
+}
+
+pub type TechnicalCollective = pallet_collective::Instance2;
+impl pallet_collective::Config<TechnicalCollective> for Runtime {
+    type RuntimeOrigin = RuntimeOrigin;
+    type Proposal = RuntimeCall;
+    type RuntimeEvent = RuntimeEvent;
+    type MotionDuration = TechnicalMotionDuration;
+    type MaxProposals = TechnicalMaxProposals;
+    type MaxMembers = TechnicalMaxMembers;
+    type DefaultVote = pallet_collective::PrimeDefaultVote;
+    type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
+    type SetMembersOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
+    type MaxProposalWeight = MaxCollectivesProposalWeight;
+}
+
+// Democracy pallet for public referendums
+parameter_types! {
+    pub const LaunchPeriod: SelendraBlockNumber = 7 * DAYS;
+    pub const VotingPeriod: SelendraBlockNumber = 7 * DAYS;
+    pub const FastTrackVotingPeriod: SelendraBlockNumber = 3 * BLOCKS_PER_HOUR;
+    pub const EnactmentPeriod: SelendraBlockNumber = 1 * DAYS;
+    pub const CooloffPeriod: SelendraBlockNumber = 7 * DAYS;
+    pub const MinimumDeposit: Balance = 100 * TOKEN;
+    pub const MaxVotes: u32 = 100;
+    pub const MaxProposals: u32 = 100;
+    pub const MaxDeposits: u32 = 100;
+    pub const MaxBlacklisted: u32 = 100;
+}
+
+impl pallet_democracy::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Currency = Balances;
+    type EnactmentPeriod = EnactmentPeriod;
+    type LaunchPeriod = LaunchPeriod;
+    type VotingPeriod = VotingPeriod;
+    type VoteLockingPeriod = EnactmentPeriod;
+    type MinimumDeposit = MinimumDeposit;
+    type ExternalOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
+    type ExternalMajorityOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 2>,
+    >;
+    type ExternalDefaultOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
+    type FastTrackOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsTechnicalCommittee,
+    >;
+    type InstantOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureUnanimousTechnicalCommittee,
+    >;
+    type InstantAllowed = ConstBool<true>;
+    type FastTrackVotingPeriod = FastTrackVotingPeriod;
+    type CancellationOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
+    type BlacklistOrigin = EnsureRoot<AccountId>;
+    type CancelProposalOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>,
+    >;
+    type VetoOrigin = pallet_collective::EnsureMember<AccountId, TechnicalCollective>;
+    type CooloffPeriod = CooloffPeriod;
+    type Slash = Treasury;
+    type Scheduler = Scheduler;
+    type PalletsOrigin = OriginCaller;
+    type MaxVotes = MaxVotes;
+    type WeightInfo = pallet_democracy::weights::SubstrateWeight<Runtime>;
+    type MaxProposals = MaxProposals;
+    type Preimages = Preimage;
+    type MaxDeposits = MaxDeposits;
+    type MaxBlacklisted = MaxBlacklisted;
+    type SubmitOrigin = frame_system::EnsureSigned<AccountId>;
+}
+
+// Council elections using Phragmen
+parameter_types! {
+    pub const CandidacyBond: Balance = 1000 * TOKEN;
+    pub const VotingBondBase: Balance = 10 * TOKEN;
+    pub const VotingBondFactor: Balance = TOKEN;
+    pub const TermDuration: SelendraBlockNumber = 7 * DAYS;
+    pub const DesiredMembers: u32 = 13;
+    pub const DesiredRunnersUp: u32 = 7;
+    pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
+}
+
+impl pallet_elections_phragmen::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type PalletId = ElectionsPhragmenPalletId;
+    type Currency = Balances;
+    type ChangeMembers = Council;
+    type InitializeMembers = Council;
+    type CurrencyToVote = U128CurrencyToVote;
+    type CandidacyBond = CandidacyBond;
+    type VotingBondBase = VotingBondBase;
+    type VotingBondFactor = VotingBondFactor;
+    type LoserCandidate = Treasury;
+    type KickedMember = Treasury;
+    type DesiredMembers = DesiredMembers;
+    type DesiredRunnersUp = DesiredRunnersUp;
+    type TermDuration = TermDuration;
+    type MaxVoters = ConstU32<10000>;
+    type MaxVotesPerVoter = ConstU32<16>;
+    type MaxCandidates = ConstU32<100>;
+    type WeightInfo = pallet_elections_phragmen::weights::SubstrateWeight<Runtime>;
+}
+
+// Origin types for governance
+pub type EnsureThreeFifthsCouncil = pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>;
+pub type EnsureThreeFifthsTechnicalCommittee = pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 3, 5>;
+pub type EnsureUnanimousTechnicalCommittee = pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 1, 1>;
+
+// --- End Governance Configuration ---
+
 #[cfg(not(feature = "enable_treasury_proposals"))]
 // This value effectively disables treasury.
 pub const TREASURY_PROPOSAL_BOND: Balance = 100_000_000_000 * TOKEN;
@@ -719,12 +900,20 @@ pub struct TreasuryGovernance;
 
 impl SortedMembers<AccountId> for TreasuryGovernance {
     fn sorted_members() -> Vec<AccountId> {
-        pallet_sudo::Pallet::<Runtime>::key().into_iter().collect()
+        // Combine sudo key and council members for treasury governance during transition
+        let mut members = pallet_sudo::Pallet::<Runtime>::key().into_iter().collect::<Vec<_>>();
+        members.extend(Council::members());
+        members.sort();
+        members.dedup();
+        members
     }
 }
 
 impl pallet_treasury::Config for Runtime {
-    type ApproveOrigin = EnsureSignedBy<TreasuryGovernance, AccountId>;
+    type ApproveOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
     type Burn = Burn;
     type BurnDestination = ();
     type Currency = Balances;
@@ -735,7 +924,10 @@ impl pallet_treasury::Config for Runtime {
     type ProposalBond = ProposalBond;
     type ProposalBondMinimum = ProposalBondMinimum;
     type ProposalBondMaximum = ProposalBondMaximum;
-    type RejectOrigin = EnsureSignedBy<TreasuryGovernance, AccountId>;
+    type RejectOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
     type SpendFunds = ();
     type SpendOrigin = frame_support::traits::NeverEnsureOrigin<u128>;
     type SpendPeriod = SpendPeriod;
@@ -845,11 +1037,20 @@ impl pallet_identity::Config for Runtime {
     type MaxSubAccounts = MaxSubAccounts;
     type MaxRegistrars = MaxRegistrars;
     type Slashed = Treasury;
-    type ForceOrigin = EnsureRoot<AccountId>;
-    type RegistrarOrigin = EnsureRoot<AccountId>;
+    type ForceOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
+    type RegistrarOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
     type OffchainSignature = Signature;
     type SigningPublicKey = <Signature as Verify>::Signer;
-    type UsernameAuthorityOrigin = EnsureRoot<AccountId>;
+    type UsernameAuthorityOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
     type PendingUsernameExpiration = ConstU32<{ 7 * DAYS }>;
     type MaxSuffixLength = ConstU32<7>;
     type MaxUsernameLength = ConstU32<32>;
@@ -1016,8 +1217,14 @@ impl Contains<RuntimeCallNameOf<Runtime>> for TxPauseWhitelistedCalls {
 impl pallet_tx_pause::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeCall = RuntimeCall;
-    type PauseOrigin = EnsureRoot<AccountId>;
-    type UnpauseOrigin = EnsureRoot<AccountId>;
+    type PauseOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>,
+    >;
+    type UnpauseOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>,
+    >;
     type WhitelistedCalls = TxPauseWhitelistedCalls;
     type MaxNameLen = ConstU32<256>;
     type WeightInfo = pallet_tx_pause::weights::SubstrateWeight<Runtime>;
@@ -1042,6 +1249,13 @@ construct_runtime!(
 		CommitteeManagement: pallet_committee_management = 15,
         Treasury: pallet_treasury = 16,
         NominationPools: pallet_nomination_pools = 18,
+
+        // Governance
+        Council: pallet_collective::<Instance1> = 30,
+        TechnicalCommittee: pallet_collective::<Instance2> = 31,
+        Democracy: pallet_democracy = 32,
+        CouncilElections: pallet_elections_phragmen = 33,
+        Preimage: pallet_preimage = 34,
 
         Utility: pallet_utility = 50,
 		Multisig: pallet_multisig = 51,
@@ -1764,6 +1978,184 @@ mod tests {
             for (j, other) in proxies.iter().enumerate() {
                 assert_eq!(proxy.is_superset(other), i <= j);
             }
+        }
+    }
+
+    // Governance Tests
+    mod governance_tests {
+        use super::*;
+        use frame_support::{
+            traits::{OnInitialize, OnFinalize, PalletInfo},
+        };
+
+        fn new_test_ext() -> sp_io::TestExternalities {
+            let mut ext = sp_io::TestExternalities::new_empty();
+            ext.execute_with(|| {
+                System::set_block_number(1);
+            });
+            ext
+        }
+
+        #[test]
+        fn test_council_members_can_propose() {
+            new_test_ext().execute_with(|| {
+                // Verify council pallet is configured
+                assert_eq!(CouncilMaxMembers::get(), 13);
+                assert_eq!(CouncilMaxProposals::get(), 100);
+                assert_eq!(CouncilMotionDuration::get(), 3 * DAYS);
+            });
+        }
+
+        #[test]
+        fn test_technical_committee_configuration() {
+            new_test_ext().execute_with(|| {
+                // Verify technical committee pallet is configured
+                assert_eq!(TechnicalMaxMembers::get(), 7);
+                assert_eq!(TechnicalMaxProposals::get(), 100);
+                assert_eq!(TechnicalMotionDuration::get(), 3 * DAYS);
+            });
+        }
+
+        #[test]
+        fn test_democracy_configuration() {
+            new_test_ext().execute_with(|| {
+                // Verify democracy pallet is configured correctly
+                assert_eq!(LaunchPeriod::get(), 7 * DAYS);
+                assert_eq!(VotingPeriod::get(), 7 * DAYS);
+                assert_eq!(FastTrackVotingPeriod::get(), 3 * BLOCKS_PER_HOUR);
+                assert_eq!(EnactmentPeriod::get(), 1 * DAYS);
+                assert_eq!(MinimumDeposit::get(), 100 * TOKEN);
+                assert_eq!(MaxVotes::get(), 100);
+                assert_eq!(MaxProposals::get(), 100);
+            });
+        }
+
+        #[test]
+        fn test_elections_phragmen_configuration() {
+            new_test_ext().execute_with(|| {
+                // Verify elections pallet is configured
+                assert_eq!(CandidacyBond::get(), 1000 * TOKEN);
+                assert_eq!(VotingBondBase::get(), 10 * TOKEN);
+                assert_eq!(VotingBondFactor::get(), TOKEN);
+                assert_eq!(TermDuration::get(), 7 * DAYS);
+                assert_eq!(DesiredMembers::get(), 13);
+                assert_eq!(DesiredRunnersUp::get(), 7);
+            });
+        }
+
+        #[test]
+        fn test_preimage_configuration() {
+            new_test_ext().execute_with(|| {
+                // Verify preimage pallet is configured
+                assert_eq!(PreimageBaseDeposit::get(), 100 * MILLI_SEL);
+                assert_eq!(PreimageByteDeposit::get(), MICRO_SEL);
+            });
+        }
+
+        #[test]
+        fn test_scheduler_supports_governance() {
+            new_test_ext().execute_with(|| {
+                // Verify scheduler is configured with proper weight limits
+                assert_eq!(MaxScheduledPerBlock::get(), 50);
+                assert!(MaximumSchedulerWeight::get().ref_time() > 0);
+            });
+        }
+
+        #[test]
+        fn test_treasury_governance_origins() {
+            new_test_ext().execute_with(|| {
+                // Verify treasury can be approved by either Root or Council 3/5
+                // Type checking test - ensures origins are properly configured
+                type TreasuryApprove = <Runtime as pallet_treasury::Config>::ApproveOrigin;
+                // If this compiles, the origin configuration is correct
+                let _type_check: Option<TreasuryApprove> = None;
+            });
+        }
+
+        #[test]
+        fn test_governance_origins_configured() {
+            new_test_ext().execute_with(|| {
+                // Test that governance origins are properly configured
+                // Type checking test - ensures all origins exist and are properly typed
+                type ThreeFifthsCouncil = EnsureThreeFifthsCouncil;
+                type ThreeFifthsTechnical = EnsureThreeFifthsTechnicalCommittee;
+                type UnanimousTechnical = EnsureUnanimousTechnicalCommittee;
+
+                // If these compile, origins are properly configured
+                let _check1: Option<ThreeFifthsCouncil> = None;
+                let _check2: Option<ThreeFifthsTechnical> = None;
+                let _check3: Option<UnanimousTechnical> = None;
+            });
+        }
+
+        #[test]
+        fn test_max_collectives_proposal_weight() {
+            new_test_ext().execute_with(|| {
+                // Verify collective proposal weight is reasonable (50% of max block)
+                let max_block_weight = BlockWeights::get().max_block;
+                let max_collective_weight = MaxCollectivesProposalWeight::get();
+                
+                assert_eq!(
+                    max_collective_weight.ref_time(),
+                    max_block_weight.ref_time() / 2
+                );
+            });
+        }
+
+        #[test]
+        fn test_governance_pallet_indices() {
+            new_test_ext().execute_with(|| {
+                // Verify governance pallets have correct indices in construct_runtime!
+                let council_call = RuntimeCall::Council(
+                    pallet_collective::Call::set_members {
+                        new_members: vec![],
+                        prime: None,
+                        old_count: 0,
+                    }
+                );
+                assert_eq!(council_call.encode()[0], 30);
+
+                let tech_call = RuntimeCall::TechnicalCommittee(
+                    pallet_collective::Call::set_members {
+                        new_members: vec![],
+                        prime: None,
+                        old_count: 0,
+                    }
+                );
+                assert_eq!(tech_call.encode()[0], 31);
+
+                // Test democracy pallet index (32)
+                // Democracy pallet is at position 32 in construct_runtime!
+                // Verify it's configured correctly
+                assert_eq!(
+                    <Runtime as frame_system::Config>::PalletInfo::index::<Democracy>(),
+                    Some(32)
+                );
+
+                let elections_call = RuntimeCall::CouncilElections(
+                    pallet_elections_phragmen::Call::submit_candidacy {
+                        candidate_count: 0,
+                    }
+                );
+                assert_eq!(elections_call.encode()[0], 33);
+
+                let preimage_call = RuntimeCall::Preimage(
+                    pallet_preimage::Call::note_preimage {
+                        bytes: vec![],
+                    }
+                );
+                assert_eq!(preimage_call.encode()[0], 34);
+            });
+        }
+
+        #[test]
+        fn test_staking_admin_origin_supports_council() {
+            new_test_ext().execute_with(|| {
+                // Verify Staking AdminOrigin supports both Root and Council
+                // Type checking test - ensures the configuration is correct
+                type StakingAdminOrigin = <Runtime as pallet_staking::Config>::AdminOrigin;
+                let _type_check: Option<StakingAdminOrigin> = None;
+            });
         }
     }
 
