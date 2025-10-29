@@ -1,3 +1,5 @@
+'use client'
+
 const Stats = () => {
   const stats = [
     {
@@ -23,14 +25,14 @@ const Stats = () => {
   ]
 
   return (
-    <section className="section bg-white dark:bg-dark-900">
+    <section className="section bg-clay-50">
       <div className="container-custom">
         <div className="text-center mb-16">
-          <h2 className="text-display-lg font-bold text-slate-900 dark:text-white mb-4">
+          <h2 className="text-display-lg font-bold text-warm-900 mb-4">
             Mainnet
             <span className="gradient-text"> performance</span>
           </h2>
-          <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+          <p className="text-xl text-warm-600 max-w-2xl mx-auto">
             Current metrics
           </p>
         </div>
@@ -42,13 +44,13 @@ const Stats = () => {
               className="card-hover text-center group animate-fade-in"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="text-6xl lg:text-7xl font-bold gradient-text mb-3 group-hover:scale-110 transition-transform duration-300">
+              <div className="text-4xl lg:text-5xl font-bold gradient-text mb-3 group-hover:scale-110 transition-transform duration-300">
                 {stat.value}
               </div>
-              <div className="text-2xl font-semibold text-slate-900 dark:text-white mb-4">
+              <div className="text-2xl font-semibold text-warm-900 mb-4">
                 {stat.label}
               </div>
-              <div className="text-slate-600 dark:text-slate-400 leading-relaxed">
+              <div className="text-warm-600 leading-relaxed">
                 {stat.description}
               </div>
             </div>

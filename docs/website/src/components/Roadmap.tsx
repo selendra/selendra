@@ -1,51 +1,53 @@
+'use client'
+
 const Roadmap = () => {
   const phases = [
     {
-      quarter: "Q4 2024",
+      quarter: "2019-2025",
       status: "Completed",
-      title: "Foundation & Testnet",
+      title: "Foundation Built",
       milestones: [
-        "Core runtime development with Substrate",
-        "AlephBFT consensus integration",
-        "EVM compatibility via Frontier",
-        "Testnet launch with 4+ validators",
-        "Basic governance implementation"
+        "v1 mainnet launched (2022)",
+        "v3 mainnet with AlephBFT + Aura (2025)",
+        "30K users on StadiumX sports platform",
+        "100+ merchants on Riverbase e-commerce",
+        "Banking APIs integrated (ABA, ACLEDA, WING)"
       ]
     },
     {
-      quarter: "Q1 2025",
+      quarter: "Q4 2025",
       status: "In Progress",
-      title: "Mainnet Preparation",
+      title: "Developer Experience",
       milestones: [
-        "Security audits (runtime + consensus)",
-        "Performance optimization and benchmarking",
-        "Validator onboarding program",
-        "Developer documentation and SDK",
-        "Community testnet incentives"
+        "TypeScript SDK with full type safety",
+        "Web-based IDE playground (5-min deploy)",
+        "No-signup testnet faucet",
+        "10+ production-ready templates",
+        "Auto-generated docs from code"
       ]
     },
     {
-      quarter: "Q2 2025",
+      quarter: "Q1-Q2 2026",
       status: "Upcoming",
-      title: "Mainnet Launch",
+      title: "DeFi Infrastructure",
       milestones: [
-        "Mainnet genesis with initial validators",
-        "Token generation event (TGE)",
-        "CEX listings and liquidity provision",
-        "Block explorer and network monitoring",
-        "Developer grants program launch"
+        "Native DEX (10x cheaper than EVM)",
+        "Chainlink oracle integration",
+        "KHRt stablecoin (backed by banks)",
+        "sUSD for DeFi (wrapped USDT/USDC)",
+        "Staking with 5-10% APY"
       ]
     },
     {
-      quarter: "Q3-Q4 2025",
+      quarter: "Q3-Q4 2026",
       status: "Planned",
-      title: "Ecosystem Growth",
+      title: "Cross-Chain & Scale",
       milestones: [
-        "DeFi protocol deployments (DEX, lending)",
-        "Bridge to Ethereum and other L1s",
-        "NFT marketplace and gaming integrations",
-        "Enterprise partnership program",
-        "Advanced governance features"
+        "LayerZero bridge to Ethereum",
+        "Advanced account abstraction",
+        "Remove sudo, full governance",
+        "Kun Khmer sports prediction (10 events/week)",
+        "CPL fan tokens and NFT tickets"
       ]
     }
   ]
@@ -62,17 +64,16 @@ const Roadmap = () => {
   }
 
   return (
-    <section id="roadmap" className="section bg-white dark:bg-slate-950/50">
+    <section id="roadmap" className="section bg-clay-100">
       <div className="container-custom">
         <div className="text-center mb-16">
-          <span className="badge-primary text-sm mb-4 inline-block">Roadmap</span>
-          <h2 className="text-display-lg font-bold text-slate-900 dark:text-white mb-4">
-            From Testnet to
-            <span className="gradient-text"> Production Scale</span>
+          <h2 className="text-display-lg font-bold text-warm-900 mb-6">
+            Not a testnet.
+            <br />
+            <span className="gradient-text">A production chain.</span>
           </h2>
-          <p className="text-xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto">
-            A clear path to mainnet launch and ecosystem growth, with transparency
-            at every milestone.
+          <p className="text-xl text-warm-600 max-w-3xl mx-auto">
+            Started 2019. Mainnet 2022. 30,000 users today. Now we help you build.
           </p>
         </div>
 
@@ -90,25 +91,25 @@ const Roadmap = () => {
                 style={{ animationDelay: `${index * 150}ms` }}
               >
                 {/* Timeline dot */}
-                <div className="hidden lg:block absolute top-8 left-1/2 w-4 h-4 bg-primary rounded-full transform -translate-x-1/2 ring-4 ring-dark-900 z-10"></div>
+                <div className="hidden lg:block absolute top-8 left-1/2 w-4 h-4 bg-primary rounded-full transform -translate-x-1/2 ring-4 ring-clay-100 z-10 shadow-clay"></div>
 
                 <div className="card-hover max-w-2xl">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <div className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{phase.quarter}</div>
+                      <div className="text-3xl font-bold text-warm-900 mb-2">{phase.quarter}</div>
                       <span className={`badge ${getStatusColor(phase.status)} text-xs`}>
                         {phase.status}
                       </span>
                     </div>
                   </div>
 
-                  <h3 className="text-2xl font-semibold text-slate-900 dark:text-white mb-4">
+                  <h3 className="text-2xl font-semibold text-warm-900 mb-4">
                     {phase.title}
                   </h3>
 
                   <ul className="space-y-3">
                     {phase.milestones.map((milestone, idx) => (
-                      <li key={idx} className="flex items-start text-slate-600 dark:text-slate-400">
+                      <li key={idx} className="flex items-start text-warm-600">
                         <svg
                           className="w-5 h-5 text-primary mr-3 mt-0.5 flex-shrink-0"
                           fill="none"
@@ -132,15 +133,15 @@ const Roadmap = () => {
 
         {/* Call to action */}
         <div className="mt-16 text-center animate-fade-in animate-delay-500">
-          <p className="text-slate-600 dark:text-slate-400 mb-6">
-            Want to stay updated on our progress?
+          <p className="text-warm-600 mb-6 text-lg">
+            Building something? Let's talk.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="#" className="btn-primary">
-              Join Community
+            <a href="/docs" className="btn-primary">
+              Start Building
             </a>
-            <a href="#" className="btn-outline">
-              Follow Development
+            <a href="https://github.com/selendra" target="_blank" rel="noopener noreferrer" className="btn-outline">
+              View on GitHub
             </a>
           </div>
         </div>

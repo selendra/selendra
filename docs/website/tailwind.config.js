@@ -1,14 +1,14 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   darkMode: 'class',
   content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
       colors: {
-        // Anthropic-inspired palette with Selendra's primary color
+        // Clay morphism palette - warm, earthy, and soft
         primary: {
           DEFAULT: '#c6613f', // Selendra primary (coral/terracotta)
           50: '#fef6f3',
@@ -22,18 +22,33 @@ export default {
           800: '#7f341d',
           900: '#6a2e1c',
         },
-        dark: {
-          DEFAULT: '#0f1419',
-          50: '#f7f8f9',
-          100: '#eceef1',
-          200: '#d4d9de',
-          300: '#b0b8c1',
-          400: '#8691a0',
-          500: '#687182',
-          600: '#535b6b',
-          700: '#444a57',
-          800: '#3a3f4a',
-          900: '#0f1419', // Main dark
+        // Clay background colors - warm, soft, organic
+        clay: {
+          DEFAULT: '#f5f1ed', // Main clay background
+          50: '#fdfcfb',
+          100: '#faf8f5',
+          200: '#f5f1ed', // Main
+          300: '#ebe4dc',
+          400: '#dfd4c8',
+          500: '#cfc1b0',
+          600: '#b5a593',
+          700: '#968777',
+          800: '#766a5f',
+          900: '#5c5249',
+        },
+        // Warm neutrals for text and borders
+        warm: {
+          DEFAULT: '#6b5d54',
+          50: '#faf8f6',
+          100: '#f0ebe6',
+          200: '#e3d9d0',
+          300: '#cebfb2',
+          400: '#b5a391',
+          500: '#988272',
+          600: '#6b5d54', // Main text
+          700: '#574b43',
+          800: '#473d37',
+          900: '#3a322d',
         },
         slate: {
           DEFAULT: '#64748b',
@@ -119,6 +134,21 @@ export default {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+      },
+      boxShadow: {
+        // Clay morphism shadows - soft, layered, organic
+        'clay-sm': '0 2px 4px rgba(107, 93, 84, 0.06), 0 1px 2px rgba(107, 93, 84, 0.04)',
+        'clay': '0 4px 8px rgba(107, 93, 84, 0.08), 0 2px 4px rgba(107, 93, 84, 0.06)',
+        'clay-md': '0 8px 16px rgba(107, 93, 84, 0.1), 0 4px 8px rgba(107, 93, 84, 0.08)',
+        'clay-lg': '0 16px 32px rgba(107, 93, 84, 0.12), 0 8px 16px rgba(107, 93, 84, 0.1)',
+        'clay-xl': '0 24px 48px rgba(107, 93, 84, 0.14), 0 12px 24px rgba(107, 93, 84, 0.12)',
+        'clay-inner': 'inset 0 2px 4px rgba(107, 93, 84, 0.08)',
+        'clay-glow': '0 0 20px rgba(198, 97, 63, 0.15), 0 4px 8px rgba(107, 93, 84, 0.08)',
+      },
+      borderRadius: {
+        'clay': '16px',
+        'clay-lg': '24px',
+        'clay-xl': '32px',
       },
     },
   },

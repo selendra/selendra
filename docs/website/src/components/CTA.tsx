@@ -1,6 +1,8 @@
+'use client'
+
 const CTA = () => {
   return (
-    <section className="section bg-slate-100 dark:bg-dark-900 relative overflow-hidden">
+    <section className="section bg-clay-50 relative overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl"></div>
@@ -9,35 +11,35 @@ const CTA = () => {
       <div className="container-custom relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           <div className="animate-fade-in">
-            <h2 className="text-display-xl font-bold text-slate-900 dark:text-white mb-6">
-              Ready to
+            <h2 className="text-display-xl font-bold text-warm-900 mb-8">
+              Deploy in 5 minutes.
               <br />
-              <span className="gradient-text">start building?</span>
+              <span className="gradient-text">Or less.</span>
             </h2>
 
-            <p className="text-xl lg:text-2xl text-slate-600 dark:text-slate-300 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Mainnet is live. Deploy and test.
+            <p className="text-xl lg:text-2xl text-warm-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+              Mainnet. Live. 30,000 users. Your code. Unchanged.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 animate-fade-in animate-delay-100">
             <div className="text-center">
-              <div className="text-4xl font-bold gradient-text mb-2">5 mins</div>
-              <div className="text-slate-600 dark:text-slate-400">To deploy your first contract</div>
+              <div className="text-4xl font-bold gradient-text mb-2">npm install</div>
+              <div className="text-warm-600">@selendra/sdk</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold gradient-text mb-2">Zero</div>
-              <div className="text-slate-600 dark:text-slate-400">Code changes from Ethereum</div>
+              <div className="text-4xl font-bold gradient-text mb-2">selendra deploy</div>
+              <div className="text-warm-600">One command to mainnet</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold gradient-text mb-2">Live</div>
-              <div className="text-slate-600 dark:text-slate-400">Mainnet ready for builders</div>
+              <div className="text-4xl font-bold gradient-text mb-2">It works.</div>
+              <div className="text-warm-600">Just like Ethereum</div>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in animate-delay-200">
-            <a href="#" className="btn-primary text-lg px-10 py-5 group">
-              Start Building
+            <a href="/docs" className="btn-primary text-lg px-10 py-5 group">
+              Get Started
               <svg
                 className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform"
                 fill="none"
@@ -50,17 +52,19 @@ const CTA = () => {
                 <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </a>
-            <a href="#" className="btn-outline text-lg px-10 py-5">
-              Read Docs
+            <a href="https://github.com/selendra" target="_blank" rel="noopener noreferrer" className="btn-outline text-lg px-10 py-5">
+              View on GitHub
             </a>
           </div>
 
-          <div className="mt-12 pt-12 border-t border-slate-200 dark:border-slate-800 animate-fade-in animate-delay-300">
-            <p className="text-slate-500 dark:text-slate-500 text-sm mb-6">Join our community</p>
+          <div className="mt-12 pt-12 border-t border-clay-300/50 animate-fade-in animate-delay-300">
+            <p className="text-warm-500 text-sm mb-6">Developer community</p>
             <div className="flex items-center justify-center gap-6">
               <a
-                href="#"
-                className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors duration-200"
+                href="https://github.com/selendra"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-warm-600 hover:text-primary transition-colors duration-200"
                 aria-label="GitHub"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -68,8 +72,10 @@ const CTA = () => {
                 </svg>
               </a>
               <a
-                href="#"
-                className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors duration-200"
+                href="https://twitter.com/selendrachain"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-warm-600 hover:text-primary transition-colors duration-200"
                 aria-label="Twitter"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -77,8 +83,10 @@ const CTA = () => {
                 </svg>
               </a>
               <a
-                href="#"
-                className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors duration-200"
+                href="https://discord.gg/selendra"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-warm-600 hover:text-primary transition-colors duration-200"
                 aria-label="Discord"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -86,8 +94,10 @@ const CTA = () => {
                 </svg>
               </a>
               <a
-                href="#"
-                className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors duration-200"
+                href="https://t.me/selendraorg"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-warm-600 hover:text-primary transition-colors duration-200"
                 aria-label="Telegram"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">

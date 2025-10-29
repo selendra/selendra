@@ -1,3 +1,5 @@
+'use client'
+
 const Footer = () => {
   const footerLinks = {
     product: [
@@ -27,26 +29,26 @@ const Footer = () => {
   }
 
   return (
-    <footer className="bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
+    <footer className="bg-white border-t border-clay-300/50">
       <div className="container-custom">
         {/* Main footer content */}
         <div className="py-16 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
           {/* Brand column - spans 2 columns on large screens */}
           <div className="col-span-2 lg:col-span-2">
             <div className="flex items-center space-x-2 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary-700 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary-700 flex items-center justify-center shadow-clay-sm">
                 <span className="text-white font-bold text-2xl">S</span>
               </div>
-              <span className="text-2xl font-bold text-slate-900 dark:text-white">Selendra</span>
+              <span className="text-2xl font-bold text-warm-900">Selendra</span>
             </div>
-            <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-sm leading-relaxed">
+            <p className="text-warm-600 mb-6 max-w-sm leading-relaxed">
               The EVM-compatible Layer 1 blockchain with 1-second finality,
               Byzantine fault tolerance, and zero compromises.
             </p>
             <div className="flex items-center gap-4">
               <a
                 href="#"
-                className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary/50 transition-all duration-200"
+                className="w-10 h-10 rounded-lg bg-clay-200 border border-clay-300/50 flex items-center justify-center text-warm-600 hover:text-primary hover:border-primary/50 transition-all duration-200 shadow-clay-sm hover:shadow-clay"
                 aria-label="GitHub"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -55,7 +57,7 @@ const Footer = () => {
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary/50 transition-all duration-200"
+                className="w-10 h-10 rounded-lg bg-clay-200 border border-clay-300/50 flex items-center justify-center text-warm-600 hover:text-primary hover:border-primary/50 transition-all duration-200 shadow-clay-sm hover:shadow-clay"
                 aria-label="Twitter"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -64,7 +66,7 @@ const Footer = () => {
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary/50 transition-all duration-200"
+                className="w-10 h-10 rounded-lg bg-clay-200 border border-clay-300/50 flex items-center justify-center text-warm-600 hover:text-primary hover:border-primary/50 transition-all duration-200 shadow-clay-sm hover:shadow-clay"
                 aria-label="Discord"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -73,7 +75,7 @@ const Footer = () => {
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary/50 transition-all duration-200"
+                className="w-10 h-10 rounded-lg bg-clay-200 border border-clay-300/50 flex items-center justify-center text-warm-600 hover:text-primary hover:border-primary/50 transition-all duration-200 shadow-clay-sm hover:shadow-clay"
                 aria-label="Telegram"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -85,13 +87,13 @@ const Footer = () => {
 
           {/* Product */}
           <div>
-            <h3 className="text-slate-900 dark:text-white font-semibold mb-4">Product</h3>
+            <h3 className="text-warm-900 font-semibold mb-4">Product</h3>
             <ul className="space-y-3">
               {footerLinks.product.map((link) => (
                 <li key={link.name}>
                   <a
                     href={link.href}
-                    className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors duration-200 text-sm"
+                    className="text-warm-600 hover:text-primary transition-colors duration-200 text-sm"
                   >
                     {link.name}
                   </a>
@@ -102,13 +104,13 @@ const Footer = () => {
 
           {/* Developers */}
           <div>
-            <h3 className="text-slate-900 dark:text-white font-semibold mb-4">Developers</h3>
+            <h3 className="text-warm-900 font-semibold mb-4">Developers</h3>
             <ul className="space-y-3">
               {footerLinks.developers.map((link) => (
                 <li key={link.name}>
                   <a
                     href={link.href}
-                    className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors duration-200 text-sm"
+                    className="text-warm-600 hover:text-primary transition-colors duration-200 text-sm"
                   >
                     {link.name}
                   </a>
@@ -119,13 +121,13 @@ const Footer = () => {
 
           {/* Community */}
           <div>
-            <h3 className="text-slate-900 dark:text-white font-semibold mb-4">Community</h3>
+            <h3 className="text-warm-900 font-semibold mb-4">Community</h3>
             <ul className="space-y-3">
               {footerLinks.community.map((link) => (
                 <li key={link.name}>
                   <a
                     href={link.href}
-                    className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors duration-200 text-sm"
+                    className="text-warm-600 hover:text-primary transition-colors duration-200 text-sm"
                   >
                     {link.name}
                   </a>
@@ -136,13 +138,13 @@ const Footer = () => {
 
           {/* Company */}
           <div>
-            <h3 className="text-slate-900 dark:text-white font-semibold mb-4">Company</h3>
+            <h3 className="text-warm-900 font-semibold mb-4">Company</h3>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
                   <a
                     href={link.href}
-                    className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors duration-200 text-sm"
+                    className="text-warm-600 hover:text-primary transition-colors duration-200 text-sm"
                   >
                     {link.name}
                   </a>
@@ -153,19 +155,19 @@ const Footer = () => {
         </div>
 
         {/* Bottom bar */}
-        <div className="py-8 border-t border-slate-200 dark:border-slate-800">
+        <div className="py-8 border-t border-clay-300/50">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-slate-500 dark:text-slate-500 text-sm">
+            <div className="text-warm-500 text-sm">
               © {new Date().getFullYear()} Selendra Network. All rights reserved.
             </div>
             <div className="flex items-center gap-6 text-sm">
-              <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors duration-200">
+              <a href="#" className="text-warm-600 hover:text-primary transition-colors duration-200">
                 Privacy Policy
               </a>
-              <a href="#" className="text-slate-400 hover:text-primary transition-colors duration-200">
+              <a href="#" className="text-warm-600 hover:text-primary transition-colors duration-200">
                 Terms of Service
               </a>
-              <a href="#" className="text-slate-400 hover:text-primary transition-colors duration-200">
+              <a href="#" className="text-warm-600 hover:text-primary transition-colors duration-200">
                 Cookie Policy
               </a>
             </div>
