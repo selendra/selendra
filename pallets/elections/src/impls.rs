@@ -6,7 +6,7 @@ use sp_std::{collections::btree_set::BTreeSet, vec::Vec};
 
 use crate::{
     traits::ValidatorProvider, CommitteeSize, Config, CurrentEraValidators, NextEraCommitteeSize,
-    NextEraNonReservedValidators, NextEraReservedValidators, Pallet,
+    NextEraNonReservedValidators, NextEraReservedValidators, Openness, Pallet,
 };
 
 impl<T> Pallet<T>
@@ -20,24 +20,43 @@ where
         let seed = u64::from_le_bytes(bytes);
 
         let mut rng = Pcg32::seed_from_u64(seed);
-        let elected_committee = BTreeSet::from_iter(T::ValidatorProvider::elected_validators(era));
-
-        let mut retain_shuffle_elected = |vals: Vec<T::AccountId>| -> Vec<T::AccountId> {
-            let mut vals: Vec<_> = vals
-                .into_iter()
-                .filter(|v| elected_committee.contains(v))
-                .collect();
-            vals.shuffle(&mut rng);
-
-            vals
-        };
-
+        
         let reserved_validators = NextEraReservedValidators::<T>::get();
         let non_reserved_validators = NextEraNonReservedValidators::<T>::get();
         let committee_size = NextEraCommitteeSize::<T>::get();
 
-        let reserved_vec = retain_shuffle_elected(reserved_validators.to_vec());
-        let non_reserved_vec = retain_shuffle_elected(non_reserved_validators.to_vec());
+        // In Permissionless mode, NextEraNonReservedValidators already contains the correct
+        // set of validators from the election. We should not filter them again by the previous
+        // era's elected_committee, as that would prevent new validators from joining.
+        let openness = Openness::<T>::get();
+        
+        let (reserved_vec, non_reserved_vec) = match openness {
+            primitives::ElectionOpenness::Permissionless => {
+                // In Permissionless mode, just shuffle without filtering
+                let mut reserved_vec: Vec<_> = reserved_validators.to_vec();
+                let mut non_reserved_vec: Vec<_> = non_reserved_validators.to_vec();
+                reserved_vec.shuffle(&mut rng);
+                non_reserved_vec.shuffle(&mut rng);
+                (reserved_vec, non_reserved_vec)
+            }
+            primitives::ElectionOpenness::Permissioned => {
+                // In Permissioned mode, filter by elected_committee as before
+                let elected_committee = BTreeSet::from_iter(T::ValidatorProvider::elected_validators(era));
+                
+                let mut retain_shuffle_elected = |vals: Vec<T::AccountId>| -> Vec<T::AccountId> {
+                    let mut vals: Vec<_> = vals
+                        .into_iter()
+                        .filter(|v| elected_committee.contains(v))
+                        .collect();
+                    vals.shuffle(&mut rng);
+                    vals
+                };
+                
+                let reserved_vec = retain_shuffle_elected(reserved_validators.to_vec());
+                let non_reserved_vec = retain_shuffle_elected(non_reserved_validators.to_vec());
+                (reserved_vec, non_reserved_vec)
+            }
+        };
 
         CurrentEraValidators::<T>::put(EraValidators {
             reserved: reserved_vec.try_into().expect("Too many validators"),
