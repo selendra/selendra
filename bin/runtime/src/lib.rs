@@ -962,19 +962,6 @@ parameter_types! {
     pub CodeHashLockupDepositPercent: Perbill = Perbill::from_percent(30);
 }
 
-// The filter for the runtime calls that are allowed to be executed by contracts.
-// Currently we allow only staking and nomination pools calls.
-pub enum ContractsCallRuntimeFilter {}
-
-impl Contains<RuntimeCall> for ContractsCallRuntimeFilter {
-    fn contains(call: &RuntimeCall) -> bool {
-        matches!(
-            call,
-            RuntimeCall::Staking(_) | RuntimeCall::NominationPools(_)
-        )
-    }
-}
-
 /// Codes using the randomness functionality cannot be uploaded. Neither can contracts
 /// be instantiated from existing codes that use this deprecated functionality.
 ///
@@ -994,7 +981,7 @@ impl pallet_contracts::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeCall = RuntimeCall;
 
-    type CallFilter = ContractsCallRuntimeFilter;
+    type CallFilter = ();
     type WeightPrice = pallet_transaction_payment::Pallet<Self>;
     type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
     type ChainExtension = ();
