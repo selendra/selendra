@@ -368,6 +368,11 @@ parameter_types! {
 impl pallet_aleph::Config for Runtime {
     type AuthorityId = SelendraId;
     type RuntimeEvent = RuntimeEvent;
+    // Allow either Root or a 3/5 Council majority to manage finality settings
+    type AdminOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
     type SessionInfoProvider = SessionInfoImpl;
     type SessionManager = SessionAndEraManager<
         Staking,
@@ -395,6 +400,11 @@ impl pallet_elections::Config for Runtime {
     type MaxWinners = MaxWinners;
     type BannedValidators = CommitteeManagement;
     type MaxValidators = ConstU32<1000>;
+    // Allow either Root or a 3/5 Council majority to administer elections
+    type AdminOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
 }
 
 impl pallet_operations::Config for Runtime {
@@ -408,6 +418,11 @@ impl pallet_operations::Config for Runtime {
 
 impl pallet_committee_management::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
+    // Allow either Root or a 3/5 Council majority to manage committee settings
+    type AdminOrigin = frame_support::traits::EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
     type BanHandler = Elections;
     type EraInfoProvider = Staking;
     type ValidatorProvider = Elections;

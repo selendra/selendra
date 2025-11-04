@@ -246,6 +246,7 @@ impl pallet_elections::Config for TestRuntime {
 
 impl Config for TestRuntime {
     type RuntimeEvent = RuntimeEvent;
+    type AdminOrigin = frame_system::EnsureRoot<AccountId>;
     type BanHandler = Elections;
     type EraInfoProvider = Staking;
     type ValidatorProvider = Elections;

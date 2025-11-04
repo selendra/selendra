@@ -32,9 +32,8 @@ pub mod pallet {
         BoundedSupportsOf, DataProviderBounds, ElectionDataProvider, ElectionProvider,
         ElectionProviderBase, Support, Supports,
     };
-    use frame_support::{pallet_prelude::*, traits::Get};
+    use frame_support::{pallet_prelude::*, traits::{Get, EnsureOrigin}};
     use frame_system::{
-        ensure_root,
         pallet_prelude::{BlockNumberFor, OriginFor},
     };
     use primitives::{BannedValidators, CommitteeSeats, ElectionOpenness};
@@ -45,6 +44,9 @@ pub mod pallet {
     #[pallet::config]
     pub trait Config: frame_system::Config {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+        /// Origin allowed to manage validators and elections settings.
+        /// Recommend wiring as EitherOfDiverse<EnsureRoot<_>, EnsureThreeFifthsCouncil> in runtime.
+        type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
         /// Something that provides data for elections.
         type DataProvider: ElectionDataProvider<
             AccountId = Self::AccountId,
@@ -124,7 +126,8 @@ pub mod pallet {
             non_reserved_validators: Option<Vec<T::AccountId>>,
             committee_size: Option<CommitteeSeats>,
         ) -> DispatchResult {
-            ensure_root(origin)?;
+            // Allow calls from Root or the configured governance origin
+            T::AdminOrigin::ensure_origin(origin)?;
             let committee_size = committee_size.unwrap_or_else(NextEraCommitteeSize::<T>::get);
             let reserved_validators =
                 reserved_validators.unwrap_or_else(|| NextEraReservedValidators::<T>::get().to_vec());
@@ -162,7 +165,8 @@ pub mod pallet {
             origin: OriginFor<T>,
             openness: ElectionOpenness,
         ) -> DispatchResult {
-            ensure_root(origin)?;
+            // Allow calls from Root or the configured governance origin
+            T::AdminOrigin::ensure_origin(origin)?;
 
             Openness::<T>::set(openness);
 

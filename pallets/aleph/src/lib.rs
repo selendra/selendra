@@ -36,7 +36,7 @@ pub mod pallet {
         BoundedVec,
     };
     use frame_system::{
-        ensure_none, ensure_root,
+        ensure_none,
         pallet_prelude::{BlockNumberFor, OriginFor},
     };
     use pallet_session::SessionManager;
@@ -59,6 +59,9 @@ pub mod pallet {
             + MaybeSerializeDeserialize
             + MaxEncodedLen;
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+        /// Origin allowed to manage finality settings (emergency finalizer, version changes, inflation params).
+        /// Recommend wiring as EitherOfDiverse<EnsureRoot<_>, EnsureThreeFifthsCouncil> in runtime.
+        type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
         type SessionInfoProvider: SessionInfoProvider<BlockNumberFor<Self>>;
         type SessionManager: SessionManager<<Self as frame_system::Config>::AccountId>;
         type NextSessionAuthorityProvider: NextSessionAuthorityProvider<Self>;
@@ -398,7 +401,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             emergency_finalizer: T::AuthorityId,
         ) -> DispatchResult {
-            ensure_root(origin)?;
+            T::AdminOrigin::ensure_origin(origin)?;
             Self::set_next_emergency_finalizer(emergency_finalizer.clone());
             Self::deposit_event(Event::ChangeEmergencyFinalizer(emergency_finalizer));
             Ok(())
@@ -417,7 +420,7 @@ pub mod pallet {
             version_incoming: Version,
             session: SessionIndex,
         ) -> DispatchResult {
-            ensure_root(origin)?;
+            T::AdminOrigin::ensure_origin(origin)?;
 
             let version_change = VersionChange {
                 version_incoming,
@@ -440,7 +443,7 @@ pub mod pallet {
             sel_cap: Option<Balance>,
             horizon_millisecs: Option<u64>,
         ) -> DispatchResult {
-            ensure_root(origin)?;
+            T::AdminOrigin::ensure_origin(origin)?;
 
             let current_sel_cap = SelCap::<T>::get();
             let current_horizon_millisecs = ExponentialInflationHorizon::<T>::get();
