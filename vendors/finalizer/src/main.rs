@@ -4,7 +4,7 @@ use selendra_client::BlockNumber;
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 
-use crate::commands::{status, try_finalize, Connections};
+use crate::commands::{status, try_finalize, doctor, Connections};
 mod commands;
 
 #[derive(Debug, Parser, Clone)]
@@ -27,6 +27,8 @@ struct Config {
 pub enum Command {
     /// Show status according to primary and secondary endpoints (read-only method)
     Status,
+    /// Run diagnostics to verify authoring/finality readiness
+    Doctor,
     /// Attempt finalizing the specified number of blocks
     TryFinalize {
         /// Path to the seed phrase to emergency finalizer.
@@ -56,6 +58,9 @@ async fn main() -> Result<()> {
     match command {
         Command::Status => {
             status(connections).await?;
+        }
+        Command::Doctor => {
+            doctor(connections).await?;
         }
         Command::TryFinalize {
             seed_path,

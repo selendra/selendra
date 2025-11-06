@@ -6,13 +6,27 @@ use std::{
 };
 
 use selendra_client::{
-    aleph_keypair_from_string, api, pallets::aleph::AlephRpc, primitives::app::Public,
-    sp_core::H256, AlephKeyPair, BlockNumber, Connection, ConnectionApi, Pair,
+    aleph_keypair_from_string,
+    api,
+    pallets::aleph::{AlephApi, AlephRpc},
+    pallets::author::AuthorRpc,
+    pallets::session::SessionApi,
+    primitives::app::Public,
+    sp_core::H256,
+    AccountId,
+    AlephKeyPair,
+    BlockNumber,
+    Connection,
+    ConnectionApi,
+    Pair,
 };
 use anyhow::Result;
 use dialoguer::Confirm;
 use futures::{stream::FuturesUnordered, StreamExt};
 use subxt::config::Header;
+use subxt::rpc_params;
+
+type AuraPublic = selendra_client::api::runtime_types::sp_consensus_aura::sr25519::app_sr25519::Public;
 
 fn pretty_print_h256(h: &H256) -> String {
     let prefix = h.0.iter().take(4).fold(String::new(), |mut output, byte| {
@@ -320,4 +334,97 @@ fn read_key_from_file(seed_path: PathBuf) -> Result<AlephKeyPair> {
     let key = aleph_keypair_from_string(suri.trim());
     println!("Read a pubkey {}\n", hex::encode(key.public().0));
     Ok(key)
+}
+
+async fn get_current_aura_authorities(connection: &Connection) -> Result<Vec<AuraPublic>> {
+    // state_call requires: method, SCALE-encoded input (none -> 0x), optional at hash
+    let method = "state_call";
+    let api_method = "AuraApi_authorities";
+    let params = rpc_params![api_method, "0x", Option::<H256>::None];
+    connection.rpc_call::<Vec<AuraPublic>>(method.to_string(), params).await
+}
+
+async fn get_next_session_aura_authorities(
+    connection: &Connection,
+) -> Result<Vec<(AccountId, AuraPublic)>> {
+    let method = "state_call";
+    let api_method = "AlephSessionApi_next_session_aura_authorities";
+    let params = rpc_params![api_method, "0x", Option::<H256>::None];
+    connection
+        .rpc_call::<Vec<(AccountId, AuraPublic)>>(method.to_string(), params)
+        .await
+}
+
+pub async fn doctor(connections: Connections) -> Result<()> {
+    // High-level cluster status
+    let statuses = get_all_chain_statuses(&connections).await?;
+    println!("{:<30}  {}", "primary", statuses.primary);
+    for (name, status) in statuses.secondaries.iter() {
+        println!("{name:<30}  {status}");
+    }
+
+    // Primary detailed checks
+    let primary = &connections.primary;
+
+    // Session and validators
+    let session_idx = primary.get_session(None).await;
+    let validators = primary.get_validators(None).await;
+    println!("\nSession index: {session_idx}");
+    println!("Validators (current) count: {}", validators.len());
+    if validators.is_empty() {
+        println!("WARNING: No validators in current session — Aura cannot author blocks.");
+    }
+
+    // Aura authorities now and next session
+    match get_current_aura_authorities(primary).await {
+        Ok(aura_now) => {
+            println!("Aura authorities (current) count: {}", aura_now.len());
+            if aura_now.is_empty() {
+                println!("WARNING: No Aura authorities in current session.");
+            }
+        }
+        Err(e) => println!("Could not fetch current Aura authorities: {e:?}"),
+    }
+
+    match get_next_session_aura_authorities(primary).await {
+        Ok(next) => {
+            println!(
+                "Next session Aura authorities count: {}",
+                next.len()
+            );
+            if next.is_empty() {
+                println!(
+                    "WARNING: Next session has no Aura authorities — upcoming authoring will stall."
+                );
+            }
+        }
+        Err(e) => println!("Could not fetch next session Aura authorities: {e:?}"),
+    }
+
+    // Emergency finalizer alignment
+    let on_chain_pubkey = get_finalizer_pubkey(primary).await;
+    match on_chain_pubkey {
+        Some(pk) => println!("Emergency finalizer key (on-chain): {}", hex::encode(pk.0 .0)),
+        None => println!(
+            "Emergency finalizer key (on-chain): NONE — emergency finalization requires activation on session change."
+        ),
+    }
+
+    // Finality version info
+    let current_finality_version = primary.finality_version(None).await;
+    let next_finality_version = primary.next_session_finality_version(None).await;
+    println!(
+        "Finality version: current={}, next_session={}",
+        current_finality_version, next_finality_version
+    );
+
+    // Node authoring health (RPC-local)
+    match primary.pending_extrinsics_len().await {
+        Ok(len) => println!("RPC node pending extrinsics: {len}"),
+        Err(e) => println!("Could not get pending extrinsics: {e:?}"),
+    }
+
+    println!("\nHints:\n- Ensure at least one validator node is running with authoring enabled and correct session keys.\n- If you just changed validators, wait for the next session for keys/authorities to take effect.\n- Emergency finalize only finalizes existing blocks; it doesn't author new ones.");
+
+    Ok(())
 }
