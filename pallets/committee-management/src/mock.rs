@@ -207,6 +207,7 @@ impl pallet_aleph::Config for TestRuntime {
     type ScoreSubmissionPeriod = ScoreSubmissionPeriod;
     type MaxAuthorities = ConstU32<100>;
     type MaxCommitteeSize = ConstU32<100>;
+    type AdminOrigin = frame_system::EnsureRoot<AccountId>;
 }
 
 impl<C> frame_system::offchain::SendTransactionTypes<C> for TestRuntime
@@ -242,6 +243,7 @@ impl pallet_elections::Config for TestRuntime {
     type MaxWinners = MaxWinners;
     type BannedValidators = CommitteeManagement;
     type MaxValidators = ConstU32<100>;
+    type AdminOrigin = frame_system::EnsureRoot<AccountId>;
 }
 
 impl Config for TestRuntime {
