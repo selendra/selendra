@@ -1269,12 +1269,13 @@ construct_runtime!(
 		EVM: pallet_evm = 81,
 		DynamicEvmBaseFee: pallet_dynamic_evm_base_fee = 83,
 		UnifiedAccounts: pallet_unified_accounts = 87,
-        
+		 EthereumChecked: pallet_ethereum_checked = 88,
+
         Contracts: pallet_contracts = 90,
-       
+
         SafeMode: pallet_safe_mode = 100,
         TxPause: pallet_tx_pause = 101,
-        
+
         Operations: pallet_operations = 155,
         Sudo: pallet_sudo = 200,
     }
@@ -1537,7 +1538,7 @@ impl_runtime_apis! {
 		fn session_period() -> u32 {
 			SessionPeriod::get()
 		}
-		
+
         fn authorities() -> Vec<SelendraId> {
             Aleph::authorities().to_vec()
         }
@@ -2096,7 +2097,7 @@ mod tests {
                 // Verify collective proposal weight is reasonable (50% of max block)
                 let max_block_weight = BlockWeights::get().max_block;
                 let max_collective_weight = MaxCollectivesProposalWeight::get();
-                
+
                 assert_eq!(
                     max_collective_weight.ref_time(),
                     max_block_weight.ref_time() / 2

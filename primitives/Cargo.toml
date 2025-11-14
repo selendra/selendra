@@ -11,6 +11,7 @@ repository.workspace = true
 parity-scale-codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
+ethereum = { workspace = true, features = ["with-codec"] }
 ethereum-types = { workspace = true }
 
 sp-api = { workspace = true }
@@ -42,7 +43,9 @@ sp-inherents = { workspace = true }
 default = ["std"]
 std = [
     "parity-scale-codec/std",
+    "scale-info/std",
     "serde/std",
+    "ethereum/std",
     "ethereum-types/std",
 
     "sp-api/std",
@@ -70,3 +73,13 @@ std = [
     "fp-evm/std",
 ]
 short_session = []
+runtime-benchmarks = [
+    "frame-support/runtime-benchmarks",
+    "sp-runtime/runtime-benchmarks",
+    "pallet-evm/runtime-benchmarks",
+]
+try-runtime = [
+    "frame-support/try-runtime",
+    "sp-runtime/try-runtime",
+    "pallet-evm/try-runtime",
+]
