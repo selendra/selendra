@@ -6100,6 +6100,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-ethereum-checked"
+version = "0.1.0"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "fp-ethereum",
+ "fp-evm",
+ "fp-rpc",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "pallet-balances",
+ "pallet-ethereum",
+ "pallet-evm",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "primitives",
+ "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
 dependencies = [
@@ -6527,6 +6552,31 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "scale-info",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-xvm"
+version = "0.1.0"
+dependencies = [
+ "environmental",
+ "fp-evm",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "log",
+ "pallet-balances",
+ "pallet-contracts",
+ "pallet-contracts-uapi",
+ "pallet-evm",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "primitives",
+ "scale-info",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -7053,6 +7103,7 @@ dependencies = [
 name = "primitives"
 version = "0.14.0+dev"
 dependencies = [
+ "ethereum",
  "ethereum-types",
  "fp-evm",
  "frame-support",
@@ -9036,6 +9087,7 @@ dependencies = [
  "pallet-elections",
  "pallet-elections-phragmen",
  "pallet-ethereum",
+ "pallet-ethereum-checked",
  "pallet-evm",
  "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-sha3fips",
@@ -9061,6 +9113,7 @@ dependencies = [
  "pallet-unified-accounts",
  "pallet-utility",
  "pallet-vesting",
+ "pallet-xvm",
  "parity-scale-codec",
  "primitives",
  "scale-info",

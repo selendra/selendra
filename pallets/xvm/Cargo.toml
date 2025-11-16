@@ -1,0 +1,79 @@
+[package]
+name = "pallet-xvm"
+version = "0.1.0"
+authors = ["Stake Technologies <devops@stake.co.jp>"]
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+environmental = { version = "1.1.4", default-features = false }
+hex = { workspace = true }
+log = { workspace = true }
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
+
+# Substrate
+frame-benchmarking = { workspace = true, optional = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+
+# Contracts
+pallet-contracts = { workspace = true }
+pallet-contracts-uapi = { workspace = true }
+
+# EVM & Frontier
+pallet-evm = { workspace = true }
+fp-evm = { workspace = true }
+
+# Local
+primitives = { workspace = true }
+
+[dev-dependencies]
+pallet-balances = { workspace = true, features = ["std"] }
+pallet-timestamp = { workspace = true, features = ["std"] }
+sp-io = { workspace = true, features = ["std"] }
+
+[features]
+default = ["std"]
+std = [
+	"environmental/std",
+	"hex/std",
+	"log/std",
+	"parity-scale-codec/std",
+	"scale-info/std",
+	# Substrate
+	"frame-support/std",
+	"frame-system/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	# Contracts
+	"pallet-contracts/std",
+	# EVM
+	"pallet-evm/std",
+	"fp-evm/std",
+	# Local
+	"primitives/std",
+]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-contracts/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-contracts/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-timestamp/try-runtime",
+	"sp-runtime/try-runtime",
+]

@@ -1269,7 +1269,8 @@ construct_runtime!(
 		EVM: pallet_evm = 81,
 		DynamicEvmBaseFee: pallet_dynamic_evm_base_fee = 83,
 		UnifiedAccounts: pallet_unified_accounts = 87,
-		 EthereumChecked: pallet_ethereum_checked = 88,
+		EthereumChecked: pallet_ethereum_checked = 88,
+		Xvm: pallet_xvm = 89,
 
         Contracts: pallet_contracts = 90,
 

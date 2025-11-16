@@ -156,3 +156,10 @@ impl pallet_ethereum_checked::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_ethereum_checked::weights::SubstrateWeight<Runtime>;
 }
+
+impl pallet_xvm::Config for Runtime {
+	type AddressMapper = crate::UnifiedAccounts;
+	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Runtime>;
+	type EthereumTransact = crate::EthereumChecked;
+	type WeightInfo = pallet_xvm::weights::SubstrateWeight<Runtime>;
+}
