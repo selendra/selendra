@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  testnet:
+    image: ghcr.io/selendra/selendra-testnet-docker:latest
+    ports:
+      - "9944-9954:9944-9954"
+      - "30333-30353:30333-30353"
+      - "9615-9625:9615-9625"
+    volumes:
+      - selendra_data:/selendra/run-nodes-local
+    environment:
+      - VALIDATORS=4
+      - RPC_NODES=1
+      - BASE_PATH=/selendra/run-nodes-local
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 0  # Unlimited restarts
+        window: 10s
+
+volumes:
+  selendra_data:
+    driver: local
