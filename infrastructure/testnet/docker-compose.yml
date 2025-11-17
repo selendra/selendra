@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  selendra-testnet:
+    build: .
+    container_name: selendra-testnet
+    restart: unless-stopped
+    ports:
+      - "9944-9954:9944-9954"  # RPC ports
+      - "30333-30353:30333-30353"  # P2P and Validator ports
+      - "9615-9625:9615-9625"  # Prometheus ports
+    volumes:
+      - selendra_data:/selendra/run-nodes-local
+    environment:
+      - VALIDATORS=4
+      - RPC_NODES=1
+      - BASE_PATH=/selendra/run-nodes-local
+
+volumes:
+  selendra_data:
