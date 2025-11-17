@@ -4,9 +4,6 @@
 //! [Substrate](https://github.com/paritytech/substrate) chain, but there are some unique to `selendra-node`,
 //! e.g. [`pallets::elections::ElectionsApi`].
 
-#![feature(auto_traits)]
-#![feature(negative_impls)]
-
 use std::str::FromStr;
 
 use anyhow::anyhow;
