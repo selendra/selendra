@@ -60,7 +60,7 @@ env_logger = { version = "0.10" }
 futures = { version = "0.3" }
 futures-timer = { version = "3.0" }
 hash-db = { version = "0.16", default-features = false }
-hex = { version = "0.4" }
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
 hex-literal = { version = "0.3" }
 ink = { version = "5.0.0-rc", default-features = false }
 ip_network = { version = "0.4" }
