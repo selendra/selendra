@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use log::debug;
-use primitives::Balance;
+use crate::primitives::Balance;
 use subxt::{blocks::ExtrinsicEvents, config::Hasher, Config};
 
 use crate::{

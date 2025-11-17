@@ -3,7 +3,7 @@ use std::{thread::sleep, time::Duration};
 use anyhow::anyhow;
 use codec::Decode;
 use log::{debug, info};
-use primitives::Nonce;
+use crate::primitives::Nonce;
 use serde::{Deserialize, Serialize};
 use subxt::{
     blocks::ExtrinsicEvents,

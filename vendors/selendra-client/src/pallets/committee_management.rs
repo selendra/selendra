@@ -1,5 +1,5 @@
 use codec::{DecodeAll, Encode};
-use primitives::{SessionCommittee, SessionValidatorError};
+use crate::primitives::{SessionCommittee, SessionValidatorError};
 use subxt::{
     ext::{sp_core::Bytes, sp_runtime::Perquintill},
     rpc_params,
