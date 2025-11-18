@@ -22,7 +22,7 @@ trap 'kill $(jobs -p); exit 0' SIGTERM SIGINT
 # We assume RPC nodes have ids //0, //1, //2, ... //N-1, where N is number of RPC nodes, and
 # validators have ids //N, //N+1, ...
 # Obviously, this is just for testing reasons and such seeds must be never used in production.
-# Also, each SelendraNode chain has sudo account. Here we assume it is //Alice.
+# Also, each SelendraNode chain has sudo account. Here we set it to //0 (the first RPC node account).
 #
 # Make sure a machine on which you're running your script has enough RAM memory. For testing nodes
 # with empty db, a 1.5 GB per node would be enough.
@@ -291,6 +291,17 @@ info "Following identities were generated:"
 info "RPC nodes: ${rpc_node_account_ids[@]}"
 info "Validator nodes: ${validator_account_ids[@]}"
 
+# Log all test account details for easy access in cloud dashboard
+info "=========================================="
+info "TEST ACCOUNT DETAILS:"
+info "=========================================="
+for i in $(seq 0 "$(( NUMBER_OF_NODES_TO_BOOTSTRAP - 1 ))"); do
+  info "Account //${i}:"
+  "${SELENDRA_NODE}" key inspect //${i} | grep -E "(Secret seed|Public key|SS58 Address)"
+  info "------------------------------------------"
+done
+info "=========================================="
+
 if [[ -z "${DONT_BOOTSTRAP}" ]]; then
   info "Bootstrapping chain for ${NUMBER_OF_NODES_TO_BOOTSTRAP} nodes."
 
@@ -319,6 +330,17 @@ if [[ -z "${DONT_BOOTSTRAP}" ]]; then
     # --rich-account-ids "${all_account_ids_string}" \
     # --finality-version "${FINALITY_VERSION}"
 
+  # Set sudo account to the first account (//0)
+  sudo_account_id="${rpc_node_account_ids[0]}"
+  info "Setting sudo account to: ${sudo_account_id}"
+
+  # Log sudo account details for easy access in cloud dashboard
+  info "=========================================="
+  info "SUDO ACCOUNT DETAILS (//0):"
+  info "=========================================="
+  "${SELENDRA_NODE}" key inspect //0
+  info "=========================================="
+
   "${CHAINSPEC_GENERATOR}" bootstrap-chain \
     --raw \
     --base-path "${BASE_PATH}" \
@@ -328,6 +350,7 @@ if [[ -z "${DONT_BOOTSTRAP}" ]]; then
     --chain-id "selendra-testnet" \
     --chain-name "Selendra Testnet" \
     --token-symbol "SEL" \
+    --sudo-account-id "${sudo_account_id}" \
     --rich-account-ids "${validator_ids_string}" \
     --finality-version "${FINALITY_VERSION}" > "${BASE_PATH}/chainspec.json"
 
