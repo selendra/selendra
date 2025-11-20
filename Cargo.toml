@@ -18,6 +18,8 @@ members = [
     "pallets/operations",
     "pallets/dynamic-evm-base-fee",
     "pallets/unified-accounts",
+    "pallets/xvm",
+    "pallets/ethereum-checked",
 ]
 
 exclude = [
@@ -58,7 +60,7 @@ env_logger = { version = "0.10" }
 futures = { version = "0.3" }
 futures-timer = { version = "3.0" }
 hash-db = { version = "0.16", default-features = false }
-hex = { version = "0.4" }
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
 hex-literal = { version = "0.3" }
 ink = { version = "5.0.0-rc", default-features = false }
 ip_network = { version = "0.4" }
@@ -82,6 +84,7 @@ tiny-bip39 = { version = "1.0" }
 tokio = { version = "1.41" }
 rand_pcg = { version = "0.3.1", default-features = false }
 ethers = { version = "2.0.9", default-features = false }
+ethereum = { version = "0.15.0", default-features = false }
 ethereum-types = { version = "0.14", default-features = false }
 
 frame-benchmarking = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
@@ -98,6 +101,7 @@ pallet-authorship = { git = "https://github.com/Cardinal-Cryptography/polkadot-s
 pallet-balances = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 pallet-collective = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 pallet-contracts = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
+pallet-contracts-uapi = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 pallet-democracy = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 pallet-elections-phragmen = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
 pallet-identity = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0", default-features = false }
@@ -191,6 +195,8 @@ pallet-aleph-runtime-api = { path = "pallets/aleph-runtime-api", default-feature
 pallet-committee-management = { path = "pallets/committee-management", default-features = false }
 pallet-elections = { path = "pallets/elections", default-features = false }
 pallet-operations = { path = "pallets/operations", default-features = false }
+pallet-xvm = { path = "pallets/xvm", default-features = false }
+pallet-ethereum-checked = { path = "pallets/ethereum-checked", default-features = false }
 
 finality-aleph = { path = "crate/finality-aleph" }
 network-clique = { path = "crate/clique" }

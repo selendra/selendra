@@ -4,9 +4,6 @@
 //! [Substrate](https://github.com/paritytech/substrate) chain, but there are some unique to `selendra-node`,
 //! e.g. [`pallets::elections::ElectionsApi`].
 
-#![feature(auto_traits)]
-#![feature(negative_impls)]
-
 use std::str::FromStr;
 
 use anyhow::anyhow;
@@ -34,6 +31,9 @@ use crate::api::runtime_types::selendra_runtime::RuntimeCall as Call;
 #[doc(hidden)]
 mod selendra;
 
+/// Local primitives module containing type definitions for selendra-client
+pub mod primitives;
+
 mod connections;
 pub mod contract;
 /// API for pallets.
@@ -44,7 +44,7 @@ pub mod utility;
 /// Waiting for some events API.
 pub mod waiting;
 
-pub use ::primitives::*;
+pub use primitives::*;
 pub use selendra::api;
 pub use runtime_types::*;
 

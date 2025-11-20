@@ -23,6 +23,12 @@ use frame_support::traits::Get;
 /// EVM primitives.
 pub mod evm;
 
+/// XVM primitives.
+pub mod xvm;
+
+/// Ethereum checked primitives.
+pub mod ethereum_checked;
+
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"alp0");
 
 // Same as GRANDPA_ENGINE_ID because as of right now substrate sends only

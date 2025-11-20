@@ -1,14 +1,14 @@
 [package]
 name = "selendra_client"
-version = "3.16.0"
+version = "1.0.0"
 edition = "2021"
-authors = ["Cardinal"]
 documentation = "https://docs.rs/selendra_client"
 readme = "README.md"
 license = "Apache-2.0"
-homepage = "https://alephzero.org"
-repository = "https://github.com/Cardinal-Cryptography/aleph-node"
-description = "This crate provides a Rust application interface for submitting transactions to `aleph-node` chain."
+description = "This crate provides a Rust application interface for submitting transactions to `selendra-node` chain."
+repository = "https://github.com/selendra/selendra"
+keywords = ["blockchain", "substrate", "selendra", "web3"]
+categories = ["cryptography::cryptocurrencies", "api-bindings"]
 
 [dependencies]
 async-trait = "0.1.58"
@@ -24,8 +24,10 @@ subxt = { version = "0.30.1", features = ["substrate-compat"] }
 futures = "0.3.25"
 serde = { version = "1.0", features = ["derive"] }
 
-pallet-contracts = { git = "https://github.com/Cardinal-Cryptography/polkadot-sdk.git", branch = "aleph-v1.6.0" }
-primitives = { path = "../../primitives" }
+# Using pallet-contracts from crates.io
+# Note: Version 29.0.0 is compatible with ink! v4.3.0 and the current code structure
+# Versions 30+ may have breaking API changes
+pallet-contracts = "29.0.0"
 
 [dev-dependencies]
 tokio = "1.21"

@@ -3,7 +3,7 @@ name = "pallet-unified-accounts"
 version = "0.1.0"
 edition = "2021"
 description = "Pallet for mapping VM accounts with native accounts"
-authors.workspace = true
+authors = ["Stake Technologies <devops@stake.co.jp>"]
 homepage.workspace = true
 repository.workspace = true
 

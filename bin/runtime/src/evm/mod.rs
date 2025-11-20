@@ -139,3 +139,27 @@ impl pallet_dynamic_evm_base_fee::Config for Runtime {
 	type StepLimitRatio = StepLimitRatio;
 	type WeightInfo = pallet_dynamic_evm_base_fee::weights::SubstrateWeight<Runtime>;
 }
+
+parameter_types! {
+	/// Weight limit for checked transactions (user calls)
+	pub CheckedTxWeightLimit: Weight = Weight::from_parts(u64::MAX / 2, 0);
+	/// Weight limit for XVM transactions
+	pub XvmTxWeightLimit: Weight = Weight::from_parts(u64::MAX / 4, 0);
+}
+
+impl pallet_ethereum_checked::Config for Runtime {
+	type CheckedTxWeightLimit = CheckedTxWeightLimit;
+	type XvmTxWeightLimit = XvmTxWeightLimit;
+	type InvalidEvmTransactionError = pallet_ethereum::InvalidTransactionWrapper;
+	type ValidatedTransaction = pallet_ethereum::ValidatedTransaction<Self>;
+	type AddressMapper = crate::UnifiedAccounts;
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_ethereum_checked::weights::SubstrateWeight<Runtime>;
+}
+
+impl pallet_xvm::Config for Runtime {
+	type AddressMapper = crate::UnifiedAccounts;
+	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Runtime>;
+	type EthereumTransact = crate::EthereumChecked;
+	type WeightInfo = pallet_xvm::weights::SubstrateWeight<Runtime>;
+}
