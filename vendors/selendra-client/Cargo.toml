@@ -1,6 +1,6 @@
 [package]
 name = "selendra_client"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 documentation = "https://docs.rs/selendra_client"
 readme = "README.md"

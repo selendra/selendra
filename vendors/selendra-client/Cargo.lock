@@ -4269,7 +4269,7 @@ dependencies = [
 
 [[package]]
 name = "selendra_client"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "anyhow",
  "async-trait",
