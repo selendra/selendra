@@ -4,7 +4,6 @@ use pallet_session::SessionManager;
 use primitives::{AbftScoresProvider, EraManager, FinalityCommitteeManager, SessionCommittee};
 use rand::{prelude::SliceRandom, SeedableRng};
 use rand_pcg::Pcg32;
-use sp_runtime::traits::Get;
 use sp_staking::{EraIndex, SessionIndex};
 use sp_std::{marker::PhantomData, vec::Vec};
 
