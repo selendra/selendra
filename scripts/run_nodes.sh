@@ -274,6 +274,14 @@ validator_account_ids=(
   "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y"
 )
 
+# # Hardcoded list of addresses (must match or exceed VALIDATORS)
+# validator_account_ids=(
+#   "5G1MS9ewwQVJsQE8HRPeHLcxSRabQefq7eSAHXpPpq5noxZT"
+#   "5CGVrJDrC1Ey2wRwmH55dWXzLYab8yqtTFNX3oNuDoyDPVrb"
+#   "5CaSeVW9EEpZg6ktQMQAj1Jj6QnE7w8k3BgBTrgwcQQxBZWR"
+#   "5EeqTNH1DCJYmwbhNnCr2jnGeqH5WZ4G9SXVxPzDPfGV9mVH"
+# )
+
 # Check if there are enough addresses
 if [[ ${#validator_account_ids[@]} -lt ${VALIDATORS} ]]; then
   error "Not enough hardcoded validator account IDs for ${VALIDATORS} validators!"
