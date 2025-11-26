@@ -124,20 +124,20 @@ where
         }
 
         let SessionCommittee {
-            producers,
+            mut producers,
             finalizers,
         } = Pallet::<C>::rotate_committee(new_index)?;
         // Notify about elected next session finality committee
         C::FinalityCommitteeManager::on_next_session_finality_committee(finalizers);
 
-        // Prepare a list of all block authors for the next session. We shuffle to minimize
-        // the impact of slow producer on his followers.
-        let full_size = C::SessionPeriod::get() as usize;
-        let mut full_aura: Vec<_> = producers.into_iter().cycle().take(full_size).collect();
+        // Shuffle the order of producers to distribute block production more evenly
+        // and minimize the impact of slow producers on their followers
         let mut rng = Pcg32::seed_from_u64(new_index as u64);
-        full_aura.shuffle(&mut rng);
+        producers.shuffle(&mut rng);
 
-        Some(full_aura)
+        // Return the unique list of producers (validators)
+        // AURA will use this list in round-robin fashion based on the shuffled order
+        Some(producers)
     }
 
     fn end_session(end_index: SessionIndex) {
