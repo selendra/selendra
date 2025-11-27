@@ -8,20 +8,6 @@ license = "GPL-3.0-only"
 resolver = "2"
 
 members = [
-	"bin/minimal/node",
-	"bin/minimal/runtime",
-	"bin/node-template/node",
-	"bin/node-template/pallets/template",
-	"bin/node-template/runtime",
-	"bin/node/bench",
-	"bin/node/cli",
-	"bin/node/inspect",
-	"bin/node/primitives",
-	"bin/node/rpc",
-	"bin/node/runtime",
-	"bin/node/testing",
-	"bin/utils/chain-spec-builder",
-	"bin/utils/subkey",
 	"client/allocator",
 	"client/api",
 	"client/authority-discovery",
