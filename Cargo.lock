@@ -7009,7 +7009,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sp-weights",
- "staging-xcm",
 ]
 
 [[package]]
