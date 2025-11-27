@@ -44,8 +44,7 @@ use fp_evm::{
 use pallet_evm::{AddressMapping, GasWeightMapping};
 
 // `DecodeLimit` specifies the max depth a call can use when decoding, as unbounded depth
-// can be used to overflow the stack.
-// Default value is 8, which is the same as in XCM call decoding.
+// can be used to overflow the stack. Default value is 8
 pub struct Dispatch<T, DispatchValidator = (), DecodeLimit = ConstU32<8>> {
 	_marker: PhantomData<(T, DispatchValidator, DecodeLimit)>,
 }

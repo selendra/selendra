@@ -99,10 +99,6 @@ define_error_codes! {
 	EcdsaRecoveryFailed = 11,
 	/// sr25519 signature verification failed.
 	Sr25519VerifyFailed = 12,
-	/// The `xcm_execute` call failed.
-	XcmExecutionFailed = 13,
-	/// The `xcm_send` call failed.
-	XcmSendFailed = 14,
 }
 
 /// The raw return code returned by the host side.
