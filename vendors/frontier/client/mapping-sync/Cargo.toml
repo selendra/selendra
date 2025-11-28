@@ -47,7 +47,6 @@ substrate-test-runtime-client = { workspace = true }
 # Frontier
 fp-consensus = { workspace = true, features = ["default"] }
 fp-storage = { workspace = true, features = ["default"] }
-frontier-template-runtime = { workspace = true, features = ["default"] }
 
 [features]
 default = ["rocksdb"]

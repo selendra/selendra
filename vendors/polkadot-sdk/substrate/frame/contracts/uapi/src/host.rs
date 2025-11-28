@@ -774,44 +774,4 @@ pub trait HostFn {
 		note = "Unstable function. Behaviour can change without further notice. Use only for testing."
 	)]
 	fn weight_to_fee_v1(ref_time_limit: u64, proof_size_limit: u64, output: &mut &mut [u8]);
-
-	/// Execute an XCM program locally, using the contract's address as the origin.
-	/// This is equivalent to dispatching `pallet_xcm::execute` through call_runtime, except that
-	/// the function is called directly instead of being dispatched.
-	///
-	/// # Parameters
-	///
-	/// - `msg`: The message, should be decodable as a [VersionedXcm](https://paritytech.github.io/polkadot-sdk/master/staging_xcm/enum.VersionedXcm.html),
-	///   traps otherwise.
-	/// - `output`: A reference to the output data buffer to write the [Outcome](https://paritytech.github.io/polkadot-sdk/master/staging_xcm/v3/enum.Outcome.html)
-	///
-	/// # Return
-	///
-	/// Returns `Error::Success` when the XCM execution attempt is successful. When the XCM
-	/// execution fails, `ReturnCode::XcmExecutionFailed` is returned
-	#[deprecated(
-		note = "Unstable function. Behaviour can change without further notice. Use only for testing."
-	)]
-	fn xcm_execute(msg: &[u8], output: &mut &mut [u8]) -> Result;
-
-	/// Send an XCM program from the contract to the specified destination.
-	/// This is equivalent to dispatching `pallet_xcm::send` through `call_runtime`, except that
-	/// the function is called directly instead of being dispatched.
-	///
-	/// # Parameters
-	///
-	/// - `dest`: The XCM destination, should be decodable as [VersionedMultiLocation](https://paritytech.github.io/polkadot-sdk/master/staging_xcm/enum.VersionedMultiLocation.html),
-	///   traps otherwise.
-	/// - `msg`: The message, should be decodable as a [VersionedXcm](https://paritytech.github.io/polkadot-sdk/master/staging_xcm/enum.VersionedXcm.html),
-	///   traps otherwise.
-	/// - `output`: A reference to the output data buffer to write the [XcmHash](https://paritytech.github.io/polkadot-sdk/master/staging_xcm/v3/type.XcmHash.html)
-	///
-	/// # Return
-	///
-	/// Returns `ReturnCode::Success` when the message was successfully sent. When the XCM
-	/// execution fails, `ReturnErrorCode::XcmSendFailed` is returned.
-	#[deprecated(
-		note = "Unstable function. Behaviour can change without further notice. Use only for testing."
-	)]
-	fn xcm_send(dest: &[u8], msg: &[u8], output: &mut [u8; 32]) -> Result;
 }

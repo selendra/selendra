@@ -30,8 +30,6 @@ members = [
 	"primitives/evm",
 	"primitives/rpc",
 	"primitives/self-contained",
-	"template/node",
-	"template/runtime",
 	"precompiles",
 	"precompiles/macro",
 	"precompiles/tests-external",
@@ -187,8 +185,6 @@ pallet-evm-precompile-sha3fips = { version = "2.0.0-dev", path = "frame/evm/prec
 pallet-evm-precompile-simple = { version = "2.0.0-dev", path = "frame/evm/precompile/simple", default-features = false }
 pallet-evm-test-vector-support = { version = "1.0.0-dev", path = "frame/evm/test-vector-support" }
 pallet-hotfix-sufficients = { version = "1.0.0", path = "frame/hotfix-sufficients", default-features = false }
-# Frontier Template
-frontier-template-runtime = { path = "template/runtime", default-features = false }
 # Frontier Utility
 precompile-utils = { path = "precompiles", default-features = false }
 
@@ -206,79 +202,78 @@ codegen-units = 1
 
 [patch."https://github.com/Cardinal-Cryptography/polkadot-sdk.git"]
 # Substrate Client
-sc-basic-authorship = { path = "../polkadot-sdk/substrate/client/basic-authorship" }
-sc-block-builder = { path = "../polkadot-sdk/substrate/client/block-builder" }
-sc-chain-spec = { path = "../polkadot-sdk/substrate/client/chain-spec" }
-sc-cli = { path = "../polkadot-sdk/substrate/client/cli" }
-sc-client-api = { path = "../polkadot-sdk/substrate/client/api" }
-sc-client-db = { path = "../polkadot-sdk/substrate/client/db" }
-sc-consensus = { path = "../polkadot-sdk/substrate/client/consensus/common" }
-sc-consensus-aura = { path = "../polkadot-sdk/substrate/client/consensus/aura" }
-sc-consensus-grandpa = { path = "../polkadot-sdk/substrate/client/consensus/grandpa" }
-sc-consensus-manual-seal = { path = "../polkadot-sdk/substrate/client/consensus/manual-seal" }
-sc-executor = { path = "../polkadot-sdk/substrate/client/executor" }
-sc-keystore = { path = "../polkadot-sdk/substrate/client/keystore" }
-sc-network = { path = "../polkadot-sdk/substrate/client/network" }
-sc-network-common = { path = "../polkadot-sdk/substrate/client/network/common" }
-sc-network-sync = { path = "../polkadot-sdk/substrate/client/network/sync" }
-sc-offchain = { path = "../polkadot-sdk/substrate/client/offchain" }
-sc-rpc = { path = "../polkadot-sdk/substrate/client/rpc" }
-sc-rpc-api = { path = "../polkadot-sdk/substrate/client/rpc-api" }
-sc-service = { path = "../polkadot-sdk/substrate/client/service" }
-sc-telemetry = { path = "../polkadot-sdk/substrate/client/telemetry" }
-sc-transaction-pool = { path = "../polkadot-sdk/substrate/client/transaction-pool" }
-sc-transaction-pool-api = { path = "../polkadot-sdk/substrate/client/transaction-pool/api" }
-sc-utils = { path = "../polkadot-sdk/substrate/client/utils" }
+sc-basic-authorship = { path = "../substrate/client/basic-authorship" }
+sc-block-builder = { path = "../substrate/client/block-builder" }
+sc-chain-spec = { path = "../substrate/client/chain-spec" }
+sc-cli = { path = "../substrate/client/cli" }
+sc-client-api = { path = "../substrate/client/api" }
+sc-client-db = { path = "../substrate/client/db" }
+sc-consensus = { path = "../substrate/client/consensus/common" }
+sc-consensus-aura = { path = "../substrate/client/consensus/aura" }
+sc-consensus-grandpa = { path = "../substrate/client/consensus/grandpa" }
+sc-consensus-manual-seal = { path = "../substrate/client/consensus/manual-seal" }
+sc-executor = { path = "../substrate/client/executor" }
+sc-keystore = { path = "../substrate/client/keystore" }
+sc-network = { path = "../substrate/client/network" }
+sc-network-common = { path = "../substrate/client/network/common" }
+sc-network-sync = { path = "../substrate/client/network/sync" }
+sc-offchain = { path = "../substrate/client/offchain" }
+sc-rpc = { path = "../substrate/client/rpc" }
+sc-rpc-api = { path = "../substrate/client/rpc-api" }
+sc-service = { path = "../substrate/client/service" }
+sc-telemetry = { path = "../substrate/client/telemetry" }
+sc-transaction-pool = { path = "../substrate/client/transaction-pool" }
+sc-transaction-pool-api = { path = "../substrate/client/transaction-pool/api" }
+sc-utils = { path = "../substrate/client/utils" }
 
 # Substrate Primitive
-sp-api = { path = "../polkadot-sdk/substrate/primitives/api" }
-sp-block-builder = { path = "../polkadot-sdk/substrate/primitives/block-builder" }
-sp-blockchain = { path = "../polkadot-sdk/substrate/primitives/blockchain" }
-sp-consensus = { path = "../polkadot-sdk/substrate/primitives/consensus/common" }
-sp-consensus-aura = { path = "../polkadot-sdk/substrate/primitives/consensus/aura" }
-sp-consensus-grandpa = { path = "../polkadot-sdk/substrate/primitives/consensus/grandpa" }
-sp-core = { path = "../polkadot-sdk/substrate/primitives/core" }
-sp-core-hashing = { path = "../polkadot-sdk/substrate/primitives/core/hashing" }
-sp-core-hashing-proc-macro = { path = "../polkadot-sdk/substrate/primitives/core/hashing/proc-macro" }
-sp-database = { path = "../polkadot-sdk/substrate/primitives/database" }
-sp-externalities = { path = "../polkadot-sdk/substrate/primitives/externalities" }
-sp-genesis-builder = { path = "../polkadot-sdk/substrate/primitives/genesis-builder" }
-sp-inherents = { path = "../polkadot-sdk/substrate/primitives/inherents" }
-sp-io = { path = "../polkadot-sdk/substrate/primitives/io" }
-sp-keyring = { path = "../polkadot-sdk/substrate/primitives/keyring" }
-sp-offchain = { path = "../polkadot-sdk/substrate/primitives/offchain" }
-sp-runtime = { path = "../polkadot-sdk/substrate/primitives/runtime" }
-sp-runtime-interface = { path = "../polkadot-sdk/substrate/primitives/runtime-interface" }
-sp-session = { path = "../polkadot-sdk/substrate/primitives/session" }
-sp-state-machine = { path = "../polkadot-sdk/substrate/primitives/state-machine" }
-sp-std = { path = "../polkadot-sdk/substrate/primitives/std" }
-sp-storage = { path = "../polkadot-sdk/substrate/primitives/storage" }
-sp-timestamp = { path = "../polkadot-sdk/substrate/primitives/timestamp" }
-sp-transaction-pool = { path = "../polkadot-sdk/substrate/primitives/transaction-pool" }
-sp-version = { path = "../polkadot-sdk/substrate/primitives/version" }
-sp-weights = { path = "../polkadot-sdk/substrate/primitives/weights" }
+sp-api = { path = "../substrate/primitives/api" }
+sp-block-builder = { path = "../substrate/primitives/block-builder" }
+sp-blockchain = { path = "../substrate/primitives/blockchain" }
+sp-consensus = { path = "../substrate/primitives/consensus/common" }
+sp-consensus-aura = { path = "../substrate/primitives/consensus/aura" }
+sp-consensus-grandpa = { path = "../substrate/primitives/consensus/grandpa" }
+sp-core = { path = "../substrate/primitives/core" }
+sp-core-hashing = { path = "../substrate/primitives/core/hashing" }
+sp-core-hashing-proc-macro = { path = "../substrate/primitives/core/hashing/proc-macro" }
+sp-database = { path = "../substrate/primitives/database" }
+sp-externalities = { path = "../substrate/primitives/externalities" }
+sp-genesis-builder = { path = "../substrate/primitives/genesis-builder" }
+sp-inherents = { path = "../substrate/primitives/inherents" }
+sp-io = { path = "../substrate/primitives/io" }
+sp-keyring = { path = "../substrate/primitives/keyring" }
+sp-offchain = { path = "../substrate/primitives/offchain" }
+sp-runtime = { path = "../substrate/primitives/runtime" }
+sp-runtime-interface = { path = "../substrate/primitives/runtime-interface" }
+sp-session = { path = "../substrate/primitives/session" }
+sp-state-machine = { path = "../substrate/primitives/state-machine" }
+sp-std = { path = "../substrate/primitives/std" }
+sp-storage = { path = "../substrate/primitives/storage" }
+sp-timestamp = { path = "../substrate/primitives/timestamp" }
+sp-transaction-pool = { path = "../substrate/primitives/transaction-pool" }
+sp-version = { path = "../substrate/primitives/version" }
+sp-weights = { path = "../substrate/primitives/weights" }
 
 # Substrate FRAME
-frame-benchmarking = { path = "../polkadot-sdk/substrate/frame/benchmarking" }
-frame-executive = { path = "../polkadot-sdk/substrate/frame/executive" }
-frame-support = { path = "../polkadot-sdk/substrate/frame/support" }
-frame-system = { path = "../polkadot-sdk/substrate/frame/system" }
-frame-system-benchmarking = { path = "../polkadot-sdk/substrate/frame/system/benchmarking" }
-frame-system-rpc-runtime-api = { path = "../polkadot-sdk/substrate/frame/system/rpc/runtime-api" }
-pallet-aura = { path = "../polkadot-sdk/substrate/frame/aura" }
-pallet-balances = { path = "../polkadot-sdk/substrate/frame/balances" }
-pallet-grandpa = { path = "../polkadot-sdk/substrate/frame/grandpa" }
-pallet-sudo = { path = "../polkadot-sdk/substrate/frame/sudo" }
-pallet-timestamp = { path = "../polkadot-sdk/substrate/frame/timestamp" }
-pallet-transaction-payment = { path = "../polkadot-sdk/substrate/frame/transaction-payment" }
-pallet-transaction-payment-rpc = { path = "../polkadot-sdk/substrate/frame/transaction-payment/rpc" }
-pallet-transaction-payment-rpc-runtime-api = { path = "../polkadot-sdk/substrate/frame/transaction-payment/rpc/runtime-api" }
-pallet-utility = { path = "../polkadot-sdk/substrate/frame/utility" }
+frame-benchmarking = { path = "../substrate/frame/benchmarking" }
+frame-executive = { path = "../substrate/frame/executive" }
+frame-support = { path = "../substrate/frame/support" }
+frame-system = { path = "../substrate/frame/system" }
+frame-system-benchmarking = { path = "../substrate/frame/system/benchmarking" }
+frame-system-rpc-runtime-api = { path = "../substrate/frame/system/rpc/runtime-api" }
+pallet-aura = { path = "../substrate/frame/aura" }
+pallet-balances = { path = "../substrate/frame/balances" }
+pallet-sudo = { path = "../substrate/frame/sudo" }
+pallet-timestamp = { path = "../substrate/frame/timestamp" }
+pallet-transaction-payment = { path = "../substrate/frame/transaction-payment" }
+pallet-transaction-payment-rpc = { path = "../substrate/frame/transaction-payment/rpc" }
+pallet-transaction-payment-rpc-runtime-api = { path = "../substrate/frame/transaction-payment/rpc/runtime-api" }
+pallet-utility = { path = "../substrate/frame/utility" }
 
 # Substrate Utility
-frame-benchmarking-cli = { path = "../polkadot-sdk/substrate/utils/frame/benchmarking-cli" }
-prometheus-endpoint = { path = "../polkadot-sdk/substrate/utils/prometheus" }
-substrate-build-script-utils = { path = "../polkadot-sdk/substrate/utils/build-script-utils" }
-substrate-frame-rpc-system = { path = "../polkadot-sdk/substrate/utils/frame/rpc/system" }
-substrate-test-runtime-client = { path = "../polkadot-sdk/substrate/test-utils/runtime/client" }
-substrate-wasm-builder = { path = "../polkadot-sdk/substrate/utils/wasm-builder" }
+frame-benchmarking-cli = { path = "../substrate/utils/frame/benchmarking-cli" }
+substrate-prometheus-endpoint = { path = "../substrate/utils/prometheus" }
+substrate-build-script-utils = { path = "../substrate/utils/build-script-utils" }
+substrate-frame-rpc-system = { path = "../substrate/utils/frame/rpc/system" }
+substrate-test-runtime-client = { path = "../substrate/test-utils/runtime/client" }
+substrate-wasm-builder = { path = "../substrate/utils/wasm-builder" }

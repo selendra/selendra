@@ -224,8 +224,8 @@ where
 
 		let total_fee_per_gas = if is_transactional {
 			match (max_fee_per_gas, max_priority_fee_per_gas) {
-				// Zero max_fee_per_gas for validated transactional calls exist in XCM -> EVM
-				// because fees are already withdrawn in the xcm-executor.
+				// Zero max_fee_per_gas for validated transactional calls exist
+				// because fees are already withdrawn
 				(Some(max_fee), _) if max_fee.is_zero() => U256::zero(),
 				// With no tip, we pay exactly the base_fee
 				(Some(_), None) => base_fee,

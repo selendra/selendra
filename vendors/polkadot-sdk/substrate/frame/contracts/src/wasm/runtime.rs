@@ -42,7 +42,6 @@ use sp_runtime::{
 };
 use sp_std::{fmt, prelude::*};
 use wasmi::{core::HostError, errors::LinkerError, Linker, Memory, Store};
-use xcm::VersionedXcm;
 
 type CallOf<T> = <T as frame_system::Config>::RuntimeCall;
 
@@ -92,8 +91,6 @@ pub use pallet_contracts_uapi::ReturnErrorCode;
 parameter_types! {
 	/// Getter types used by [`crate::api_doc::Current::call_runtime`]
 	const CallRuntimeFailed: ReturnErrorCode = ReturnErrorCode::CallRuntimeFailed;
-	/// Getter types used by [`crate::api_doc::Current::xcm_execute`]
-	const XcmExecutionFailed: ReturnErrorCode = ReturnErrorCode::XcmExecutionFailed;
 }
 
 impl From<ExecReturnValue> for ReturnErrorCode {
@@ -388,29 +385,6 @@ impl CallType {
 /// the beginning of the API entry point.
 fn already_charged(_: u32) -> Option<RuntimeCosts> {
 	None
-}
-
-/// Ensure that the XCM program is executable, by checking that it does not contain any [`Transact`]
-/// instruction with a call that is not allowed by the CallFilter.
-fn ensure_executable<T: Config>(message: &VersionedXcm<CallOf<T>>) -> DispatchResult {
-	use frame_support::traits::Contains;
-	use xcm::prelude::{Transact, Xcm};
-
-	let mut message: Xcm<CallOf<T>> =
-		message.clone().try_into().map_err(|_| Error::<T>::XCMDecodeFailed)?;
-
-	message.iter_mut().try_for_each(|inst| -> DispatchResult {
-		let Transact { ref mut call, .. } = inst else { return Ok(()) };
-		let call = call.ensure_decoded().map_err(|_| Error::<T>::XCMDecodeFailed)?;
-
-		if !<T as Config>::CallFilter::contains(call) {
-			return Err(frame_system::Error::<T>::CallFiltered.into())
-		}
-
-		Ok(())
-	})?;
-
-	Ok(())
 }
 
 /// Can only be used for one call.
@@ -2118,83 +2092,6 @@ pub mod env {
 		ctx.call_dispatchable::<CallRuntimeFailed, _>(call.get_dispatch_info(), |ctx| {
 			ctx.ext.call_runtime(call)
 		})
-	}
-
-	/// Execute an XCM program locally, using the contract's address as the origin.
-	/// See [`pallet_contracts_uapi::HostFn::execute_xcm`].
-	#[unstable]
-	fn xcm_execute(
-		ctx: _,
-		memory: _,
-		msg_ptr: u32,
-		msg_len: u32,
-		output_ptr: u32,
-	) -> Result<ReturnErrorCode, TrapReason> {
-		use frame_support::dispatch::DispatchInfo;
-		use xcm::VersionedXcm;
-		use xcm_builder::{ExecuteController, ExecuteControllerWeightInfo};
-
-		ctx.charge_gas(RuntimeCosts::CopyFromContract(msg_len))?;
-		let message: VersionedXcm<CallOf<E::T>> =
-			ctx.read_sandbox_memory_as_unbounded(memory, msg_ptr, msg_len)?;
-
-		let execute_weight =
-			<<E::T as Config>::Xcm as ExecuteController<_, _>>::WeightInfo::execute();
-		let weight = ctx.ext.gas_meter().gas_left().max(execute_weight);
-		let dispatch_info = DispatchInfo { weight, ..Default::default() };
-
-		ensure_executable::<E::T>(&message)?;
-		ctx.call_dispatchable::<XcmExecutionFailed, _>(dispatch_info, |ctx| {
-			let origin = crate::RawOrigin::Signed(ctx.ext.address().clone()).into();
-			let outcome = <<E::T as Config>::Xcm>::execute(
-				origin,
-				Box::new(message),
-				weight.saturating_sub(execute_weight),
-			)?;
-
-			ctx.write_sandbox_memory(memory, output_ptr, &outcome.encode())?;
-			let pre_dispatch_weight =
-				<<E::T as Config>::Xcm as ExecuteController<_, _>>::WeightInfo::execute();
-			Ok(Some(outcome.weight_used().saturating_add(pre_dispatch_weight)).into())
-		})
-	}
-
-	/// Send an XCM program from the contract to the specified destination.
-	/// See [`pallet_contracts_uapi::HostFn::send_xcm`].
-	#[unstable]
-	fn xcm_send(
-		ctx: _,
-		memory: _,
-		dest_ptr: u32,
-		msg_ptr: u32,
-		msg_len: u32,
-		output_ptr: u32,
-	) -> Result<ReturnErrorCode, TrapReason> {
-		use xcm::{VersionedMultiLocation, VersionedXcm};
-		use xcm_builder::{SendController, SendControllerWeightInfo};
-
-		ctx.charge_gas(RuntimeCosts::CopyFromContract(msg_len))?;
-		let dest: VersionedMultiLocation = ctx.read_sandbox_memory_as(memory, dest_ptr)?;
-
-		let message: VersionedXcm<()> =
-			ctx.read_sandbox_memory_as_unbounded(memory, msg_ptr, msg_len)?;
-		let weight = <<E::T as Config>::Xcm as SendController<_>>::WeightInfo::send();
-		ctx.charge_gas(RuntimeCosts::CallRuntime(weight))?;
-		let origin = crate::RawOrigin::Signed(ctx.ext.address().clone()).into();
-
-		match <<E::T as Config>::Xcm>::send(origin, dest.into(), message.into()) {
-			Ok(message_id) => {
-				ctx.write_sandbox_memory(memory, output_ptr, &message_id.encode())?;
-				Ok(ReturnErrorCode::Success)
-			},
-			Err(e) => {
-				if ctx.ext.append_debug_buffer("") {
-					ctx.ext.append_debug_buffer("seal0::xcm_send failed with: ");
-					ctx.ext.append_debug_buffer(e.into());
-				};
-				Ok(ReturnErrorCode::XcmSendFailed)
-			},
-		}
 	}
 
 	/// Recovers the ECDSA public key from the given message hash and signature.
