@@ -283,7 +283,7 @@ mod sys {
 //     (v1) => [gas_left],
 // }
 // ```
-// 
+//
 // Expands to:
 // ```nocompile
 // fn gas_left(output: &mut &mut [u8]) {
@@ -808,18 +808,5 @@ impl HostFn for HostFnImpl {
 
 	fn reentrance_count() -> u32 {
 		unsafe { sys::reentrance_count() }
-	}
-
-	fn xcm_execute(msg: &[u8], output: &mut &mut [u8]) -> Result {
-		let ret_code =
-			unsafe { sys::xcm_execute(msg.as_ptr(), msg.len() as _, output.as_mut_ptr()) };
-		ret_code.into()
-	}
-
-	fn xcm_send(dest: &[u8], msg: &[u8], output: &mut [u8; 32]) -> Result {
-		let ret_code = unsafe {
-			sys::xcm_send(dest.as_ptr(), msg.as_ptr(), msg.len() as _, output.as_mut_ptr())
-		};
-		ret_code.into()
 	}
 }
