@@ -58,7 +58,7 @@ parameter_types! {
 	);
 	pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
 	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, 0);
-	pub ChainId: u64 = 1961;
+	pub ChainId: u64 = 1953;
 	/// The amount of gas per storage (in bytes): BLOCK_GAS_LIMIT / BLOCK_STORAGE_LIMIT
 	/// The current definition of BLOCK_STORAGE_LIMIT is 160 KB, resulting in a value of 400.
 	pub GasLimitStorageGrowthRatio: u64 = 400;

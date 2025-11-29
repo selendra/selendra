@@ -324,6 +324,7 @@ if [[ -z "${DONT_BOOTSTRAP}" ]]; then
   "${CHAINSPEC_GENERATOR}" bootstrap-chain \
     --raw \
     --base-path "${BASE_PATH}" \
+    --token-symbol "tSEL" \
     --account-ids "${all_account_ids_string}" \
     --authorities-account-ids "${validator_ids_string}" \
     --chain-type local > "${BASE_PATH}/chainspec.json" \
