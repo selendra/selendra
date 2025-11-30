@@ -1,4 +1,4 @@
-T#!/usr/bin/env bash
+#!/usr/bin/env bash
 
 # Add signal handling for graceful shutdown
 trap 'kill $(jobs -p); exit 0' SIGTERM SIGINT
