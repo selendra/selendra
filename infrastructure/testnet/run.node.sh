@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+T#!/usr/bin/env bash
 
 # Add signal handling for graceful shutdown
 trap 'kill $(jobs -p); exit 0' SIGTERM SIGINT
@@ -349,7 +349,7 @@ if [[ -z "${DONT_BOOTSTRAP}" ]]; then
     --chain-type live \
     --chain-id "selendra-testnet" \
     --chain-name "Selendra Testnet" \
-    --token-symbol "SEL" \
+    --token-symbol "tSEL" \
     --sudo-account-id "${sudo_account_id}" \
     --rich-account-ids "${validator_ids_string}" \
     --finality-version "${FINALITY_VERSION}" > "${BASE_PATH}/chainspec.json"
