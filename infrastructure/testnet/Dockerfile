@@ -9,10 +9,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Download pre-built binaries
-RUN curl -L https://github.com/selendra/selendra/releases/download/v2.0.2/selendra-node -o /tmp/selendra-node && \
+RUN curl -L https://github.com/selendra/selendra/releases/download/2.0.6/selendra-testnet -o /tmp/selendra-node && \
     chmod +x /tmp/selendra-node
 
-RUN curl -L https://github.com/selendra/selendra/releases/download/v2.0.2/chain-bootstrapper -o /tmp/chain-bootstrapper && \
+RUN curl -L https://github.com/selendra/selendra/releases/download/2.0.6/chain-bootstrapper -o /tmp/chain-bootstrapper && \
     chmod +x /tmp/chain-bootstrapper
 
 # Runtime stage
