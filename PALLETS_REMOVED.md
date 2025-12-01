@@ -6,7 +6,7 @@
 - **Removed from compilation**: ~39 pallets
 
 ## What This Means
-The removed pallets still exist on disk in `vendors/polkadot-sdk/substrate/frame/` but they are **NOT included** in the workspace's `Cargo.toml`. This means:
+The removed pallets still exist on disk in `vendors/substrate/frame/` but they are **NOT included** in the workspace's `Cargo.toml`. This means:
 - ✅ They won't be compiled when you run `cargo build`
 - ✅ They won't be checked when you run `cargo check`
 - ✅ Faster build times

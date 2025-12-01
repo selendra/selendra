@@ -44,7 +44,7 @@ kvdb-rocksdb = "0.19.0"
 rand = "0.8.5"
 tempfile = "3.1.0"
 quickcheck = { version = "1.0.3", default-features = false }
-selendra-runtime = { path = "../../../../../bin/runtime" }
+selendra-runtime = { path = "../../../../bin/runtime" }
 sp-tracing = { path = "../../primitives/tracing" }
 substrate-test-runtime-client = { path = "../../test-utils/runtime/client" }
 array-bytes = "6.1"
