@@ -62,10 +62,7 @@ pallet-contracts-fixtures = { path = "./fixtures" }
 # Substrate Dependencies
 pallet-balances = { path = "../balances" }
 pallet-timestamp = { path = "../timestamp" }
-pallet-message-queue = { path = "../message-queue" }
-pallet-insecure-randomness-collective-flip = { path = "../insecure-randomness-collective-flip" }
 pallet-utility = { path = "../utility" }
-pallet-assets = { path = "../assets" }
 pallet-proxy = { path = "../proxy" }
 sp-keystore = { path = "../../primitives/keystore" }
 sp-tracing = { path = "../../primitives/tracing" }
@@ -81,7 +78,6 @@ std = [
 	"log/std",
 	"pallet-balances?/std",
 	"pallet-contracts-proc-macro/full",
-	"pallet-insecure-randomness-collective-flip/std",
 	"pallet-proxy/std",
 	"pallet-timestamp/std",
 	"pallet-utility/std",
@@ -101,9 +97,7 @@ runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
-	"pallet-assets/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
-	"pallet-message-queue/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
@@ -115,10 +109,7 @@ runtime-benchmarks = [
 try-runtime = [
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",
-	"pallet-assets/try-runtime",
 	"pallet-balances/try-runtime",
-	"pallet-insecure-randomness-collective-flip/try-runtime",
-	"pallet-message-queue/try-runtime",
 	"pallet-proxy/try-runtime",
 	"pallet-timestamp/try-runtime",
 	"pallet-utility/try-runtime",

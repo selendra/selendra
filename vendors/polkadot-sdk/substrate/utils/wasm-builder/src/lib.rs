@@ -95,7 +95,7 @@
 //!
 //! Each project can be skipped individually by using the environment variable
 //! `SKIP_PROJECT_NAME_WASM_BUILD`. Where `PROJECT_NAME` needs to be replaced by the name of the
-//! cargo project, e.g. `kitchensink-runtime` will be `NODE_RUNTIME`.
+//! cargo project, e.g. `selendra-runtime` will be `NODE_RUNTIME`.
 //!
 //! ## Prerequisites:
 //!

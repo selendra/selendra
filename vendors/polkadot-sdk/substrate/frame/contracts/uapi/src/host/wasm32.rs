@@ -16,6 +16,7 @@ use super::{
 };
 use crate::{ReturnCode, ReturnFlags};
 
+#[allow(dead_code)]
 mod sys {
 	use super::ReturnCode;
 
@@ -160,8 +161,10 @@ mod sys {
 
 		pub fn weight_to_fee(gas: u64, output_ptr: *mut u8, output_len_ptr: *mut u32);
 
+		#[allow(dead_code)]
 		pub fn xcm_execute(msg_ptr: *const u8, msg_len: u32, output_ptr: *mut u8) -> ReturnCode;
 
+		#[allow(dead_code)]
 		pub fn xcm_send(
 			dest_ptr: *const u8,
 			msg_ptr: *const u8,

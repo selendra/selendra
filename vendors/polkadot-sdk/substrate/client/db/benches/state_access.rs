@@ -44,7 +44,7 @@ fn insert_blocks(db: &Backend<Block>, storage: Vec<(Vec<u8>, Vec<u8>)>) -> H256 
 			Storage {
 				top: vec![(
 					sp_core::storage::well_known_keys::CODE.to_vec(),
-					kitchensink_runtime::wasm_binary_unwrap().to_vec(),
+					selendra_runtime::wasm_binary_unwrap().to_vec(),
 				)]
 				.into_iter()
 				.collect(),
