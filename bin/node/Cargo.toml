@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node"
-version = "2.0.2"
+version = "2.0.7"
 build = "build.rs"
 license = "GPL-3.0-or-later"
 authors.workspace = true
