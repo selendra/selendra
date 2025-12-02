@@ -1,7 +1,0 @@
-error: failed to resolve patches for `https://github.com/paritytech/polkadot-sdk`
-
-Caused by:
-  patch for `prometheus-endpoint` in `https://github.com/paritytech/polkadot-sdk` failed to resolve
-
-Caused by:
-  The patch location `/home/msi/Project/selendra/vendors/polkadot-sdk/substrate/utils/prometheus` does not appear to contain any packages matching the name `prometheus-endpoint`.
