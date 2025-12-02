@@ -4,10 +4,8 @@ use sp_core::{Hasher, H256};
 use sp_runtime::traits::UniqueSaturatedInto;
 use core::marker::PhantomData;
 use frame_support::traits::{
-    fungible::{Balanced, Inspect, Credit},
-    OnUnbalanced,
+    Currency, Imbalance, OnUnbalanced,
 };
-use fp_evm::AccountProvider;
 use pallet_evm::{OnChargeEVMTransaction, HashedAddressMapping, AddressMapping};
 use ethereum_types::U256;
 use crate::AccountId;
@@ -93,34 +91,41 @@ impl<Address> UnifiedAddress<Address> {
     }
 }
 
-/// Wrapper around the `EvmFungibleAdapter` from the `pallet-evm`.
+/// Wrapper around the `EVMCurrencyAdapter` from the `pallet-evm`.
 ///
 /// While it provides most of the functionality we need,
 /// it doesn't allow the tip to be deposited into an arbitrary account.
 /// This adapter allows us to do that.
 ///
-/// Two separate `OnUnbalanced` handers are used:
-/// - `UOF` for the fee
-/// - `OUT` for the tip
-pub struct EVMFungibleAdapterWrapper<F, FeeHandler, TipHandler>(
-    core::marker::PhantomData<(F, FeeHandler, TipHandler)>,
+/// Two separate `OnUnbalanced` handlers are used:
+/// - `FeeHandler` for the fee
+/// - `TipHandler` for the tip
+pub struct EVMCurrencyAdapterWrapper<C, FeeHandler, TipHandler>(
+    core::marker::PhantomData<(C, FeeHandler, TipHandler)>,
 );
-impl<T, F, FeeHandler, TipHandler> OnChargeEVMTransaction<T>
-    for EVMFungibleAdapterWrapper<F, FeeHandler, TipHandler>
+
+impl<T, C, FeeHandler, TipHandler> OnChargeEVMTransaction<T>
+    for EVMCurrencyAdapterWrapper<C, FeeHandler, TipHandler>
 where
     T: pallet_evm::Config,
-    F: Balanced<<T::AccountProvider as AccountProvider>::AccountId>,
-    FeeHandler: OnUnbalanced<Credit<<T::AccountProvider as AccountProvider>::AccountId, F>>,
-    TipHandler: OnUnbalanced<Credit<<T::AccountProvider as AccountProvider>::AccountId, F>>,
-    U256: UniqueSaturatedInto<
-        <F as Inspect<<T::AccountProvider as AccountProvider>::AccountId>>::Balance,
+    C: Currency<<T as frame_system::Config>::AccountId>,
+    C::PositiveImbalance: Imbalance<
+        <C as Currency<<T as frame_system::Config>::AccountId>>::Balance,
+        Opposite = C::NegativeImbalance,
     >,
+    C::NegativeImbalance: Imbalance<
+        <C as Currency<<T as frame_system::Config>::AccountId>>::Balance,
+        Opposite = C::PositiveImbalance,
+    >,
+    FeeHandler: OnUnbalanced<C::NegativeImbalance>,
+    TipHandler: OnUnbalanced<C::NegativeImbalance>,
+    U256: UniqueSaturatedInto<<C as Currency<<T as frame_system::Config>::AccountId>>::Balance>,
 {
     // Kept type as Option to satisfy bound of Default
-    type LiquidityInfo = Option<Credit<<T::AccountProvider as AccountProvider>::AccountId, F>>;
+    type LiquidityInfo = Option<C::NegativeImbalance>;
 
     fn withdraw_fee(who: &EvmAddress, fee: U256) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
-        pallet_evm::EVMFungibleAdapter::<F, FeeHandler>::withdraw_fee(who, fee)
+        pallet_evm::EVMCurrencyAdapter::<C, FeeHandler>::withdraw_fee(who, fee)
     }
 
     fn correct_and_deposit_fee(
@@ -129,7 +134,7 @@ where
         base_fee: U256,
         already_withdrawn: Self::LiquidityInfo,
     ) -> Self::LiquidityInfo {
-        <pallet_evm::EVMFungibleAdapter::<F, FeeHandler> as OnChargeEVMTransaction<T>>::correct_and_deposit_fee(
+        <pallet_evm::EVMCurrencyAdapter::<C, FeeHandler> as OnChargeEVMTransaction<T>>::correct_and_deposit_fee(
             who,
             corrected_fee,
             base_fee,

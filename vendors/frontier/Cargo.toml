@@ -1,0 +1,293 @@
+[workspace]
+members = [
+	"frame/base-fee",
+	"frame/dynamic-fee",
+	"frame/ethereum",
+	"frame/evm",
+	"frame/evm-chain-id",
+	"frame/hotfix-sufficients",
+	"frame/evm/precompile/sha3fips",
+	"frame/evm/precompile/simple",
+	"frame/evm/precompile/modexp",
+	"frame/evm/precompile/ed25519",
+	"frame/evm/precompile/bn128",
+	"frame/evm/precompile/blake2",
+	"frame/evm/precompile/bw6761",
+	"frame/evm/precompile/bls12377",
+	"frame/evm/precompile/bls12381",
+	"frame/evm/precompile/dispatch",
+	"frame/evm/precompile/curve25519",
+	"client/api",
+	"client/consensus",
+	"client/rpc-core",
+	"client/rpc",
+	"client/db",
+	"client/storage",
+	"client/mapping-sync",
+	"primitives/account",
+	"primitives/consensus",
+	"primitives/dynamic-fee",
+	"primitives/evm",
+	"primitives/rpc",
+	"primitives/self-contained",
+	"precompiles",
+	"precompiles/macro",
+	"precompiles/tests-external",
+]
+resolver = "2"
+
+[workspace.package]
+authors = ["Parity Technologies <admin@parity.io>"]
+edition = "2021"
+repository = "https://github.com/paritytech/frontier/"
+
+[workspace.dependencies]
+async-trait = "0.1"
+bn = { package = "substrate-bn", version = "0.6", default-features = false }
+clap = { version = "4.5", features = ["derive", "deprecated"] }
+derive_more = "0.99"
+environmental = { version = "1.1.4", default-features = false }
+ethereum = { version = "0.15.0", default-features = false }
+ethereum-types = { version = "0.14.1", default-features = false }
+evm = { version = "0.41.1", default-features = false }
+futures = "0.3.30"
+getrandom = { version = "0.2", default-features = false }
+hash-db = { version = "0.16.0", default-features = false }
+hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
+hex-literal = "0.4.1"
+impl-serde = { version = "0.4.0", default-features = false }
+impl-trait-for-tuples = "0.2.1"
+jsonrpsee = "0.20.3"
+kvdb-rocksdb = "0.19.0"
+libsecp256k1 = { version = "0.7.1", default-features = false }
+log = { version = "0.4.20", default-features = false }
+num_enum = { version = "0.7.2", default-features = false }
+parity-db = "0.4.12"
+parking_lot = "0.12.1"
+rlp = { version = "0.5.2", default-features = false }
+scale-codec = { package = "parity-scale-codec", version = "3.6.4", default-features = false, features = ["derive"] }
+scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+serde_json = "1.0"
+similar-asserts = "1.5.0"
+sqlx = { version = "0.7.3", default-features = false, features = ["macros"] }
+thiserror = "1.0"
+tokio = "1.36.0"
+
+sc-basic-authorship = { path = "../polkadot-sdk/substrate/client/basic-authorship", default-features = false }
+sc-block-builder = { path = "../polkadot-sdk/substrate/client/block-builder", default-features = false }
+sc-chain-spec = { path = "../polkadot-sdk/substrate/client/chain-spec", default-features = false }
+sc-cli = { path = "../polkadot-sdk/substrate/client/cli", default-features = false }
+sc-client-api = { path = "../polkadot-sdk/substrate/client/api", default-features = false }
+sc-client-db = { path = "../polkadot-sdk/substrate/client/db", default-features = false }
+sc-consensus = { path = "../polkadot-sdk/substrate/client/consensus/common", default-features = false }
+sc-consensus-aura = { path = "../polkadot-sdk/substrate/client/consensus/aura", default-features = false }
+sc-consensus-grandpa = { path = "../polkadot-sdk/substrate/client/consensus/grandpa", default-features = false }
+sc-consensus-manual-seal = { path = "../polkadot-sdk/substrate/client/consensus/manual-seal", default-features = false }
+sc-executor = { path = "../polkadot-sdk/substrate/client/executor", default-features = false }
+sc-keystore = { path = "../polkadot-sdk/substrate/client/keystore", default-features = false }
+sc-network = { path = "../polkadot-sdk/substrate/client/network", default-features = false }
+sc-network-common = { path = "../polkadot-sdk/substrate/client/network/common", default-features = false }
+sc-network-sync = { path = "../polkadot-sdk/substrate/client/network/sync", default-features = false }
+sc-offchain = { path = "../polkadot-sdk/substrate/client/offchain", default-features = false }
+sc-rpc = { path = "../polkadot-sdk/substrate/client/rpc", default-features = false }
+sc-rpc-api = { path = "../polkadot-sdk/substrate/client/rpc-api", default-features = false }
+sc-service = { path = "../polkadot-sdk/substrate/client/service", default-features = false }
+sc-telemetry = { path = "../polkadot-sdk/substrate/client/telemetry", default-features = false }
+sc-transaction-pool = { path = "../polkadot-sdk/substrate/client/transaction-pool", default-features = false }
+sc-transaction-pool-api = { path = "../polkadot-sdk/substrate/client/transaction-pool/api", default-features = false }
+sc-utils = { path = "../polkadot-sdk/substrate/client/utils", default-features = false }
+
+# Primitives
+sp-api = { path = "../polkadot-sdk/substrate/primitives/api", default-features = false }
+sp-block-builder = { path = "../polkadot-sdk/substrate/primitives/block-builder", default-features = false }
+sp-blockchain = { path = "../polkadot-sdk/substrate/primitives/blockchain", default-features = false }
+sp-consensus = { path = "../polkadot-sdk/substrate/primitives/consensus/common", default-features = false }
+sp-consensus-aura = { path = "../polkadot-sdk/substrate/primitives/consensus/aura", default-features = false }
+sp-consensus-grandpa = { path = "../polkadot-sdk/substrate/primitives/consensus/grandpa", default-features = false }
+sp-core = { path = "../polkadot-sdk/substrate/primitives/core", default-features = false }
+sp-core-hashing = { path = "../polkadot-sdk/substrate/deprecated/hashing", default-features = false }
+sp-core-hashing-proc-macro = { path = "../polkadot-sdk/substrate/deprecated/hashing/proc-macro", default-features = false }
+sp-database = { path = "../polkadot-sdk/substrate/primitives/database", default-features = false }
+sp-externalities = { path = "../polkadot-sdk/substrate/primitives/externalities", default-features = false }
+sp-genesis-builder = { path = "../polkadot-sdk/substrate/primitives/genesis-builder", default-features = false }
+sp-inherents = { path = "../polkadot-sdk/substrate/primitives/inherents", default-features = false }
+sp-io = { path = "../polkadot-sdk/substrate/primitives/io", default-features = false }
+sp-keyring = { path = "../polkadot-sdk/substrate/primitives/keyring", default-features = false }
+sp-offchain = { path = "../polkadot-sdk/substrate/primitives/offchain", default-features = false }
+sp-runtime = { path = "../polkadot-sdk/substrate/primitives/runtime", default-features = false }
+sp-runtime-interface = { path = "../polkadot-sdk/substrate/primitives/runtime-interface", default-features = false }
+sp-session = { path = "../polkadot-sdk/substrate/primitives/session", default-features = false }
+sp-state-machine = { path = "../polkadot-sdk/substrate/primitives/state-machine", default-features = false }
+sp-std = { path = "../polkadot-sdk/substrate/primitives/std", default-features = false }
+sp-storage = { path = "../polkadot-sdk/substrate/primitives/storage", default-features = false }
+sp-timestamp = { path = "../polkadot-sdk/substrate/primitives/timestamp", default-features = false }
+sp-transaction-pool = { path = "../polkadot-sdk/substrate/primitives/transaction-pool", default-features = false }
+sp-version = { path = "../polkadot-sdk/substrate/primitives/version", default-features = false }
+sp-weights = { path = "../polkadot-sdk/substrate/primitives/weights", default-features = false }
+
+# FRAME
+frame-benchmarking = { path = "../polkadot-sdk/substrate/frame/benchmarking", default-features = false }
+frame-executive = { path = "../polkadot-sdk/substrate/frame/executive", default-features = false }
+frame-support = { path = "../polkadot-sdk/substrate/frame/support", default-features = false }
+frame-system = { path = "../polkadot-sdk/substrate/frame/system", default-features = false }
+frame-system-benchmarking = { path = "../polkadot-sdk/substrate/frame/system/benchmarking", default-features = false }
+frame-system-rpc-runtime-api = { path = "../polkadot-sdk/substrate/frame/system/rpc/runtime-api", default-features = false }
+pallet-aura = { path = "../polkadot-sdk/substrate/frame/aura", default-features = false }
+pallet-balances = { path = "../polkadot-sdk/substrate/frame/balances", default-features = false }
+pallet-grandpa = { path = "../polkadot-sdk/substrate/frame/grandpa", default-features = false }
+pallet-sudo = { path = "../polkadot-sdk/substrate/frame/sudo", default-features = false }
+pallet-timestamp = { path = "../polkadot-sdk/substrate/frame/timestamp", default-features = false }
+pallet-transaction-payment = { path = "../polkadot-sdk/substrate/frame/transaction-payment", default-features = false }
+pallet-transaction-payment-rpc = { path = "../polkadot-sdk/substrate/frame/transaction-payment/rpc", default-features = false }
+pallet-transaction-payment-rpc-runtime-api = { path = "../polkadot-sdk/substrate/frame/transaction-payment/rpc/runtime-api", default-features = false }
+pallet-utility = { path = "../polkadot-sdk/substrate/frame/utility", default-features = false }
+
+# Utilities
+frame-benchmarking-cli = { path = "../polkadot-sdk/substrate/utils/frame/benchmarking-cli", default-features = false }
+substrate-prometheus-endpoint = { path = "../polkadot-sdk/substrate/utils/prometheus", default-features = false }
+substrate-build-script-utils = { path = "../polkadot-sdk/substrate/utils/build-script-utils", default-features = false }
+substrate-frame-rpc-system = { path = "../polkadot-sdk/substrate/utils/frame/rpc/system", default-features = false }
+substrate-test-runtime-client = { path = "../polkadot-sdk/substrate/test-utils/runtime/client", default-features = false }
+substrate-wasm-builder = { path = "../polkadot-sdk/substrate/utils/wasm-builder", default-features = false }
+
+# XCM
+xcm = { package = "staging-xcm", path = "../polkadot-sdk/polkadot/xcm", default-features = false }
+
+
+# Arkworks
+ark-bls12-377 = { version = "0.4.0", default-features = false, features = ["curve"] }
+ark-bls12-381 = { version = "0.4.0", default-features = false, features = ["curve"] }
+ark-bw6-761 = { version = "0.4.0", default-features = false }
+ark-ec = { version = "0.4.0", default-features = false }
+ark-ff = { version = "0.4.0", default-features = false }
+ark-std = { version = "0.4.0", default-features = false }
+
+# Frontier Client
+fc-api = { version = "1.0.0-dev", path = "client/api", default-features = false }
+fc-cli = { version = "1.0.0-dev", path = "client/cli", default-features = false }
+fc-consensus = { version = "2.0.0-dev", path = "client/consensus", default-features = false }
+fc-db = { version = "2.0.0-dev", path = "client/db", default-features = false }
+fc-mapping-sync = { version = "2.0.0-dev", path = "client/mapping-sync", default-features = false }
+fc-rpc = { version = "2.0.0-dev", path = "client/rpc", default-features = false }
+fc-rpc-core = { version = "1.1.0-dev", path = "client/rpc-core", default-features = false }
+fc-storage = { version = "1.0.0-dev", path = "client/storage", default-features = false }
+# Frontier Primitive
+fp-account = { version = "1.0.0-dev", path = "primitives/account", default-features = false }
+fp-consensus = { version = "2.0.0-dev", path = "primitives/consensus", default-features = false }
+fp-dynamic-fee = { version = "1.0.0", path = "primitives/dynamic-fee", default-features = false }
+fp-ethereum = { version = "1.0.0-dev", path = "primitives/ethereum", default-features = false }
+fp-evm = { version = "3.0.0-dev", path = "primitives/evm", default-features = false }
+fp-rpc = { version = "3.0.0-dev", path = "primitives/rpc", default-features = false }
+fp-self-contained = { version = "1.0.0-dev", path = "primitives/self-contained", default-features = false }
+fp-storage = { version = "2.0.0", path = "primitives/storage", default-features = false }
+# Frontier FRAME
+pallet-base-fee = { version = "1.0.0", path = "frame/base-fee", default-features = false }
+pallet-dynamic-fee = { version = "4.0.0-dev", path = "frame/dynamic-fee", default-features = false }
+pallet-ethereum = { version = "4.0.0-dev", path = "frame/ethereum", default-features = false }
+pallet-evm = { version = "6.0.0-dev", path = "frame/evm", default-features = false }
+pallet-evm-chain-id = { version = "1.0.0-dev", path = "frame/evm-chain-id", default-features = false }
+pallet-evm-precompile-modexp = { version = "2.0.0-dev", path = "frame/evm/precompile/modexp", default-features = false }
+pallet-evm-precompile-sha3fips = { version = "2.0.0-dev", path = "frame/evm/precompile/sha3fips", default-features = false }
+pallet-evm-precompile-simple = { version = "2.0.0-dev", path = "frame/evm/precompile/simple", default-features = false }
+pallet-evm-test-vector-support = { version = "1.0.0-dev", path = "frame/evm/test-vector-support", default-features = false }
+pallet-hotfix-sufficients = { version = "1.0.0", path = "frame/hotfix-sufficients", default-features = false }
+
+precompile-utils = { path = "precompiles", default-features = false }
+
+[profile.release]
+# Substrate runtime requires unwinding.
+panic = "unwind"
+
+[profile.production]
+inherits = "release"
+# Sacrifice compile speed for execution speed by using optimization flags:
+# https://doc.rust-lang.org/rustc/linker-plugin-lto.html
+lto = true
+# https://doc.rust-lang.org/rustc/codegen-options/index.html#codegen-units
+codegen-units = 1
+
+# Override Substrate (polkadot-sdk) git dependencies to use local paths when
+# building Frontier as a standalone workspace. This keeps resolution portable
+# and ensures we use the checked-out SDK under `vendors/polkadot-sdk`.
+[patch."https://github.com/paritytech/polkadot-sdk"]
+# Client crates
+sc-basic-authorship = { path = "../polkadot-sdk/substrate/client/basic-authorship" }
+sc-block-builder = { path = "../polkadot-sdk/substrate/client/block-builder" }
+sc-chain-spec = { path = "../polkadot-sdk/substrate/client/chain-spec" }
+sc-cli = { path = "../polkadot-sdk/substrate/client/cli" }
+sc-client-api = { path = "../polkadot-sdk/substrate/client/api" }
+sc-client-db = { path = "../polkadot-sdk/substrate/client/db" }
+sc-consensus = { path = "../polkadot-sdk/substrate/client/consensus/common" }
+sc-consensus-aura = { path = "../polkadot-sdk/substrate/client/consensus/aura" }
+sc-consensus-grandpa = { path = "../polkadot-sdk/substrate/client/consensus/grandpa" }
+sc-consensus-manual-seal = { path = "../polkadot-sdk/substrate/client/consensus/manual-seal" }
+sc-executor = { path = "../polkadot-sdk/substrate/client/executor" }
+sc-keystore = { path = "../polkadot-sdk/substrate/client/keystore" }
+sc-network = { path = "../polkadot-sdk/substrate/client/network" }
+sc-network-common = { path = "../polkadot-sdk/substrate/client/network/common" }
+sc-network-sync = { path = "../polkadot-sdk/substrate/client/network/sync" }
+sc-offchain = { path = "../polkadot-sdk/substrate/client/offchain" }
+sc-rpc = { path = "../polkadot-sdk/substrate/client/rpc" }
+sc-rpc-api = { path = "../polkadot-sdk/substrate/client/rpc-api" }
+sc-service = { path = "../polkadot-sdk/substrate/client/service" }
+sc-telemetry = { path = "../polkadot-sdk/substrate/client/telemetry" }
+sc-transaction-pool = { path = "../polkadot-sdk/substrate/client/transaction-pool" }
+sc-transaction-pool-api = { path = "../polkadot-sdk/substrate/client/transaction-pool/api" }
+sc-utils = { path = "../polkadot-sdk/substrate/client/utils" }
+
+# Primitives
+sp-api = { path = "../polkadot-sdk/substrate/primitives/api" }
+sp-block-builder = { path = "../polkadot-sdk/substrate/primitives/block-builder" }
+sp-blockchain = { path = "../polkadot-sdk/substrate/primitives/blockchain" }
+sp-consensus = { path = "../polkadot-sdk/substrate/primitives/consensus/common" }
+sp-consensus-aura = { path = "../polkadot-sdk/substrate/primitives/consensus/aura" }
+sp-consensus-grandpa = { path = "../polkadot-sdk/substrate/primitives/consensus/grandpa" }
+sp-core = { path = "../polkadot-sdk/substrate/primitives/core" }
+sp-core-hashing = { path = "../polkadot-sdk/substrate/deprecated/hashing" }
+sp-core-hashing-proc-macro = { path = "../polkadot-sdk/substrate/deprecated/hashing/proc-macro" }
+sp-database = { path = "../polkadot-sdk/substrate/primitives/database" }
+sp-externalities = { path = "../polkadot-sdk/substrate/primitives/externalities" }
+sp-genesis-builder = { path = "../polkadot-sdk/substrate/primitives/genesis-builder" }
+sp-inherents = { path = "../polkadot-sdk/substrate/primitives/inherents" }
+sp-io = { path = "../polkadot-sdk/substrate/primitives/io" }
+sp-keyring = { path = "../polkadot-sdk/substrate/primitives/keyring" }
+sp-offchain = { path = "../polkadot-sdk/substrate/primitives/offchain" }
+sp-runtime = { path = "../polkadot-sdk/substrate/primitives/runtime" }
+sp-runtime-interface = { path = "../polkadot-sdk/substrate/primitives/runtime-interface" }
+sp-session = { path = "../polkadot-sdk/substrate/primitives/session" }
+sp-state-machine = { path = "../polkadot-sdk/substrate/primitives/state-machine" }
+sp-std = { path = "../polkadot-sdk/substrate/primitives/std" }
+sp-storage = { path = "../polkadot-sdk/substrate/primitives/storage" }
+sp-timestamp = { path = "../polkadot-sdk/substrate/primitives/timestamp" }
+sp-transaction-pool = { path = "../polkadot-sdk/substrate/primitives/transaction-pool" }
+sp-version = { path = "../polkadot-sdk/substrate/primitives/version" }
+sp-weights = { path = "../polkadot-sdk/substrate/primitives/weights" }
+
+# FRAME
+frame-benchmarking = { path = "../polkadot-sdk/substrate/frame/benchmarking" }
+frame-executive = { path = "../polkadot-sdk/substrate/frame/executive" }
+frame-support = { path = "../polkadot-sdk/substrate/frame/support" }
+frame-system = { path = "../polkadot-sdk/substrate/frame/system" }
+frame-system-benchmarking = { path = "../polkadot-sdk/substrate/frame/system/benchmarking" }
+frame-system-rpc-runtime-api = { path = "../polkadot-sdk/substrate/frame/system/rpc/runtime-api" }
+pallet-aura = { path = "../polkadot-sdk/substrate/frame/aura" }
+pallet-balances = { path = "../polkadot-sdk/substrate/frame/balances" }
+pallet-grandpa = { path = "../polkadot-sdk/substrate/frame/grandpa" }
+pallet-sudo = { path = "../polkadot-sdk/substrate/frame/sudo" }
+pallet-timestamp = { path = "../polkadot-sdk/substrate/frame/timestamp" }
+pallet-transaction-payment = { path = "../polkadot-sdk/substrate/frame/transaction-payment" }
+pallet-transaction-payment-rpc = { path = "../polkadot-sdk/substrate/frame/transaction-payment/rpc" }
+pallet-transaction-payment-rpc-runtime-api = { path = "../polkadot-sdk/substrate/frame/transaction-payment/rpc/runtime-api" }
+pallet-utility = { path = "../polkadot-sdk/substrate/frame/utility" }
+
+# Utilities
+frame-benchmarking-cli = { path = "../polkadot-sdk/substrate/utils/frame/benchmarking-cli" }
+substrate-prometheus-endpoint = { path = "../polkadot-sdk/substrate/utils/prometheus" }
+substrate-build-script-utils = { path = "../polkadot-sdk/substrate/utils/build-script-utils" }
+substrate-frame-rpc-system = { path = "../polkadot-sdk/substrate/utils/frame/rpc/system" }
+substrate-test-runtime-client = { path = "../polkadot-sdk/substrate/test-utils/runtime/client" }
+substrate-wasm-builder = { path = "../polkadot-sdk/substrate/utils/wasm-builder" }
+
+# XCM
+xcm = { package = "staging-xcm", path = "../polkadot-sdk/polkadot/xcm" }

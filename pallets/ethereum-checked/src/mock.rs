@@ -182,8 +182,7 @@ impl pallet_evm::Config for TestRuntime {
     type Timestamp = Timestamp;
     type WeightInfo = pallet_evm::weights::SubstrateWeight<TestRuntime>;
     type GasLimitPovSizeRatio = ConstU64<4>;
-    type GasLimitStorageGrowthRatio = ConstU64<10>;
-    type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
+    type SuicideQuickClearLimit = ConstU32<0>;
 }
 
 parameter_types! {
