@@ -180,6 +180,7 @@ pub struct TaskDef {
 	pub condition_attr: TaskConditionAttr,
 	pub list_attr: TaskListAttr,
 	pub weight_attr: TaskWeightAttr,
+	#[allow(dead_code)]
 	pub normal_attrs: Vec<Attribute>,
 	pub item: ImplItemFn,
 	pub arg_names: Vec<Ident>,

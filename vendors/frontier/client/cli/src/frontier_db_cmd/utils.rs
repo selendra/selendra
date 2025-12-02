@@ -91,6 +91,7 @@ pub trait FrontierDbMessage {
 		format!("Operation not allowed for non-empty Key `{:?}`", key).into()
 	}
 
+	#[allow(dead_code)]
 	fn one_to_many_error(&self) -> sc_cli::Error {
 		"One-to-many operation not allowed".into()
 	}

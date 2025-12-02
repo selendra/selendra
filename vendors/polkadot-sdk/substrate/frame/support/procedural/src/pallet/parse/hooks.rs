@@ -20,6 +20,7 @@ use syn::spanned::Spanned;
 
 /// Implementation of the pallet hooks.
 pub struct HooksDef {
+	#[allow(dead_code)]
 	/// The index of item in pallet.
 	pub index: usize,
 	/// A set of usage of instance, must be check for consistency with trait.

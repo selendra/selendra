@@ -20,8 +20,10 @@ use syn::spanned::Spanned;
 
 /// The definition of the pallet validate unsigned implementation.
 pub struct ValidateUnsignedDef {
+	#[allow(dead_code)]
 	/// The index of validate unsigned item in pallet module.
 	pub index: usize,
+	#[allow(dead_code)]
 	/// A set of usage of instance, must be check for consistency with config.
 	pub instances: Vec<helper::InstanceUsage>,
 }

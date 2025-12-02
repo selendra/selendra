@@ -28,10 +28,12 @@ pub struct TypeValueDef {
 	pub ident: syn::Ident,
 	/// The type return by Get.
 	pub type_: Box<syn::Type>,
+	#[allow(dead_code)]
 	/// The block returning the value to get
 	pub block: Box<syn::Block>,
 	/// If type value is generic over `T` (or `T` and `I` for instantiable pallet)
 	pub is_generic: bool,
+	#[allow(dead_code)]
 	/// A set of usage of instance, must be check for consistency with config.
 	pub instances: Vec<helper::InstanceUsage>,
 	/// The where clause of the function.

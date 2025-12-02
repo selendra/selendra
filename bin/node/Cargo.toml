@@ -71,7 +71,7 @@ fp-evm = { workspace = true, features = ["default"] }
 fp-rpc = { workspace = true, features = ["default"] }
 
 # These dependencies are used for the node's RPCs
-jsonrpsee = { workspace = true, features = ["server"] }
+jsonrpsee = { workspace = true, features = ["server", "macros"] }
 sc-rpc = { workspace = true }
 sc-rpc-api = { workspace = true }
 sp-api = { workspace = true }

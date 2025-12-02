@@ -87,6 +87,7 @@ pub mod keyword {
 }
 
 pub struct CompositeDef {
+	#[allow(dead_code)]
 	/// The index of the CompositeDef item in the pallet module.
 	pub index: usize,
 	/// The composite keyword used (contains span).

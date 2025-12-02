@@ -59,14 +59,11 @@ parameter_types! {
 	pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
 	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, 0);
 	pub ChainId: u64 = 1961;
-	/// The amount of gas per storage (in bytes): BLOCK_GAS_LIMIT / BLOCK_STORAGE_LIMIT
-	/// The current definition of BLOCK_STORAGE_LIMIT is 160 KB, resulting in a value of 400.
-	pub GasLimitStorageGrowthRatio: u64 = 400;
+	/// The amount of gas per pov size: BLOCK_GAS_LIMIT / MAX_POV_SIZE
 	pub const GasLimitPovSizeRatio: u64 = 16;
 }
 
 impl pallet_evm::Config for Runtime {
-	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
 	type FeeCalculator = DynamicEvmBaseFee;
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 	type WeightPerGas = WeightPerGas;
@@ -85,7 +82,7 @@ impl pallet_evm::Config for Runtime {
 	type OnCreate = ();
 	type FindAuthor = FindAuthorTruncated<Aura>;
 	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
-	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
+	type SuicideQuickClearLimit = ConstU32<0>;
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Self>;
 }

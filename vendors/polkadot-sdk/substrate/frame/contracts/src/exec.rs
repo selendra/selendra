@@ -419,6 +419,7 @@ pub trait Executable<T: Config>: Sized {
 	/// The code hash of the executable.
 	fn code_hash(&self) -> &CodeHash<T>;
 
+	#[allow(dead_code)]
 	/// Size of the contract code in bytes.
 	fn code_len(&self) -> u32;
 

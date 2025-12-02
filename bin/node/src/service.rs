@@ -37,7 +37,7 @@ use crate::{
     rpc::{create_full as create_full_rpc, FullDeps as RpcFullDeps},
 	eth::{
 		db_config_dir, new_frontier_partial, spawn_frontier_tasks, BackendType, EthConfiguration,
-		FrontierBackend, FrontierBlockImport, FrontierPartialComponents, StorageOverrideHandler
+		FrontierBackend, FrontierBlockImport, FrontierPartialComponents,
 	},
 };
 
@@ -60,8 +60,8 @@ pub struct ServiceComponents {
 	pub keystore_container: KeystoreContainer,
 	pub justification_channel_provider: ChannelProvider<Justification>,
 	pub telemetry: Option<Telemetry>,
-	pub frontier_backend: Arc<FrontierBackend<FullClient>>,
-	pub storage_override : Arc<dyn fc_rpc::StorageOverride<Block>>,
+	pub frontier_backend: Arc<FrontierBackend>,
+	pub storage_override : Arc<fc_storage::OverrideHandle<Block>>,
 }
 struct LimitNonfinalized(u32);
 
@@ -157,15 +157,15 @@ pub fn new_partial(
     let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 
 	let frontier_block_import =
-		FrontierBlockImport::new(selendra_block_import.clone(), client.clone());
+	FrontierBlockImport::new(selendra_block_import.clone(), client.clone());
 
-    let storage_override = Arc::new(StorageOverrideHandler::new(client.clone()));
-		let frontier_backend = match eth_config.frontier_backend_type {
-		BackendType::KeyValue => FrontierBackend::KeyValue(Arc::new(fc_db::kv::Backend::open(
+    let storage_override = fc_storage::overrides_handle(client.clone());
+	let frontier_backend = match eth_config.frontier_backend_type {
+		BackendType::KeyValue => FrontierBackend::KeyValue(fc_db::kv::Backend::open(
 			Arc::clone(&client),
 			&config.database,
 			&db_config_dir(config),
-		)?)),
+		)?),
 		BackendType::Sql => {
 			let db_path = db_config_dir(config).join("sql");
 			std::fs::create_dir_all(&db_path).expect("failed creating sql db directory");
@@ -180,16 +180,14 @@ pub fn new_partial(
 					thread_count: eth_config.frontier_sql_backend_thread_count,
 					cache_size: eth_config.frontier_sql_backend_cache_size,
 				}),
-				eth_config.frontier_sql_backend_pool_size,
-				std::num::NonZeroU32::new(eth_config.frontier_sql_backend_num_ops_timeout),
-				storage_override.clone(),
-			))
-			.unwrap_or_else(|err| panic!("failed creating sql backend: {:?}", err));
-			FrontierBackend::Sql(Arc::new(backend))
-		}
-	};
-
-	// DO NOT change Aura parameters without updating the finality-aleph sync accordingly,
+			eth_config.frontier_sql_backend_pool_size,
+			std::num::NonZeroU32::new(eth_config.frontier_sql_backend_num_ops_timeout),
+			storage_override.clone(),
+		))
+		.unwrap_or_else(|err| panic!("failed creating sql backend: {:?}", err));
+		FrontierBackend::Sql(backend)
+	}
+};	// DO NOT change Aura parameters without updating the finality-aleph sync accordingly,
 	// in particular the code responsible for verifying incoming Headers, as it is supposed
 	// to duplicate parts of Aura internal logic
 	let import_queue = sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _>(
@@ -444,17 +442,17 @@ pub async fn new_authority(
 				converter: Some(TransactionConverter),
 				is_authority,
 				enable_dev_signer,
-				network: network.clone(),
-				sync: sync_service.clone(),
-				frontier_backend: match &*frontier_backend {
-					fc_db::Backend::KeyValue(b) => b.clone(),
-					fc_db::Backend::Sql(b) => b.clone(),
-				},
-				storage_override: storage_override.clone(),
-				block_data_cache: block_data_cache.clone(),
-				filter_pool: filter_pool.clone(),
-				max_past_logs,
-				fee_history_cache: fee_history_cache.clone(),
+			network: network.clone(),
+			sync: sync_service.clone(),
+			frontier_backend: match &*frontier_backend {
+				fc_db::Backend::KeyValue(b) => Arc::new(b.clone()),
+				fc_db::Backend::Sql(b) => Arc::new(b.clone()),
+			},
+			storage_override: storage_override.clone(),
+			block_data_cache: block_data_cache.clone(),
+			filter_pool: filter_pool.clone(),
+			max_past_logs,
+			fee_history_cache: fee_history_cache.clone(),
 				fee_history_cache_limit,
 				execute_gas_limit_multiplier,
 				forced_parent_hashes: None,
@@ -562,7 +560,7 @@ pub fn new_chain_ops(
 	config: &mut Configuration,
 	eth_config: &EthConfiguration,
 ) -> Result<
-	(Arc<FullClient>, Arc<FullBackend>, BasicQueue<Block>, TaskManager, Arc<FrontierBackend<FullClient>>),
+	(Arc<FullClient>, Arc<FullBackend>, BasicQueue<Block>, TaskManager, Arc<FrontierBackend>),
 	ServiceError,
 > {
 	config.keystore = sc_service::config::KeystoreConfig::InMemory;

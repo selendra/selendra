@@ -232,11 +232,12 @@ impl pallet_balances::Config for Runtime {
     type AccountStore = System;
     type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
     type FreezeIdentifier = RuntimeFreezeReason;
-    type MaxHolds = MaxHolds;
     type MaxFreezes = MaxFreezes;
     type RuntimeHoldReason = RuntimeHoldReason;
     type RuntimeFreezeReason = RuntimeFreezeReason;
 }
+
+
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
@@ -1016,6 +1017,7 @@ impl pallet_contracts::Config for Runtime {
     type CodeHashLockupDepositPercent = CodeHashLockupDepositPercent;
     type Debug = ();
     type Environment = ();
+	type Xcm = ();
 }
 
 parameter_types! {
@@ -1818,10 +1820,6 @@ impl_runtime_apis! {
 				pallet_ethereum::CurrentBlock::<Runtime>::get(),
 				pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
 			)
-		}
-
-        fn initialize_pending_block(header: &<Block as BlockT>::Header) {
-			Executive::initialize_block(header);
 		}
 	}
 

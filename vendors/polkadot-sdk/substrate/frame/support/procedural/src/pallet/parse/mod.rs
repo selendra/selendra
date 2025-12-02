@@ -724,6 +724,7 @@ impl syn::parse::Parse for PalletAttr {
 #[derive(Clone)]
 pub struct InheritedCallWeightAttr {
 	pub typename: syn::Type,
+	#[allow(dead_code)]
 	pub span: proc_macro2::Span,
 }
 

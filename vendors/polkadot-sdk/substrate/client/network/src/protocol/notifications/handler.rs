@@ -283,6 +283,7 @@ pub enum NotifsHandlerOut {
 		protocol_index: usize,
 		/// Name of the protocol that was actually negotiated, if the default one wasn't available.
 		negotiated_fallback: Option<ProtocolName>,
+		#[allow(dead_code)]
 		/// The endpoint of the connection that is open for custom protocols.
 		endpoint: ConnectedPoint,
 		/// Handshake that was sent to us.

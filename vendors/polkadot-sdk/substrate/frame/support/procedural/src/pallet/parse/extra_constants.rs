@@ -37,6 +37,7 @@ pub struct ExtraConstantsDef {
 	pub where_clause: Option<syn::WhereClause>,
 	/// A set of usage of instance, must be check for consistency with trait.
 	pub instances: Vec<helper::InstanceUsage>,
+	#[allow(dead_code)]
 	/// The index of call item in pallet module.
 	pub index: usize,
 	/// The extra constant defined.

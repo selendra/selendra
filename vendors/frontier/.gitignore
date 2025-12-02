@@ -24,3 +24,5 @@ polkadot.*
 
 # NixOS development environment
 .envrc
+
+template/*

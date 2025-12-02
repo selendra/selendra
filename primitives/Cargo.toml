@@ -23,6 +23,7 @@ sp-staking = { workspace = true }
 sp-consensus-aura = { workspace = true }
 
 frame-support = { workspace = true }
+frame-system = { workspace = true }
 frame-system-rpc-runtime-api = { workspace = true }
 
 pallet-transaction-payment = { workspace = true }
@@ -63,6 +64,7 @@ std = [
     "sp-inherents/std",
 
     "frame-support/std",
+	"frame-system/std",
     "frame-system-rpc-runtime-api/std",
 
     "pallet-transaction-payment-rpc-runtime-api/std",

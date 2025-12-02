@@ -58,6 +58,8 @@ all = { level = "allow", priority = 0 }
 [workspace.dependencies]
 aleph-bft-crypto = { version = "0.9" }
 aleph-bft-mock = { version = "0.15" }
+# Pin to version that doesn't require edition2024
+ws_stream_wasm = { version = "=0.7.4" }
 aleph-bft-rmc = { version = "0.14" }
 aleph-bft-types = { version = "0.14" }
 async-trait = { version = "0.1" }
@@ -73,17 +75,17 @@ hex = { version = "0.4", default-features = false, features = ["alloc"] }
 hex-literal = { version = "0.3" }
 ink = { version = "5.0.0-rc", default-features = false }
 ip_network = { version = "0.4" }
-jsonrpsee = { version = "0.16.3" }
+jsonrpsee = { version = "0.20.3" }
 libp2p = { version = "0.51" }
 libsecp256k1 = { version = "0.7.1", default-features = false }
 log = { version = "0.4", default-features = false }
 lru = { version = "0.10" }
 num-traits = { version = "0.2", default-features = false }
-parity-scale-codec = { version = "3.6", default-features = false }
+parity-scale-codec = { version = "3.6.1", default-features = false }
 parking_lot = { version = "0.12" }
 paste = { version = "1.0" }
 rand = { version = "0.8.5", default-features = false }
-scale-info = { version = "2.11", default-features = false }
+scale-info = { version = "2.11.0", default-features = false }
 serde = { version = "1.0", default-features = false }
 serde_json = { version = "1.0", default-features = false }
 smallvec = { version = "1", default-features = false }
@@ -260,8 +262,8 @@ sc-client-api = { path = "vendors/polkadot-sdk/substrate/client/api" }
 sc-client-db = { path = "vendors/polkadot-sdk/substrate/client/db" }
 sc-consensus = { path = "vendors/polkadot-sdk/substrate/client/consensus/common" }
 sc-consensus-aura = { path = "vendors/polkadot-sdk/substrate/client/consensus/aura" }
-sc-consensus-grandpa = { path = "vendors/polkadot-sdk/substrate/client/consensus/grandpa" }
-sc-consensus-manual-seal = { path = "vendors/polkadot-sdk/substrate/client/consensus/manual-seal" }
+# sc-consensus-grandpa = { path = "vendors/polkadot-sdk/substrate/client/consensus/grandpa" }
+# sc-consensus-manual-seal = { path = "vendors/polkadot-sdk/substrate/client/consensus/manual-seal" }
 sc-executor = { path = "vendors/polkadot-sdk/substrate/client/executor" }
 sc-keystore = { path = "vendors/polkadot-sdk/substrate/client/keystore" }
 sc-network = { path = "vendors/polkadot-sdk/substrate/client/network" }
@@ -306,11 +308,11 @@ frame-benchmarking = { path = "vendors/polkadot-sdk/substrate/frame/benchmarking
 frame-executive = { path = "vendors/polkadot-sdk/substrate/frame/executive" }
 frame-support = { path = "vendors/polkadot-sdk/substrate/frame/support" }
 frame-system = { path = "vendors/polkadot-sdk/substrate/frame/system" }
-frame-system-benchmarking = { path = "vendors/polkadot-sdk/substrate/frame/system/benchmarking" }
+# frame-system-benchmarking = { path = "vendors/polkadot-sdk/substrate/frame/system/benchmarking" }
 frame-system-rpc-runtime-api = { path = "vendors/polkadot-sdk/substrate/frame/system/rpc/runtime-api" }
 pallet-aura = { path = "vendors/polkadot-sdk/substrate/frame/aura" }
 pallet-balances = { path = "vendors/polkadot-sdk/substrate/frame/balances" }
-pallet-grandpa = { path = "vendors/polkadot-sdk/substrate/frame/grandpa" }
+# pallet-grandpa = { path = "vendors/polkadot-sdk/substrate/frame/grandpa" }
 pallet-sudo = { path = "vendors/polkadot-sdk/substrate/frame/sudo" }
 pallet-timestamp = { path = "vendors/polkadot-sdk/substrate/frame/timestamp" }
 pallet-transaction-payment = { path = "vendors/polkadot-sdk/substrate/frame/transaction-payment" }

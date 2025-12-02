@@ -6,9 +6,9 @@ use finality_aleph::{
 };
 use futures::channel::mpsc;
 use jsonrpsee::{
-    core::{error::Error as JsonRpseeError, RpcResult},
+    core::RpcResult,
     proc_macros::rpc,
-    types::error::{CallError, ErrorObject},
+    types::error::{ErrorObject, ErrorObjectOwned},
 };
 use parity_scale_codec::Decode;
 use primitives::{AccountId, Block, BlockHash, BlockNumber, Signature};
@@ -86,67 +86,66 @@ const UNKNOWN_HASH_ERROR: i32 = BASE_ERROR + 9;
 /// Network info caching is not enabled.
 const NETWORK_INFO_CACHING_NOT_ENABLED_ERROR: i32 = BASE_ERROR + 10;
 
-impl From<Error> for JsonRpseeError {
+impl From<Error> for ErrorObjectOwned {
     fn from(e: Error) -> Self {
         match e {
-            Error::FailedJustificationSend(e) => CallError::Custom(ErrorObject::owned(
+            Error::FailedJustificationSend(e) => ErrorObject::owned(
                 FAILED_JUSTIFICATION_SEND_ERROR,
                 e,
                 None::<()>,
-            )),
-            Error::MalformedJustificationArg(e) => CallError::Custom(ErrorObject::owned(
+            ),
+            Error::MalformedJustificationArg(e) => ErrorObject::owned(
                 MALFORMATTED_JUSTIFICATION_ARG_ERROR,
                 e,
                 None::<()>,
-            )),
-            Error::FailedJustificationTranslation(e) => CallError::Custom(ErrorObject::owned(
+            ),
+            Error::FailedJustificationTranslation(e) => ErrorObject::owned(
                 FAILED_JUSTIFICATION_TRANSLATION_ERROR,
                 e,
                 None::<()>,
-            )),
-            Error::BlockWithoutDigest => CallError::Custom(ErrorObject::owned(
+            ),
+            Error::BlockWithoutDigest => ErrorObject::owned(
                 BLOCK_WITHOUT_DIGEST_ERROR,
                 "Block doesn't have any Aura pre-runtime digest item.",
                 None::<()>,
-            )),
+            ),
             Error::StorageItemNotAvailable(pallet, key, hash) => {
-                CallError::Custom(ErrorObject::owned(
+                ErrorObject::owned(
                     STORAGE_ITEM_NOT_AVAILABLE_ERROR,
                     format!("Failed to get storage item {pallet}/{key} at the block {hash}."),
                     None::<()>,
-                ))
+                )
             }
             Error::FailedStorageRead(pallet, key, hash, err) => {
-                CallError::Custom(ErrorObject::owned(
+                ErrorObject::owned(
                     FAILED_STORAGE_READ_ERROR,
                     format!("Failed to read {pallet}/{key} at the block {hash}: {err:?}."),
                     None::<()>,
-                ))
+                )
             }
             Error::FailedStorageDecoding(pallet, key, hash, err) => {
-                CallError::Custom(ErrorObject::owned(
+                ErrorObject::owned(
                     FAILED_STORAGE_DECODING_ERROR,
                     format!("Failed to decode {pallet}/{key} at the block {hash}: {err:?}.",),
                     None::<()>,
-                ))
+                )
             }
-            Error::FailedHeaderDecoding(hash, err) => CallError::Custom(ErrorObject::owned(
+            Error::FailedHeaderDecoding(hash, err) => ErrorObject::owned(
                 FAILED_HEADER_DECODING_ERROR,
                 format!("Failed to decode header of a block {hash}: {err:?}.",),
                 None::<()>,
-            )),
-            Error::UnknownHash(hash) => CallError::Custom(ErrorObject::owned(
+            ),
+            Error::UnknownHash(hash) => ErrorObject::owned(
                 UNKNOWN_HASH_ERROR,
                 format!("Failed to find a block with hash {hash}.",),
                 None::<()>,
-            )),
-            Error::NetworkInfoCachingNotEnabled => CallError::Custom(ErrorObject::owned(
+            ),
+            Error::NetworkInfoCachingNotEnabled => ErrorObject::owned(
                 NETWORK_INFO_CACHING_NOT_ENABLED_ERROR,
                 "Unable to get any data, because network info caching is not enabled.",
                 None::<()>,
-            )),
+            ),
         }
-        .into()
     }
 }
 

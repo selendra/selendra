@@ -65,7 +65,9 @@ pub enum RuntimeDeclaration {
 /// Declaration of a runtime with some pallet with implicit declaration of parts.
 #[derive(Debug)]
 pub struct ImplicitRuntimeDeclaration {
+	#[allow(dead_code)]
 	pub name: Ident,
+	#[allow(dead_code)]
 	pub where_section: Option<WhereSection>,
 	pub pallets: Vec<PalletDeclaration>,
 }
@@ -124,8 +126,11 @@ impl Parse for RuntimeDeclaration {
 #[derive(Debug)]
 pub struct WhereSection {
 	pub span: Span,
+	#[allow(dead_code)]
 	pub block: syn::TypePath,
+	#[allow(dead_code)]
 	pub node_block: syn::TypePath,
+	#[allow(dead_code)]
 	pub unchecked_extrinsic: syn::TypePath,
 }
 
