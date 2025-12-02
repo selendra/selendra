@@ -96,103 +96,103 @@ ethers = { version = "2.0.9", default-features = false }
 ethereum = { version = "0.15.0", default-features = false }
 ethereum-types = { version = "0.14", default-features = false }
 
-frame-benchmarking = { path = "vendors/substrate/frame/benchmarking", default-features = false }
-frame-benchmarking-cli = { path = "vendors/substrate/utils/frame/benchmarking-cli", default-features = false }
-frame-election-provider-support = { path = "vendors/substrate/frame/election-provider-support", default-features = false }
-frame-executive = { path = "vendors/substrate/frame/executive", default-features = false }
-frame-support = { path = "vendors/substrate/frame/support", default-features = false }
-frame-system = { path = "vendors/substrate/frame/system", default-features = false }
-frame-system-rpc-runtime-api = { path = "vendors/substrate/frame/system/rpc/runtime-api", default-features = false }
-frame-try-runtime = { path = "vendors/substrate/frame/try-runtime", default-features = false }
+frame-benchmarking = { path = "vendors/polkadot-sdk/substrate/frame/benchmarking", default-features = false }
+frame-benchmarking-cli = { path = "vendors/polkadot-sdk/substrate/utils/frame/benchmarking-cli", default-features = false }
+frame-election-provider-support = { path = "vendors/polkadot-sdk/substrate/frame/election-provider-support", default-features = false }
+frame-executive = { path = "vendors/polkadot-sdk/substrate/frame/executive", default-features = false }
+frame-support = { path = "vendors/polkadot-sdk/substrate/frame/support", default-features = false }
+frame-system = { path = "vendors/polkadot-sdk/substrate/frame/system", default-features = false }
+frame-system-rpc-runtime-api = { path = "vendors/polkadot-sdk/substrate/frame/system/rpc/runtime-api", default-features = false }
+frame-try-runtime = { path = "vendors/polkadot-sdk/substrate/frame/try-runtime", default-features = false }
 
-pallet-aura = { path = "vendors/substrate/frame/aura", default-features = false }
-pallet-authorship = { path = "vendors/substrate/frame/authorship", default-features = false }
-pallet-balances = { path = "vendors/substrate/frame/balances", default-features = false }
-pallet-collective = { path = "vendors/substrate/frame/collective", default-features = false }
-pallet-contracts = { path = "vendors/substrate/frame/contracts", default-features = false }
-pallet-contracts-uapi = { path = "vendors/substrate/frame/contracts/uapi", default-features = false }
-pallet-democracy = { path = "vendors/substrate/frame/democracy", default-features = false }
-pallet-elections-phragmen = { path = "vendors/substrate/frame/elections-phragmen", default-features = false }
-pallet-identity = { path = "vendors/substrate/frame/identity", default-features = false }
-pallet-multisig = { path = "vendors/substrate/frame/multisig", default-features = false }
-pallet-preimage = { path = "vendors/substrate/frame/preimage", default-features = false }
-pallet-nomination-pools = { path = "vendors/substrate/frame/nomination-pools", default-features = false }
-pallet-nomination-pools-runtime-api = { path = "vendors/substrate/frame/nomination-pools/runtime-api", default-features = false }
-pallet-scheduler = { path = "vendors/substrate/frame/scheduler", default-features = false }
-pallet-session = { path = "vendors/substrate/frame/session", default-features = false }
-pallet-staking = { path = "vendors/substrate/frame/staking", default-features = false }
-pallet-staking-runtime-api = { path = "vendors/substrate/frame/staking/runtime-api", default-features = false }
-pallet-sudo = { path = "vendors/substrate/frame/sudo", default-features = false }
-pallet-timestamp = { path = "vendors/substrate/frame/timestamp", default-features = false }
-pallet-transaction-payment = { path = "vendors/substrate/frame/transaction-payment", default-features = false }
-pallet-transaction-payment-rpc = { path = "vendors/substrate/frame/transaction-payment/rpc", default-features = false }
-pallet-transaction-payment-rpc-runtime-api = { path = "vendors/substrate/frame/transaction-payment/rpc/runtime-api", default-features = false }
-pallet-treasury = { path = "vendors/substrate/frame/treasury", default-features = false }
-pallet-utility = { path = "vendors/substrate/frame/utility", default-features = false }
-pallet-vesting = { path = "vendors/substrate/frame/vesting", default-features = false }
-pallet-proxy = { path = "vendors/substrate/frame/proxy", default-features = false }
-pallet-safe-mode = { path = "vendors/substrate/frame/safe-mode", default-features = false }
-pallet-tx-pause = { path = "vendors/substrate/frame/tx-pause", default-features = false }
+pallet-aura = { path = "vendors/polkadot-sdk/substrate/frame/aura", default-features = false }
+pallet-authorship = { path = "vendors/polkadot-sdk/substrate/frame/authorship", default-features = false }
+pallet-balances = { path = "vendors/polkadot-sdk/substrate/frame/balances", default-features = false }
+pallet-collective = { path = "vendors/polkadot-sdk/substrate/frame/collective", default-features = false }
+pallet-contracts = { path = "vendors/polkadot-sdk/substrate/frame/contracts", default-features = false }
+pallet-contracts-uapi = { path = "vendors/polkadot-sdk/substrate/frame/contracts/uapi", default-features = false }
+pallet-democracy = { path = "vendors/polkadot-sdk/substrate/frame/democracy", default-features = false }
+pallet-elections-phragmen = { path = "vendors/polkadot-sdk/substrate/frame/elections-phragmen", default-features = false }
+pallet-identity = { path = "vendors/polkadot-sdk/substrate/frame/identity", default-features = false }
+pallet-multisig = { path = "vendors/polkadot-sdk/substrate/frame/multisig", default-features = false }
+pallet-preimage = { path = "vendors/polkadot-sdk/substrate/frame/preimage", default-features = false }
+pallet-nomination-pools = { path = "vendors/polkadot-sdk/substrate/frame/nomination-pools", default-features = false }
+pallet-nomination-pools-runtime-api = { path = "vendors/polkadot-sdk/substrate/frame/nomination-pools/runtime-api", default-features = false }
+pallet-scheduler = { path = "vendors/polkadot-sdk/substrate/frame/scheduler", default-features = false }
+pallet-session = { path = "vendors/polkadot-sdk/substrate/frame/session", default-features = false }
+pallet-staking = { path = "vendors/polkadot-sdk/substrate/frame/staking", default-features = false }
+pallet-staking-runtime-api = { path = "vendors/polkadot-sdk/substrate/frame/staking/runtime-api", default-features = false }
+pallet-sudo = { path = "vendors/polkadot-sdk/substrate/frame/sudo", default-features = false }
+pallet-timestamp = { path = "vendors/polkadot-sdk/substrate/frame/timestamp", default-features = false }
+pallet-transaction-payment = { path = "vendors/polkadot-sdk/substrate/frame/transaction-payment", default-features = false }
+pallet-transaction-payment-rpc = { path = "vendors/polkadot-sdk/substrate/frame/transaction-payment/rpc", default-features = false }
+pallet-transaction-payment-rpc-runtime-api = { path = "vendors/polkadot-sdk/substrate/frame/transaction-payment/rpc/runtime-api", default-features = false }
+pallet-treasury = { path = "vendors/polkadot-sdk/substrate/frame/treasury", default-features = false }
+pallet-utility = { path = "vendors/polkadot-sdk/substrate/frame/utility", default-features = false }
+pallet-vesting = { path = "vendors/polkadot-sdk/substrate/frame/vesting", default-features = false }
+pallet-proxy = { path = "vendors/polkadot-sdk/substrate/frame/proxy", default-features = false }
+pallet-safe-mode = { path = "vendors/polkadot-sdk/substrate/frame/safe-mode", default-features = false }
+pallet-tx-pause = { path = "vendors/polkadot-sdk/substrate/frame/tx-pause", default-features = false }
 
-sc-basic-authorship = { path = "vendors/substrate/client/basic-authorship" }
-sc-block-builder = { path = "vendors/substrate/client/block-builder" }
-sc-chain-spec = { path = "vendors/substrate/client/chain-spec" }
-sc-cli = { path = "vendors/substrate/client/cli", default-features = false }
-sc-client-db = { path = "vendors/substrate/client/db", default-features = false }
-sc-client-api = { path = "vendors/substrate/client/api" }
-sc-consensus = { path = "vendors/substrate/client/consensus/common" }
-sc-consensus-aura = { path = "vendors/substrate/client/consensus/aura" }
-sc-consensus-slots = { path = "vendors/substrate/client/consensus/slots" }
-sc-executor = { path = "vendors/substrate/client/executor" }
-sc-keystore = { path = "vendors/substrate/client/keystore" }
-sc-network = { path = "vendors/substrate/client/network" }
-sc-network-common = { path = "vendors/substrate/client/network/common" }
-sc-network-light = { path = "vendors/substrate/client/network/light" }
-sc-network-transactions = { path = "vendors/substrate/client/network/transactions" }
-sc-network-sync = { path = "vendors/substrate/client/network/sync" }
-sc-rpc = { path = "vendors/substrate/client/rpc" }
-sc-rpc-api = { path = "vendors/substrate/client/rpc-api" }
-sc-service = { path = "vendors/substrate/client/service", default-features = false }
-sc-telemetry = { path = "vendors/substrate/client/telemetry" }
-sc-transaction-pool = { path = "vendors/substrate/client/transaction-pool" }
-sc-transaction-pool-api = { path = "vendors/substrate/client/transaction-pool/api" }
-sc-utils = { path = "vendors/substrate/client/utils" }
+sc-basic-authorship = { path = "vendors/polkadot-sdk/substrate/client/basic-authorship" }
+sc-block-builder = { path = "vendors/polkadot-sdk/substrate/client/block-builder" }
+sc-chain-spec = { path = "vendors/polkadot-sdk/substrate/client/chain-spec" }
+sc-cli = { path = "vendors/polkadot-sdk/substrate/client/cli", default-features = false }
+sc-client-db = { path = "vendors/polkadot-sdk/substrate/client/db", default-features = false }
+sc-client-api = { path = "vendors/polkadot-sdk/substrate/client/api" }
+sc-consensus = { path = "vendors/polkadot-sdk/substrate/client/consensus/common" }
+sc-consensus-aura = { path = "vendors/polkadot-sdk/substrate/client/consensus/aura" }
+sc-consensus-slots = { path = "vendors/polkadot-sdk/substrate/client/consensus/slots" }
+sc-executor = { path = "vendors/polkadot-sdk/substrate/client/executor" }
+sc-keystore = { path = "vendors/polkadot-sdk/substrate/client/keystore" }
+sc-network = { path = "vendors/polkadot-sdk/substrate/client/network" }
+sc-network-common = { path = "vendors/polkadot-sdk/substrate/client/network/common" }
+sc-network-light = { path = "vendors/polkadot-sdk/substrate/client/network/light" }
+sc-network-transactions = { path = "vendors/polkadot-sdk/substrate/client/network/transactions" }
+sc-network-sync = { path = "vendors/polkadot-sdk/substrate/client/network/sync" }
+sc-rpc = { path = "vendors/polkadot-sdk/substrate/client/rpc" }
+sc-rpc-api = { path = "vendors/polkadot-sdk/substrate/client/rpc-api" }
+sc-service = { path = "vendors/polkadot-sdk/substrate/client/service", default-features = false }
+sc-telemetry = { path = "vendors/polkadot-sdk/substrate/client/telemetry" }
+sc-transaction-pool = { path = "vendors/polkadot-sdk/substrate/client/transaction-pool" }
+sc-transaction-pool-api = { path = "vendors/polkadot-sdk/substrate/client/transaction-pool/api" }
+sc-utils = { path = "vendors/polkadot-sdk/substrate/client/utils" }
 
-sp-api = { path = "vendors/substrate/primitives/api", default-features = false }
-sp-application-crypto = { path = "vendors/substrate/primitives/application-crypto", default-features = false }
-sp-arithmetic = { path = "vendors/substrate/primitives/arithmetic", default-features = false }
-sp-blockchain = { path = "vendors/substrate/primitives/blockchain", default-features = false }
-sp-block-builder = { path = "vendors/substrate/primitives/block-builder", default-features = false }
-sp-consensus = { path = "vendors/substrate/primitives/consensus/common", default-features = false }
-sp-consensus-aura = { path = "vendors/substrate/primitives/consensus/aura", default-features = false }
-sp-consensus-slots = { path = "vendors/substrate/primitives/consensus/slots", default-features = false }
-sp-core = { path = "vendors/substrate/primitives/core", default-features = false }
-sp-genesis-builder = { path = "vendors/substrate/primitives/genesis-builder", default-features = false }
-sp-inherents = { path = "vendors/substrate/primitives/inherents", default-features = false }
-sp-io = { path = "vendors/substrate/primitives/io", default-features = false }
-sp-keyring = { path = "vendors/substrate/primitives/keyring", default-features = false }
-sp-keystore = { path = "vendors/substrate/primitives/keystore", default-features = false }
-sp-offchain = { path = "vendors/substrate/primitives/offchain", default-features = false }
-sp-runtime = { path = "vendors/substrate/primitives/runtime", default-features = false }
-sp-runtime-interface = { path = "vendors/substrate/primitives/runtime-interface", default-features = false }
-sp-session = { path = "vendors/substrate/primitives/session", default-features = false }
-sp-staking = { path = "vendors/substrate/primitives/staking", default-features = false }
-sp-state-machine = { path = "vendors/substrate/primitives/state-machine", default-features = false }
-sp-std = { path = "vendors/substrate/primitives/std", default-features = false }
-sp-timestamp = { path = "vendors/substrate/primitives/timestamp", default-features = false }
-sp-transaction-pool = { path = "vendors/substrate/primitives/transaction-pool", default-features = false }
-sp-trie = { path = "vendors/substrate/primitives/trie", default-features = false }
-sp-version = { path = "vendors/substrate/primitives/version", default-features = false }
+sp-api = { path = "vendors/polkadot-sdk/substrate/primitives/api", default-features = false }
+sp-application-crypto = { path = "vendors/polkadot-sdk/substrate/primitives/application-crypto", default-features = false }
+sp-arithmetic = { path = "vendors/polkadot-sdk/substrate/primitives/arithmetic", default-features = false }
+sp-blockchain = { path = "vendors/polkadot-sdk/substrate/primitives/blockchain", default-features = false }
+sp-block-builder = { path = "vendors/polkadot-sdk/substrate/primitives/block-builder", default-features = false }
+sp-consensus = { path = "vendors/polkadot-sdk/substrate/primitives/consensus/common", default-features = false }
+sp-consensus-aura = { path = "vendors/polkadot-sdk/substrate/primitives/consensus/aura", default-features = false }
+sp-consensus-slots = { path = "vendors/polkadot-sdk/substrate/primitives/consensus/slots", default-features = false }
+sp-core = { path = "vendors/polkadot-sdk/substrate/primitives/core", default-features = false }
+sp-genesis-builder = { path = "vendors/polkadot-sdk/substrate/primitives/genesis-builder", default-features = false }
+sp-inherents = { path = "vendors/polkadot-sdk/substrate/primitives/inherents", default-features = false }
+sp-io = { path = "vendors/polkadot-sdk/substrate/primitives/io", default-features = false }
+sp-keyring = { path = "vendors/polkadot-sdk/substrate/primitives/keyring", default-features = false }
+sp-keystore = { path = "vendors/polkadot-sdk/substrate/primitives/keystore", default-features = false }
+sp-offchain = { path = "vendors/polkadot-sdk/substrate/primitives/offchain", default-features = false }
+sp-runtime = { path = "vendors/polkadot-sdk/substrate/primitives/runtime", default-features = false }
+sp-runtime-interface = { path = "vendors/polkadot-sdk/substrate/primitives/runtime-interface", default-features = false }
+sp-session = { path = "vendors/polkadot-sdk/substrate/primitives/session", default-features = false }
+sp-staking = { path = "vendors/polkadot-sdk/substrate/primitives/staking", default-features = false }
+sp-state-machine = { path = "vendors/polkadot-sdk/substrate/primitives/state-machine", default-features = false }
+sp-std = { path = "vendors/polkadot-sdk/substrate/primitives/std", default-features = false }
+sp-timestamp = { path = "vendors/polkadot-sdk/substrate/primitives/timestamp", default-features = false }
+sp-transaction-pool = { path = "vendors/polkadot-sdk/substrate/primitives/transaction-pool", default-features = false }
+sp-trie = { path = "vendors/polkadot-sdk/substrate/primitives/trie", default-features = false }
+sp-version = { path = "vendors/polkadot-sdk/substrate/primitives/version", default-features = false }
 
-substrate-build-script-utils = { path = "vendors/substrate/utils/build-script-utils" }
-substrate-frame-rpc-system = { path = "vendors/substrate/utils/frame/rpc/system" }
-substrate-prometheus-endpoint = { path = "vendors/substrate/utils/prometheus" }
-substrate-test-runtime-client = { path = "vendors/substrate/test-utils/runtime/client" }
-substrate-test-runtime = { path = "vendors/substrate/test-utils/runtime" }
-substrate-test-client = { path = "vendors/substrate/test-utils/client" }
-substrate-wasm-builder = { path = "vendors/substrate/utils/wasm-builder" }
+substrate-build-script-utils = { path = "vendors/polkadot-sdk/substrate/utils/build-script-utils" }
+substrate-frame-rpc-system = { path = "vendors/polkadot-sdk/substrate/utils/frame/rpc/system" }
+substrate-prometheus-endpoint = { path = "vendors/polkadot-sdk/substrate/utils/prometheus" }
+substrate-test-runtime-client = { path = "vendors/polkadot-sdk/substrate/test-utils/runtime/client" }
+substrate-test-runtime = { path = "vendors/polkadot-sdk/substrate/test-utils/runtime" }
+substrate-test-client = { path = "vendors/polkadot-sdk/substrate/test-utils/client" }
+substrate-wasm-builder = { path = "vendors/polkadot-sdk/substrate/utils/wasm-builder" }
 
-try-runtime-cli = { path = "vendors/substrate/utils/frame/try-runtime/cli" }
+try-runtime-cli = { path = "vendors/polkadot-sdk/substrate/utils/frame/try-runtime/cli" }
 
 # Local crates
 primitives = { path = "primitives", default-features = false }
@@ -249,3 +249,80 @@ pallet-dynamic-evm-base-fee = { path = "pallets/dynamic-evm-base-fee", default-f
 
 # utils
 precompile-utils = { path = "vendors/frontier/precompiles", default-features = false }
+
+[patch.'https://github.com/paritytech/polkadot-sdk']
+# Substrate Client
+sc-basic-authorship = { path = "vendors/polkadot-sdk/substrate/client/basic-authorship" }
+sc-block-builder = { path = "vendors/polkadot-sdk/substrate/client/block-builder" }
+sc-chain-spec = { path = "vendors/polkadot-sdk/substrate/client/chain-spec" }
+sc-cli = { path = "vendors/polkadot-sdk/substrate/client/cli" }
+sc-client-api = { path = "vendors/polkadot-sdk/substrate/client/api" }
+sc-client-db = { path = "vendors/polkadot-sdk/substrate/client/db" }
+sc-consensus = { path = "vendors/polkadot-sdk/substrate/client/consensus/common" }
+sc-consensus-aura = { path = "vendors/polkadot-sdk/substrate/client/consensus/aura" }
+sc-consensus-grandpa = { path = "vendors/polkadot-sdk/substrate/client/consensus/grandpa" }
+sc-consensus-manual-seal = { path = "vendors/polkadot-sdk/substrate/client/consensus/manual-seal" }
+sc-executor = { path = "vendors/polkadot-sdk/substrate/client/executor" }
+sc-keystore = { path = "vendors/polkadot-sdk/substrate/client/keystore" }
+sc-network = { path = "vendors/polkadot-sdk/substrate/client/network" }
+sc-network-common = { path = "vendors/polkadot-sdk/substrate/client/network/common" }
+sc-network-sync = { path = "vendors/polkadot-sdk/substrate/client/network/sync" }
+sc-offchain = { path = "vendors/polkadot-sdk/substrate/client/offchain" }
+sc-rpc = { path = "vendors/polkadot-sdk/substrate/client/rpc" }
+sc-rpc-api = { path = "vendors/polkadot-sdk/substrate/client/rpc-api" }
+sc-service = { path = "vendors/polkadot-sdk/substrate/client/service" }
+sc-telemetry = { path = "vendors/polkadot-sdk/substrate/client/telemetry" }
+sc-transaction-pool = { path = "vendors/polkadot-sdk/substrate/client/transaction-pool" }
+sc-transaction-pool-api = { path = "vendors/polkadot-sdk/substrate/client/transaction-pool/api" }
+sc-utils = { path = "vendors/polkadot-sdk/substrate/client/utils" }
+
+# Substrate Primitives
+sp-api = { path = "vendors/polkadot-sdk/substrate/primitives/api" }
+sp-block-builder = { path = "vendors/polkadot-sdk/substrate/primitives/block-builder" }
+sp-blockchain = { path = "vendors/polkadot-sdk/substrate/primitives/blockchain" }
+sp-consensus = { path = "vendors/polkadot-sdk/substrate/primitives/consensus/common" }
+sp-consensus-aura = { path = "vendors/polkadot-sdk/substrate/primitives/consensus/aura" }
+sp-core = { path = "vendors/polkadot-sdk/substrate/primitives/core" }
+sp-database = { path = "vendors/polkadot-sdk/substrate/primitives/database" }
+sp-externalities = { path = "vendors/polkadot-sdk/substrate/primitives/externalities" }
+sp-genesis-builder = { path = "vendors/polkadot-sdk/substrate/primitives/genesis-builder" }
+sp-inherents = { path = "vendors/polkadot-sdk/substrate/primitives/inherents" }
+sp-io = { path = "vendors/polkadot-sdk/substrate/primitives/io" }
+sp-keyring = { path = "vendors/polkadot-sdk/substrate/primitives/keyring" }
+sp-offchain = { path = "vendors/polkadot-sdk/substrate/primitives/offchain" }
+sp-runtime = { path = "vendors/polkadot-sdk/substrate/primitives/runtime" }
+sp-runtime-interface = { path = "vendors/polkadot-sdk/substrate/primitives/runtime-interface" }
+sp-session = { path = "vendors/polkadot-sdk/substrate/primitives/session" }
+sp-state-machine = { path = "vendors/polkadot-sdk/substrate/primitives/state-machine" }
+sp-std = { path = "vendors/polkadot-sdk/substrate/primitives/std" }
+sp-storage = { path = "vendors/polkadot-sdk/substrate/primitives/storage" }
+sp-timestamp = { path = "vendors/polkadot-sdk/substrate/primitives/timestamp" }
+sp-transaction-pool = { path = "vendors/polkadot-sdk/substrate/primitives/transaction-pool" }
+sp-version = { path = "vendors/polkadot-sdk/substrate/primitives/version" }
+sp-weights = { path = "vendors/polkadot-sdk/substrate/primitives/weights" }
+
+# FRAME
+frame-benchmarking = { path = "vendors/polkadot-sdk/substrate/frame/benchmarking" }
+frame-executive = { path = "vendors/polkadot-sdk/substrate/frame/executive" }
+frame-support = { path = "vendors/polkadot-sdk/substrate/frame/support" }
+frame-system = { path = "vendors/polkadot-sdk/substrate/frame/system" }
+frame-system-benchmarking = { path = "vendors/polkadot-sdk/substrate/frame/system/benchmarking" }
+frame-system-rpc-runtime-api = { path = "vendors/polkadot-sdk/substrate/frame/system/rpc/runtime-api" }
+pallet-aura = { path = "vendors/polkadot-sdk/substrate/frame/aura" }
+pallet-balances = { path = "vendors/polkadot-sdk/substrate/frame/balances" }
+pallet-grandpa = { path = "vendors/polkadot-sdk/substrate/frame/grandpa" }
+pallet-sudo = { path = "vendors/polkadot-sdk/substrate/frame/sudo" }
+pallet-timestamp = { path = "vendors/polkadot-sdk/substrate/frame/timestamp" }
+pallet-transaction-payment = { path = "vendors/polkadot-sdk/substrate/frame/transaction-payment" }
+pallet-transaction-payment-rpc = { path = "vendors/polkadot-sdk/substrate/frame/transaction-payment/rpc" }
+pallet-transaction-payment-rpc-runtime-api = { path = "vendors/polkadot-sdk/substrate/frame/transaction-payment/rpc/runtime-api" }
+pallet-utility = { path = "vendors/polkadot-sdk/substrate/frame/utility" }
+
+# Utilities & XCM
+frame-benchmarking-cli = { path = "vendors/polkadot-sdk/substrate/utils/frame/benchmarking-cli" }
+substrate-prometheus-endpoint = { path = "vendors/polkadot-sdk/substrate/utils/prometheus" }
+substrate-build-script-utils = { path = "vendors/polkadot-sdk/substrate/utils/build-script-utils" }
+substrate-frame-rpc-system = { path = "vendors/polkadot-sdk/substrate/utils/frame/rpc/system" }
+substrate-test-runtime-client = { path = "vendors/polkadot-sdk/substrate/test-utils/runtime/client" }
+substrate-wasm-builder = { path = "vendors/polkadot-sdk/substrate/utils/wasm-builder" }
+xcm = { package = "staging-xcm", path = "vendors/polkadot-sdk/polkadot/xcm" }
