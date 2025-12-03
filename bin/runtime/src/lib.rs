@@ -237,8 +237,6 @@ impl pallet_balances::Config for Runtime {
     type RuntimeFreezeReason = RuntimeFreezeReason;
 }
 
-
-
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 pub struct EverythingToTheTreasury;
