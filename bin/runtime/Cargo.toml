@@ -1,6 +1,6 @@
 [package]
 name = "selendra-runtime"
-version = "2.0.7"
+version = "2.0.8"
 license = "GPL-3.0-or-later"
 authors.workspace = true
 edition.workspace = true
