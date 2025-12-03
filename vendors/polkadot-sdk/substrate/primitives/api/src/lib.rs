@@ -105,6 +105,9 @@ pub mod __private {
 	};
 	pub use sp_std::{mem, slice, vec};
 	pub use sp_version::{create_apis_vec, ApiId, ApisVec, RuntimeVersion};
+
+	#[cfg(all(any(target_arch = "riscv32", target_arch = "riscv64"), substrate_runtime))]
+	pub use sp_runtime_interface::polkavm::{polkavm_abi, polkavm_export};
 }
 
 #[cfg(feature = "std")]
@@ -829,4 +832,3 @@ decl_runtime_apis! {
 
 sp_core::generate_feature_enabled_macro!(std_enabled, feature = "std", $);
 sp_core::generate_feature_enabled_macro!(std_disabled, not(feature = "std"), $);
-sp_core::generate_feature_enabled_macro!(frame_metadata_enabled, feature = "frame-metadata", $);

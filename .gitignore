@@ -30,8 +30,9 @@ chainspec.json
 snapshot.json
 
 .claude
-CLAUDE.md 
+CLAUDE.md
 node_modules
 
-## local 
-devtools 
+## local
+devtools
+polkadot-sdk-*

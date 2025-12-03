@@ -21,6 +21,8 @@ use std::{
 	process,
 };
 
+use crate::RuntimeTarget;
+
 /// Extra information when generating the `metadata-hash`.
 #[cfg(feature = "metadata-hash")]
 pub(crate) struct MetadataExtraInfo {
@@ -56,6 +58,8 @@ impl WasmBuilderSelectProject {
 			project_cargo_toml: get_manifest_dir().join("Cargo.toml"),
 			features_to_enable: Vec::new(),
 			disable_runtime_version_section_check: false,
+			export_heap_base: false,
+			import_memory: false,
 			#[cfg(feature = "metadata-hash")]
 			enable_metadata_hash: None,
 		}
@@ -74,6 +78,8 @@ impl WasmBuilderSelectProject {
 				project_cargo_toml: path,
 				features_to_enable: Vec::new(),
 				disable_runtime_version_section_check: false,
+				export_heap_base: false,
+				import_memory: false,
 				#[cfg(feature = "metadata-hash")]
 				enable_metadata_hash: None,
 			})
@@ -108,6 +114,12 @@ pub struct WasmBuilder {
 	features_to_enable: Vec<String>,
 	/// Should the builder not check that the `runtime_version` section exists in the wasm binary?
 	disable_runtime_version_section_check: bool,
+
+	/// Whether `__heap_base` should be exported (WASM-only).
+	export_heap_base: bool,
+	/// Whether `--import-memory` should be added to the link args (WASM-only).
+	import_memory: bool,
+
 	/// Whether to enable the metadata hash generation.
 	#[cfg(feature = "metadata-hash")]
 	enable_metadata_hash: Option<MetadataExtraInfo>,
@@ -156,7 +168,7 @@ impl WasmBuilder {
 	///
 	/// This adds `-Clink-arg=--export=__heap_base` to `RUST_FLAGS`.
 	pub fn export_heap_base(mut self) -> Self {
-		self.rust_flags.push("-Clink-arg=--export=__heap_base".into());
+		self.export_heap_base = true;
 		self
 	}
 
@@ -174,7 +186,7 @@ impl WasmBuilder {
 	///
 	/// This adds `-C link-arg=--import-memory` to `RUST_FLAGS`.
 	pub fn import_memory(mut self) -> Self {
-		self.rust_flags.push("-C link-arg=--import-memory".into());
+		self.import_memory = true;
 		self
 	}
 
@@ -222,7 +234,18 @@ impl WasmBuilder {
 	}
 
 	/// Build the WASM binary.
-	pub fn build(self) {
+	pub fn build(mut self) {
+		let target = crate::runtime_target();
+		if target == RuntimeTarget::Wasm {
+			if self.export_heap_base {
+				self.rust_flags.push("-Clink-arg=--export=__heap_base".into());
+			}
+
+			if self.import_memory {
+				self.rust_flags.push("-C link-arg=--import-memory".into());
+			}
+		}
+
 		let out_dir = PathBuf::from(env::var("OUT_DIR").expect("`OUT_DIR` is set by cargo!"));
 		let file_path =
 			out_dir.join(self.file_name.clone().unwrap_or_else(|| "wasm_binary.rs".into()));
@@ -238,6 +261,7 @@ impl WasmBuilder {
 		}
 
 		build_project(
+			target,
 			file_path,
 			self.project_cargo_toml,
 			self.rust_flags.into_iter().map(|f| format!("{} ", f)).collect(),
@@ -313,6 +337,7 @@ fn generate_rerun_if_changed_instructions() {
 /// `check_for_runtime_version_section` - Should the wasm binary be checked for the
 /// `runtime_version` section?
 fn build_project(
+	target: RuntimeTarget,
 	file_name: PathBuf,
 	project_cargo_toml: PathBuf,
 	default_rustflags: String,
@@ -321,7 +346,7 @@ fn build_project(
 	check_for_runtime_version_section: bool,
 	#[cfg(feature = "metadata-hash")] enable_metadata_hash: Option<MetadataExtraInfo>,
 ) {
-	let cargo_cmd = match crate::prerequisites::check() {
+	let cargo_cmd = match crate::prerequisites::check(target) {
 		Ok(cmd) => cmd,
 		Err(err_msg) => {
 			eprintln!("{}", err_msg);
@@ -330,6 +355,7 @@ fn build_project(
 	};
 
 	let (wasm_binary, bloaty) = crate::wasm_project::create_and_compile(
+		target,
 		&project_cargo_toml,
 		&default_rustflags,
 		cargo_cmd,

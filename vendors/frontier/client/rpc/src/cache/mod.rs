@@ -81,7 +81,7 @@ impl<B: BlockT> EthBlockDataCacheTask<B> {
 		overrides: Arc<OverrideHandle<B>>,
 		blocks_cache_max_size: usize,
 		statuses_cache_max_size: usize,
-		prometheus_registry: Option<substrate_prometheus_endpoint::Registry>,
+		prometheus_registry: Option<prometheus_endpoint::Registry>,
 	) -> Self {
 		let (task_tx, mut task_rx) = mpsc::channel(100);
 		let outer_task_tx = task_tx.clone();

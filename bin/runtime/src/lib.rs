@@ -915,7 +915,11 @@ pub struct TreasuryGovernance;
 impl SortedMembers<AccountId> for TreasuryGovernance {
     fn sorted_members() -> Vec<AccountId> {
         // Combine sudo key and council members for treasury governance during transition
-        let mut members = pallet_sudo::Pallet::<Runtime>::key().into_iter().collect::<Vec<_>>();
+        use frame_support::storage::unhashed::get;
+        let sudo_key: Option<AccountId> = get(
+            &frame_support::storage::storage_prefix(b"Sudo", b"Key")
+        );
+        let mut members = sudo_key.into_iter().collect::<Vec<_>>();
         members.extend(Council::members());
         members.sort();
         members.dedup();
@@ -1015,6 +1019,7 @@ impl pallet_contracts::Config for Runtime {
     type CodeHashLockupDepositPercent = CodeHashLockupDepositPercent;
     type Debug = ();
     type Environment = ();
+    type ApiVersion = ();
 	type Xcm = ();
 }
 

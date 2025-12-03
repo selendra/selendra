@@ -18,7 +18,6 @@
 
 use scale_codec::Encode;
 use schnellru::{LruMap, Unlimited};
-use substrate_prometheus_endpoint as prometheus_endpoint;
 
 pub struct LRUCacheByteLimited<K, V> {
 	cache: LruMap<K, V, Unlimited>,
