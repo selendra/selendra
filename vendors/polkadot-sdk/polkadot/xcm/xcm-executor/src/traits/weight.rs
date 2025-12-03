@@ -29,7 +29,6 @@ pub trait WeightBounds<RuntimeCall> {
 	fn instr_weight(instruction: &Instruction<RuntimeCall>) -> Result<Weight, ()>;
 }
 
-#[allow(dead_code)]
 /// A means of getting approximate weight consumption for a given destination message executor and a
 /// message.
 pub trait UniversalWeigher {

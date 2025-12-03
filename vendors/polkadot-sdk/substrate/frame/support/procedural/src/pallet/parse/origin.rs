@@ -25,13 +25,10 @@ use syn::spanned::Spanned;
 /// * `struct Origin`
 /// * `enum Origin`
 pub struct OriginDef {
-	#[allow(dead_code)]
 	/// The index of item in pallet module.
 	pub index: usize,
-	#[allow(dead_code)]
 	pub has_instance: bool,
 	pub is_generic: bool,
-	#[allow(dead_code)]
 	/// A set of usage of instance, must be check for consistency with trait.
 	pub instances: Vec<helper::InstanceUsage>,
 }

@@ -150,7 +150,7 @@ impl From<Error> for ErrorObjectOwned {
 }
 
 /// Selendra Node RPC API
-#[rpc(client, server, namespace = "selendraNode")]
+#[rpc(server, namespace = "selendraNode")]
 pub trait SelendraNodeApi<BE> {
     /// Finalize the block with given hash and number using attached signature. Returns the empty string or an error.
     #[method(name = "emergencyFinalize")]

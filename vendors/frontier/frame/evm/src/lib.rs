@@ -547,12 +547,17 @@ pub mod pallet {
 					MAX_ACCOUNT_NONCE,
 					UniqueSaturatedInto::<usize>::unique_saturated_into(account.nonce),
 				) {
-				frame_system::Pallet::<T>::inc_account_nonce(&account_id);
-			}
+					frame_system::Pallet::<T>::inc_account_nonce(&account_id);
+				}
 
-			let _ = T::Currency::deposit_creating(&account_id, account.balance.unique_saturated_into());
+				let _ = T::Currency::deposit_creating(
+					&account_id,
+					account.balance.unique_saturated_into(),
+				);
 
-			Pallet::<T>::create_account(*address, account.code.clone());				for (index, value) in &account.storage {
+				Pallet::<T>::create_account(*address, account.code.clone());
+
+				for (index, value) in &account.storage {
 					<AccountStorages<T>>::insert(address, index, value);
 				}
 			}

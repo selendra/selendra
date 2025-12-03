@@ -37,7 +37,6 @@ pub struct VariantDef {
 	pub ident: syn::Ident,
 	/// The variant field, if any.
 	pub field: Option<VariantField>,
-	#[allow(dead_code)]
 	/// The variant doc literals.
 	pub docs: Vec<syn::Expr>,
 	/// The `cfg` attributes.

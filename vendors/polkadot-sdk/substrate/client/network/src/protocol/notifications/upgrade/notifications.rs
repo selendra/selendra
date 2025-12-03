@@ -192,7 +192,6 @@ where
 pub struct NotificationsInOpen<TSubstream> {
 	/// Handshake sent by the remote.
 	pub handshake: Vec<u8>,
-	#[allow(dead_code)]
 	/// If the negotiated name is not the "main" protocol name but a fallback, contains the
 	/// name of the negotiated fallback.
 	pub negotiated_fallback: Option<ProtocolName>,

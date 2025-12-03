@@ -58,7 +58,6 @@ pub struct ImportBlocksCmd {
 	pub import_params: ImportParams,
 }
 
-#[allow(dead_code)]
 /// Internal trait used to cast to a dynamic type that implements Read and Seek.
 trait ReadPlusSeek: Read + Seek {}
 

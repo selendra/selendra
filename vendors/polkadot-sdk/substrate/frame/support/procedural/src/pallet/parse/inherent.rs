@@ -20,7 +20,6 @@ use syn::spanned::Spanned;
 
 /// The definition of the pallet inherent implementation.
 pub struct InherentDef {
-	#[allow(dead_code)]
 	/// The index of inherent item in pallet module.
 	pub index: usize,
 	/// A set of usage of instance, must be check for consistency with trait.

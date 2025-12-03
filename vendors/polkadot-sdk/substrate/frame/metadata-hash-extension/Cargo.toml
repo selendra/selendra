@@ -5,7 +5,7 @@ authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
 homepage = "https://substrate.io"
-repository = "https://github.com/paritytech/polkadot-sdk/"
+repository.workspace = true
 description = "FRAME signed extension for verifying the metadata hash"
 
 [dependencies]
@@ -15,7 +15,7 @@ scale-info = { version = "2.11.1", default-features = false, features = ["derive
 sp-runtime = { path = "../../primitives/runtime", default-features = false, features = ["serde"] }
 frame-support = { path = "../support", default-features = false }
 frame-system = { path = "../system", default-features = false }
-log = { version = "0.4.17", default-features = false }
+log = { workspace = true, default-features = false }
 docify = "0.2.8"
 
 [dev-dependencies]

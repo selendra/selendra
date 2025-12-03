@@ -359,7 +359,6 @@ pub enum NotificationsOut {
 		received_handshake: Vec<u8>,
 		/// Object that permits sending notifications to the peer.
 		notifications_sink: NotificationsSink,
-		#[allow(dead_code)]
 		/// Is the connection inbound.
 		inbound: bool,
 	},
