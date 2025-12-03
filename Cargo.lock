@@ -9189,7 +9189,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node"
-version = "2.0.7"
+version = "2.0.8"
 dependencies = [
  "client-runtime-api",
  "fc-api",
@@ -9253,7 +9253,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime"
-version = "2.0.7"
+version = "2.0.8"
 dependencies = [
  "fp-account",
  "fp-evm",
