@@ -7,12 +7,13 @@ use crate::{
 	NORMAL_DISPATCH_RATIO
 };
 
+use parity_scale_codec::Encode;
 use pallet_transaction_payment::Multiplier;
-use sp_core::{crypto::ByteArray, Get, H160, U256};
+use sp_core::{Get, H160, U256};
 use sp_runtime::{
 	ConsensusEngineId, Perquintill,
 };
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::prelude::*;
 
 use frame_support::{
 	parameter_types,
@@ -28,19 +29,36 @@ use primitives::{
 	evm::HashedDefaultMappings,
 };
 
-pub struct FindAuthorTruncated<F>(PhantomData<F>);
+// pub struct FindAuthorTruncated<F>(PhantomData<F>);
+// impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
+// 	fn find_author<'a, I>(digests: I) -> Option<H160>
+// 	where
+// 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
+// 	{
+// 		if let Some(author_index) = F::find_author(digests) {
+// 			let authority_id = Aura::authorities()[author_index as usize].clone();
+// 			return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]));
+// 		}
+// 		None
+// 	}
+// }
+
+pub struct FindAuthorTruncated<F>(sp_std::marker::PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
-	fn find_author<'a, I>(digests: I) -> Option<H160>
-	where
-		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
-	{
-		if let Some(author_index) = F::find_author(digests) {
-			let authority_id = Aura::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]));
-		}
-		None
-	}
+    fn find_author<'a, I>(digests: I) -> Option<H160>
+    where
+        I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
+    {
+        if let Some(author_index) = F::find_author(digests) {
+            let authority_id =
+                pallet_aura::Authorities::<Runtime>::get()[author_index as usize].clone();
+            return Some(H160::from_slice(&authority_id.encode()[4..24]));
+        }
+
+        None
+    }
 }
+
 
 /// Current approximation of the gas/s consumption considering
 /// EVM execution over compiled WASM (on 4.4Ghz CPU).

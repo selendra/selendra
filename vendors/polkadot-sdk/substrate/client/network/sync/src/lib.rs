@@ -28,8 +28,8 @@ mod justification_requests;
 mod pending_responses;
 mod request_metrics;
 mod schema;
-
 pub mod types;
+
 pub mod block_relay_protocol;
 pub mod block_request_handler;
 pub mod blocks;

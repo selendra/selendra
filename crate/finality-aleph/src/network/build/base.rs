@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use libp2p::{core::StreamMuxer, PeerId, Transport};
 use sc_client_api::Backend;
 use sc_network::{
     config::{
@@ -8,10 +7,9 @@ use sc_network::{
         Params as NetworkParams, ProtocolId, Role,
     },
     error::Error as NetworkError,
-    peer_store::PeerStore,
-    transport::NetworkConfig,
     NetworkService, NetworkWorker,
 };
+use sc_network_common::ExHashT;
 use sc_network_light::light_client_requests::handler::LightClientRequestHandler;
 use sc_network_sync::state_request_handler::StateRequestHandler;
 use sc_network_transactions::TransactionsHandlerPrototype;
@@ -27,11 +25,13 @@ use crate::{
 };
 
 fn spawn_state_request_handler<B: Block, BE: Backend<B>, C: ClientForAleph<B, BE>>(
-    full_network_config: &mut FullNetworkConfiguration,
+    full_network_config: &mut FullNetworkConfiguration<B, B::Hash, NetworkWorker<B, B::Hash>>,
     protocol_id: &ProtocolId,
     client: Arc<C>,
     spawn_handle: &SpawnTaskHandle,
-) {
+) where
+    B::Hash: ExHashT,
+{
     let num_peer_hint = full_network_config
         .network_config
         .default_peers_set_num_full as usize
@@ -42,20 +42,22 @@ fn spawn_state_request_handler<B: Block, BE: Backend<B>, C: ClientForAleph<B, BE
             .len();
     let (service, protocol_config) =
     // The None is the fork id, which we don't have.
-        StateRequestHandler::new(protocol_id, None, client, num_peer_hint);
+        StateRequestHandler::new::<NetworkWorker<B, B::Hash>>(protocol_id, None, client, num_peer_hint);
     spawn_handle.spawn("state-request-handler", SPAWN_CATEGORY, service.run());
     full_network_config.add_request_response_protocol(protocol_config);
 }
 
 fn spawn_light_client_request_handler<B: Block, BE: Backend<B>, C: ClientForAleph<B, BE>>(
-    full_network_config: &mut FullNetworkConfiguration,
+    full_network_config: &mut FullNetworkConfiguration<B, B::Hash, NetworkWorker<B, B::Hash>>,
     protocol_id: &ProtocolId,
     client: Arc<C>,
     spawn_handle: &SpawnTaskHandle,
-) {
+) where
+    B::Hash: ExHashT,
+{
     let (handler, protocol_config) =
     // The None is the fork id, which we don't have.
-        LightClientRequestHandler::new(protocol_id, None, client.clone());
+        LightClientRequestHandler::new::<NetworkWorker<B, B::Hash>>(protocol_id, None, client.clone());
     spawn_handle.spawn(
         "light-client-request-handler",
         SPAWN_CATEGORY,
@@ -71,9 +73,14 @@ type BaseNetworkOutput<B> = (
 );
 
 /// Create a base network with all the protocols already included. Also spawn (almost) all the necessary services.
-pub fn network<B, BE, C, T, SM>(
+pub fn network<B, BE, C>(
     network_config: &NetworkConfiguration,
-    transport_builder: impl FnOnce(NetworkConfig) -> T,
+    transport_builder: impl FnOnce(
+        sc_network::transport::NetworkConfig,
+    ) -> (
+        libp2p::core::transport::Boxed<(libp2p::PeerId, libp2p::core::muxing::StreamMuxerBox)>,
+        std::sync::Arc<sc_network::transport::BandwidthSinks>,
+    ),
     protocol_id: ProtocolId,
     client: Arc<C>,
     spawn_handle: &SpawnTaskHandle,
@@ -85,15 +92,9 @@ where
     B::Header: Header<Number = BlockNumber>,
     BE: Backend<B>,
     C: ClientForAleph<B, BE>,
-    T: Transport<Output = (PeerId, SM)> + Send + Unpin + 'static,
-    T::Dial: Send,
-    T::ListenerUpgrade: Send,
-    T::Error: Send + Sync,
-    SM: StreamMuxer + Unpin + Send + 'static,
-    SM::Substream: Unpin + Send,
-    SM::Error: Send + Sync,
+    B::Hash: ExHashT,
 {
-    let mut full_network_config = FullNetworkConfiguration::new(network_config);
+    let mut full_network_config = FullNetworkConfiguration::<B, B::Hash, NetworkWorker<B, B::Hash>>::new(network_config);
     let genesis_hash = client
         .hash(0)
         .ok()
@@ -114,20 +115,13 @@ where
         spawn_handle,
     );
     let transactions_prototype =
-        build_transactions_prototype(&mut full_network_config, &protocol_id, genesis_hash);
+        build_transactions_prototype(&mut full_network_config, &protocol_id, genesis_hash, metrics_registry.as_ref());
 
-    let peer_store_service = PeerStore::new(
-        full_network_config
-            .network_config
-            .boot_nodes
-            .iter()
-            .map(|bootnode| bootnode.peer_id)
-            .collect(),
-    );
-    let peer_store = peer_store_service.handle();
-    spawn_handle.spawn("peer-store", SPAWN_CATEGORY, peer_store_service.run());
+    // Take the peer store from the network config and spawn it
+    let peer_store = full_network_config.take_peer_store();
+    spawn_handle.spawn("peer-store", SPAWN_CATEGORY, peer_store.run());
 
-    let network_params = NetworkParams::<B> {
+    let network_params = NetworkParams::<B, B::Hash, NetworkWorker<B, B::Hash>> {
         role: Role::Full,
         executor: {
             let spawn_handle = spawn_handle.clone();
@@ -136,13 +130,14 @@ where
             })
         },
         network_config: full_network_config,
-        peer_store,
         genesis_hash,
         protocol_id: protocol_id.clone(),
         fork_id: None,
         metrics_registry: metrics_registry.clone(),
         // The names are silly, but that's substrate's fault.
         block_announce_config: base_protocol_config,
+        bitswap_config: None,
+        notification_metrics: sc_network::NotificationMetrics::new(metrics_registry.as_ref()),
     };
 
     let network_service =

@@ -1,5 +1,7 @@
 use libp2p::{core::muxing::StreamMuxer, PeerId, Transport};
 use rate_limiter::{FuturesRateLimitedAsyncReadWrite, SharedRateLimiter};
+use sc_network::transport::BandwidthSinks;
+use std::sync::Arc;
 
 struct RateLimitedStreamMuxer<SM> {
     rate_limiter: SharedRateLimiter,
@@ -70,18 +72,14 @@ where
 /// Builds a rate-limited implementation of [libp2p::Transport].
 /// Note: all of the `Send` constraints in the return type are put in order to satisfy constraints of the constructor of
 /// [sc_network::NetworkWorker].
+/// Returns a tuple of (boxed transport, bandwidth sink).
 pub fn build_transport(
     rate_limiter: SharedRateLimiter,
     config: sc_network::transport::NetworkConfig,
-) -> impl Transport<
-    Output = (
-        PeerId,
-        impl StreamMuxer<Substream = impl Send, Error = impl Send> + Send,
-    ),
-    Dial = impl Send,
-    ListenerUpgrade = impl Send,
-    Error = impl Send,
-> + Send {
+) -> (
+    libp2p::core::transport::Boxed<(PeerId, libp2p::core::muxing::StreamMuxerBox)>,
+    Arc<BandwidthSinks>,
+) {
     struct ClonableSharedRateLimiter(SharedRateLimiter);
     impl ClonableSharedRateLimiter {
         fn share(&self) -> SharedRateLimiter {
@@ -95,16 +93,21 @@ pub fn build_transport(
     }
     let rate_limiter = ClonableSharedRateLimiter(rate_limiter);
 
-    sc_network::transport::build_transport(
+    let (transport, bandwidth) = sc_network::transport::build_transport(
         config.keypair,
         config.memory_only,
         config.muxer_window_size,
         config.muxer_maximum_buffer_size,
-    )
-    .map(move |(peer_id, stream_muxer), _| {
+    );
+
+    let transport = transport.map(move |(peer_id, stream_muxer), _| {
         (
             peer_id,
-            RateLimitedStreamMuxer::new(stream_muxer, rate_limiter.share()),
+            libp2p::core::muxing::StreamMuxerBox::new(
+                RateLimitedStreamMuxer::new(stream_muxer, rate_limiter.share())
+            ),
         )
-    })
+    });
+
+    (transport.boxed(), bandwidth)
 }

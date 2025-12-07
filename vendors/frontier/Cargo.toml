@@ -194,6 +194,10 @@ precompile-utils = { path = "precompiles", default-features = false }
 # Frontier Template
 frontier-template-runtime = { path = "template/runtime", default-features = false }
 
+[workspace.lints.rust]
+suspicious_double_ref_op = { level = "allow", priority = 2 }
+dead_code = { level = "allow", priority = 2 }
+
 [profile.release]
 # Substrate runtime requires unwinding.
 panic = "unwind"

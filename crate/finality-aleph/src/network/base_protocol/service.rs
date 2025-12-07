@@ -99,7 +99,11 @@ where
         match command {
             EventStream(events_for_user) => self.events_for_users.push(events_for_user),
             PeersInfo(response) => {
-                if response.send(self.handler.peers_info()).is_err() {
+                let peers_info = self.handler.peers_info()
+                    .into_iter()
+                    .map(|(peer_id, info)| (peer_id.into(), info))
+                    .collect();
+                if response.send(peers_info).is_err() {
                     debug!(
                         target: LOG_TARGET,
                         "Failed to send response to peers info request."
@@ -132,7 +136,7 @@ where
                 handshake,
                 result_tx,
             } => {
-                let result = match self.handler.verify_inbound_connection(peer, handshake) {
+                let result = match self.handler.verify_inbound_connection(peer.into(), handshake) {
                     Ok(()) => ValidationResult::Accept,
                     Err(e) => {
                         debug!(target: LOG_TARGET, "Rejecting incoming substream: {}.", e);
@@ -151,7 +155,7 @@ where
                 handshake,
                 direction,
                 negotiated_fallback: _,
-            } => match self.handler.on_peer_connect(peer, handshake, direction) {
+            } => match self.handler.on_peer_connect(peer.into(), handshake, direction) {
                 Ok(()) => {
                     let multiaddress: Multiaddr =
                         iter::once(MultiaddressProtocol::P2p(peer.into())).collect();
@@ -166,7 +170,7 @@ where
                     }
                     self.events_for_users.retain(|for_user| {
                         for_user
-                            .unbounded_send(SyncEvent::PeerConnected(peer))
+                            .unbounded_send(SyncEvent::PeerConnected(peer.into()))
                             .is_ok()
                     });
                 }
@@ -174,7 +178,7 @@ where
             },
             NotificationStreamClosed { peer } => {
                 trace!(target: LOG_TARGET, "Disconnect event for peer {:?}", peer);
-                if let Err(e) = self.handler.on_peer_disconnect(peer) {
+                if let Err(e) = self.handler.on_peer_disconnect(peer.into()) {
                     warn!(target: LOG_TARGET, "Problem removing disconnecting peer: {e}.");
                 }
                 let addresses: Vec<_> = iter::once(peer).collect();

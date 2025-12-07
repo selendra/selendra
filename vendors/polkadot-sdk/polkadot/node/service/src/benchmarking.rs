@@ -224,7 +224,7 @@ fn westend_sign_call(
 	runtime::UncheckedExtrinsic::new_signed(
 		call,
 		sp_runtime::AccountId32::from(acc.public()).into(),
-		polkadot_core_primitives::Signature::Sr25519(signature.clone()),
+		polkadot_core_primitives::Signature::Sr25519(signature),
 		extra,
 	)
 	.into()
@@ -278,7 +278,7 @@ fn rococo_sign_call(
 	runtime::UncheckedExtrinsic::new_signed(
 		call,
 		sp_runtime::AccountId32::from(acc.public()).into(),
-		polkadot_core_primitives::Signature::Sr25519(signature.clone()),
+		polkadot_core_primitives::Signature::Sr25519(signature),
 		extra,
 	)
 	.into()
