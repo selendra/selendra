@@ -61,7 +61,7 @@ pub struct ServiceComponents {
 	pub justification_channel_provider: ChannelProvider<Justification>,
 	pub telemetry: Option<Telemetry>,
 	pub frontier_backend: Arc<FrontierBackend>,
-	pub storage_override : Arc<fc_storage::OverrideHandle<Block>>,
+	pub storage_override : Arc<fc_storage::StorageOverrideHandler<Block, FullClient, FullBackend>>,
 }
 struct LimitNonfinalized(u32);
 
@@ -159,13 +159,13 @@ pub fn new_partial(
 	let frontier_block_import =
 	FrontierBlockImport::new(selendra_block_import.clone(), client.clone());
 
-    let storage_override = fc_storage::overrides_handle(client.clone());
+    let storage_override = Arc::new(fc_storage::StorageOverrideHandler::new(client.clone()));
 	let frontier_backend = match eth_config.frontier_backend_type {
-		BackendType::KeyValue => FrontierBackend::KeyValue(fc_db::kv::Backend::open(
+		BackendType::KeyValue => FrontierBackend::KeyValue(Arc::new(fc_db::kv::Backend::open(
 			Arc::clone(&client),
 			&config.database,
 			&db_config_dir(config),
-		)?),
+		)?)),
 		BackendType::Sql => {
 			let db_path = db_config_dir(config).join("sql");
 			std::fs::create_dir_all(&db_path).expect("failed creating sql db directory");
@@ -185,7 +185,7 @@ pub fn new_partial(
 			storage_override.clone(),
 		))
 		.unwrap_or_else(|err| panic!("failed creating sql backend: {:?}", err));
-		FrontierBackend::Sql(backend)
+		FrontierBackend::Sql(Arc::new(backend))
 	}
 };	// DO NOT change Aura parameters without updating the finality-aleph sync accordingly,
 	// in particular the code responsible for verifying incoming Headers, as it is supposed
@@ -437,16 +437,16 @@ pub async fn new_authority(
 		Box::new(move |deny_unsafe, subscription_task_executor| {
 			let eth_deps = crate::rpc::EthDeps {
 				client: client.clone(),
-				pool: pool.clone(),
-				graph: pool.pool().clone(),
-				converter: Some(TransactionConverter),
-				is_authority,
-				enable_dev_signer,
+			pool: pool.clone(),
+			graph: pool.pool().clone(),
+			converter: Some(TransactionConverter),
+			is_authority,
+			enable_dev_signer,
 			network: network.clone(),
 			sync: sync_service.clone(),
 			frontier_backend: match &*frontier_backend {
-				fc_db::Backend::KeyValue(b) => Arc::new(b.clone()),
-				fc_db::Backend::Sql(b) => Arc::new(b.clone()),
+				fc_db::Backend::KeyValue(b) => b.clone() as Arc<dyn fc_api::Backend<Block>>,
+				fc_db::Backend::Sql(b) => b.clone() as Arc<dyn fc_api::Backend<Block>>,
 			},
 			storage_override: storage_override.clone(),
 			block_data_cache: block_data_cache.clone(),

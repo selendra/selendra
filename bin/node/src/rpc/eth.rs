@@ -22,7 +22,6 @@ use sp_runtime::traits::Block as BlockT;
 // Frontier
 pub use fc_rpc::{EthBlockDataCacheTask, EthConfig};
 pub use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
-use fc_storage::OverrideHandle;
 use fp_rpc::{ConvertTransaction, ConvertTransactionRuntimeApi, EthereumRuntimeRPCApi};
 
 /// Extra dependencies for Ethereum compatibility.
@@ -46,7 +45,7 @@ pub struct EthDeps<B: BlockT, C, P, A: ChainApi, CT, CIDP> {
 	/// Frontier Backend.
 	pub frontier_backend: Arc<dyn fc_api::Backend<B>>,
 	/// Ethereum data access overrides.
-	pub storage_override: Arc<OverrideHandle<B>>,
+	pub storage_override: Arc<dyn fc_storage::StorageOverride<B>>,
 	/// Cache for Ethereum block data.
 	pub block_data_cache: Arc<EthBlockDataCacheTask<B>>,
 	/// EthFilterApi pool.

@@ -9,7 +9,6 @@ use sc_cli::{clap::Parser, SubstrateCli};
 use sc_network::config::Role;
 use sc_service::{Configuration, DatabaseSource};
 use fc_db::kv::frontier_database_dir;
-use std::sync::Arc;
 
 fn enforce_heap_pages(config: &mut Configuration) {
     config.default_heap_pages = Some(HEAP_PAGES);
@@ -137,7 +136,7 @@ fn main() -> sc_cli::Result<()> {
 				let (client, _, _, _, frontier_backend) =
 					service::new_chain_ops(&mut config, &cli.eth)?;
 				let frontier_backend = match &*frontier_backend {
-					fc_db::Backend::KeyValue(kv) => Arc::new(kv.clone()),
+					fc_db::Backend::KeyValue(kv) => kv.clone(),
 					_ => panic!("Only fc_db::Backend::KeyValue supported"),
 				};
 				cmd.run(client, frontier_backend)

@@ -4,7 +4,7 @@ use std::{
 };
 
 use parity_scale_codec::{DecodeAll, Error as CodecError};
-use sc_network::{config::NetworkConfiguration, service::traits::Direction, PeerId};
+use sc_network::{config::NetworkConfiguration, service::traits::Direction, types::PeerId};
 use sc_network_common::{role::Roles, sync::message::BlockAnnouncesHandshake};
 use sc_network_sync::types::ExtendedPeerInfo;
 use sp_core::H256;
@@ -204,7 +204,7 @@ where
             .default_peers_set
             .reserved_nodes
             .iter()
-            .map(|reserved| reserved.peer_id)
+            .map(|reserved| reserved.peer_id.into())
             .collect();
         let limits = ConnectionLimits::new(net_config);
 

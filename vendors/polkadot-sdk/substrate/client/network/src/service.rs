@@ -64,7 +64,7 @@ use futures::{channel::oneshot, prelude::*};
 #[allow(deprecated)]
 use libp2p::{
 	connection_limits::Exceeded,
-	core::{upgrade, ConnectedPoint, Endpoint},
+	core::{muxing::StreamMuxerBox, upgrade, ConnectedPoint, Endpoint},
 	identify::Info as IdentifyInfo,
 	kad::record::Key as KademliaKey,
 	multiaddr,
@@ -256,6 +256,33 @@ where
 	/// for the network processing to advance. From it, you can extract a `NetworkService` using
 	/// `worker.service()`. The `NetworkService` can be shared through the codebase.
 	pub fn new(params: Params<B, H, Self>) -> Result<Self, Error> {
+		Self::new_with_custom_transport(params, |config| {
+			transport::build_transport(
+				config.keypair,
+				config.memory_only,
+				config.muxer_window_size,
+				config.muxer_maximum_buffer_size,
+			)
+		})
+	}
+
+	/// Creates the network service with a custom transport builder.
+	///
+	/// Similar to `new()` but allows providing a custom transport builder function.
+	/// This is useful when you need to customize the libp2p transport beyond the default
+	/// configuration.
+	///
+	/// The `transport_builder` function receives a `NetworkConfig` with the necessary
+	/// configuration and should return a tuple of (transport, bandwidth_sinks).
+	pub fn new_with_custom_transport(
+		params: Params<B, H, Self>,
+		transport_builder: impl FnOnce(
+			transport::NetworkConfig,
+		) -> (
+			libp2p::core::transport::Boxed<(PeerId, StreamMuxerBox)>,
+			Arc<transport::BandwidthSinks>,
+		),
+	) -> Result<Self, Error> {
 		let peer_store_handle = params.network_config.peer_store_handle();
 		let FullNetworkConfiguration {
 			notification_protocols,
@@ -369,12 +396,14 @@ where
 					.saturating_add(10)
 			};
 
-			transport::build_transport(
-				local_identity.clone(),
-				config_mem,
-				network_config.yamux_window_size,
-				yamux_maximum_buffer_size,
-			)
+			let config = transport::NetworkConfig {
+				keypair: local_identity.clone(),
+				memory_only: config_mem,
+				muxer_window_size: network_config.yamux_window_size,
+				muxer_maximum_buffer_size: yamux_maximum_buffer_size,
+			};
+
+			transport_builder(config)
 		};
 
 		let (to_notifications, from_protocol_controllers) =

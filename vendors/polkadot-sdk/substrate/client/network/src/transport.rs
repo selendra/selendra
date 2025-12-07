@@ -31,6 +31,18 @@ use std::{sync::Arc, time::Duration};
 
 pub use libp2p::bandwidth::BandwidthSinks;
 
+/// Describes network configuration used for building instances of [`libp2p::Transport`].
+pub struct NetworkConfig {
+	/// Our network identity.
+	pub keypair: identity::Keypair,
+	/// Indicates whether created [`Transport`] should be only memory-based.
+	pub memory_only: bool,
+	/// Window size of the muxer.
+	pub muxer_window_size: Option<u32>,
+	/// Buffer size of the muxer.
+	pub muxer_maximum_buffer_size: usize,
+}
+
 /// Builds the transport that serves as a common ground for all connections.
 ///
 /// If `memory_only` is true, then only communication within the same process are allowed. Only
