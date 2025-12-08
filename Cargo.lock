@@ -9506,7 +9506,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node"
-version = "2.0.8"
+version = "2.1.1"
 dependencies = [
  "client-runtime-api",
  "fc-api",
@@ -9570,7 +9570,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime"
-version = "2.0.8"
+version = "2.1.1"
 dependencies = [
  "fp-account",
  "fp-evm",
