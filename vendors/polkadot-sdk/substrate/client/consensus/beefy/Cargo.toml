@@ -1,57 +1,74 @@
 [package]
 name = "sc-consensus-beefy"
-version = "13.0.0"
+version = "23.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
 repository.workspace = true
-description = "BEEFY Client gadget for substrate"
+description = "BEEFY Client gadget for substrate (polkadot v1.15.0)"
 homepage = "https://substrate.io"
 
 [lints]
 workspace = true
 
 [dependencies]
-array-bytes = "6.1"
-async-channel = "1.8.0"
-async-trait = "0.1.79"
-codec = { package = "parity-scale-codec", version = "3.6.1", features = ["derive"] }
-fnv = "1.0.6"
-futures = "0.3.30"
+array-bytes = { workspace = true, default-features = true }
+async-channel = { workspace = true }
+async-trait = { workspace = true }
+codec = { features = ["derive"], workspace = true, default-features = true }
+fnv = { workspace = true }
+futures = { workspace = true }
 log = { workspace = true, default-features = true }
-parking_lot = "0.12.1"
+parking_lot = { workspace = true, default-features = true }
 thiserror = { workspace = true }
-wasm-timer = "0.2.5"
-prometheus = { package = "substrate-prometheus-endpoint", path = "../../../utils/prometheus" }
-sc-client-api = { path = "../../api" }
-sc-consensus = { path = "../common" }
-sc-network = { path = "../../network" }
-sc-network-gossip = { path = "../../network-gossip" }
-sc-network-sync = { path = "../../network/sync" }
-sc-network-types = { path = "../../network/types" }
-sc-utils = { path = "../../utils" }
-sp-api = { path = "../../../primitives/api" }
-sp-application-crypto = { path = "../../../primitives/application-crypto" }
-sp-arithmetic = { path = "../../../primitives/arithmetic" }
-sp-blockchain = { path = "../../../primitives/blockchain" }
-sp-consensus = { path = "../../../primitives/consensus/common" }
-sp-consensus-beefy = { path = "../../../primitives/consensus/beefy" }
-sp-core = { path = "../../../primitives/core" }
-sp-crypto-hashing = { path = "../../../primitives/crypto/hashing" }
-sp-keystore = { path = "../../../primitives/keystore" }
-sp-mmr-primitives = { path = "../../../primitives/merkle-mountain-range" }
-sp-runtime = { path = "../../../primitives/runtime" }
-tokio = "1.37"
-
+wasm-timer = { workspace = true }
+prometheus-endpoint.workspace = true
+prometheus-endpoint.default-features = true
+sc-client-api.workspace = true
+sc-client-api.default-features = true
+sc-consensus.workspace = true
+sc-consensus.default-features = true
+sc-network.workspace = true
+sc-network.default-features = true
+sc-network-gossip.workspace = true
+sc-network-gossip.default-features = true
+sc-network-sync.workspace = true
+sc-network-sync.default-features = true
+sc-network-types.workspace = true
+sc-network-types.default-features = true
+sc-utils.workspace = true
+sc-utils.default-features = true
+sp-api.workspace = true
+sp-api.default-features = true
+sp-application-crypto.workspace = true
+sp-application-crypto.default-features = true
+sp-arithmetic.workspace = true
+sp-arithmetic.default-features = true
+sp-blockchain.workspace = true
+sp-blockchain.default-features = true
+sp-consensus.workspace = true
+sp-consensus.default-features = true
+sp-consensus-beefy.workspace = true
+sp-consensus-beefy.default-features = true
+sp-core.workspace = true
+sp-core.default-features = true
+sp-crypto-hashing.workspace = true
+sp-crypto-hashing.default-features = true
+sp-keystore.workspace = true
+sp-keystore.default-features = true
+sp-runtime.workspace = true
+sp-runtime.default-features = true
+tokio = { workspace = true, default-features = true }
 
 [dev-dependencies]
 serde = { workspace = true, default-features = true }
-tempfile = "3.1.0"
-sc-block-builder = { path = "../../block-builder" }
+tempfile = { workspace = true }
+sc-block-builder = { default-features = true, path = "../../block-builder" }
 sc-network-test = { path = "../../network/test" }
-sp-consensus-grandpa = { path = "../../../primitives/consensus/grandpa" }
-sp-keyring = { path = "../../../primitives/keyring" }
-sp-tracing = { path = "../../../primitives/tracing" }
+sp-consensus-grandpa = { default-features = true, path = "../../../primitives/consensus/grandpa" }
+sp-keyring = { default-features = true, path = "../../../primitives/keyring" }
+sp-mmr-primitives = { default-features = true, path = "../../../primitives/merkle-mountain-range" }
+sp-tracing = { default-features = true, path = "../../../primitives/tracing" }
 substrate-test-runtime-client = { path = "../../../test-utils/runtime/client" }
 
 [features]

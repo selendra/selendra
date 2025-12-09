@@ -1,7 +1,7 @@
 [package]
 name = "polkadot-node-metrics"
-description = "Subsystem metric helpers"
-version = "7.0.0"
+description = "Subsystem metric helpers (polkadot v1.15.0)"
+version = "17.0.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -10,38 +10,43 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-futures = "0.3.30"
-futures-timer = "3.0.2"
-gum = { package = "tracing-gum", path = "../gum" }
+futures = { workspace = true }
+futures-timer = { workspace = true }
+gum.workspace = true
+gum.default-features = true
 
-metered = { package = "prioritized-metered-channel", version = "0.6.1", default-features = false, features = ["futures_channel"] }
-# Both `sc-service` and `sc-cli` are required by runtime metrics `logger_hook()`.
-sc-service = { path = "../../../substrate/client/service" }
-sc-cli = { path = "../../../substrate/client/cli" }
-
-substrate-prometheus-endpoint = { path = "../../../substrate/utils/prometheus" }
-sc-tracing = { path = "../../../substrate/client/tracing" }
-codec = { package = "parity-scale-codec", version = "3.6.1" }
-primitives = { package = "polkadot-primitives", path = "../../primitives" }
-bs58 = { version = "0.5.0", features = ["alloc"] }
+metered = { features = ["futures_channel"], workspace = true }
+sc-service.workspace = true
+sc-service.default-features = true
+sc-cli.workspace = true
+sc-cli.default-features = true
+prometheus-endpoint.workspace = true
+prometheus-endpoint.default-features = true
+sc-tracing.workspace = true
+sc-tracing.default-features = true
+codec = { workspace = true, default-features = true }
+polkadot-primitives.workspace = true
+polkadot-primitives.default-features = true
+bs58 = { features = ["alloc"], workspace = true, default-features = true }
 log = { workspace = true, default-features = true }
 
 [dev-dependencies]
-assert_cmd = "2.0.4"
-tempfile = "3.2.0"
-hyper = { version = "0.14.20", default-features = false, features = ["http1", "tcp"] }
-tokio = "1.37"
-polkadot-test-service = { path = "../test/service", features = ["runtime-metrics"] }
+assert_cmd = { workspace = true }
+tempfile = { workspace = true }
+hyper-util = { features = ["client-legacy", "tokio"], workspace = true }
+hyper = { workspace = true }
+http-body-util = { workspace = true }
+tokio = { workspace = true, default-features = true }
+polkadot-test-service = { features = ["runtime-metrics"], path = "../test/service" }
 substrate-test-utils = { path = "../../../substrate/test-utils" }
-sc-service = { path = "../../../substrate/client/service" }
-sp-keyring = { path = "../../../substrate/primitives/keyring" }
-prometheus-parse = { version = "0.2.2" }
+sc-service = { default-features = true, path = "../../../substrate/client/service" }
+sp-keyring = { default-features = true, path = "../../../substrate/primitives/keyring" }
+prometheus-parse = { workspace = true }
 
 [features]
 default = []
 runtime-metrics = []
 runtime-benchmarks = [
-	"polkadot-test-service/runtime-benchmarks",
-	"primitives/runtime-benchmarks",
+	"polkadot-primitives/runtime-benchmarks",
 	"sc-service/runtime-benchmarks",
 ]

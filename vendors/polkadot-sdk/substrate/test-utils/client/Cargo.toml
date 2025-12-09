@@ -1,6 +1,6 @@
 [package]
 name = "substrate-test-client"
-description = "Client testing utilities"
+description = "Client testing utilities (polkadot v1.15.0)"
 version = "2.0.1"
 authors.workspace = true
 edition.workspace = true
@@ -16,27 +16,34 @@ workspace = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-array-bytes = "6.1"
-async-trait = "0.1.79"
-codec = { package = "parity-scale-codec", version = "3.6.1" }
-futures = "0.3.30"
+array-bytes = { workspace = true, default-features = true }
+async-trait = { workspace = true }
+codec = { workspace = true, default-features = true }
+futures = { workspace = true }
 serde = { workspace = true, default-features = true }
 serde_json = { workspace = true, default-features = true }
-sc-client-api = { path = "../../client/api" }
-sc-client-db = { path = "../../client/db", default-features = false, features = [
-	"test-helpers",
-] }
-sc-consensus = { path = "../../client/consensus/common" }
-sc-executor = { path = "../../client/executor" }
-sc-offchain = { path = "../../client/offchain" }
-sc-service = { path = "../../client/service", default-features = false, features = [
-	"test-helpers",
-] }
-sp-blockchain = { path = "../../primitives/blockchain" }
-sp-consensus = { path = "../../primitives/consensus/common" }
-sp-core = { path = "../../primitives/core" }
-sp-keyring = { path = "../../primitives/keyring" }
-sp-keystore = { path = "../../primitives/keystore" }
-sp-runtime = { path = "../../primitives/runtime" }
-sp-state-machine = { path = "../../primitives/state-machine" }
-tokio = { version = "1.22.0", features = ["sync"] }
+sc-client-api.workspace = true
+sc-client-api.default-features = true
+sc-client-db = { features = ["test-helpers"], workspace = true }
+sc-consensus.workspace = true
+sc-consensus.default-features = true
+sc-executor.workspace = true
+sc-executor.default-features = true
+sc-offchain.workspace = true
+sc-offchain.default-features = true
+sc-service = { features = ["test-helpers"], workspace = true }
+sp-blockchain.workspace = true
+sp-blockchain.default-features = true
+sp-consensus.workspace = true
+sp-consensus.default-features = true
+sp-core.workspace = true
+sp-core.default-features = true
+sp-keyring.workspace = true
+sp-keyring.default-features = true
+sp-keystore.workspace = true
+sp-keystore.default-features = true
+sp-runtime.workspace = true
+sp-runtime.default-features = true
+sp-state-machine.workspace = true
+sp-state-machine.default-features = true
+tokio = { features = ["sync"], workspace = true, default-features = true }

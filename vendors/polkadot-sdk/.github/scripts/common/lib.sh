@@ -242,6 +242,7 @@ fetch_release_artifacts() {
 # - GITHUB_TOKEN
 # - REPO in the form paritytech/polkadot
 fetch_release_artifacts_from_s3() {
+  BINARY=$1
   echo "Version    : $VERSION"
   echo "Repo       : $REPO"
   echo "Binary     : $BINARY"
@@ -315,6 +316,7 @@ function import_gpg_keys() {
     ) &
   done
   wait
+  gpg -k $SEC
 }
 
 # Check the GPG signature for a given binary
@@ -443,4 +445,29 @@ get_latest_release_tag() {
     TOKEN="Authorization: Bearer $GITHUB_TOKEN"
     latest_release_tag=$(curl -s -H "$TOKEN" $api_base/paritytech/polkadot-sdk/releases/latest | jq -r '.tag_name')
     printf $latest_release_tag
+}
+
+function get_polkadot_node_version_from_code() {
+   # list all the files with node version
+  git grep -e "\(NODE_VERSION[^=]*= \)\".*\"" |
+  # fetch only the one we need
+  grep  "primitives/src/lib.rs:" |
+  # Print only the version
+  awk '{ print $7 }' |
+  # Remove the quotes
+  sed 's/"//g' |
+  # Remove the semicolon
+  sed 's/;//g'
+}
+
+validate_stable_tag() {
+    tag="$1"
+    pattern="^stable[0-9]{4}(-[0-9]+)?(-rc[0-9]+)?$"
+
+    if [[ $tag =~ $pattern ]]; then
+        echo $tag
+    else
+        echo "The input '$tag' does not match the pattern."
+        exit 1
+    fi
 }

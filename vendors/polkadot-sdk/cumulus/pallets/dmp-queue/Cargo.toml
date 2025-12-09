@@ -1,10 +1,10 @@
 [package]
 name = "cumulus-pallet-dmp-queue"
-version = "0.7.0"
+version = "0.16.0"
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
-description = "Migrates messages from the old DMP queue pallet."
+description = "Migrates messages from the old DMP queue pallet. (polkadot v1.15.0)"
 license = "Apache-2.0"
 
 [lints]
@@ -14,26 +14,20 @@ workspace = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+codec = { features = ["derive"], workspace = true }
 log = { workspace = true }
-scale-info = { version = "2.11.1", default-features = false, features = ["derive"] }
-
-frame-benchmarking = { path = "../../../substrate/frame/benchmarking", default-features = false, optional = true }
-frame-support = { path = "../../../substrate/frame/support", default-features = false }
-frame-system = { path = "../../../substrate/frame/system", default-features = false }
-sp-std = { path = "../../../substrate/primitives/std", default-features = false }
-sp-runtime = { path = "../../../substrate/primitives/runtime", default-features = false }
-sp-io = { path = "../../../substrate/primitives/io", default-features = false }
-
-# Polkadot
-xcm = { package = "staging-xcm", path = "../../../polkadot/xcm", default-features = false }
-
-# Cumulus
-cumulus-primitives-core = { path = "../../primitives/core", default-features = false }
+scale-info = { features = ["derive"], workspace = true }
+frame-benchmarking = { optional = true, workspace = true }
+frame-support.workspace = true
+frame-system.workspace = true
+sp-runtime.workspace = true
+sp-io.workspace = true
+xcm.workspace = true
+cumulus-primitives-core.workspace = true
 
 [dev-dependencies]
-sp-core = { path = "../../../substrate/primitives/core" }
-sp-tracing = { path = "../../../substrate/primitives/tracing" }
+sp-core = { default-features = true, path = "../../../substrate/primitives/core" }
+sp-tracing = { default-features = true, path = "../../../substrate/primitives/tracing" }
 
 [features]
 default = ["std"]
@@ -48,7 +42,6 @@ std = [
 	"scale-info/std",
 	"sp-io/std",
 	"sp-runtime/std",
-	"sp-std/std",
 	"xcm/std",
 ]
 

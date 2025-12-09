@@ -21,6 +21,7 @@
 //! of others. It uses this information to determine when candidates and blocks have
 //! been sufficiently approved to finalize.
 
+use futures_timer::Delay;
 use itertools::Itertools;
 use jaeger::{hash_to_trace_identifier, PerLeafSpan};
 use polkadot_node_jaeger as jaeger;
@@ -63,6 +64,12 @@ use sc_keystore::LocalKeystore;
 use sp_application_crypto::Pair;
 use sp_consensus::SyncOracle;
 use sp_consensus_slots::Slot;
+use std::time::Instant;
+
+// The max number of blocks we keep track of assignments gathering times. Normally,
+// this would never be reached because we prune the data on finalization, but we need
+// to also ensure the data is not growing unecessarily large.
+const MAX_BLOCKS_WITH_ASSIGNMENT_TIMESTAMPS: u32 = 100;
 
 use futures::{
 	channel::oneshot,
@@ -118,11 +125,24 @@ const WAIT_FOR_SIGS_TIMEOUT: Duration = Duration::from_millis(500);
 const APPROVAL_CACHE_SIZE: u32 = 1024;
 
 const TICK_TOO_FAR_IN_FUTURE: Tick = 20; // 10 seconds.
+/// The maximum number of times we retry to approve a block if is still needed.
+const MAX_APPROVAL_RETRIES: u32 = 16;
+
 const APPROVAL_DELAY: Tick = 2;
 pub(crate) const LOG_TARGET: &str = "parachain::approval-voting";
 
 // The max number of ticks we delay sending the approval after we are ready to issue the approval
 const MAX_APPROVAL_COALESCE_WAIT_TICKS: Tick = 12;
+
+// If the node restarted and the tranche has passed without the assignment
+// being trigger, we won't trigger the assignment at restart because we don't have
+// an wakeup schedule for it.
+// The solution, is to always schedule a wake up after the restart and let the
+// process_wakeup to decide if the assignment needs to be triggered.
+// We need to have a delay after restart to give time to the node to catch up with
+// messages and not trigger its assignment unnecessarily, because it hasn't seen
+// the assignments from the other validators.
+const RESTART_WAKEUP_DELAY: Tick = 12;
 
 /// Configuration for the approval voting subsystem
 #[derive(Debug, Clone)]
@@ -160,6 +180,10 @@ pub struct ApprovalVotingSubsystem {
 	mode: Mode,
 	metrics: Metrics,
 	clock: Box<dyn Clock + Send + Sync>,
+	/// The maximum time we retry to approve a block if it is still needed and PoV fetch failed.
+	max_approval_retries: u32,
+	/// The backoff before we retry the approval.
+	retry_backoff: Duration,
 }
 
 #[derive(Clone)]
@@ -182,6 +206,14 @@ struct MetricsInner {
 	time_recover_and_approve: prometheus::Histogram,
 	candidate_signatures_requests_total: prometheus::Counter<prometheus::U64>,
 	unapproved_candidates_in_unfinalized_chain: prometheus::Gauge<prometheus::U64>,
+	// The time it takes in each stage to gather enough assignments.
+	// We defined a `stage` as being the entire process of gathering enough assignments to
+	// be able to approve a candidate:
+	// E.g:
+	// - Stage 0: We wait for the needed_approvals assignments to be gathered.
+	// - Stage 1: We wait for enough tranches to cover all no-shows in stage 0.
+	// - Stage 2: We wait for enough tranches to cover all no-shows  of stage 1.
+	assignments_gathering_time_by_stage: prometheus::HistogramVec,
 }
 
 /// Approval Voting metrics.
@@ -300,6 +332,20 @@ impl Metrics {
 	fn on_unapproved_candidates_in_unfinalized_chain(&self, count: usize) {
 		if let Some(metrics) = &self.0 {
 			metrics.unapproved_candidates_in_unfinalized_chain.set(count as u64);
+		}
+	}
+
+	pub fn observe_assignment_gathering_time(&self, stage: usize, elapsed_as_millis: usize) {
+		if let Some(metrics) = &self.0 {
+			let stage_string = stage.to_string();
+			// We don't want to have too many metrics entries with this label to not put unncessary
+			// pressure on the metrics infrastructure, so we cap the stage at 10, which is
+			// equivalent to having already a finalization lag to 10 * no_show_slots, so it should
+			// be more than enough.
+			metrics
+				.assignments_gathering_time_by_stage
+				.with_label_values(&[if stage < 10 { stage_string.as_str() } else { "inf" }])
+				.observe(elapsed_as_millis as f64);
 		}
 	}
 }
@@ -431,6 +477,17 @@ impl metrics::Metrics for Metrics {
 				)?,
 				registry,
 			)?,
+			assignments_gathering_time_by_stage: prometheus::register(
+				prometheus::HistogramVec::new(
+					prometheus::HistogramOpts::new(
+						"polkadot_parachain_assignments_gather_time_by_stage_ms",
+						"The time in ms it takes for each stage to gather enough assignments needed for approval",
+					)
+					.buckets(vec![0.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0, 16000.0, 32000.0]),
+					&["stage"],
+				)?,
+				registry,
+			)?,
 		};
 
 		Ok(Metrics(Some(metrics)))
@@ -453,6 +510,8 @@ impl ApprovalVotingSubsystem {
 			sync_oracle,
 			metrics,
 			Box::new(SystemClock {}),
+			MAX_APPROVAL_RETRIES,
+			APPROVAL_CHECKING_TIMEOUT / 2,
 		)
 	}
 
@@ -464,6 +523,8 @@ impl ApprovalVotingSubsystem {
 		sync_oracle: Box<dyn SyncOracle + Send>,
 		metrics: Metrics,
 		clock: Box<dyn Clock + Send + Sync>,
+		max_approval_retries: u32,
+		retry_backoff: Duration,
 	) -> Self {
 		ApprovalVotingSubsystem {
 			keystore,
@@ -473,6 +534,8 @@ impl ApprovalVotingSubsystem {
 			mode: Mode::Syncing(sync_oracle),
 			metrics,
 			clock,
+			max_approval_retries,
+			retry_backoff,
 		}
 	}
 
@@ -652,6 +715,7 @@ struct ApprovalStatus {
 	tranche_now: DelayTranche,
 	block_tick: Tick,
 	last_no_shows: usize,
+	no_show_validators: Vec<ValidatorIndex>,
 }
 
 #[derive(Copy, Clone)]
@@ -661,18 +725,53 @@ enum ApprovalOutcome {
 	TimedOut,
 }
 
+#[derive(Clone)]
+struct RetryApprovalInfo {
+	candidate: CandidateReceipt,
+	backing_group: GroupIndex,
+	executor_params: ExecutorParams,
+	core_index: Option<CoreIndex>,
+	session_index: SessionIndex,
+	attempts_remaining: u32,
+	backoff: Duration,
+}
+
 struct ApprovalState {
 	validator_index: ValidatorIndex,
 	candidate_hash: CandidateHash,
 	approval_outcome: ApprovalOutcome,
+	retry_info: Option<RetryApprovalInfo>,
 }
 
 impl ApprovalState {
 	fn approved(validator_index: ValidatorIndex, candidate_hash: CandidateHash) -> Self {
-		Self { validator_index, candidate_hash, approval_outcome: ApprovalOutcome::Approved }
+		Self {
+			validator_index,
+			candidate_hash,
+			approval_outcome: ApprovalOutcome::Approved,
+			retry_info: None,
+		}
 	}
 	fn failed(validator_index: ValidatorIndex, candidate_hash: CandidateHash) -> Self {
-		Self { validator_index, candidate_hash, approval_outcome: ApprovalOutcome::Failed }
+		Self {
+			validator_index,
+			candidate_hash,
+			approval_outcome: ApprovalOutcome::Failed,
+			retry_info: None,
+		}
+	}
+
+	fn failed_with_retry(
+		validator_index: ValidatorIndex,
+		candidate_hash: CandidateHash,
+		retry_info: Option<RetryApprovalInfo>,
+	) -> Self {
+		Self {
+			validator_index,
+			candidate_hash,
+			approval_outcome: ApprovalOutcome::Failed,
+			retry_info,
+		}
 	}
 }
 
@@ -712,6 +811,7 @@ impl CurrentlyCheckingSet {
 							candidate_hash,
 							validator_index,
 							approval_outcome: ApprovalOutcome::TimedOut,
+							retry_info: None,
 						},
 						Some(approval_state) => approval_state,
 					}
@@ -788,6 +888,73 @@ struct State {
 	clock: Box<dyn Clock + Send + Sync>,
 	assignment_criteria: Box<dyn AssignmentCriteria + Send + Sync>,
 	spans: HashMap<Hash, jaeger::PerLeafSpan>,
+	// Per block, candidate records about how long we take until we gather enough
+	// assignments, this is relevant because it gives us a good idea about how many
+	// tranches we trigger and why.
+	per_block_assignments_gathering_times:
+		LruMap<BlockNumber, HashMap<(Hash, CandidateHash), AssignmentGatheringRecord>>,
+	no_show_stats: NoShowStats,
+}
+
+// Regularly dump the no-show stats at this block number frequency.
+const NO_SHOW_DUMP_FREQUENCY: BlockNumber = 50;
+// The maximum number of validators we record no-shows for, per candidate.
+pub(crate) const MAX_RECORDED_NO_SHOW_VALIDATORS_PER_CANDIDATE: usize = 20;
+
+// No show stats per validator and per parachain.
+// This is valuable information when we have to debug live network issue, because
+// it gives information if things are going wrong only for some validators or just
+// for some parachains.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+struct NoShowStats {
+	per_validator_no_show: HashMap<SessionIndex, HashMap<ValidatorIndex, usize>>,
+	per_parachain_no_show: HashMap<u32, usize>,
+	last_dumped_block_number: BlockNumber,
+}
+
+impl NoShowStats {
+	// Print the no-show stats if NO_SHOW_DUMP_FREQUENCY blocks have passed since the last
+	// print.
+	fn maybe_print(&mut self, current_block_number: BlockNumber) {
+		if self.last_dumped_block_number > current_block_number ||
+			current_block_number - self.last_dumped_block_number < NO_SHOW_DUMP_FREQUENCY
+		{
+			return
+		}
+		if self.per_parachain_no_show.is_empty() && self.per_validator_no_show.is_empty() {
+			return
+		}
+
+		gum::debug!(
+			target: LOG_TARGET,
+			"Validators with no_show {:?} and parachains with no_shows {:?} since {:}",
+			self.per_validator_no_show,
+			self.per_parachain_no_show,
+			self.last_dumped_block_number
+		);
+
+		self.last_dumped_block_number = current_block_number;
+
+		self.per_validator_no_show.clear();
+		self.per_parachain_no_show.clear();
+	}
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct AssignmentGatheringRecord {
+	// The stage we are in.
+	// Candidate assignment gathering goes in stages, first we wait for needed_approvals(stage 0)
+	// Then if we have no-shows, we move into stage 1 and wait for enough tranches to cover all
+	// no-shows.
+	stage: usize,
+	// The time we started the stage.
+	stage_start: Option<Instant>,
+}
+
+impl Default for AssignmentGatheringRecord {
+	fn default() -> Self {
+		AssignmentGatheringRecord { stage: 0, stage_start: Some(Instant::now()) }
+	}
 }
 
 #[overseer::contextbounds(ApprovalVoting, prefix = self::overseer)]
@@ -826,21 +993,25 @@ impl State {
 		);
 
 		if let Some(approval_entry) = candidate_entry.approval_entry(&block_hash) {
-			let TranchesToApproveResult { required_tranches, total_observed_no_shows } =
-				approval_checking::tranches_to_approve(
-					approval_entry,
-					candidate_entry.approvals(),
-					tranche_now,
-					block_tick,
-					no_show_duration,
-					session_info.needed_approvals as _,
-				);
+			let TranchesToApproveResult {
+				required_tranches,
+				total_observed_no_shows,
+				no_show_validators,
+			} = approval_checking::tranches_to_approve(
+				approval_entry,
+				candidate_entry.approvals(),
+				tranche_now,
+				block_tick,
+				no_show_duration,
+				session_info.needed_approvals as _,
+			);
 
 			let status = ApprovalStatus {
 				required_tranches,
 				block_tick,
 				tranche_now,
 				last_no_shows: total_observed_no_shows,
+				no_show_validators,
 			};
 
 			Some((approval_entry, status))
@@ -893,6 +1064,116 @@ impl State {
 			},
 		}
 	}
+
+	fn mark_begining_of_gathering_assignments(
+		&mut self,
+		block_number: BlockNumber,
+		block_hash: Hash,
+		candidate: CandidateHash,
+	) {
+		if let Some(record) = self
+			.per_block_assignments_gathering_times
+			.get_or_insert(block_number, HashMap::new)
+			.and_then(|records| Some(records.entry((block_hash, candidate)).or_default()))
+		{
+			if record.stage_start.is_none() {
+				record.stage += 1;
+				gum::debug!(
+					target: LOG_TARGET,
+					stage = ?record.stage,
+					?block_hash,
+					?candidate,
+					"Started a new assignment gathering stage",
+				);
+				record.stage_start = Some(Instant::now());
+			}
+		}
+	}
+
+	fn mark_gathered_enough_assignments(
+		&mut self,
+		block_number: BlockNumber,
+		block_hash: Hash,
+		candidate: CandidateHash,
+	) -> AssignmentGatheringRecord {
+		let record = self
+			.per_block_assignments_gathering_times
+			.get(&block_number)
+			.and_then(|entry| entry.get_mut(&(block_hash, candidate)));
+		let stage = record.as_ref().map(|record| record.stage).unwrap_or_default();
+		AssignmentGatheringRecord {
+			stage,
+			stage_start: record.and_then(|record| record.stage_start.take()),
+		}
+	}
+
+	fn cleanup_assignments_gathering_timestamp(&mut self, remove_lower_than: BlockNumber) {
+		while let Some((block_number, _)) = self.per_block_assignments_gathering_times.peek_oldest()
+		{
+			if *block_number < remove_lower_than {
+				self.per_block_assignments_gathering_times.pop_oldest();
+			} else {
+				break
+			}
+		}
+	}
+
+	fn observe_assignment_gathering_status(
+		&mut self,
+		metrics: &Metrics,
+		required_tranches: &RequiredTranches,
+		block_hash: Hash,
+		block_number: BlockNumber,
+		candidate_hash: CandidateHash,
+	) {
+		match required_tranches {
+			RequiredTranches::All | RequiredTranches::Pending { .. } => {
+				self.mark_begining_of_gathering_assignments(
+					block_number,
+					block_hash,
+					candidate_hash,
+				);
+			},
+			RequiredTranches::Exact { .. } => {
+				let time_to_gather =
+					self.mark_gathered_enough_assignments(block_number, block_hash, candidate_hash);
+				if let Some(gathering_started) = time_to_gather.stage_start {
+					if gathering_started.elapsed().as_millis() > 6000 {
+						gum::trace!(
+							target: LOG_TARGET,
+							?block_hash,
+							?candidate_hash,
+							"Long assignment gathering time",
+						);
+					}
+					metrics.observe_assignment_gathering_time(
+						time_to_gather.stage,
+						gathering_started.elapsed().as_millis() as usize,
+					)
+				}
+			},
+		}
+	}
+
+	fn record_no_shows(
+		&mut self,
+		session_index: SessionIndex,
+		para_id: u32,
+		no_show_validators: &Vec<ValidatorIndex>,
+	) {
+		if !no_show_validators.is_empty() {
+			*self.no_show_stats.per_parachain_no_show.entry(para_id.into()).or_default() += 1;
+		}
+		for validator_index in no_show_validators {
+			*self
+				.no_show_stats
+				.per_validator_no_show
+				.entry(session_index)
+				.or_default()
+				.entry(*validator_index)
+				.or_default() += 1;
+		}
+	}
 }
 
 #[derive(Debug, Clone)]
@@ -914,6 +1195,7 @@ enum Action {
 		candidate: CandidateReceipt,
 		backing_group: GroupIndex,
 		distribute_assignment: bool,
+		core_index: Option<CoreIndex>,
 	},
 	NoteApprovedInChainSelection(Hash),
 	IssueApproval(CandidateHash, ApprovalVoteRequest),
@@ -941,6 +1223,10 @@ where
 		clock: subsystem.clock,
 		assignment_criteria,
 		spans: HashMap::new(),
+		per_block_assignments_gathering_times: LruMap::new(ByLength::new(
+			MAX_BLOCKS_WITH_ASSIGNMENT_TIMESTAMPS,
+		)),
+		no_show_stats: NoShowStats::default(),
 	};
 
 	// `None` on start-up. Gets initialized/updated on leaf update
@@ -972,7 +1258,7 @@ where
 				subsystem.metrics.on_wakeup();
 				process_wakeup(
 					&mut ctx,
-					&state,
+					&mut state,
 					&mut overlayed_db,
 					&mut session_info_provider,
 					woken_block,
@@ -1010,23 +1296,67 @@ where
 						validator_index,
 						candidate_hash,
 						approval_outcome,
+						retry_info,
 					}
 				) = approval_state;
 
 				if matches!(approval_outcome, ApprovalOutcome::Approved) {
 					let mut approvals: Vec<Action> = relay_block_hashes
-						.into_iter()
+						.iter()
 						.map(|block_hash|
 							Action::IssueApproval(
 								candidate_hash,
 								ApprovalVoteRequest {
 									validator_index,
-									block_hash,
+									block_hash: *block_hash,
 								},
 							)
 						)
 						.collect();
 					actions.append(&mut approvals);
+				}
+
+				if let Some(retry_info) = retry_info {
+					for block_hash in relay_block_hashes {
+						if overlayed_db.load_block_entry(&block_hash).map(|block_info| block_info.is_some()).unwrap_or(false) {
+							let ctx = &mut ctx;
+							let metrics = subsystem.metrics.clone();
+							let retry_info = retry_info.clone();
+							let executor_params = retry_info.executor_params.clone();
+							let candidate = retry_info.candidate.clone();
+							let launch_approval_span = state
+								.spans
+								.get(&block_hash)
+								.map(|span| span.child("launch-approval"))
+								.unwrap_or_else(|| jaeger::Span::new(candidate_hash, "launch-approval"))
+								.with_trace_id(candidate_hash)
+								.with_candidate(candidate_hash)
+								.with_stage(jaeger::Stage::ApprovalChecking);
+							currently_checking_set
+								.insert_relay_block_hash(
+									candidate_hash,
+									validator_index,
+									block_hash,
+									async move {
+										launch_approval(
+											ctx,
+											metrics,
+											retry_info.session_index,
+											candidate,
+											validator_index,
+											block_hash,
+											retry_info.backing_group,
+											executor_params,
+											retry_info.core_index,
+											&launch_approval_span,
+											retry_info,
+										)
+										.await
+									},
+								)
+								.await?;
+						}
+					}
 				}
 
 				actions
@@ -1076,6 +1406,8 @@ where
 			&mut approvals_cache,
 			&mut subsystem.mode,
 			actions,
+			subsystem.max_approval_retries,
+			subsystem.retry_backoff,
 		)
 		.await?
 		{
@@ -1124,6 +1456,8 @@ async fn handle_actions<Context>(
 	approvals_cache: &mut LruMap<CandidateHash, ApprovalOutcome>,
 	mode: &mut Mode,
 	actions: Vec<Action>,
+	max_approval_retries: u32,
+	retry_backoff: Duration,
 ) -> SubsystemResult<bool> {
 	let mut conclude = false;
 	let mut actions_iter = actions.into_iter();
@@ -1174,6 +1508,7 @@ async fn handle_actions<Context>(
 				candidate,
 				backing_group,
 				distribute_assignment,
+				core_index,
 			} => {
 				// Don't launch approval work if the node is syncing.
 				if let Mode::Syncing(_) = *mode {
@@ -1215,6 +1550,16 @@ async fn handle_actions<Context>(
 					None => {
 						let ctx = &mut *ctx;
 
+						let retry = RetryApprovalInfo {
+							candidate: candidate.clone(),
+							backing_group,
+							executor_params: executor_params.clone(),
+							core_index,
+							session_index: session,
+							attempts_remaining: max_approval_retries,
+							backoff: retry_backoff,
+						};
+
 						currently_checking_set
 							.insert_relay_block_hash(
 								candidate_hash,
@@ -1230,7 +1575,9 @@ async fn handle_actions<Context>(
 										block_hash,
 										backing_group,
 										executor_params,
+										core_index,
 										&launch_approval_span,
+										retry,
 									)
 									.await
 								},
@@ -1263,8 +1610,9 @@ async fn handle_actions<Context>(
 					session_info_provider,
 				)
 				.await?;
-
-				ctx.send_messages(messages.into_iter()).await;
+				for message in messages.into_iter() {
+					ctx.send_unbounded_message(message);
+				}
 				let next_actions: Vec<Action> =
 					next_actions.into_iter().map(|v| v.clone()).chain(actions_iter).collect();
 
@@ -1349,6 +1697,7 @@ async fn distribution_messages_for_activation<Context>(
 
 	let mut approval_meta = Vec::with_capacity(all_blocks.len());
 	let mut messages = Vec::new();
+	let mut approvals = Vec::new();
 	let mut actions = Vec::new();
 
 	messages.push(ApprovalDistributionMessage::NewBlocks(Vec::new())); // dummy value.
@@ -1404,7 +1753,20 @@ async fn distribution_messages_for_activation<Context>(
 			match candidate_entry.approval_entry(&block_hash) {
 				Some(approval_entry) => {
 					match approval_entry.local_statements() {
-						(None, None) | (None, Some(_)) => {}, // second is impossible case.
+						(None, None) =>
+							if approval_entry
+								.our_assignment()
+								.map(|assignment| !assignment.triggered())
+								.unwrap_or(false)
+							{
+								actions.push(Action::ScheduleWakeup {
+									block_hash,
+									block_number: block_entry.block_number(),
+									candidate_hash: *candidate_hash,
+									tick: state.clock.tick_now() + RESTART_WAKEUP_DELAY,
+								})
+							},
+						(None, Some(_)) => {}, // second is impossible case.
 						(Some(assignment), None) => {
 							let claimed_core_indices =
 								get_core_indices_on_startup(&assignment.cert().kind, *core_index);
@@ -1467,6 +1829,7 @@ async fn distribution_messages_for_activation<Context>(
 											candidate: candidate_entry.candidate_receipt().clone(),
 											backing_group: approval_entry.backing_group(),
 											distribute_assignment: false,
+											core_index: Some(*core_index),
 										});
 									}
 								},
@@ -1512,7 +1875,7 @@ async fn distribution_messages_for_activation<Context>(
 							if signatures_queued
 								.insert(approval_sig.signed_candidates_indices.clone())
 							{
-								messages.push(ApprovalDistributionMessage::DistributeApproval(
+								approvals.push(ApprovalDistributionMessage::DistributeApproval(
 									IndirectSignedApprovalVoteV2 {
 										block_hash,
 										candidate_indices: approval_sig.signed_candidates_indices,
@@ -1537,6 +1900,10 @@ async fn distribution_messages_for_activation<Context>(
 	}
 
 	messages[0] = ApprovalDistributionMessage::NewBlocks(approval_meta);
+	// Approvals are appended at the end, to make sure all assignments are sent
+	// before the approvals, otherwise if they arrive ahead in approval-distribution
+	// they will be ignored.
+	messages.extend(approvals.into_iter());
 	Ok((messages, actions))
 }
 
@@ -1581,6 +1948,8 @@ async fn handle_from_overseer<Context>(
 								num_candidates = block_batch.imported_candidates.len(),
 								"Imported new block.",
 							);
+
+							state.no_show_stats.maybe_print(block_batch.block_number);
 
 							for (c_hash, c_entry) in block_batch.imported_candidates {
 								metrics.on_candidate_imported();
@@ -1628,6 +1997,7 @@ async fn handle_from_overseer<Context>(
 			// `prune_finalized_wakeups` prunes all finalized block hashes. We prune spans
 			// accordingly.
 			wakeups.prune_finalized_wakeups(block_number, &mut state.spans);
+			state.cleanup_assignments_gathering_timestamp(block_number);
 
 			// // `prune_finalized_wakeups` prunes all finalized block hashes. We prune spans
 			// accordingly. let hash_set =
@@ -2413,8 +2783,15 @@ where
 						Vec::new(),
 					)),
 			};
-			is_duplicate &= approval_entry.is_assigned(assignment.validator);
-			approval_entry.import_assignment(tranche, assignment.validator, tick_now);
+
+			let is_duplicate_for_candidate = approval_entry.is_assigned(assignment.validator);
+			is_duplicate &= is_duplicate_for_candidate;
+			approval_entry.import_assignment(
+				tranche,
+				assignment.validator,
+				tick_now,
+				is_duplicate_for_candidate,
+			);
 			check_and_import_assignment_span.add_uint_tag("tranche", tranche as u64);
 
 			// We've imported a new assignment, so we need to schedule a wake-up for when that might
@@ -2474,7 +2851,7 @@ where
 
 async fn check_and_import_approval<T, Sender>(
 	sender: &mut Sender,
-	state: &State,
+	state: &mut State,
 	db: &mut OverlayedBackend<'_, impl Backend>,
 	session_info_provider: &mut RuntimeInfo,
 	metrics: &Metrics,
@@ -2706,7 +3083,7 @@ impl ApprovalStateTransition {
 // as necessary and schedules any further wakeups.
 async fn advance_approval_state<Sender>(
 	sender: &mut Sender,
-	state: &State,
+	state: &mut State,
 	db: &mut OverlayedBackend<'_, impl Backend>,
 	session_info_provider: &mut RuntimeInfo,
 	metrics: &Metrics,
@@ -2745,7 +3122,8 @@ where
 	let mut actions = Vec::new();
 	let block_hash = block_entry.block_hash();
 	let block_number = block_entry.block_number();
-
+	let session_index = block_entry.session();
+	let para_id = candidate_entry.candidate_receipt().descriptor().para_id;
 	let tick_now = state.clock.tick_now();
 
 	let (is_approved, status) = if let Some((approval_entry, status)) = state
@@ -2756,6 +3134,13 @@ where
 			&candidate_entry,
 			approval_entry,
 			status.required_tranches.clone(),
+		);
+		state.observe_assignment_gathering_status(
+			&metrics,
+			&status.required_tranches,
+			block_hash,
+			block_entry.block_number(),
+			candidate_hash,
 		);
 
 		// Check whether this is approved, while allowing a maximum
@@ -2834,7 +3219,9 @@ where
 		if is_approved {
 			approval_entry.mark_approved();
 		}
-
+		if newly_approved {
+			state.record_no_shows(session_index, para_id.into(), &status.no_show_validators);
+		}
 		actions.extend(schedule_wakeup_action(
 			&approval_entry,
 			block_hash,
@@ -2937,7 +3324,7 @@ fn should_trigger_assignment(
 #[overseer::contextbounds(ApprovalVoting, prefix = self::overseer)]
 async fn process_wakeup<Context>(
 	ctx: &mut Context,
-	state: &State,
+	state: &mut State,
 	db: &mut OverlayedBackend<'_, impl Backend>,
 	session_info_provider: &mut RuntimeInfo,
 	relay_block: Hash,
@@ -3050,6 +3437,11 @@ async fn process_wakeup<Context>(
 			"Launching approval work.",
 		);
 
+		let candidate_core_index = block_entry
+			.candidates()
+			.iter()
+			.find_map(|(core_index, h)| (h == &candidate_hash).then_some(*core_index));
+
 		if let Some(claimed_core_indices) =
 			get_assignment_core_indices(&indirect_cert.cert.kind, &candidate_hash, &block_entry)
 		{
@@ -3062,7 +3454,6 @@ async fn process_wakeup<Context>(
 						true
 					};
 					db.write_block_entry(block_entry.clone());
-
 					actions.push(Action::LaunchApproval {
 						claimed_candidate_indices,
 						candidate_hash,
@@ -3074,10 +3465,12 @@ async fn process_wakeup<Context>(
 						candidate: candidate_receipt,
 						backing_group,
 						distribute_assignment,
+						core_index: candidate_core_index,
 					});
 				},
 				Err(err) => {
-					// Never happens, it should only happen if no cores are claimed, which is a bug.
+					// Never happens, it should only happen if no cores are claimed, which is a
+					// bug.
 					gum::warn!(
 						target: LOG_TARGET,
 						block_hash = ?relay_block,
@@ -3133,7 +3526,9 @@ async fn launch_approval<Context>(
 	block_hash: Hash,
 	backing_group: GroupIndex,
 	executor_params: ExecutorParams,
+	core_index: Option<CoreIndex>,
 	span: &jaeger::Span,
+	retry: RetryApprovalInfo,
 ) -> SubsystemResult<RemoteHandle<ApprovalState>> {
 	let (a_tx, a_rx) = oneshot::channel();
 	let (code_tx, code_rx) = oneshot::channel();
@@ -3165,6 +3560,7 @@ async fn launch_approval<Context>(
 
 	let candidate_hash = candidate.hash();
 	let para_id = candidate.descriptor.para_id;
+	let mut next_retry = None;
 	gum::trace!(target: LOG_TARGET, ?candidate_hash, ?para_id, "Recovering data.");
 
 	let request_validation_data_span = span
@@ -3179,6 +3575,7 @@ async fn launch_approval<Context>(
 		candidate.clone(),
 		session_index,
 		Some(backing_group),
+		core_index,
 		a_tx,
 	))
 	.await;
@@ -3202,7 +3599,6 @@ async fn launch_approval<Context>(
 	let background = async move {
 		// Force the move of the timer into the background task.
 		let _timer = timer;
-
 		let available_data = match a_rx.await {
 			Err(_) => return ApprovalState::failed(validator_index, candidate_hash),
 			Ok(Ok(a)) => a,
@@ -3213,10 +3609,27 @@ async fn launch_approval<Context>(
 							target: LOG_TARGET,
 							?para_id,
 							?candidate_hash,
+							attempts_remaining = retry.attempts_remaining,
 							"Data unavailable for candidate {:?}",
 							(candidate_hash, candidate.descriptor.para_id),
 						);
-						// do nothing. we'll just be a no-show and that'll cause others to rise up.
+						// Availability could fail if we did not discover much of the network, so
+						// let's back off and order the subsystem to retry at a later point if the
+						// approval is still needed, because no-show wasn't covered yet.
+						if retry.attempts_remaining > 0 {
+							Delay::new(retry.backoff).await;
+							next_retry = Some(RetryApprovalInfo {
+								candidate,
+								backing_group,
+								executor_params,
+								core_index,
+								session_index,
+								attempts_remaining: retry.attempts_remaining - 1,
+								backoff: retry.backoff,
+							});
+						} else {
+							next_retry = None;
+						}
 						metrics_guard.take().on_approval_unavailable();
 					},
 					&RecoveryError::ChannelClosed => {
@@ -3247,7 +3660,7 @@ async fn launch_approval<Context>(
 						metrics_guard.take().on_approval_invalid();
 					},
 				}
-				return ApprovalState::failed(validator_index, candidate_hash)
+				return ApprovalState::failed_with_retry(validator_index, candidate_hash, next_retry)
 			},
 		};
 		drop(request_validation_data_span);

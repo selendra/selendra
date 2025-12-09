@@ -32,9 +32,9 @@ use sp_runtime::{traits::StaticLookup, AccountId32, MultiAddress};
 /// EIP712 Payload struct
 #[derive(Eip712, EthAbiType, Clone)]
 #[eip712(
-        name = "Selendra EVM Claim",
+        name = "SelendraSelendra EVM Claim",
         version = "1",
-        chain_id = 1961,
+        chain_id = 1953,
         // mock genisis hash
         raw_salt = "0x4545454545454545454545454545454545454545454545454545454545454545"
     )]
@@ -130,7 +130,7 @@ fn on_killed_account_hook() {
         // check killed account events
         assert!(System::events().iter().any(|r| matches!(
             &r.event,
-            RuntimeEvent::System(frame_system::Event::KilledAccount { account }) if *account == ALICE
+            RuntimeEvent::System(frame_system::Event::KilledAccount { account }) if account == &ALICE
         )));
 
         // make sure mapping is removed
@@ -174,7 +174,7 @@ fn account_claim_should_work() {
         assert!(System::events().iter().any(|r| matches!(
             &r.event,
             RuntimeEvent::Balances(pallet_balances::Event::Burned { who, amount })
-                if *who == ALICE && *amount == AccountMappingStorageFee::get()
+                if who == &ALICE && amount == &AccountMappingStorageFee::get()
         )));
 
         // check for claim account event
@@ -211,7 +211,7 @@ fn account_default_claim_works() {
         assert!(System::events().iter().any(|r| matches!(
             &r.event,
             RuntimeEvent::Balances(pallet_balances::Event::Burned { who, amount })
-                if *who == ALICE && *amount == AccountMappingStorageFee::get()
+                if who == &ALICE && amount == &AccountMappingStorageFee::get()
         )));
 
         // check UnifiedAddressMapper's mapping works

@@ -19,19 +19,19 @@
 //! Configuration can change only at session boundaries and is buffered until then.
 
 use crate::{inclusion::MAX_UPWARD_MESSAGE_SIZE_BOUND, shared};
+use alloc::vec::Vec;
+use codec::{Decode, Encode};
 use frame_support::{pallet_prelude::*, DefaultNoBound};
 use frame_system::pallet_prelude::*;
-use parity_scale_codec::{Decode, Encode};
 use polkadot_parachain_primitives::primitives::{
 	MAX_HORIZONTAL_MESSAGE_NUM, MAX_UPWARD_MESSAGE_NUM,
 };
-use primitives::{
+use polkadot_primitives::{
 	ApprovalVotingParams, AsyncBackingParams, Balance, ExecutorParamError, ExecutorParams,
 	NodeFeatures, SessionIndex, LEGACY_MIN_BACKING_VOTES, MAX_CODE_SIZE, MAX_HEAD_DATA_SIZE,
-	MAX_POV_SIZE, ON_DEMAND_MAX_QUEUE_MAX_SIZE,
+	ON_DEMAND_MAX_QUEUE_MAX_SIZE,
 };
-use sp_runtime::{traits::Zero, Perbill};
-use sp_std::prelude::*;
+use sp_runtime::{traits::Zero, Perbill, Percent};
 
 #[cfg(test)]
 mod tests;
@@ -42,9 +42,13 @@ mod benchmarking;
 pub mod migration;
 
 pub use pallet::*;
-use primitives::vstaging::SchedulerParams;
+use polkadot_primitives::vstaging::SchedulerParams;
 
 const LOG_TARGET: &str = "runtime::configuration";
+
+// This value is derived from network layer limits. See `sc_network::MAX_RESPONSE_SIZE` and
+// `polkadot_node_network_protocol::POV_RESPONSE_SIZE`.
+const POV_SIZE_HARD_LIMIT: u32 = 16 * 1024 * 1024;
 
 /// All configuration of the runtime with respect to paras.
 #[derive(
@@ -310,7 +314,7 @@ pub enum InconsistentError<BlockNumber> {
 	MaxCodeSizeExceedHardLimit { max_code_size: u32 },
 	/// `max_head_data_size` exceeds the hard limit of `MAX_HEAD_DATA_SIZE`.
 	MaxHeadDataSizeExceedHardLimit { max_head_data_size: u32 },
-	/// `max_pov_size` exceeds the hard limit of `MAX_POV_SIZE`.
+	/// `max_pov_size` exceeds the hard limit of `POV_SIZE_HARD_LIMIT`.
 	MaxPovSizeExceedHardLimit { max_pov_size: u32 },
 	/// `minimum_validation_upgrade_delay` is less than `paras_availability_period`.
 	MinimumValidationUpgradeDelayLessThanChainAvailabilityPeriod {
@@ -335,6 +339,8 @@ pub enum InconsistentError<BlockNumber> {
 	InconsistentExecutorParams { inner: ExecutorParamError },
 	/// TTL should be bigger than lookahead
 	LookaheadExceedsTTL,
+	/// Lookahead is zero, while it must be at least 1 for parachains to work.
+	LookaheadZero,
 	/// Passed in queue size for on-demand was too large.
 	OnDemandQueueSizeTooLarge,
 	/// Number of delay tranches cannot be 0.
@@ -343,7 +349,7 @@ pub enum InconsistentError<BlockNumber> {
 
 impl<BlockNumber> HostConfiguration<BlockNumber>
 where
-	BlockNumber: Zero + PartialOrd + sp_std::fmt::Debug + Clone + From<u32>,
+	BlockNumber: Zero + PartialOrd + core::fmt::Debug + Clone + From<u32>,
 {
 	/// Checks that this instance is consistent with the requirements on each individual member.
 	///
@@ -375,7 +381,7 @@ where
 			})
 		}
 
-		if self.max_pov_size > MAX_POV_SIZE {
+		if self.max_pov_size > POV_SIZE_HARD_LIMIT {
 			return Err(MaxPovSizeExceedHardLimit { max_pov_size: self.max_pov_size })
 		}
 
@@ -430,6 +436,10 @@ where
 
 		if self.scheduler_params.ttl < self.scheduler_params.lookahead.into() {
 			return Err(LookaheadExceedsTTL)
+		}
+
+		if self.scheduler_params.lookahead == 0 {
+			return Err(LookaheadZero)
 		}
 
 		if self.scheduler_params.on_demand_queue_max_size > ON_DEMAND_MAX_QUEUE_MAX_SIZE {
@@ -1276,7 +1286,7 @@ pub mod pallet {
 		fn integrity_test() {
 			assert_eq!(
 				&ActiveConfig::<T>::hashed_key(),
-				primitives::well_known_keys::ACTIVE_CONFIG,
+				polkadot_primitives::well_known_keys::ACTIVE_CONFIG,
 				"`well_known_keys::ACTIVE_CONFIG` doesn't match key of `ActiveConfig`! Make sure that the name of the\
 				 configuration pallet is `Configuration` in the runtime!",
 			);
@@ -1458,5 +1468,18 @@ impl<T: Config> Pallet<T> {
 		PendingConfigs::<T>::put(pending_configs);
 
 		Ok(())
+	}
+}
+
+/// The implementation of `Get<(u32, u32)>` which reads `ActiveConfig` and returns `P` percent of
+/// `hrmp_channel_max_message_size` / `hrmp_channel_max_capacity`.
+pub struct ActiveConfigHrmpChannelSizeAndCapacityRatio<T, P>(core::marker::PhantomData<(T, P)>);
+impl<T: crate::hrmp::pallet::Config, P: Get<Percent>> Get<(u32, u32)>
+	for ActiveConfigHrmpChannelSizeAndCapacityRatio<T, P>
+{
+	fn get() -> (u32, u32) {
+		let config = ActiveConfig::<T>::get();
+		let percent = P::get();
+		(percent * config.hrmp_channel_max_message_size, percent * config.hrmp_channel_max_capacity)
 	}
 }

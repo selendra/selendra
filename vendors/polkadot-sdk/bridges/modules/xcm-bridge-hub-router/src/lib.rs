@@ -37,8 +37,9 @@ use codec::Encode;
 use frame_support::traits::Get;
 use sp_core::H256;
 use sp_runtime::{FixedPointNumber, FixedU128, Saturating};
+use sp_std::vec::Vec;
 use xcm::prelude::*;
-use xcm_builder::{ExporterFor, SovereignPaidRemoteExporter};
+use xcm_builder::{ExporterFor, InspectMessageQueues, SovereignPaidRemoteExporter};
 
 pub use pallet::*;
 pub use weights::WeightInfo;
@@ -396,6 +397,16 @@ impl<T: Config<I>, I: 'static> SendXcm for Pallet<T, I> {
 	}
 }
 
+impl<T: Config<I>, I: 'static> InspectMessageQueues for Pallet<T, I> {
+	fn clear_messages() {}
+
+	/// This router needs to implement `InspectMessageQueues` but doesn't have to
+	/// return any messages, since it just reuses the `XcmpQueue` router.
+	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+		Vec::new()
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -633,6 +644,17 @@ mod tests {
 			assert!(
 				old_bridge.delivery_fee_factor < XcmBridgeHubRouter::bridge().delivery_fee_factor
 			);
+		});
+	}
+
+	#[test]
+	fn get_messages_does_not_return_anything() {
+		run_test(|| {
+			assert_ok!(send_xcm::<XcmBridgeHubRouter>(
+				(Parent, Parent, GlobalConsensus(BridgedNetworkId::get()), Parachain(1000)).into(),
+				vec![ClearOrigin].into()
+			));
+			assert_eq!(XcmBridgeHubRouter::get_messages(), vec![]);
 		});
 	}
 }

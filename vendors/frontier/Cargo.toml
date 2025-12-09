@@ -4,8 +4,6 @@ members = [
 	"frame/dynamic-fee",
 	"frame/ethereum",
 	"frame/evm",
-	"frame/evm-chain-id",
-	"frame/hotfix-sufficients",
 	"frame/evm/precompile/sha3fips",
 	"frame/evm/precompile/simple",
 	"frame/evm/precompile/modexp",
@@ -17,10 +15,16 @@ members = [
 	"frame/evm/precompile/bls12381",
 	"frame/evm/precompile/dispatch",
 	"frame/evm/precompile/curve25519",
+	"frame/evm/precompile/storage-cleaner",
+	"frame/evm-chain-id",
+	"frame/hotfix-sufficients",
 	"client/api",
 	"client/consensus",
 	"client/rpc-core",
 	"client/rpc",
+	"client/rpc-v2",
+	"client/rpc-v2/api",
+	"client/rpc-v2/types",
 	"client/db",
 	"client/storage",
 	"client/mapping-sync",
@@ -47,6 +51,7 @@ repository = "https://github.com/paritytech/frontier/"
 async-trait = "0.1"
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 clap = { version = "4.5", features = ["derive", "deprecated"] }
+const-hex = { version = "1.12", default-features = false, features = ["alloc"] }
 derive_more = "0.99"
 environmental = { version = "1.1.4", default-features = false }
 ethereum = { version = "0.15.0", default-features = false }
@@ -58,22 +63,24 @@ hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
 hex-literal = "0.4.1"
 impl-serde = { version = "0.4.0", default-features = false }
 impl-trait-for-tuples = "0.2.1"
-jsonrpsee = "0.22.2"
+jsonrpsee = { version = "0.23.2" }
+jsonrpsee-core = { version = "0.23.2" }
 kvdb-rocksdb = "0.19.0"
 libsecp256k1 = { version = "0.7.1", default-features = false }
 log = { version = "0.4.21", default-features = false }
 num_enum = { version = "0.7.2", default-features = false }
 parity-db = "0.4.13"
-parking_lot = "0.12.1"
+parking_lot = "0.12.3"
 rlp = { version = "0.5.2", default-features = false }
-scale-codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false, features = ["derive"] }
-scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
+scale-codec = { package = "parity-scale-codec", version = "3.6.12", default-features = false, features = ["derive"] }
+scale-info = { version = "2.11.3", default-features = false, features = ["derive"] }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = "1.0"
 similar-asserts = "1.5.0"
-sqlx = { version = "0.7.3", default-features = false, features = ["macros"] }
+sqlx = { version = "0.7.4", default-features = false, features = ["macros"] }
 thiserror = "1.0"
-tokio = "1.36.0"
+tokio = "1.44.2"
+
 
 # Substrate Client
 sc-basic-authorship = { path = "../polkadot-sdk/substrate/client/basic-authorship" }
@@ -168,6 +175,9 @@ fc-db = { path = "client/db", default-features = false }
 fc-mapping-sync = { path = "client/mapping-sync", default-features = false }
 fc-rpc = { path = "client/rpc", default-features = false }
 fc-rpc-core = { path = "client/rpc-core" }
+fc-rpc-v2 = { path = "client/rpc-v2" }
+fc-rpc-v2-api = { path = "client/rpc-v2/api" }
+fc-rpc-v2-types = { path = "client/rpc-v2/types" }
 fc-storage = { path = "client/storage" }
 # Frontier Primitive
 fp-account = { path = "primitives/account", default-features = false }
@@ -193,10 +203,6 @@ pallet-hotfix-sufficients = { path = "frame/hotfix-sufficients", default-feature
 precompile-utils = { path = "precompiles", default-features = false }
 # Frontier Template
 frontier-template-runtime = { path = "template/runtime", default-features = false }
-
-[workspace.lints.rust]
-suspicious_double_ref_op = { level = "allow", priority = 2 }
-dead_code = { level = "allow", priority = 2 }
 
 [profile.release]
 # Substrate runtime requires unwinding.

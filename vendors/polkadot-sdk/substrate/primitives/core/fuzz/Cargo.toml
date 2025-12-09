@@ -1,7 +1,9 @@
 [package]
 name = "sp-core-fuzz"
-version = "0.0.0"
+version = "0.1.0"
 publish = false
+edition.workspace = true
+description = "sp-core-fuzz (polkadot v1.15.0)"
 
 [lints]
 workspace = true
@@ -10,11 +12,11 @@ workspace = true
 cargo-fuzz = true
 
 [dependencies]
-lazy_static = "1.4.0"
-libfuzzer-sys = "0.4"
-regex = "1.10.2"
-
-sp-core = { path = ".." }
+lazy_static = { workspace = true }
+libfuzzer-sys = { workspace = true }
+regex = { workspace = true }
+sp-core.workspace = true
+sp-core.default-features = true
 
 [[bin]]
 name = "fuzz_address_uri"

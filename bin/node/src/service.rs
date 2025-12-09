@@ -504,7 +504,7 @@ pub async fn new_authority(
 		keystore: service_components.keystore_container.local_keystore(),
 		task_manager: &mut service_components.task_manager,
 		transaction_pool: service_components.transaction_pool.clone(),
-		rpc_builder,
+		rpc_builder: Box::new(rpc_builder),
 		backend: service_components.backend,
 		system_rpc_tx,
 		tx_handler_controller,

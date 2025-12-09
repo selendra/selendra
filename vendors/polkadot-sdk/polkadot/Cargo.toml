@@ -12,45 +12,47 @@ path = "src/bin/prepare-worker.rs"
 
 [package]
 name = "polkadot"
-description = "Implementation of a `https://polkadot.network` node in Rust based on the Substrate framework."
+description = "Implementation of a `https://polkadot.network` node in Rust based on the Substrate framework. (polkadot v1.15.0)"
 license = "GPL-3.0-only"
 rust-version = "1.64.0"
 readme = "README.md"
 authors.workspace = true
 edition.workspace = true
-version = "6.0.0"
+version = "17.0.0"
 default-run = "polkadot"
 
 [lints]
 workspace = true
 
 [dependencies]
-color-eyre = { version = "0.6.1", default-features = false }
-tikv-jemallocator = { version = "0.5.0", optional = true, features = ["unprefixed_malloc_on_supported_platforms"] }
-
-# Crates in our workspace, defined as dependencies so we can pass them feature flags.
-polkadot-cli = { path = "cli", features = ["rococo-native", "westend-native"] }
-polkadot-node-core-pvf = { path = "node/core/pvf" }
-polkadot-node-core-pvf-prepare-worker = { path = "node/core/pvf/prepare-worker" }
-polkadot-overseer = { path = "node/overseer" }
-
-# Needed for worker binaries.
-polkadot-node-core-pvf-common = { path = "node/core/pvf/common" }
-polkadot-node-core-pvf-execute-worker = { path = "node/core/pvf/execute-worker" }
+color-eyre = { workspace = true }
+tikv-jemallocator = { optional = true, features = ["unprefixed_malloc_on_supported_platforms"], workspace = true }
+polkadot-cli = { features = ["rococo-native", "westend-native"], workspace = true, default-features = true }
+polkadot-node-core-pvf.workspace = true
+polkadot-node-core-pvf.default-features = true
+polkadot-node-core-pvf-prepare-worker.workspace = true
+polkadot-node-core-pvf-prepare-worker.default-features = true
+polkadot-overseer.workspace = true
+polkadot-overseer.default-features = true
+polkadot-node-core-pvf-common.workspace = true
+polkadot-node-core-pvf-common.default-features = true
+polkadot-node-core-pvf-execute-worker.workspace = true
+polkadot-node-core-pvf-execute-worker.default-features = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
 tikv-jemallocator = { version = "0.5.0", features = ["unprefixed_malloc_on_supported_platforms"] }
 
 [dev-dependencies]
-assert_cmd = "2.0.4"
-nix = { version = "0.26.1", features = ["signal"] }
-tempfile = "3.2.0"
-tokio = "1.37"
-substrate-rpc-client = { path = "../substrate/utils/frame/rpc/client" }
-polkadot-core-primitives = { path = "core-primitives" }
+assert_cmd = { workspace = true }
+nix = { features = ["signal"], workspace = true }
+tempfile = { workspace = true }
+tokio = { workspace = true, default-features = true }
+substrate-rpc-client = { default-features = true, path = "../substrate/utils/frame/rpc/client" }
+polkadot-core-primitives = { default-features = true, path = "core-primitives" }
 
 [build-dependencies]
-substrate-build-script-utils = { path = "../substrate/utils/build-script-utils" }
+substrate-build-script-utils.workspace = true
+substrate-build-script-utils.default-features = true
 
 [badges]
 maintenance = { status = "actively-developed" }
@@ -68,6 +70,11 @@ jemalloc-allocator = [
 	"polkadot-overseer/jemalloc-allocator",
 ]
 
+# Generate the metadata hash needed for CheckMetadataHash
+# in the builtin test runtimes (westend and rococo).
+metadata-hash = [
+	"polkadot-cli/metadata-hash",
+]
 
 # Enables timeout-based tests supposed to be run only in CI environment as they may be flaky
 # when run locally depending on system load

@@ -37,7 +37,6 @@ impl frame_system::Config for Runtime {
 
 #[derive_impl(pallet_balances::config_preludes::TestDefaultConfig)]
 impl pallet_balances::Config for Runtime {
-	type ReserveIdentifier = [u8; 8];
 	type AccountStore = System;
 }
 
@@ -76,7 +75,7 @@ pub mod dynamic_params {
 	}
 
 	#[dynamic_pallet_params]
-	#[codec(index = 3)]
+	#[codec(index = 4)]
 	pub mod somE_weird_SPElLInG_s {
 		#[codec(index = 0)]
 		pub static V: u64 = 0;

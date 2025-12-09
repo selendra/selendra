@@ -1,10 +1,10 @@
 [package]
 name = "test-parachain-adder"
-description = "Test parachain which adds to a number as its state transition"
+description = "Test parachain which adds to a number as its state transition (polkadot v1.15.0)"
 build = "build.rs"
 edition.workspace = true
 license.workspace = true
-version = "1.0.0"
+version = "0.1.0"
 authors.workspace = true
 publish = false
 
@@ -12,18 +12,16 @@ publish = false
 workspace = true
 
 [dependencies]
-parachain = { package = "polkadot-parachain-primitives", path = "../..", default-features = false, features = ["wasm-api"] }
-parity-scale-codec = { version = "3.6.1", default-features = false, features = ["derive"] }
-sp-std = { path = "../../../../substrate/primitives/std", default-features = false }
-tiny-keccak = { version = "2.0.2", features = ["keccak"] }
-dlmalloc = { version = "0.2.4", features = ["global"] }
-
-# We need to make sure the global allocator is disabled until we have support of full substrate externalities
-sp-io = { path = "../../../../substrate/primitives/io", default-features = false, features = ["disable_allocator"] }
+polkadot-parachain-primitives = { features = ["wasm-api"], workspace = true }
+codec = { features = ["derive"], workspace = true }
+tiny-keccak = { features = ["keccak"], workspace = true }
+dlmalloc = { features = ["global"], workspace = true }
+sp-io = { features = ["disable_allocator"], workspace = true }
 
 [build-dependencies]
-substrate-wasm-builder = { path = "../../../../substrate/utils/wasm-builder" }
+substrate-wasm-builder.workspace = true
+substrate-wasm-builder.default-features = true
 
 [features]
 default = ["std"]
-std = ["parachain/std", "parity-scale-codec/std", "sp-io/std", "sp-std/std"]
+std = ["codec/std", "polkadot-parachain-primitives/std", "sp-io/std"]

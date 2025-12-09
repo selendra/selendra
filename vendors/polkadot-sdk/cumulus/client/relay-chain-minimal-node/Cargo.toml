@@ -1,54 +1,64 @@
 [package]
 authors.workspace = true
 name = "cumulus-relay-chain-minimal-node"
-version = "0.7.0"
+version = "0.18.0"
 edition.workspace = true
-description = "Minimal node implementation to be used in tandem with RPC or light-client mode."
+description = "Minimal node implementation to be used in tandem with RPC or light-client mode. (polkadot v1.15.0)"
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
 
 [lints]
 workspace = true
 
 [dependencies]
-# polkadot deps
-polkadot-primitives = { path = "../../../polkadot/primitives" }
-polkadot-core-primitives = { path = "../../../polkadot/core-primitives" }
-polkadot-overseer = { path = "../../../polkadot/node/overseer" }
-polkadot-node-subsystem-util = { path = "../../../polkadot/node/subsystem-util" }
-polkadot-node-network-protocol = { path = "../../../polkadot/node/network/protocol" }
+polkadot-primitives.workspace = true
+polkadot-primitives.default-features = true
+polkadot-core-primitives.workspace = true
+polkadot-core-primitives.default-features = true
+polkadot-overseer.workspace = true
+polkadot-overseer.default-features = true
+polkadot-node-subsystem-util.workspace = true
+polkadot-node-subsystem-util.default-features = true
+polkadot-node-network-protocol.workspace = true
+polkadot-node-network-protocol.default-features = true
+polkadot-network-bridge.workspace = true
+polkadot-network-bridge.default-features = true
+polkadot-service.workspace = true
+polkadot-service.default-features = true
+sc-authority-discovery.workspace = true
+sc-authority-discovery.default-features = true
+sc-network.workspace = true
+sc-network.default-features = true
+sc-network-common.workspace = true
+sc-network-common.default-features = true
+sc-service.workspace = true
+sc-service.default-features = true
+sc-client-api.workspace = true
+sc-client-api.default-features = true
+prometheus-endpoint.workspace = true
+prometheus-endpoint.default-features = true
+sc-tracing.workspace = true
+sc-tracing.default-features = true
+sc-utils.workspace = true
+sc-utils.default-features = true
+sp-api.workspace = true
+sp-api.default-features = true
+sp-consensus-babe.workspace = true
+sp-consensus-babe.default-features = true
+sp-consensus.workspace = true
+sp-consensus.default-features = true
+sp-runtime.workspace = true
+sp-runtime.default-features = true
+sp-blockchain.workspace = true
+sp-blockchain.default-features = true
+tokio = { features = ["macros"], workspace = true, default-features = true }
+cumulus-relay-chain-interface.workspace = true
+cumulus-relay-chain-interface.default-features = true
+cumulus-relay-chain-rpc-interface.workspace = true
+cumulus-relay-chain-rpc-interface.default-features = true
+cumulus-primitives-core.workspace = true
+cumulus-primitives-core.default-features = true
 
-polkadot-availability-recovery = { path = "../../../polkadot/node/network/availability-recovery" }
-polkadot-collator-protocol = { path = "../../../polkadot/node/network/collator-protocol" }
-polkadot-network-bridge = { path = "../../../polkadot/node/network/bridge" }
-polkadot-node-collation-generation = { path = "../../../polkadot/node/collation-generation" }
-polkadot-node-core-runtime-api = { path = "../../../polkadot/node/core/runtime-api" }
-polkadot-node-core-chain-api = { path = "../../../polkadot/node/core/chain-api" }
-polkadot-node-core-prospective-parachains = { path = "../../../polkadot/node/core/prospective-parachains" }
-polkadot-service = { path = "../../../polkadot/node/service" }
-
-# substrate deps
-sc-authority-discovery = { path = "../../../substrate/client/authority-discovery" }
-sc-network = { path = "../../../substrate/client/network" }
-sc-network-common = { path = "../../../substrate/client/network/common" }
-sc-service = { path = "../../../substrate/client/service" }
-sc-client-api = { path = "../../../substrate/client/api" }
-substrate-prometheus-endpoint = { path = "../../../substrate/utils/prometheus" }
-sc-tracing = { path = "../../../substrate/client/tracing" }
-sc-utils = { path = "../../../substrate/client/utils" }
-sp-api = { path = "../../../substrate/primitives/api" }
-sp-consensus-babe = { path = "../../../substrate/primitives/consensus/babe" }
-sp-consensus = { path = "../../../substrate/primitives/consensus/common" }
-sp-runtime = { path = "../../../substrate/primitives/runtime" }
-sp-blockchain = { path = "../../../substrate/primitives/blockchain" }
-tokio = { version = "1.32.0", features = ["macros"] }
-
-# cumulus deps
-cumulus-relay-chain-interface = { path = "../relay-chain-interface" }
-cumulus-relay-chain-rpc-interface = { path = "../relay-chain-rpc-interface" }
-cumulus-primitives-core = { path = "../../primitives/core" }
-
-array-bytes = "6.1"
-tracing = "0.1.37"
-async-trait = "0.1.79"
-futures = "0.3.28"
-parking_lot = "0.12.1"
+array-bytes = { workspace = true, default-features = true }
+tracing = { workspace = true, default-features = true }
+async-trait = { workspace = true }
+futures = { workspace = true }

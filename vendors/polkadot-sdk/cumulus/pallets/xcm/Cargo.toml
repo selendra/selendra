@@ -2,26 +2,22 @@
 authors.workspace = true
 edition.workspace = true
 name = "cumulus-pallet-xcm"
-version = "0.7.0"
+version = "0.16.0"
 license = "Apache-2.0"
-description = "Pallet for stuff specific to parachains' usage of XCM"
+description = "Pallet for stuff specific to parachains' usage of XCM (polkadot v1.15.0)"
 
 [lints]
 workspace = true
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-scale-info = { version = "2.11.1", default-features = false, features = ["derive"] }
-
-sp-std = { path = "../../../substrate/primitives/std", default-features = false }
-sp-io = { path = "../../../substrate/primitives/io", default-features = false }
-sp-runtime = { path = "../../../substrate/primitives/runtime", default-features = false }
-frame-support = { path = "../../../substrate/frame/support", default-features = false }
-frame-system = { path = "../../../substrate/frame/system", default-features = false }
-
-xcm = { package = "staging-xcm", path = "../../../polkadot/xcm", default-features = false }
-
-cumulus-primitives-core = { path = "../../primitives/core", default-features = false }
+codec = { features = ["derive"], workspace = true }
+scale-info = { features = ["derive"], workspace = true }
+sp-io.workspace = true
+sp-runtime.workspace = true
+frame-support.workspace = true
+frame-system.workspace = true
+xcm.workspace = true
+cumulus-primitives-core.workspace = true
 
 [features]
 default = ["std"]
@@ -33,7 +29,6 @@ std = [
 	"scale-info/std",
 	"sp-io/std",
 	"sp-runtime/std",
-	"sp-std/std",
 	"xcm/std",
 ]
 try-runtime = [

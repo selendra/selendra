@@ -45,7 +45,7 @@ pub fn build_chain_spec(
 
 	Ok(SelendraNodeChainSpec::builder(
 		WASM_BINARY.ok_or("SelendraNode development wasm not available")?,
-		Default::default(),
+		None,
 	)
 	.with_name(chain_params.chain_name())
 	.with_id(chain_params.chain_id())

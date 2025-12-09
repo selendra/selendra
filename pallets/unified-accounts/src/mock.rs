@@ -23,12 +23,12 @@ use crate as pallet_unified_accounts;
 use primitives::evm::HashedDefaultMappings;
 use frame_support::{
     construct_runtime, parameter_types,
-    traits::{ConstU32, ConstU64, FindAuthor},
+    traits::{ConstU64, FindAuthor},
     weights::Weight,
 };
 use pallet_ethereum::PostLogContent;
 use pallet_evm::FeeCalculator;
-use sp_core::{keccak_256, H160, U256};
+use sp_core::{keccak_256, H160, H256, U256};
 use sp_io::TestExternalities;
 use sp_runtime::{
     traits::{AccountIdLookup, BlakeTwo256},
@@ -37,25 +37,25 @@ use sp_runtime::{
 
 parameter_types! {
     pub BlockWeights: frame_system::limits::BlockWeights =
-        frame_system::limits::BlockWeights::simple_max(Weight::from_parts(1_000_000_000, 1_000_000));
+        frame_system::limits::BlockWeights::simple_max(Weight::from_parts(1024, 0));
     pub const ExistentialDeposit: u128 = 100;
 }
 
 impl frame_system::Config for TestRuntime {
     type BaseCallFilter = frame_support::traits::Everything;
-    type BlockWeights = BlockWeights;
+    type BlockWeights = ();
     type BlockLength = ();
-    type DbWeight = ();
     type RuntimeOrigin = RuntimeOrigin;
+    type Nonce = u64;
     type RuntimeCall = RuntimeCall;
-    type Nonce = u32;
-    type Hash = sp_core::H256;
+    type Block = Block;
+    type Hash = H256;
     type Hashing = BlakeTwo256;
     type AccountId = AccountId;
     type Lookup = (AccountIdLookup<Self::AccountId, ()>, UnifiedAccounts);
-    type Block = Block;
     type RuntimeEvent = RuntimeEvent;
     type BlockHashCount = ConstU64<250>;
+    type DbWeight = ();
     type Version = ();
     type PalletInfo = PalletInfo;
     type AccountData = pallet_balances::AccountData<Balance>;
@@ -64,12 +64,17 @@ impl frame_system::Config for TestRuntime {
     type SystemWeightInfo = ();
     type SS58Prefix = ();
     type OnSetCode = ();
-    type MaxConsumers = ConstU32<16>;
-    type RuntimeTask = ();
+    type MaxConsumers = frame_support::traits::ConstU32<16>;
+    type RuntimeTask = RuntimeTask;
+    type SingleBlockMigrations = ();
+    type MultiBlockMigrator = ();
+    type PreInherents = ();
+    type PostInherents = ();
+    type PostTransactions = ();
 }
 
 impl pallet_balances::Config for TestRuntime {
-    type MaxLocks = ConstU32<50>;
+    type MaxLocks = ConstU32<4>;
     type MaxReserves = ();
     type ReserveIdentifier = [u8; 8];
     type Balance = Balance;
@@ -78,11 +83,10 @@ impl pallet_balances::Config for TestRuntime {
     type ExistentialDeposit = ExistentialDeposit;
     type AccountStore = System;
     type WeightInfo = ();
+    type RuntimeHoldReason = RuntimeHoldReason;
     type FreezeIdentifier = ();
-    type MaxFreezes = ();
-    type MaxHolds = ConstU32<50>;
-    type RuntimeHoldReason = ();
     type RuntimeFreezeReason = ();
+    type MaxFreezes = ConstU32<0>;
 }
 
 impl pallet_timestamp::Config for TestRuntime {
@@ -112,7 +116,7 @@ impl FindAuthor<H160> for MockFindAuthor {
 parameter_types! {
     pub WeightPerGas: Weight = Weight::from_parts(1, 0);
     pub const BlockGasLimit: U256 = U256::MAX;
-    pub ChainId: u64 = 1961;
+    pub ChainId: u64 = 1953;
 }
 
 impl pallet_evm::Config for TestRuntime {
@@ -145,7 +149,7 @@ parameter_types! {
 
 impl pallet_ethereum::Config for TestRuntime {
     type RuntimeEvent = RuntimeEvent;
-    type StateRoot = pallet_ethereum::IntermediateStateRoot<TestRuntime>;
+    type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
     type PostLogContent = PostBlockAndTxnHashes;
     type ExtraDataLength = ConstU32<30>;
 }

@@ -2,24 +2,20 @@
 authors.workspace = true
 edition.workspace = true
 name = "staging-parachain-info"
-version = "0.7.0"
+version = "0.16.0"
 license = "Apache-2.0"
-description = "Pallet to store the parachain ID"
+description = "Pallet to store the parachain ID (polkadot v1.15.0)"
 
 [lints]
 workspace = true
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-scale-info = { version = "2.11.1", default-features = false, features = ["derive"] }
-
-frame-support = { path = "../../../../substrate/frame/support", default-features = false }
-frame-system = { path = "../../../../substrate/frame/system", default-features = false }
-
-sp-runtime = { path = "../../../../substrate/primitives/runtime", default-features = false }
-sp-std = { path = "../../../../substrate/primitives/std", default-features = false }
-
-cumulus-primitives-core = { path = "../../../primitives/core", default-features = false }
+codec = { features = ["derive"], workspace = true }
+scale-info = { features = ["derive"], workspace = true }
+frame-support.workspace = true
+frame-system.workspace = true
+sp-runtime.workspace = true
+cumulus-primitives-core.workspace = true
 
 [features]
 default = ["std"]
@@ -30,7 +26,6 @@ std = [
 	"frame-system/std",
 	"scale-info/std",
 	"sp-runtime/std",
-	"sp-std/std",
 ]
 try-runtime = [
 	"frame-support/try-runtime",

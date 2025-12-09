@@ -1,29 +1,35 @@
 [package]
 name = "polkadot-node-core-chain-api"
-version = "7.0.0"
+version = "17.0.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "The Chain API subsystem provides access to chain related utility functions like block number to hash conversions."
+description = "The Chain API subsystem provides access to chain related utility functions like block number to hash conversions. (polkadot v1.15.0)"
 
 [lints]
 workspace = true
 
 [dependencies]
-futures = "0.3.30"
-gum = { package = "tracing-gum", path = "../../gum" }
-polkadot-node-metrics = { path = "../../metrics" }
-polkadot-node-subsystem = { path = "../../subsystem" }
-polkadot-node-subsystem-types = { path = "../../subsystem-types" }
-sc-client-api = { path = "../../../../substrate/client/api" }
-sc-consensus-babe = { path = "../../../../substrate/client/consensus/babe" }
+futures = { workspace = true }
+gum.workspace = true
+gum.default-features = true
+polkadot-node-metrics.workspace = true
+polkadot-node-metrics.default-features = true
+polkadot-node-subsystem.workspace = true
+polkadot-node-subsystem.default-features = true
+polkadot-node-subsystem-types.workspace = true
+polkadot-node-subsystem-types.default-features = true
+sc-client-api.workspace = true
+sc-client-api.default-features = true
+sc-consensus-babe.workspace = true
+sc-consensus-babe.default-features = true
 
 [dev-dependencies]
-futures = { version = "0.3.30", features = ["thread-pool"] }
-maplit = "1.0.2"
-parity-scale-codec = "3.6.1"
-polkadot-node-primitives = { path = "../../primitives" }
-polkadot-primitives = { path = "../../../primitives" }
+futures = { features = ["thread-pool"], workspace = true }
+maplit = { workspace = true }
+codec = { workspace = true, default-features = true }
+polkadot-node-primitives = { default-features = true, path = "../../primitives" }
+polkadot-primitives = { default-features = true, path = "../../../primitives" }
 polkadot-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
-sp-core = { path = "../../../../substrate/primitives/core" }
-sp-blockchain = { path = "../../../../substrate/primitives/blockchain" }
+sp-core = { default-features = true, path = "../../../../substrate/primitives/core" }
+sp-blockchain = { default-features = true, path = "../../../../substrate/primitives/blockchain" }

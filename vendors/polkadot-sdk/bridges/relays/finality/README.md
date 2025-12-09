@@ -33,7 +33,9 @@ node. The transaction is then tracked by the relay until it is mined and finaliz
 The main entrypoint for the crate is the [`run` function](./src/finality_loop.rs), which takes source and target
 clients and [`FinalitySyncParams`](./src/finality_loop.rs) parameters. The most important parameter is the
 `only_mandatory_headers` - it is set to `true`, the relay will only submit mandatory headers. Since transactions
-with mandatory headers are fee-free, the cost of running such relay is zero (in terms of fees).
+with mandatory headers are fee-free, the cost of running such relay is zero (in terms of fees). If a similar,
+`only_free_headers` parameter, is set to `true`, then free headers (if configured in the runtime) are also
+relayed.
 
 ## Finality Relay Metrics
 
@@ -58,3 +60,8 @@ chains, simply change chain names. So the metrics are:
 
 If relay operates properly, you should see that the `Rococo_to_BridgeHubWestend_Sync_best_source_at_target_block_number`
 tries to reach the `Rococo_to_BridgeHubWestend_Sync_best_source_block_number`. And the latter one always increases.
+
+
+## Release
+
+polkadot v1.15.0

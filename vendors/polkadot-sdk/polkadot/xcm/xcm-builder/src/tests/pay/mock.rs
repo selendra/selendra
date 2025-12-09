@@ -25,8 +25,8 @@ use frame_support::{
 	traits::{ConstU32, Everything},
 };
 use frame_system::{EnsureRoot, EnsureSigned};
+use polkadot_primitives::{AccountIndex, BlakeTwo256, Signature};
 use polkadot_test_runtime::SignedExtra;
-use primitives::{AccountIndex, BlakeTwo256, Signature};
 use sp_runtime::{generic, traits::MaybeEquivalence, AccountId32, BuildStorage};
 use xcm_executor::{traits::ConvertLocation, XcmExecutor};
 
@@ -54,7 +54,6 @@ impl frame_system::Config for Test {
 	type Block = Block;
 	type AccountData = pallet_balances::AccountData<Balance>;
 	type AccountId = AccountId;
-	type BlockHashCount = ConstU32<256>;
 	type Lookup = sp_runtime::traits::IdentityLookup<AccountId>;
 }
 
@@ -118,7 +117,6 @@ parameter_types! {
 	pub const AnyNetwork: Option<NetworkId> = None;
 	pub UniversalLocation: InteriorLocation = (ByGenesis([0; 32]), Parachain(42)).into();
 	pub UnitWeightCost: u64 = 1_000;
-	pub static AdvertisedXcmVersion: u32 = 3;
 	pub const BaseXcmWeight: Weight = Weight::from_parts(1_000, 1_000);
 	pub CurrencyPerSecondPerByte: (AssetId, u128, u128) = (AssetId(RelayLocation::get()), 1, 1);
 	pub TrustedAssets: (AssetFilter, Location) = (All.into(), Here.into());
@@ -221,6 +219,7 @@ impl xcm_executor::Config for XcmConfig {
 	type HrmpNewChannelOpenRequestHandler = ();
 	type HrmpChannelAcceptedHandler = ();
 	type HrmpChannelClosingHandler = ();
+	type XcmRecorder = XcmPallet;
 }
 
 parameter_types! {
@@ -258,7 +257,7 @@ impl pallet_xcm::Config for Test {
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
 	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
-	type AdvertisedXcmVersion = AdvertisedXcmVersion;
+	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 	type TrustedLockers = ();
 	type SovereignAccountOf = SovereignAccountOf;
 	type Currency = Balances;
@@ -299,6 +298,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 			(1, TreasuryAccountId::get(), INITIAL_BALANCE),
 			(100, TreasuryAccountId::get(), INITIAL_BALANCE),
 		],
+		next_asset_id: None,
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();

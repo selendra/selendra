@@ -1,8 +1,8 @@
 [package]
 name = "sc-consensus-manual-seal"
-version = "0.35.0"
+version = "0.45.0"
 authors.workspace = true
-description = "Manual sealing engine for Substrate"
+description = "Manual sealing engine for Substrate (polkadot v1.15.0)"
 edition.workspace = true
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
 homepage = "https://substrate.io"
@@ -16,37 +16,56 @@ workspace = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-jsonrpsee = { version = "0.22", features = ["client-core", "macros", "server"] }
-assert_matches = "1.3.0"
-async-trait = "0.1.79"
-codec = { package = "parity-scale-codec", version = "3.6.1" }
-futures = "0.3.30"
-futures-timer = "3.0.1"
+jsonrpsee = { features = ["client-core", "macros", "server-core"], workspace = true }
+assert_matches = { workspace = true }
+async-trait = { workspace = true }
+codec = { workspace = true, default-features = true }
+futures = { workspace = true }
+futures-timer = { workspace = true }
 log = { workspace = true, default-features = true }
 serde = { features = ["derive"], workspace = true, default-features = true }
 thiserror = { workspace = true }
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", path = "../../../utils/prometheus" }
-sc-client-api = { path = "../../api" }
-sc-consensus = { path = "../common" }
-sc-consensus-aura = { path = "../aura" }
-sc-consensus-babe = { path = "../babe" }
-sc-consensus-epochs = { path = "../epochs" }
-sc-transaction-pool = { path = "../../transaction-pool" }
-sc-transaction-pool-api = { path = "../../transaction-pool/api" }
-sp-api = { path = "../../../primitives/api" }
-sp-blockchain = { path = "../../../primitives/blockchain" }
-sp-consensus = { path = "../../../primitives/consensus/common" }
-sp-consensus-aura = { path = "../../../primitives/consensus/aura" }
-sp-consensus-babe = { path = "../../../primitives/consensus/babe" }
-sp-consensus-slots = { path = "../../../primitives/consensus/slots" }
-sp-core = { path = "../../../primitives/core" }
-sp-inherents = { path = "../../../primitives/inherents" }
-sp-keystore = { path = "../../../primitives/keystore" }
-sp-runtime = { path = "../../../primitives/runtime" }
-sp-timestamp = { path = "../../../primitives/timestamp" }
+prometheus-endpoint.workspace = true
+prometheus-endpoint.default-features = true
+sc-client-api.workspace = true
+sc-client-api.default-features = true
+sc-consensus.workspace = true
+sc-consensus.default-features = true
+sc-consensus-aura.workspace = true
+sc-consensus-aura.default-features = true
+sc-consensus-babe.workspace = true
+sc-consensus-babe.default-features = true
+sc-consensus-epochs.workspace = true
+sc-consensus-epochs.default-features = true
+sc-transaction-pool.workspace = true
+sc-transaction-pool.default-features = true
+sc-transaction-pool-api.workspace = true
+sc-transaction-pool-api.default-features = true
+sp-api.workspace = true
+sp-api.default-features = true
+sp-blockchain.workspace = true
+sp-blockchain.default-features = true
+sp-consensus.workspace = true
+sp-consensus.default-features = true
+sp-consensus-aura.workspace = true
+sp-consensus-aura.default-features = true
+sp-consensus-babe.workspace = true
+sp-consensus-babe.default-features = true
+sp-consensus-slots.workspace = true
+sp-consensus-slots.default-features = true
+sp-core.workspace = true
+sp-core.default-features = true
+sp-inherents.workspace = true
+sp-inherents.default-features = true
+sp-keystore.workspace = true
+sp-keystore.default-features = true
+sp-runtime.workspace = true
+sp-runtime.default-features = true
+sp-timestamp.workspace = true
+sp-timestamp.default-features = true
 
 [dev-dependencies]
-tokio = { version = "1.22.0", features = ["macros", "rt-multi-thread"] }
-sc-basic-authorship = { path = "../../basic-authorship" }
+tokio = { features = ["macros", "rt-multi-thread"], workspace = true, default-features = true }
+sc-basic-authorship = { default-features = true, path = "../../basic-authorship" }
 substrate-test-runtime-client = { path = "../../../test-utils/runtime/client" }
 substrate-test-runtime-transaction-pool = { path = "../../../test-utils/runtime/transaction-pool" }

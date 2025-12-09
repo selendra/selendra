@@ -1008,7 +1008,8 @@ macro_rules! impl_benchmark {
 					$(
 						(stringify!($pov_name).as_bytes().to_vec(),
 						$crate::__private::vec![
-							$( ( stringify!($storage).as_bytes().to_vec(),
+							// Stringify sometimes includes spaces, depending on the Rust version.
+							$( ( stringify!($storage).replace(" ", "").as_bytes().to_vec(),
 								 stringify!($pov_mode).as_bytes().to_vec() ), )*
 						]),
 					)*
@@ -1741,9 +1742,9 @@ pub fn show_benchmark_debug_info(
 		* Components: {:?}\n\
 		* Verify: {:?}\n\
 		* Error message: {}",
-		sp_std::str::from_utf8(instance_string)
+		alloc::str::from_utf8(instance_string)
 			.expect("it's all just strings ran through the wasm interface. qed"),
-		sp_std::str::from_utf8(benchmark)
+		alloc::str::from_utf8(benchmark)
 			.expect("it's all just strings ran through the wasm interface. qed"),
 		components,
 		verify,

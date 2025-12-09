@@ -25,7 +25,7 @@ use asset_hub_westend_runtime::{
 		LocationToAccountId, StakingPot, TrustBackedAssetsPalletLocation, WestendLocation,
 		XcmConfig,
 	},
-	AllPalletsWithoutSystem, Assets, Balances, ExistentialDeposit, ForeignAssets,
+	AllPalletsWithoutSystem, Assets, Balances, Block, ExistentialDeposit, ForeignAssets,
 	ForeignAssetsInstance, MetadataDepositBase, MetadataDepositPerByte, ParachainSystem,
 	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, SessionKeys,
 	ToRococoXcmRouterInstance, TrustBackedAssetsInstance, XcmpQueue,
@@ -1258,7 +1258,7 @@ fn report_bridge_status_from_xcm_bridge_router_for_rococo_works() {
 		collator_session_keys(),
 		bridging_to_asset_hub_rococo,
 		|| {
-			sp_std::vec![
+			vec![
 				UnpaidExecution { weight_limit: Unlimited, check_origin: None },
 				Transact {
 					origin_kind: OriginKind::Xcm,
@@ -1268,16 +1268,16 @@ fn report_bridge_status_from_xcm_bridge_router_for_rococo_works() {
 						bp_asset_hub_westend::XcmBridgeHubRouterCall::report_bridge_status {
 							bridge_id: Default::default(),
 							is_congested: true,
-						}
+						},
 					)
 					.encode()
 					.into(),
-				}
+				},
 			]
 			.into()
 		},
 		|| {
-			sp_std::vec![
+			vec![
 				UnpaidExecution { weight_limit: Unlimited, check_origin: None },
 				Transact {
 					origin_kind: OriginKind::Xcm,
@@ -1287,11 +1287,11 @@ fn report_bridge_status_from_xcm_bridge_router_for_rococo_works() {
 						bp_asset_hub_westend::XcmBridgeHubRouterCall::report_bridge_status {
 							bridge_id: Default::default(),
 							is_congested: false,
-						}
+						},
 					)
 					.encode()
 					.into(),
-				}
+				},
 			]
 			.into()
 		},
@@ -1418,4 +1418,20 @@ fn reserve_transfer_native_asset_to_non_teleport_para_works() {
 		}),
 		WeightLimit::Unlimited,
 	);
+}
+
+#[test]
+fn xcm_payment_api_works() {
+	parachains_runtimes_test_utils::test_cases::xcm_payment_api_with_native_token_works::<
+		Runtime,
+		RuntimeCall,
+		RuntimeOrigin,
+		Block,
+	>();
+	asset_test_utils::test_cases::xcm_payment_api_with_pools_works::<
+		Runtime,
+		RuntimeCall,
+		RuntimeOrigin,
+		Block,
+	>();
 }

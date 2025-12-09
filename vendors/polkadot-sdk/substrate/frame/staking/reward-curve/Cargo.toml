@@ -1,12 +1,12 @@
 [package]
 name = "pallet-staking-reward-curve"
-version = "11.0.0"
+version = "12.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
 homepage = "https://substrate.io"
 repository.workspace = true
-description = "Reward Curve for FRAME staking pallet"
+description = "Reward Curve for FRAME staking pallet (polkadot v1.15.0)"
 
 [lints]
 workspace = true
@@ -18,10 +18,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 proc-macro = true
 
 [dependencies]
-proc-macro-crate = "3.0.0"
-proc-macro2 = "1.0.56"
+proc-macro-crate = { workspace = true }
+proc-macro2 = { workspace = true }
 quote = { workspace = true }
 syn = { features = ["full", "visit"], workspace = true }
 
 [dev-dependencies]
-sp-runtime = { path = "../../../primitives/runtime" }
+sp-runtime = { default-features = true, path = "../../../primitives/runtime" }

@@ -22,11 +22,11 @@
 
 use codec::Encode;
 
-use sp_std::{
-	cell::{RefCell, RefMut},
+use alloc::{
 	collections::{btree_map::BTreeMap, btree_set::BTreeSet},
 	rc::Rc,
 };
+use core::cell::{RefCell, RefMut};
 use sp_trie::{NodeCodec, ProofSizeProvider, StorageProof};
 use trie_db::{Hasher, RecordedForKey, TrieAccess};
 
@@ -115,7 +115,10 @@ impl<H: Hasher> SizeOnlyRecorderProvider<H> {
 }
 
 impl<H: trie_db::Hasher> sp_trie::TrieRecorderProvider<H> for SizeOnlyRecorderProvider<H> {
-	type Recorder<'a> = SizeOnlyRecorder<'a, H> where H: 'a;
+	type Recorder<'a>
+		= SizeOnlyRecorder<'a, H>
+	where
+		H: 'a;
 
 	fn drain_storage_proof(self) -> Option<StorageProof> {
 		None

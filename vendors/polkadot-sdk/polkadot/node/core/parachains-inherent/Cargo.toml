@@ -1,22 +1,28 @@
 [package]
 name = "polkadot-node-core-parachains-inherent"
-version = "7.0.0"
+version = "17.0.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Parachains inherent data provider for Polkadot node"
+description = "Parachains inherent data provider for Polkadot node (polkadot v1.15.0)"
 
 [lints]
 workspace = true
 
 [dependencies]
-futures = "0.3.30"
-futures-timer = "3.0.2"
-gum = { package = "tracing-gum", path = "../../gum" }
+futures = { workspace = true }
+futures-timer = { workspace = true }
+gum.workspace = true
+gum.default-features = true
 thiserror = { workspace = true }
-async-trait = "0.1.79"
-polkadot-node-subsystem = { path = "../../subsystem" }
-polkadot-overseer = { path = "../../overseer" }
-polkadot-primitives = { path = "../../../primitives" }
-sp-blockchain = { path = "../../../../substrate/primitives/blockchain" }
-sp-inherents = { path = "../../../../substrate/primitives/inherents" }
+async-trait = { workspace = true }
+polkadot-node-subsystem.workspace = true
+polkadot-node-subsystem.default-features = true
+polkadot-overseer.workspace = true
+polkadot-overseer.default-features = true
+polkadot-primitives.workspace = true
+polkadot-primitives.default-features = true
+sp-blockchain.workspace = true
+sp-blockchain.default-features = true
+sp-inherents.workspace = true
+sp-inherents.default-features = true

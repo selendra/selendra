@@ -75,8 +75,8 @@ hex = { version = "0.4", default-features = false, features = ["alloc"] }
 hex-literal = { version = "0.3" }
 ink = { version = "5.0.0-rc", default-features = false }
 ip_network = { version = "0.4" }
-jsonrpsee = { version = "0.22" }
-libp2p = { version = "0.51" }
+jsonrpsee = { version = "0.23.2" }
+libp2p = { version = "0.52.4" }
 libsecp256k1 = { version = "0.7.1", default-features = false }
 log = { version = "0.4", default-features = false }
 lru = { version = "0.10" }

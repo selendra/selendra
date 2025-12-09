@@ -1,7 +1,7 @@
 [package]
 name = "pallet-migrations"
-version = "1.0.0"
-description = "FRAME pallet to execute multi-block migrations."
+version = "7.0.1"
+description = "FRAME pallet to execute multi-block migrations. (polkadot v1.15.0)"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,28 +11,26 @@ repository.workspace = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-docify = "0.2.8"
-impl-trait-for-tuples = "0.2.2"
-log = "0.4.21"
-scale-info = { version = "2.11.1", default-features = false, features = ["derive"] }
-
-frame-benchmarking = { default-features = false, optional = true, path = "../benchmarking" }
-frame-support = { default-features = false, path = "../support" }
-frame-system = { default-features = false, path = "../system" }
-sp-core = { path = "../../primitives/core", default-features = false }
-sp-std = { path = "../../primitives/std", default-features = false }
-sp-runtime = { path = "../../primitives/runtime", default-features = false }
+codec = { features = ["derive"], workspace = true }
+docify = { workspace = true }
+impl-trait-for-tuples = { workspace = true }
+log = { workspace = true, default-features = true }
+scale-info = { features = ["derive"], workspace = true }
+frame-benchmarking = { optional = true, workspace = true }
+frame-support.workspace = true
+frame-system.workspace = true
+sp-core.workspace = true
+sp-runtime.workspace = true
 
 [dev-dependencies]
-frame-executive = { path = "../executive" }
-sp-api = { path = "../../primitives/api", features = ["std"] }
-sp-block-builder = { path = "../../primitives/block-builder", features = ["std"] }
-sp-io = { path = "../../primitives/io", features = ["std"] }
-sp-tracing = { path = "../../primitives/tracing", features = ["std"] }
-sp-version = { path = "../../primitives/version", features = ["std"] }
+frame-executive = { default-features = true, path = "../executive" }
+sp-api = { features = ["std"], default-features = true, path = "../../primitives/api" }
+sp-block-builder = { features = ["std"], default-features = true, path = "../../primitives/block-builder" }
+sp-io = { features = ["std"], default-features = true, path = "../../primitives/io" }
+sp-tracing = { features = ["std"], default-features = true, path = "../../primitives/tracing" }
+sp-version = { features = ["std"], default-features = true, path = "../../primitives/version" }
 
-pretty_assertions = "1.3.0"
+pretty_assertions = { workspace = true }
 
 [features]
 default = ["std"]
@@ -46,7 +44,6 @@ std = [
 	"scale-info/std",
 	"sp-core/std",
 	"sp-runtime/std",
-	"sp-std/std",
 ]
 
 runtime-benchmarks = [
@@ -57,7 +54,6 @@ runtime-benchmarks = [
 ]
 
 try-runtime = [
-	"frame-executive/try-runtime",
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",
 	"sp-runtime/try-runtime",

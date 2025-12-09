@@ -39,8 +39,8 @@ pub use imbalances::{NegativeImbalance, PositiveImbalance};
 // of the inner member.
 mod imbalances {
 	use super::{result, Config, Imbalance, RuntimeDebug, Saturating, TryDrop, Zero};
+	use core::mem;
 	use frame_support::traits::SameOrOther;
-	use sp_std::mem;
 
 	/// Opaque, move-only struct with private fields that serves as a token denoting that
 	/// funds have been created without any equal and opposite accounting.
@@ -651,8 +651,10 @@ where
 		Reserves::<T, I>::try_mutate(who, |reserves| -> DispatchResult {
 			match reserves.binary_search_by_key(id, |data| data.id) {
 				Ok(index) => {
-					// this add can't overflow but just to be defensive.
-					reserves[index].amount = reserves[index].amount.defensive_saturating_add(value);
+					reserves[index].amount = reserves[index]
+						.amount
+						.checked_add(&value)
+						.ok_or(ArithmeticError::Overflow)?;
 				},
 				Err(index) => {
 					reserves

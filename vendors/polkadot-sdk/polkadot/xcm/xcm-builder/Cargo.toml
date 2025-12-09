@@ -1,42 +1,39 @@
 [package]
 name = "staging-xcm-builder"
-description = "Tools & types for building with XCM and its executor."
+description = "Tools & types for building with XCM and its executor. (polkadot v1.15.0)"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
-version = "7.0.0"
+version = "16.0.5"
 
 [lints]
 workspace = true
 
 [dependencies]
-impl-trait-for-tuples = "0.2.1"
-parity-scale-codec = { version = "3.6.1", default-features = false, features = ["derive"] }
-scale-info = { version = "2.11.1", default-features = false, features = ["derive"] }
-xcm = { package = "staging-xcm", path = "..", default-features = false }
-xcm-executor = { package = "staging-xcm-executor", path = "../xcm-executor", default-features = false }
-sp-std = { path = "../../../substrate/primitives/std", default-features = false }
-sp-arithmetic = { path = "../../../substrate/primitives/arithmetic", default-features = false }
-sp-io = { path = "../../../substrate/primitives/io", default-features = false }
-sp-runtime = { path = "../../../substrate/primitives/runtime", default-features = false }
-sp-weights = { path = "../../../substrate/primitives/weights", default-features = false }
-frame-support = { path = "../../../substrate/frame/support", default-features = false }
-frame-system = { path = "../../../substrate/frame/system", default-features = false }
-pallet-transaction-payment = { path = "../../../substrate/frame/transaction-payment", default-features = false }
+impl-trait-for-tuples = { workspace = true }
+codec = { features = ["derive"], workspace = true }
+scale-info = { features = ["derive"], workspace = true }
+xcm.workspace = true
+xcm-executor.workspace = true
+sp-arithmetic.workspace = true
+sp-io.workspace = true
+sp-runtime.workspace = true
+sp-weights.workspace = true
+frame-support.workspace = true
+frame-system.workspace = true
+pallet-transaction-payment.workspace = true
 log = { workspace = true }
-
-# Polkadot dependencies
-polkadot-parachain-primitives = { path = "../../parachain", default-features = false }
+polkadot-parachain-primitives.workspace = true
 
 [dev-dependencies]
-primitive-types = "0.12.1"
-pallet-balances = { path = "../../../substrate/frame/balances" }
-pallet-xcm = { path = "../pallet-xcm" }
-pallet-salary = { path = "../../../substrate/frame/salary" }
-pallet-assets = { path = "../../../substrate/frame/assets" }
-primitives = { package = "polkadot-primitives", path = "../../primitives" }
-polkadot-runtime-parachains = { path = "../../runtime/parachains" }
-assert_matches = "1.5.0"
+primitive-types = { workspace = true, default-features = true }
+pallet-balances = { default-features = true, path = "../../../substrate/frame/balances" }
+pallet-xcm = { default-features = true, path = "../pallet-xcm" }
+pallet-salary = { default-features = true, path = "../../../substrate/frame/salary" }
+pallet-assets = { default-features = true, path = "../../../substrate/frame/assets" }
+polkadot-primitives = { default-features = true, path = "../../primitives" }
+polkadot-runtime-parachains = { default-features = true, path = "../../runtime/parachains" }
+assert_matches = { workspace = true }
 polkadot-test-runtime = { path = "../../runtime/test-runtime" }
 
 [features]
@@ -44,29 +41,21 @@ default = ["std"]
 runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
-	"pallet-assets/runtime-benchmarks",
-	"pallet-balances/runtime-benchmarks",
-	"pallet-salary/runtime-benchmarks",
-	"pallet-xcm/runtime-benchmarks",
 	"polkadot-parachain-primitives/runtime-benchmarks",
-	"polkadot-runtime-parachains/runtime-benchmarks",
-	"polkadot-test-runtime/runtime-benchmarks",
-	"primitives/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"xcm-executor/runtime-benchmarks",
 ]
 std = [
+	"codec/std",
 	"frame-support/std",
 	"frame-system/std",
 	"log/std",
 	"pallet-transaction-payment/std",
-	"parity-scale-codec/std",
 	"polkadot-parachain-primitives/std",
 	"scale-info/std",
 	"sp-arithmetic/std",
 	"sp-io/std",
 	"sp-runtime/std",
-	"sp-std/std",
 	"sp-weights/std",
 	"xcm-executor/std",
 	"xcm/std",

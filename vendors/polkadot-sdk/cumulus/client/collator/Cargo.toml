@@ -1,45 +1,51 @@
 [package]
 name = "cumulus-client-collator"
-version = "0.7.0"
+version = "0.17.0"
 authors.workspace = true
 edition.workspace = true
-description = "Common node-side functionality and glue code to collate parachain blocks."
+description = "Common node-side functionality and glue code to collate parachain blocks. (polkadot v1.15.0)"
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
 
 [lints]
 workspace = true
 
 [dependencies]
-parking_lot = "0.12.1"
-codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
-futures = "0.3.30"
-tracing = "0.1.25"
-
-# Substrate
-sc-client-api = { path = "../../../substrate/client/api" }
-sp-consensus = { path = "../../../substrate/primitives/consensus/common" }
-sp-api = { path = "../../../substrate/primitives/api" }
-sp-core = { path = "../../../substrate/primitives/core" }
-sp-runtime = { path = "../../../substrate/primitives/runtime" }
-
-# Polkadot
-polkadot-node-primitives = { path = "../../../polkadot/node/primitives" }
-polkadot-node-subsystem = { path = "../../../polkadot/node/subsystem" }
-polkadot-overseer = { path = "../../../polkadot/node/overseer" }
-polkadot-primitives = { path = "../../../polkadot/primitives" }
-
-# Cumulus
-cumulus-client-consensus-common = { path = "../consensus/common" }
-cumulus-client-network = { path = "../network" }
-cumulus-primitives-core = { path = "../../primitives/core" }
+parking_lot = { workspace = true, default-features = true }
+codec = { features = ["derive"], workspace = true, default-features = true }
+futures = { workspace = true }
+tracing = { workspace = true, default-features = true }
+sc-client-api.workspace = true
+sc-client-api.default-features = true
+sp-consensus.workspace = true
+sp-consensus.default-features = true
+sp-api.workspace = true
+sp-api.default-features = true
+sp-core.workspace = true
+sp-core.default-features = true
+sp-runtime.workspace = true
+sp-runtime.default-features = true
+polkadot-node-primitives.workspace = true
+polkadot-node-primitives.default-features = true
+polkadot-node-subsystem.workspace = true
+polkadot-node-subsystem.default-features = true
+polkadot-overseer.workspace = true
+polkadot-overseer.default-features = true
+polkadot-primitives.workspace = true
+polkadot-primitives.default-features = true
+cumulus-client-consensus-common.workspace = true
+cumulus-client-consensus-common.default-features = true
+cumulus-client-network.workspace = true
+cumulus-client-network.default-features = true
+cumulus-primitives-core.workspace = true
+cumulus-primitives-core.default-features = true
 
 [dev-dependencies]
-async-trait = "0.1.79"
+async-trait = { workspace = true }
 
 # Substrate
-sp-maybe-compressed-blob = { path = "../../../substrate/primitives/maybe-compressed-blob" }
-sp-state-machine = { path = "../../../substrate/primitives/state-machine" }
-sp-tracing = { path = "../../../substrate/primitives/tracing" }
+sp-maybe-compressed-blob = { default-features = true, path = "../../../substrate/primitives/maybe-compressed-blob" }
+sp-state-machine = { default-features = true, path = "../../../substrate/primitives/state-machine" }
+sp-tracing = { default-features = true, path = "../../../substrate/primitives/tracing" }
 
 # Polkadot
 polkadot-node-subsystem-test-helpers = { path = "../../../polkadot/node/subsystem-test-helpers" }
@@ -47,4 +53,4 @@ polkadot-node-subsystem-test-helpers = { path = "../../../polkadot/node/subsyste
 # Cumulus
 cumulus-test-client = { path = "../../test/client" }
 cumulus-test-runtime = { path = "../../test/runtime" }
-cumulus-test-relay-sproof-builder = { path = "../../test/relay-sproof-builder" }
+cumulus-test-relay-sproof-builder = { default-features = true, path = "../../test/relay-sproof-builder" }

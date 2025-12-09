@@ -7,29 +7,26 @@ authors = ["Stake Technologies <devops@stake.co.jp>"]
 homepage.workspace = true
 repository.workspace = true
 
-
-[package.metadata.docs.rs]
-targets = ["x86_64-unknown-linux-gnu"]
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 libsecp256k1 = { workspace = true, optional = true, features = ["hmac", "static-context"] }
 log = { workspace = true }
-parity-scale-codec = { workspace = true, features = ["derive"] }
-scale-info = {  workspace = true, features = ["derive"] }
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
 
 frame-support = { workspace = true }
 frame-system = { workspace = true }
-pallet-evm = { workspace = true }
-
-sp-std = { workspace = true }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
-
-precompile-utils = { workspace = true }
-primitives = { workspace = true }
+sp-std = { workspace = true }
 
 frame-benchmarking = { workspace = true, optional = true }
+precompile-utils = { workspace = true }
+pallet-evm = { workspace = true }
+
+primitives = { workspace = true }
 
 [dev-dependencies]
 ethers = { workspace = true }
@@ -60,6 +57,7 @@ std = [
 	"pallet-balances/std",
 	"pallet-timestamp/std",
 	"pallet-ethereum/std",
+	"frame-benchmarking?/std",
 ]
 runtime-benchmarks = [
 	"libsecp256k1/hmac",
@@ -67,7 +65,15 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
+	"primitives/runtime-benchmarks",
 	"pallet-ethereum/runtime-benchmarks",
 	"pallet-evm/runtime-benchmarks",
+	"frame-benchmarking/runtime-benchmarks",
 ]
-try-runtime = ["frame-support/try-runtime", "pallet-evm/try-runtime"]
+try-runtime = [
+	"frame-support/try-runtime",
+	"pallet-evm/try-runtime",
+	"primitives/try-runtime",
+	"frame-system/try-runtime",
+	"sp-runtime/try-runtime",
+]

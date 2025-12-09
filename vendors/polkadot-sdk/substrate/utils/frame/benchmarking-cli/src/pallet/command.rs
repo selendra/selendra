@@ -240,7 +240,7 @@ impl PalletCmd {
 		let state = &state_without_tracking;
 		let runtime = self.runtime_blob(&state_without_tracking)?;
 		let runtime_code = runtime.code()?;
-		let alloc_strategy = Self::alloc_strategy(runtime_code.heap_pages);
+		let alloc_strategy = self.alloc_strategy(runtime_code.heap_pages);
 
 		let executor = WasmExecutor::<(
 			sp_io::SubstrateHostFunctions,
@@ -284,7 +284,8 @@ impl PalletCmd {
 		let mut timer = time::SystemTime::now();
 		// Maps (pallet, extrinsic) to its component ranges.
 		let mut component_ranges = HashMap::<(String, String), Vec<ComponentRange>>::new();
-		let pov_modes = Self::parse_pov_modes(&benchmarks_to_run)?;
+		let pov_modes =
+			Self::parse_pov_modes(&benchmarks_to_run, &storage_info, self.ignore_unknown_pov_mode)?;
 		let mut failed = Vec::<(String, String)>::new();
 
 		'outer: for (i, SelectedBenchmark { pallet, extrinsic, components, .. }) in
@@ -744,9 +745,9 @@ impl PalletCmd {
 	}
 
 	/// Allocation strategy for pallet benchmarking.
-	fn alloc_strategy(heap_pages: Option<u64>) -> HeapAllocStrategy {
-		heap_pages.map_or(DEFAULT_HEAP_ALLOC_STRATEGY, |p| HeapAllocStrategy::Static {
-			extra_pages: p as _,
+	fn alloc_strategy(&self, runtime_heap_pages: Option<u64>) -> HeapAllocStrategy {
+		self.heap_pages.or(runtime_heap_pages).map_or(DEFAULT_HEAP_ALLOC_STRATEGY, |p| {
+			HeapAllocStrategy::Static { extra_pages: p as _ }
 		})
 	}
 
@@ -936,14 +937,20 @@ impl PalletCmd {
 	}
 
 	/// Parses the PoV modes per benchmark that were specified by the `#[pov_mode]` attribute.
-	fn parse_pov_modes(benchmarks: &Vec<SelectedBenchmark>) -> Result<PovModesMap> {
+	fn parse_pov_modes(
+		benchmarks: &Vec<SelectedBenchmark>,
+		storage_info: &[StorageInfo],
+		ignore_unknown_pov_mode: bool,
+	) -> Result<PovModesMap> {
 		use std::collections::hash_map::Entry;
 		let mut parsed = PovModesMap::new();
 
 		for SelectedBenchmark { pallet, extrinsic, pov_modes, .. } in benchmarks {
 			for (pallet_storage, mode) in pov_modes {
 				let mode = PovEstimationMode::from_str(&mode)?;
+				let pallet_storage = pallet_storage.replace(" ", "");
 				let splits = pallet_storage.split("::").collect::<Vec<_>>();
+
 				if splits.is_empty() || splits.len() > 2 {
 					return Err(format!(
 						"Expected 'Pallet::Storage' as storage name but got: {}",
@@ -951,7 +958,8 @@ impl PalletCmd {
 					)
 					.into())
 				}
-				let (pov_pallet, pov_storage) = (splits[0], splits.get(1).unwrap_or(&"ALL"));
+				let (pov_pallet, pov_storage) =
+					(splits[0].trim(), splits.get(1).unwrap_or(&"ALL").trim());
 
 				match parsed
 					.entry((pallet.clone(), extrinsic.clone()))
@@ -970,7 +978,41 @@ impl PalletCmd {
 				}
 			}
 		}
+		log::debug!("Parsed PoV modes: {:?}", parsed);
+		Self::check_pov_modes(&parsed, storage_info, ignore_unknown_pov_mode)?;
+
 		Ok(parsed)
+	}
+
+	fn check_pov_modes(
+		pov_modes: &PovModesMap,
+		storage_info: &[StorageInfo],
+		ignore_unknown_pov_mode: bool,
+	) -> Result<()> {
+		// Check that all PoV modes are valid pallet storage keys
+		for (pallet, storage) in pov_modes.values().flat_map(|i| i.keys()) {
+			let (mut found_pallet, mut found_storage) = (false, false);
+
+			for info in storage_info {
+				if pallet == "ALL" || info.pallet_name == pallet.as_bytes() {
+					found_pallet = true;
+				}
+				if storage == "ALL" || info.storage_name == storage.as_bytes() {
+					found_storage = true;
+				}
+			}
+			if !found_pallet || !found_storage {
+				let err = format!("The PoV mode references an unknown storage item or pallet: `{}::{}`. You can ignore this warning by specifying `--ignore-unknown-pov-mode`", pallet, storage);
+
+				if ignore_unknown_pov_mode {
+					log::warn!(target: LOG_TARGET, "Error demoted to warning due to `--ignore-unknown-pov-mode`: {}", err);
+				} else {
+					return Err(err.into());
+				}
+			}
+		}
+
+		Ok(())
 	}
 
 	/// Sanity check the CLI arguments.

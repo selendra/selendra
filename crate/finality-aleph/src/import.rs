@@ -69,7 +69,7 @@ where
     type Error = I::Error;
 
     async fn check_block(
-        &mut self,
+        &self,
         block: BlockCheckParams<Block>,
     ) -> Result<ImportResult, Self::Error> {
         self.inner.check_block(block).await
@@ -158,12 +158,12 @@ where
 #[async_trait::async_trait]
 impl<I> BlockImport<Block> for AlephBlockImport<I>
 where
-    I: BlockImport<Block> + Clone + Send,
+    I: BlockImport<Block> + Clone + Send + Sync,
 {
     type Error = I::Error;
 
     async fn check_block(
-        &mut self,
+        &self,
         block: BlockCheckParams<Block>,
     ) -> Result<ImportResult, Self::Error> {
         self.inner.check_block(block).await
@@ -285,12 +285,12 @@ impl<E: Display + Debug> Error for RedirectingImportError<E> {}
 #[async_trait::async_trait]
 impl<I> BlockImport<Block> for RedirectingBlockImport<I>
 where
-    I: BlockImport<Block> + Clone + Send,
+    I: BlockImport<Block> + Clone + Send + Sync,
 {
     type Error = RedirectingImportError<I::Error>;
 
     async fn check_block(
-        &mut self,
+        &self,
         block: BlockCheckParams<Block>,
     ) -> Result<ImportResult, Self::Error> {
         self.inner

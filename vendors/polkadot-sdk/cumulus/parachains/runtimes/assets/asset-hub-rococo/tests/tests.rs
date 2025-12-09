@@ -24,16 +24,17 @@ use asset_hub_rococo_runtime::{
 		ForeignAssetFeeAsExistentialDepositMultiplierFeeCharger, ForeignCreatorsSovereignAccountOf,
 		LocationToAccountId, StakingPot, TokenLocation, TrustBackedAssetsPalletLocation, XcmConfig,
 	},
-	AllPalletsWithoutSystem, AssetConversion, AssetDeposit, Assets, Balances, CollatorSelection,
-	ExistentialDeposit, ForeignAssets, ForeignAssetsInstance, MetadataDepositBase,
-	MetadataDepositPerByte, ParachainSystem, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
-	SessionKeys, ToWestendXcmRouterInstance, TrustBackedAssetsInstance, XcmpQueue,
+	AllPalletsWithoutSystem, AssetConversion, AssetDeposit, Assets, Balances, Block,
+	CollatorSelection, ExistentialDeposit, ForeignAssets, ForeignAssetsInstance,
+	MetadataDepositBase, MetadataDepositPerByte, ParachainSystem, Runtime, RuntimeCall,
+	RuntimeEvent, RuntimeOrigin, SessionKeys, ToWestendXcmRouterInstance, TrustBackedAssetsInstance, XcmpQueue,
 };
 use asset_test_utils::{
 	test_cases_over_bridge::TestBridgingConfig, CollatorSessionKey, CollatorSessionKeys,
 	ExtBuilder, SlotDurations,
 };
 use codec::{Decode, Encode};
+use core::ops::Mul;
 use cumulus_primitives_utility::ChargeWeightInFungibles;
 use frame_support::{
 	assert_noop, assert_ok,
@@ -48,7 +49,6 @@ use frame_support::{
 use parachains_common::{AccountId, AssetIdForTrustBackedAssets, AuraId, Balance};
 use sp_consensus_aura::SlotDuration;
 use sp_runtime::traits::MaybeEquivalence;
-use sp_std::ops::Mul;
 use std::convert::Into;
 use testnet_parachains_constants::rococo::{consensus::*, currency::UNITS, fee::WeightToFee};
 use xcm::latest::prelude::{Assets as XcmAssets, *};
@@ -1277,7 +1277,7 @@ mod asset_hub_rococo_tests {
 			collator_session_keys(),
 			bridging_to_asset_hub_westend,
 			|| {
-				sp_std::vec![
+				vec![
 					UnpaidExecution { weight_limit: Unlimited, check_origin: None },
 					Transact {
 						origin_kind: OriginKind::Xcm,
@@ -1287,16 +1287,16 @@ mod asset_hub_rococo_tests {
 							bp_asset_hub_rococo::XcmBridgeHubRouterCall::report_bridge_status {
 								bridge_id: Default::default(),
 								is_congested: true,
-							}
+							},
 						)
 						.encode()
 						.into(),
-					}
+					},
 				]
 				.into()
 			},
 			|| {
-				sp_std::vec![
+				vec![
 					UnpaidExecution { weight_limit: Unlimited, check_origin: None },
 					Transact {
 						origin_kind: OriginKind::Xcm,
@@ -1306,11 +1306,11 @@ mod asset_hub_rococo_tests {
 							bp_asset_hub_rococo::XcmBridgeHubRouterCall::report_bridge_status {
 								bridge_id: Default::default(),
 								is_congested: false,
-							}
+							},
 						)
 						.encode()
 						.into(),
-					}
+					},
 				]
 				.into()
 			},
@@ -1472,4 +1472,20 @@ fn change_xcm_bridge_hub_ethereum_base_fee_by_governance_works() {
 			}
 		},
 	)
+}
+
+#[test]
+fn xcm_payment_api_works() {
+	parachains_runtimes_test_utils::test_cases::xcm_payment_api_with_native_token_works::<
+		Runtime,
+		RuntimeCall,
+		RuntimeOrigin,
+		Block,
+	>();
+	asset_test_utils::test_cases::xcm_payment_api_with_pools_works::<
+		Runtime,
+		RuntimeCall,
+		RuntimeOrigin,
+		Block,
+	>();
 }

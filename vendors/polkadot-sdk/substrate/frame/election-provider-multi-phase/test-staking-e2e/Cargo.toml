@@ -6,7 +6,7 @@ edition.workspace = true
 license = "Apache-2.0"
 homepage = "https://substrate.io"
 repository.workspace = true
-description = "FRAME election provider multi phase pallet tests with staking pallet, bags-list and session pallets"
+description = "FRAME election provider multi phase pallet tests with staking pallet, bags-list and session pallets (polkadot v1.15.0)"
 publish = false
 
 [lints]
@@ -16,42 +16,31 @@ workspace = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dev-dependencies]
-parking_lot = "0.12.1"
-codec = { package = "parity-scale-codec", version = "3.6.1", features = ["derive"] }
-scale-info = { version = "2.11.1", features = ["derive"] }
+parking_lot = { workspace = true, default-features = true }
+codec = { features = ["derive"], workspace = true, default-features = true }
+scale-info = { features = ["derive"], workspace = true, default-features = true }
 log = { workspace = true }
 
-sp-runtime = { path = "../../../primitives/runtime" }
-sp-io = { path = "../../../primitives/io" }
-sp-std = { path = "../../../primitives/std" }
-sp-staking = { path = "../../../primitives/staking" }
-sp-core = { path = "../../../primitives/core" }
+sp-runtime = { default-features = true, path = "../../../primitives/runtime" }
+sp-io = { default-features = true, path = "../../../primitives/io" }
+sp-std = { default-features = true, path = "../../../primitives/std" }
+sp-staking = { default-features = true, path = "../../../primitives/staking" }
+sp-core = { default-features = true, path = "../../../primitives/core" }
 sp-npos-elections = { path = "../../../primitives/npos-elections", default-features = false }
-sp-tracing = { path = "../../../primitives/tracing" }
+sp-tracing = { default-features = true, path = "../../../primitives/tracing" }
 
-frame-system = { path = "../../system" }
-frame-support = { path = "../../support" }
-frame-election-provider-support = { path = "../../election-provider-support" }
+frame-system = { default-features = true, path = "../../system" }
+frame-support = { default-features = true, path = "../../support" }
+frame-election-provider-support = { default-features = true, path = "../../election-provider-support" }
 
-pallet-election-provider-multi-phase = { path = ".." }
-pallet-staking = { path = "../../staking" }
-pallet-nomination-pools = { path = "../../nomination-pools" }
-pallet-bags-list = { path = "../../bags-list" }
-pallet-balances = { path = "../../balances" }
-pallet-timestamp = { path = "../../timestamp" }
-pallet-session = { path = "../../session" }
+pallet-election-provider-multi-phase = { default-features = true, path = ".." }
+pallet-staking = { default-features = true, path = "../../staking" }
+pallet-nomination-pools = { default-features = true, path = "../../nomination-pools" }
+pallet-bags-list = { default-features = true, path = "../../bags-list" }
+pallet-balances = { default-features = true, path = "../../balances" }
+pallet-timestamp = { default-features = true, path = "../../timestamp" }
+pallet-session = { default-features = true, path = "../../session" }
 
 [features]
 try-runtime = [
-	"frame-election-provider-support/try-runtime",
-	"frame-support/try-runtime",
-	"frame-system/try-runtime",
-	"pallet-bags-list/try-runtime",
-	"pallet-balances/try-runtime",
-	"pallet-election-provider-multi-phase/try-runtime",
-	"pallet-nomination-pools/try-runtime",
-	"pallet-session/try-runtime",
-	"pallet-staking/try-runtime",
-	"pallet-timestamp/try-runtime",
-	"sp-runtime/try-runtime",
 ]

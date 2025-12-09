@@ -1,12 +1,12 @@
 [package]
 name = "sp-blockchain"
-version = "28.0.0"
+version = "37.0.1"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
 homepage = "https://substrate.io"
 repository.workspace = true
-description = "Substrate blockchain traits and primitives."
+description = "Substrate blockchain traits and primitives. (polkadot v1.15.0)"
 documentation = "https://docs.rs/sp-blockchain"
 readme = "README.md"
 
@@ -17,14 +17,21 @@ workspace = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false, features = ["derive"] }
-futures = "0.3.30"
-log = { workspace = true, default-features = true }
-parking_lot = "0.12.1"
-schnellru = "0.2.1"
+codec = { features = ["derive"], workspace = true }
+futures = { workspace = true }
+parking_lot = { workspace = true, default-features = true }
+schnellru = { workspace = true }
 thiserror = { workspace = true }
-sp-api = { path = "../api" }
-sp-consensus = { path = "../consensus/common" }
-sp-database = { path = "../database" }
-sp-runtime = { path = "../runtime" }
-sp-state-machine = { path = "../state-machine" }
+sp-api.workspace = true
+sp-api.default-features = true
+sp-core.workspace = true
+sp-core.default-features = true
+sp-consensus.workspace = true
+sp-consensus.default-features = true
+sp-database.workspace = true
+sp-database.default-features = true
+sp-runtime.workspace = true
+sp-runtime.default-features = true
+sp-state-machine.workspace = true
+sp-state-machine.default-features = true
+tracing = { workspace = true, default-features = true }

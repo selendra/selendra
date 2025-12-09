@@ -50,7 +50,13 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::BlockNumberFor;
 
-use primitives::{
+use alloc::{
+	boxed::Box,
+	collections::{btree_map::Entry, btree_set::BTreeSet},
+	vec,
+	vec::Vec,
+};
+use polkadot_primitives::{
 	slashing::{DisputeProof, DisputesTimeSlot, PendingSlashes, SlashingOffenceKind},
 	CandidateHash, SessionIndex, ValidatorId, ValidatorIndex,
 };
@@ -64,11 +70,7 @@ use sp_runtime::{
 	KeyTypeId, Perbill,
 };
 use sp_session::{GetSessionNumber, GetValidatorCount};
-use sp_staking::offence::{DisableStrategy, Kind, Offence, OffenceError, ReportOffence};
-use sp_std::{
-	collections::{btree_map::Entry, btree_set::BTreeSet},
-	prelude::*,
-};
+use sp_staking::offence::{Kind, Offence, OffenceError, ReportOffence};
 
 const LOG_TARGET: &str = "runtime::parachains::slashing";
 
@@ -134,15 +136,6 @@ where
 		self.time_slot.clone()
 	}
 
-	fn disable_strategy(&self) -> DisableStrategy {
-		match self.kind {
-			SlashingOffenceKind::ForInvalid => DisableStrategy::Always,
-			// in the future we might change it based on number of disputes initiated:
-			// <https://github.com/paritytech/polkadot/issues/5946>
-			SlashingOffenceKind::AgainstValid => DisableStrategy::Never,
-		}
-	}
-
 	fn slash_fraction(&self, _offenders: u32) -> Perbill {
 		self.slash_fraction
 	}
@@ -167,7 +160,7 @@ impl<KeyOwnerIdentification> SlashingOffence<KeyOwnerIdentification> {
 
 /// This type implements `SlashingHandler`.
 pub struct SlashValidatorsForDisputes<C> {
-	_phantom: sp_std::marker::PhantomData<C>,
+	_phantom: core::marker::PhantomData<C>,
 }
 
 impl<C> Default for SlashValidatorsForDisputes<C> {
@@ -465,7 +458,8 @@ pub mod pallet {
 
 			let validator_set_count = key_owner_proof.validator_count() as ValidatorSetCount;
 			// check the membership proof to extract the offender's id
-			let key = (primitives::PARACHAIN_KEY_TYPE_ID, dispute_proof.validator_id.clone());
+			let key =
+				(polkadot_primitives::PARACHAIN_KEY_TYPE_ID, dispute_proof.validator_id.clone());
 			let offender = T::KeyOwnerProofSystem::check_proof(key, key_owner_proof)
 				.ok_or(Error::<T>::InvalidKeyOwnershipProof)?;
 
@@ -624,7 +618,7 @@ fn is_known_offence<T: Config>(
 	key_owner_proof: &T::KeyOwnerProof,
 ) -> Result<(), TransactionValidityError> {
 	// check the membership proof to extract the offender's id
-	let key = (primitives::PARACHAIN_KEY_TYPE_ID, dispute_proof.validator_id.clone());
+	let key = (polkadot_primitives::PARACHAIN_KEY_TYPE_ID, dispute_proof.validator_id.clone());
 
 	let offender = T::KeyOwnerProofSystem::check_proof(key, key_owner_proof.clone())
 		.ok_or(InvalidTransaction::BadProof)?;
@@ -648,7 +642,7 @@ fn is_known_offence<T: Config>(
 /// When configured properly, should be instantiated with
 /// `T::KeyOwnerIdentification, Offences, ReportLongevity` parameters.
 pub struct SlashingReportHandler<I, R, L> {
-	_phantom: sp_std::marker::PhantomData<(I, R, L)>,
+	_phantom: core::marker::PhantomData<(I, R, L)>,
 }
 
 impl<I, R, L> Default for SlashingReportHandler<I, R, L> {

@@ -505,7 +505,7 @@ impl pallet_nomination_pools::Config for Runtime {
     type RewardCounter = FixedU128;
     type BalanceToU256 = BalanceToU256;
     type U256ToBalance = U256ToBalance;
-    type Staking = pallet_staking::Pallet<Self>;
+    type StakeAdapter = pallet_nomination_pools::adapter::TransferStake<Self, Staking>;
     type PostUnbondingPoolsWindow = PostUnbondPoolsWindow;
     type MaxMetadataLen = ConstU32<256>;
     type MaxUnbonding = ConstU32<8>;
@@ -595,7 +595,7 @@ impl pallet_staking::Config for Runtime {
     type EraPayout = ExponentialEraPayout;
     type NextNewSession = Session;
     type MaxExposurePageSize = MaxExposurePageSize;
-    type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
+    type DisablingStrategy = pallet_staking::UpToLimitDisablingStrategy;
     type VoterList = pallet_staking::UseNominatorsAndValidatorsMap<Runtime>;
     type MaxUnlockingChunks = ConstU32<16>;
     type MaxControllersInDeprecationBatch = ConstU32<4084>;
@@ -865,20 +865,12 @@ parameter_types! {
 }
 
 impl pallet_treasury::Config for Runtime {
-    type ApproveOrigin = EitherOfDiverse<
-        EnsureRoot<AccountId>,
-        EnsureThreeFifthsCouncil,
-    >;
     type Burn = Burn;
     type BurnDestination = ();
     type Currency = Balances;
     type RuntimeEvent = RuntimeEvent;
     type MaxApprovals = MaxApprovals;
-    type OnSlash = ();
     type PalletId = TreasuryPalletId;
-    type ProposalBond = ProposalBond;
-    type ProposalBondMinimum = ProposalBondMinimum;
-    type ProposalBondMaximum = ProposalBondMaximum;
     type RejectOrigin = EitherOfDiverse<
         EnsureRoot<AccountId>,
         EnsureThreeFifthsCouncil,
@@ -956,6 +948,7 @@ impl pallet_contracts::Config for Runtime {
     type Migrations = ();
     type MaxDelegateDependencies = ConstU32<32>;
     type CodeHashLockupDepositPercent = CodeHashLockupDepositPercent;
+    type MaxTransientStorageSize = ConstU32<{ 1024 * 1024 }>;
     type Debug = ();
     type Environment = ();
     type ApiVersion = ();
@@ -1570,6 +1563,22 @@ impl_runtime_apis! {
         fn balance_to_points(pool_id: pallet_nomination_pools::PoolId, new_funds: Balance) -> Balance {
             NominationPools::api_balance_to_points(pool_id, new_funds)
         }
+
+        fn pool_pending_slash(pool_id: pallet_nomination_pools::PoolId) -> Balance {
+            NominationPools::api_pool_pending_slash(pool_id)
+        }
+
+        fn member_pending_slash(member: AccountId) -> Balance {
+            NominationPools::api_member_pending_slash(member)
+        }
+
+        fn pool_needs_delegate_migration(pool_id: pallet_nomination_pools::PoolId) -> bool {
+            NominationPools::api_pool_needs_delegate_migration(pool_id)
+        }
+
+        fn member_needs_delegate_migration(member: AccountId) -> bool {
+            NominationPools::api_member_needs_delegate_migration(member)
+        }
     }
 
 	impl pallet_staking_runtime_api::StakingApi<Block, Balance, AccountId> for Runtime {
@@ -1579,6 +1588,10 @@ impl_runtime_apis! {
 
 		fn eras_stakers_page_count(era: sp_staking::EraIndex, account: AccountId) -> sp_staking::Page {
 			Staking::api_eras_stakers_page_count(era, account)
+		}
+
+		fn pending_rewards(era: sp_staking::EraIndex, account: AccountId) -> bool {
+			Staking::api_pending_rewards(era, account)
 		}
 	}
 
@@ -1752,6 +1765,10 @@ impl_runtime_apis! {
 		}
 
 		fn gas_limit_multiplier_support() {}
+
+		fn initialize_pending_block(header: &<Block as BlockT>::Header) {
+			let _ = Executive::initialize_block(header);
+		}
 
 		fn pending_block(
 			xts: Vec<<Block as BlockT>::Extrinsic>,

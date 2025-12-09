@@ -1,12 +1,12 @@
 [package]
 name = "pallet-election-provider-multi-phase"
-version = "27.0.0"
+version = "36.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
 homepage = "https://substrate.io"
 repository.workspace = true
-description = "PALLET two phase election providers"
+description = "PALLET two phase election providers (polkadot v1.15.0)"
 
 [lints]
 workspace = true
@@ -15,40 +15,35 @@ workspace = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false, features = [
+codec = { features = [
 	"derive",
-] }
-scale-info = { version = "2.11.1", default-features = false, features = [
+], workspace = true }
+scale-info = { features = [
 	"derive",
-] }
+], workspace = true }
 log = { workspace = true }
-
-frame-support = { path = "../support", default-features = false }
-frame-system = { path = "../system", default-features = false }
-
-sp-io = { path = "../../primitives/io", default-features = false }
-sp-std = { path = "../../primitives/std", default-features = false }
-sp-core = { path = "../../primitives/core", default-features = false }
-sp-runtime = { path = "../../primitives/runtime", default-features = false }
-sp-npos-elections = { path = "../../primitives/npos-elections", default-features = false }
-sp-arithmetic = { path = "../../primitives/arithmetic", default-features = false }
-frame-election-provider-support = { path = "../election-provider-support", default-features = false }
-
-# Optional imports for benchmarking
-frame-benchmarking = { path = "../benchmarking", default-features = false, optional = true }
-pallet-election-provider-support-benchmarking = { path = "../election-provider-support/benchmarking", default-features = false, optional = true }
-rand = { version = "0.8.5", default-features = false, features = ["alloc", "small_rng"], optional = true }
-strum = { version = "0.26.2", default-features = false, features = ["derive"], optional = true }
+frame-support.workspace = true
+frame-system.workspace = true
+sp-io.workspace = true
+sp-core.workspace = true
+sp-runtime.workspace = true
+sp-npos-elections.workspace = true
+sp-arithmetic.workspace = true
+frame-election-provider-support.workspace = true
+frame-benchmarking = { optional = true, workspace = true }
+pallet-election-provider-support-benchmarking = { optional = true, workspace = true }
+rand = { features = ["alloc", "small_rng"], optional = true, workspace = true }
+strum = { features = ["derive"], optional = true, workspace = true }
 
 [dev-dependencies]
-parking_lot = "0.12.1"
-rand = "0.8.5"
+parking_lot = { workspace = true, default-features = true }
+rand = { workspace = true, default-features = true }
 sp-core = { path = "../../primitives/core", default-features = false }
-sp-io = { path = "../../primitives/io" }
+sp-io = { default-features = true, path = "../../primitives/io" }
 sp-npos-elections = { path = "../../primitives/npos-elections", default-features = false }
-sp-tracing = { path = "../../primitives/tracing" }
-pallet-balances = { path = "../balances" }
-frame-benchmarking = { path = "../benchmarking" }
+sp-tracing = { default-features = true, path = "../../primitives/tracing" }
+pallet-balances = { default-features = true, path = "../balances" }
+frame-benchmarking = { default-features = true, path = "../benchmarking" }
 
 [features]
 default = ["std"]
@@ -59,7 +54,6 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"log/std",
-	"pallet-balances/std",
 	"pallet-election-provider-support-benchmarking?/std",
 	"rand/std",
 	"scale-info/std",
@@ -68,8 +62,6 @@ std = [
 	"sp-io/std",
 	"sp-npos-elections/std",
 	"sp-runtime/std",
-	"sp-std/std",
-	"sp-tracing/std",
 	"strum/std",
 ]
 runtime-benchmarks = [
@@ -77,7 +69,6 @@ runtime-benchmarks = [
 	"frame-election-provider-support/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
-	"pallet-balances/runtime-benchmarks",
 	"pallet-election-provider-support-benchmarking?/runtime-benchmarks",
 	"rand",
 	"sp-runtime/runtime-benchmarks",
@@ -87,6 +78,5 @@ try-runtime = [
 	"frame-election-provider-support/try-runtime",
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",
-	"pallet-balances/try-runtime",
 	"sp-runtime/try-runtime",
 ]

@@ -1,28 +1,24 @@
 [package]
 name = "cumulus-primitives-storage-weight-reclaim"
-version = "1.0.0"
+version = "7.0.2"
 authors.workspace = true
 edition.workspace = true
-description = "Utilities to reclaim storage weight."
+description = "Utilities to reclaim storage weight. (polkadot v1.15.0)"
 license = "Apache-2.0"
 
 [lints]
 workspace = true
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+codec = { features = ["derive"], workspace = true }
 log = { workspace = true }
-scale-info = { version = "2.11.1", default-features = false, features = ["derive"] }
-
-frame-support = { path = "../../../substrate/frame/support", default-features = false }
-frame-system = { path = "../../../substrate/frame/system", default-features = false }
-
-sp-runtime = { path = "../../../substrate/primitives/runtime", default-features = false }
-sp-std = { path = "../../../substrate/primitives/std", default-features = false }
-
-cumulus-primitives-core = { path = "../core", default-features = false }
-cumulus-primitives-proof-size-hostfunction = { path = "../proof-size-hostfunction", default-features = false }
-docify = "0.2.8"
+scale-info = { features = ["derive"], workspace = true }
+frame-support.workspace = true
+frame-system.workspace = true
+sp-runtime.workspace = true
+cumulus-primitives-core.workspace = true
+cumulus-primitives-proof-size-hostfunction.workspace = true
+docify = { workspace = true }
 
 [dev-dependencies]
 sp-trie = { path = "../../../substrate/primitives/trie", default-features = false }
@@ -39,8 +35,5 @@ std = [
 	"frame-system/std",
 	"log/std",
 	"scale-info/std",
-	"sp-io/std",
 	"sp-runtime/std",
-	"sp-std/std",
-	"sp-trie/std",
 ]

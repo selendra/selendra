@@ -6,57 +6,65 @@ edition.workspace = true
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
 repository.workspace = true
 publish = false
+description = "substrate-relay-helper (polkadot v1.15.0)"
 
 [lints]
 workspace = true
 
 [dependencies]
-anyhow = "1.0"
-async-std = "1.9.0"
-async-trait = "0.1.79"
-codec = { package = "parity-scale-codec", version = "3.6.1" }
-futures = "0.3.30"
-hex = "0.4"
+anyhow = { workspace = true }
+async-std = { workspace = true }
+async-trait = { workspace = true }
+codec = { workspace = true, default-features = true }
+futures = { workspace = true }
+hex = { workspace = true, default-features = true }
 log = { workspace = true }
-num-traits = "0.2"
-rbtag = "0.3"
-structopt = "0.3"
-strum = { version = "0.26.2", features = ["derive"] }
+num-traits = { workspace = true, default-features = true }
+rbtag = { workspace = true }
+structopt = { workspace = true }
+strum = { features = ["derive"], workspace = true, default-features = true }
 thiserror = { workspace = true }
-
-# Bridge dependencies
-
-bp-header-chain = { path = "../../primitives/header-chain" }
-bp-parachains = { path = "../../primitives/parachains" }
-bp-polkadot-core = { path = "../../primitives/polkadot-core" }
-bp-relayers = { path = "../../primitives/relayers" }
-bridge-runtime-common = { path = "../../bin/runtime-common" }
-
-equivocation-detector = { path = "../equivocation" }
-finality-grandpa = { version = "0.16.2" }
-finality-relay = { path = "../finality" }
-parachains-relay = { path = "../parachains" }
-relay-utils = { path = "../utils" }
-messages-relay = { path = "../messages" }
-relay-substrate-client = { path = "../client-substrate" }
-
-pallet-bridge-grandpa = { path = "../../modules/grandpa" }
-pallet-bridge-messages = { path = "../../modules/messages" }
-pallet-bridge-parachains = { path = "../../modules/parachains" }
-
-bp-runtime = { path = "../../primitives/runtime" }
-bp-messages = { path = "../../primitives/messages" }
-
-# Substrate Dependencies
-
-frame-support = { path = "../../../substrate/frame/support" }
-frame-system = { path = "../../../substrate/frame/system" }
-pallet-balances = { path = "../../../substrate/frame/balances" }
-pallet-grandpa = { path = "../../../substrate/frame/grandpa" }
-sp-core = { path = "../../../substrate/primitives/core" }
-sp-consensus-grandpa = { path = "../../../substrate/primitives/consensus/grandpa" }
-sp-runtime = { path = "../../../substrate/primitives/runtime" }
+bp-header-chain.workspace = true
+bp-header-chain.default-features = true
+bp-parachains.workspace = true
+bp-parachains.default-features = true
+bp-polkadot-core.workspace = true
+bp-polkadot-core.default-features = true
+bp-relayers.workspace = true
+bp-relayers.default-features = true
+equivocation-detector.workspace = true
+finality-relay.workspace = true
+parachains-relay.workspace = true
+relay-utils.workspace = true
+messages-relay.workspace = true
+relay-substrate-client.workspace = true
+pallet-bridge-grandpa.workspace = true
+pallet-bridge-grandpa.default-features = true
+pallet-bridge-messages.workspace = true
+pallet-bridge-messages.default-features = true
+pallet-bridge-parachains.workspace = true
+pallet-bridge-parachains.default-features = true
+bp-runtime.workspace = true
+bp-runtime.default-features = true
+bp-messages.workspace = true
+bp-messages.default-features = true
+frame-support.workspace = true
+frame-support.default-features = true
+frame-system.workspace = true
+frame-system.default-features = true
+pallet-balances.workspace = true
+pallet-balances.default-features = true
+pallet-grandpa.workspace = true
+pallet-grandpa.default-features = true
+sp-core.workspace = true
+sp-core.default-features = true
+sp-consensus-grandpa.workspace = true
+sp-consensus-grandpa.default-features = true
+sp-runtime.workspace = true
+sp-runtime.default-features = true
+sp-trie.workspace = true
 
 [dev-dependencies]
-pallet-transaction-payment = { path = "../../../substrate/frame/transaction-payment" }
-relay-substrate-client = { path = "../client-substrate", features = ["test-helpers"] }
+scale-info = { features = ["derive"], workspace = true }
+pallet-transaction-payment = { default-features = true, path = "../../../substrate/frame/transaction-payment" }
+relay-substrate-client = { features = ["test-helpers"], path = "../client-substrate" }

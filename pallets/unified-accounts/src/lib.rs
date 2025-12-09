@@ -280,6 +280,7 @@ impl<T: Config> Pallet<T> {
         T::Currency::burn_from(
             who,
             T::AccountMappingStorageFee::get(),
+            Preserve,
             Exact,
             Polite,
         )
@@ -315,9 +316,7 @@ impl<T: Config> Pallet<T> {
                 .to_vec();
         domain.extend_from_slice(&keccak256!("Selendra EVM Claim")); // name
         domain.extend_from_slice(&keccak256!("1")); // version
-        let mut chain_id_bytes = [0u8; 32];
-        U256::from(T::ChainId::get()).to_big_endian(&mut chain_id_bytes);
-        domain.extend_from_slice(&chain_id_bytes); // chain id
+        domain.extend_from_slice(&(<[u8; 32]>::from(U256::from(T::ChainId::get())))); // chain id
         domain.extend_from_slice(
             frame_system::Pallet::<T>::block_hash(BlockNumberFor::<T>::zero()).as_ref(),
         ); // genesis block hash

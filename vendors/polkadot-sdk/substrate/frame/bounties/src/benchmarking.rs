@@ -15,12 +15,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! bounties pallet benchmarking.
-
-#![cfg(feature = "runtime-benchmarks")]
+//! Bounties pallet benchmarking.
 
 use super::*;
 
+use alloc::{vec, vec::Vec};
 use frame_benchmarking::v1::{
 	account, benchmarks_instance_pallet, whitelisted_caller, BenchmarkError,
 };
@@ -31,6 +30,16 @@ use crate::Pallet as Bounties;
 use pallet_treasury::Pallet as Treasury;
 
 const SEED: u32 = 0;
+
+fn minimum_balance<T: Config<I>, I: 'static>() -> BalanceOf<T, I> {
+	let minimum_balance = T::Currency::minimum_balance();
+
+	if minimum_balance.is_zero() {
+		1u32.into()
+	} else {
+		minimum_balance
+	}
+}
 
 // Create bounties that are approved for use in `on_initialize`.
 fn create_approved_bounties<T: Config<I>, I: 'static>(n: u32) -> Result<(), BenchmarkError> {
@@ -57,12 +66,10 @@ fn setup_bounty<T: Config<I>, I: 'static>(
 	let fee = value / 2u32.into();
 	let deposit = T::BountyDepositBase::get() +
 		T::DataDepositPerByte::get() * T::MaximumReasonLength::get().into();
-	let _ = T::Currency::make_free_balance_be(&caller, deposit + T::Currency::minimum_balance());
+	let _ = T::Currency::make_free_balance_be(&caller, deposit + minimum_balance::<T, I>());
 	let curator = account("curator", u, SEED);
-	let _ = T::Currency::make_free_balance_be(
-		&curator,
-		fee / 2u32.into() + T::Currency::minimum_balance(),
-	);
+	let _ =
+		T::Currency::make_free_balance_be(&curator, fee / 2u32.into() + minimum_balance::<T, I>());
 	let reason = vec![0; d as usize];
 	(caller, curator, fee, value, reason)
 }
@@ -85,7 +92,7 @@ fn create_bounty<T: Config<I>, I: 'static>(
 
 fn setup_pot_account<T: Config<I>, I: 'static>() {
 	let pot_account = Bounties::<T, I>::account_id();
-	let value = T::Currency::minimum_balance().saturating_mul(1_000_000_000u32.into());
+	let value = minimum_balance::<T, I>().saturating_mul(1_000_000_000u32.into());
 	let _ = T::Currency::make_free_balance_be(&pot_account, value);
 }
 
@@ -177,7 +184,7 @@ benchmarks_instance_pallet! {
 		Bounties::<T, I>::propose_bounty(RawOrigin::Signed(caller).into(), value, reason)?;
 		let bounty_id = BountyCount::<T, I>::get() - 1;
 		let approve_origin =
-			T::ApproveOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+			T::RejectOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
 	}: close_bounty<T::RuntimeOrigin>(approve_origin, bounty_id)
 
 	close_bounty_active {
@@ -186,7 +193,7 @@ benchmarks_instance_pallet! {
 		Treasury::<T, I>::on_initialize(BlockNumberFor::<T>::zero());
 		let bounty_id = BountyCount::<T, I>::get() - 1;
 		let approve_origin =
-			T::ApproveOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+			T::RejectOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
 	}: close_bounty<T::RuntimeOrigin>(approve_origin, bounty_id)
 	verify {
 		assert_last_event::<T, I>(Event::BountyCanceled { index: bounty_id }.into())
@@ -231,5 +238,5 @@ benchmarks_instance_pallet! {
 		}
 	}
 
-	impl_benchmark_test_suite!(Bounties, crate::tests::new_test_ext(), crate::tests::Test)
+	impl_benchmark_test_suite!(Bounties, crate::tests::ExtBuilder::default().build(), crate::tests::Test)
 }

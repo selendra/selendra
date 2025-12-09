@@ -1,6 +1,6 @@
 [package]
 name = "xcm-executor-integration-tests"
-description = "Integration tests for the XCM Executor"
+description = "Integration tests for the XCM Executor (polkadot v1.15.0)"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,24 +11,34 @@ publish = false
 workspace = true
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.6.1" }
-frame-support = { path = "../../../../substrate/frame/support", default-features = false }
-frame-system = { path = "../../../../substrate/frame/system" }
-futures = "0.3.30"
-pallet-transaction-payment = { path = "../../../../substrate/frame/transaction-payment" }
-pallet-xcm = { path = "../../pallet-xcm" }
-polkadot-test-client = { path = "../../../node/test/client" }
-polkadot-test-runtime = { path = "../../../runtime/test-runtime" }
-polkadot-test-service = { path = "../../../node/test/service" }
-polkadot-service = { path = "../../../node/service" }
-sp-consensus = { path = "../../../../substrate/primitives/consensus/common" }
-sp-keyring = { path = "../../../../substrate/primitives/keyring" }
-sp-runtime = { path = "../../../../substrate/primitives/runtime", default-features = false }
-sp-state-machine = { path = "../../../../substrate/primitives/state-machine" }
-xcm = { package = "staging-xcm", path = "../..", default-features = false }
-xcm-executor = { package = "staging-xcm-executor", path = ".." }
-sp-tracing = { path = "../../../../substrate/primitives/tracing" }
-sp-core = { path = "../../../../substrate/primitives/core" }
+codec = { workspace = true, default-features = true }
+frame-support.workspace = true
+frame-system.workspace = true
+frame-system.default-features = true
+futures = { workspace = true }
+pallet-transaction-payment.workspace = true
+pallet-transaction-payment.default-features = true
+pallet-xcm.workspace = true
+pallet-xcm.default-features = true
+polkadot-test-client.workspace = true
+polkadot-test-runtime.workspace = true
+polkadot-test-service.workspace = true
+polkadot-service.workspace = true
+polkadot-service.default-features = true
+sp-consensus.workspace = true
+sp-consensus.default-features = true
+sp-keyring.workspace = true
+sp-keyring.default-features = true
+sp-runtime.workspace = true
+sp-state-machine.workspace = true
+sp-state-machine.default-features = true
+xcm.workspace = true
+xcm-executor.workspace = true
+xcm-executor.default-features = true
+sp-tracing.workspace = true
+sp-tracing.default-features = true
+sp-core.workspace = true
+sp-core.default-features = true
 
 [features]
 default = ["std"]
