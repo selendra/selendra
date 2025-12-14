@@ -20,7 +20,9 @@
 
 extern crate alloc;
 
+mod account_provider;
 mod precompile;
+mod storage_oog;
 mod validation;
 
 use alloc::{collections::BTreeMap, vec::Vec};
@@ -38,11 +40,13 @@ pub use evm::{
 };
 
 pub use self::{
+	account_provider::AccountProvider,
 	precompile::{
 		Context, ExitError, ExitRevert, ExitSucceed, IsPrecompileResult, LinearCostPrecompile,
 		Precompile, PrecompileFailure, PrecompileHandle, PrecompileOutput, PrecompileResult,
 		PrecompileSet, Transfer,
 	},
+	storage_oog::{handle_storage_oog, set_storage_oog},
 	validation::{
 		CheckEvmTransaction, CheckEvmTransactionConfig, CheckEvmTransactionInput,
 		TransactionValidationError,
@@ -59,9 +63,9 @@ pub struct Vicinity {
 	pub origin: H160,
 }
 
-/// `System::Account` 16(hash) + 20 (key) + 60 (AccountInfo::max_encoded_len)
-pub const ACCOUNT_BASIC_PROOF_SIZE: u64 = 96;
-/// `AccountCodesMetadata` read, temptatively 16 (hash) + 20 (key) + 40 (CodeMetadata).
+/// `System::Account` 16(hash) + 20 (key) + 72 (AccountInfo::max_encoded_len)
+pub const ACCOUNT_BASIC_PROOF_SIZE: u64 = 108;
+/// `AccountCodesMetadata` read, temtatively 16 (hash) + 20 (key) + 40 (CodeMetadata).
 pub const ACCOUNT_CODES_METADATA_PROOF_SIZE: u64 = 76;
 /// 16 (hash1) + 20 (key1) + 16 (hash2) + 32 (key2) + 32 (value)
 pub const ACCOUNT_STORAGE_PROOF_SIZE: u64 = 116;
@@ -69,6 +73,8 @@ pub const ACCOUNT_STORAGE_PROOF_SIZE: u64 = 116;
 pub const WRITE_PROOF_SIZE: u64 = 32;
 /// Account basic proof size + 5 bytes max of `decode_len` call.
 pub const IS_EMPTY_CHECK_PROOF_SIZE: u64 = 93;
+/// `AccountCodes` key size. 16 (hash) + 20 (key)
+pub const ACCOUNT_CODES_KEY_SIZE: u64 = 36;
 
 pub enum AccessedStorage {
 	AccountCodes(H160),
@@ -114,6 +120,7 @@ impl WeightInfo {
 	fn try_consume(&self, cost: u64, limit: u64, usage: u64) -> Result<u64, ExitError> {
 		let usage = usage.checked_add(cost).ok_or(ExitError::OutOfGas)?;
 		if usage > limit {
+			storage_oog::set_storage_oog();
 			return Err(ExitError::OutOfGas);
 		}
 		Ok(usage)
@@ -138,6 +145,7 @@ impl WeightInfo {
 		{
 			let proof_size_usage = self.try_consume(cost, proof_size_limit, proof_size_usage)?;
 			if proof_size_usage > proof_size_limit {
+				storage_oog::set_storage_oog();
 				return Err(ExitError::OutOfGas);
 			}
 			self.proof_size_usage = Some(proof_size_usage);

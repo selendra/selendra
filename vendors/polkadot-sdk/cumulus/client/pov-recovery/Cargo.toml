@@ -1,8 +1,8 @@
 [package]
 name = "cumulus-client-pov-recovery"
-version = "0.17.0"
+version = "0.21.0"
 authors.workspace = true
-description = "Cumulus-specific networking protocol (polkadot v1.15.0)"
+description = "Parachain PoV recovery"
 edition.workspace = true
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
 

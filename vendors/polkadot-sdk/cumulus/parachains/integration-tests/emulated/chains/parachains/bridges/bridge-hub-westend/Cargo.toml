@@ -4,7 +4,7 @@ version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-description = "Bridge Hub Westend emulated chain (polkadot v1.15.0)"
+description = "Bridge Hub Westend emulated chain"
 publish = false
 
 [lints]
@@ -12,7 +12,10 @@ workspace = true
 
 [dependencies]
 sp-core.workspace = true
+sp-keyring.workspace = true
 frame-support.workspace = true
+xcm.workspace = true
+bp-messages.workspace = true
 parachains-common.workspace = true
 parachains-common.default-features = true
 emulated-integration-tests-common.workspace = true

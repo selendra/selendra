@@ -11,7 +11,7 @@ use sc_service::{Configuration, DatabaseSource};
 use fc_db::kv::frontier_database_dir;
 
 fn enforce_heap_pages(config: &mut Configuration) {
-    config.default_heap_pages = Some(HEAP_PAGES);
+    config.executor.default_heap_pages = Some(HEAP_PAGES);
 }
 
 fn main() -> sc_cli::Result<()> {

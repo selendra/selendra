@@ -1,12 +1,12 @@
 [package]
 name = "frame-support-procedural-tools"
-version = "13.0.0"
+version = "13.0.1"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Proc macro helpers for procedural macros (polkadot v1.15.0)"
+description = "Proc macro helpers for procedural macros"
 
 [lints]
 workspace = true

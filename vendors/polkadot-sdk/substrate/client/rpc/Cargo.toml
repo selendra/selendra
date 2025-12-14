@@ -1,12 +1,12 @@
 [package]
 name = "sc-rpc"
-version = "39.0.0"
+version = "43.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Substrate Client RPC (polkadot v1.15.0)"
+description = "Substrate Client RPC"
 readme = "README.md"
 
 [lints]
@@ -61,7 +61,6 @@ sp-statement-store.default-features = true
 tokio = { workspace = true, default-features = true }
 
 [dev-dependencies]
-env_logger = { workspace = true }
 assert_matches = { workspace = true }
 sc-block-builder = { default-features = true, path = "../block-builder" }
 sc-network = { default-features = true, path = "../network" }
@@ -73,7 +72,6 @@ tokio = { workspace = true, default-features = true }
 sp-io = { default-features = true, path = "../../primitives/io" }
 substrate-test-runtime-client = { path = "../../test-utils/runtime/client" }
 pretty_assertions = { workspace = true }
-tracing-subscriber = { features = ["env-filter"], workspace = true }
 
 [features]
 test-helpers = []

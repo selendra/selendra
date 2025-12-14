@@ -15,7 +15,6 @@ members = [
 	"frame/evm/precompile/bls12381",
 	"frame/evm/precompile/dispatch",
 	"frame/evm/precompile/curve25519",
-	"frame/evm/precompile/storage-cleaner",
 	"frame/evm-chain-id",
 	"frame/hotfix-sufficients",
 	"client/api",
@@ -45,42 +44,46 @@ resolver = "2"
 [workspace.package]
 authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2021"
-repository = "https://github.com/paritytech/frontier/"
+repository = "https://github.com/polkadot-evm/frontier/"
 
 [workspace.dependencies]
 async-trait = "0.1"
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 clap = { version = "4.5", features = ["derive", "deprecated"] }
-const-hex = { version = "1.12", default-features = false, features = ["alloc"] }
-derive_more = "0.99"
+const-hex = { version = "1.14", default-features = false, features = ["alloc"] }
+derive_more = "1.0"
 environmental = { version = "1.1.4", default-features = false }
-ethereum = { version = "0.15.0", default-features = false }
-ethereum-types = { version = "0.14.1", default-features = false }
-evm = { version = "0.41.1", default-features = false }
-futures = "0.3.30"
+futures = "0.3.31"
 hash-db = { version = "0.16.0", default-features = false }
 hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
 hex-literal = "0.4.1"
-impl-serde = { version = "0.4.0", default-features = false }
-impl-trait-for-tuples = "0.2.1"
-jsonrpsee = { version = "0.23.2" }
-jsonrpsee-core = { version = "0.23.2" }
+impl-serde = { version = "0.5.0", default-features = false }
+impl-trait-for-tuples = "0.2.3"
+jsonrpsee = { version = "0.24.7" }
+jsonrpsee-core = { version = "0.24.4" }
 kvdb-rocksdb = "0.19.0"
 libsecp256k1 = { version = "0.7.1", default-features = false }
-log = { version = "0.4.21", default-features = false }
-num_enum = { version = "0.7.2", default-features = false }
+log = { version = "0.4.22", default-features = false }
+num_enum = { version = "0.7.3", default-features = false }
 parity-db = "0.4.13"
 parking_lot = "0.12.3"
-rlp = { version = "0.5.2", default-features = false }
+quote = "1.0.38"
+rlp = { version = "0.6", default-features = false }
 scale-codec = { package = "parity-scale-codec", version = "3.6.12", default-features = false, features = ["derive"] }
-scale-info = { version = "2.11.3", default-features = false, features = ["derive"] }
+scale-info = { version = "2.11.6", default-features = false, features = ["derive"] }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = "1.0"
-similar-asserts = "1.5.0"
+similar-asserts = "1.6.1"
 sqlx = { version = "0.7.4", default-features = false, features = ["macros"] }
 thiserror = "1.0"
-tokio = "1.44.2"
+tokio = "1.43.0"
 
+# To make it compatible with frontier
+evm = { git = "https://github.com/rust-ethereum/evm", rev = "e81732d6bb47e3d3d68d233e43919c4522598361", default-features = false }
+evm-gasometer = { git = "https://github.com/rust-ethereum/evm", rev = "e81732d6bb47e3d3d68d233e43919c4522598361", default-features = false }
+evm-runtime = { git = "https://github.com/rust-ethereum/evm", rev = "e81732d6bb47e3d3d68d233e43919c4522598361", default-features = false }
+ethereum-types = { version = "0.15", default-features = false }
+ethereum = { git = "https://github.com/rust-ethereum/ethereum", rev = "3be0d8fd4c2ad1ba216b69ef65b9382612efc8ba", default-features = false }
 
 # Substrate Client
 sc-basic-authorship = { path = "../polkadot-sdk/substrate/client/basic-authorship" }

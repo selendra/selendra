@@ -1,12 +1,12 @@
 // Copyright (C) Parity Technologies (UK) Ltd.
 // This file is part of Polkadot.
 
-// Substrate is free software: you can redistribute it and/or modify
+// Polkadot is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Substrate is distributed in the hope that it will be useful,
+// Polkadot is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
@@ -57,8 +57,18 @@ sp_api::decl_runtime_apis! {
 	/// Calls or XCMs might fail when executed, this doesn't mean the result of these calls will be an `Err`.
 	/// In those cases, there might still be a valid result, with the execution error inside it.
 	/// The only reasons why these calls might return an error are listed in the [`Error`] enum.
-	pub trait DryRunApi<Call: Encode, Event: Decode, OriginCaller: Encode> {
-		/// Dry run call.
+	#[api_version(2)]
+	pub trait DryRunApi<Call, Event, OriginCaller>
+	where
+		Call: Encode,
+		Event: Decode,
+		OriginCaller: Encode
+	{
+		/// Dry run call V2.
+		fn dry_run_call(origin: OriginCaller, call: Call, result_xcms_version: XcmVersion) -> Result<CallDryRunEffects<Event>, Error>;
+
+		/// Dry run call V1.
+		#[changed_in(2)]
 		fn dry_run_call(origin: OriginCaller, call: Call) -> Result<CallDryRunEffects<Event>, Error>;
 
 		/// Dry run XCM program

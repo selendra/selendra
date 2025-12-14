@@ -36,7 +36,6 @@ use jsonrpsee::core::{async_trait, RpcResult};
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
-use sc_transaction_pool::{ChainApi, Pool};
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder as BlockBuilderApi;
@@ -71,9 +70,9 @@ impl<B: BlockT, C> EthConfig<B, C> for () {
 }
 
 /// Eth API implementation.
-pub struct Eth<B: BlockT, C, P, CT, BE, A: ChainApi, CIDP, EC> {
+pub struct Eth<B: BlockT, C, P, CT, BE, CIDP, EC> {
 	pool: Arc<P>,
-	graph: Arc<Pool<A>>,
+	graph: Arc<P>,
 	client: Arc<C>,
 	convert_transaction: Option<CT>,
 	sync: Arc<SyncingService<B>>,
@@ -94,19 +93,18 @@ pub struct Eth<B: BlockT, C, P, CT, BE, A: ChainApi, CIDP, EC> {
 	_marker: PhantomData<(BE, EC)>,
 }
 
-impl<B, C, P, CT, BE, A, CIDP, EC> Eth<B, C, P, CT, BE, A, CIDP, EC>
+impl<B, C, P, CT, BE, CIDP, EC> Eth<B, C, P, CT, BE, CIDP, EC>
 where
 	B: BlockT,
 	C: ProvideRuntimeApi<B>,
 	C::Api: EthereumRuntimeRPCApi<B>,
 	C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
 	BE: Backend<B> + 'static,
-	A: ChainApi<Block = B>,
 {
 	pub fn new(
 		client: Arc<C>,
 		pool: Arc<P>,
-		graph: Arc<Pool<A>>,
+		graph: Arc<P>,
 		convert_transaction: Option<CT>,
 		sync: Arc<SyncingService<B>>,
 		signers: Vec<Box<dyn EthSigner>>,
@@ -247,13 +245,12 @@ where
 	}
 }
 
-impl<B, C, P, CT, BE, A, CIDP, EC> Eth<B, C, P, CT, BE, A, CIDP, EC>
+impl<B, C, P, CT, BE, CIDP, EC> Eth<B, C, P, CT, BE, CIDP, EC>
 where
 	B: BlockT,
-	A: ChainApi<Block = B>,
 	EC: EthConfig<B, C>,
 {
-	pub fn replace_config<EC2: EthConfig<B, C>>(self) -> Eth<B, C, P, CT, BE, A, CIDP, EC2> {
+	pub fn replace_config<EC2: EthConfig<B, C>>(self) -> Eth<B, C, P, CT, BE, CIDP, EC2> {
 		let Self {
 			client,
 			pool,
@@ -297,16 +294,15 @@ where
 }
 
 #[async_trait]
-impl<B, C, P, CT, BE, A, CIDP, EC> EthApiServer for Eth<B, C, P, CT, BE, A, CIDP, EC>
+impl<B, C, P, CT, BE, CIDP, EC> EthApiServer for Eth<B, C, P, CT, BE, CIDP, EC>
 where
 	B: BlockT,
 	C: CallApiAt<B> + ProvideRuntimeApi<B>,
 	C::Api: BlockBuilderApi<B> + ConvertTransactionRuntimeApi<B> + EthereumRuntimeRPCApi<B>,
 	C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
 	BE: Backend<B> + 'static,
-	P: TransactionPool<Block = B> + 'static,
+	P: TransactionPool<Block = B, Hash = B::Hash> + 'static,
 	CT: ConvertTransaction<<B as BlockT>::Extrinsic> + Send + Sync + 'static,
-	A: ChainApi<Block = B> + 'static,
 	CIDP: CreateInherentDataProviders<B, ()> + Send + 'static,
 	EC: EthConfig<B, C>,
 {
@@ -494,11 +490,11 @@ where
 
 	async fn fee_history(
 		&self,
-		block_count: U256,
+		block_count: BlockCount,
 		newest_block: BlockNumberOrHash,
 		reward_percentiles: Option<Vec<f64>>,
 	) -> RpcResult<FeeHistory> {
-		self.fee_history(block_count, newest_block, reward_percentiles)
+		self.fee_history(block_count.into(), newest_block, reward_percentiles)
 			.await
 	}
 
@@ -616,6 +612,31 @@ fn rich_block_build(
 		},
 		extra_info: BTreeMap::new(),
 	}
+}
+
+fn empty_block_from(number: U256) -> ethereum::BlockV2 {
+	let ommers = Vec::<ethereum::Header>::new();
+	let receipts = Vec::<ethereum::ReceiptV2>::new();
+	let receipts_root = ethereum::util::ordered_trie_root(
+		receipts.iter().map(ethereum::EnvelopedEncodable::encode),
+	);
+	let logs_bloom = ethereum_types::Bloom::default();
+	let partial_header = ethereum::PartialHeader {
+		parent_hash: H256::default(),
+		beneficiary: Default::default(),
+		state_root: Default::default(),
+		receipts_root,
+		logs_bloom,
+		difficulty: U256::zero(),
+		number,
+		gas_limit: U256::from(4_000_000),
+		gas_used: U256::zero(),
+		timestamp: Default::default(),
+		extra_data: Vec::new(),
+		mix_hash: H256::default(),
+		nonce: H64::default(),
+	};
+	ethereum::Block::new(partial_header, Default::default(), ommers)
 }
 
 fn transaction_build(

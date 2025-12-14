@@ -5,9 +5,8 @@ authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
 publish = false
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "frame-support-test-stg-frame-crate (polkadot v1.15.0)"
 
 [lints]
 workspace = true

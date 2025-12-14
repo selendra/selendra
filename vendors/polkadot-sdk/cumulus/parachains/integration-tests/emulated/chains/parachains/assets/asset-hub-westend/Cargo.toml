@@ -4,7 +4,7 @@ version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-description = "Asset Hub Westend emulated chain (polkadot v1.15.0)"
+description = "Asset Hub Westend emulated chain"
 publish = false
 
 [lints]
@@ -12,6 +12,7 @@ workspace = true
 
 [dependencies]
 sp-core.workspace = true
+sp-keyring.workspace = true
 frame-support.workspace = true
 parachains-common.workspace = true
 parachains-common.default-features = true
@@ -22,3 +23,4 @@ westend-emulated-chain.workspace = true
 westend-emulated-chain.default-features = true
 testnet-parachains-constants = { features = ["westend"], workspace = true, default-features = true }
 xcm.workspace = true
+bp-bridge-hub-westend.workspace = true

@@ -1,11 +1,11 @@
 [package]
-description = "Substrate network common (polkadot v1.15.0)"
+description = "Substrate network common"
 name = "sc-network-common"
-version = "0.43.0"
+version = "0.47.0"
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
 authors.workspace = true
 edition.workspace = true
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
 documentation = "https://docs.rs/sc-network-sync"
 

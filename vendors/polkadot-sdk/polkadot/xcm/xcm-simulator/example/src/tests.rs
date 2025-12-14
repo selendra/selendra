@@ -46,8 +46,8 @@ fn dmp() {
 			Parachain(1),
 			Xcm(vec![Transact {
 				origin_kind: OriginKind::SovereignAccount,
-				require_weight_at_most: Weight::from_parts(INITIAL_BALANCE as u64, 1024 * 1024),
 				call: remark.encode().into(),
+				fallback_max_weight: None,
 			}]),
 		));
 	});
@@ -74,8 +74,8 @@ fn ump() {
 			Parent,
 			Xcm(vec![Transact {
 				origin_kind: OriginKind::SovereignAccount,
-				require_weight_at_most: Weight::from_parts(INITIAL_BALANCE as u64, 1024 * 1024),
 				call: remark.encode().into(),
+				fallback_max_weight: None,
 			}]),
 		));
 	});
@@ -102,8 +102,8 @@ fn xcmp() {
 			(Parent, Parachain(2)),
 			Xcm(vec![Transact {
 				origin_kind: OriginKind::SovereignAccount,
-				require_weight_at_most: Weight::from_parts(INITIAL_BALANCE as u64, 1024 * 1024),
 				call: remark.encode().into(),
+				fallback_max_weight: None,
 			}]),
 		));
 	});
@@ -383,7 +383,6 @@ fn reserve_asset_class_create_and_reserve_transfer() {
 
 		let message = Xcm(vec![Transact {
 			origin_kind: OriginKind::Xcm,
-			require_weight_at_most: Weight::from_parts(1_000_000_000, 1024 * 1024),
 			call: parachain::RuntimeCall::from(
 				pallet_uniques::Call::<parachain::Runtime>::create {
 					collection: (Parent, 2u64).into(),
@@ -392,6 +391,7 @@ fn reserve_asset_class_create_and_reserve_transfer() {
 			)
 			.encode()
 			.into(),
+			fallback_max_weight: None,
 		}]);
 		// Send creation.
 		assert_ok!(RelayChainPalletXcm::send_xcm(Here, Parachain(1), message));
@@ -466,7 +466,7 @@ fn query_holding() {
 	let query_id_set = 1234;
 
 	// Send a message which fully succeeds on the relay chain
-	ParaA::execute_with(|| {
+	let expected_hash = ParaA::execute_with(|| {
 		let message = Xcm(vec![
 			WithdrawAsset((Here, send_amount).into()),
 			buy_execution((Here, send_amount)),
@@ -482,6 +482,8 @@ fn query_holding() {
 		]);
 		// Send withdraw and deposit with query holding
 		assert_ok!(ParachainPalletXcm::send_xcm(Here, Parent, message.clone(),));
+
+		VersionedXcm::from(message).using_encoded(sp_core::blake2_256)
 	});
 
 	// Check that transfer was executed
@@ -502,12 +504,15 @@ fn query_holding() {
 	ParaA::execute_with(|| {
 		assert_eq!(
 			ReceivedDmp::<parachain::Runtime>::get(),
-			vec![Xcm(vec![QueryResponse {
-				query_id: query_id_set,
-				response: Response::Assets(Assets::new()),
-				max_weight: Weight::from_parts(1_000_000_000, 1024 * 1024),
-				querier: Some(Here.into()),
-			}])],
+			vec![Xcm(vec![
+				QueryResponse {
+					query_id: query_id_set,
+					response: Response::Assets(Assets::new()),
+					max_weight: Weight::from_parts(1_000_000_000, 1024 * 1024),
+					querier: Some(Here.into()),
+				},
+				SetTopic(expected_hash),
+			])],
 		);
 	});
 }

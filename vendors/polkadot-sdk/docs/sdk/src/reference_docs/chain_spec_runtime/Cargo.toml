@@ -1,6 +1,6 @@
 [package]
 name = "chain-spec-guide-runtime"
-description = "A minimal runtime for chain spec guide (polkadot v1.15.0)"
+description = "A minimal runtime for chain spec guide"
 version = "0.1.0"
 license = "MIT-0"
 authors.workspace = true
@@ -12,6 +12,7 @@ publish = false
 [dependencies]
 docify = { workspace = true }
 codec = { workspace = true }
+frame-support.workspace = true
 scale-info = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -40,6 +41,7 @@ std = [
 	"codec/std",
 	"scale-info/std",
 
+	"frame-support/std",
 	"frame/std",
 
 	"pallet-balances/std",

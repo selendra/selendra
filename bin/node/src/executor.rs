@@ -14,7 +14,7 @@ pub mod selendra_executor {
     pub type Executor = WasmExecutor<ExtendHostFunctions>;
 
     pub fn get_executor(config: &Configuration) -> Executor {
-        sc_service::new_wasm_executor(config)
+        sc_service::new_wasm_executor(&config.executor)
     }
 }
 
@@ -45,6 +45,6 @@ pub mod selendra_executor {
     pub type Executor = NativeElseWasmExecutor<ExecutorDispatch>;
 
     pub fn get_executor(config: &Configuration) -> Executor {
-        sc_service::new_native_or_wasm_executor(config)
+        sc_service::new_native_or_wasm_executor(&config.executor)
     }
 }

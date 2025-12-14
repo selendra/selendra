@@ -16,4 +16,4 @@ are registered during delivery confirmation transactions. You may find more info
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

@@ -1,7 +1,7 @@
 [package]
 name = "pallet-migrations"
-version = "7.0.1"
-description = "FRAME pallet to execute multi-block migrations. (polkadot v1.15.0)"
+version = "9.1.1"
+description = "FRAME pallet to execute multi-block migrations."
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -12,6 +12,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 codec = { features = ["derive"], workspace = true }
+cfg-if = { workspace = true }
 docify = { workspace = true }
 impl-trait-for-tuples = { workspace = true }
 log = { workspace = true, default-features = true }

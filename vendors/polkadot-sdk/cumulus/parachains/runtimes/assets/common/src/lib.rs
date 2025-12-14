@@ -32,7 +32,7 @@ use core::{cmp::PartialEq, marker::PhantomData};
 use frame_support::traits::{Equals, EverythingBut};
 use parachains_common::{AssetIdForTrustBackedAssets, CollectionId, ItemId};
 use sp_runtime::traits::TryConvertInto;
-use xcm::latest::{AssetId, Location};
+use xcm::prelude::*;
 use xcm_builder::{
 	AsPrefixedGeneralIndex, MatchedConvertedConcreteId, StartsWith, WithLatestLocationConverter,
 };
@@ -137,6 +137,36 @@ pub type PoolAssetsConvertedConcreteId<PoolAssetsPalletLocation, Balance> =
 		TryConvertInto,
 	>;
 
+/// Returns an iterator of all assets in a pool with `asset`.
+///
+/// Should only be used in runtime APIs since it iterates over the whole
+/// `pallet_asset_conversion::Pools` map.
+///
+/// It takes in any version of an XCM Location but always returns the latest one.
+/// This is to allow some margin of migrating the pools when updating the XCM version.
+///
+/// An error of type `()` is returned if the version conversion fails for XCM locations.
+/// This error should be mapped by the caller to a more descriptive one.
+pub fn get_assets_in_pool_with<
+	Runtime: pallet_asset_conversion::Config<PoolId = (L, L)>,
+	L: TryInto<Location> + Clone + Decode + EncodeLike + PartialEq,
+>(
+	asset: &L,
+) -> Result<Vec<AssetId>, ()> {
+	pallet_asset_conversion::Pools::<Runtime>::iter_keys()
+		.filter_map(|(asset_1, asset_2)| {
+			if asset_1 == *asset {
+				Some(asset_2)
+			} else if asset_2 == *asset {
+				Some(asset_1)
+			} else {
+				None
+			}
+		})
+		.map(|location| location.try_into().map_err(|_| ()).map(AssetId))
+		.collect::<Result<Vec<_>, _>>()
+}
+
 /// Adapter implementation for accessing pools (`pallet_asset_conversion`) that uses `AssetKind` as
 /// a `xcm::v*` which could be different from the `xcm::latest`.
 pub struct PoolAdapter<Runtime>(PhantomData<Runtime>);
@@ -208,7 +238,6 @@ impl<
 mod tests {
 	use super::*;
 	use sp_runtime::traits::MaybeEquivalence;
-	use xcm::prelude::*;
 	use xcm_builder::{StartsWithExplicitGlobalConsensus, WithLatestLocationConverter};
 	use xcm_executor::traits::{Error as MatchError, MatchesFungibles};
 
@@ -331,15 +360,15 @@ mod tests {
 			pub UniversalLocationNetworkId: NetworkId = NetworkId::ByGenesis([9; 32]);
 		}
 
-		// set up a converter which uses `xcm::v3::Location` under the hood
+		// set up a converter which uses `xcm::v4::Location` under the hood
 		type Convert = ForeignAssetsConvertedConcreteId<
 			(
 				StartsWith<Parachain100Pattern>,
 				StartsWithExplicitGlobalConsensus<UniversalLocationNetworkId>,
 			),
 			u128,
-			xcm::v3::Location,
-			WithLatestLocationConverter<xcm::v3::Location>,
+			xcm::v4::Location,
+			WithLatestLocationConverter<xcm::v4::Location>,
 		>;
 
 		let test_data = vec![
@@ -386,18 +415,18 @@ mod tests {
 			// ok
 			(
 				ma_1000(1, [Parachain(200)].into()),
-				Ok((xcm::v3::Location::new(1, [xcm::v3::Junction::Parachain(200)]), 1000)),
+				Ok((xcm::v4::Location::new(1, [xcm::v4::Junction::Parachain(200)]), 1000)),
 			),
 			(
 				ma_1000(2, [Parachain(200)].into()),
-				Ok((xcm::v3::Location::new(2, [xcm::v3::Junction::Parachain(200)]), 1000)),
+				Ok((xcm::v4::Location::new(2, [xcm::v4::Junction::Parachain(200)]), 1000)),
 			),
 			(
 				ma_1000(1, [Parachain(200), GeneralIndex(1234)].into()),
 				Ok((
-					xcm::v3::Location::new(
+					xcm::v4::Location::new(
 						1,
-						[xcm::v3::Junction::Parachain(200), xcm::v3::Junction::GeneralIndex(1234)],
+						[xcm::v4::Junction::Parachain(200), xcm::v4::Junction::GeneralIndex(1234)],
 					),
 					1000,
 				)),
@@ -405,9 +434,9 @@ mod tests {
 			(
 				ma_1000(2, [Parachain(200), GeneralIndex(1234)].into()),
 				Ok((
-					xcm::v3::Location::new(
+					xcm::v4::Location::new(
 						2,
-						[xcm::v3::Junction::Parachain(200), xcm::v3::Junction::GeneralIndex(1234)],
+						[xcm::v4::Junction::Parachain(200), xcm::v4::Junction::GeneralIndex(1234)],
 					),
 					1000,
 				)),
@@ -415,9 +444,9 @@ mod tests {
 			(
 				ma_1000(2, [GlobalConsensus(NetworkId::ByGenesis([7; 32]))].into()),
 				Ok((
-					xcm::v3::Location::new(
+					xcm::v4::Location::new(
 						2,
-						[xcm::v3::Junction::GlobalConsensus(xcm::v3::NetworkId::ByGenesis(
+						[xcm::v4::Junction::GlobalConsensus(xcm::v4::NetworkId::ByGenesis(
 							[7; 32],
 						))],
 					),
@@ -435,14 +464,14 @@ mod tests {
 					.into(),
 				),
 				Ok((
-					xcm::v3::Location::new(
+					xcm::v4::Location::new(
 						2,
 						[
-							xcm::v3::Junction::GlobalConsensus(xcm::v3::NetworkId::ByGenesis(
+							xcm::v4::Junction::GlobalConsensus(xcm::v4::NetworkId::ByGenesis(
 								[7; 32],
 							)),
-							xcm::v3::Junction::Parachain(200),
-							xcm::v3::Junction::GeneralIndex(1234),
+							xcm::v4::Junction::Parachain(200),
+							xcm::v4::Junction::GeneralIndex(1234),
 						],
 					),
 					1000,
@@ -452,7 +481,7 @@ mod tests {
 
 		for (asset, expected_result) in test_data {
 			assert_eq!(
-				<Convert as MatchesFungibles<xcm::v3::Location, u128>>::matches_fungibles(
+				<Convert as MatchesFungibles<xcm::v4::Location, u128>>::matches_fungibles(
 					&asset.clone().try_into().unwrap()
 				),
 				expected_result,

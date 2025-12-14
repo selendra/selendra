@@ -1,11 +1,11 @@
 [package]
 name = "pallet-authorship"
-version = "37.0.0"
-description = "Block and Uncle Author tracking for the FRAME (polkadot v1.15.0)"
+version = "39.0.0"
+description = "Block and Uncle Author tracking for the FRAME"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
 readme = "README.md"
 

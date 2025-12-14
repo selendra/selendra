@@ -27,4 +27,4 @@ To do this automatically, run `scripts/adder-collator.sh`.
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

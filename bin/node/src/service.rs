@@ -46,7 +46,8 @@ use crate::{
 pub type SelendraExecutor = selendra_executor::Executor;
 pub type FullClient = sc_service::TFullClient<Block, RuntimeApi, SelendraExecutor>;
 pub type FullBackend = sc_service::TFullBackend<Block>;
-type FullPool = sc_transaction_pool::FullPool<Block, FullClient>;
+type FullChainApi = sc_transaction_pool::FullChainApi<FullClient, Block>;
+type FullPool = sc_transaction_pool::BasicPool<FullChainApi, Block>;
 type FullImportQueue = sc_consensus::DefaultImportQueue<Block>;
 type FullProposerFactory = ProposerFactory<FullPool, FullClient, DisableProofRecording>;
 
@@ -135,13 +136,13 @@ pub fn new_partial(
 
 	let select_chain_provider = FavouriteSelectChainProvider::default();
 
-	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
-		config.transaction_pool.clone(),
+	let transaction_pool = Arc::new(sc_transaction_pool::BasicPool::new_full(
+		sc_transaction_pool::Options::default(),
 		config.role.is_authority().into(),
 		config.prometheus_registry(),
 		task_manager.spawn_essential_handle(),
 		client.clone(),
-	);
+	));
 	let justification_translator = JustificationTranslator::new(
 		SubstrateChainStatus::new(backend.clone())
 			.map_err(|e| ServiceError::Other(format!("failed to set up chain status: {e}")))?,
@@ -387,9 +388,6 @@ pub async fn new_authority(
 	> = Default::default();
 	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
 
-	// for ethereum-compatibility rpc.
-	config.rpc_id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
-
 	let chain_status = SubstrateChainStatus::new(service_components.backend.clone())
 		.map_err(|e| ServiceError::Other(format!("failed to set up chain status: {e}")))?;
 	let validator_address_cache = get_validator_address_cache(&aleph_config);
@@ -409,6 +407,7 @@ pub async fn new_authority(
 		let pubsub_notification_sinks = pubsub_notification_sinks.clone();
 		let storage_override = service_components.storage_override.clone();
 		let fee_history_cache = fee_history_cache.clone();
+		let deny_unsafe = sc_rpc::DenyUnsafe::No;
 		let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
 			service_components.task_manager.spawn_handle(),
 			service_components.storage_override.clone(),
@@ -422,6 +421,7 @@ pub async fn new_authority(
 		let is_authority = role.is_authority();
 		let frontier_backend = service_components.frontier_backend.clone();
 		let target_gas_price = eth_config.target_gas_price;
+		let task_manager_spawn_handle = service_components.task_manager.spawn_handle();
 		let pending_create_inherent_data_providers = move |_, ()| async move {
 			let current = sp_timestamp::InherentDataProvider::from_system_time();
 			let next_slot = current.timestamp().as_millis() + slot_duration.as_millis();
@@ -434,11 +434,12 @@ pub async fn new_authority(
 			Ok((slot, timestamp, dynamic_fee))
 		};
 
-		Box::new(move |deny_unsafe, subscription_task_executor| {
+		Box::new(move |subscription_task_executor| {
+			
 			let eth_deps = crate::rpc::EthDeps {
 				client: client.clone(),
 			pool: pool.clone(),
-			graph: pool.pool().clone(),
+			graph: pool.clone(),
 			converter: Some(TransactionConverter),
 			is_authority,
 			enable_dev_signer,
@@ -467,6 +468,7 @@ pub async fn new_authority(
 				sync_oracle: sync_oracle.clone(),
 				validator_address_cache: validator_address_cache.clone(),
 				eth: eth_deps,
+				_phantom: std::marker::PhantomData::<FullChainApi>,
 			};
 
 			Ok(create_full_rpc(
@@ -494,7 +496,7 @@ pub async fn new_authority(
 	service_components.task_manager.spawn_handle().spawn(
 		"import-queue",
 		None,
-		service_components.import_queue.run(Box::new(NoopLink)),
+		service_components.import_queue.run(&NoopLink),
 	);
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {

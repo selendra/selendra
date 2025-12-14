@@ -14,16 +14,27 @@ the [CODEOWNERS](../../.github/CODEOWNERS) for advice.
 
 A `.prdoc` file is a YAML file with a defined structure (ie JSON Schema). Please follow these steps to generate one:
 
-1. Install the [`prdoc` CLI](https://github.com/paritytech/prdoc) by running `cargo install prdoc`.
+1. Install the [`prdoc` CLI](https://github.com/paritytech/prdoc) by running `cargo install parity-prdoc`.
 1. Open a Pull Request and get the PR number.
 1. Generate the file with `prdoc generate <PR_NUMBER>`. The output filename will be printed.
 1. Optional: Install the `prdoc/schema_user.json` schema in your editor, for example
-[VsCode](https://github.com/paritytech/prdoc?tab=readme-ov-file#schemas).
+   [VsCode](https://github.com/paritytech/prdoc?tab=readme-ov-file#schemas).
 1. Edit your `.prdoc` file according to the [Audience](#pick-an-audience) and [SemVer](#record-semver-changes) sections.
 1. Check your prdoc with `prdoc check -n <PR_NUMBER>`. This is optional since the CI will also check it.
 
 > **Tip:** GitHub CLI and jq can be used to provide the number of your PR to generate the correct file:  
 > `prdoc generate $(gh pr view --json number | jq '.number') -o prdoc`
+
+Alternatively you can call the prdoc from PR via `/cmd prdoc` (see args with `/cmd prdoc --help`)
+in a comment to PR to trigger it from CI.
+
+Options:
+
+- `pr`: The PR number to generate the PrDoc for.
+- `audience`: The audience of whom the changes may concern.
+- `bump`: A default bump level for all crates.
+  The PrDoc will likely need to be edited to reflect the actual changes after generation.
+- `force`: Whether to overwrite any existing PrDoc.
 
 ## Pick An Audience
 
@@ -31,11 +42,11 @@ While describing a PR, the author needs to consider which audience(s) need to be
 The list of valid audiences is described and documented in the JSON schema as follow:
 
 - `Node Dev`: Those who build around the client side code. Alternative client builders, SMOLDOT, those who consume RPCs.
-   These are people who are oblivious to the runtime changes. They only care about the meta-protocol, not the protocol
-   itself.
+  These are people who are oblivious to the runtime changes. They only care about the meta-protocol, not the protocol
+  itself.
 
 - `Runtime Dev`: All of those who rely on the runtime. A parachain team that is using a pallet. A DApp that is using a
-   pallet. These are people who care about the protocol (WASM), not the meta-protocol (client).
+  pallet. These are people who care about the protocol (WASM), not the meta-protocol (client).
 
 - `Node Operator`: Those who don't write any code and only run code.
 
@@ -64,10 +75,10 @@ For example when you modified two crates and record the changes:
 
 ```yaml
 crates:
-- name: frame-example
-  bump: major
-- name: frame-example-pallet
-  bump: minor
+  - name: frame-example
+    bump: major
+  - name: frame-example-pallet
+    bump: minor
 ```
 
 It means that downstream code using `frame-example-pallet` is still guaranteed to work as before, while code using
@@ -79,3 +90,48 @@ A crate that depends on another crate will automatically inherit its `major` bum
 bump a crate that had a SemVer breaking change only from re-exporting another crate with a breaking change.  
 `minor` an `patch` bumps do not need to be inherited, since `cargo` will automatically update them to the latest
 compatible version.
+
+### Overwrite CI Check
+
+The `check-semver` CI check is doing sanity checks based on the provided `PRDoc` and the mentioned
+crate version bumps. The tooling is not perfect and it may recommends incorrect bumps of the version.
+The CI check can be forced to accept the provided version bump. This can be done like:
+
+```yaml
+crates:
+  - name: frame-example
+    bump: major
+    validate: false
+  - name: frame-example-pallet
+    bump: minor
+```
+
+By putting `validate: false` for `frame-example`, the version bump is ignored by the tooling. For
+`frame-example-pallet` the version bump is still validated by the CI check.
+
+### Backporting PRs
+
+When [backporting changes](../BACKPORT.md) to a stable release branch (e.g. `stable2503`), stricter versioning rules
+apply to minimise risk for downstream users.
+
+#### ✅ Allowed Bump Levels
+
+Only the following `bump` levels are allowed by default:
+
+- `none`: No observable change. No detectable difference between old and new versions.
+- `patch`: Bug fixes or internal changes. Do not affect functionality or cause compilation errors.
+- `minor`: Backward-compatible additions. Safe to adopt; adds features only, no behaviour changes.
+
+Backport PRs with `major` bumps will fail CI.
+
+#### 🚨 Overriding the CI Check
+
+If a `major` bump is truly needed, you must:
+
+1. Set `validate: false` in the `.prdoc`. See [Overwrite CI Check](#overwrite-ci-check).
+2. Include a justification in the PR description explaining:
+    - Why the bump is necessary.
+    - Why it is safe for downstream users.
+3. Notify a release engineer or senior reviewer for approval.
+
+> Use this override sparingly, and only when you’re confident the change is safe and justified.

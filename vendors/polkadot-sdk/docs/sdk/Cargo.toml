@@ -1,6 +1,6 @@
 [package]
 name = "polkadot-sdk-docs"
-description = "The one stop shop for developers of the polkadot-sdk (polkadot v1.15.0)"
+description = "The one stop shop for developers of the polkadot-sdk"
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
 homepage = "paritytech.github.io"
 repository.workspace = true
@@ -19,6 +19,7 @@ codec = { workspace = true }
 scale-info = { workspace = true }
 frame = { features = ["experimental", "runtime"], workspace = true, default-features = true }
 pallet-examples.workspace = true
+pallet-contracts.workspace = true
 pallet-default-config-example.workspace = true
 pallet-default-config-example.default-features = true
 pallet-example-offchain-worker.workspace = true
@@ -27,7 +28,8 @@ pallet-example-offchain-worker.default-features = true
 # How we build docs in rust-docs
 simple-mermaid = "0.1.1"
 docify = { workspace = true }
-polkadot-sdk = { features = ["runtime"], workspace = true, default-features = true }
+serde_json = { workspace = true }
+polkadot-sdk = { features = ["runtime-full"], workspace = true, default-features = true }
 node-cli.workspace = true
 kitchensink-runtime.workspace = true
 chain-spec-builder.workspace = true
@@ -37,10 +39,14 @@ subkey.default-features = true
 frame-system.workspace = true
 frame-support.workspace = true
 frame-executive.workspace = true
+frame-benchmarking.workspace = true
+pallet-example-authorization-tx-extension.workspace = true
+pallet-example-authorization-tx-extension.default-features = true
 pallet-example-single-block-migrations.workspace = true
 pallet-example-single-block-migrations.default-features = true
 frame-metadata-hash-extension.workspace = true
 frame-metadata-hash-extension.default-features = true
+log = { workspace = true, default-features = true }
 sc-network.workspace = true
 sc-network.default-features = true
 sc-rpc-api.workspace = true
@@ -83,6 +89,8 @@ cumulus-client-service.workspace = true
 cumulus-client-service.default-features = true
 cumulus-primitives-storage-weight-reclaim.workspace = true
 cumulus-primitives-storage-weight-reclaim.default-features = true
+polkadot-omni-node-lib.workspace = true
+polkadot-omni-node-lib.default-features = true
 pallet-aura.workspace = true
 pallet-aura.default-features = true
 pallet-timestamp.workspace = true
@@ -125,6 +133,8 @@ pallet-broker.workspace = true
 pallet-broker.default-features = true
 pallet-babe.workspace = true
 pallet-babe.default-features = true
+pallet-grandpa.workspace = true
+pallet-grandpa.default-features = true
 sp-io.workspace = true
 sp-io.default-features = true
 sp-std.workspace = true
@@ -149,10 +159,28 @@ sp-offchain.workspace = true
 sp-offchain.default-features = true
 sp-version.workspace = true
 sp-version.default-features = true
+sp-weights.workspace = true
+sp-weights.default-features = true
 xcm.workspace = true
 xcm.default-features = true
+xcm-builder.workspace = true
 xcm-docs.workspace = true
+xcm-executor.workspace = true
+xcm-simulator.workspace = true
+pallet-xcm.workspace = true
 chain-spec-guide-runtime.workspace = true
+chain-spec-guide-runtime.default-features = true
 minimal-template-runtime.workspace = true
+minimal-template-runtime.default-features = true
 solochain-template-runtime.workspace = true
+solochain-template-runtime.default-features = true
 parachain-template-runtime.workspace = true
+parachain-template-runtime.default-features = true
+first-runtime.workspace = true
+first-runtime.default-features = true
+first-pallet.workspace = true
+first-pallet.default-features = true
+
+[dev-dependencies]
+assert_cmd = "2.0.14"
+rand = "0.8"

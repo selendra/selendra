@@ -16,11 +16,11 @@ asset.
 ### Integration
 This pallet wraps FRAME's transaction payment pallet and functions as a replacement. This means
 you should include both pallets in your `construct_runtime` macro, but only include this
-pallet's [`SignedExtension`] ([`ChargeAssetTxPayment`]).
+pallet's [`TransactionExtension`] ([`ChargeAssetTxPayment`]).
 
 License: Apache-2.0
 
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

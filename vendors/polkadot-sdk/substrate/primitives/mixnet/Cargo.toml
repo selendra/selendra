@@ -1,11 +1,11 @@
 [package]
-description = "Substrate mixnet types and runtime interface (polkadot v1.15.0)"
+description = "Substrate mixnet types and runtime interface"
 name = "sp-mixnet"
-version = "0.12.0"
+version = "0.13.0"
 license = "Apache-2.0"
 authors = ["Parity Technologies <admin@parity.io>"]
 edition.workspace = true
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository = "https://github.com/paritytech/substrate/"
 readme = "README.md"
 

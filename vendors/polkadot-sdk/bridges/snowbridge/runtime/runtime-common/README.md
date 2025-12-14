@@ -5,4 +5,4 @@ Common crate to contain runtime related structs and implementations for Snowbrid
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

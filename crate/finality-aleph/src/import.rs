@@ -76,7 +76,7 @@ where
     }
 
     async fn import_block(
-        &mut self,
+        &self,
         mut block: BlockImportParams<Block>,
     ) -> Result<ImportResult, Self::Error> {
         if let Ok(best) = self.select_chain.best_chain().await {
@@ -132,7 +132,7 @@ where
     }
 
     fn send_justification(
-        &mut self,
+        &self,
         block_id: BlockId,
         justification: SubstrateJustification,
     ) -> Result<(), SendJustificationError<TranslateError>> {
@@ -170,7 +170,7 @@ where
     }
 
     async fn import_block(
-        &mut self,
+        &self,
         mut block: BlockImportParams<Block>,
     ) -> Result<ImportResult, Self::Error> {
         let number = *block.header.number();
@@ -300,7 +300,7 @@ where
     }
 
     async fn import_block(
-        &mut self,
+        &self,
         block: BlockImportParams<Block>,
     ) -> Result<ImportResult, Self::Error> {
         let header = block.post_header();

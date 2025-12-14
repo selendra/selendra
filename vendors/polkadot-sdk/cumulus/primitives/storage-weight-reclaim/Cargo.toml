@@ -1,9 +1,9 @@
 [package]
 name = "cumulus-primitives-storage-weight-reclaim"
-version = "7.0.2"
+version = "9.1.0"
 authors.workspace = true
 edition.workspace = true
-description = "Utilities to reclaim storage weight. (polkadot v1.15.0)"
+description = "Utilities to reclaim storage weight."
 license = "Apache-2.0"
 
 [lints]
@@ -13,6 +13,7 @@ workspace = true
 codec = { features = ["derive"], workspace = true }
 log = { workspace = true }
 scale-info = { features = ["derive"], workspace = true }
+frame-benchmarking = { optional = true, workspace = true }
 frame-support.workspace = true
 frame-system.workspace = true
 sp-runtime.workspace = true
@@ -21,8 +22,8 @@ cumulus-primitives-proof-size-hostfunction.workspace = true
 docify = { workspace = true }
 
 [dev-dependencies]
-sp-trie = { path = "../../../substrate/primitives/trie", default-features = false }
 sp-io = { path = "../../../substrate/primitives/io", default-features = false }
+sp-trie = { path = "../../../substrate/primitives/trie", default-features = false }
 cumulus-test-runtime = { path = "../../test/runtime" }
 
 [features]
@@ -31,6 +32,7 @@ std = [
 	"codec/std",
 	"cumulus-primitives-core/std",
 	"cumulus-primitives-proof-size-hostfunction/std",
+	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
 	"log/std",

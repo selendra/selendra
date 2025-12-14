@@ -1,12 +1,12 @@
 [package]
 name = "sc-allocator"
-version = "29.0.0"
+version = "30.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Collection of allocator implementations. (polkadot v1.15.0)"
+description = "Collection of allocator implementations."
 documentation = "https://docs.rs/sc-allocator"
 readme = "README.md"
 

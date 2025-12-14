@@ -1,12 +1,12 @@
 [package]
 name = "cumulus-pallet-session-benchmarking"
-version = "18.0.0"
+version = "20.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "FRAME sessions pallet benchmarking (polkadot v1.15.0)"
+description = "FRAME sessions pallet benchmarking"
 readme = "README.md"
 
 [lints]

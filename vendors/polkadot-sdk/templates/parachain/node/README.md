@@ -20,4 +20,4 @@ It's a place to configure consensus-related topics.
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

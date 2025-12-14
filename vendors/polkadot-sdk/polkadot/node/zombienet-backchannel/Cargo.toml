@@ -1,6 +1,6 @@
 [package]
 name = "zombienet-backchannel"
-description = "Zombienet backchannel to notify test runner and coordinate with malus actors. (polkadot v1.15.0)"
+description = "Zombienet backchannel to notify test runner and coordinate with malus actors."
 readme = "README.md"
 publish = false
 version = "1.0.0"
@@ -16,7 +16,6 @@ tokio = { features = ["macros", "net", "rt-multi-thread", "sync"], workspace = t
 url = { workspace = true }
 tokio-tungstenite = { workspace = true }
 futures-util = { workspace = true, default-features = true }
-lazy_static = { workspace = true }
 codec = { features = ["derive"], workspace = true, default-features = true }
 reqwest = { features = ["rustls-tls"], workspace = true }
 thiserror = { workspace = true }

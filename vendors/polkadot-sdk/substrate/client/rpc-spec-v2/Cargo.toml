@@ -1,12 +1,12 @@
 [package]
 name = "sc-rpc-spec-v2"
-version = "0.44.0"
+version = "0.48.0"
 authors.workspace = true
 edition.workspace = true
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Substrate RPC interface v2. (polkadot v1.15.0)"
+description = "Substrate RPC interface v2."
 readme = "README.md"
 
 [lints]
@@ -16,7 +16,7 @@ workspace = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-jsonrpsee = { features = ["client-core", "macros", "server-core"], workspace = true }
+jsonrpsee = { workspace = true, features = ["client-core", "macros", "server-core"] }
 sc-chain-spec.workspace = true
 sc-chain-spec.default-features = true
 sc-transaction-pool-api.workspace = true
@@ -35,8 +35,6 @@ sp-version.workspace = true
 sp-version.default-features = true
 sc-client-api.workspace = true
 sc-client-api.default-features = true
-sc-utils.workspace = true
-sc-utils.default-features = true
 sc-rpc.workspace = true
 sc-rpc.default-features = true
 codec = { workspace = true, default-features = true }
@@ -52,9 +50,10 @@ log = { workspace = true, default-features = true }
 futures-util = { workspace = true }
 rand = { workspace = true, default-features = true }
 schnellru = { workspace = true }
+itertools = { workspace = true }
 
 [dev-dependencies]
-jsonrpsee = { features = ["server", "ws-client"], workspace = true }
+jsonrpsee = { workspace = true, features = ["server", "ws-client"] }
 serde_json = { workspace = true, default-features = true }
 tokio = { features = ["macros"], workspace = true, default-features = true }
 substrate-test-runtime-client = { path = "../../test-utils/runtime/client" }
@@ -65,6 +64,8 @@ sp-externalities = { default-features = true, path = "../../primitives/externali
 sp-maybe-compressed-blob = { default-features = true, path = "../../primitives/maybe-compressed-blob" }
 sc-block-builder = { default-features = true, path = "../block-builder" }
 sc-service = { features = ["test-helpers"], default-features = true, path = "../service" }
+sc-rpc = { default-features = true, features = ["test-helpers"], path = "../rpc" }
 assert_matches = { workspace = true }
 pretty_assertions = { workspace = true }
 sc-transaction-pool = { default-features = true, path = "../transaction-pool" }
+sc-utils = { default-features = true, path = "../utils" }

@@ -20,7 +20,6 @@ use ethereum_types::U256;
 use jsonrpsee::core::RpcResult;
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
-use sc_transaction_pool::ChainApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{
@@ -33,14 +32,13 @@ use fp_rpc::EthereumRuntimeRPCApi;
 
 use crate::{eth::Eth, frontier_backend_client, internal_err};
 
-impl<B, C, P, CT, BE, A, CIDP, EC> Eth<B, C, P, CT, BE, A, CIDP, EC>
+impl<B, C, P, CT, BE, CIDP, EC> Eth<B, C, P, CT, BE, CIDP, EC>
 where
 	B: BlockT,
 	C: ProvideRuntimeApi<B>,
 	C::Api: EthereumRuntimeRPCApi<B>,
 	C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
 	BE: Backend<B> + 'static,
-	A: ChainApi<Block = B>,
 {
 	pub fn gas_price(&self) -> RpcResult<U256> {
 		let block_hash = self.client.info().best_hash;
@@ -53,17 +51,13 @@ where
 
 	pub async fn fee_history(
 		&self,
-		block_count: U256,
+		block_count: u64,
 		newest_block: BlockNumberOrHash,
 		reward_percentiles: Option<Vec<f64>>,
 	) -> RpcResult<FeeHistory> {
 		// The max supported range size is 1024 by spec.
-		let range_limit = U256::from(1024);
-		let block_count = if block_count > range_limit {
-			range_limit.as_u64()
-		} else {
-			block_count.as_u64()
-		};
+		let range_limit: u64 = 1024;
+		let block_count: u64 = u64::min(block_count, range_limit);
 
 		if let Some(id) = frontier_backend_client::native_block_id::<B, C>(
 			self.client.as_ref(),

@@ -1,12 +1,12 @@
 [package]
 name = "sp-mmr-primitives"
-version = "34.0.0"
+version = "35.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Merkle Mountain Range primitives. (polkadot v1.15.0)"
+description = "Merkle Mountain Range primitives."
 
 [lints]
 workspace = true

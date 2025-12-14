@@ -22,8 +22,7 @@ use ethereum_types::{H256, U256};
 use jsonrpsee::core::RpcResult;
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
-use sc_transaction_pool::ChainApi;
-use sc_transaction_pool_api::InPoolTransaction;
+use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_core::hashing::keccak_256;
@@ -33,18 +32,18 @@ use fc_rpc_core::types::*;
 use fp_rpc::EthereumRuntimeRPCApi;
 
 use crate::{
-	eth::{rich_block_build, BlockInfo, Eth},
+	eth::{empty_block_from, rich_block_build, BlockInfo, Eth},
 	frontier_backend_client, internal_err,
 };
 
-impl<B, C, P, CT, BE, A, CIDP, EC> Eth<B, C, P, CT, BE, A, CIDP, EC>
+impl<B, C, P, CT, BE, CIDP, EC> Eth<B, C, P, CT, BE, CIDP, EC>
 where
 	B: BlockT,
 	C: ProvideRuntimeApi<B>,
 	C::Api: EthereumRuntimeRPCApi<B>,
 	C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
 	BE: Backend<B> + 'static,
-	A: ChainApi<Block = B>,
+	P: TransactionPool<Block = B, Hash = B::Hash> + 'static,
 {
 	pub async fn block_by_hash(&self, hash: H256, full: bool) -> RpcResult<Option<RichBlock>> {
 		let BlockInfo {
@@ -133,7 +132,24 @@ where
 
 						Ok(Some(rich_block))
 					}
-					_ => Ok(None),
+					_ => {
+						if let BlockNumberOrHash::Num(block_number) = number_or_hash {
+							let eth_block = empty_block_from(block_number.into());
+							let eth_hash = H256::from_slice(
+								keccak_256(&rlp::encode(&eth_block.header)).as_slice(),
+							);
+							Ok(Some(rich_block_build(
+								eth_block,
+								Default::default(),
+								Some(eth_hash),
+								full,
+								None,
+								false,
+							)))
+						} else {
+							Ok(None)
+						}
+					}
 				}
 			}
 			None if number_or_hash == BlockNumberOrHash::Pending => {
@@ -145,19 +161,17 @@ where
 				// ready validated pool
 				xts.extend(
 					graph
-						.validated_pool()
 						.ready()
-						.map(|in_pool_tx| in_pool_tx.data().clone())
+						.map(|in_pool_tx| in_pool_tx.data().as_ref().clone())
 						.collect::<Vec<<B as BlockT>::Extrinsic>>(),
 				);
 
 				// future validated pool
 				xts.extend(
 					graph
-						.validated_pool()
 						.futures()
 						.iter()
-						.map(|(_hash, extrinsic)| extrinsic.clone())
+						.map(|in_pool_tx| in_pool_tx.data().as_ref().clone())
 						.collect::<Vec<<B as BlockT>::Extrinsic>>(),
 				);
 
@@ -197,9 +211,7 @@ where
 	) -> RpcResult<Option<U256>> {
 		if let BlockNumberOrHash::Pending = number_or_hash {
 			// get the pending transactions count
-			return Ok(Some(U256::from(
-				self.graph.validated_pool().ready().count(),
-			)));
+			return Ok(Some(U256::from(self.graph.ready().count())));
 		}
 
 		let block_info = self.block_info_by_number(number_or_hash).await?;

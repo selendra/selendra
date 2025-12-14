@@ -4,9 +4,9 @@ version = "16.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Hashing primitives (deprecated: use sp-crypto-hashing for new applications) (polkadot v1.15.0)"
+description = "Hashing primitives (deprecated: use sp-crypto-hashing for new applications)"
 documentation = "https://docs.rs/sp-crypto-hashing"
 
 [badges]

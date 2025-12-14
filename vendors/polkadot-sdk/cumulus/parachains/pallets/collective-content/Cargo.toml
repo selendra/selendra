@@ -1,9 +1,9 @@
 [package]
 name = "pallet-collective-content"
-version = "0.15.0"
+version = "0.17.1"
 authors = ["Parity Technologies <admin@parity.io>"]
 edition.workspace = true
-description = "Managed content (polkadot v1.15.0)"
+description = "Managed content"
 license = "Apache-2.0"
 
 [lints]

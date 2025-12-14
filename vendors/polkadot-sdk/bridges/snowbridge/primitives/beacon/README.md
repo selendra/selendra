@@ -12,4 +12,4 @@ The code in this crate relates to the Ethereum consensus chain, commonly referre
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

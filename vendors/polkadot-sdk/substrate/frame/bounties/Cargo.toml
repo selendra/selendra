@@ -1,12 +1,12 @@
 [package]
 name = "pallet-bounties"
-version = "36.0.1"
+version = "38.1.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "FRAME pallet to manage bounties (polkadot v1.15.0)"
+description = "FRAME pallet to manage bounties"
 readme = "README.md"
 
 [lints]

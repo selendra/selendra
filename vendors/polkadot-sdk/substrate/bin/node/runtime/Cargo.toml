@@ -2,11 +2,11 @@
 name = "kitchensink-runtime"
 version = "3.0.0"
 authors.workspace = true
-description = "Substrate node kitchensink runtime. (polkadot v1.15.0)"
+description = "Substrate node kitchensink runtime."
 edition.workspace = true
 build = "build.rs"
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
 publish = false
 
@@ -27,10 +27,11 @@ scale-info = { features = ["derive", "serde"], workspace = true }
 static_assertions = { workspace = true, default-features = true }
 log = { workspace = true }
 serde_json = { features = ["alloc", "arbitrary_precision"], workspace = true }
+sp-debug-derive = { workspace = true, features = ["force-debug"] }
 
 # pallet-asset-conversion: turn on "num-traits" feature
 primitive-types = { features = ["codec", "num-traits", "scale-info"], workspace = true }
-polkadot-sdk = { features = ["runtime", "tuples-96"], workspace = true }
+polkadot-sdk = { features = ["runtime-full", "tuples-96"], workspace = true }
 node-primitives.workspace = true
 pallet-example-mbm.workspace = true
 pallet-example-tasks.workspace = true
@@ -51,6 +52,7 @@ std = [
 	"primitive-types/std",
 	"scale-info/std",
 	"serde_json/std",
+	"sp-debug-derive/std",
 	"substrate-wasm-builder",
 ]
 runtime-benchmarks = [
@@ -66,5 +68,4 @@ try-runtime = [
 experimental = [
 	"pallet-example-tasks/experimental",
 ]
-
 metadata-hash = ["substrate-wasm-builder/metadata-hash"]

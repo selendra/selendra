@@ -1,12 +1,12 @@
 [package]
 name = "sp-version"
-version = "37.0.0"
+version = "38.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Version module for the Substrate runtime; Provides a function that returns the runtime version. (polkadot v1.15.0)"
+description = "Version module for the Substrate runtime; Provides a function that returns the runtime version."
 documentation = "https://docs.rs/sp-version"
 readme = "README.md"
 

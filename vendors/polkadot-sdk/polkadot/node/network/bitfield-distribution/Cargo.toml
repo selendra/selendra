@@ -1,7 +1,7 @@
 [package]
 name = "polkadot-availability-bitfield-distribution"
-version = "17.0.0"
-description = "Polkadot Bitfiled Distribution subsystem, which gossips signed availability bitfields used to compactly determine which backed candidates are available or not based on a 2/3+ quorum. (polkadot v1.15.0)"
+version = "21.0.0"
+description = "Polkadot Bitfiled Distribution subsystem, which gossips signed availability bitfields used to compactly determine which backed candidates are available or not based on a 2/3+ quorum."
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -34,7 +34,6 @@ sp-authority-discovery = { default-features = true, path = "../../../../substrat
 sp-keystore = { default-features = true, path = "../../../../substrate/primitives/keystore" }
 sp-keyring = { default-features = true, path = "../../../../substrate/primitives/keyring" }
 maplit = { workspace = true }
-log = { workspace = true, default-features = true }
-env_logger = { workspace = true }
+sp-tracing = { path = "../../../../substrate/primitives/tracing", default-features = false }
 assert_matches = { workspace = true }
 rand_chacha = { workspace = true, default-features = true }

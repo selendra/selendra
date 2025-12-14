@@ -4,10 +4,9 @@ version = "2.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
 publish = false
-description = "substrate-test-runtime-client (polkadot v1.15.0)"
 
 [lints]
 workspace = true

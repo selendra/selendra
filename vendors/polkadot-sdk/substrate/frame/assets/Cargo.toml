@@ -1,12 +1,12 @@
 [package]
 name = "pallet-assets"
-version = "39.0.0"
+version = "41.1.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "FRAME asset management pallet (polkadot v1.15.0)"
+description = "FRAME asset management pallet"
 readme = "README.md"
 
 [lints]
@@ -27,7 +27,6 @@ frame-benchmarking = { optional = true, workspace = true }
 sp-core.workspace = true
 
 [dev-dependencies]
-sp-std = { default-features = true, path = "../../primitives/std" }
 sp-io = { default-features = true, path = "../../primitives/io" }
 pallet-balances = { default-features = true, path = "../balances" }
 

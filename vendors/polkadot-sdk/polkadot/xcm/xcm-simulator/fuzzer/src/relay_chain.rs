@@ -45,13 +45,13 @@ use xcm_builder::{
 };
 use xcm_executor::{Config, XcmExecutor};
 
-pub type SignedExtra = (frame_system::CheckNonZeroSender<Runtime>,);
+pub type TxExtension = (frame_system::CheckNonZeroSender<Runtime>,);
 
 pub type BlockNumber = u64;
 pub type Address = MultiAddress<AccountId, ()>;
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 pub type UncheckedExtrinsic =
-	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, TxExtension>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 
 pub type Signature = MultiSignature;
@@ -185,7 +185,7 @@ impl origin::Config for Runtime {}
 
 parameter_types! {
 	/// Amount of weight that can be spent per block to service messages.
-	pub MessageQueueServiceWeight: Weight = Weight::from_parts(100_000_000_000, 1_000_000);
+	pub MessageQueueServiceWeight: Weight = Weight::from_parts(1_000_000_000, 1_000_000);
 	pub const MessageQueueHeapSize: u32 = 65_536;
 	pub const MessageQueueMaxStale: u32 = 16;
 }

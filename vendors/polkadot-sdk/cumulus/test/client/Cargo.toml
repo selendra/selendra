@@ -4,7 +4,6 @@ version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
 publish = false
-description = "cumulus-test-client (polkadot v1.15.0)"
 
 [lints]
 workspace = true
@@ -75,6 +74,7 @@ runtime-benchmarks = [
 	"cumulus-test-service/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks",
 	"polkadot-parachain-primitives/runtime-benchmarks",
 	"polkadot-primitives/runtime-benchmarks",
 	"sc-service/runtime-benchmarks",

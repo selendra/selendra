@@ -51,7 +51,9 @@ pub mod pallet {
 
     #[pallet::config]
     pub trait Config:
-        frame_system::Config + frame_system::offchain::SendTransactionTypes<Call<Self>>
+        frame_system::Config
+        + frame_system::offchain::CreateSignedTransaction<Call<Self>>
+        + frame_system::offchain::CreateInherent<Call<Self>>
     {
         type AuthorityId: Member
             + Parameter
@@ -387,7 +389,8 @@ pub mod pallet {
             use frame_system::offchain::SubmitTransaction;
 
             let call = Call::unsigned_submit_abft_score { score, signature };
-            SubmitTransaction::<T, Call<T>>::submit_unsigned_transaction(call.into()).ok()
+            let xt = T::create_inherent(call.into());
+            SubmitTransaction::<T, Call<T>>::submit_transaction(xt).ok()
         }
     }
 

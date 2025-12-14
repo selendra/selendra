@@ -1,8 +1,8 @@
 [package]
 name = "rococo-runtime"
 build = "build.rs"
-version = "17.0.0"
-description = "Rococo testnet Relay Chain runtime. (polkadot v1.15.0)"
+version = "21.1.1"
+description = "Rococo testnet Relay Chain runtime."
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -41,6 +41,7 @@ sp-storage.workspace = true
 sp-version.workspace = true
 sp-transaction-pool.workspace = true
 sp-block-builder.workspace = true
+sp-keyring.workspace = true
 pallet-authority-discovery.workspace = true
 pallet-authorship.workspace = true
 pallet-babe.workspace = true
@@ -63,6 +64,7 @@ pallet-identity.workspace = true
 pallet-indices.workspace = true
 pallet-membership.workspace = true
 pallet-message-queue.workspace = true
+pallet-migrations.workspace = true
 pallet-mmr.workspace = true
 pallet-multisig.workspace = true
 pallet-nis.workspace = true
@@ -151,6 +153,7 @@ std = [
 	"pallet-indices/std",
 	"pallet-membership/std",
 	"pallet-message-queue/std",
+	"pallet-migrations/std",
 	"pallet-mmr/std",
 	"pallet-multisig/std",
 	"pallet-nis/std",
@@ -220,6 +223,7 @@ runtime-benchmarks = [
 	"pallet-asset-rate/runtime-benchmarks",
 	"pallet-babe/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
+	"pallet-beefy-mmr/runtime-benchmarks",
 	"pallet-bounties/runtime-benchmarks",
 	"pallet-child-bounties/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
@@ -231,6 +235,7 @@ runtime-benchmarks = [
 	"pallet-indices/runtime-benchmarks",
 	"pallet-membership/runtime-benchmarks",
 	"pallet-message-queue/runtime-benchmarks",
+	"pallet-migrations/runtime-benchmarks",
 	"pallet-mmr/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
 	"pallet-nis/runtime-benchmarks",
@@ -248,6 +253,7 @@ runtime-benchmarks = [
 	"pallet-sudo/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-tips/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
 	"pallet-vesting/runtime-benchmarks",
@@ -288,6 +294,7 @@ try-runtime = [
 	"pallet-indices/try-runtime",
 	"pallet-membership/try-runtime",
 	"pallet-message-queue/try-runtime",
+	"pallet-migrations/try-runtime",
 	"pallet-mmr/try-runtime",
 	"pallet-multisig/try-runtime",
 	"pallet-nis/try-runtime",
@@ -324,9 +331,12 @@ metadata-hash = ["substrate-wasm-builder/metadata-hash"]
 # Set timing constants (e.g. session period) to faster versions to speed up testing.
 fast-runtime = ["rococo-runtime-constants/fast-runtime"]
 
-runtime-metrics = ["polkadot-runtime-parachains/runtime-metrics", "sp-io/with-tracing"]
+runtime-metrics = [
+	"polkadot-runtime-parachains/runtime-metrics",
+	"sp-io/with-tracing",
+]
 
 # A feature that should be enabled when the runtime should be built for on-chain
 # deployment. This will disable stuff that shouldn't be part of the on-chain wasm
 # to make it smaller, like logging for example.
-on-chain-release-build = ["metadata-hash", "sp-api/disable-logging"]
+on-chain-release-build = ["metadata-hash"]

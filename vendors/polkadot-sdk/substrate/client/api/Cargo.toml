@@ -1,12 +1,12 @@
 [package]
 name = "sc-client-api"
-version = "37.0.0"
+version = "38.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Substrate client interfaces. (polkadot v1.15.0)"
+description = "Substrate client interfaces."
 documentation = "https://docs.rs/sc-client-api"
 readme = "README.md"
 

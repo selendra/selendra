@@ -42,4 +42,4 @@ The code coverage will be in `./coverage/index.html`.
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

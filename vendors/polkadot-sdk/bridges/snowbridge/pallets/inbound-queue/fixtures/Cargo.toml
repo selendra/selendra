@@ -1,7 +1,7 @@
 [package]
 name = "snowbridge-pallet-inbound-queue-fixtures"
-description = "Snowbridge Inbound Queue Test Fixtures (polkadot v1.15.0)"
-version = "0.17.0"
+description = "Snowbridge Inbound Queue Test Fixtures"
+version = "0.20.1"
 authors = ["Snowfork <contact@snowfork.com>"]
 edition.workspace = true
 repository.workspace = true
@@ -29,6 +29,4 @@ std = [
 	"sp-core/std",
 	"sp-std/std",
 ]
-runtime-benchmarks = [
-	"snowbridge-core/runtime-benchmarks",
-]
+runtime-benchmarks = ["snowbridge-core/runtime-benchmarks"]

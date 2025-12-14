@@ -23,7 +23,7 @@ use frame::{
 	traits::{IdentityLookup, ProcessMessage, ProcessMessageError},
 };
 use polkadot_runtime_parachains::inclusion::{AggregateMessageOrigin, UmpQueueId};
-use xcm::v4::prelude::*;
+use xcm::latest::prelude::*;
 
 mod xcm_config;
 pub use xcm_config::LocationToAccountId;
@@ -53,7 +53,7 @@ type Block = frame_system::mocking::MockBlock<Runtime>;
 
 parameter_types! {
 	/// Amount of weight that can be spent per block to service messages.
-	pub MessageQueueServiceWeight: Weight = Weight::from_parts(100_000_000_000, 1_000_000);
+	pub MessageQueueServiceWeight: Weight = Weight::from_parts(1_000_000_000, 1_000_000);
 	pub const MessageQueueHeapSize: u32 = 65_536;
 	pub const MessageQueueMaxStale: u32 = 16;
 }

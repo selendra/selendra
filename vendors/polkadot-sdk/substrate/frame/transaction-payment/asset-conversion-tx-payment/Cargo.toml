@@ -1,12 +1,12 @@
 [package]
 name = "pallet-asset-conversion-tx-payment"
-version = "19.0.0"
+version = "21.1.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Pallet to manage transaction payments in assets by converting them to native assets. (polkadot v1.15.0)"
+description = "Pallet to manage transaction payments in assets by converting them to native assets."
 readme = "README.md"
 
 [lints]
@@ -17,6 +17,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 sp-runtime.workspace = true
+frame-benchmarking = { optional = true, workspace = true }
 frame-support.workspace = true
 frame-system.workspace = true
 pallet-asset-conversion.workspace = true
@@ -35,12 +36,21 @@ pallet-balances = { default-features = true, path = "../../balances" }
 default = ["std"]
 std = [
 	"codec/std",
+	"frame-benchmarking?/std",
 	"frame-support/std",
 	"frame-system/std",
 	"pallet-asset-conversion/std",
 	"pallet-transaction-payment/std",
 	"scale-info/std",
 	"sp-runtime/std",
+]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-asset-conversion/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
 ]
 try-runtime = [
 	"frame-support/try-runtime",

@@ -4,10 +4,9 @@ version = "2.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
 publish = false
-description = "substrate-test-runtime-transaction-pool (polkadot v1.15.0)"
 
 [lints]
 workspace = true
@@ -18,6 +17,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 codec = { workspace = true, default-features = true }
 futures = { workspace = true }
+log = { workspace = true }
 parking_lot = { workspace = true, default-features = true }
 thiserror = { workspace = true }
 sc-transaction-pool.workspace = true

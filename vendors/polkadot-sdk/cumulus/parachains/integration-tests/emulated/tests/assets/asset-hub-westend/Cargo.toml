@@ -4,7 +4,7 @@ version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-description = "Asset Hub Westend runtime integration tests with xcm-emulator (polkadot v1.15.0)"
+description = "Asset Hub Westend runtime integration tests with xcm-emulator"
 publish = false
 
 [lints]
@@ -14,7 +14,6 @@ workspace = true
 codec = { workspace = true }
 assert_matches = { workspace = true }
 sp-runtime.workspace = true
-sp-keyring.workspace = true
 sp-core.workspace = true
 frame-metadata-hash-extension.workspace = true
 frame-metadata-hash-extension.default-features = true
@@ -30,9 +29,11 @@ pallet-asset-tx-payment.workspace = true
 polkadot-runtime-common.workspace = true
 polkadot-runtime-common.default-features = true
 xcm.workspace = true
+xcm-builder.workspace = true
 xcm-executor.workspace = true
 pallet-xcm.workspace = true
 xcm-runtime-apis.workspace = true
+assets-common.workspace = true
 parachains-common.workspace = true
 parachains-common.default-features = true
 asset-test-utils.workspace = true

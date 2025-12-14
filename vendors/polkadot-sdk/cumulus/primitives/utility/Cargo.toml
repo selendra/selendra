@@ -1,10 +1,10 @@
 [package]
 name = "cumulus-primitives-utility"
-version = "0.16.1"
+version = "0.18.1"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-description = "Helper datatypes for Cumulus (polkadot v1.15.0)"
+description = "Helper datatypes for Cumulus"
 
 [lints]
 workspace = true
@@ -13,11 +13,9 @@ workspace = true
 codec = { features = ["derive"], workspace = true }
 log = { workspace = true }
 frame-support.workspace = true
-sp-io.workspace = true
 sp-runtime.workspace = true
 pallet-asset-conversion.workspace = true
 polkadot-runtime-common.workspace = true
-polkadot-runtime-parachains.workspace = true
 xcm.workspace = true
 xcm-executor.workspace = true
 xcm-builder.workspace = true
@@ -32,8 +30,6 @@ std = [
 	"log/std",
 	"pallet-asset-conversion/std",
 	"polkadot-runtime-common/std",
-	"polkadot-runtime-parachains/std",
-	"sp-io/std",
 	"sp-runtime/std",
 	"xcm-builder/std",
 	"xcm-executor/std",
@@ -45,7 +41,6 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"pallet-asset-conversion/runtime-benchmarks",
 	"polkadot-runtime-common/runtime-benchmarks",
-	"polkadot-runtime-parachains/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"xcm-executor/runtime-benchmarks",

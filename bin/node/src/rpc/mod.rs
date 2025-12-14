@@ -17,6 +17,7 @@ use finality_aleph::{Justification, JustificationTranslator, ValidatorAddressCac
 use futures::channel::mpsc;
 use jsonrpsee::RpcModule;
 use primitives::{AccountId, Balance, Block, Nonce};
+use sp_core::H256;
 use sc_client_api::{
 	backend::{Backend, StorageProvider},
 	client::BlockchainEvents,
@@ -52,7 +53,9 @@ pub struct FullDeps<C, P, A: ChainApi, CT, CIDP, SO> {
 	/// validator address cache
 	pub validator_address_cache: Option<ValidatorAddressCache>,
 	/// Ethereum-compatibility specific dependencies.
-	pub eth: EthDeps<Block, C, P, A, CT, CIDP>,
+	pub eth: EthDeps<Block, C, P, CT, CIDP>,
+	/// Phantom
+	pub _phantom: std::marker::PhantomData<A>,
 }
 
 pub struct DefaultEthConfig<C, BE>(std::marker::PhantomData<(C, BE)>);
@@ -96,7 +99,7 @@ where
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	BE: Backend<Block> + 'static,
-	P: TransactionPool<Block = Block> + 'static,
+	P: TransactionPool<Block = Block, Hash = H256> + 'static,
 	A: ChainApi<Block = Block> + 'static,
 	CIDP: CreateInherentDataProviders<Block, ()> + Send + 'static,
 	CT: fp_rpc::ConvertTransaction<<Block as BlockT>::Extrinsic> + Send + Sync + 'static,
@@ -115,9 +118,10 @@ where
 		sync_oracle,
 		validator_address_cache,
 		eth,
+		_phantom,
 	} = deps;
 
-	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
+	module.merge(System::new(client.clone(), pool.clone()).into_rpc())?;
 
 	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
     
@@ -133,7 +137,7 @@ where
 	)?;
 
 	// Ethereum compatibility RPCs
-	let module = create_eth::<_, _, _, _, _, _, _, DefaultEthConfig<C, BE>>(
+	let module = create_eth::<_, _, _, _, _, _, DefaultEthConfig<C, BE>>(
 		module,
 		eth,
 		subscription_task_executor,

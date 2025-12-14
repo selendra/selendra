@@ -1,11 +1,11 @@
 [package]
-description = "Endpoint to expose Prometheus metrics (polkadot v1.15.0)"
+description = "Endpoint to expose Prometheus metrics"
 name = "substrate-prometheus-endpoint"
-version = "0.17.0"
+version = "0.17.7"
 license = "Apache-2.0"
 authors.workspace = true
 edition.workspace = true
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
 readme = "README.md"
 
@@ -22,7 +22,7 @@ hyper-util = { features = ["server-auto", "tokio"], workspace = true }
 log = { workspace = true, default-features = true }
 prometheus = { workspace = true }
 thiserror = { workspace = true }
-tokio = { features = ["parking_lot"], workspace = true, default-features = true }
+tokio = { features = ["net", "parking_lot"], workspace = true, default-features = true }
 
 [dev-dependencies]
 hyper-util = { features = ["client-legacy", "tokio"], workspace = true, default-features = true }
