@@ -64,4 +64,4 @@ tries to reach the `Rococo_to_BridgeHubWestend_Sync_best_source_block_number`. A
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

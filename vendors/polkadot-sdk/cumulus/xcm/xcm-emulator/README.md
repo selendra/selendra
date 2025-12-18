@@ -25,4 +25,4 @@ repo) is the perfect tool for this.
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

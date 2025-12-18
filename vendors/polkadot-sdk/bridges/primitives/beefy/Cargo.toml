@@ -1,6 +1,6 @@
 [package]
 name = "bp-beefy"
-description = "Primitives of pallet-bridge-beefy module. (polkadot v1.15.0)"
+description = "Primitives of pallet-bridge-beefy module."
 version = "0.1.0"
 authors.workspace = true
 edition.workspace = true

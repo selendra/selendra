@@ -1,11 +1,11 @@
 [package]
 name = "sc-consensus-epochs"
-version = "0.43.0"
+version = "0.47.0"
 authors.workspace = true
-description = "Generic epochs-based utilities for consensus (polkadot v1.15.0)"
+description = "Generic epochs-based utilities for consensus"
 edition.workspace = true
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
 readme = "README.md"
 

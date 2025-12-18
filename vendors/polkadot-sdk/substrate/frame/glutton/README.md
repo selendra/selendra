@@ -15,4 +15,4 @@ Initially the `Glutton` needs to be initialized once with `initialize_pallet`.
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

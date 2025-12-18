@@ -1,7 +1,7 @@
 [package]
 name = "bp-xcm-bridge-hub"
-description = "Primitives of the xcm-bridge-hub pallet. (polkadot v1.15.0)"
-version = "0.3.0"
+description = "Primitives of the xcm-bridge-hub pallet."
+version = "0.5.0"
 authors.workspace = true
 edition.workspace = true
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
@@ -11,8 +11,28 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
+codec = { features = ["derive"], workspace = true }
+scale-info = { features = ["derive"], workspace = true }
+serde = { features = ["alloc", "derive"], workspace = true }
+bp-messages.workspace = true
+bp-runtime.workspace = true
 sp-std.workspace = true
+sp-io.workspace = true
+sp-core.workspace = true
+frame-support.workspace = true
+xcm.workspace = true
 
 [features]
 default = ["std"]
-std = ["sp-std/std"]
+std = [
+	"bp-messages/std",
+	"bp-runtime/std",
+	"codec/std",
+	"frame-support/std",
+	"scale-info/std",
+	"serde/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-std/std",
+	"xcm/std",
+]

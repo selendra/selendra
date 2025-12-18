@@ -1,9 +1,9 @@
 [package]
 name = "cumulus-pallet-parachain-system"
-version = "0.16.2"
+version = "0.18.1"
 authors.workspace = true
 edition.workspace = true
-description = "Base pallet for cumulus-based parachains (polkadot v1.15.0)"
+description = "Base pallet for cumulus-based parachains"
 license = "Apache-2.0"
 
 [lints]
@@ -43,7 +43,6 @@ cumulus-primitives-proof-size-hostfunction.workspace = true
 [dev-dependencies]
 assert_matches = { workspace = true }
 hex-literal = { workspace = true, default-features = true }
-lazy_static = { workspace = true }
 trie-standardmap = { workspace = true }
 rand = { workspace = true, default-features = true }
 futures = { workspace = true }
@@ -114,3 +113,5 @@ try-runtime = [
 	"polkadot-runtime-parachains/try-runtime",
 	"sp-runtime/try-runtime",
 ]
+
+experimental-ump-signals = []

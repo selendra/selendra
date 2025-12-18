@@ -1,10 +1,10 @@
 [package]
 name = "staging-xcm-executor"
-description = "An abstract and configurable XCM message executor. (polkadot v1.15.0)"
+description = "An abstract and configurable XCM message executor."
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
-version = "16.0.1"
+version = "18.0.5"
 
 [lints]
 workspace = true

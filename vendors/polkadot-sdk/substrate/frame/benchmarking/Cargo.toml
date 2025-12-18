@@ -1,12 +1,12 @@
 [package]
 name = "frame-benchmarking"
-version = "37.0.0"
+version = "39.1.1"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Macro for benchmarking a FRAME runtime. (polkadot v1.15.0)"
+description = "Macro for benchmarking a FRAME runtime."
 readme = "README.md"
 
 [lints]

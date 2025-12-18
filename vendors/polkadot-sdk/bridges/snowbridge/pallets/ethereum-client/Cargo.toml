@@ -1,7 +1,7 @@
 [package]
 name = "snowbridge-pallet-ethereum-client"
-description = "Snowbridge Ethereum Client Pallet (polkadot v1.15.0)"
-version = "0.9.0"
+description = "Snowbridge Ethereum Client Pallet"
+version = "0.12.1"
 authors = ["Snowfork <contact@snowfork.com>"]
 edition.workspace = true
 repository.workspace = true
@@ -47,13 +47,7 @@ serde = { workspace = true, default-features = true }
 
 [features]
 default = ["std"]
-fuzzing = [
-	"hex-literal",
-	"pallet-timestamp",
-	"serde",
-	"serde_json",
-	"sp-io",
-]
+fuzzing = ["hex-literal", "pallet-timestamp", "serde", "serde_json", "sp-io"]
 std = [
 	"codec/std",
 	"frame-support/std",

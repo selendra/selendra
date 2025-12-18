@@ -1,6 +1,6 @@
 [package]
 name = "polkadot-test-malus"
-description = "Misbehaving nodes for local testnets, system and Simnet tests. (polkadot v1.15.0)"
+description = "Misbehaving nodes for local testnets, system and Simnet tests."
 version = "1.0.0"
 authors.workspace = true
 edition.workspace = true

@@ -5,10 +5,9 @@ authors.workspace = true
 edition.workspace = true
 build = "build.rs"
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
 publish = false
-description = "sp-runtime-interface-test-wasm-deprecated (polkadot v1.15.0)"
 
 [lints]
 workspace = true

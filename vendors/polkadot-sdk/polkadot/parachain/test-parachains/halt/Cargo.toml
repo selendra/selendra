@@ -1,6 +1,6 @@
 [package]
 name = "test-parachain-halt"
-description = "Test parachain which executes forever (polkadot v1.15.0)"
+description = "Test parachain which executes forever"
 build = "build.rs"
 publish = false
 version = "0.1.0"

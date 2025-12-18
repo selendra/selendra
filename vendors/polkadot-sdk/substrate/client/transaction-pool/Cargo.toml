@@ -1,12 +1,12 @@
 [package]
 name = "sc-transaction-pool"
-version = "37.0.0"
+version = "38.1.0"
 authors.workspace = true
 edition.workspace = true
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Substrate transaction pool implementation. (polkadot v1.15.0)"
+description = "Substrate transaction pool implementation."
 readme = "README.md"
 
 [lints]
@@ -20,6 +20,8 @@ async-trait = { workspace = true }
 codec = { workspace = true, default-features = true }
 futures = { workspace = true }
 futures-timer = { workspace = true }
+indexmap = { workspace = true }
+itertools = { workspace = true }
 linked-hash-map = { workspace = true }
 log = { workspace = true, default-features = true }
 parking_lot = { workspace = true, default-features = true }
@@ -47,6 +49,8 @@ sp-tracing.workspace = true
 sp-tracing.default-features = true
 sp-transaction-pool.workspace = true
 sp-transaction-pool.default-features = true
+tokio-stream = { workspace = true }
+tokio = { workspace = true, default-features = true, features = ["macros", "time"] }
 
 [dev-dependencies]
 array-bytes = { workspace = true, default-features = true }

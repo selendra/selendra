@@ -705,7 +705,7 @@ impl NetworkConfiguration {
 				.expect("value is a constant; constant is non-zero; qed."),
 			yamux_window_size: None,
 			ipfs_server: false,
-			network_backend: NetworkBackendType::Libp2p,
+			network_backend: NetworkBackendType::Litep2p,
 		}
 	}
 
@@ -790,13 +790,16 @@ pub struct FullNetworkConfiguration<B: BlockT + 'static, H: ExHashT, N: NetworkB
 
 	/// Handle to [`PeerStore`](crate::peer_store::PeerStore).
 	peer_store_handle: Arc<dyn PeerStoreProvider>,
+
+	/// Registry for recording prometheus metrics to.
+	pub metrics_registry: Option<Registry>,
 }
 
 impl<B: BlockT + 'static, H: ExHashT, N: NetworkBackend<B, H>> FullNetworkConfiguration<B, H, N> {
 	/// Create new [`FullNetworkConfiguration`].
-	pub fn new(network_config: &NetworkConfiguration) -> Self {
+	pub fn new(network_config: &NetworkConfiguration, metrics_registry: Option<Registry>) -> Self {
 		let bootnodes = network_config.boot_nodes.iter().map(|bootnode| bootnode.peer_id).collect();
-		let peer_store = N::peer_store(bootnodes);
+		let peer_store = N::peer_store(bootnodes, metrics_registry.clone());
 		let peer_store_handle = peer_store.handle();
 
 		Self {
@@ -805,6 +808,7 @@ impl<B: BlockT + 'static, H: ExHashT, N: NetworkBackend<B, H>> FullNetworkConfig
 			notification_protocols: Vec::new(),
 			request_response_protocols: Vec::new(),
 			network_config: network_config.clone(),
+			metrics_registry,
 		}
 	}
 
@@ -927,13 +931,21 @@ impl<B: BlockT + 'static, H: ExHashT, N: NetworkBackend<B, H>> FullNetworkConfig
 }
 
 /// Network backend type.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default, Copy)]
 pub enum NetworkBackendType {
-	/// Use libp2p for P2P networking.
-	Libp2p,
-
 	/// Use litep2p for P2P networking.
+	///
+	/// This is the preferred option for Substrate-based chains.
+	#[default]
 	Litep2p,
+
+	/// Use libp2p for P2P networking.
+	///
+	/// The libp2p is still used for compatibility reasons until the
+	/// ecosystem switches entirely to litep2p. The backend will enter
+	/// a "best-effort" maintenance mode, where only critical issues will
+	/// get fixed. If you are unsure, please use `NetworkBackendType::Litep2p`.
+	Libp2p,
 }
 
 #[cfg(test)]

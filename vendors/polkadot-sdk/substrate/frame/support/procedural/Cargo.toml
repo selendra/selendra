@@ -1,12 +1,12 @@
 [package]
 name = "frame-support-procedural"
-version = "30.0.5"
+version = "31.1.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Proc macro of Support code for the runtime. (polkadot v1.15.0)"
+description = "Proc macro of Support code for the runtime."
 
 [lints]
 workspace = true
@@ -19,6 +19,7 @@ proc-macro = true
 
 [dependencies]
 derive-syn-parse = { workspace = true }
+docify = { workspace = true }
 Inflector = { workspace = true }
 cfg-expr = { workspace = true }
 itertools = { workspace = true }
@@ -33,14 +34,32 @@ expander = { workspace = true }
 sp-crypto-hashing.workspace = true
 
 [dev-dependencies]
+codec = { features = [
+	"derive",
+	"max-encoded-len",
+], workspace = true }
 regex = { workspace = true }
+sp-metadata-ir = { path = "../../../primitives/metadata-ir", default-features = false }
+scale-info = { features = ["derive"], workspace = true }
+sp-core = { path = "../../../primitives/core", default-features = false }
+sp-io = { path = "../../../primitives/io", default-features = false }
+sp-runtime = { features = ["serde"], path = "../../../primitives/runtime", default-features = false }
+frame-system = { path = "../../system", default-features = false }
+frame-support = { path = "..", default-features = false }
+pretty_assertions = { workspace = true }
+static_assertions = { workspace = true }
 
 [features]
 default = ["std"]
-std = ["sp-crypto-hashing/std"]
+std = [
+	"sp-crypto-hashing/std",
+]
 no-metadata-docs = []
 experimental = []
 # Generate impl-trait for tuples with the given number of tuples. Will be needed as the number of
 # pallets in a runtime grows. Does increase the compile time!
 tuples-96 = []
 tuples-128 = []
+
+[[example]]
+name = "proc_main"

@@ -1,18 +1,18 @@
 // Copyright (C) Parity Technologies (UK) Ltd.
-// This file is part of Substrate.
+// This file is part of Polkadot.
 
-// Substrate is free software: you can redistribute it and/or modify
+// Polkadot is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Substrate is distributed in the hope that it will be useful,
+// Polkadot is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
+// along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Polkadot runtime metrics integration test.
 
@@ -45,13 +45,13 @@ async fn runtime_can_publish_metrics() {
 	builder.init().expect("Failed to set up the logger");
 
 	// Start validator Alice.
-	let alice = run_validator_node(alice_config, None);
+	let alice = run_validator_node(alice_config, None).await;
 
 	let bob_config =
 		node_config(|| {}, tokio::runtime::Handle::current(), Bob, vec![alice.addr.clone()], true);
 
 	// Start validator Bob.
-	let _bob = run_validator_node(bob_config, None);
+	let _bob = run_validator_node(bob_config, None).await;
 
 	// Wait for Alice to see two finalized blocks.
 	alice.wait_for_finalized_blocks(2).await;

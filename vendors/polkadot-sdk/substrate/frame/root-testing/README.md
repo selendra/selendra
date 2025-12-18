@@ -7,4 +7,4 @@ NOTE: This pallet should only be used for testing purposes and should not be use
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

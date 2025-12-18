@@ -1,9 +1,9 @@
 [package]
 name = "cumulus-client-cli"
-version = "0.17.0"
+version = "0.21.1"
 authors.workspace = true
 edition.workspace = true
-description = "Parachain node CLI utilities. (polkadot v1.15.0)"
+description = "Parachain node CLI utilities."
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
 
 [lints]

@@ -1,7 +1,7 @@
 [package]
 name = "polkadot-runtime-common"
-version = "16.0.1"
-description = "Pallets and constants used in Relay Chain networks. (polkadot v1.15.0)"
+version = "18.1.0"
+description = "Pallets and constants used in Relay Chain networks."
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -26,6 +26,7 @@ sp-runtime = { features = ["serde"], workspace = true }
 sp-session.workspace = true
 sp-staking = { features = ["serde"], workspace = true }
 sp-core = { features = ["serde"], workspace = true }
+sp-keyring.workspace = true
 sp-npos-elections = { features = ["serde"], workspace = true }
 pallet-authorship.workspace = true
 pallet-balances.workspace = true
@@ -125,6 +126,7 @@ runtime-benchmarks = [
 	"pallet-identity/runtime-benchmarks",
 	"pallet-staking/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-vesting/runtime-benchmarks",
 	"polkadot-primitives/runtime-benchmarks",

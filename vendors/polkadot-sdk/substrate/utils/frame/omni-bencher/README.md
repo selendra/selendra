@@ -62,4 +62,4 @@ it needs to be prefixed with a `v1` to ensure drop-in compatibility.
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

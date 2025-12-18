@@ -1,6 +1,6 @@
 [package]
 name = "solochain-template-node"
-description = "A solochain node template built with Substrate, part of Polkadot Sdk. (polkadot v1.15.0)"
+description = "A solochain node template built with Substrate, part of Polkadot Sdk."
 version = "0.1.0"
 license = "Unlicense"
 authors.workspace = true
@@ -37,20 +37,20 @@ sc-transaction-pool-api.workspace = true
 sc-transaction-pool-api.default-features = true
 sc-offchain.workspace = true
 sc-offchain.default-features = true
+sc-consensus.workspace = true
+sc-consensus.default-features = true
 sc-consensus-aura.workspace = true
 sc-consensus-aura.default-features = true
 sp-consensus-aura.workspace = true
 sp-consensus-aura.default-features = true
-sc-consensus.workspace = true
-sc-consensus.default-features = true
 sc-consensus-grandpa.workspace = true
 sc-consensus-grandpa.default-features = true
 sp-consensus-grandpa.workspace = true
 sp-consensus-grandpa.default-features = true
+sp-genesis-builder.workspace = true
+sp-genesis-builder.default-features = true
 sc-client-api.workspace = true
 sc-client-api.default-features = true
-sc-rpc-api.workspace = true
-sc-rpc-api.default-features = true
 sc-basic-authorship.workspace = true
 sc-basic-authorship.default-features = true
 sp-runtime.workspace = true
@@ -71,7 +71,10 @@ sp-block-builder.workspace = true
 sp-block-builder.default-features = true
 frame-system.workspace = true
 frame-system.default-features = true
+frame-metadata-hash-extension.workspace = true
+frame-metadata-hash-extension.default-features = true
 pallet-transaction-payment.workspace = true
+pallet-transaction-payment.default-features = true
 pallet-transaction-payment-rpc.workspace = true
 pallet-transaction-payment-rpc.default-features = true
 substrate-frame-rpc-system.workspace = true
@@ -85,11 +88,13 @@ substrate-build-script-utils.workspace = true
 substrate-build-script-utils.default-features = true
 
 [features]
-default = []
+default = ["std"]
+std = ["solochain-template-runtime/std"]
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
 	"frame-benchmarking-cli/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks",
 	"sc-service/runtime-benchmarks",
 	"solochain-template-runtime/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",

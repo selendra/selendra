@@ -1,11 +1,11 @@
 [package]
 name = "sp-state-machine"
-version = "0.43.0"
+version = "0.44.0"
 authors.workspace = true
-description = "Substrate State Machine (polkadot v1.15.0)"
+description = "Substrate State Machine"
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
 documentation = "https://docs.rs/sp-state-machine"
 readme = "README.md"

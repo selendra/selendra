@@ -5,4 +5,4 @@ Reads messages from Ethereum and sends it to intended destination on Polkadot, u
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

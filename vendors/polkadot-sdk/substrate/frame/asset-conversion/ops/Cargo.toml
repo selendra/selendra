@@ -1,12 +1,12 @@
 [package]
 name = "pallet-asset-conversion-ops"
-version = "0.5.0"
+version = "0.7.1"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "FRAME asset conversion pallet's operations suite (polkadot v1.15.0)"
+description = "FRAME asset conversion pallet's operations suite"
 
 [lints]
 workspace = true

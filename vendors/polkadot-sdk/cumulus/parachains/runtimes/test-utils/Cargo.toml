@@ -1,9 +1,9 @@
 [package]
 name = "parachains-runtimes-test-utils"
-version = "16.0.0"
+version = "20.0.2"
 authors.workspace = true
 edition.workspace = true
-description = "Utils for Runtimes testing (polkadot v1.15.0)"
+description = "Utils for Runtimes testing"
 license = "Apache-2.0"
 
 [lints]
@@ -32,8 +32,8 @@ cumulus-primitives-parachain-inherent.workspace = true
 cumulus-test-relay-sproof-builder.workspace = true
 xcm.workspace = true
 xcm-executor.workspace = true
-pallet-xcm.workspace = true
 xcm-runtime-apis.workspace = true
+pallet-xcm.workspace = true
 polkadot-parachain-primitives.workspace = true
 
 [dev-dependencies]

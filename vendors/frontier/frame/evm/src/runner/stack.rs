@@ -42,18 +42,20 @@ use sp_runtime::traits::UniqueSaturatedInto;
 // Frontier
 use fp_evm::{
 	AccessedStorage, CallInfo, CreateInfo, ExecutionInfoV2, IsPrecompileResult, Log, PrecompileSet,
-	Vicinity, WeightInfo, ACCOUNT_BASIC_PROOF_SIZE, ACCOUNT_CODES_METADATA_PROOF_SIZE,
-	ACCOUNT_STORAGE_PROOF_SIZE, IS_EMPTY_CHECK_PROOF_SIZE, WRITE_PROOF_SIZE,
+	Vicinity, WeightInfo, ACCOUNT_BASIC_PROOF_SIZE, ACCOUNT_CODES_KEY_SIZE,
+	ACCOUNT_CODES_METADATA_PROOF_SIZE, ACCOUNT_STORAGE_PROOF_SIZE, IS_EMPTY_CHECK_PROOF_SIZE,
+	WRITE_PROOF_SIZE,
 };
 
+use super::meter::StorageMeter;
 use crate::{
-	runner::Runner as RunnerT, AccountCodes, AccountCodesMetadata, AccountStorages, AddressMapping,
-	BalanceOf, BlockHashMapping, Config, Error, Event, FeeCalculator, OnChargeEVMTransaction,
-	OnCreate, Pallet, RunnerError,
+	runner::Runner as RunnerT, AccountCodes, AccountCodesMetadata, AccountProvider,
+	AccountStorages, AddressMapping, BalanceOf, BlockHashMapping, Config, Error, Event,
+	FeeCalculator, OnChargeEVMTransaction, OnCreate, Pallet, RunnerError,
 };
 
 #[cfg(feature = "forbid-evm-reentrancy")]
-environmental::thread_local_impl!(static IN_EVM: environmental::RefCell<bool> = environmental::RefCell::new(false));
+environmental::environmental!(IN_EVM: bool);
 
 #[derive(Default)]
 pub struct Runner<T: Config> {
@@ -92,14 +94,7 @@ where
 	{
 		let (base_fee, weight) = T::FeeCalculator::min_gas_price();
 
-		#[cfg(feature = "forbid-evm-reentrancy")]
-		if IN_EVM.with(|in_evm| in_evm.replace(true)) {
-			return Err(RunnerError {
-				error: Error::<T>::Reentrancy,
-				weight,
-			});
-		}
-
+		#[cfg(not(feature = "forbid-evm-reentrancy"))]
 		let res = Self::execute_inner(
 			source,
 			value,
@@ -116,10 +111,44 @@ where
 			proof_size_base_cost,
 		);
 
-		// Set IN_EVM to false
-		// We should make sure that this line is executed whatever the execution path.
 		#[cfg(feature = "forbid-evm-reentrancy")]
-		let _ = IN_EVM.with(|in_evm| in_evm.take());
+		let res = IN_EVM::using_once(&mut false, || {
+			IN_EVM::with(|in_evm| {
+				if *in_evm {
+					return Err(RunnerError {
+						error: Error::<T>::Reentrancy,
+						weight,
+					});
+				}
+				*in_evm = true;
+				Ok(())
+			})
+			// This should always return `Some`, but let's play it safe.
+			.unwrap_or(Ok(()))?;
+
+			// Ensure that we always release the lock whenever we finish processing
+			sp_core::defer! {
+				IN_EVM::with(|in_evm| {
+					*in_evm = false;
+				});
+			}
+
+			Self::execute_inner(
+				source,
+				value,
+				gas_limit,
+				max_fee_per_gas,
+				max_priority_fee_per_gas,
+				config,
+				precompiles,
+				is_transactional,
+				f,
+				base_fee,
+				weight,
+				weight_limit,
+				proof_size_base_cost,
+			)
+		});
 
 		res
 	}
@@ -233,30 +262,53 @@ where
 		let fee = T::OnChargeTransaction::withdraw_fee(&source, total_fee)
 			.map_err(|e| RunnerError { error: e, weight })?;
 
-		// Execute the EVM call.
 		let vicinity = Vicinity {
 			gas_price: base_fee,
 			origin: source,
 		};
 
+		// Compute the storage limit based on the gas limit and the storage growth ratio.
+		let storage_growth_ratio = T::GasLimitStorageGrowthRatio::get();
+		let storage_limit = if storage_growth_ratio > 0 {
+			let storage_limit = gas_limit.saturating_div(storage_growth_ratio);
+			Some(storage_limit)
+		} else {
+			None
+		};
+
 		let metadata = StackSubstateMetadata::new(gas_limit, config);
-		let state = SubstrateStackState::new(&vicinity, metadata, maybe_weight_info);
+		let state = SubstrateStackState::new(&vicinity, metadata, maybe_weight_info, storage_limit);
 		let mut executor = StackExecutor::new_with_precompiles(state, config, precompiles);
 
-		let (reason, retv) = f(&mut executor);
+		// Execute the EVM call.
+		let (reason, retv, used_gas, effective_gas) =
+			fp_evm::handle_storage_oog::<R, _>(gas_limit, || {
+				let (reason, retv) = f(&mut executor);
 
-		// Post execution.
-		let used_gas = executor.used_gas();
-		let effective_gas = match executor.state().weight_info() {
-			Some(weight_info) => U256::from(core::cmp::max(
-				used_gas,
-				weight_info
-					.proof_size_usage
-					.unwrap_or_default()
-					.saturating_mul(T::GasLimitPovSizeRatio::get()),
-			)),
-			_ => used_gas.into(),
-		};
+				// Compute the storage gas cost based on the storage growth.
+				let storage_gas = match &executor.state().storage_meter {
+					Some(storage_meter) => storage_meter.storage_to_gas(storage_growth_ratio),
+					None => 0,
+				};
+
+				let pov_gas = match executor.state().weight_info() {
+					Some(weight_info) => weight_info
+						.proof_size_usage
+						.unwrap_or_default()
+						.saturating_mul(T::GasLimitPovSizeRatio::get()),
+					None => 0,
+				};
+
+				// Post execution.
+				let used_gas = executor.used_gas();
+				let effective_gas = U256::from(core::cmp::max(
+					core::cmp::max(used_gas, pov_gas),
+					storage_gas,
+				));
+
+				(reason, retv, used_gas, effective_gas)
+			});
+
 		let actual_fee = effective_gas.saturating_mul(total_fee_per_gas);
 		let actual_base_fee = effective_gas.saturating_mul(base_fee);
 
@@ -571,6 +623,7 @@ where
 struct SubstrateStackSubstate<'config> {
 	metadata: StackSubstateMetadata<'config>,
 	deletes: BTreeSet<H160>,
+	creates: BTreeSet<H160>,
 	logs: Vec<Log>,
 	parent: Option<Box<SubstrateStackSubstate<'config>>>,
 }
@@ -589,6 +642,7 @@ impl<'config> SubstrateStackSubstate<'config> {
 			metadata: self.metadata.spit_child(gas_limit, is_static),
 			parent: None,
 			deletes: BTreeSet::new(),
+			creates: BTreeSet::new(),
 			logs: Vec::new(),
 		};
 		mem::swap(&mut entering, self);
@@ -605,7 +659,7 @@ impl<'config> SubstrateStackSubstate<'config> {
 		self.metadata.swallow_commit(exited.metadata)?;
 		self.logs.append(&mut exited.logs);
 		self.deletes.append(&mut exited.deletes);
-
+		self.creates.append(&mut exited.creates);
 		sp_io::storage::commit_transaction();
 		Ok(())
 	}
@@ -640,8 +694,24 @@ impl<'config> SubstrateStackSubstate<'config> {
 		false
 	}
 
+	pub fn created(&self, address: H160) -> bool {
+		if self.creates.contains(&address) {
+			return true;
+		}
+
+		if let Some(parent) = self.parent.as_ref() {
+			return parent.created(address);
+		}
+
+		false
+	}
+
 	pub fn set_deleted(&mut self, address: H160) {
 		self.deletes.insert(address);
+	}
+
+	pub fn set_created(&mut self, address: H160) {
+		self.creates.insert(address);
 	}
 
 	pub fn log(&mut self, address: H160, topics: Vec<H256>, data: Vec<u8>) {
@@ -676,8 +746,10 @@ pub struct SubstrateStackState<'vicinity, 'config, T> {
 	vicinity: &'vicinity Vicinity,
 	substate: SubstrateStackSubstate<'config>,
 	original_storage: BTreeMap<(H160, H256), H256>,
+	transient_storage: BTreeMap<(H160, H256), H256>,
 	recorded: Recorded,
 	weight_info: Option<WeightInfo>,
+	storage_meter: Option<StorageMeter>,
 	_marker: PhantomData<T>,
 }
 
@@ -687,19 +759,24 @@ impl<'vicinity, 'config, T: Config> SubstrateStackState<'vicinity, 'config, T> {
 		vicinity: &'vicinity Vicinity,
 		metadata: StackSubstateMetadata<'config>,
 		weight_info: Option<WeightInfo>,
+		storage_limit: Option<u64>,
 	) -> Self {
+		let storage_meter = storage_limit.map(StorageMeter::new);
 		Self {
 			vicinity,
 			substate: SubstrateStackSubstate {
 				metadata,
 				deletes: BTreeSet::new(),
+				creates: BTreeSet::new(),
 				logs: Vec::new(),
 				parent: None,
 			},
 			_marker: PhantomData,
 			original_storage: BTreeMap::new(),
+			transient_storage: BTreeMap::new(),
 			recorded: Default::default(),
 			weight_info,
+			storage_meter,
 		}
 	}
 
@@ -791,6 +868,13 @@ where
 		<AccountStorages<T>>::get(address, index)
 	}
 
+	fn transient_storage(&self, address: H160, index: H256) -> H256 {
+		self.transient_storage
+			.get(&(address, index))
+			.copied()
+			.unwrap_or_default()
+	}
+
 	fn original_storage(&self, address: H160, index: H256) -> Option<H256> {
 		Some(
 			self.original_storage
@@ -838,9 +922,13 @@ where
 		self.substate.deleted(address)
 	}
 
+	fn created(&self, address: H160) -> bool {
+		self.substate.created(address)
+	}
+
 	fn inc_nonce(&mut self, address: H160) -> Result<(), ExitError> {
 		let account_id = T::AddressMapping::into_account_id(address);
-		frame_system::Pallet::<T>::inc_account_nonce(&account_id);
+		T::AccountProvider::inc_account_nonce(&account_id);
 		Ok(())
 	}
 
@@ -877,6 +965,10 @@ where
 		}
 	}
 
+	fn set_transient_storage(&mut self, address: H160, key: H256, value: H256) {
+		self.transient_storage.insert((address, key), value);
+	}
+
 	fn reset_storage(&mut self, address: H160) {
 		#[allow(deprecated)]
 		let _ = <AccountStorages<T>>::remove_prefix(address, None);
@@ -888,6 +980,10 @@ where
 
 	fn set_deleted(&mut self, address: H160) {
 		self.substate.set_deleted(address)
+	}
+
+	fn set_created(&mut self, address: H160) {
+		self.substate.set_created(address);
 	}
 
 	fn set_code(&mut self, address: H160, code: Vec<u8>) {
@@ -987,6 +1083,7 @@ where
 
 							let actual_size = Pallet::<T>::account_code_metadata(address).size;
 							if actual_size > pre_size {
+								fp_evm::set_storage_oog();
 								return Err(ExitError::OutOfGas);
 							}
 							// Refund unused proof size
@@ -998,8 +1095,18 @@ where
 				ExternalOperation::IsEmpty => {
 					weight_info.try_record_proof_size_or_fail(IS_EMPTY_CHECK_PROOF_SIZE)?
 				}
-				ExternalOperation::Write(_) => {
-					weight_info.try_record_proof_size_or_fail(WRITE_PROOF_SIZE)?
+				ExternalOperation::Write(len) => {
+					weight_info.try_record_proof_size_or_fail(WRITE_PROOF_SIZE)?;
+
+					if let Some(storage_meter) = self.storage_meter.as_mut() {
+						// Record the number of bytes written to storage when deploying a contract.
+						let storage_growth = ACCOUNT_CODES_KEY_SIZE
+							.saturating_add(ACCOUNT_CODES_METADATA_PROOF_SIZE)
+							.saturating_add(len.as_u64());
+						storage_meter
+							.record(storage_growth)
+							.map_err(|_| ExitError::OutOfGas)?;
+					}
 				}
 			};
 		}
@@ -1009,9 +1116,15 @@ where
 	fn record_external_dynamic_opcode_cost(
 		&mut self,
 		opcode: Opcode,
-		_gas_cost: GasCost,
+		gas_cost: GasCost,
 		target: evm::gasometer::StorageTarget,
 	) -> Result<(), ExitError> {
+		if let Some(storage_meter) = self.storage_meter.as_mut() {
+			storage_meter
+				.record_dynamic_opcode_cost(opcode, gas_cost, target)
+				.map_err(|_| ExitError::OutOfGas)?;
+		}
+
 		// If account code or storage slot is in the overlay it is already accounted for and early exit
 		let accessed_storage: Option<AccessedStorage> = match target {
 			StorageTarget::Address(address) => {
@@ -1137,7 +1250,7 @@ where
 		&mut self,
 		ref_time: Option<u64>,
 		proof_size: Option<u64>,
-		_storage_growth: Option<u64>,
+		storage_growth: Option<u64>,
 	) -> Result<(), ExitError> {
 		let weight_info = if let (Some(weight_info), _) = self.info_mut() {
 			weight_info
@@ -1150,6 +1263,13 @@ where
 		}
 		if let Some(amount) = proof_size {
 			weight_info.try_record_proof_size_or_fail(amount)?;
+		}
+		if let Some(storage_meter) = self.storage_meter.as_mut() {
+			if let Some(amount) = storage_growth {
+				storage_meter
+					.record(amount)
+					.map_err(|_| ExitError::OutOfGas)?;
+			}
 		}
 		Ok(())
 	}

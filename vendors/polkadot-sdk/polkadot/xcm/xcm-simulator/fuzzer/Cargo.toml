@@ -1,6 +1,6 @@
 [package]
 name = "xcm-simulator-fuzzer"
-description = "Examples of xcm-simulator usage. (polkadot v1.15.0)"
+description = "Examples of xcm-simulator usage."
 version = "1.0.0"
 authors.workspace = true
 edition.workspace = true

@@ -39,7 +39,6 @@ use crate::{
 		},
 	},
 	peer_store::PeerStoreProvider,
-	protocol,
 	service::{
 		metrics::{register_without_sources, MetricSources, Metrics, NotificationMetrics},
 		out_events,
@@ -50,29 +49,29 @@ use crate::{
 
 use codec::Encode;
 use futures::StreamExt;
-use libp2p::kad::RecordKey;
+use libp2p::kad::{PeerRecord, Record as P2PRecord, RecordKey};
 use litep2p::{
 	config::ConfigBuilder,
 	crypto::ed25519::Keypair,
+	error::{DialError, NegotiationError},
 	executor::Executor,
 	protocol::{
 		libp2p::{
 			bitswap::Config as BitswapConfig,
-			kademlia::{QueryId, Record, RecordsType},
+			kademlia::{QueryId, Record},
 		},
 		request_response::ConfigBuilder as RequestResponseConfigBuilder,
 	},
 	transport::{
 		tcp::config::Config as TcpTransportConfig,
-		websocket::config::Config as WebSocketTransportConfig, Endpoint,
+		websocket::config::Config as WebSocketTransportConfig, ConnectionLimitsConfig, Endpoint,
 	},
 	types::{
 		multiaddr::{Multiaddr, Protocol},
 		ConnectionId,
 	},
-	Error as Litep2pError, Litep2p, Litep2pEvent, ProtocolName as Litep2pProtocolName,
+	Litep2p, Litep2pEvent, ProtocolName as Litep2pProtocolName,
 };
-use parking_lot::RwLock;
 use prometheus_endpoint::Registry;
 
 use sc_client_api::BlockBackend;
@@ -99,6 +98,9 @@ mod discovery;
 mod peerstore;
 mod service;
 mod shim;
+
+/// Timeout for connection waiting new substreams.
+const KEEP_ALIVE_TIMEOUT: Duration = Duration::from_secs(10);
 
 /// Litep2p bandwidth sink.
 struct Litep2pBandwidthSink {
@@ -183,9 +185,6 @@ pub struct Litep2pNetworkBackend {
 
 	/// Prometheus metrics.
 	metrics: Option<Metrics>,
-
-	/// External addresses.
-	external_addresses: Arc<RwLock<HashSet<Multiaddr>>>,
 }
 
 impl Litep2pNetworkBackend {
@@ -269,57 +268,6 @@ impl Litep2pNetworkBackend {
 		};
 		let config_builder = ConfigBuilder::new();
 
-		// The yamux buffer size limit is configured to be equal to the maximum frame size
-		// of all protocols. 10 bytes are added to each limit for the length prefix that
-		// is not included in the upper layer protocols limit but is still present in the
-		// yamux buffer. These 10 bytes correspond to the maximum size required to encode
-		// a variable-length-encoding 64bits number. In other words, we make the
-		// assumption that no notification larger than 2^64 will ever be sent.
-		let yamux_maximum_buffer_size = {
-			let requests_max = config
-				.request_response_protocols
-				.iter()
-				.map(|cfg| usize::try_from(cfg.max_request_size).unwrap_or(usize::MAX));
-			let responses_max = config
-				.request_response_protocols
-				.iter()
-				.map(|cfg| usize::try_from(cfg.max_response_size).unwrap_or(usize::MAX));
-			let notifs_max = config
-				.notification_protocols
-				.iter()
-				.map(|cfg| usize::try_from(cfg.max_notification_size()).unwrap_or(usize::MAX));
-
-			// A "default" max is added to cover all the other protocols: ping, identify,
-			// kademlia, block announces, and transactions.
-			let default_max = cmp::max(
-				1024 * 1024,
-				usize::try_from(protocol::BLOCK_ANNOUNCES_TRANSACTIONS_SUBSTREAM_SIZE)
-					.unwrap_or(usize::MAX),
-			);
-
-			iter::once(default_max)
-				.chain(requests_max)
-				.chain(responses_max)
-				.chain(notifs_max)
-				.max()
-				.expect("iterator known to always yield at least one element; qed")
-				.saturating_add(10)
-		};
-
-		let yamux_config = {
-			let mut yamux_config = litep2p::yamux::Config::default();
-			// Enable proper flow-control: window updates are only sent when
-			// buffered data has been consumed.
-			yamux_config.set_window_update_mode(litep2p::yamux::WindowUpdateMode::OnRead);
-			yamux_config.set_max_buffer_size(yamux_maximum_buffer_size);
-
-			if let Some(yamux_window_size) = config.network_config.yamux_window_size {
-				yamux_config.set_receive_window(yamux_window_size);
-			}
-
-			yamux_config
-		};
-
 		let (tcp, websocket): (Vec<Option<_>>, Vec<Option<_>>) = config
 			.network_config
 			.listen_addresses
@@ -368,13 +316,13 @@ impl Litep2pNetworkBackend {
 		config_builder
 			.with_websocket(WebSocketTransportConfig {
 				listen_addresses: websocket.into_iter().flatten().map(Into::into).collect(),
-				yamux_config: yamux_config.clone(),
+				yamux_config: litep2p::yamux::Config::default(),
 				nodelay: true,
 				..Default::default()
 			})
 			.with_tcp(TcpTransportConfig {
 				listen_addresses: tcp.into_iter().flatten().map(Into::into).collect(),
-				yamux_config,
+				yamux_config: litep2p::yamux::Config::default(),
 				nodelay: true,
 				..Default::default()
 			})
@@ -543,6 +491,7 @@ impl<B: BlockT + 'static, H: ExHashT> NetworkBackend<B, H> for Litep2pNetworkBac
 		let listen_addresses = Arc::new(Default::default());
 		let (discovery, ping_config, identify_config, kademlia_config, maybe_mdns_config) =
 			Discovery::new(
+				local_peer_id,
 				&network_config,
 				params.genesis_hash,
 				params.fork_id.as_deref(),
@@ -557,6 +506,12 @@ impl<B: BlockT + 'static, H: ExHashT> NetworkBackend<B, H> for Litep2pNetworkBac
 			.with_libp2p_ping(ping_config)
 			.with_libp2p_identify(identify_config)
 			.with_libp2p_kademlia(kademlia_config)
+			.with_connection_limits(ConnectionLimitsConfig::default().max_incoming_connections(
+				Some(crate::MAX_CONNECTIONS_ESTABLISHED_INCOMING as usize),
+			))
+			// This has the same effect as `libp2p::Swarm::with_idle_connection_timeout` which is
+			// set to 10 seconds as well.
+			.with_keep_alive_timeout(KEEP_ALIVE_TIMEOUT)
 			.with_executor(executor);
 
 		if let Some(config) = maybe_mdns_config {
@@ -570,14 +525,21 @@ impl<B: BlockT + 'static, H: ExHashT> NetworkBackend<B, H> for Litep2pNetworkBac
 		let litep2p =
 			Litep2p::new(config_builder.build()).map_err(|error| Error::Litep2p(error))?;
 
-		let external_addresses: Arc<RwLock<HashSet<Multiaddr>>> = Arc::new(RwLock::new(
-			HashSet::from_iter(network_config.public_addresses.iter().cloned().map(Into::into)),
-		));
 		litep2p.listen_addresses().for_each(|address| {
 			log::debug!(target: LOG_TARGET, "listening on: {address}");
 
 			listen_addresses.write().insert(address.clone());
 		});
+
+		let public_addresses = litep2p.public_addresses();
+		for address in network_config.public_addresses.iter() {
+			if let Err(err) = public_addresses.add_address(address.clone().into()) {
+				log::warn!(
+					target: LOG_TARGET,
+					"failed to add public address {address:?}: {err:?}",
+				);
+			}
+		}
 
 		let network_service = Arc::new(Litep2pNetworkService::new(
 			local_peer_id,
@@ -588,7 +550,7 @@ impl<B: BlockT + 'static, H: ExHashT> NetworkBackend<B, H> for Litep2pNetworkBac
 			block_announce_protocol.clone(),
 			request_response_senders,
 			Arc::clone(&listen_addresses),
-			Arc::clone(&external_addresses),
+			public_addresses,
 		));
 
 		// register rest of the metrics now that `Litep2p` has been created
@@ -614,7 +576,6 @@ impl<B: BlockT + 'static, H: ExHashT> NetworkBackend<B, H> for Litep2pNetworkBac
 			event_streams: out_events::OutChannels::new(None)?,
 			peers: HashMap::new(),
 			litep2p,
-			external_addresses,
 		})
 	}
 
@@ -622,8 +583,11 @@ impl<B: BlockT + 'static, H: ExHashT> NetworkBackend<B, H> for Litep2pNetworkBac
 		Arc::clone(&self.network_service)
 	}
 
-	fn peer_store(bootnodes: Vec<sc_network_types::PeerId>) -> Self::PeerStore {
-		Peerstore::new(bootnodes)
+	fn peer_store(
+		bootnodes: Vec<sc_network_types::PeerId>,
+		metrics_registry: Option<Registry>,
+	) -> Self::PeerStore {
+		Peerstore::new(bootnodes, metrics_registry)
 	}
 
 	fn register_notification_metrics(registry: Option<&Registry>) -> NotificationMetrics {
@@ -700,6 +664,12 @@ impl<B: BlockT + 'static, H: ExHashT> NetworkBackend<B, H> for Litep2pNetworkBac
 							let query_id = self.discovery.put_value(key.clone(), value).await;
 							self.pending_put_values.insert(query_id, (key, Instant::now()));
 						}
+						NetworkServiceCommand::PutValueTo { record, peers, update_local_storage} => {
+							let kademlia_key = record.key.to_vec().into();
+							let query_id = self.discovery.put_value_to_peers(record, peers, update_local_storage).await;
+							self.pending_put_values.insert(query_id, (kademlia_key, Instant::now()));
+						}
+
 						NetworkServiceCommand::StoreRecord { key, value, publisher, expires } => {
 							self.discovery.store_record(key, value, publisher.map(Into::into), expires).await;
 						}
@@ -737,7 +707,7 @@ impl<B: BlockT + 'static, H: ExHashT> NetworkBackend<B, H> for Litep2pNetworkBac
 							}
 
 							if self.litep2p.add_known_address(peer.into(), iter::once(address.clone())) == 0usize {
-								log::warn!(
+								log::debug!(
 									target: LOG_TARGET,
 									"couldn't add known address ({address}) for {peer:?}, unsupported transport"
 								);
@@ -804,31 +774,45 @@ impl<B: BlockT + 'static, H: ExHashT> NetworkBackend<B, H> for Litep2pNetworkBac
 							self.peerstore_handle.add_known_peer(peer.into());
 						}
 					}
-					Some(DiscoveryEvent::GetRecordSuccess { query_id, records }) => {
-						match self.pending_get_values.remove(&query_id) {
-							None => log::warn!(
+					Some(DiscoveryEvent::GetRecordPartialResult { query_id, record }) => {
+						if !self.pending_get_values.contains_key(&query_id) {
+							log::error!(
 								target: LOG_TARGET,
-								"`GET_VALUE` succeeded for a non-existent query",
-							),
+								"Missing/invalid pending query for `GET_VALUE` partial result: {query_id:?}"
+							);
+
+							continue
+						}
+
+						let peer_id: sc_network_types::PeerId = record.peer.into();
+						let record = PeerRecord {
+							record: P2PRecord {
+								key: record.record.key.to_vec().into(),
+								value: record.record.value,
+								publisher: record.record.publisher.map(|peer_id| {
+									let peer_id: sc_network_types::PeerId = peer_id.into();
+									peer_id.into()
+								}),
+								expires: record.record.expires,
+							},
+							peer: Some(peer_id.into()),
+						};
+
+						self.event_streams.send(
+							Event::Dht(
+								DhtEvent::ValueFound(
+									record.into()
+								)
+							)
+						);
+					}
+					Some(DiscoveryEvent::GetRecordSuccess { query_id }) => {
+						match self.pending_get_values.remove(&query_id) {
 							Some((key, started)) => {
 								log::trace!(
 									target: LOG_TARGET,
-									"`GET_VALUE` for {:?} ({query_id:?}) succeeded",
-									key,
+									"`GET_VALUE` for {key:?} ({query_id:?}) succeeded",
 								);
-
-								let value_found = match records {
-									RecordsType::LocalStore(record) => vec![
-										(libp2p::kad::RecordKey::new(&record.key), record.value)
-									],
-									RecordsType::Network(records) => records.into_iter().map(|peer_record| {
-										(libp2p::kad::RecordKey::new(&peer_record.record.key), peer_record.record.value)
-									}).collect(),
-								};
-
-								self.event_streams.send(Event::Dht(
-									DhtEvent::ValueFound(value_found)
-								));
 
 								if let Some(ref metrics) = self.metrics {
 									metrics
@@ -836,7 +820,14 @@ impl<B: BlockT + 'static, H: ExHashT> NetworkBackend<B, H> for Litep2pNetworkBac
 										.with_label_values(&["value-get"])
 										.observe(started.elapsed().as_secs_f64());
 								}
-							}
+							},
+							None => {
+								log::error!(
+									target: LOG_TARGET,
+									"Missing/invalid pending query for `GET_VALUE`: {query_id:?}"
+								);
+								debug_assert!(false);
+							},
 						}
 					}
 					Some(DiscoveryEvent::PutRecordSuccess { query_id }) => {
@@ -912,10 +903,35 @@ impl<B: BlockT + 'static, H: ExHashT> NetworkBackend<B, H> for Litep2pNetworkBac
 						self.discovery.add_self_reported_address(peer, supported_protocols, listen_addresses).await;
 					}
 					Some(DiscoveryEvent::ExternalAddressDiscovered { address }) => {
-						let mut addresses = self.external_addresses.write();
+						match self.litep2p.public_addresses().add_address(address.clone().into()) {
+							Ok(inserted) => if inserted {
+								log::info!(target: LOG_TARGET, "🔍 Discovered new external address for our node: {address}");
+							},
+							Err(err) => {
+								log::warn!(
+									target: LOG_TARGET,
+									"🔍 Failed to add discovered external address {address:?}: {err:?}",
+								);
+							},
+						}
+					}
+					Some(DiscoveryEvent::ExternalAddressExpired{ address }) => {
+						let local_peer_id = self.litep2p.local_peer_id();
 
-						if addresses.insert(address.clone()) {
-							log::info!(target: LOG_TARGET, "discovered new external address for our node: {address}");
+						// Litep2p requires the peer ID to be present in the address.
+						let address = if !std::matches!(address.iter().last(), Some(Protocol::P2p(_))) {
+							address.with(Protocol::P2p(*local_peer_id.as_ref()))
+						} else {
+							address
+						};
+
+						if self.litep2p.public_addresses().remove_address(&address) {
+							log::info!(target: LOG_TARGET, "🔍 Expired external address for our node: {address}");
+						} else {
+							log::warn!(
+								target: LOG_TARGET,
+								"🔍 Failed to remove expired external address {address:?}"
+							);
 						}
 					}
 					Some(DiscoveryEvent::Ping { peer, rtt }) => {
@@ -949,7 +965,15 @@ impl<B: BlockT + 'static, H: ExHashT> NetworkBackend<B, H> for Litep2pNetworkBac
 
 						let direction = match endpoint {
 							Endpoint::Dialer { .. } => "out",
-							Endpoint::Listener { .. } => "in",
+							Endpoint::Listener { .. } => {
+								// Increment incoming connections counter.
+								//
+								// Note: For litep2p these are represented by established negotiated connections,
+								// while for libp2p (legacy) these represent not-yet-negotiated connections.
+								metrics.incoming_connections_total.inc();
+
+								"in"
+							},
 						};
 						metrics.connections_opened_total.with_label_values(&[direction]).inc();
 
@@ -1001,23 +1025,50 @@ impl<B: BlockT + 'static, H: ExHashT> NetworkBackend<B, H> for Litep2pNetworkBac
 						}
 					}
 					Some(Litep2pEvent::DialFailure { address, error }) => {
-						log::trace!(
+						log::debug!(
 							target: LOG_TARGET,
 							"failed to dial peer at {address:?}: {error:?}",
 						);
 
-						let reason = match error {
-							Litep2pError::PeerIdMismatch(_, _) => "invalid-peer-id",
-							Litep2pError::Timeout | Litep2pError::TransportError(_) |
-							Litep2pError::IoError(_) | Litep2pError::WebSocket(_) => "transport-error",
-							_ => "other",
-						};
-
 						if let Some(metrics) = &self.metrics {
-							metrics.pending_connections_errors_total.with_label_values(&[reason]).inc();
+							let reason = match error {
+								DialError::Timeout => "timeout",
+								DialError::AddressError(_) => "invalid-address",
+								DialError::DnsError(_) => "cannot-resolve-dns",
+								DialError::NegotiationError(error) => match error {
+									NegotiationError::Timeout => "timeout",
+									NegotiationError::PeerIdMissing => "missing-peer-id",
+									NegotiationError::StateMismatch => "state-mismatch",
+									NegotiationError::PeerIdMismatch(_,_) => "peer-id-missmatch",
+									NegotiationError::MultistreamSelectError(_) => "multistream-select-error",
+									NegotiationError::SnowError(_) => "noise-error",
+									NegotiationError::ParseError(_) => "parse-error",
+									NegotiationError::IoError(_) => "io-error",
+									NegotiationError::WebSocket(_) => "webscoket-error",
+									NegotiationError::BadSignature => "bad-signature",
+								}
+							};
+
+							metrics.pending_connections_errors_total.with_label_values(&[&reason]).inc();
 						}
 					}
-					_ => {}
+					Some(Litep2pEvent::ListDialFailures { errors }) => {
+						log::debug!(
+							target: LOG_TARGET,
+							"failed to dial peer on multiple addresses {errors:?}",
+						);
+
+						if let Some(metrics) = &self.metrics {
+							metrics.pending_connections_errors_total.with_label_values(&["transport-errors"]).inc();
+						}
+					}
+					None => {
+						log::error!(
+								target: LOG_TARGET,
+								"Litep2p backend terminated"
+						);
+						return
+					}
 				},
 			}
 		}

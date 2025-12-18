@@ -1,12 +1,12 @@
 [package]
 name = "pallet-insecure-randomness-collective-flip"
-version = "25.0.0"
+version = "27.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Insecure do not use in production: FRAME randomness collective flip pallet (polkadot v1.15.0)"
+description = "Insecure do not use in production: FRAME randomness collective flip pallet"
 readme = "README.md"
 
 [lints]

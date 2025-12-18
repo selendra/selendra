@@ -1,7 +1,7 @@
 [package]
 name = "pallet-bridge-messages"
-description = "Module that allows bridged chains to exchange messages using lane concept. (polkadot v1.15.0)"
-version = "0.17.0"
+description = "Module that allows bridged chains to exchange messages using lane concept."
+version = "0.19.1"
 authors.workspace = true
 edition.workspace = true
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
@@ -60,7 +60,4 @@ try-runtime = [
 	"frame-system/try-runtime",
 	"sp-runtime/try-runtime",
 ]
-test-helpers = [
-	"bp-runtime/test-helpers",
-	"sp-trie",
-]
+test-helpers = ["bp-runtime/test-helpers", "sp-trie"]

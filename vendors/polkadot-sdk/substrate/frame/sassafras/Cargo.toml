@@ -4,9 +4,9 @@ version = "0.3.5"
 authors = ["Parity Technologies <admin@parity.io>"]
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository = "https://github.com/paritytech/substrate/"
-description = "Consensus extension module for Sassafras consensus. (polkadot v1.15.0)"
+description = "Consensus extension module for Sassafras consensus."
 readme = "README.md"
 publish = false
 

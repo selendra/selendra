@@ -1,12 +1,12 @@
 [package]
 name = "sp-rpc"
-version = "32.0.0"
+version = "33.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Substrate RPC primitives and utilities. (polkadot v1.15.0)"
+description = "Substrate RPC primitives and utilities."
 readme = "README.md"
 
 [lints]

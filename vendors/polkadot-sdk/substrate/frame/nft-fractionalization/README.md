@@ -10,4 +10,4 @@ fungible asset will not allow the unlocking of the NFT.
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

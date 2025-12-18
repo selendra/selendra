@@ -31,4 +31,4 @@ Child Bounty protocol:
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

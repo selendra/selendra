@@ -3,10 +3,10 @@ name = "sp-application-crypto-test"
 version = "2.0.0"
 authors.workspace = true
 edition.workspace = true
-description = "Integration tests for application-crypto (polkadot v1.15.0)"
+description = "Integration tests for application-crypto"
 license = "Apache-2.0"
 publish = false
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
 
 [lints]

@@ -1,12 +1,12 @@
 [package]
 name = "sc-executor"
-version = "0.40.0"
+version = "0.41.0"
 authors.workspace = true
 edition.workspace = true
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "A crate that provides means of executing/dispatching calls into the runtime. (polkadot v1.15.0)"
+description = "A crate that provides means of executing/dispatching calls into the runtime."
 documentation = "https://docs.rs/sc-executor"
 readme = "README.md"
 
@@ -63,7 +63,6 @@ tracing-subscriber = { workspace = true }
 paste = { workspace = true, default-features = true }
 regex = { workspace = true }
 criterion = { workspace = true, default-features = true }
-env_logger = { workspace = true }
 num_cpus = { workspace = true }
 tempfile = { workspace = true }
 

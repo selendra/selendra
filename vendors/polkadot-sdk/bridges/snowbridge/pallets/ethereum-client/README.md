@@ -5,4 +5,4 @@ The Ethereum Beacon Client is an on-chain light client that tracks Ethereum cons
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

@@ -1,12 +1,12 @@
 [package]
 name = "sp-keyring"
-version = "39.0.0"
+version = "40.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Keyring support code for the runtime. A set of test accounts. (polkadot v1.15.0)"
+description = "Keyring support code for the runtime. A set of test accounts."
 documentation = "https://docs.rs/sp-keyring"
 readme = "README.md"
 
