@@ -110,6 +110,7 @@ where
 		sync_oracle,
 		validator_address_cache,
 		eth,
+		_phantom,
 	} = deps;
 
 	module.merge(System::new(client.clone(), pool.clone()).into_rpc())?;

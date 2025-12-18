@@ -144,7 +144,6 @@ where
 			pending_create_inherent_data_providers,
 			Some(Box::new(pending::AuraConsensusDataProvider::new(client.clone()))),
 		)
-		.replace_config::<EC>()
 		.into_rpc(),
 	)?;
 
@@ -172,7 +171,7 @@ where
 			storage_override.clone(),
 			pubsub_notification_sinks,
 		)
-		.into_rpc(),
+	.into_rpc(),
 	)?;
 
 	io.merge(
@@ -182,10 +181,8 @@ where
 			// Whether to format the `peer_count` response as Hex (default) or not.
 			true,
 		)
-		.into_rpc(),
+	.into_rpc(),
 	)?;
-
-	io.merge(Web3::new(client.clone()).into_rpc())?;
 
 	io.merge(
 		Debug::new(
@@ -194,7 +191,7 @@ where
 			storage_override,
 			block_data_cache,
 		)
-		.into_rpc(),
+	.into_rpc(),
 	)?;
 
 	#[cfg(feature = "txpool")]

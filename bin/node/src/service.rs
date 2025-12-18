@@ -1,4 +1,4 @@
-//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
+W//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 use std::{
     path::{Path, PathBuf},
@@ -407,6 +407,7 @@ pub async fn new_authority(
 		let pubsub_notification_sinks = pubsub_notification_sinks.clone();
 		let storage_override = service_components.storage_override.clone();
 		let fee_history_cache = fee_history_cache.clone();
+		let deny_unsafe = sc_rpc::DenyUnsafe::No;
 		let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
 			service_components.task_manager.spawn_handle(),
 			service_components.storage_override.clone(),
@@ -420,6 +421,7 @@ pub async fn new_authority(
 		let is_authority = role.is_authority();
 		let frontier_backend = service_components.frontier_backend.clone();
 		let target_gas_price = eth_config.target_gas_price;
+		let task_manager_spawn_handle = service_components.task_manager.spawn_handle();
 		let pending_create_inherent_data_providers = move |_, ()| async move {
 			let current = sp_timestamp::InherentDataProvider::from_system_time();
 			let next_slot = current.timestamp().as_millis() + slot_duration.as_millis();
@@ -464,6 +466,7 @@ pub async fn new_authority(
 				sync_oracle: sync_oracle.clone(),
 				validator_address_cache: validator_address_cache.clone(),
 				eth: eth_deps,
+				_phantom: std::marker::PhantomData::<FullChainApi>,
 			};
 
 			Ok(create_full_rpc(
