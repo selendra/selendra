@@ -8,6 +8,9 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod evm;
 
+extern crate alloc;
+
+use alloc::borrow::Cow;
 pub use frame_support::{
     construct_runtime,
     genesis_builder_helper::{build_state, get_preset},
@@ -70,13 +73,13 @@ use sp_core::{crypto::KeyTypeId, ConstU64, ConstU128, OpaqueMetadata, H160, H256
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 use sp_runtime::{
-    create_runtime_str, generic,
+    generic,
     traits::{
         AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, Convert, ConvertInto, PostDispatchInfoOf,
         IdentityLookup, One, OpaqueKeys, Verify, DispatchInfoOf, Dispatchable, UniqueSaturatedInto, Zero
     },
     transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
-    ApplyExtrinsicResult, FixedU128, RuntimeDebug,
+    ApplyExtrinsicResult, FixedU128, RuntimeDebug, SaturatedConversion,
 };
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Saturating};
 use sp_staking::{currency_to_vote::U128CurrencyToVote, EraIndex};
@@ -87,14 +90,14 @@ use sp_version::RuntimeVersion;
 
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("selendra"),
-	impl_name: create_runtime_str!("selendra"),
+	spec_name: Cow::Borrowed("selendra"),
+	impl_name: Cow::Borrowed("selendra"),
 	authoring_version: 1,
 	spec_version: 20015,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
-	state_version: 2,
+	system_version: 2,
 };
 
 
@@ -193,6 +196,7 @@ impl frame_system::Config for Runtime {
 	type PreInherents = ();
 	type PostInherents = ();
 	type PostTransactions = ();
+	type ExtensionsWeightInfo = ();
 }
 
 parameter_types! {
@@ -240,6 +244,7 @@ impl pallet_balances::Config for Runtime {
     type MaxFreezes = MaxFreezes;
     type RuntimeHoldReason = RuntimeHoldReason;
     type RuntimeFreezeReason = RuntimeFreezeReason;
+    type DoneSlashHandler = ();
 }
 
 // Type alias for fungible imbalance (Credit type for transaction fees)
@@ -293,7 +298,7 @@ impl WeightToFeePolynomial for WeightToFee {
 /// Tips go 100% to the block author.
 pub struct DealWithFees;
 impl OnUnbalanced<FungibleCredit> for DealWithFees {
-    fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = FungibleCredit>) {
+    fn on_unbalanceds(mut fees_then_tips: impl Iterator<Item = FungibleCredit>) {
         if let Some(fees) = fees_then_tips.next() {
             // Split fees: 80% burn, 20% to author
             let (to_burn, mut to_author) = fees.ration(80, 20);
@@ -330,6 +335,7 @@ impl pallet_transaction_payment::Config for Runtime {
         MaximumMultiplier,
     >;
     type OperationalFeeMultiplier = OperationalFeeMultiplier;
+    type WeightInfo = ();
 }
 
 parameter_types! {
@@ -623,14 +629,6 @@ impl pallet_timestamp::Config for Runtime {
     type WeightInfo = ();
 }
 
-impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
-where
-    RuntimeCall: From<C>,
-{
-    type Extrinsic = UncheckedExtrinsic;
-    type OverarchingCall = RuntimeCall;
-}
-
 parameter_types! {
     pub const MinVestedTransfer: Balance = MICRO_SEL;
     pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons = WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
@@ -707,6 +705,15 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
         pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>,
     >;
     type MaxProposalWeight = MaxCollectivesProposalWeight;
+    type DisapproveOrigin = EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 2>,
+    >;
+    type KillOrigin = EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>,
+    >;
+    type Consideration = ();
 }
 
 // Technical Committee collective instance
@@ -731,6 +738,15 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
         EnsureThreeFifthsCouncil,
     >;
     type MaxProposalWeight = MaxCollectivesProposalWeight;
+    type DisapproveOrigin = EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
+    type KillOrigin = EitherOfDiverse<
+        EnsureRoot<AccountId>,
+        EnsureThreeFifthsCouncil,
+    >;
+    type Consideration = ();
 }
 
 // Democracy pallet for public referendums
@@ -885,6 +901,7 @@ impl pallet_treasury::Config for Runtime {
     type Paymaster = PayFromAccount<Balances, TreasuryAccount>;
     type BalanceConverter = UnityAssetBalanceConversion;
     type PayoutPeriod = ConstU32<0>;
+    type BlockNumberProvider = System;
     #[cfg(feature = "runtime-benchmarks")]
     type BenchmarkHelper = ();
 }
@@ -994,6 +1011,8 @@ impl pallet_identity::Config for Runtime {
     type MaxUsernameLength = ConstU32<32>;
     type WeightInfo = pallet_identity::weights::SubstrateWeight<Self>;
     type IdentityInformation = IdentityInfo<MaxAdditionalFields>;
+    type UsernameDeposit = ConstU128<0>;
+    type UsernameGracePeriod = ConstU32<{ 7 * DAYS }>;
 }
 parameter_types! {
     // Key size = 32, value size = 8
@@ -1239,6 +1258,64 @@ pub type CheckedExtrinsic =
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
 
+// Implementations for offchain worker transaction submission
+impl frame_system::offchain::SigningTypes for Runtime {
+	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
+	type Signature = Signature;
+}
+
+impl<LocalCall> frame_system::offchain::CreateTransactionBase<LocalCall> for Runtime
+where
+	RuntimeCall: From<LocalCall>,
+{
+	type Extrinsic = UncheckedExtrinsic;
+	type RuntimeCall = RuntimeCall;
+}
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
+where
+	RuntimeCall: From<LocalCall>,
+{
+	fn create_signed_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: RuntimeCall,
+		public: <Signature as sp_runtime::traits::Verify>::Signer,
+		account: AccountId,
+		nonce: Nonce,
+	) -> Option<UncheckedExtrinsic> {
+		use sp_runtime::traits::StaticLookup;
+		let tip = 0;
+		let period = BlockHashCount::get().checked_next_power_of_two().map(|c| c / 2).unwrap_or(2) as u64;
+		let current_block = System::block_number()
+			.saturated_into::<u64>()
+			.saturating_sub(1);
+		let era = sp_runtime::generic::Era::mortal(period, current_block);
+		let extra = (
+			frame_system::CheckNonZeroSender::<Runtime>::new(),
+			frame_system::CheckSpecVersion::<Runtime>::new(),
+			frame_system::CheckTxVersion::<Runtime>::new(),
+			frame_system::CheckGenesis::<Runtime>::new(),
+			frame_system::CheckEra::<Runtime>::from(era),
+			frame_system::CheckNonce::<Runtime>::from(nonce),
+			frame_system::CheckWeight::<Runtime>::new(),
+			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+		);
+		let raw_payload = SignedPayload::new(call, extra).ok()?;
+		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
+		let (call, extra, _) = raw_payload.deconstruct();
+		let address = <Runtime as frame_system::Config>::Lookup::unlookup(account);
+		Some(UncheckedExtrinsic::new_signed(call, address, signature, extra))
+	}
+}
+
+impl<C> frame_system::offchain::CreateInherent<C> for Runtime
+where
+	RuntimeCall: From<C>,
+{
+	fn create_inherent(call: RuntimeCall) -> UncheckedExtrinsic {
+		UncheckedExtrinsic::new_bare(call)
+	}
+}
+
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<SelendraHeader, UncheckedExtrinsic>;
 /// A Block signed with a Justification
@@ -1267,8 +1344,8 @@ pub struct TransactionConverter;
 
 impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
 	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> UncheckedExtrinsic {
-		UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
+		UncheckedExtrinsic::new_bare(
+			pallet_ethereum::Call::<Runtime>::transact { transaction }.into()
 		)
 	}
 }
@@ -1278,8 +1355,8 @@ impl fp_rpc::ConvertTransaction<primitives::UncheckedExtrinsic> for TransactionC
 		&self,
 		transaction: pallet_ethereum::Transaction,
 	) -> primitives::UncheckedExtrinsic {
-		let extrinsic = UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
+		let extrinsic = UncheckedExtrinsic::new_bare(
+			pallet_ethereum::Call::<Runtime>::transact { transaction }.into()
 		);
 		let encoded = extrinsic.encode();
 		primitives::UncheckedExtrinsic::decode(&mut &encoded[..])
@@ -1579,6 +1656,18 @@ impl_runtime_apis! {
         fn member_needs_delegate_migration(member: AccountId) -> bool {
             NominationPools::api_member_needs_delegate_migration(member)
         }
+
+        fn member_total_balance(member: AccountId) -> Balance {
+            NominationPools::api_member_total_balance(member)
+        }
+
+        fn pool_balance(pool_id: pallet_nomination_pools::PoolId) -> Balance {
+            NominationPools::api_pool_balance(pool_id)
+        }
+
+        fn pool_accounts(pool_id: pallet_nomination_pools::PoolId) -> (AccountId, AccountId) {
+            NominationPools::api_pool_accounts(pool_id)
+        }
     }
 
 	impl pallet_staking_runtime_api::StakingApi<Block, Balance, AccountId> for Runtime {
@@ -1619,14 +1708,13 @@ impl_runtime_apis! {
 		}
 
 		fn storage_at(address: H160, index: U256) -> H256 {
-			let mut tmp = [0u8; 32];
-			index.to_big_endian(&mut tmp);
-			pallet_evm::AccountStorages::<Runtime>::get(address, H256::from_slice(&tmp[..]))
-		}
+		let tmp = index.to_big_endian();
+		pallet_evm::AccountStorages::<Runtime>::get(address, H256::from_slice(&tmp[..]))
+	}
 
-		fn call(
-			from: H160,
-			to: H160,
+	fn call(
+		from: H160,
+		to: H160,
 			data: Vec<u8>,
 			value: U256,
 			gas_limit: U256,
@@ -1788,8 +1876,8 @@ impl_runtime_apis! {
 
 	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
 		fn convert_transaction(transaction: EthereumTransaction) -> <Block as BlockT>::Extrinsic {
-			UncheckedExtrinsic::new_unsigned(
-				pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
+			UncheckedExtrinsic::new_bare(
+				pallet_ethereum::Call::<Runtime>::transact { transaction }.into()
 			)
 		}
 	}
