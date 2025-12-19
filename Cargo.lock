@@ -1110,6 +1110,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bstr"
+version = "1.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63044e1ae8e69f3b5a92c736ca6269b8d12fa7efe39bf34ddb06d102cf0e2cab"
+dependencies = [
+ "memchr",
+ "regex-automata 0.4.9",
+ "serde",
+]
+
+[[package]]
 name = "build-helper"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2371,6 +2382,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "diff"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56254986775e3233ffa9c4d7d3faaf6d36a2c09d30b20687e9f88bc8bafc16c8"
+
+[[package]]
 name = "difflib"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3235,15 +3252,25 @@ version = "1.0.0-dev"
 dependencies = [
  "clap",
  "ethereum-types 0.15.1",
+ "fc-api",
  "fc-db",
  "fp-rpc",
  "fp-storage",
+ "futures",
+ "parity-scale-codec",
+ "sc-block-builder",
  "sc-cli",
+ "sc-client-db",
+ "selendra-runtime",
  "serde",
  "serde_json",
  "sp-api",
  "sp-blockchain",
+ "sp-consensus",
+ "sp-io",
  "sp-runtime",
+ "substrate-test-runtime-client",
+ "tempfile",
 ]
 
 [[package]]
@@ -3275,18 +3302,23 @@ dependencies = [
  "futures",
  "kvdb-rocksdb",
  "log",
+ "maplit",
  "parity-db",
  "parity-scale-codec",
  "parking_lot 0.12.3",
+ "sc-block-builder",
  "sc-client-api",
  "sc-client-db",
  "smallvec",
  "sp-api",
  "sp-blockchain",
+ "sp-consensus",
  "sp-core",
  "sp-database",
  "sp-runtime",
  "sqlx",
+ "substrate-test-runtime-client",
+ "tempfile",
  "tokio",
 ]
 
@@ -3294,21 +3326,32 @@ dependencies = [
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
 dependencies = [
+ "ethereum",
+ "ethereum-types 0.15.1",
  "fc-db",
  "fc-storage",
  "fp-consensus",
  "fp-rpc",
+ "fp-storage",
  "futures",
  "futures-timer",
  "log",
+ "parity-scale-codec",
  "parking_lot 0.12.3",
+ "sc-block-builder",
  "sc-client-api",
+ "sc-client-db",
  "sc-utils",
+ "selendra-runtime",
  "sp-api",
  "sp-blockchain",
  "sp-consensus",
  "sp-core",
+ "sp-io",
  "sp-runtime",
+ "sqlx",
+ "substrate-test-runtime-client",
+ "tempfile",
  "tokio",
 ]
 
@@ -3320,6 +3363,7 @@ dependencies = [
  "ethereum-types 0.15.1",
  "evm",
  "fc-api",
+ "fc-db",
  "fc-mapping-sync",
  "fc-rpc-core",
  "fc-storage",
@@ -3336,7 +3380,9 @@ dependencies = [
  "prometheus",
  "rand 0.8.5",
  "rlp 0.6.1",
+ "sc-block-builder",
  "sc-client-api",
+ "sc-client-db",
  "sc-consensus-aura",
  "sc-network",
  "sc-network-sync",
@@ -3360,6 +3406,8 @@ dependencies = [
  "sp-storage",
  "sp-timestamp",
  "substrate-prometheus-endpoint",
+ "substrate-test-runtime-client",
+ "tempfile",
  "thiserror 1.0.69",
  "tokio",
 ]
@@ -3649,7 +3697,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-runtime-interface",
- "staging-xcm",
 ]
 
 [[package]]
@@ -4548,6 +4595,12 @@ name = "hex-conservative"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "212ab92002354b4819390025006c897e8140934349e8635c9b077f47b4dcbd20"
+
+[[package]]
+name = "hex-literal"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
 
 [[package]]
 name = "hex-literal"
@@ -6507,6 +6560,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "macrotest"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1bf02346400dec0d7e4af0aa787c28acf174ce54a9c77f6507a1ee62e2aa2ca2"
+dependencies = [
+ "diff",
+ "fastrand",
+ "glob",
+ "prettyplease",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "syn 2.0.101",
+ "toml 0.9.6",
+]
+
+[[package]]
+name = "maplit"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
+
+[[package]]
 name = "matchers"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7676,12 +7752,19 @@ dependencies = [
  "fp-ethereum",
  "fp-evm",
  "fp-rpc",
+ "fp-self-contained",
  "fp-storage",
  "frame-support",
  "frame-system",
+ "hex",
+ "libsecp256k1",
+ "pallet-balances",
  "pallet-evm",
+ "pallet-timestamp",
  "parity-scale-codec",
+ "rlp 0.6.1",
  "scale-info",
+ "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-version",
@@ -7724,9 +7807,13 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hash-db",
- "hex-literal",
+ "hex",
+ "hex-literal 0.3.4",
  "impl-trait-for-tuples",
  "log",
+ "pallet-balances",
+ "pallet-evm-precompile-simple",
+ "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -7739,7 +7826,9 @@ name = "pallet-evm-precompile-modexp"
 version = "2.0.0-dev"
 dependencies = [
  "fp-evm",
+ "hex",
  "num",
+ "pallet-evm-test-vector-support",
 ]
 
 [[package]]
@@ -7755,8 +7844,21 @@ name = "pallet-evm-precompile-simple"
 version = "2.0.0-dev"
 dependencies = [
  "fp-evm",
+ "pallet-evm-test-vector-support",
  "ripemd",
  "sp-io",
+]
+
+[[package]]
+name = "pallet-evm-test-vector-support"
+version = "1.0.0-dev"
+dependencies = [
+ "evm",
+ "fp-evm",
+ "hex",
+ "serde",
+ "serde_json",
+ "sp-core",
 ]
 
 [[package]]
@@ -8582,7 +8684,7 @@ name = "polkadot-primitives"
 version = "17.1.0"
 dependencies = [
  "bitvec",
- "hex-literal",
+ "hex-literal 0.4.1",
  "log",
  "parity-scale-codec",
  "polkadot-core-primitives",
@@ -8793,23 +8895,27 @@ dependencies = [
 name = "precompile-utils"
 version = "0.1.0"
 dependencies = [
+ "derive_more 1.0.0",
  "environmental",
  "evm",
  "fp-evm",
  "frame-support",
  "frame-system",
  "hex",
+ "hex-literal 0.3.4",
  "impl-trait-for-tuples",
  "log",
  "num_enum",
  "pallet-evm",
  "parity-scale-codec",
  "precompile-utils-macro",
+ "scale-info",
+ "serde",
+ "similar-asserts",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-weights",
- "staging-xcm",
 ]
 
 [[package]]
@@ -8817,12 +8923,17 @@ name = "precompile-utils-macro"
 version = "0.1.0"
 dependencies = [
  "case",
+ "fp-evm",
+ "frame-support",
+ "macrotest",
  "num_enum",
+ "precompile-utils",
  "prettyplease",
  "proc-macro2",
  "quote",
  "sp-crypto-hashing 0.1.0",
  "syn 2.0.101",
+ "trybuild",
 ]
 
 [[package]]
@@ -11253,7 +11364,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node"
-version = "2.1.5"
+version = "2.1.6"
 dependencies = [
  "client-runtime-api",
  "fc-api",
@@ -11317,7 +11428,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime"
-version = "2.1.5"
+version = "2.1.6"
 dependencies = [
  "fp-account",
  "fp-evm",
@@ -11429,10 +11540,11 @@ checksum = "cd0b0ec5f1c1ca621c432a25813d8d60c88abe6d3e08a3eb9cf37d97a0fe3d73"
 
 [[package]]
 name = "serde"
-version = "1.0.219"
+version = "1.0.228"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f0e2c6ed6606019b4e29e69dbaba95b11854410e5347d525002456dbbb786b6"
+checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
 dependencies = [
+ "serde_core",
  "serde_derive",
 ]
 
@@ -11446,10 +11558,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_derive"
-version = "1.0.219"
+name = "serde_core"
+version = "1.0.228"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b0276cf7f2c73365f7157c8123c21cd9a50fbbd844757af28ca1f5925fc2a00"
+checksum = "41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad"
+dependencies = [
+ "serde_derive",
+]
+
+[[package]]
+name = "serde_derive"
+version = "1.0.228"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -11475,6 +11596,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "87607cb1398ed59d48732e575a4c28a7a8ebf2454b964fe3f224f2afc07909e1"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "serde_spanned"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8bbf91e5a4d6315eee45e704372590b30e260ee83af6639d64557f51b067776"
+dependencies = [
+ "serde_core",
 ]
 
 [[package]]
@@ -11602,6 +11732,26 @@ dependencies = [
  "num-traits",
  "paste",
  "wide",
+]
+
+[[package]]
+name = "similar"
+version = "2.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbbb5d9659141646ae647b42fe094daf6c6192d1620870b449d9557f748b2daa"
+dependencies = [
+ "bstr",
+ "unicode-segmentation",
+]
+
+[[package]]
+name = "similar-asserts"
+version = "1.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b5b441962c817e33508847a22bd82f03a30cff43642dc2fae8b050566121eb9a"
+dependencies = [
+ "console",
+ "similar",
 ]
 
 [[package]]
@@ -12700,7 +12850,7 @@ dependencies = [
  "derivative",
  "environmental",
  "frame-support",
- "hex-literal",
+ "hex-literal 0.4.1",
  "impl-trait-for-tuples",
  "log",
  "parity-scale-codec",
@@ -13288,6 +13438,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "61c41af27dd6d1e27b1b16b489db798443478cef1f06a660c96db617ba5de3b1"
 
 [[package]]
+name = "target-triple"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "591ef38edfb78ca4771ee32cf494cb8771944bee237a9b91fc9c1424ac4b777b"
+
+[[package]]
 name = "tempfile"
 version = "3.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13612,9 +13768,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "05ae329d1f08c4d17a59bed7ff5b5a769d062e64a62d34a3261b219e62cd5aae"
 dependencies = [
  "serde",
- "serde_spanned",
- "toml_datetime",
+ "serde_spanned 0.6.8",
+ "toml_datetime 0.6.9",
  "toml_edit",
+]
+
+[[package]]
+name = "toml"
+version = "0.9.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae2a4cf385da23d1d53bc15cdfa5c2109e93d8d362393c801e87da2f72f0e201"
+dependencies = [
+ "indexmap 2.9.0",
+ "serde_core",
+ "serde_spanned 1.0.4",
+ "toml_datetime 0.7.5+spec-1.1.0",
+ "toml_parser",
+ "toml_writer",
+ "winnow",
 ]
 
 [[package]]
@@ -13627,6 +13798,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "toml_datetime"
+version = "0.7.5+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92e1cfed4a3038bc5a127e35a2d360f145e1f4b971b551a2ba5fd7aedf7e1347"
+dependencies = [
+ "serde_core",
+]
+
+[[package]]
 name = "toml_edit"
 version = "0.22.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13634,9 +13814,18 @@ checksum = "310068873db2c5b3e7659d2cc35d21855dbafa50d1ce336397c666e3cb08137e"
 dependencies = [
  "indexmap 2.9.0",
  "serde",
- "serde_spanned",
- "toml_datetime",
+ "serde_spanned 0.6.8",
+ "toml_datetime 0.6.9",
  "toml_write",
+ "winnow",
+]
+
+[[package]]
+name = "toml_parser"
+version = "1.0.6+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a3198b4b0a8e11f09dd03e133c0280504d0801269e9afa46362ffde1cbeebf44"
+dependencies = [
  "winnow",
 ]
 
@@ -13645,6 +13834,12 @@ name = "toml_write"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bfb942dfe1d8e29a7ee7fcbde5bd2b9a25fb89aa70caea2eba3bee836ff41076"
+
+[[package]]
+name = "toml_writer"
+version = "1.0.6+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab16f14aed21ee8bfd8ec22513f7287cd4a91aa92e44edfe2c17ddd004e92607"
 
 [[package]]
 name = "tower"
@@ -13882,6 +14077,21 @@ name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
+
+[[package]]
+name = "trybuild"
+version = "1.0.114"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e17e807bff86d2a06b52bca4276746584a78375055b6e45843925ce2802b335"
+dependencies = [
+ "glob",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "target-triple",
+ "termcolor",
+ "toml 0.9.6",
+]
 
 [[package]]
 name = "tt-call"
@@ -15147,9 +15357,9 @@ checksum = "d6bbff5f0aada427a1e5a6da5f1f98158182f26556f345ac9e04d36d0ebed650"
 
 [[package]]
 name = "winnow"
-version = "0.7.9"
+version = "0.7.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9fb597c990f03753e08d3c29efbfcf2019a003b4bf4ba19225c158e1549f0f3"
+checksum = "5a5364e9d77fcdeeaa6062ced926ee3381faa2ee02d3eb83a5c27a8825540829"
 dependencies = [
  "memchr",
 ]
