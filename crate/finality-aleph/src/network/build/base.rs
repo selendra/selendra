@@ -94,7 +94,7 @@ where
     C: ClientForAleph<B, BE>,
     B::Hash: ExHashT,
 {
-    let mut full_network_config = FullNetworkConfiguration::<B, B::Hash, NetworkWorker<B, B::Hash>>::new(network_config);
+    let mut full_network_config = FullNetworkConfiguration::<B, B::Hash, NetworkWorker<B, B::Hash>>::new(network_config, None);
     let genesis_hash = client
         .hash(0)
         .ok()

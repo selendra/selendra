@@ -1,6 +1,6 @@
 [package]
 name = "test-parachain-adder"
-description = "Test parachain which adds to a number as its state transition (polkadot v1.15.0)"
+description = "Test parachain which adds to a number as its state transition"
 build = "build.rs"
 edition.workspace = true
 license.workspace = true

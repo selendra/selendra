@@ -1,6 +1,6 @@
 [package]
 name = "polkadot-node-subsystem-test-helpers"
-description = "Subsystem traits and message definitions (polkadot v1.15.0)"
+description = "Subsystem traits and message definitions"
 publish = false
 version = "1.0.0"
 authors.workspace = true

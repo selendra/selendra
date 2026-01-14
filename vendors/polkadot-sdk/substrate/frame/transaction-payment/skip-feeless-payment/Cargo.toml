@@ -1,11 +1,11 @@
 [package]
 name = "pallet-skip-feeless-payment"
-version = "12.0.0"
+version = "14.1.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Pallet to skip payments for calls annotated with `feeless_if` if the respective conditions are satisfied. (polkadot v1.15.0)"
+description = "Pallet to skip payments for calls annotated with `feeless_if` if the respective conditions are satisfied."
 
 [lints]
 workspace = true

@@ -1,6 +1,6 @@
 [package]
 name = "test-parachain-undying"
-description = "Test parachain for zombienet integration tests (polkadot v1.15.0)"
+description = "Test parachain for zombienet integration tests"
 build = "build.rs"
 publish = false
 version = "1.0.0"

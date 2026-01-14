@@ -4,7 +4,7 @@ version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-description = "Rococo emulated chain (polkadot v1.15.0)"
+description = "Rococo emulated chain"
 publish = false
 
 [lints]
@@ -12,6 +12,7 @@ workspace = true
 
 [dependencies]
 sp-core.workspace = true
+sp-keyring.workspace = true
 sp-authority-discovery.workspace = true
 sp-consensus-babe.workspace = true
 sp-consensus-beefy.workspace = true

@@ -1,12 +1,12 @@
 [package]
 name = "pallet-im-online"
-version = "36.0.0"
+version = "38.1.1"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "FRAME's I'm online pallet (polkadot v1.15.0)"
+description = "FRAME's I'm online pallet"
 readme = "README.md"
 
 [lints]

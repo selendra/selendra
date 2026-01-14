@@ -17,17 +17,16 @@ use finality_aleph::{Justification, JustificationTranslator, ValidatorAddressCac
 use futures::channel::mpsc;
 use jsonrpsee::RpcModule;
 use primitives::{AccountId, Balance, Block, Nonce};
+use sp_core::H256;
 use sc_client_api::{
 	backend::{Backend, StorageProvider},
 	client::BlockchainEvents,
 	AuxStore, UsageProvider,
 };
-pub use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::{CallApiAt, ProvideRuntimeApi};
 
 use sc_rpc::SubscriptionTaskExecutor;
-use sc_transaction_pool::ChainApi;
 
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus::SyncOracle;
@@ -36,13 +35,11 @@ use sp_inherents::CreateInherentDataProviders;
 use sp_runtime::traits::Block as BlockT;
 
 /// Full client dependencies.
-pub struct FullDeps<C, P, A: ChainApi, CT, CIDP, SO> {
+pub struct FullDeps<C, P, CT, CIDP, SO> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
-	/// Whether to deny unsafe calls
-	pub deny_unsafe: DenyUnsafe,
 	/// import justification transaction
 	pub import_justification_tx: mpsc::UnboundedSender<Justification>,
 	/// import jjustification translator
@@ -52,7 +49,7 @@ pub struct FullDeps<C, P, A: ChainApi, CT, CIDP, SO> {
 	/// validator address cache
 	pub validator_address_cache: Option<ValidatorAddressCache>,
 	/// Ethereum-compatibility specific dependencies.
-	pub eth: EthDeps<Block, C, P, A, CT, CIDP>,
+	pub eth: EthDeps<Block, C, P, CT, CIDP>,
 }
 
 pub struct DefaultEthConfig<C, BE>(std::marker::PhantomData<(C, BE)>);
@@ -68,8 +65,8 @@ where
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, BE, A, CT, CIDP, SO>(
-	deps: FullDeps<C, P, A, CT, CIDP, SO>,
+pub fn create_full<C, P, BE, CT, CIDP, SO>(
+	deps: FullDeps<C, P, CT, CIDP, SO>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 	pubsub_notification_sinks: Arc<
 		fc_mapping_sync::EthereumBlockNotificationSinks<
@@ -96,8 +93,7 @@ where
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	BE: Backend<Block> + 'static,
-	P: TransactionPool<Block = Block> + 'static,
-	A: ChainApi<Block = Block> + 'static,
+	P: TransactionPool<Block = Block, Hash = H256> + 'static,
 	CIDP: CreateInherentDataProviders<Block, ()> + Send + 'static,
 	CT: fp_rpc::ConvertTransaction<<Block as BlockT>::Extrinsic> + Send + Sync + 'static,
 	SO: SyncOracle + Send + Sync + 'static,
@@ -109,7 +105,6 @@ where
 	let FullDeps {
 		client,
 		pool,
-		deny_unsafe,
 		import_justification_tx,
 		justification_translator,
 		sync_oracle,
@@ -117,7 +112,7 @@ where
 		eth,
 	} = deps;
 
-	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
+	module.merge(System::new(client.clone(), pool.clone()).into_rpc())?;
 
 	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
     
@@ -133,7 +128,7 @@ where
 	)?;
 
 	// Ethereum compatibility RPCs
-	let module = create_eth::<_, _, _, _, _, _, _, DefaultEthConfig<C, BE>>(
+	let module = create_eth::<_, _, _, _, _, _, DefaultEthConfig<C, BE>>(
 		module,
 		eth,
 		subscription_task_executor,

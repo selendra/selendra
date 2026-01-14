@@ -1,9 +1,9 @@
 [package]
 name = "cumulus-pallet-xcmp-queue"
-version = "0.16.1"
+version = "0.18.2"
 authors.workspace = true
 edition.workspace = true
-description = "Pallet to queue outbound and inbound XCMP messages. (polkadot v1.15.0)"
+description = "Pallet to queue outbound and inbound XCMP messages."
 license = "Apache-2.0"
 
 [lints]

@@ -1,7 +1,7 @@
 [package]
 name = "frame-omni-bencher"
-version = "0.6.1"
-description = "Freestanding benchmark runner for any Polkadot runtime. (polkadot v1.15.0)"
+version = "0.10.0"
+description = "Freestanding benchmark runner for any Polkadot runtime."
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -23,5 +23,12 @@ sp-runtime.default-features = true
 sp-statement-store.workspace = true
 sp-statement-store.default-features = true
 tracing-subscriber = { workspace = true }
-env_logger = { workspace = true }
 log = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+assert_cmd = { workspace = true }
+cumulus-test-runtime = { path = "../../../../cumulus/test/runtime" }
+sp-tracing = { default-features = true, path = "../../../primitives/tracing" }
+sp-genesis-builder = { default-features = true, path = "../../../primitives/genesis-builder" }
+sc-chain-spec = { path = "../../../client/chain-spec", default-features = false }

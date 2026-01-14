@@ -4,9 +4,9 @@ version = "11.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Helper macros for Substrate's client CLI (polkadot v1.15.0)"
+description = "Helper macros for Substrate's client CLI"
 
 [lints]
 workspace = true

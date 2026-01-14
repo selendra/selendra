@@ -22,9 +22,9 @@ use crate::{
 	EnsureDecodableXcm,
 };
 pub use crate::{
-	AliasForeignAccountId32, AllowExplicitUnpaidExecutionFrom, AllowKnownQueryResponses,
-	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, FixedRateOfFungible,
-	FixedWeightBounds, TakeWeightCredit,
+	AliasChildLocation, AliasForeignAccountId32, AllowExplicitUnpaidExecutionFrom,
+	AllowKnownQueryResponses, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
+	FixedRateOfFungible, FixedWeightBounds, TakeWeightCredit,
 };
 pub use alloc::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 pub use codec::{Decode, Encode};
@@ -48,6 +48,7 @@ pub use xcm_executor::{
 	},
 	AssetsInHolding, Config,
 };
+pub use xcm_simulator::helpers::derive_topic_id;
 
 #[derive(Debug)]
 pub enum TestOrigin {
@@ -100,13 +101,13 @@ impl Dispatchable for TestCall {
 
 impl GetDispatchInfo for TestCall {
 	fn get_dispatch_info(&self) -> DispatchInfo {
-		let weight = *match self {
+		let call_weight = *match self {
 			TestCall::OnlyRoot(estimate, ..) |
 			TestCall::OnlyParachain(estimate, ..) |
 			TestCall::OnlySigned(estimate, ..) |
 			TestCall::Any(estimate, ..) => estimate,
 		};
-		DispatchInfo { weight, ..Default::default() }
+		DispatchInfo { call_weight, ..Default::default() }
 	}
 }
 
@@ -174,7 +175,7 @@ impl SendXcm for TestMessageSenderImpl {
 		msg: &mut Option<Xcm<()>>,
 	) -> SendResult<(Location, Xcm<()>, XcmHash)> {
 		let msg = msg.take().unwrap();
-		let hash = fake_message_hash(&msg);
+		let hash = derive_topic_id(&msg);
 		let triplet = (dest.take().unwrap(), msg, hash);
 		Ok((triplet, SEND_PRICE.with(|l| l.borrow().clone())))
 	}
@@ -204,7 +205,7 @@ impl ExportXcm for TestMessageExporter {
 				Ok(Assets::new())
 			}
 		});
-		let h = fake_message_hash(&m);
+		let h = derive_topic_id(&m);
 		match r {
 			Ok(price) => Ok(((network, channel, s, d, m, h), price)),
 			Err(e) => {
@@ -695,6 +696,20 @@ impl AssetExchange for TestAssetExchange {
 		EXCHANGE_ASSETS.with(|l| l.replace(have));
 		Ok(get)
 	}
+
+	fn quote_exchange_price(give: &Assets, want: &Assets, maximal: bool) -> Option<Assets> {
+		let mut have = EXCHANGE_ASSETS.with(|l| l.borrow().clone());
+		if !have.contains_assets(want) {
+			return None;
+		}
+		let get = if maximal {
+			have.saturating_take(give.clone().into())
+		} else {
+			have.saturating_take(want.clone().into())
+		};
+		let result: Vec<Asset> = get.fungible_assets_iter().collect();
+		Some(result.into())
+	}
 }
 
 pub struct SiblingPrefix;
@@ -717,6 +732,9 @@ impl Contains<Location> for ParentPrefix {
 		matches!(loc.unpack(), (1, []))
 	}
 }
+
+/// Pairs (location1, location2) where location1 can alias as location2.
+pub type Aliasers = (AliasForeignAccountId32<SiblingPrefix>, AliasChildLocation);
 
 pub struct TestConfig;
 impl Config for TestConfig {
@@ -743,7 +761,7 @@ impl Config for TestConfig {
 	type MessageExporter = TestMessageExporter;
 	type CallDispatcher = TestCall;
 	type SafeCallFilter = Everything;
-	type Aliasers = AliasForeignAccountId32<SiblingPrefix>;
+	type Aliasers = Aliasers;
 	type TransactionalProcessor = ();
 	type HrmpNewChannelOpenRequestHandler = ();
 	type HrmpChannelAcceptedHandler = ();

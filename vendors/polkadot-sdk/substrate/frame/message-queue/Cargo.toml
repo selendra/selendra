@@ -2,11 +2,11 @@
 authors.workspace = true
 edition.workspace = true
 name = "pallet-message-queue"
-version = "40.0.1"
+version = "42.0.0"
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "FRAME pallet to queue and process messages (polkadot v1.15.0)"
+description = "FRAME pallet to queue and process messages"
 
 [lints]
 workspace = true

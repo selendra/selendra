@@ -1,12 +1,12 @@
 // Copyright (C) Parity Technologies (UK) Ltd.
 // This file is part of Cumulus.
 
-// Substrate is free software: you can redistribute it and/or modify
+// Cumulus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Substrate is distributed in the hope that it will be useful,
+// Cumulus is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
@@ -528,11 +528,7 @@ impl<T: Config> Pallet<T> {
 					recipient,
 					channel_details.last_index - 1,
 					|page| {
-						if XcmpMessageFormat::decode_with_depth_limit(
-							MAX_XCM_DECODE_DEPTH,
-							&mut &page[..],
-						) != Ok(format)
-						{
+						if XcmpMessageFormat::decode(&mut &page[..]) != Ok(format) {
 							defensive!("Bad format in outbound queue; dropping message");
 							return Err(())
 						}
@@ -1011,6 +1007,12 @@ impl<T: Config> InspectMessageQueues for Pallet<T> {
 	fn clear_messages() {
 		// Best effort.
 		let _ = OutboundXcmpMessages::<T>::clear(u32::MAX, None);
+		OutboundXcmpStatus::<T>::mutate(|details_vec| {
+			for details in details_vec {
+				details.first_index = 0;
+				details.last_index = 0;
+			}
+		});
 	}
 
 	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
@@ -1019,9 +1021,7 @@ impl<T: Config> InspectMessageQueues for Pallet<T> {
 		OutboundXcmpMessages::<T>::iter()
 			.map(|(para_id, _, messages)| {
 				let mut data = &messages[..];
-				let decoded_format =
-					XcmpMessageFormat::decode_with_depth_limit(MAX_XCM_DECODE_DEPTH, &mut data)
-						.unwrap();
+				let decoded_format = XcmpMessageFormat::decode(&mut data).unwrap();
 				if decoded_format != XcmpMessageFormat::ConcatenatedVersionedXcm {
 					panic!("Unexpected format.")
 				}
@@ -1036,7 +1036,7 @@ impl<T: Config> InspectMessageQueues for Pallet<T> {
 				}
 
 				(
-					VersionedLocation::V4((Parent, Parachain(para_id.into())).into()),
+					VersionedLocation::from(Location::new(1, Parachain(para_id.into()))),
 					decoded_messages,
 				)
 			})

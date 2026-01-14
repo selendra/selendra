@@ -20,7 +20,7 @@ use crate::{CreateMatcher, MatchXcm};
 use core::{cell::Cell, marker::PhantomData, ops::ControlFlow, result::Result};
 use frame_support::{
 	ensure,
-	traits::{Contains, Get, ProcessMessageError},
+	traits::{Contains, ContainsPair, Get, Nothing, ProcessMessageError},
 };
 use polkadot_parachain_primitives::primitives::IsSystem;
 use xcm::prelude::*;
@@ -57,8 +57,9 @@ const MAX_ASSETS_FOR_BUY_EXECUTION: usize = 2;
 /// Allows execution from `origin` if it is contained in `T` (i.e. `T::Contains(origin)`) taking
 /// payments into account.
 ///
-/// Only allows for `TeleportAsset`, `WithdrawAsset`, `ClaimAsset` and `ReserveAssetDeposit` XCMs
-/// because they are the only ones that place assets in the Holding Register to pay for execution.
+/// Only allows for `WithdrawAsset`, `ReceiveTeleportedAsset`, `ReserveAssetDeposited` and
+/// `ClaimAsset` XCMs because they are the only ones that place assets in the Holding Register to
+/// pay for execution.
 pub struct AllowTopLevelPaidExecutionFrom<T>(PhantomData<T>);
 impl<T: Contains<Location>> ShouldExecute for AllowTopLevelPaidExecutionFrom<T> {
 	fn should_execute<RuntimeCall>(
@@ -81,9 +82,9 @@ impl<T: Contains<Location>> ShouldExecute for AllowTopLevelPaidExecutionFrom<T> 
 		instructions[..end]
 			.matcher()
 			.match_next_inst(|inst| match inst {
+				WithdrawAsset(ref assets) |
 				ReceiveTeleportedAsset(ref assets) |
 				ReserveAssetDeposited(ref assets) |
-				WithdrawAsset(ref assets) |
 				ClaimAsset { ref assets, .. } =>
 					if assets.len() <= MAX_ASSETS_FOR_BUY_EXECUTION {
 						Ok(())
@@ -92,7 +93,11 @@ impl<T: Contains<Location>> ShouldExecute for AllowTopLevelPaidExecutionFrom<T> 
 					},
 				_ => Err(ProcessMessageError::BadFormat),
 			})?
-			.skip_inst_while(|inst| matches!(inst, ClearOrigin))?
+			.skip_inst_while(|inst| {
+				matches!(inst, ClearOrigin | AliasOrigin(..)) ||
+					matches!(inst, DescendOrigin(child) if child != &Here) ||
+					matches!(inst, SetHints { .. })
+			})?
 			.match_next_inst(|inst| match inst {
 				BuyExecution { weight_limit: Limited(ref mut weight), .. }
 					if weight.all_gte(max_weight) =>
@@ -104,6 +109,7 @@ impl<T: Contains<Location>> ShouldExecute for AllowTopLevelPaidExecutionFrom<T> 
 					*weight_limit = Limited(max_weight);
 					Ok(())
 				},
+				PayFees { .. } => Ok(()),
 				_ => Err(ProcessMessageError::Overweight(max_weight)),
 			})?;
 		Ok(())
@@ -284,11 +290,25 @@ impl<T: Contains<Location>> ShouldExecute for AllowUnpaidExecutionFrom<T> {
 }
 
 /// Allows execution from any origin that is contained in `T` (i.e. `T::Contains(origin)`) if the
-/// message begins with the instruction `UnpaidExecution`.
+/// message explicitly includes the `UnpaidExecution` instruction.
 ///
 /// Use only for executions from trusted origin groups.
-pub struct AllowExplicitUnpaidExecutionFrom<T>(PhantomData<T>);
-impl<T: Contains<Location>> ShouldExecute for AllowExplicitUnpaidExecutionFrom<T> {
+///
+/// Allows for the message to receive teleports or reserve asset transfers and altering
+/// the origin before indicating `UnpaidExecution`.
+///
+/// Origin altering instructions are executed so the barrier can more accurately reject messages
+/// whose effective origin at the time of calling `UnpaidExecution` is not allowed.
+/// This means `T` will be checked against the actual origin _after_ being modified by prior
+/// instructions.
+///
+/// In order to execute the `AliasOrigin` instruction, the `Aliasers` type should be set to the same
+/// `Aliasers` item in the XCM configuration. If it isn't, then all messages with an `AliasOrigin`
+/// instruction will be rejected.
+pub struct AllowExplicitUnpaidExecutionFrom<T, Aliasers = Nothing>(PhantomData<(T, Aliasers)>);
+impl<T: Contains<Location>, Aliasers: ContainsPair<Location, Location>> ShouldExecute
+	for AllowExplicitUnpaidExecutionFrom<T, Aliasers>
+{
 	fn should_execute<Call>(
 		origin: &Location,
 		instructions: &mut [Instruction<Call>],
@@ -300,12 +320,69 @@ impl<T: Contains<Location>> ShouldExecute for AllowExplicitUnpaidExecutionFrom<T
 			"AllowExplicitUnpaidExecutionFrom origin: {:?}, instructions: {:?}, max_weight: {:?}, properties: {:?}",
 			origin, instructions, max_weight, _properties,
 		);
-		ensure!(T::contains(origin), ProcessMessageError::Unsupported);
-		instructions.matcher().match_next_inst(|inst| match inst {
-			UnpaidExecution { weight_limit: Limited(m), .. } if m.all_gte(max_weight) => Ok(()),
-			UnpaidExecution { weight_limit: Unlimited, .. } => Ok(()),
-			_ => Err(ProcessMessageError::Overweight(max_weight)),
-		})?;
+		// We will read up to 5 instructions before `UnpaidExecution`.
+		// This allows up to 3 asset transfer instructions, thus covering all possible transfer
+		// types, followed by a potential origin altering instruction, and a potential `SetHints`.
+		let mut actual_origin = origin.clone();
+		let processed = Cell::new(0usize);
+		let instructions_to_process = 5;
+		instructions
+			.matcher()
+			// We skip set hints and all types of asset transfer instructions.
+			.match_next_inst_while(
+				|inst| {
+					processed.get() < instructions_to_process &&
+						matches!(
+							inst,
+							ReceiveTeleportedAsset(_) |
+								ReserveAssetDeposited(_) | WithdrawAsset(_) |
+								SetHints { .. }
+						)
+				},
+				|_| {
+					processed.set(processed.get() + 1);
+					Ok(ControlFlow::Continue(()))
+				},
+			)?
+			// Then we go through all origin altering instructions and we
+			// alter the original origin.
+			.match_next_inst_while(
+				|_| processed.get() < instructions_to_process,
+				|inst| {
+					match inst {
+						ClearOrigin => {
+							// We don't support the `ClearOrigin` instruction since we always need
+							// to know the origin to know if it's allowed unpaid execution.
+							return Err(ProcessMessageError::Unsupported);
+						},
+						AliasOrigin(target) =>
+							if Aliasers::contains(&actual_origin, &target) {
+								actual_origin = target.clone();
+							} else {
+								return Err(ProcessMessageError::Unsupported);
+							},
+						DescendOrigin(child) if child != &Here => {
+							let Ok(_) = actual_origin.append_with(child.clone()) else {
+								return Err(ProcessMessageError::Unsupported);
+							};
+						},
+						_ => return Ok(ControlFlow::Break(())),
+					};
+					processed.set(processed.get() + 1);
+					Ok(ControlFlow::Continue(()))
+				},
+			)?
+			// We finally match on the required `UnpaidExecution` instruction.
+			.match_next_inst(|inst| match inst {
+				UnpaidExecution { weight_limit: Limited(m), .. } if m.all_gte(max_weight) => Ok(()),
+				UnpaidExecution { weight_limit: Unlimited, .. } => Ok(()),
+				_ => Err(ProcessMessageError::Overweight(max_weight)),
+			})?;
+
+		// After processing all the instructions, `actual_origin` was modified and we
+		// check if it's allowed to have unpaid execution.
+		ensure!(T::contains(&actual_origin), ProcessMessageError::Unsupported);
+
 		Ok(())
 	}
 }
@@ -484,7 +561,7 @@ impl ShouldExecute for DenyReserveTransferToRelayChain {
 					if matches!(origin, Location { parents: 1, interior: Here }) =>
 				{
 					log::warn!(
-						target: "xcm::barrier",
+						target: "xcm::barriers",
 						"Unexpected ReserveAssetDeposited from the Relay Chain",
 					);
 					Ok(ControlFlow::Continue(()))

@@ -205,7 +205,10 @@ use sp_runtime::TryRuntimeError;
 // re-export for the solution macro, with the dependencies of the macro.
 #[doc(hidden)]
 pub mod private {
-	pub use alloc::{collections::btree_set::BTreeSet, vec::Vec};
+	pub use alloc::{
+		collections::{btree_map::BTreeMap, btree_set::BTreeSet},
+		vec::Vec,
+	};
 	pub use codec;
 	pub use scale_info;
 	pub use sp_arithmetic;
@@ -687,7 +690,7 @@ sp_core::generate_feature_enabled_macro!(
 );
 
 sp_core::generate_feature_enabled_macro!(
-	runtime_benchmarks_fuzz_or_std_enabled,
-	any(feature = "runtime-benchmarks", feature = "fuzzing", feature = "std"),
+	runtime_benchmarks_or_std_enabled,
+	any(feature = "runtime-benchmarks", feature = "std"),
 	$
 );

@@ -1,9 +1,9 @@
 [package]
 name = "coretime-rococo-runtime"
-version = "0.11.0"
+version = "0.13.3"
 authors.workspace = true
 edition.workspace = true
-description = "Rococo's Coretime parachain runtime (polkadot v1.15.0)"
+description = "Rococo's Coretime parachain runtime"
 license = "Apache-2.0"
 
 [lints]
@@ -32,6 +32,7 @@ pallet-balances.workspace = true
 pallet-message-queue.workspace = true
 pallet-broker.workspace = true
 pallet-multisig.workspace = true
+pallet-proxy.workspace = true
 pallet-session.workspace = true
 pallet-sudo.workspace = true
 pallet-timestamp.workspace = true
@@ -105,6 +106,7 @@ std = [
 	"pallet-collator-selection/std",
 	"pallet-message-queue/std",
 	"pallet-multisig/std",
+	"pallet-proxy/std",
 	"pallet-session/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
@@ -155,8 +157,10 @@ runtime-benchmarks = [
 	"pallet-collator-selection/runtime-benchmarks",
 	"pallet-message-queue/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
+	"pallet-proxy/runtime-benchmarks",
 	"pallet-sudo/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
 	"pallet-xcm-benchmarks/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
@@ -185,6 +189,7 @@ try-runtime = [
 	"pallet-collator-selection/try-runtime",
 	"pallet-message-queue/try-runtime",
 	"pallet-multisig/try-runtime",
+	"pallet-proxy/try-runtime",
 	"pallet-session/try-runtime",
 	"pallet-sudo/try-runtime",
 	"pallet-timestamp/try-runtime",
@@ -206,4 +211,4 @@ metadata-hash = ["substrate-wasm-builder/metadata-hash"]
 # A feature that should be enabled when the runtime should be built for on-chain
 # deployment. This will disable stuff that shouldn't be part of the on-chain wasm
 # to make it smaller, like logging for example.
-on-chain-release-build = ["metadata-hash", "sp-api/disable-logging"]
+on-chain-release-build = ["metadata-hash"]

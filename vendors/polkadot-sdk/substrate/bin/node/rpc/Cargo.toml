@@ -2,10 +2,10 @@
 name = "node-rpc"
 version = "3.0.0"
 authors.workspace = true
-description = "Substrate node rpc methods. (polkadot v1.15.0)"
+description = "Substrate node rpc methods."
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
 publish = false
 
@@ -45,10 +45,6 @@ sc-mixnet.workspace = true
 sc-mixnet.default-features = true
 sc-rpc.workspace = true
 sc-rpc.default-features = true
-sc-rpc-api.workspace = true
-sc-rpc-api.default-features = true
-sc-rpc-spec-v2.workspace = true
-sc-rpc-spec-v2.default-features = true
 sc-sync-state-rpc.workspace = true
 sc-sync-state-rpc.default-features = true
 sc-transaction-pool-api.workspace = true

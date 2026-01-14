@@ -23,6 +23,10 @@ use frame_benchmarking::{v2::*, BenchmarkError};
 use frame_system::{Pallet as System, RawOrigin};
 use sp_runtime::traits::One;
 
+fn assert_has_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
+	frame_system::Pallet::<T>::assert_has_event(generic_event.into());
+}
+
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
 }
@@ -149,7 +153,7 @@ mod benches {
 			Pallet::<T>::exec_migration(c, false, &mut meter);
 		}
 
-		assert_last_event::<T>(Event::UpgradeFailed {}.into());
+		assert_has_event::<T>(Event::UpgradeFailed {}.into());
 
 		Ok(())
 	}
@@ -158,7 +162,7 @@ mod benches {
 	fn on_init_loop() {
 		T::Migrations::set_fail_after(0); // Should not be called anyway.
 		System::<T>::set_block_number(1u32.into());
-		Pallet::<T>::on_runtime_upgrade();
+		<Pallet<T> as Hooks<BlockNumberFor<T>>>::on_runtime_upgrade();
 
 		#[block]
 		{

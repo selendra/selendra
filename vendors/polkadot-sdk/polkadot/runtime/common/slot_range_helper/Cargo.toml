@@ -1,10 +1,10 @@
 [package]
 name = "slot-range-helper"
-version = "15.0.0"
+version = "16.0.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Helper crate for generating slot ranges for the Polkadot runtime. (polkadot v1.15.0)"
+description = "Helper crate for generating slot ranges for the Polkadot runtime."
 
 [lints]
 workspace = true

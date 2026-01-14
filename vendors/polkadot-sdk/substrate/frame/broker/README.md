@@ -28,4 +28,4 @@ price fixed, unsold assigned to instapool, system cores reserved -/
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

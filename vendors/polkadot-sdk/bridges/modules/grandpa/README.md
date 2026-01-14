@@ -103,4 +103,4 @@ It is the finality relay - you may look at the [crate level documentation and th
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

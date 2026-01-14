@@ -5,9 +5,8 @@ authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
 publish = false
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "frame-support-test (polkadot v1.15.0)"
 
 [lints]
 workspace = true
@@ -20,7 +19,7 @@ static_assertions = { workspace = true, default-features = true }
 serde = { features = ["derive"], workspace = true }
 codec = { features = ["derive"], workspace = true }
 scale-info = { features = ["derive"], workspace = true }
-frame-metadata = { features = ["current"], workspace = true }
+frame-metadata = { features = ["current", "unstable"], workspace = true }
 sp-api.workspace = true
 sp-arithmetic.workspace = true
 sp-io.workspace = true
@@ -59,10 +58,7 @@ std = [
 	"sp-version/std",
 	"test-pallet/std",
 ]
-experimental = [
-	"frame-support/experimental",
-	"frame-system/experimental",
-]
+experimental = ["frame-support/experimental", "frame-system/experimental"]
 try-runtime = [
 	"frame-executive/try-runtime",
 	"frame-support/try-runtime",

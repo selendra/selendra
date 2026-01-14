@@ -78,6 +78,7 @@ fn create_approved_proposals<T: Config<I>, I: 'static>(n: u32) -> Result<(), &'s
 	for i in 0..n {
 		let (_, value, lookup) = setup_proposal::<T, I>(i);
 
+		#[allow(deprecated)]
 		if let Ok(origin) = &spender {
 			Treasury::<T, I>::spend_local(origin.clone(), value, lookup)?;
 		}
@@ -86,7 +87,6 @@ fn create_approved_proposals<T: Config<I>, I: 'static>(n: u32) -> Result<(), &'s
 	if spender.is_ok() {
 		ensure!(Approvals::<T, I>::get().len() == n as usize, "Not all approved");
 	}
-
 	Ok(())
 }
 
@@ -137,8 +137,9 @@ mod benchmarks {
 		let (spend_exists, proposal_id) =
 			if let Ok(origin) = T::SpendOrigin::try_successful_origin() {
 				let (_, value, beneficiary_lookup) = setup_proposal::<T, _>(SEED);
+				#[allow(deprecated)]
 				Treasury::<T, _>::spend_local(origin, value, beneficiary_lookup)?;
-				let proposal_id = Treasury::<T, _>::proposal_count() - 1;
+				let proposal_id = ProposalCount::<T, _>::get() - 1;
 
 				(true, proposal_id)
 			} else {
@@ -150,8 +151,8 @@ mod benchmarks {
 
 		#[block]
 		{
-			let res =
-				Treasury::<T, _>::remove_approval(reject_origin as T::RuntimeOrigin, proposal_id);
+			#[allow(deprecated)]
+			let res = Treasury::<T, _>::remove_approval(reject_origin as T::RuntimeOrigin, proposal_id);
 
 			if spend_exists {
 				assert_ok!(res);

@@ -1,12 +1,12 @@
 [package]
 name = "frame-metadata-hash-extension"
-version = "0.5.0"
+version = "0.7.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
 homepage.workspace = true
 repository.workspace = true
-description = "FRAME signed extension for verifying the metadata hash (polkadot v1.15.0)"
+description = "FRAME signed extension for verifying the metadata hash"
 
 [dependencies]
 array-bytes = { workspace = true, default-features = true }
@@ -17,6 +17,7 @@ frame-support.workspace = true
 frame-system.workspace = true
 log = { workspace = true }
 docify = { workspace = true }
+const-hex = { workspace = true }
 
 [dev-dependencies]
 substrate-wasm-builder = { features = ["metadata-hash"], default-features = true, path = "../../utils/wasm-builder" }
@@ -24,13 +25,14 @@ substrate-test-runtime-client = { path = "../../test-utils/runtime/client" }
 sp-api = { default-features = true, path = "../../primitives/api" }
 sp-transaction-pool = { default-features = true, path = "../../primitives/transaction-pool" }
 merkleized-metadata = { workspace = true }
-frame-metadata = { features = ["current"], workspace = true, default-features = true }
+frame-metadata = { features = ["current", "unstable"], workspace = true, default-features = true }
 sp-tracing = { default-features = true, path = "../../primitives/tracing" }
 
 [features]
 default = ["std"]
 std = [
 	"codec/std",
+	"const-hex/std",
 	"frame-support/std",
 	"frame-system/std",
 	"log/std",

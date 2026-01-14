@@ -5,4 +5,4 @@ Provides an API for looking up an agent ID on Ethereum.
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

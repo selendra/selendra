@@ -1,12 +1,12 @@
 [package]
 name = "pallet-mmr"
-version = "37.0.0"
+version = "39.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "FRAME Merkle Mountain Range pallet. (polkadot v1.15.0)"
+description = "FRAME Merkle Mountain Range pallet."
 
 [lints]
 workspace = true
@@ -28,7 +28,7 @@ sp-runtime.workspace = true
 
 [dev-dependencies]
 array-bytes = { workspace = true, default-features = true }
-env_logger = { workspace = true }
+sp-tracing = { default-features = true, path = "../../primitives/tracing" }
 itertools = { workspace = true }
 
 [features]

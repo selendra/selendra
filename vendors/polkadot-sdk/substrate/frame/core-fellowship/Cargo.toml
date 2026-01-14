@@ -1,12 +1,12 @@
 [package]
 name = "pallet-core-fellowship"
-version = "21.1.0"
+version = "23.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Logic as per the description of The Fellowship for core Polkadot technology (polkadot v1.15.0)"
+description = "Logic as per the description of The Fellowship for core Polkadot technology"
 readme = "README.md"
 
 [lints]

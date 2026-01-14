@@ -1,9 +1,9 @@
 [package]
 name = "bridge-hub-test-utils"
-version = "0.17.0"
+version = "0.21.1"
 authors.workspace = true
 edition.workspace = true
-description = "Utils for BridgeHub testing (polkadot v1.15.0)"
+description = "Utils for BridgeHub testing"
 license = "Apache-2.0"
 
 [lints]
@@ -20,6 +20,7 @@ sp-io.workspace = true
 sp-keyring.workspace = true
 sp-keyring.default-features = true
 sp-runtime.workspace = true
+sp-std.workspace = true
 sp-tracing.workspace = true
 sp-tracing.default-features = true
 pallet-balances.workspace = true
@@ -34,8 +35,10 @@ parachains-runtimes-test-utils.workspace = true
 xcm.workspace = true
 xcm-builder.workspace = true
 xcm-executor.workspace = true
+pallet-xcm.workspace = true
 bp-header-chain.workspace = true
 bp-messages.workspace = true
+bp-parachains.workspace = true
 bp-polkadot-core.workspace = true
 bp-relayers.workspace = true
 bp-runtime.workspace = true
@@ -44,7 +47,7 @@ pallet-bridge-grandpa.workspace = true
 pallet-bridge-parachains.workspace = true
 pallet-bridge-messages = { features = ["test-helpers"], workspace = true }
 pallet-bridge-relayers.workspace = true
-bridge-runtime-common.workspace = true
+pallet-xcm-bridge-hub.workspace = true
 
 [features]
 default = ["std"]
@@ -52,11 +55,11 @@ std = [
 	"asset-test-utils/std",
 	"bp-header-chain/std",
 	"bp-messages/std",
+	"bp-parachains/std",
 	"bp-polkadot-core/std",
 	"bp-relayers/std",
 	"bp-runtime/std",
 	"bp-test-utils/std",
-	"bridge-runtime-common/std",
 	"codec/std",
 	"cumulus-pallet-parachain-system/std",
 	"cumulus-pallet-xcmp-queue/std",
@@ -70,11 +73,14 @@ std = [
 	"pallet-bridge-relayers/std",
 	"pallet-timestamp/std",
 	"pallet-utility/std",
+	"pallet-xcm-bridge-hub/std",
+	"pallet-xcm/std",
 	"parachains-common/std",
 	"parachains-runtimes-test-utils/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
+	"sp-std/std",
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",

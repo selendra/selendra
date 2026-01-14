@@ -1,6 +1,6 @@
 [package]
 name = "xcm-executor-integration-tests"
-description = "Integration tests for the XCM Executor (polkadot v1.15.0)"
+description = "Integration tests for the XCM Executor"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -18,13 +18,15 @@ frame-system.default-features = true
 futures = { workspace = true }
 pallet-transaction-payment.workspace = true
 pallet-transaction-payment.default-features = true
+pallet-sudo.workspace = true
+pallet-sudo.default-features = true
 pallet-xcm.workspace = true
 pallet-xcm.default-features = true
+polkadot-runtime-parachains.workspace = true
+polkadot-runtime-parachains.default-features = true
 polkadot-test-client.workspace = true
 polkadot-test-runtime.workspace = true
 polkadot-test-service.workspace = true
-polkadot-service.workspace = true
-polkadot-service.default-features = true
 sp-consensus.workspace = true
 sp-consensus.default-features = true
 sp-keyring.workspace = true

@@ -1,10 +1,10 @@
 [package]
 name = "polkadot-node-collation-generation"
-version = "17.0.0"
+version = "21.0.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Collator-side subsystem that handles incoming candidate submissions from the parachain. (polkadot v1.15.0)"
+description = "Collator-side subsystem that handles incoming candidate submissions from the parachain."
 
 [lints]
 workspace = true
@@ -29,6 +29,7 @@ sp-maybe-compressed-blob.workspace = true
 sp-maybe-compressed-blob.default-features = true
 thiserror = { workspace = true }
 codec = { features = ["bit-vec", "derive"], workspace = true }
+schnellru = { workspace = true }
 
 [dev-dependencies]
 polkadot-node-subsystem-test-helpers = { path = "../subsystem-test-helpers" }
@@ -36,3 +37,4 @@ polkadot-primitives-test-helpers = { path = "../../primitives/test-helpers" }
 assert_matches = { workspace = true }
 rstest = { workspace = true }
 sp-keyring = { default-features = true, path = "../../../substrate/primitives/keyring" }
+polkadot-primitives = { features = ["test"], path = "../../primitives", default-features = false }

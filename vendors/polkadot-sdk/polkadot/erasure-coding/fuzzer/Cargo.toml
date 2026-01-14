@@ -5,7 +5,6 @@ authors.workspace = true
 edition.workspace = true
 license.workspace = true
 publish = false
-description = "erasure_coding_fuzzer (polkadot v1.15.0)"
 
 [lints]
 workspace = true

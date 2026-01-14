@@ -5,7 +5,7 @@ authors.workspace = true
 edition.workspace = true
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
 repository.workspace = true
-description = "Equivocation detector (polkadot v1.15.0)"
+description = "Equivocation detector"
 publish = false
 
 [lints]

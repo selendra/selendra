@@ -1,12 +1,12 @@
 [package]
 name = "sc-executor-polkavm"
-version = "0.32.0"
+version = "0.33.0"
 authors.workspace = true
 edition.workspace = true
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "PolkaVM executor for Substrate (polkadot v1.15.0)"
+description = "PolkaVM executor for Substrate"
 readme = "README.md"
 
 [lints]

@@ -82,9 +82,9 @@
 /// in practice at most once every few weeks.
 use polkadot_node_subsystem::messages::HypotheticalCandidate;
 use polkadot_primitives::{
-	async_backing::Constraints as PrimitiveConstraints, BlockNumber, CandidateCommitments,
-	CandidateHash, CollatorId, CollatorSignature, Hash, HeadData, Id as ParaId,
-	PersistedValidationData, UpgradeRestriction, ValidationCodeHash,
+	async_backing::Constraints as PrimitiveConstraints, vstaging::skip_ump_signals, BlockNumber,
+	CandidateCommitments, CandidateHash, Hash, HeadData, Id as ParaId, PersistedValidationData,
+	UpgradeRestriction, ValidationCodeHash,
 };
 use std::{collections::HashMap, sync::Arc};
 
@@ -431,9 +431,9 @@ pub struct ConstraintModifications {
 	pub hrmp_watermark: Option<HrmpWatermarkUpdate>,
 	/// Outbound HRMP channel modifications.
 	pub outbound_hrmp: HashMap<ParaId, OutboundHrmpChannelModification>,
-	/// The amount of UMP messages sent.
+	/// The amount of UMP XCM messages sent. `UMPSignal` and separator are excluded.
 	pub ump_messages_sent: usize,
-	/// The amount of UMP bytes sent.
+	/// The amount of UMP XCM bytes sent. `UMPSignal` and separator are excluded.
 	pub ump_bytes_sent: usize,
 	/// The amount of DMP messages processed.
 	pub dmp_messages_processed: usize,
@@ -486,18 +486,13 @@ impl ConstraintModifications {
 /// The prospective candidate.
 ///
 /// This comprises the key information that represent a candidate
-/// without pinning it to a particular session. For example, everything
-/// to do with the collator's signature and commitments are represented
-/// here. But the erasure-root is not. This means that prospective candidates
+/// without pinning it to a particular session. For example commitments are
+/// represented here. But the erasure-root is not. This means that prospective candidates
 /// are not correlated to any session in particular.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ProspectiveCandidate {
 	/// The commitments to the output of the execution.
 	pub commitments: CandidateCommitments,
-	/// The collator that created the candidate.
-	pub collator: CollatorId,
-	/// The signature of the collator on the payload.
-	pub collator_signature: CollatorSignature,
 	/// The persisted validation data used to create the candidate.
 	pub persisted_validation_data: PersistedValidationData,
 	/// The hash of the PoV.
@@ -605,6 +600,13 @@ impl Fragment {
 		validation_code_hash: &ValidationCodeHash,
 		persisted_validation_data: &PersistedValidationData,
 	) -> Result<ConstraintModifications, FragmentValidityError> {
+		// Filter UMP signals and the separator.
+		let upward_messages =
+			skip_ump_signals(commitments.upward_messages.iter()).collect::<Vec<_>>();
+
+		let ump_messages_sent = upward_messages.len();
+		let ump_bytes_sent = upward_messages.iter().map(|msg| msg.len()).sum();
+
 		let modifications = {
 			ConstraintModifications {
 				required_parent: Some(commitments.head_data.clone()),
@@ -637,8 +639,8 @@ impl Fragment {
 
 					outbound_hrmp
 				},
-				ump_messages_sent: commitments.upward_messages.len(),
-				ump_bytes_sent: commitments.upward_messages.iter().map(|msg| msg.len()).sum(),
+				ump_messages_sent,
+				ump_bytes_sent,
 				dmp_messages_processed: commitments.processed_downward_messages as _,
 				code_upgrade_applied: operating_constraints
 					.future_validation_code
@@ -755,7 +757,7 @@ fn validate_against_constraints(
 		})
 	}
 
-	if commitments.upward_messages.len() > constraints.max_ump_num_per_candidate {
+	if modifications.ump_messages_sent > constraints.max_ump_num_per_candidate {
 		return Err(FragmentValidityError::UmpMessagesPerCandidateOverflow {
 			messages_allowed: constraints.max_ump_num_per_candidate,
 			messages_submitted: commitments.upward_messages.len(),
@@ -775,7 +777,7 @@ pub trait HypotheticalOrConcreteCandidate {
 	/// Return a reference to the persisted validation data, if present.
 	fn persisted_validation_data(&self) -> Option<&PersistedValidationData>;
 	/// Return a reference to the validation code hash, if present.
-	fn validation_code_hash(&self) -> Option<&ValidationCodeHash>;
+	fn validation_code_hash(&self) -> Option<ValidationCodeHash>;
 	/// Return the parent head hash.
 	fn parent_head_data_hash(&self) -> Hash;
 	/// Return the output head hash, if present.
@@ -795,7 +797,7 @@ impl HypotheticalOrConcreteCandidate for HypotheticalCandidate {
 		self.persisted_validation_data()
 	}
 
-	fn validation_code_hash(&self) -> Option<&ValidationCodeHash> {
+	fn validation_code_hash(&self) -> Option<ValidationCodeHash> {
 		self.validation_code_hash()
 	}
 
@@ -819,10 +821,11 @@ impl HypotheticalOrConcreteCandidate for HypotheticalCandidate {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use codec::Encode;
 	use polkadot_primitives::{
-		CollatorPair, HorizontalMessages, OutboundHrmpMessage, ValidationCode,
+		vstaging::{ClaimQueueOffset, CoreSelector, UMPSignal, UMP_SEPARATOR},
+		HorizontalMessages, OutboundHrmpMessage, ValidationCode,
 	};
-	use sp_application_crypto::Pair;
 
 	#[test]
 	fn stack_modifications() {
@@ -1181,11 +1184,6 @@ mod tests {
 		constraints: &Constraints,
 		relay_parent: &RelayChainBlockInfo,
 	) -> ProspectiveCandidate {
-		let collator_pair = CollatorPair::generate().0;
-		let collator = collator_pair.public();
-
-		let sig = collator_pair.sign(b"blabla".as_slice());
-
 		ProspectiveCandidate {
 			commitments: CandidateCommitments {
 				upward_messages: Default::default(),
@@ -1195,8 +1193,6 @@ mod tests {
 				processed_downward_messages: 0,
 				hrmp_watermark: relay_parent.number,
 			},
-			collator,
-			collator_signature: sig,
 			persisted_validation_data: PersistedValidationData {
 				parent_head: constraints.required_parent.clone(),
 				relay_parent_number: relay_parent.number,
@@ -1280,6 +1276,35 @@ mod tests {
 			Fragment::new(relay_parent, constraints, Arc::new(candidate.clone())),
 			Err(FragmentValidityError::CodeSizeTooLarge(max_code_size, max_code_size + 1,)),
 		);
+	}
+
+	#[test]
+	fn ump_signals_ignored() {
+		let relay_parent = RelayChainBlockInfo {
+			number: 6,
+			hash: Hash::repeat_byte(0xbe),
+			storage_root: Hash::repeat_byte(0xff),
+		};
+
+		let constraints = make_constraints();
+		let mut candidate = make_candidate(&constraints, &relay_parent);
+		let max_ump = constraints.max_ump_num_per_candidate;
+
+		// Fill ump queue to the limit.
+		candidate
+			.commitments
+			.upward_messages
+			.try_extend((0..max_ump).map(|i| vec![i as u8]))
+			.unwrap();
+
+		// Add ump signals.
+		candidate.commitments.upward_messages.force_push(UMP_SEPARATOR);
+		candidate
+			.commitments
+			.upward_messages
+			.force_push(UMPSignal::SelectCore(CoreSelector(0), ClaimQueueOffset(1)).encode());
+
+		Fragment::new(relay_parent, constraints, Arc::new(candidate)).unwrap();
 	}
 
 	#[test]

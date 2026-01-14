@@ -1,9 +1,9 @@
 [package]
 name = "cumulus-pallet-aura-ext"
-version = "0.16.0"
+version = "0.18.0"
 authors.workspace = true
 edition.workspace = true
-description = "AURA consensus extension pallet for parachains (polkadot v1.15.0)"
+description = "AURA consensus extension pallet for parachains"
 license = "Apache-2.0"
 
 [lints]

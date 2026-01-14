@@ -1,12 +1,12 @@
 [package]
 name = "substrate-rpc-client"
-version = "0.43.0"
+version = "0.47.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "Shared JSON-RPC client (polkadot v1.15.0)"
+description = "Shared JSON-RPC client"
 
 [lints]
 workspace = true

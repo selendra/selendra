@@ -1,12 +1,12 @@
 // Copyright (C) Parity Technologies (UK) Ltd.
 // This file is part of Polkadot.
 
-// Substrate is free software: you can redistribute it and/or modify
+// Polkadot is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Substrate is distributed in the hope that it will be useful,
+// Polkadot is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
@@ -17,12 +17,11 @@
 //! Mock runtime for tests.
 //! Implements both runtime APIs for fee estimation and getting the messages for transfers.
 
-use codec::Encode;
 use core::{cell::RefCell, marker::PhantomData};
 use frame_support::{
 	construct_runtime, derive_impl, parameter_types, sp_runtime,
 	sp_runtime::{
-		traits::{Dispatchable, Get, IdentityLookup, MaybeEquivalence, TryConvert},
+		traits::{Get, IdentityLookup, MaybeEquivalence, TryConvert},
 		BuildStorage, SaturatedConversion,
 	},
 	traits::{
@@ -36,8 +35,8 @@ use pallet_xcm::TestWeightInfo;
 use xcm::{prelude::*, Version as XcmVersion};
 use xcm_builder::{
 	AllowTopLevelPaidExecutionFrom, ConvertedConcreteId, EnsureXcmOrigin, FixedRateOfFungible,
-	FixedWeightBounds, FungibleAdapter, FungiblesAdapter, IsConcrete, MintLocation, NoChecking,
-	TakeWeightCredit,
+	FixedWeightBounds, FungibleAdapter, FungiblesAdapter, InspectMessageQueues, IsConcrete,
+	MintLocation, NoChecking, TakeWeightCredit,
 };
 use xcm_executor::{
 	traits::{ConvertLocation, JustTry},
@@ -48,7 +47,9 @@ use xcm_runtime_apis::{
 	conversions::{Error as LocationToAccountApiError, LocationToAccountApi},
 	dry_run::{CallDryRunEffects, DryRunApi, Error as XcmDryRunApiError, XcmDryRunEffects},
 	fees::{Error as XcmPaymentApiError, XcmPaymentApi},
+	trusted_query::{Error as TrustedQueryApiError, TrustedQueryApi},
 };
+use xcm_simulator::helpers::derive_topic_id;
 
 construct_runtime! {
 	pub enum TestRuntime {
@@ -59,9 +60,16 @@ construct_runtime! {
 	}
 }
 
-pub type SignedExtra = (frame_system::CheckWeight<TestRuntime>,);
-pub type TestXt = sp_runtime::testing::TestXt<RuntimeCall, SignedExtra>;
-type Block = sp_runtime::testing::Block<TestXt>;
+pub type TxExtension = (frame_system::CheckWeight<TestRuntime>,);
+
+// we only use the hash type from this, so using the mock should be fine.
+pub(crate) type Extrinsic = sp_runtime::generic::UncheckedExtrinsic<
+	u64,
+	RuntimeCall,
+	sp_runtime::testing::UintAuthorityId,
+	TxExtension,
+>;
+type Block = sp_runtime::testing::Block<Extrinsic>;
 type Balance = u128;
 type AssetIdForAssetsPallet = u32;
 type AccountId = u64;
@@ -102,10 +110,6 @@ thread_local! {
 	pub static SENT_XCM: RefCell<Vec<(Location, Xcm<()>)>> = const { RefCell::new(Vec::new()) };
 }
 
-pub(crate) fn sent_xcm() -> Vec<(Location, Xcm<()>)> {
-	SENT_XCM.with(|q| (*q.borrow()).clone())
-}
-
 pub struct TestXcmSender;
 impl SendXcm for TestXcmSender {
 	type Ticket = (Location, Xcm<()>);
@@ -118,14 +122,30 @@ impl SendXcm for TestXcmSender {
 		Ok((ticket, fees))
 	}
 	fn deliver(ticket: Self::Ticket) -> Result<XcmHash, SendError> {
-		let hash = fake_message_hash(&ticket.1);
+		let hash = derive_topic_id(&ticket.1);
 		SENT_XCM.with(|q| q.borrow_mut().push(ticket));
 		Ok(hash)
 	}
 }
+impl InspectMessageQueues for TestXcmSender {
+	fn clear_messages() {
+		SENT_XCM.with(|q| q.borrow_mut().clear());
+	}
 
-pub(crate) fn fake_message_hash<Call>(message: &Xcm<Call>) -> XcmHash {
-	message.using_encoded(sp_io::hashing::blake2_256)
+	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+		SENT_XCM.with(|q| {
+			(*q.borrow())
+				.clone()
+				.iter()
+				.map(|(location, message)| {
+					(
+						VersionedLocation::from(location.clone()),
+						vec![VersionedXcm::from(message.clone())],
+					)
+				})
+				.collect()
+		})
+	}
 }
 
 pub type XcmRouter = TestXcmSender;
@@ -136,7 +156,7 @@ parameter_types! {
 	pub const BaseXcmWeight: Weight = Weight::from_parts(100, 10); // Random value.
 	pub const MaxInstructions: u32 = 100;
 	pub const NativeTokenPerSecondPerByte: (AssetId, u128, u128) = (AssetId(HereLocation::get()), 1, 1);
-	pub UniversalLocation: InteriorLocation = [GlobalConsensus(NetworkId::Westend), Parachain(2000)].into();
+	pub UniversalLocation: InteriorLocation = [GlobalConsensus(NetworkId::ByGenesis([0; 32])), Parachain(2000)].into();
 	pub const HereLocation: Location = Location::here();
 	pub const RelayLocation: Location = Location::parent();
 	pub const MaxAssetsIntoHolding: u32 = 64;
@@ -413,6 +433,16 @@ impl sp_api::ProvideRuntimeApi<Block> for TestClient {
 }
 
 sp_api::mock_impl_runtime_apis! {
+	impl TrustedQueryApi<Block> for RuntimeApi {
+		fn is_trusted_reserve(asset: VersionedAsset, location: VersionedLocation) -> Result<bool, TrustedQueryApiError> {
+			XcmPallet::is_trusted_reserve(asset, location)
+		}
+
+		fn is_trusted_teleporter(asset: VersionedAsset, location: VersionedLocation) -> Result<bool, TrustedQueryApiError> {
+			XcmPallet::is_trusted_teleporter(asset, location)
+		}
+	}
+
 	impl LocationToAccountApi<Block, AccountId> for RuntimeApi {
 		fn convert_location(location: VersionedLocation) -> Result<AccountId, LocationToAccountApiError> {
 			let location = location.try_into().map_err(|_| LocationToAccountApiError::VersionedConversionFailed)?;
@@ -463,64 +493,23 @@ sp_api::mock_impl_runtime_apis! {
 	}
 
 	impl DryRunApi<Block, RuntimeCall, RuntimeEvent, OriginCaller> for RuntimeApi {
-		fn dry_run_call(origin: OriginCaller, call: RuntimeCall) -> Result<CallDryRunEffects<RuntimeEvent>, XcmDryRunApiError> {
-			use xcm_executor::RecordXcm;
-			pallet_xcm::Pallet::<TestRuntime>::set_record_xcm(true);
-			let result = call.dispatch(origin.into());
-			pallet_xcm::Pallet::<TestRuntime>::set_record_xcm(false);
-			let local_xcm = pallet_xcm::Pallet::<TestRuntime>::recorded_xcm();
-			let forwarded_xcms = sent_xcm()
-							   .into_iter()
-							   .map(|(location, message)| (
-									   VersionedLocation::from(location),
-									   vec![VersionedXcm::from(message)],
-							   )).collect();
-			let events: Vec<RuntimeEvent> = System::read_events_no_consensus().map(|record| record.event.clone()).collect();
-			Ok(CallDryRunEffects {
-				local_xcm: local_xcm.map(VersionedXcm::<()>::from),
-				forwarded_xcms,
-				emitted_events: events,
-				execution_result: result,
-			})
+		fn dry_run_call(
+			origin: OriginCaller,
+			call: RuntimeCall,
+			result_xcms_version: XcmVersion,
+		) -> Result<CallDryRunEffects<RuntimeEvent>, XcmDryRunApiError> {
+			pallet_xcm::Pallet::<TestRuntime>::dry_run_call::<TestRuntime, XcmRouter, OriginCaller, RuntimeCall>(origin, call, result_xcms_version)
+		}
+
+		fn dry_run_call_before_version_2(
+			origin: OriginCaller,
+			call: RuntimeCall,
+		) -> Result<CallDryRunEffects<RuntimeEvent>, XcmDryRunApiError> {
+			pallet_xcm::Pallet::<TestRuntime>::dry_run_call::<TestRuntime, XcmRouter, OriginCaller, RuntimeCall>(origin, call, xcm::latest::VERSION)
 		}
 
 		fn dry_run_xcm(origin_location: VersionedLocation, xcm: VersionedXcm<RuntimeCall>) -> Result<XcmDryRunEffects<RuntimeEvent>, XcmDryRunApiError> {
-			let origin_location: Location = origin_location.try_into().map_err(|error| {
-				log::error!(
-					target: "xcm::DryRunApi::dry_run_xcm",
-					"Location version conversion failed with error: {:?}",
-					error,
-				);
-				XcmDryRunApiError::VersionedConversionFailed
-			})?;
-			let xcm: Xcm<RuntimeCall> = xcm.try_into().map_err(|error| {
-				log::error!(
-					target: "xcm::DryRunApi::dry_run_xcm",
-					"Xcm version conversion failed with error {:?}",
-					error,
-				);
-				XcmDryRunApiError::VersionedConversionFailed
-			})?;
-			let mut hash = fake_message_hash(&xcm);
-			let result = XcmExecutor::<XcmConfig>::prepare_and_execute(
-				origin_location,
-				xcm,
-				&mut hash,
-				Weight::MAX, // Max limit available for execution.
-				Weight::zero(),
-			);
-			let forwarded_xcms = sent_xcm()
-				.into_iter()
-				.map(|(location, message)| (
-					VersionedLocation::from(location),
-					vec![VersionedXcm::from(message)],
-				)).collect();
-			let events: Vec<RuntimeEvent> = System::events().iter().map(|record| record.event.clone()).collect();
-			Ok(XcmDryRunEffects {
-				forwarded_xcms,
-				emitted_events: events,
-				execution_result: result,
-			})
+			pallet_xcm::Pallet::<TestRuntime>::dry_run_xcm::<TestRuntime, XcmRouter, RuntimeCall, XcmConfig>(origin_location, xcm)
 		}
 	}
 }

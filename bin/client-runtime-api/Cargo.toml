@@ -33,6 +33,9 @@ sp-inherents = { workspace = true }
 primitives = { workspace = true }
 pallet-aleph-runtime-api = { workspace = true }
 
+frame-try-runtime = { workspace = true, optional = true }
+frame-benchmarking = { workspace = true, optional = true }
+
 [features]
 default = ["std"]
 std = [
@@ -43,3 +46,5 @@ std = [
     "fp-rpc/std",
 ]
 short_session = []
+try-runtime = ["frame-try-runtime"]
+runtime-benchmarks = ["frame-benchmarking"]

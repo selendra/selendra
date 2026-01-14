@@ -1,11 +1,11 @@
 [package]
 name = "xcm-runtime-apis"
-version = "0.3.1"
+version = "0.5.3"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
 repository.workspace = true
-description = "XCM runtime APIs (polkadot v1.15.0)"
+description = "XCM runtime APIs"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -30,7 +30,8 @@ pallet-assets = { path = "../../../substrate/frame/assets", default-features = f
 xcm-executor = { path = "../xcm-executor", package = "staging-xcm-executor", default-features = false }
 frame-executive = { path = "../../../substrate/frame/executive", default-features = false }
 log = { workspace = true }
-env_logger = { workspace = true }
+sp-tracing = { default-features = true, path = "../../../substrate/primitives/tracing" }
+xcm-simulator = { default-features = true, path = "../xcm-simulator" }
 
 [features]
 default = ["std"]

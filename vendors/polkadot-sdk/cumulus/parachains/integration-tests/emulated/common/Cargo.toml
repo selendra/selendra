@@ -1,10 +1,10 @@
 [package]
 name = "emulated-integration-tests-common"
-version = "13.2.0"
+version = "19.1.1"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-description = "Common resources for integration testing with xcm-emulator (polkadot v1.15.0)"
+description = "Common resources for integration testing with xcm-emulator"
 
 [lints]
 workspace = true
@@ -26,6 +26,8 @@ sp-core.workspace = true
 sp-core.default-features = true
 sp-consensus-babe.workspace = true
 sp-consensus-babe.default-features = true
+sp-keyring.workspace = true
+sp-keyring.default-features = true
 pallet-assets.workspace = true
 pallet-assets.default-features = true
 pallet-balances.workspace = true
@@ -40,14 +42,17 @@ polkadot-runtime-parachains.workspace = true
 polkadot-runtime-parachains.default-features = true
 xcm.workspace = true
 xcm.default-features = true
-pallet-xcm.workspace = true
-pallet-xcm.default-features = true
+pallet-xcm = { features = ["test-utils"], workspace = true, default-features = true }
+xcm-executor.workspace = true
+xcm-executor.default-features = true
 parachains-common.workspace = true
 parachains-common.default-features = true
 cumulus-primitives-core.workspace = true
 cumulus-primitives-core.default-features = true
 xcm-emulator.workspace = true
 xcm-emulator.default-features = true
+xcm-simulator.workspace = true
+xcm-simulator.default-features = true
 cumulus-pallet-xcmp-queue.workspace = true
 cumulus-pallet-xcmp-queue.default-features = true
 cumulus-pallet-parachain-system.workspace = true
@@ -56,7 +61,9 @@ asset-test-utils.workspace = true
 asset-test-utils.default-features = true
 bp-messages.workspace = true
 bp-messages.default-features = true
+bp-xcm-bridge-hub.workspace = true
+bp-xcm-bridge-hub.default-features = true
 pallet-bridge-messages.workspace = true
 pallet-bridge-messages.default-features = true
-bridge-runtime-common.workspace = true
-bridge-runtime-common.default-features = true
+pallet-xcm-bridge-hub.workspace = true
+pallet-xcm-bridge-hub.default-features = true

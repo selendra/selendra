@@ -4,7 +4,7 @@ version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-description = "Collectives Westend runtime integration tests with xcm-emulator (polkadot v1.15.0)"
+description = "Collectives Westend runtime integration tests with xcm-emulator"
 publish = false
 
 [lints]
@@ -21,6 +21,7 @@ pallet-assets.workspace = true
 pallet-treasury.workspace = true
 pallet-message-queue.workspace = true
 pallet-utility.workspace = true
+pallet-whitelist.workspace = true
 polkadot-runtime-common.workspace = true
 polkadot-runtime-common.default-features = true
 xcm.workspace = true

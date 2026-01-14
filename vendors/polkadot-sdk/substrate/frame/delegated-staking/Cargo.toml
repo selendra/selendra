@@ -1,12 +1,12 @@
 [package]
 name = "pallet-delegated-staking"
-version = "4.0.0"
+version = "6.1.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
-homepage = "https://substrate.io"
+homepage.workspace = true
 repository.workspace = true
-description = "FRAME delegated staking pallet (polkadot v1.15.0)"
+description = "FRAME delegated staking pallet"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -18,6 +18,8 @@ frame-system.workspace = true
 scale-info = { features = ["derive"], workspace = true }
 sp-runtime.workspace = true
 sp-staking.workspace = true
+sp-io.workspace = true
+log = { workspace = true }
 
 [dev-dependencies]
 sp-core = { default-features = true, path = "../../primitives/core" }
@@ -37,7 +39,9 @@ std = [
 	"codec/std",
 	"frame-support/std",
 	"frame-system/std",
+	"log/std",
 	"scale-info/std",
+	"sp-io/std",
 	"sp-runtime/std",
 	"sp-staking/std",
 ]

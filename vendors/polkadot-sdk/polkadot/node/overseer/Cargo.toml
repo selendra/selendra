@@ -1,10 +1,10 @@
 [package]
 name = "polkadot-overseer"
-version = "17.0.0"
+version = "21.1.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "System overseer of the Polkadot node (polkadot v1.15.0)"
+description = "System overseer of the Polkadot node"
 
 [lints]
 workspace = true

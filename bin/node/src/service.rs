@@ -46,7 +46,8 @@ use crate::{
 pub type SelendraExecutor = selendra_executor::Executor;
 pub type FullClient = sc_service::TFullClient<Block, RuntimeApi, SelendraExecutor>;
 pub type FullBackend = sc_service::TFullBackend<Block>;
-type FullPool = sc_transaction_pool::FullPool<Block, FullClient>;
+type FullChainApi = sc_transaction_pool::FullChainApi<FullClient, Block>;
+type FullPool = sc_transaction_pool::BasicPool<FullChainApi, Block>;
 type FullImportQueue = sc_consensus::DefaultImportQueue<Block>;
 type FullProposerFactory = ProposerFactory<FullPool, FullClient, DisableProofRecording>;
 
@@ -135,13 +136,13 @@ pub fn new_partial(
 
 	let select_chain_provider = FavouriteSelectChainProvider::default();
 
-	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
-		config.transaction_pool.clone(),
+	let transaction_pool = Arc::new(sc_transaction_pool::BasicPool::new_full(
+		sc_transaction_pool::Options::default(),
 		config.role.is_authority().into(),
 		config.prometheus_registry(),
 		task_manager.spawn_essential_handle(),
 		client.clone(),
-	);
+	));
 	let justification_translator = JustificationTranslator::new(
 		SubstrateChainStatus::new(backend.clone())
 			.map_err(|e| ServiceError::Other(format!("failed to set up chain status: {e}")))?,
@@ -299,7 +300,7 @@ impl Link<Block> for NoopLink {}
 
 /// Builds a new service for a full client.
 pub async fn new_authority(
-	mut config: Configuration,
+	config: Configuration,
 	aleph_config: AlephCli,
 	eth_config: EthConfiguration,
 ) -> Result<TaskManager, ServiceError> {
@@ -387,9 +388,6 @@ pub async fn new_authority(
 	> = Default::default();
 	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
 
-	// for ethereum-compatibility rpc.
-	config.rpc_id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
-
 	let chain_status = SubstrateChainStatus::new(service_components.backend.clone())
 		.map_err(|e| ServiceError::Other(format!("failed to set up chain status: {e}")))?;
 	let validator_address_cache = get_validator_address_cache(&aleph_config);
@@ -434,11 +432,11 @@ pub async fn new_authority(
 			Ok((slot, timestamp, dynamic_fee))
 		};
 
-		Box::new(move |deny_unsafe, subscription_task_executor| {
+		Box::new(move |subscription_task_executor| {
 			let eth_deps = crate::rpc::EthDeps {
 				client: client.clone(),
 			pool: pool.clone(),
-			graph: pool.pool().clone(),
+			graph: pool.clone(),
 			converter: Some(TransactionConverter),
 			is_authority,
 			enable_dev_signer,
@@ -461,7 +459,6 @@ pub async fn new_authority(
 			let deps = RpcFullDeps {
 				client: client.clone(),
 				pool: pool.clone(),
-				deny_unsafe,
 				import_justification_tx: import_justification_tx.clone(),
 				justification_translator: JustificationTranslator::new(chain_status.clone()),
 				sync_oracle: sync_oracle.clone(),
@@ -494,7 +491,7 @@ pub async fn new_authority(
 	service_components.task_manager.spawn_handle().spawn(
 		"import-queue",
 		None,
-		service_components.import_queue.run(Box::new(NoopLink)),
+		service_components.import_queue.run(&NoopLink),
 	);
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {

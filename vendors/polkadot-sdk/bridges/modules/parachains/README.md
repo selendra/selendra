@@ -92,4 +92,4 @@ It is the parachains relay - you may look at the [crate level documentation and 
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412

@@ -1,6 +1,6 @@
 [package]
 name = "polkadot-subsystem-bench"
-description = "Subsystem performance benchmark client (polkadot v1.15.0)"
+description = "Subsystem performance benchmark client"
 version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
@@ -19,7 +19,12 @@ path = "src/cli/subsystem-bench.rs"
 # Prevent rustdoc error. Already documented from top-level Cargo.toml.
 doc = false
 
+
 [dependencies]
+tikv-jemallocator = { features = ["profiling", "unprefixed_malloc_on_supported_platforms"], workspace = true, optional = true }
+jemalloc_pprof = { workspace = true, optional = true }
+polkadot-service.workspace = true
+polkadot-service.default-features = true
 polkadot-node-subsystem.workspace = true
 polkadot-node-subsystem.default-features = true
 polkadot-node-subsystem-util.workspace = true
@@ -28,8 +33,7 @@ polkadot-node-subsystem-types.workspace = true
 polkadot-node-subsystem-types.default-features = true
 polkadot-node-primitives.workspace = true
 polkadot-node-primitives.default-features = true
-polkadot-primitives.workspace = true
-polkadot-primitives.default-features = true
+polkadot-primitives = { workspace = true, features = ["test"] }
 polkadot-node-network-protocol.workspace = true
 polkadot-node-network-protocol.default-features = true
 polkadot-availability-recovery = { features = ["subsystem-benchmarks"], workspace = true, default-features = true }
@@ -66,7 +70,7 @@ gum.default-features = true
 polkadot-erasure-coding.workspace = true
 polkadot-erasure-coding.default-features = true
 log = { workspace = true, default-features = true }
-env_logger = { workspace = true }
+sp-tracing.workspace = true
 rand = { workspace = true, default-features = true }
 # `rand` only supports uniform distribution, we need normal distribution for latency.
 rand_distr = { workspace = true }
@@ -101,6 +105,8 @@ serde_yaml = { workspace = true }
 serde_json = { workspace = true }
 polkadot-node-core-approval-voting.workspace = true
 polkadot-node-core-approval-voting.default-features = true
+polkadot-node-core-approval-voting-parallel.workspace = true
+polkadot-node-core-approval-voting-parallel.default-features = true
 polkadot-approval-distribution.workspace = true
 polkadot-approval-distribution.default-features = true
 sp-consensus-babe.workspace = true
@@ -121,3 +127,7 @@ strum = { features = ["derive"], workspace = true, default-features = true }
 
 [features]
 default = []
+memprofile = [
+	"dep:jemalloc_pprof",
+	"dep:tikv-jemallocator",
+]

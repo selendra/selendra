@@ -11,4 +11,4 @@ cargo build --bin polkadot-execute-worker --bin polkadot-prepare-worker
 
 ## Release
 
-polkadot v1.15.0
+Polkadot SDK Stable 2412
