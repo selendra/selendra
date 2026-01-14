@@ -1335,9 +1335,12 @@ pub type Executive = frame_executive::Executive<
 	Migrations,
 >;
 
-pub type Migrations = (
-	pallet_contracts::Migration<Runtime>,
-);
+/// Runtime migrations.
+/// 
+/// NOTE: If you encounter `invalid_version` panic during runtime upgrade,
+/// it means the on-chain storage version doesn't match what the migration expects.
+/// Either remove the migration (if pallet is unused) or provide the correct version.
+pub type Migrations = ();
 
 #[derive(Clone)]
 pub struct TransactionConverter;
