@@ -33,3 +33,5 @@ pub mod treasury;
 pub mod utility;
 /// Pallet vesting API
 pub mod vesting;
+/// Pallet unified accounts API for native ↔ EVM account mapping
+pub mod unified_accounts;

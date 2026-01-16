@@ -1,0 +1,44 @@
+[package]
+name = "selendra-unified-accounts"
+version = "1.0.0"
+edition = "2021"
+description = "CLI tool for binding Substrate accounts to EVM accounts on Selendra"
+license = "Apache-2.0"
+repository = "https://github.com/selendra/selendra"
+keywords = ["blockchain", "substrate", "selendra", "evm", "unified-accounts"]
+categories = ["cryptography::cryptocurrencies", "command-line-utilities"]
+
+[[bin]]
+name = "unified-accounts"
+path = "src/main.rs"
+
+[dependencies]
+# CLI
+clap = { version = "4.4", features = ["derive", "env"] }
+tokio = { version = "1.34", features = ["full"] }
+
+# Substrate/Polkadot - use same versions as subxt 0.30.1
+sp-core = { version = "21.0.0", default-features = false, features = ["std"] }
+sp-core-hashing = { version = "9.0.0", default-features = false, features = ["std"] }
+codec = { package = "parity-scale-codec", version = "3.6.1", features = ["derive"] }
+subxt = { version = "0.30.1", features = ["substrate-compat"] }
+
+# Crypto
+libsecp256k1 = { version = "0.7", default-features = false, features = ["std", "hmac"] }
+hex = { version = "0.4", features = ["alloc"] }
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging
+env_logger = "0.10"
+log = "0.4"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[features]
+default = ["std"]
+std = []

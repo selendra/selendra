@@ -26,6 +26,7 @@ exclude = [
     "crate/selendra-client",
     "crate/finalizer",
     "crate/fork-off",
+    "crate/unified-accounts-cli",
 	"vendors/polkadot-sdk"
 ]
 
