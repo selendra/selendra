@@ -13,7 +13,7 @@ module and the final goal is to hand message to the message dispatch mechanism.
 
 ## Overview
 
-Message lane is an unidirectional channel, where messages are sent from source chain to the target chain. At the same
+Message lane is a unidirectional channel, where messages are sent from source chain to the target chain. At the same
 time, a single instance of messages module supports both outbound lanes and inbound lanes. So the chain where the module
 is deployed (this chain), may act as a source chain for outbound messages (heading to a bridged chain) and as a target
 chain for inbound messages (coming from a bridged chain).
@@ -200,8 +200,3 @@ If pallet owner is not defined, the governance may be used to make those calls.
 
 We have an offchain actor, who is watching for new messages and submits them to the bridged chain. It is the messages
 relay - you may look at the [crate level documentation and the code](../../relays/messages/).
-
-
-## Release
-
-Polkadot SDK Stable 2412

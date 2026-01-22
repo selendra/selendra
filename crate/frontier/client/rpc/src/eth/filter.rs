@@ -23,7 +23,7 @@ use std::{
 	time::{Duration, Instant},
 };
 
-use ethereum::BlockV2 as EthereumBlock;
+use ethereum::BlockV3 as EthereumBlock;
 use ethereum_types::{H256, U256};
 use jsonrpsee::core::{async_trait, RpcResult};
 // Substrate
@@ -49,6 +49,7 @@ pub struct EthFilter<B: BlockT, C, BE, P> {
 	filter_pool: FilterPool,
 	max_stored_filters: usize,
 	max_past_logs: u32,
+	max_block_range: u32,
 	block_data_cache: Arc<EthBlockDataCacheTask<B>>,
 	_marker: PhantomData<BE>,
 }
@@ -61,6 +62,7 @@ impl<B: BlockT, C, BE, P: TransactionPool> EthFilter<B, C, BE, P> {
 		filter_pool: FilterPool,
 		max_stored_filters: usize,
 		max_past_logs: u32,
+		max_block_range: u32,
 		block_data_cache: Arc<EthBlockDataCacheTask<B>>,
 	) -> Self {
 		Self {
@@ -70,6 +72,7 @@ impl<B: BlockT, C, BE, P: TransactionPool> EthFilter<B, C, BE, P> {
 			filter_pool,
 			max_stored_filters,
 			max_past_logs,
+			max_block_range,
 			block_data_cache,
 			_marker: PhantomData,
 		}
@@ -302,7 +305,7 @@ where
 					}
 				}
 			} else {
-				FuturePath::Error(internal_err(format!("Filter id {:?} does not exist.", key)))
+				FuturePath::Error(internal_err(format!("Filter id {key:?} does not exist.")))
 			}
 		} else {
 			FuturePath::Error(internal_err("Filter pool is not available."))
@@ -319,9 +322,9 @@ where
 				let mut ethereum_hashes: Vec<H256> = Vec::new();
 				for n in last..next {
 					let id = BlockId::Number(n.unique_saturated_into());
-					let substrate_hash = client.expect_block_hash_from_id(&id).map_err(|_| {
-						internal_err(format!("Expect block number from id: {}", id))
-					})?;
+					let substrate_hash = client
+						.expect_block_hash_from_id(&id)
+						.map_err(|_| internal_err(format!("Expect block number from id: {id}")))?;
 
 					let block = block_data_cache.current_block(substrate_hash).await;
 					if let Some(block) = block {
@@ -336,33 +339,30 @@ where
 				from_number,
 				current_number,
 			} => {
-				let mut ret: Vec<Log> = Vec::new();
-				if backend.is_indexed() {
-					let _ = filter_range_logs_indexed(
+				let logs = if backend.is_indexed() {
+					filter_range_logs_indexed(
 						client.as_ref(),
 						backend.log_indexer(),
 						&block_data_cache,
-						&mut ret,
 						max_past_logs,
 						&filter,
 						from_number,
 						current_number,
 					)
-					.await?;
+					.await?
 				} else {
-					let _ = filter_range_logs(
+					filter_range_logs(
 						client.as_ref(),
 						&block_data_cache,
-						&mut ret,
 						max_past_logs,
 						&filter,
 						from_number,
 						current_number,
 					)
-					.await?;
-				}
+					.await?
+				};
 
-				Ok(FilterChanges::Logs(ret))
+				Ok(FilterChanges::Logs(logs))
 			}
 		}
 	}
@@ -380,13 +380,12 @@ where
 
 			let pool_item = pool
 				.get(&key)
-				.ok_or_else(|| internal_err(format!("Filter id {:?} does not exist.", key)))?;
+				.ok_or_else(|| internal_err(format!("Filter id {key:?} does not exist.")))?;
 
 			match &pool_item.filter_type {
 				FilterType::Log(filter) => Ok(filter.clone()),
 				_ => Err(internal_err(format!(
-					"Filter id {:?} is not a Log filter.",
-					key
+					"Filter id {key:?} is not a Log filter."
 				))),
 			}
 		})();
@@ -415,32 +414,29 @@ where
 			.map(|s| s.unique_saturated_into())
 			.unwrap_or(best_number);
 
-		let mut ret: Vec<Log> = Vec::new();
-		if backend.is_indexed() {
-			let _ = filter_range_logs_indexed(
+		let logs = if backend.is_indexed() {
+			filter_range_logs_indexed(
 				client.as_ref(),
 				backend.log_indexer(),
 				&block_data_cache,
-				&mut ret,
 				max_past_logs,
 				&filter,
 				from_number,
 				current_number,
 			)
-			.await?;
+			.await?
 		} else {
-			let _ = filter_range_logs(
+			filter_range_logs(
 				client.as_ref(),
 				&block_data_cache,
-				&mut ret,
 				max_past_logs,
 				&filter,
 				from_number,
 				current_number,
 			)
-			.await?;
-		}
-		Ok(ret)
+			.await?
+		};
+		Ok(logs)
 	}
 
 	fn uninstall_filter(&self, index: Index) -> RpcResult<bool> {
@@ -451,7 +447,7 @@ where
 			if locked.remove(&key).is_some() {
 				Ok(true)
 			} else {
-				Err(internal_err(format!("Filter id {:?} does not exist.", key)))
+				Err(internal_err(format!("Filter id {key:?} does not exist.")))
 			}
 		} else {
 			Err(internal_err("Filter pool is not available."))
@@ -465,7 +461,7 @@ where
 		let backend = Arc::clone(&self.backend);
 		let max_past_logs = self.max_past_logs;
 
-		let mut ret: Vec<Log> = Vec::new();
+		let mut logs = Vec::new();
 		if let Some(hash) = filter.block_hash {
 			let substrate_hash = match frontier_backend_client::load_hash::<B, C>(
 				client.as_ref(),
@@ -473,7 +469,7 @@ where
 				hash,
 			)
 			.await
-			.map_err(|err| internal_err(format!("{:?}", err)))?
+			.map_err(|err| internal_err(format!("{err:?}")))?
 			{
 				Some(hash) => hash,
 				_ => return Err(crate::err(-32000, "unknown block", None)),
@@ -484,7 +480,7 @@ where
 				.current_transaction_statuses(substrate_hash)
 				.await;
 			if let (Some(block), Some(statuses)) = (block, statuses) {
-				filter_block_logs(&mut ret, &filter, block, statuses);
+				logs = filter_block_logs(&filter, block, statuses);
 			}
 		} else {
 			let best_number = client.info().best_number;
@@ -504,32 +500,38 @@ where
 				.map(|s| s.unique_saturated_into())
 				.unwrap_or(best_number);
 
-			if backend.is_indexed() {
-				let _ = filter_range_logs_indexed(
+			let block_range = current_number.saturating_sub(from_number);
+			if block_range > self.max_block_range.into() {
+				return Err(internal_err(format!(
+					"block range is too wide (maximum {})",
+					self.max_block_range
+				)));
+			}
+
+			logs = if backend.is_indexed() {
+				filter_range_logs_indexed(
 					client.as_ref(),
 					backend.log_indexer(),
 					&block_data_cache,
-					&mut ret,
 					max_past_logs,
 					&filter,
 					from_number,
 					current_number,
 				)
-				.await?;
+				.await?
 			} else {
-				let _ = filter_range_logs(
+				filter_range_logs(
 					client.as_ref(),
 					&block_data_cache,
-					&mut ret,
 					max_past_logs,
 					&filter,
 					from_number,
 					current_number,
 				)
-				.await?;
-			}
+				.await?
+			};
 		}
-		Ok(ret)
+		Ok(logs)
 	}
 }
 
@@ -537,12 +539,11 @@ async fn filter_range_logs_indexed<B, C, BE>(
 	_client: &C,
 	backend: &dyn fc_api::LogIndexerBackend<B>,
 	block_data_cache: &EthBlockDataCacheTask<B>,
-	ret: &mut Vec<Log>,
 	max_past_logs: u32,
 	filter: &Filter,
 	from: NumberFor<B>,
 	to: NumberFor<B>,
-) -> RpcResult<()>
+) -> RpcResult<Vec<Log>>
 where
 	B: BlockT,
 	C: ProvideRuntimeApi<B>,
@@ -557,31 +558,26 @@ where
 	let max_duration = Duration::from_secs(10);
 	let begin_request = Instant::now();
 
-	let topics_input = if filter.topics.is_some() {
-		let filtered_params = FilteredParams::new(Some(filter.clone()));
-		Some(filtered_params.flat_topics)
-	} else {
-		None
-	};
-
 	// Normalize filter data
 	let addresses = match &filter.address {
 		Some(VariadicValue::Single(item)) => vec![*item],
 		Some(VariadicValue::Multiple(items)) => items.clone(),
 		_ => vec![],
 	};
-	let topics = topics_input
-		.unwrap_or_default()
+	let topics = filter
+		.topics
 		.iter()
 		.map(|flat| match flat {
 			VariadicValue::Single(item) => vec![*item],
 			VariadicValue::Multiple(items) => items.clone(),
 			_ => vec![],
 		})
-		.collect::<Vec<Vec<Option<H256>>>>();
+		.collect::<Vec<Vec<H256>>>();
 
 	let time_prepare = timer_prepare.elapsed().as_millis();
 	let timer_fetch = Instant::now();
+
+	let mut logs_to_return = Vec::new();
 	if let Ok(logs) = backend
 		.filter_logs(
 			UniqueSaturatedInto::<u64>::unique_saturated_into(from),
@@ -623,7 +619,7 @@ where
 						if transaction_index == db_transaction_index
 							&& transaction_log_index == db_log_index
 						{
-							ret.push(Log {
+							logs_to_return.push(Log {
 								address: ethereum_log.address,
 								topics: ethereum_log.topics.clone(),
 								data: Bytes(ethereum_log.data.clone()),
@@ -642,10 +638,9 @@ where
 				}
 			}
 			// Check for restrictions
-			if ret.len() as u32 > max_past_logs {
+			if logs_to_return.len() as u32 > max_past_logs {
 				return Err(internal_err(format!(
-					"query returned more than {} results",
-					max_past_logs
+					"query returned more than {max_past_logs} results",
 				)));
 			}
 			if begin_request.elapsed() > max_duration {
@@ -660,9 +655,7 @@ where
 
 		log::info!(
 			target: "frontier-sql",
-			"OUTER-TIMER fetch={}, post={}",
-			time_fetch,
-			time_post,
+			"OUTER-TIMER fetch={time_fetch}, post={time_post}"
 		);
 	}
 
@@ -673,18 +666,17 @@ where
 		time_prepare,
 		timer_fetch.elapsed().as_millis(),
 	);
-	Ok(())
+	Ok(logs_to_return)
 }
 
 async fn filter_range_logs<B, C, BE>(
 	client: &C,
 	block_data_cache: &EthBlockDataCacheTask<B>,
-	ret: &mut Vec<Log>,
 	max_past_logs: u32,
 	filter: &Filter,
 	from: NumberFor<B>,
 	to: NumberFor<B>,
-) -> RpcResult<()>
+) -> RpcResult<Vec<Log>>
 where
 	B: BlockT,
 	C: ProvideRuntimeApi<B>,
@@ -699,20 +691,15 @@ where
 	let mut current_number = from;
 
 	// Pre-calculate BloomInput for reuse.
-	let topics_input = if filter.topics.is_some() {
-		let filtered_params = FilteredParams::new(Some(filter.clone()));
-		Some(filtered_params.flat_topics)
-	} else {
-		None
-	};
 	let address_bloom_filter = FilteredParams::address_bloom_filter(&filter.address);
-	let topics_bloom_filter = FilteredParams::topics_bloom_filter(&topics_input);
+	let topics_bloom_filter = FilteredParams::topics_bloom_filter(&filter.topics);
 
+	let mut logs = Vec::new();
 	while current_number <= to {
 		let id = BlockId::Number(current_number);
 		let substrate_hash = client
 			.expect_block_hash_from_id(&id)
-			.map_err(|_| internal_err(format!("Expect block number from id: {}", id)))?;
+			.map_err(|_| internal_err(format!("Expect block number from id: {id}")))?;
 
 		let block = block_data_cache.current_block(substrate_hash).await;
 
@@ -724,15 +711,14 @@ where
 					.current_transaction_statuses(substrate_hash)
 					.await;
 				if let Some(statuses) = statuses {
-					filter_block_logs(ret, filter, block, statuses);
+					logs.extend(filter_block_logs(filter, block, statuses));
 				}
 			}
 		}
 		// Check for restrictions
-		if ret.len() as u32 > max_past_logs {
+		if logs.len() as u32 > max_past_logs {
 			return Err(internal_err(format!(
-				"query returned more than {} results",
-				max_past_logs
+				"query returned more than {max_past_logs} results"
 			)));
 		}
 		if begin_request.elapsed() > max_duration {
@@ -747,18 +733,19 @@ where
 			current_number = current_number.saturating_add(One::one());
 		}
 	}
-	Ok(())
+	Ok(logs)
 }
 
-fn filter_block_logs<'a>(
-	ret: &'a mut Vec<Log>,
-	filter: &'a Filter,
+pub(crate) fn filter_block_logs(
+	filter: &Filter,
 	block: EthereumBlock,
 	transaction_statuses: Vec<TransactionStatus>,
-) -> &'a Vec<Log> {
-	let params = FilteredParams::new(Some(filter.clone()));
+) -> Vec<Log> {
+	let params = FilteredParams::new(filter.clone());
 	let mut block_log_index: u32 = 0;
 	let block_hash = H256::from(keccak_256(&rlp::encode(&block.header)));
+
+	let mut logs = Vec::new();
 	for status in transaction_statuses.iter() {
 		let mut transaction_log_index: u32 = 0;
 		let transaction_hash = status.transaction_hash;
@@ -775,37 +762,24 @@ fn filter_block_logs<'a>(
 				transaction_log_index: None,
 				removed: false,
 			};
-			let mut add: bool = true;
-			match (filter.address.clone(), filter.topics.clone()) {
-				(Some(_), Some(_)) => {
-					if !params.filter_address(&log.address) || !params.filter_topics(&log.topics) {
-						add = false;
-					}
-				}
-				(Some(_), _) => {
-					if !params.filter_address(&log.address) {
-						add = false;
-					}
-				}
-				(_, Some(_)) => {
-					if !params.filter_topics(&log.topics) {
-						add = false;
-					}
-				}
-				_ => {}
-			}
-			if add {
+
+			let topics_match = filter.topics.is_empty() || params.filter_topics(&log.topics);
+			let address_match = filter
+				.address
+				.as_ref()
+				.is_none_or(|_| params.filter_address(&log.address));
+			if topics_match && address_match {
 				log.block_hash = Some(block_hash);
 				log.block_number = Some(block.header.number);
 				log.transaction_hash = Some(transaction_hash);
 				log.transaction_index = Some(U256::from(status.transaction_index));
 				log.log_index = Some(U256::from(block_log_index));
 				log.transaction_log_index = Some(U256::from(transaction_log_index));
-				ret.push(log);
+				logs.push(log);
 			}
 			transaction_log_index += 1;
 			block_log_index += 1;
 		}
 	}
-	ret
+	logs
 }

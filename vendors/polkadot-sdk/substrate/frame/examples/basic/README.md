@@ -238,8 +238,3 @@ pub trait Config: <INSERT_CUSTOM_PALLET_NAME>::Config { }
 </pre></p></details>
 
 License: MIT-0
-
-
-## Release
-
-Polkadot SDK Stable 2412

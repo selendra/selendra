@@ -18,7 +18,7 @@
 
 use std::{marker::PhantomData, sync::Arc};
 
-use ethereum::TransactionV2 as EthereumTransaction;
+use ethereum::TransactionV3 as EthereumTransaction;
 use futures::{future, FutureExt as _, StreamExt as _};
 use jsonrpsee::{core::traits::IdProvider, server::PendingSubscriptionSink};
 // Substrate
@@ -139,19 +139,28 @@ where
 			let substrate_hash = notification.hash;
 
 			let block = self.storage_override.current_block(substrate_hash);
-			let receipts = self.storage_override.current_receipts(substrate_hash);
+			let statuses = self
+				.storage_override
+				.current_transaction_statuses(substrate_hash);
 
-			match (block, receipts) {
-				(Some(block), Some(receipts)) => Some((block, receipts)),
+			match (block, statuses) {
+				(Some(block), Some(statuses)) => Some((block, statuses)),
 				_ => None,
 			}
 		} else {
 			None
 		};
-		future::ready(res.map(|(block, receipts)| PubSubResult::logs(block, receipts, params)))
+
+		future::ready(res.map(|(block, statuses)| {
+			let logs = crate::eth::filter::filter_block_logs(&params.filter, block, statuses);
+
+			logs.clone()
+				.into_iter()
+				.map(|log| PubSubResult::Log(Box::new(log.clone())))
+		}))
 	}
 
-	fn pending_transaction(&self, hash: &TxHash<P>) -> future::Ready<Option<PubSubResult>> {
+	fn pending_transactions(&self, hash: &TxHash<P>) -> future::Ready<Option<PubSubResult>> {
 		let res = if let Some(xt) = self.pool.ready_transaction(hash) {
 			let best_block = self.client.info().best_hash;
 
@@ -230,7 +239,7 @@ where
 {
 	fn subscribe(&self, pending: PendingSubscriptionSink, kind: Kind, params: Option<Params>) {
 		let filtered_params = match params {
-			Some(Params::Logs(filter)) => FilteredParams::new(Some(filter)),
+			Some(Params::Logs(filter)) => FilteredParams::new(filter),
 			_ => FilteredParams::default(),
 		};
 
@@ -263,7 +272,7 @@ where
 					let pool = pubsub.pool.clone();
 					let stream = pool
 						.import_notification_stream()
-						.filter_map(move |hash| pubsub.pending_transaction(&hash));
+						.filter_map(move |hash| pubsub.pending_transactions(&hash));
 					PendingSubscription::from(pending)
 						.pipe_from_stream(stream, BoundedVecDeque::new(16))
 						.await;

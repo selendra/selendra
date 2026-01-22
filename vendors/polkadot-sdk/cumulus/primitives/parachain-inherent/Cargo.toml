@@ -1,10 +1,12 @@
 [package]
 name = "cumulus-primitives-parachain-inherent"
-version = "0.17.0"
+version = "0.19.0"
 authors.workspace = true
 edition.workspace = true
 description = "Inherent that needs to be present in every parachain block. Contains messages and a relay chain storage-proof."
 license = "Apache-2.0"
+homepage.workspace = true
+repository.workspace = true
 
 [lints]
 workspace = true
@@ -12,11 +14,14 @@ workspace = true
 [dependencies]
 async-trait = { optional = true, workspace = true }
 codec = { features = ["derive"], workspace = true }
+cumulus-primitives-core.workspace = true
 scale-info = { features = ["derive"], workspace = true }
 sp-core.workspace = true
 sp-inherents.workspace = true
 sp-trie.workspace = true
-cumulus-primitives-core.workspace = true
+
+[dev-dependencies]
+cumulus-test-relay-sproof-builder = { default-features = true, workspace = true }
 
 [features]
 default = ["std"]

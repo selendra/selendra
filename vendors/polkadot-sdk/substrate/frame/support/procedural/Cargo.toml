@@ -1,6 +1,6 @@
 [package]
 name = "frame-support-procedural"
-version = "31.1.0"
+version = "34.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
@@ -17,37 +17,36 @@ targets = ["x86_64-unknown-linux-gnu"]
 [lib]
 proc-macro = true
 
+[[example]]
+name = "proc_main"
+
 [dependencies]
-derive-syn-parse = { workspace = true }
-docify = { workspace = true }
 Inflector = { workspace = true }
 cfg-expr = { workspace = true }
-itertools = { workspace = true }
-proc-macro2 = { workspace = true }
-quote = { workspace = true }
-syn = { features = ["full", "parsing", "visit-mut"], workspace = true }
-frame-support-procedural-tools.workspace = true
+derive-syn-parse = { workspace = true }
+docify = { workspace = true }
+expander = { workspace = true }
 frame-support-procedural-tools.default-features = true
+frame-support-procedural-tools.workspace = true
+itertools = { workspace = true }
 macro_magic = { features = ["proc_support"], workspace = true }
 proc-macro-warning = { workspace = true }
-expander = { workspace = true }
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
 sp-crypto-hashing.workspace = true
+syn = { features = ["full", "parsing", "visit-mut"], workspace = true }
 
 [dev-dependencies]
-codec = { features = [
-	"derive",
-	"max-encoded-len",
-], workspace = true }
-regex = { workspace = true }
-sp-metadata-ir = { path = "../../../primitives/metadata-ir", default-features = false }
-scale-info = { features = ["derive"], workspace = true }
-sp-core = { path = "../../../primitives/core", default-features = false }
-sp-io = { path = "../../../primitives/io", default-features = false }
-sp-runtime = { features = ["serde"], path = "../../../primitives/runtime", default-features = false }
-frame-system = { path = "../../system", default-features = false }
-frame-support = { path = "..", default-features = false }
+codec = { features = ["derive", "max-encoded-len"], workspace = true, default-features = true }
+frame-benchmarking = { default-features = true, workspace = true }
+frame-support = { default-features = true, workspace = true }
+frame-system = { default-features = true, workspace = true }
 pretty_assertions = { workspace = true }
-static_assertions = { workspace = true }
+regex = { workspace = true }
+scale-info = { features = ["derive"], workspace = true, default-features = true }
+sp-io = { default-features = true, workspace = true }
+sp-metadata-ir = { default-features = true, workspace = true }
+sp-runtime = { features = ["serde"], default-features = true, workspace = true }
 
 [features]
 default = ["std"]
@@ -60,6 +59,3 @@ experimental = []
 # pallets in a runtime grows. Does increase the compile time!
 tuples-96 = []
 tuples-128 = []
-
-[[example]]
-name = "proc_main"

@@ -35,7 +35,7 @@ ethereum = { workspace = true }
 ethereum-types = { workspace = true }
 scale-codec = { workspace = true }
 sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "sqlite"] }
-tempfile = "3.14.0"
+tempfile = "3.21.0"
 tokio = { workspace = true, features = ["sync"] }
 # Substrate
 sc-block-builder = { workspace = true }
@@ -47,7 +47,7 @@ substrate-test-runtime-client = { workspace = true }
 # Frontier
 fp-consensus = { workspace = true, features = ["default"] }
 fp-storage = { workspace = true, features = ["default"] }
-selendra-runtime = { workspace = true }
+selendra-runtime = { workspace = true, features = ["default"] }
 
 [features]
 default = ["rocksdb"]

@@ -6,7 +6,7 @@ underflows.
 ## Install dependencies
 
 ```
-cargo install honggfuzz
+cargo install honggfuzz --locked
 ```
 
 ## Run the fuzzer
@@ -38,8 +38,3 @@ grcov ccov.zip -s ../../../ -t html --llvm --branch --ignore-not-existing -o ./c
 ```
 
 The code coverage will be in `./coverage/index.html`.
-
-
-## Release
-
-Polkadot SDK Stable 2412

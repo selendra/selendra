@@ -14,8 +14,3 @@ See `RefWindow` for pruning algorithm details. `StateDb` prunes on each canonica
 constraints are satisfied.
 
 License: GPL-3.0-or-later WITH Classpath-exception-2.0
-
-
-## Release
-
-Polkadot SDK Stable 2412

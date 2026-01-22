@@ -13,13 +13,13 @@ host functions that are not part of the Polkadot host specification.
 Directly via crates.io:
 
 ```sh
-cargo install frame-omni-bencher --profile=production
+cargo install frame-omni-bencher --profile=production --locked
 ```
 
 from GitHub:
 
 ```sh
-cargo install --git https://github.com/paritytech/polkadot-sdk frame-omni-bencher --profile=production
+cargo install --git https://github.com/paritytech/polkadot-sdk frame-omni-bencher --profile=production --locked
 ```
 
 or locally from the sources:
@@ -58,8 +58,3 @@ not need be passed explicitly anymore.
 
 The exposed pallet sub-command is identical as the node-integrated CLI. The only difference is that
 it needs to be prefixed with a `v1` to ensure drop-in compatibility.
-
-
-## Release
-
-Polkadot SDK Stable 2412

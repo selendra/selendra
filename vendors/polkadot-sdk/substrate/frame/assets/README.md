@@ -122,8 +122,3 @@ module is undefined.
 * [`Support`](https://docs.rs/frame-support/latest/frame_support/)
 
 License: Apache-2.0
-
-
-## Release
-
-Polkadot SDK Stable 2412

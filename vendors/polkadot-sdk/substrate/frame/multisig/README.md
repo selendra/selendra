@@ -27,8 +27,3 @@ not available or desired.
 [`Config`]: ./trait.Config.html
 
 License: Apache-2.0
-
-
-## Release
-
-Polkadot SDK Stable 2412

@@ -113,7 +113,7 @@ impl<Block: BlockT> fc_api::LogIndexerBackend<Block> for LogIndexerBackend<Block
 		_from_block: u64,
 		_to_block: u64,
 		_addresses: Vec<H160>,
-		_topics: Vec<Vec<Option<H256>>>,
+		_topics: Vec<Vec<H256>>,
 	) -> Result<Vec<FilteredLog<Block>>, String> {
 		Err("KeyValue db does not index logs".into())
 	}
@@ -260,7 +260,7 @@ pub struct MappingDb<Block> {
 impl<Block: BlockT> MappingDb<Block> {
 	pub fn is_synced(&self, block_hash: &Block::Hash) -> Result<bool, String> {
 		match self.db.get(columns::SYNCED_MAPPING, &block_hash.encode()) {
-			Some(raw) => Ok(bool::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?),
+			Some(raw) => Ok(bool::decode(&mut &raw[..]).map_err(|e| format!("{e:?}"))?),
 			None => Ok(false),
 		}
 	}
@@ -274,7 +274,7 @@ impl<Block: BlockT> MappingDb<Block> {
 			.get(columns::BLOCK_MAPPING, &ethereum_block_hash.encode())
 		{
 			Some(raw) => Ok(Some(
-				Vec::<Block::Hash>::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?,
+				Vec::<Block::Hash>::decode(&mut &raw[..]).map_err(|e| format!("{e:?}"))?,
 			)),
 			None => Ok(None),
 		}

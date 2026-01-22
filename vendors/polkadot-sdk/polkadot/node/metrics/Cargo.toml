@@ -1,10 +1,12 @@
 [package]
 name = "polkadot-node-metrics"
 description = "Subsystem metric helpers"
-version = "21.1.0"
+version = "24.0.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
+homepage.workspace = true
+repository.workspace = true
 
 [lints]
 workspace = true
@@ -12,41 +14,36 @@ workspace = true
 [dependencies]
 futures = { workspace = true }
 futures-timer = { workspace = true }
-gum.workspace = true
-gum.default-features = true
 
-metered = { features = ["futures_channel"], workspace = true }
-sc-service.workspace = true
-sc-service.default-features = true
-sc-cli.workspace = true
-sc-cli.default-features = true
-prometheus-endpoint.workspace = true
-prometheus-endpoint.default-features = true
-sc-tracing.workspace = true
-sc-tracing.default-features = true
-codec = { workspace = true, default-features = true }
-polkadot-primitives.workspace = true
-polkadot-primitives.default-features = true
 bs58 = { features = ["alloc"], workspace = true, default-features = true }
-log = { workspace = true, default-features = true }
+codec = { workspace = true, default-features = true }
+metered = { features = ["futures_channel"], workspace = true }
+polkadot-primitives.default-features = true
+polkadot-primitives.workspace = true
+prometheus-endpoint.default-features = true
+prometheus-endpoint.workspace = true
+sc-cli.default-features = false
+sc-cli.workspace = true
+sc-service.default-features = false
+sc-service.workspace = true
+sc-tracing.default-features = true
+sc-tracing.workspace = true
 
 [dev-dependencies]
-assert_cmd = { workspace = true }
-tempfile = { workspace = true }
-hyper-util = { features = ["client-legacy", "tokio"], workspace = true }
-hyper = { workspace = true }
 http-body-util = { workspace = true }
-tokio = { workspace = true, default-features = true }
-polkadot-test-service = { features = ["runtime-metrics"], path = "../test/service" }
-substrate-test-utils = { path = "../../../substrate/test-utils" }
-sc-service = { default-features = true, path = "../../../substrate/client/service" }
-sp-keyring = { default-features = true, path = "../../../substrate/primitives/keyring" }
+hyper = { workspace = true }
+hyper-util = { features = ["client-legacy", "tokio"], workspace = true }
+polkadot-test-service = { features = ["runtime-metrics"], workspace = true }
 prometheus-parse = { workspace = true }
+sc-service = { default-features = true, workspace = true }
+sp-keyring = { default-features = true, workspace = true }
+tokio = { workspace = true, default-features = true }
 
 [features]
 default = []
 runtime-metrics = []
 runtime-benchmarks = [
 	"polkadot-primitives/runtime-benchmarks",
+	"polkadot-test-service/runtime-benchmarks",
 	"sc-service/runtime-benchmarks",
 ]

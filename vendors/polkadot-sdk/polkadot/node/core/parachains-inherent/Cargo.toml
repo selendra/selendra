@@ -1,28 +1,30 @@
 [package]
 name = "polkadot-node-core-parachains-inherent"
-version = "21.0.0"
+version = "24.0.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
 description = "Parachains inherent data provider for Polkadot node"
+homepage.workspace = true
+repository.workspace = true
 
 [lints]
 workspace = true
 
 [dependencies]
+async-trait = { workspace = true }
 futures = { workspace = true }
 futures-timer = { workspace = true }
-gum.workspace = true
 gum.default-features = true
-thiserror = { workspace = true }
-async-trait = { workspace = true }
-polkadot-node-subsystem.workspace = true
+gum.workspace = true
 polkadot-node-subsystem.default-features = true
-polkadot-overseer.workspace = true
+polkadot-node-subsystem.workspace = true
 polkadot-overseer.default-features = true
-polkadot-primitives.workspace = true
+polkadot-overseer.workspace = true
 polkadot-primitives.default-features = true
-sp-blockchain.workspace = true
+polkadot-primitives.workspace = true
 sp-blockchain.default-features = true
-sp-inherents.workspace = true
+sp-blockchain.workspace = true
 sp-inherents.default-features = true
+sp-inherents.workspace = true
+thiserror = { workspace = true }

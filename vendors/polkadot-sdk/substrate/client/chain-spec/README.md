@@ -4,8 +4,3 @@ This crate contains structs and utilities to declare a runtime-specific configur
 Refer to crate documentation for details.
 
 License: GPL-3.0-or-later WITH Classpath-exception-2.0
-
-
-## Release
-
-Polkadot SDK Stable 2412

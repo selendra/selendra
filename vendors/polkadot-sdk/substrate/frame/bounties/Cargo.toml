@@ -1,6 +1,6 @@
 [package]
 name = "pallet-bounties"
-version = "38.1.0"
+version = "40.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
@@ -16,21 +16,19 @@ workspace = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { features = [
-	"derive",
-], workspace = true }
-log = { workspace = true }
-scale-info = { features = ["derive"], workspace = true }
+codec = { features = ["derive"], workspace = true }
 frame-benchmarking = { optional = true, workspace = true }
 frame-support.workspace = true
 frame-system.workspace = true
+log = { workspace = true }
 pallet-treasury.workspace = true
+scale-info = { features = ["derive"], workspace = true }
 sp-core.workspace = true
 sp-io.workspace = true
 sp-runtime.workspace = true
 
 [dev-dependencies]
-pallet-balances = { default-features = true, path = "../balances" }
+pallet-balances = { default-features = true, workspace = true }
 
 [features]
 default = ["std"]
@@ -50,12 +48,14 @@ runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 ]
 try-runtime = [
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",
+	"pallet-balances/try-runtime",
 	"pallet-treasury/try-runtime",
 	"sp-runtime/try-runtime",
 ]

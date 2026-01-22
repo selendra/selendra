@@ -87,8 +87,3 @@ converted into the corresponding type.
 `Identity` means that the value is converted directly into the corresponding FFI type.
 
 License: Apache-2.0
-
-
-## Release
-
-Polkadot SDK Stable 2412

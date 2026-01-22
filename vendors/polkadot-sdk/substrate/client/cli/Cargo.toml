@@ -1,6 +1,6 @@
 [package]
 name = "sc-cli"
-version = "0.50.2"
+version = "0.53.1"
 authors.workspace = true
 description = "Substrate CLI interface."
 edition.workspace = true
@@ -17,61 +17,62 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 array-bytes = { workspace = true, default-features = true }
+bip39 = { workspace = true, default-features = true, features = ["rand"] }
 chrono = { workspace = true }
 clap = { features = ["derive", "string", "wrap_help"], workspace = true }
+codec = { workspace = true, default-features = true }
 fdlimit = { workspace = true }
 futures = { workspace = true }
 itertools = { workspace = true }
 libp2p-identity = { features = ["ed25519", "peerid"], workspace = true }
 log = { workspace = true, default-features = true }
 names = { workspace = true }
-codec = { workspace = true, default-features = true }
 rand = { workspace = true, default-features = true }
 regex = { workspace = true }
 rpassword = { workspace = true }
+sc-client-api.default-features = true
+sc-client-api.workspace = true
+sc-client-db.default-features = false
+sc-client-db.workspace = true
+sc-keystore.default-features = true
+sc-keystore.workspace = true
+sc-mixnet.default-features = true
+sc-mixnet.workspace = true
+sc-network.default-features = true
+sc-network.workspace = true
+sc-service.default-features = false
+sc-service.workspace = true
+sc-telemetry.default-features = true
+sc-telemetry.workspace = true
+sc-tracing.default-features = true
+sc-tracing.workspace = true
+sc-transaction-pool.default-features = true
+sc-transaction-pool.workspace = true
+sc-utils.default-features = true
+sc-utils.workspace = true
 serde = { workspace = true, default-features = true }
 serde_json = { workspace = true, default-features = true }
-thiserror = { workspace = true }
-# personal fork here as workaround for: https://github.com/rust-bitcoin/rust-bip39/pull/64
-bip39 = { package = "parity-bip39", version = "2.0.1", features = ["rand"] }
-tokio = { features = ["parking_lot", "rt-multi-thread", "signal"], workspace = true, default-features = true }
-sc-client-api.workspace = true
-sc-client-api.default-features = true
-sc-client-db.workspace = true
-sc-keystore.workspace = true
-sc-keystore.default-features = true
-sc-mixnet.workspace = true
-sc-mixnet.default-features = true
-sc-network.workspace = true
-sc-network.default-features = true
-sc-service.workspace = true
-sc-telemetry.workspace = true
-sc-telemetry.default-features = true
-sc-tracing.workspace = true
-sc-tracing.default-features = true
-sc-transaction-pool.workspace = true
-sc-transaction-pool.default-features = true
-sc-utils.workspace = true
-sc-utils.default-features = true
-sp-blockchain.workspace = true
 sp-blockchain.default-features = true
-sp-core.workspace = true
+sp-blockchain.workspace = true
 sp-core.default-features = true
-sp-keyring.workspace = true
+sp-core.workspace = true
 sp-keyring.default-features = true
-sp-keystore.workspace = true
+sp-keyring.workspace = true
 sp-keystore.default-features = true
-sp-panic-handler.workspace = true
+sp-keystore.workspace = true
 sp-panic-handler.default-features = true
-sp-runtime.workspace = true
+sp-panic-handler.workspace = true
 sp-runtime.default-features = true
-sp-version.workspace = true
+sp-runtime.workspace = true
 sp-version.default-features = true
+sp-version.workspace = true
+thiserror = { workspace = true }
+tokio = { features = ["parking_lot", "rt-multi-thread", "signal"], workspace = true, default-features = true }
 
 [dev-dependencies]
-tempfile = { workspace = true }
 futures-timer = { workspace = true }
-sp-tracing = { default-features = true, path = "../../primitives/tracing" }
+sp-tracing = { default-features = true, workspace = true }
+tempfile = { workspace = true }
 
 [features]
 default = ["rocksdb"]

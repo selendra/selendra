@@ -23,8 +23,3 @@ abstentions and the proposal is executed if there are enough approvals counting 
 If there are not, or if no prime member is set, then the motion is dropped without being executed.
 
 License: Apache-2.0
-
-
-## Release
-
-Polkadot SDK Stable 2412

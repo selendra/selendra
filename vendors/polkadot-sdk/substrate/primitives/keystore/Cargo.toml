@@ -1,6 +1,6 @@
 [package]
 name = "sp-keystore"
-version = "0.41.0"
+version = "0.43.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
@@ -21,10 +21,6 @@ parking_lot = { optional = true, workspace = true }
 sp-core.workspace = true
 sp-externalities.workspace = true
 
-[dev-dependencies]
-rand = { workspace = true, default-features = true }
-rand_chacha = { workspace = true, default-features = true }
-
 [features]
 default = ["std"]
 std = ["codec/std", "dep:parking_lot", "sp-core/std", "sp-externalities/std"]
@@ -33,3 +29,8 @@ std = ["codec/std", "dep:parking_lot", "sp-core/std", "sp-externalities/std"]
 # It should not be used in production since the implementation and interface may still
 # be subject to significant changes.
 bls-experimental = ["sp-core/bls-experimental"]
+
+# This feature adds Bandersnatch crypto primitives.
+# It should not be used in production since the implementation and interface may still
+# be subject to significant changes.
+bandersnatch-experimental = ["sp-core/bandersnatch-experimental"]

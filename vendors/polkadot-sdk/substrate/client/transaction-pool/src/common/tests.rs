@@ -18,7 +18,10 @@
 
 //! Testing related primitives for internal usage in this crate.
 
-use crate::graph::{BlockHash, ChainApi, ExtrinsicFor, NumberFor, Pool, RawExtrinsicFor};
+use crate::{
+	graph::{BlockHash, ChainApi, ExtrinsicFor, NumberFor, RawExtrinsicFor},
+	ValidateTransactionPriority,
+};
 use codec::Encode;
 use parking_lot::Mutex;
 use sc_transaction_pool_api::error;
@@ -35,6 +38,8 @@ use substrate_test_runtime::{
 	substrate_test_pallet::pallet::Call as PalletCall, BalancesCall, Block, BlockNumber, Extrinsic,
 	ExtrinsicBuilder, Hashing, RuntimeCall, Transfer, TransferData, H256,
 };
+
+type Pool<Api> = crate::graph::Pool<Api, ()>;
 
 pub(crate) const INVALID_NONCE: u64 = 254;
 
@@ -76,6 +81,7 @@ impl ChainApi for TestApi {
 		at: <Self::Block as BlockT>::Hash,
 		_source: TransactionSource,
 		uxt: ExtrinsicFor<Self>,
+		_: ValidateTransactionPriority,
 	) -> Self::ValidationFuture {
 		let uxt = (*uxt).clone();
 		self.validation_requests.lock().push(uxt.clone());
@@ -222,5 +228,5 @@ pub(crate) fn uxt(transfer: Transfer) -> Extrinsic {
 
 pub(crate) fn pool() -> (Pool<TestApi>, Arc<TestApi>) {
 	let api = Arc::new(TestApi::default());
-	(Pool::new(Default::default(), true.into(), api.clone()), api)
+	(Pool::new_with_staticly_sized_rotator(Default::default(), true.into(), api.clone()), api)
 }

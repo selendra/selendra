@@ -37,8 +37,3 @@ or prune any signaled changes based on whether the signaling block is
 included in the newly-finalized chain.
 
 License: GPL-3.0-or-later WITH Classpath-exception-2.0
-
-
-## Release
-
-Polkadot SDK Stable 2412

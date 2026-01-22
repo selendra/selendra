@@ -1,18 +1,18 @@
 // Copyright (C) Parity Technologies (UK) Ltd.
 // This file is part of Polkadot.
+// SPDX-License-Identifier: Apache-2.0
 
-// Polkadot is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Polkadot is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 //! Tests for using both the XCM fee payment API and the dry-run API.
 
@@ -377,6 +377,7 @@ fn dry_run_xcm_common(xcm_version: XcmVersion) {
 		.buy_execution((Here, execution_fees), Unlimited)
 		.deposit_reserve_asset(AllCounted(1), (Parent, Parachain(2100)), inner_xcm.clone())
 		.build();
+	let expected_msg_id = fake_message_hash(&xcm);
 	let balances = vec![(
 		who,
 		transfer_amount + execution_fees + DeliveryFees::get() + ExistentialDeposit::get(),
@@ -392,25 +393,23 @@ fn dry_run_xcm_common(xcm_version: XcmVersion) {
 			)
 			.unwrap()
 			.unwrap();
+		let expected_xcms = Xcm::<()>::builder_unsafe()
+			.reserve_asset_deposited((
+				(Parent, Parachain(2000)),
+				transfer_amount + execution_fees - DeliveryFees::get(),
+			))
+			.clear_origin()
+			.buy_execution((Here, 1u128), Unlimited)
+			.deposit_asset(AllCounted(1), [0u8; 32])
+			.set_topic(expected_msg_id)
+			.build();
 		assert_eq!(
 			dry_run_effects.forwarded_xcms,
 			vec![(
 				VersionedLocation::from((Parent, Parachain(2100)))
 					.into_version(xcm_version)
 					.unwrap(),
-				vec![VersionedXcm::from(
-					Xcm::<()>::builder_unsafe()
-						.reserve_asset_deposited((
-							(Parent, Parachain(2000)),
-							transfer_amount + execution_fees - DeliveryFees::get()
-						))
-						.clear_origin()
-						.buy_execution((Here, 1u128), Unlimited)
-						.deposit_asset(AllCounted(1), [0u8; 32])
-						.build()
-				)
-				.into_version(xcm_version)
-				.unwrap()],
+				vec![VersionedXcm::from(expected_xcms).into_version(xcm_version).unwrap()],
 			),]
 		);
 
@@ -424,6 +423,12 @@ fn dry_run_xcm_common(xcm_version: XcmVersion) {
 					free_balance: 520
 				}),
 				RuntimeEvent::Balances(pallet_balances::Event::Minted { who: 2100, amount: 520 }),
+				RuntimeEvent::XcmPallet(pallet_xcm::Event::Sent {
+					origin: (who,).into(),
+					destination: (Parent, Parachain(2100)).into(),
+					message: Xcm::default(),
+					message_id: expected_msg_id,
+				})
 			]
 		);
 	});

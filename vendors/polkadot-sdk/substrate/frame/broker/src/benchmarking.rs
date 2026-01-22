@@ -220,6 +220,31 @@ mod benches {
 	}
 
 	#[benchmark]
+	fn remove_lease() -> Result<(), BenchmarkError> {
+		let task = 1u32;
+		let until = 10u32;
+
+		// Assume Leases to be almost filled for worst case
+		let mut leases = vec![
+			LeaseRecordItem { task, until };
+			T::MaxLeasedCores::get().saturating_sub(1) as usize
+		];
+		let task = 2u32;
+		leases.push(LeaseRecordItem { task, until });
+		Leases::<T>::put(BoundedVec::try_from(leases).unwrap());
+
+		let origin =
+			T::AdminOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+
+		#[extrinsic_call]
+		_(origin as T::RuntimeOrigin, task);
+
+		assert_eq!(Leases::<T>::get().len(), T::MaxLeasedCores::get().saturating_sub(1) as usize);
+
+		Ok(())
+	}
+
+	#[benchmark]
 	fn start_sales(n: Linear<0, { MAX_CORE_COUNT.into() }>) -> Result<(), BenchmarkError> {
 		let config = new_config_record::<T>();
 		Configuration::<T>::put(config.clone());
@@ -245,9 +270,11 @@ mod benches {
 		_(origin as T::RuntimeOrigin, initial_price, extra_cores.try_into().unwrap());
 
 		assert!(SaleInfo::<T>::get().is_some());
+		let sale_start = RCBlockNumberProviderOf::<T::Coretime>::current_block_number() +
+			config.interlude_length;
 		assert_last_event::<T>(
 			Event::SaleInitialized {
-				sale_start: 2u32.into(),
+				sale_start,
 				leadin_length: 1u32.into(),
 				start_price,
 				end_price,
@@ -585,26 +612,22 @@ mod benches {
 		let caller: T::AccountId = whitelisted_caller();
 		T::Currency::set_balance(
 			&caller.clone(),
-			T::Currency::minimum_balance().saturating_add(30_000_000u32.into()),
+			T::Currency::minimum_balance().saturating_add(T::MinimumCreditPurchase::get()),
 		);
 		T::Currency::set_balance(&Broker::<T>::account_id(), T::Currency::minimum_balance());
-
-		let region = Broker::<T>::do_purchase(caller.clone(), 10_000_000u32.into())
-			.expect("Offer not high enough for configuration.");
-
-		let recipient: T::AccountId = account("recipient", 0, SEED);
-
-		Broker::<T>::do_pool(region, None, recipient, Final)
-			.map_err(|_| BenchmarkError::Weightless)?;
 
 		let beneficiary: RelayAccountIdOf<T> = account("beneficiary", 0, SEED);
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(caller.clone()), 20_000_000u32.into(), beneficiary.clone());
+		_(RawOrigin::Signed(caller.clone()), T::MinimumCreditPurchase::get(), beneficiary.clone());
 
 		assert_last_event::<T>(
-			Event::CreditPurchased { who: caller, beneficiary, amount: 20_000_000u32.into() }
-				.into(),
+			Event::CreditPurchased {
+				who: caller,
+				beneficiary,
+				amount: T::MinimumCreditPurchase::get(),
+			}
+			.into(),
 		);
 
 		Ok(())
@@ -868,7 +891,7 @@ mod benches {
 		let timeslice_period: u32 = T::TimeslicePeriod::get().try_into().ok().unwrap();
 		let sale = SaleInfo::<T>::get().expect("Sale has started.");
 
-		let now = System::<T>::block_number();
+		let now = RCBlockNumberProviderOf::<T::Coretime>::current_block_number();
 		let price = Broker::<T>::sale_price(&sale, now);
 		(0..n_renewable.into()).try_for_each(|indx| -> Result<(), BenchmarkError> {
 			let task = 1000 + indx;
@@ -913,7 +936,7 @@ mod benches {
 		// Get prices from the actual price adapter.
 		let new_prices = T::PriceAdapter::adapt_price(SalePerformance::from_sale(&sale));
 		let new_sale = SaleInfo::<T>::get().expect("Sale has started.");
-		let now = System::<T>::block_number();
+		let now = RCBlockNumberProviderOf::<T::Coretime>::current_block_number();
 		let sale_start = config.interlude_length.saturating_add(rotate_block.into());
 
 		assert_has_event::<T>(
@@ -1068,6 +1091,47 @@ mod benches {
 	}
 
 	#[benchmark]
+	fn force_reserve() -> Result<(), BenchmarkError> {
+		Configuration::<T>::put(new_config_record::<T>());
+		// Assume Reservations to be almost filled for worst case.
+		let reservation_count = T::MaxReservedCores::get().saturating_sub(1);
+		setup_reservations::<T>(reservation_count);
+
+		// Assume leases to be filled for worst case
+		setup_leases::<T>(T::MaxLeasedCores::get(), 1, 10);
+
+		let origin =
+			T::AdminOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+
+		// Sales must be started.
+		Broker::<T>::do_start_sales(100u32.into(), CoreIndex::try_from(reservation_count).unwrap())
+			.map_err(|_| BenchmarkError::Weightless)?;
+
+		// Add a core.
+		let status = Status::<T>::get().unwrap();
+		Broker::<T>::do_request_core_count(status.core_count + 1).unwrap();
+
+		advance_to::<T>(T::TimeslicePeriod::get().try_into().ok().unwrap());
+		let schedule = new_schedule();
+
+		#[extrinsic_call]
+		_(origin as T::RuntimeOrigin, schedule.clone(), status.core_count);
+
+		assert_eq!(Reservations::<T>::decode_len().unwrap(), T::MaxReservedCores::get() as usize);
+
+		let sale_info = SaleInfo::<T>::get().unwrap();
+		assert_eq!(
+			Workplan::<T>::get((sale_info.region_begin, status.core_count)),
+			Some(schedule.clone())
+		);
+		// We called at timeslice 1, therefore 2 was already processed and 3 is the next possible
+		// assignment point.
+		assert_eq!(Workplan::<T>::get((3, status.core_count)), Some(schedule));
+
+		Ok(())
+	}
+
+	#[benchmark]
 	fn swap_leases() -> Result<(), BenchmarkError> {
 		let admin_origin =
 			T::AdminOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
@@ -1215,6 +1279,34 @@ mod benches {
 
 		Ok(())
 	}
+
+	#[benchmark]
+	fn remove_assignment() -> Result<(), BenchmarkError> {
+		let sale_data = setup_and_start_sale::<T>()?;
+
+		advance_to::<T>(2);
+
+		let caller: T::AccountId = whitelisted_caller();
+		T::Currency::set_balance(
+			&caller.clone(),
+			T::Currency::minimum_balance().saturating_add(sale_data.start_price),
+		);
+
+		let region = Broker::<T>::do_purchase(caller.clone(), sale_data.start_price)
+			.expect("Offer not high enough for configuration.");
+
+		Broker::<T>::do_assign(region, None, 1000, Provisional)
+			.map_err(|_| BenchmarkError::Weightless)?;
+
+		let origin =
+			T::AdminOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+
+		#[extrinsic_call]
+		_(origin as T::RuntimeOrigin, region);
+
+		Ok(())
+	}
+
 	// Implements a test for each benchmark. Execute with:
 	// `cargo test -p pallet-broker --features runtime-benchmarks`.
 	impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);

@@ -9,8 +9,3 @@ having discarded heavy state that will allow a chain reorganization.
 Finality implies canonicality but not vice-versa.
 
 License: GPL-3.0-or-later WITH Classpath-exception-2.0
-
-
-## Release
-
-Polkadot SDK Stable 2412

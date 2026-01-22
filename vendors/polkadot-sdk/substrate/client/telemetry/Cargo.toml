@@ -1,6 +1,6 @@
 [package]
 name = "sc-telemetry"
-version = "28.0.0"
+version = "29.0.0"
 authors.workspace = true
 description = "Telemetry utils"
 edition.workspace = true
@@ -19,15 +19,13 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 chrono = { workspace = true }
 futures = { workspace = true }
-libp2p = { features = ["dns", "tcp", "tokio", "wasm-ext", "websocket"], workspace = true }
+libp2p = { features = ["dns", "tcp", "tokio", "websocket"], workspace = true }
 log = { workspace = true, default-features = true }
 parking_lot = { workspace = true, default-features = true }
 pin-project = { workspace = true }
-sc-utils.workspace = true
-sc-utils.default-features = true
-sc-network.workspace = true
-sc-network.default-features = true
 rand = { workspace = true, default-features = true }
+sc-utils.default-features = true
+sc-utils.workspace = true
 serde = { features = ["derive"], workspace = true, default-features = true }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }

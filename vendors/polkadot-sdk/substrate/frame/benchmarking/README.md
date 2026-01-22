@@ -194,8 +194,3 @@ To get a full list of available options when running benchmarks, run:
 ```
 
 License: Apache-2.0
-
-
-## Release
-
-Polkadot SDK Stable 2412

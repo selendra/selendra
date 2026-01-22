@@ -5,8 +5,3 @@ change. Implementors of traits should not rely on the interfaces to remain
 the same.
 
 License: Apache-2.0
-
-
-## Release
-
-Polkadot SDK Stable 2412

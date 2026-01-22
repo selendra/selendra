@@ -19,7 +19,6 @@
 mod block_builder;
 pub use block_builder::*;
 use codec::{Decode, Encode};
-use cumulus_primitives_core::BlockT;
 pub use cumulus_test_runtime as runtime;
 use cumulus_test_runtime::AuraId;
 pub use polkadot_parachain_primitives::primitives::{
@@ -76,6 +75,7 @@ pub type Client = client::Client<Backend, Executor, Block, runtime::RuntimeApi>;
 #[derive(Default)]
 pub struct GenesisParameters {
 	pub endowed_accounts: Vec<cumulus_test_runtime::AccountId>,
+	pub wasm: Option<Vec<u8>>,
 }
 
 impl substrate_test_client::GenesisInit for GenesisParameters {
@@ -83,7 +83,9 @@ impl substrate_test_client::GenesisInit for GenesisParameters {
 		cumulus_test_service::chain_spec::get_chain_spec_with_extra_endowed(
 			None,
 			self.endowed_accounts.clone(),
-			cumulus_test_runtime::WASM_BINARY.expect("WASM binary not compiled!"),
+			self.wasm.as_deref().unwrap_or_else(|| {
+				cumulus_test_runtime::WASM_BINARY.expect("WASM binary not compiled!")
+			}),
 		)
 		.build_storage()
 		.expect("Builds test runtime genesis storage")
@@ -140,6 +142,7 @@ pub fn generate_extrinsic_with_pair(
 		BlockHashCount::get().checked_next_power_of_two().map(|c| c / 2).unwrap_or(2) as u64;
 	let tip = 0;
 	let tx_ext: TxExtension = (
+		frame_system::AuthorizeCall::<Runtime>::new(),
 		frame_system::CheckNonZeroSender::<Runtime>::new(),
 		frame_system::CheckSpecVersion::<Runtime>::new(),
 		frame_system::CheckGenesis::<Runtime>::new(),
@@ -147,7 +150,6 @@ pub fn generate_extrinsic_with_pair(
 		frame_system::CheckNonce::<Runtime>::from(nonce),
 		frame_system::CheckWeight::<Runtime>::new(),
 		pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-		cumulus_primitives_storage_weight_reclaim::StorageWeightReclaim::<Runtime>::new(),
 	)
 		.into();
 
@@ -156,7 +158,7 @@ pub fn generate_extrinsic_with_pair(
 	let raw_payload = SignedPayload::from_raw(
 		function.clone(),
 		tx_ext.clone(),
-		((), VERSION.spec_version, genesis_block, current_block_hash, (), (), (), ()),
+		((), (), VERSION.spec_version, genesis_block, current_block_hash, (), (), ()),
 	);
 	let signature = raw_payload.using_encoded(|e| origin.sign(e));
 
@@ -171,7 +173,7 @@ pub fn generate_extrinsic_with_pair(
 /// Generate an extrinsic from the provided function call, origin and [`Client`].
 pub fn generate_extrinsic(
 	client: &Client,
-	origin: sp_keyring::AccountKeyring,
+	origin: sp_keyring::Sr25519Keyring,
 	function: impl Into<RuntimeCall>,
 ) -> UncheckedExtrinsic {
 	generate_extrinsic_with_pair(client, origin.into(), function, None)
@@ -180,8 +182,8 @@ pub fn generate_extrinsic(
 /// Transfer some token from one account to another using a provided test [`Client`].
 pub fn transfer(
 	client: &Client,
-	origin: sp_keyring::AccountKeyring,
-	dest: sp_keyring::AccountKeyring,
+	origin: sp_keyring::Sr25519Keyring,
+	dest: sp_keyring::Sr25519Keyring,
 	value: Balance,
 ) -> UncheckedExtrinsic {
 	let function = RuntimeCall::Balances(pallet_balances::Call::transfer_allow_death {
@@ -257,15 +259,4 @@ pub fn seal_block(mut block: Block, client: &Client) -> Block {
 	block.header.digest_mut().push(seal_digest);
 
 	block
-}
-
-/// Seals all the blocks in the given [`ParachainBlockData`] with an AURA seal.
-///
-/// Assumes that the authorities of the test runtime are present in the keyring.
-pub fn seal_parachain_block_data(block: ParachainBlockData, client: &Client) -> ParachainBlockData {
-	let (header, extrinsics, proof) = block.deconstruct();
-
-	let (header, extrinsics) = seal_block(Block::new(header, extrinsics), client).deconstruct();
-
-	ParachainBlockData::new(header, extrinsics, proof)
 }

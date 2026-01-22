@@ -24,9 +24,12 @@ use super::v4::{
 use crate::{utils::decode_xcm_instructions, DoubleEncoded};
 use alloc::{vec, vec::Vec};
 use bounded_collections::{parameter_types, BoundedVec};
-use codec::{self, Decode, Encode, Error as CodecError, Input as CodecInput, MaxEncodedLen};
+use codec::{
+	self, Decode, DecodeWithMemTracking, Encode, Error as CodecError, Input as CodecInput,
+	MaxEncodedLen,
+};
 use core::{fmt::Debug, result};
-use derivative::Derivative;
+use derive_where::derive_where;
 use scale_info::TypeInfo;
 
 mod asset;
@@ -45,8 +48,8 @@ pub use junction::{
 pub use junctions::Junctions;
 pub use location::{Ancestor, AncestorThen, InteriorLocation, Location, Parent, ParentThen};
 pub use traits::{
-	send_xcm, validate_send, Error, ExecuteXcm, Outcome, PreparedMessage, Reanchorable, Result,
-	SendError, SendResult, SendXcm, Weight, XcmHash,
+	send_xcm, validate_send, Error, ExecuteXcm, InstructionError, InstructionIndex, Outcome,
+	PreparedMessage, Reanchorable, Result, SendError, SendResult, SendXcm, Weight, XcmHash,
 };
 // These parts of XCM v4 are unchanged in XCM v5, and are re-imported here.
 pub use super::v4::{MaxDispatchErrorLen, MaybeErrorCode, OriginKind, WeightLimit};
@@ -56,8 +59,8 @@ pub const VERSION: super::Version = 5;
 /// An identifier for a query.
 pub type QueryId = u64;
 
-#[derive(Derivative, Default, Encode, TypeInfo)]
-#[derivative(Clone(bound = ""), Eq(bound = ""), PartialEq(bound = ""), Debug(bound = ""))]
+#[derive(Default, DecodeWithMemTracking, Encode, TypeInfo)]
+#[derive_where(Clone, Eq, PartialEq, Debug)]
 #[codec(encode_bound())]
 #[codec(decode_bound())]
 #[scale_info(bounds(), skip_type_params(Call))]
@@ -180,7 +183,7 @@ pub mod prelude {
 			Hint::{self, *},
 			HintNumVariants,
 			Instruction::*,
-			InteriorLocation,
+			InstructionError, InstructionIndex, InteriorLocation,
 			Junction::{self, *},
 			Junctions::{self, Here},
 			Location, MaxAssetTransferFilters, MaybeErrorCode,
@@ -210,7 +213,9 @@ parameter_types! {
 	pub MaxAssetTransferFilters: u32 = 6;
 }
 
-#[derive(Clone, Eq, PartialEq, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Clone, Eq, PartialEq, Encode, Decode, DecodeWithMemTracking, Debug, TypeInfo, MaxEncodedLen,
+)]
 pub struct PalletInfo {
 	#[codec(compact)]
 	pub index: u32,
@@ -257,7 +262,9 @@ impl PalletInfo {
 }
 
 /// Response data to a query.
-#[derive(Clone, Eq, PartialEq, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Clone, Eq, PartialEq, Encode, Decode, DecodeWithMemTracking, Debug, TypeInfo, MaxEncodedLen,
+)]
 pub enum Response {
 	/// No response. Serves as a neutral default.
 	Null,
@@ -309,7 +316,7 @@ impl TryFrom<OldResponse> for Response {
 }
 
 /// Information regarding the composition of a query response.
-#[derive(Clone, Eq, PartialEq, Encode, Decode, Debug, TypeInfo)]
+#[derive(Clone, Eq, PartialEq, Encode, Decode, DecodeWithMemTracking, Debug, TypeInfo)]
 pub struct QueryResponseInfo {
 	/// The destination to which the query response message should be send.
 	pub destination: Location,
@@ -370,16 +377,17 @@ impl XcmContext {
 /// This is the inner XCM format and is version-sensitive. Messages are typically passed using the
 /// outer XCM format, known as `VersionedXcm`.
 #[derive(
-	Derivative,
 	Encode,
 	Decode,
+	DecodeWithMemTracking,
 	TypeInfo,
 	xcm_procedural::XcmWeightInfoTrait,
 	xcm_procedural::Builder,
 )]
-#[derivative(Clone(bound = ""), Eq(bound = ""), PartialEq(bound = ""), Debug(bound = ""))]
+#[derive_where(Clone, Eq, PartialEq, Debug)]
 #[codec(encode_bound())]
 #[codec(decode_bound())]
+#[codec(decode_with_mem_tracking_bound())]
 #[scale_info(bounds(), skip_type_params(Call))]
 pub enum Instruction<Call> {
 	/// Withdraw asset(s) (`assets`) from the ownership of `origin` and place them into the Holding
@@ -1133,7 +1141,17 @@ pub enum Instruction<Call> {
 	SetHints { hints: BoundedVec<Hint, HintNumVariants> },
 }
 
-#[derive(Encode, Decode, TypeInfo, Debug, PartialEq, Eq, Clone, xcm_procedural::NumVariants)]
+#[derive(
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	TypeInfo,
+	Debug,
+	PartialEq,
+	Eq,
+	Clone,
+	xcm_procedural::NumVariants,
+)]
 pub enum Hint {
 	/// Set asset claimer for all the trapped assets during the execution.
 	///

@@ -39,8 +39,3 @@ These status packets will typically contain light pieces of information
 used to inform peers of a current view of protocol state.
 
 License: GPL-3.0-or-later WITH Classpath-exception-2.0
-
-
-## Release
-
-Polkadot SDK Stable 2412

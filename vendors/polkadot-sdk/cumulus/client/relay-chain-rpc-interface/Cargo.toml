@@ -1,66 +1,68 @@
 [package]
 authors.workspace = true
 name = "cumulus-relay-chain-rpc-interface"
-version = "0.21.2"
+version = "0.24.0"
 edition.workspace = true
 description = "Implementation of the RelayChainInterface trait that connects to a remote RPC-node."
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
+homepage.workspace = true
+repository.workspace = true
 
 [lints]
 workspace = true
 
-[dev-dependencies]
-portpicker = "0.1.1"
-
 [dependencies]
-polkadot-overseer.workspace = true
-polkadot-overseer.default-features = true
-cumulus-primitives-core.workspace = true
 cumulus-primitives-core.default-features = true
-cumulus-relay-chain-interface.workspace = true
+cumulus-primitives-core.workspace = true
 cumulus-relay-chain-interface.default-features = true
-sp-api.workspace = true
-sp-api.default-features = true
-sp-core.workspace = true
-sp-core.default-features = true
-sp-consensus-babe.workspace = true
-sp-consensus-babe.default-features = true
-sp-authority-discovery.workspace = true
-sp-authority-discovery.default-features = true
-sp-state-machine.workspace = true
-sp-state-machine.default-features = true
-sp-storage.workspace = true
-sp-storage.default-features = true
-sp-runtime.workspace = true
-sp-runtime.default-features = true
-sp-version.workspace = true
-sp-version.default-features = true
-sc-client-api.workspace = true
-sc-client-api.default-features = true
-sc-rpc-api.workspace = true
-sc-rpc-api.default-features = true
-sc-service.workspace = true
-sc-service.default-features = true
-prometheus-endpoint.workspace = true
+cumulus-relay-chain-interface.workspace = true
+polkadot-overseer.default-features = true
+polkadot-overseer.workspace = true
 prometheus-endpoint.default-features = true
+prometheus-endpoint.workspace = true
+sc-client-api.default-features = true
+sc-client-api.workspace = true
+sc-network.default-features = true
+sc-network.workspace = true
+sc-rpc-api.default-features = true
+sc-rpc-api.workspace = true
+sc-service.default-features = true
+sc-service.workspace = true
+sp-authority-discovery.default-features = true
+sp-authority-discovery.workspace = true
+sp-consensus-babe.default-features = true
+sp-consensus-babe.workspace = true
+sp-core.default-features = true
+sp-core.workspace = true
+sp-runtime.default-features = true
+sp-runtime.workspace = true
+sp-state-machine.default-features = true
+sp-state-machine.workspace = true
+sp-storage.default-features = true
+sp-storage.workspace = true
+sp-version.default-features = true
+sp-version.workspace = true
 
 tokio = { features = ["sync"], workspace = true, default-features = true }
 tokio-util = { features = ["compat"], workspace = true }
 
+async-trait = { workspace = true }
+codec = { workspace = true, default-features = true }
+either = { workspace = true, default-features = true }
 futures = { workspace = true }
 futures-timer = { workspace = true }
-codec = { workspace = true, default-features = true }
 jsonrpsee = { features = ["ws-client"], workspace = true }
-tracing = { workspace = true, default-features = true }
-async-trait = { workspace = true }
-url = { workspace = true }
-serde_json = { workspace = true, default-features = true }
-serde = { workspace = true, default-features = true }
-schnellru = { workspace = true }
-smoldot = { default_features = false, features = ["std"], workspace = true }
-smoldot-light = { default_features = false, features = ["std"], workspace = true }
-either = { workspace = true, default-features = true }
-thiserror = { workspace = true }
-rand = { workspace = true, default-features = true }
 pin-project = { workspace = true }
 prometheus = { workspace = true }
+rand = { workspace = true, default-features = true }
+schnellru = { workspace = true }
+serde = { workspace = true, default-features = true }
+serde_json = { workspace = true, default-features = true }
+smoldot = { default-features = false, features = ["std"], workspace = true }
+smoldot-light = { default-features = false, features = ["std"], workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true, default-features = true }
+url = { workspace = true }
+
+[dev-dependencies]
+portpicker = { workspace = true }

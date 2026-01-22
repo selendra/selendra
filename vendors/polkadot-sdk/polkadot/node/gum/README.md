@@ -55,8 +55,3 @@ disambiguate, the prefix `gum::` is used.
 Feature Parity with `tracing::{warn!,..}` is not desired. We want consistency
 more than anything. All currently used features _are_ supported with _gum_ as
 well.
-
-
-## Release
-
-Polkadot SDK Stable 2412

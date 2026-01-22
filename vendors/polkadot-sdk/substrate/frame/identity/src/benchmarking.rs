@@ -23,14 +23,13 @@ use super::*;
 
 use crate::{migration::v2::LazyMigrationV1ToV2, Pallet as Identity};
 use alloc::{vec, vec::Vec};
-use codec::Decode;
 use frame_benchmarking::{account, v2::*, whitelisted_caller, BenchmarkError};
 use frame_support::{
 	assert_ok, ensure,
 	traits::{EnsureOrigin, Get, OnFinalize, OnInitialize},
 };
 use frame_system::RawOrigin;
-use sp_runtime::traits::{Bounded, IdentifyAccount, One, Verify};
+use sp_runtime::traits::{Bounded, One};
 
 const SEED: u32 = 0;
 
@@ -128,12 +127,7 @@ fn bounded_username<T: Config>(username: Vec<u8>, suffix: Vec<u8>) -> Username<T
 	Username::<T>::try_from(full_username).expect("test usernames should fit within bounds")
 }
 
-#[benchmarks(
-	where
-		// Most commonly used runtime AccountId types (`AccountId32` & `AccountId20`) implement `Decode`.
-		// A generic solution to needing this was implemented in PR #8179, but that is available from release `stable-2506` onwards.
-		<T as crate::Config>::SigningPublicKey: Decode,
-)]
+#[benchmarks]
 mod benchmarks {
 	use super::*;
 
@@ -216,7 +210,7 @@ mod benchmarks {
 		let caller: T::AccountId = whitelisted_caller();
 
 		// Give them p many previous sub accounts.
-		let _ = add_sub_accounts::<T>(&caller, p)?;
+		add_sub_accounts::<T>(&caller, p)?;
 
 		// Remove all subs.
 		let subs = create_sub_accounts::<T>(&caller, 0)?;
@@ -244,7 +238,7 @@ mod benchmarks {
 		add_registrars::<T>(r)?;
 
 		// Add sub accounts
-		let _ = add_sub_accounts::<T>(&caller, s)?;
+		add_sub_accounts::<T>(&caller, s)?;
 
 		// Create their main identity with x additional fields
 		let info = T::IdentityInformation::create_identity_info();
@@ -462,7 +456,7 @@ mod benchmarks {
 
 		let info = T::IdentityInformation::create_identity_info();
 		Identity::<T>::set_identity(target_origin.clone(), Box::new(info.clone()))?;
-		let _ = add_sub_accounts::<T>(&target, s)?;
+		add_sub_accounts::<T>(&target, s)?;
 
 		// User requests judgement from all the registrars, and they approve
 		for i in 0..r {
@@ -496,7 +490,7 @@ mod benchmarks {
 	#[benchmark]
 	fn add_sub(s: Linear<0, { T::MaxSubAccounts::get() - 1 }>) -> Result<(), BenchmarkError> {
 		let caller: T::AccountId = whitelisted_caller();
-		let _ = add_sub_accounts::<T>(&caller, s)?;
+		add_sub_accounts::<T>(&caller, s)?;
 		let sub = account("new_sub", 0, SEED);
 		let data = Data::Raw(vec![0; 32].try_into().unwrap());
 
@@ -544,7 +538,7 @@ mod benchmarks {
 	fn quit_sub(s: Linear<0, { T::MaxSubAccounts::get() - 1 }>) -> Result<(), BenchmarkError> {
 		let caller: T::AccountId = whitelisted_caller();
 		let sup = account("super", 0, SEED);
-		let _ = add_sub_accounts::<T>(&sup, s)?;
+		add_sub_accounts::<T>(&sup, s)?;
 		let sup_origin = RawOrigin::Signed(sup).into();
 		Identity::<T>::add_sub(
 			sup_origin,
@@ -623,17 +617,9 @@ mod benchmarks {
 		let username = bench_username();
 		let bounded_username = bounded_username::<T>(username.clone(), suffix.clone());
 
-		// Use benchmark_helper to generate the signature
-		let (public_bytes, signature_bytes) = T::benchmark_helper(&bounded_username[..]);
-
-		// Decode the public key and signature
-		let public = T::SigningPublicKey::decode(&mut &public_bytes[..])
-			.expect("benchmark_helper should return valid encoded public key");
-		let who_account: T::AccountId = public.into_account();
+		let (public, signature) = T::BenchmarkHelper::sign_message(&bounded_username[..]);
+		let who_account = public.into_account();
 		let who_lookup = T::Lookup::unlookup(who_account.clone());
-
-		let signature = T::OffchainSignature::decode(&mut &signature_bytes[..])
-			.expect("benchmark_helper should return valid encoded signature");
 
 		// Verify signature here to avoid surprise errors at runtime
 		assert!(signature.verify(&bounded_username[..], &who_account));
@@ -648,7 +634,7 @@ mod benchmarks {
 			RawOrigin::Signed(authority.clone()),
 			who_lookup,
 			bounded_username.clone().into(),
-			Some(signature),
+			Some(signature.into()),
 			use_allocation,
 		);
 

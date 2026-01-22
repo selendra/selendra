@@ -1,6 +1,6 @@
 [package]
 name = "pallet-transaction-storage"
-version = "38.1.0"
+version = "40.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
@@ -18,32 +18,23 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 array-bytes = { optional = true, workspace = true, default-features = true }
 codec = { workspace = true }
-scale-info = { features = ["derive"], workspace = true }
-serde = { optional = true, workspace = true, default-features = true }
 frame-benchmarking = { optional = true, workspace = true }
 frame-support.workspace = true
 frame-system.workspace = true
+log = { workspace = true }
 pallet-balances.workspace = true
+scale-info = { features = ["derive"], workspace = true }
+serde = { optional = true, workspace = true, default-features = true }
 sp-inherents.workspace = true
 sp-io.workspace = true
 sp-runtime.workspace = true
 sp-transaction-storage-proof.workspace = true
-log = { workspace = true }
 
 [dev-dependencies]
-sp-core = { path = "../../primitives/core", default-features = false }
-sp-transaction-storage-proof = { default-features = true, path = "../../primitives/transaction-storage-proof" }
+sp-transaction-storage-proof = { default-features = true, workspace = true }
 
 [features]
 default = ["std"]
-runtime-benchmarks = [
-	"array-bytes",
-	"frame-benchmarking/runtime-benchmarks",
-	"frame-support/runtime-benchmarks",
-	"frame-system/runtime-benchmarks",
-	"pallet-balances/runtime-benchmarks",
-	"sp-runtime/runtime-benchmarks",
-]
 std = [
 	"codec/std",
 	"frame-benchmarking?/std",
@@ -56,7 +47,14 @@ std = [
 	"sp-inherents/std",
 	"sp-io/std",
 	"sp-runtime/std",
-	"sp-transaction-storage-proof/std",
+]
+runtime-benchmarks = [
+	"array-bytes",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
 ]
 try-runtime = [
 	"frame-support/try-runtime",

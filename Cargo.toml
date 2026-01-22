@@ -7,10 +7,10 @@ members = [
     "crate/clique",
     "crate/rate-limiter",
     "crate/finality-aleph",
-    "bin/node",
-    "bin/runtime",
-    "bin/chain-bootstrapper",
-    "bin/client-runtime-api",
+    # "bin/node",
+    # "bin/runtime",
+    # "bin/chain-bootstrapper",
+    # "bin/client-runtime-api",
     "pallets/aleph",
     "pallets/aleph-runtime-api",
     "pallets/elections",
@@ -58,19 +58,20 @@ aleph-bft-crypto = { version = "0.9" }
 aleph-bft-mock = { version = "0.15" }
 # Pin to version that doesn't require edition2024
 ws_stream_wasm = { version = "=0.7.4" }
+base64ct = { version = "=1.6.0", default-features = false }
 aleph-bft-rmc = { version = "0.14" }
 aleph-bft-types = { version = "0.14" }
-async-trait = { version = "0.1" }
-array-bytes = { version = "6" }
-assert_matches = "1.3.0"
+async-trait = { version = "0.1.88" }
+array-bytes = { version = "6.2.2" }
+assert_matches = "1.5.0"
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 bytes = { version = "1.8" }
-clap = { version = "4.5", features = ["derive", "deprecated"] }
+clap = { version = "4.5.13", features = ["derive", "deprecated"] }
 const-hex = { version = "1.14", default-features = false, features = ["alloc"] }
 derive_more = { version = "1.0", features = ["from", "into", "as_ref", "display"] }
 environmental = { version = "1.1.4", default-features = false }
-env_logger = { version = "0.10" }
-futures = { version = "0.3" }
+env_logger = { version = "0.11.2" }
+futures = { version = "0.3.31" }
 futures-timer = { version = "3.0" }
 hash-db = { version = "0.16", default-features = false }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
@@ -89,20 +90,20 @@ num-traits = { version = "0.2", default-features = false }
 parity-db = { version = "0.4.13" }
 parity-scale-codec = { version = "3.6.1", default-features = false }
 parking_lot = { version = "0.12" }
-paste = { version = "1.0" }
+paste = { version = "1.0.15" }
 rand = { version = "0.8.5", default-features = false }
-rlp = { version = "0.6", default-features = false }
+rlp = { version = "0.6.1", default-features = false }
 scale-codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false, features = ["derive"] }
 scale-info = { version = "2.11.0", default-features = false }
 serde = { version = "1.0", default-features = false }
 serde_json = { version = "1.0", default-features = false }
 similar-asserts = { version = "1.6.1" }
-smallvec = { version = "1", default-features = false }
+smallvec = { version = "1.11.0", default-features = false }
 sqlx = { version = "0.7.4", default-features = false, features = ["macros"] }
 static_assertions = { version = "1.1" }
 thiserror = { version = "1.0" }
 tiny-bip39 = { version = "1.0" }
-tokio = { version = "1.41" }
+tokio = { version = "1.45.0" }
 rand_pcg = { version = "0.3.1", default-features = false }
 
 # Arkworks
@@ -114,11 +115,11 @@ ark-ff = { version = "0.4.0", default-features = false }
 ark-std = { version = "0.4.0", default-features = false }
 
 ethers = { version = "2.0.9", default-features = false }
-evm = { git = "https://github.com/rust-ethereum/evm", rev = "e81732d6bb47e3d3d68d233e43919c4522598361", default-features = false }
-evm-gasometer = { git = "https://github.com/rust-ethereum/evm", rev = "e81732d6bb47e3d3d68d233e43919c4522598361", default-features = false }
-evm-runtime = { git = "https://github.com/rust-ethereum/evm", rev = "e81732d6bb47e3d3d68d233e43919c4522598361", default-features = false }
+evm = { git = "https://github.com/rust-ethereum/evm", branch = "v0.x", default-features = false }
+evm-gasometer = { git = "https://github.com/rust-ethereum/evm", branch = "v0.x", default-features = false }
+evm-runtime = { git = "https://github.com/rust-ethereum/evm", branch = "v0.x", default-features = false }
 ethereum-types = { version = "0.15", default-features = false }
-ethereum = { git = "https://github.com/rust-ethereum/ethereum", rev = "3be0d8fd4c2ad1ba216b69ef65b9382612efc8ba", default-features = false }
+ethereum = { version = "0.18.2", default-features = false }
 kvdb-rocksdb = { version = "0.19.0" }
 
 frame-benchmarking = { path = "vendors/polkadot-sdk/substrate/frame/benchmarking", default-features = false }
@@ -243,45 +244,6 @@ pallet-unified-accounts = { path = "pallets/unified-accounts", default-features 
 finality-aleph = { path = "crate/finality-aleph" }
 network-clique = { path = "crate/clique" }
 rate-limiter = { path = "crate/rate-limiter" }
-
-# # frontier Client
-# fc-api = { path = "crate/frontier/client/api", default-features = false }
-# fc-cli = { path = "crate/frontierclient/cli", default-features = false }
-# fc-consensus = { path = "crate/frontierclient/consensus", default-features = false }
-# fc-db = { path = "crate/frontierclient/db", default-features = false }
-# fc-mapping-sync = {path = "crate/frontierclient/mapping-sync", default-features = false }
-# fc-rpc = { path = "crate/frontierclient/rpc", default-features = false }
-# fc-rpc-core = { path = "crate/frontierclient/rpc-core", default-features = false }
-# fc-storage = {path = "crate/frontierclient/storage", default-features = false }
-
-# # frontier Primitive
-# fp-account = { path = "crate/frontierprimitives/account", default-features = false }
-# fp-consensus = { path = "crate/frontierprimitives/consensus", default-features = false }
-# fp-dynamic-fee = { path = "crate/frontierprimitives/dynamic-fee", default-features = false }
-# fp-ethereum = { path = "crate/frontierprimitives/ethereum", default-features = false }
-# fp-evm = { path = "crate/frontierprimitives/evm", default-features = false }
-# fp-rpc = { path = "crate/frontierprimitives/rpc", default-features = false }
-# fp-self-contained = {path = "crate/frontierprimitives/self-contained", default-features = false }
-# fp-storage = { path = "crate/frontierprimitives/storage", default-features = false }
-
-# # frontier FRAME
-# pallet-base-fee = { path = "crate/frontierframe/base-fee", default-features = false }
-# pallet-dynamic-fee = { path = "crate/frontierframe/dynamic-fee", default-features = false }
-# pallet-ethereum = { path = "crate/frontierframe/ethereum", default-features = false }
-# pallet-evm = { path = "crate/frontierframe/evm", default-features = false }
-# pallet-evm-chain-id = { path = "crate/frontierframe/evm-chain-id", default-features = false }
-# pallet-evm-precompile-modexp = { path = "crate/frontierframe/evm/precompile/modexp", default-features = false }
-# pallet-evm-precompile-sha3fips = { path = "crate/frontierframe/evm/precompile/sha3fips", default-features = false }
-# pallet-evm-precompile-simple = { path = "crate/frontierframe/evm/precompile/simple", default-features = false }
-# pallet-hotfix-sufficients = { path = "crate/frontierframe/hotfix-sufficients", default-features = false }
-
-# # local frontier
-# pallet-custom-signatures = { path = "pallets/custom-signatures", default-features = false }
-# pallet-unified-accounts = { path = "pallets/unified-accounts", default-features = false }
-# pallet-dynamic-evm-base-fee = { path = "pallets/dynamic-evm-base-fee", default-features = false }
-
-# # utils
-# precompile-utils = { path = "crate/frontierprecompiles", default-features = false }
 
 # frontier Client
 fc-api = { path = "crate/frontier/client/api" }

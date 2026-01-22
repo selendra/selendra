@@ -54,6 +54,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(unused_crate_dependencies)]
 #![allow(clippy::too_many_arguments)]
+#![allow(clippy::useless_conversion)]
 
 extern crate alloc;
 
@@ -67,14 +68,15 @@ pub mod runner;
 mod tests;
 pub mod weights;
 
-use alloc::{collections::btree_map::BTreeMap, vec::Vec};
+use alloc::{borrow::Cow, collections::btree_map::BTreeMap, vec::Vec};
 use core::cmp::min;
+use ethereum::AuthorizationList;
 pub use evm::{
 	Config as EvmConfig, Context, ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed,
 };
 use hash_db::Hasher;
 use impl_trait_for_tuples::impl_for_tuples;
-use scale_codec::{Decode, Encode, MaxEncodedLen};
+use scale_codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 // Substrate
 use frame_support::{
@@ -92,6 +94,7 @@ use frame_support::{
 	},
 	weights::Weight,
 };
+use frame_support::traits::tokens::WithdrawConsequence;
 use frame_system::RawOrigin;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
@@ -113,6 +116,13 @@ pub use self::{
 	runner::{Runner, RunnerError},
 	weights::WeightInfo,
 };
+
+/// For standalone chains (non-parachain), proof size is not measured.
+/// This function always returns None.
+#[inline]
+fn get_proof_size() -> Option<u64> {
+	None
+}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -147,6 +157,14 @@ pub mod pallet {
 		#[pallet::no_default_bounds]
 		type CallOrigin: EnsureAddressOrigin<Self::RuntimeOrigin>;
 
+		/// Allow the source address to deploy contracts directly via CREATE calls.
+		#[pallet::no_default_bounds]
+		type CreateOriginFilter: EnsureCreateOrigin<Self>;
+
+		/// Allow the source address to deploy contracts via CALL(CREATE) calls.
+		#[pallet::no_default_bounds]
+		type CreateInnerOriginFilter: EnsureCreateOrigin<Self>;
+
 		/// Allow the origin to withdraw on behalf of given address.
 		#[pallet::no_default_bounds]
 		type WithdrawOrigin: EnsureAddressOrigin<Self::RuntimeOrigin, Success = AccountIdOf<Self>>;
@@ -158,10 +176,6 @@ pub mod pallet {
 		/// Currency type for withdraw and balance storage.
 		#[pallet::no_default]
 		type Currency: Currency<AccountIdOf<Self>> + Inspect<AccountIdOf<Self>>;
-
-		/// The overarching event type.
-		#[pallet::no_default_bounds]
-		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// Precompiles associated with this EVM engine.
 		type PrecompilesType: PrecompileSet;
@@ -204,7 +218,7 @@ pub mod pallet {
 
 		/// EVM config used in the module.
 		fn config() -> &'static EvmConfig {
-			&CANCUN_CONFIG
+			&PECTRA_CONFIG
 		}
 	}
 
@@ -243,8 +257,6 @@ pub mod pallet {
 			type FeeCalculator = FixedGasPrice;
 			type GasWeightMapping = FixedGasWeightMapping<Self>;
 			type WeightPerGas = WeightPerGas;
-			#[inject_runtime_type]
-			type RuntimeEvent = ();
 			type PrecompilesType = ();
 			type PrecompilesValue = ();
 			type ChainId = ChainId;
@@ -254,6 +266,8 @@ pub mod pallet {
 			type FindAuthor = FindAuthorTruncated;
 			type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
 			type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
+			type CreateOriginFilter = ();
+			type CreateInnerOriginFilter = ();
 			type WeightInfo = ();
 		}
 
@@ -321,6 +335,7 @@ pub mod pallet {
 			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			access_list: Vec<(H160, Vec<H256>)>,
+			authorization_list: AuthorizationList,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
@@ -336,6 +351,7 @@ pub mod pallet {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list,
+				authorization_list,
 				is_transactional,
 				validate,
 				None,
@@ -397,6 +413,7 @@ pub mod pallet {
 			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			access_list: Vec<(H160, Vec<H256>)>,
+			authorization_list: AuthorizationList,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
@@ -411,6 +428,7 @@ pub mod pallet {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list,
+				authorization_list,
 				is_transactional,
 				validate,
 				None,
@@ -484,6 +502,7 @@ pub mod pallet {
 			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			access_list: Vec<(H160, Vec<H256>)>,
+			authorization_list: AuthorizationList,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
@@ -499,6 +518,7 @@ pub mod pallet {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list,
+				authorization_list,
 				is_transactional,
 				validate,
 				None,
@@ -599,6 +619,8 @@ pub mod pallet {
 		TransactionMustComeFromEOA,
 		/// Undefined error.
 		Undefined,
+		/// Address not allowed to deploy contracts either via CREATE or CALL(CREATE).
+		CreateOriginNotAllowed,
 	}
 
 	impl<T> From<TransactionValidationError> for Error<T> {
@@ -614,6 +636,8 @@ pub mod pallet {
 				TransactionValidationError::InvalidFeeInput => Error::<T>::GasPriceTooLow,
 				TransactionValidationError::InvalidChainId => Error::<T>::InvalidChainId,
 				TransactionValidationError::InvalidSignature => Error::<T>::InvalidSignature,
+				TransactionValidationError::EmptyAuthorizationList => Error::<T>::Undefined,
+				TransactionValidationError::AuthorizationListTooLarge => Error::<T>::Undefined,
 				TransactionValidationError::UnknownError => Error::<T>::Undefined,
 			}
 		}
@@ -652,7 +676,7 @@ pub mod pallet {
 					account.balance.unique_saturated_into(),
 				);
 
-				Pallet::<T>::create_account(*address, account.code.clone());
+				let _ = Pallet::<T>::create_account(*address, account.code.clone(), None);
 
 				for (index, value) in &account.storage {
 					<AccountStorages<T>>::insert(address, index, value);
@@ -671,6 +695,35 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type AccountStorages<T: Config> =
 		StorageDoubleMap<_, Blake2_128Concat, H160, Blake2_128Concat, H256, H256, ValueQuery>;
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
+			let mut total_weight = Weight::zero();
+
+			// Do dummy read to populate the pov with the intermediates nodes,
+			// only when proof size recording is enabled.
+			if let Some(pov_before) = get_proof_size() {
+				const ZERO_ACCOUNT: H160 = H160::zero();
+
+				// just a dummy read to populate the pov with the intermediates nodes
+				let _ = AccountCodesMetadata::<T>::get(ZERO_ACCOUNT.clone());
+				let (_, min_gas_weight) = T::FeeCalculator::min_gas_price();
+				let (_, account_basic_weight) = Pallet::<T>::account_basic(&ZERO_ACCOUNT);
+
+				let pov = get_proof_size().unwrap_or_default() - pov_before;
+
+				total_weight = total_weight
+					.saturating_add(Weight::from_parts(0, pov))
+					.saturating_add(T::DbWeight::get().reads(1))
+					.saturating_add(account_basic_weight)
+					.saturating_add(min_gas_weight);
+
+			}
+
+			total_weight
+		}
+	}
 }
 
 /// Utility alias for easy access to the [`AccountProvider::AccountId`] type from a given config.
@@ -690,6 +743,8 @@ type NegativeImbalanceOf<C, T> = <C as Currency<AccountIdOf<T>>>::NegativeImbala
 	PartialEq,
 	Encode,
 	Decode,
+	Default,
+	DecodeWithMemTracking,
 	TypeInfo,
 	MaxEncodedLen
 )]
@@ -699,7 +754,7 @@ pub struct CodeMetadata {
 }
 
 impl CodeMetadata {
-	fn from_code(code: &[u8]) -> Self {
+	pub fn from_code(code: &[u8]) -> Self {
 		let size = code.len() as u64;
 		let hash = H256::from(sp_io::hashing::keccak_256(code));
 
@@ -810,6 +865,30 @@ where
 	}
 }
 
+pub trait EnsureCreateOrigin<T> {
+	fn check_create_origin(address: &H160) -> Result<(), Error<T>>;
+}
+
+pub struct EnsureAllowedCreateAddress<AddressGetter>(core::marker::PhantomData<AddressGetter>);
+
+impl<AddressGetter, T: Config> EnsureCreateOrigin<T> for EnsureAllowedCreateAddress<AddressGetter>
+where
+	AddressGetter: Get<Vec<H160>>,
+{
+	fn check_create_origin(address: &H160) -> Result<(), Error<T>> {
+		if !AddressGetter::get().contains(address) {
+			return Err(Error::<T>::CreateOriginNotAllowed);
+		}
+		Ok(())
+	}
+}
+
+impl<T> EnsureCreateOrigin<T> for () {
+	fn check_create_origin(_address: &H160) -> Result<(), Error<T>> {
+		Ok(())
+	}
+}
+
 /// Trait to be implemented for evm address mapping.
 pub trait AddressMapping<A> {
 	fn into_account_id(address: H160) -> A;
@@ -898,13 +977,15 @@ where
 	}
 }
 
-static CANCUN_CONFIG: EvmConfig = EvmConfig::cancun();
+static PECTRA_CONFIG: EvmConfig = EvmConfig::pectra();
 
 impl<T: Config> Pallet<T> {
 	/// Check whether an account is empty.
 	pub fn is_account_empty(address: &H160) -> bool {
 		let (account, _) = Self::account_basic(address);
-		let code_len = <AccountCodes<T>>::decode_len(address).unwrap_or(0);
+		let code_len = <AccountCodesMetadata<T>>::get(address)
+			.unwrap_or_default()
+			.size;
 
 		account.nonce == U256::zero() && account.balance == U256::zero() && code_len == 0
 	}
@@ -922,20 +1003,35 @@ impl<T: Config> Pallet<T> {
 
 	/// Remove an account.
 	pub fn remove_account(address: &H160) {
-		if <AccountCodes<T>>::contains_key(address) {
-			let account_id = T::AddressMapping::into_account_id(*address);
-			T::AccountProvider::remove_account(&account_id);
-		}
+		let account_id = T::AddressMapping::into_account_id(*address);
+		T::AccountProvider::remove_account(&account_id);
 
 		<AccountCodes<T>>::remove(address);
 		<AccountCodesMetadata<T>>::remove(address);
 		let _ = <AccountStorages<T>>::clear_prefix(address, u32::MAX, None);
 	}
 
+	/// Remove an account's code if present.
+	pub fn remove_account_code(address: &H160) {
+		<AccountCodes<T>>::remove(address);
+		<AccountCodesMetadata<T>>::remove(address);
+	}
+
 	/// Create an account.
-	pub fn create_account(address: H160, code: Vec<u8>) {
+	pub fn create_account(
+		address: H160,
+		code: Vec<u8>,
+		caller: Option<H160>,
+	) -> Result<(), ExitError> {
+		if let Some(caller_address) = caller {
+			T::CreateInnerOriginFilter::check_create_origin(&caller_address).map_err(|e| {
+				let error: &'static str = e.into();
+				ExitError::Other(Cow::Borrowed(error))
+			})?;
+		}
+
 		if code.is_empty() {
-			return;
+			return Ok(());
 		}
 
 		if !<AccountCodes<T>>::contains_key(address) {
@@ -948,33 +1044,23 @@ impl<T: Config> Pallet<T> {
 		<AccountCodesMetadata<T>>::insert(address, meta);
 
 		<AccountCodes<T>>::insert(address, code);
+		Ok(())
 	}
 
 	/// Get the account metadata (hash and size) from storage if it exists,
 	/// or compute it from code and store it if it doesn't exist.
 	pub fn account_code_metadata(address: H160) -> CodeMetadata {
-		if let Some(meta) = <AccountCodesMetadata<T>>::get(address) {
-			return meta;
-		}
-
-		let code = <AccountCodes<T>>::get(address);
-
-		// If code is empty we return precomputed hash for empty code.
-		// We don't store it as this address could get code deployed in the future.
-		if code.is_empty() {
+		<AccountCodesMetadata<T>>::get(address).unwrap_or_else(|| {
+			// If there is no codeMetadata, we assume that the code is empty,
+			// we then return precomputed hash for empty code.
 			const EMPTY_CODE_HASH: [u8; 32] = hex_literal::hex!(
 				"c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
 			);
-			return CodeMetadata {
+			CodeMetadata {
 				size: 0,
 				hash: EMPTY_CODE_HASH.into(),
-			};
-		}
-
-		let meta = CodeMetadata::from_code(&code);
-
-		<AccountCodesMetadata<T>>::insert(address, meta);
-		meta
+			}
+		})
 	}
 
 	/// Get the account basic in EVM format.
@@ -1010,6 +1096,8 @@ pub trait OnChargeEVMTransaction<T: Config> {
 	/// Before the transaction is executed the payment of the transaction fees
 	/// need to be secured.
 	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, Error<T>>;
+
+	fn can_withdraw(who: &H160, amount: U256) -> Result<(), Error<T>>;
 
 	/// After the transaction was executed the actual fee can be calculated.
 	/// This function should refund any overpaid fees and optionally deposit
@@ -1060,6 +1148,20 @@ where
 		)
 		.map_err(|_| Error::<T>::BalanceLow)?;
 		Ok(Some(imbalance))
+	}
+
+	fn can_withdraw(who: &H160, amount: U256) -> Result<(), Error<T>> {
+		let account_id = T::AddressMapping::into_account_id(*who);
+		let amount = amount.unique_saturated_into();
+		let new_free = C::free_balance(&account_id).saturating_sub(amount);
+		C::ensure_can_withdraw(
+			&account_id,
+			amount,
+			WithdrawReasons::FEE, // note that this is ignored in ensure_can_withdraw()
+			new_free,
+		)
+		.map_err(|_| Error::<T>::BalanceLow)?;
+		Ok(())
 	}
 
 	fn correct_and_deposit_fee(
@@ -1155,6 +1257,15 @@ where
 		Ok(Some(imbalance))
 	}
 
+	fn can_withdraw(who: &H160, amount: U256) -> Result<(), Error<T>> {
+		let account_id = T::AddressMapping::into_account_id(*who);
+		let amount = amount.unique_saturated_into();
+		if let WithdrawConsequence::Success = F::can_withdraw(&account_id, amount) {
+			return Ok(());
+		}
+		Err(Error::<T>::BalanceLow)
+	}
+
 	fn correct_and_deposit_fee(
 		who: &H160,
 		corrected_fee: U256,
@@ -1225,6 +1336,10 @@ where
 
 	fn pay_priority_fee(tip: Self::LiquidityInfo) {
 		<EVMFungibleAdapter<T::Currency, ()> as OnChargeEVMTransaction<T>>::pay_priority_fee(tip);
+	}
+
+	fn can_withdraw(who: &H160, amount: U256) -> Result<(), Error<T>> {
+		EVMFungibleAdapter::<T::Currency, ()>::can_withdraw(who, amount)
 	}
 }
 

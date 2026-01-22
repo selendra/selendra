@@ -1,10 +1,12 @@
 [package]
 name = "cumulus-client-cli"
-version = "0.21.1"
+version = "0.24.0"
 authors.workspace = true
 edition.workspace = true
 description = "Parachain node CLI utilities."
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
+homepage.workspace = true
+repository.workspace = true
 
 [lints]
 workspace = true
@@ -12,18 +14,18 @@ workspace = true
 [dependencies]
 clap = { features = ["derive"], workspace = true }
 codec = { workspace = true, default-features = true }
-url = { workspace = true }
-sc-cli.workspace = true
-sc-cli.default-features = true
-sc-client-api.workspace = true
-sc-client-api.default-features = true
-sc-chain-spec.workspace = true
 sc-chain-spec.default-features = true
+sc-chain-spec.workspace = true
+sc-cli.default-features = false
+sc-cli.workspace = true
+sc-client-api.default-features = true
+sc-client-api.workspace = true
+sc-service.default-features = false
 sc-service.workspace = true
-sc-service.default-features = true
-sp-core.workspace = true
-sp-core.default-features = true
-sp-runtime.workspace = true
-sp-runtime.default-features = true
-sp-blockchain.workspace = true
 sp-blockchain.default-features = true
+sp-blockchain.workspace = true
+sp-core.default-features = true
+sp-core.workspace = true
+sp-runtime.default-features = true
+sp-runtime.workspace = true
+url = { workspace = true }

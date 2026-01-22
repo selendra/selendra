@@ -1,47 +1,45 @@
 [package]
 name = "polkadot-node-core-av-store"
 description = "The Availability Store subsystem. Wrapper over the DB that stores availability data and chunks."
-version = "21.0.0"
+version = "24.0.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
+homepage.workspace = true
+repository.workspace = true
 
 [lints]
 workspace = true
 
 [dependencies]
+bitvec = { workspace = true, default-features = true }
 futures = { workspace = true }
 futures-timer = { workspace = true }
-kvdb = { workspace = true }
-thiserror = { workspace = true }
-gum.workspace = true
 gum.default-features = true
-bitvec = { workspace = true, default-features = true }
+gum.workspace = true
+thiserror = { workspace = true }
 
 codec = { features = ["derive"], workspace = true, default-features = true }
-polkadot-erasure-coding.workspace = true
 polkadot-erasure-coding.default-features = true
-polkadot-node-subsystem.workspace = true
-polkadot-node-subsystem.default-features = true
-polkadot-node-subsystem-util.workspace = true
-polkadot-node-subsystem-util.default-features = true
-polkadot-overseer.workspace = true
-polkadot-overseer.default-features = true
-polkadot-primitives.workspace = true
-polkadot-primitives.default-features = true
-polkadot-node-primitives.workspace = true
+polkadot-erasure-coding.workspace = true
 polkadot-node-primitives.default-features = true
+polkadot-node-primitives.workspace = true
+polkadot-node-subsystem-util.default-features = true
+polkadot-node-subsystem-util.workspace = true
+polkadot-node-subsystem.default-features = true
+polkadot-node-subsystem.workspace = true
+polkadot-primitives.default-features = true
+polkadot-primitives.workspace = true
 sp-consensus.workspace = true
 
 [dev-dependencies]
-log = { workspace = true, default-features = true }
 assert_matches = { workspace = true }
 kvdb-memorydb = { workspace = true }
-sp-tracing = { path = "../../../../substrate/primitives/tracing", default-features = false }
+sp-tracing = { workspace = true, default-features = false }
 
-sp-core = { default-features = true, path = "../../../../substrate/primitives/core" }
-polkadot-node-subsystem-util = { default-features = true, path = "../../subsystem-util" }
-polkadot-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
-sp-keyring = { default-features = true, path = "../../../../substrate/primitives/keyring" }
 parking_lot = { workspace = true, default-features = true }
-polkadot-primitives-test-helpers = { path = "../../../primitives/test-helpers" }
+polkadot-node-subsystem-test-helpers = { workspace = true }
+polkadot-node-subsystem-util = { default-features = true, workspace = true }
+polkadot-primitives-test-helpers = { workspace = true }
+sp-core = { default-features = true, workspace = true }
+sp-keyring = { default-features = true, workspace = true }

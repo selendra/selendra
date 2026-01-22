@@ -101,17 +101,17 @@ impl<'a, K, V> TrackedMapReadAccess<'a, K, V>
 where
 	K: Eq + std::hash::Hash,
 {
-	/// Returns true if map contains key.
+	/// Returns true if the map contains given key.
 	pub fn contains_key(&self, key: &K) -> bool {
 		self.inner_guard.contains_key(key)
 	}
 
-	/// Returns reference to the contained value by key, if exists.
+	/// Returns the reference to the contained value by key, if exists.
 	pub fn get(&self, key: &K) -> Option<&V> {
 		self.inner_guard.get(key)
 	}
 
-	/// Returns iterator over all values.
+	/// Returns an iterator over all values.
 	pub fn values(&self) -> std::collections::hash_map::Values<K, V> {
 		self.inner_guard.values()
 	}

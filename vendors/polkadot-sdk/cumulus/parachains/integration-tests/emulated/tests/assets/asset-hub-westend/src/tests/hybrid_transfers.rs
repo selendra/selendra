@@ -13,12 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use emulated_integration_tests_common::xcm_helpers::{
+	find_mq_processed_id, find_xcm_sent_message_id,
+};
+use westend_system_emulated_network::westend_emulated_chain::westend_runtime::Dmp;
+
 use super::reserve_transfer::*;
 use crate::{
 	imports::*,
 	tests::teleport::do_bidirectional_teleport_foreign_assets_between_para_and_asset_hub_using_xt,
 };
-use emulated_integration_tests_common::xcm_helpers::find_mq_processed_id;
 
 fn para_to_para_assethub_hop_assertions(mut t: ParaToParaThroughAHTest) {
 	type RuntimeEvent = <AssetHubWestend as Chain>::RuntimeEvent;
@@ -53,6 +57,8 @@ fn para_to_para_assethub_hop_assertions(mut t: ParaToParaThroughAHTest) {
 
 	let mq_prc_id = find_mq_processed_id::<AssetHubWestend>().expect("Missing Processed Event");
 	t.insert_unique_topic_id("AssetHubWestend", mq_prc_id);
+	let msg_sent_id = find_xcm_sent_message_id::<AssetHubWestend>().expect("Missing Sent Event");
+	t.insert_unique_topic_id("AssetHubWestend", msg_sent_id.into());
 }
 
 fn ah_to_para_transfer_assets(t: SystemParaToParaTest) -> DispatchResult {
@@ -101,7 +107,7 @@ fn para_to_para_transfer_assets_through_ah(t: ParaToParaThroughAHTest) -> Dispat
 		assets: Wild(AllCounted(t.args.assets.len() as u32)),
 		beneficiary: t.args.beneficiary,
 	}]);
-	<PenpalA as PenpalAPallet>::PolkadotXcm::transfer_assets_using_type_and_then(
+	let result = <PenpalA as PenpalAPallet>::PolkadotXcm::transfer_assets_using_type_and_then(
 		t.signed_origin,
 		bx!(t.args.dest.into()),
 		bx!(t.args.assets.into()),
@@ -110,7 +116,15 @@ fn para_to_para_transfer_assets_through_ah(t: ParaToParaThroughAHTest) -> Dispat
 		bx!(TransferType::RemoteReserve(asset_hub_location.into())),
 		bx!(VersionedXcm::from(custom_xcm_on_dest)),
 		t.args.weight_limit,
-	)
+	);
+
+	let msg_sent_id = find_xcm_sent_message_id::<PenpalA>().expect("Missing Sent Event");
+	t.topic_id_tracker
+		.lock()
+		.unwrap()
+		.insert_and_assert_unique("PenpalA", msg_sent_id.into());
+
+	result
 }
 
 fn para_to_asset_hub_teleport_foreign_assets(t: ParaToSystemParaTest) -> DispatchResult {
@@ -743,13 +757,11 @@ fn transfer_native_asset_from_relay_to_penpal_through_asset_hub() {
 	}
 	fn penpal_assertions(t: RelayToParaThroughAHTest) {
 		type RuntimeEvent = <PenpalA as Chain>::RuntimeEvent;
-		let expected_id =
-			t.args.assets.into_inner().first().unwrap().id.0.clone().try_into().unwrap();
 		assert_expected_events!(
 			PenpalA,
 			vec![
 				RuntimeEvent::ForeignAssets(pallet_assets::Event::Issued { asset_id, owner, .. }) => {
-					asset_id: *asset_id == expected_id,
+					asset_id: *asset_id == Location::new(1, Here),
 					owner: *owner == t.receiver.account_id,
 				},
 			]
@@ -784,6 +796,8 @@ fn transfer_native_asset_from_relay_to_penpal_through_asset_hub() {
 			dest,
 			xcm: xcm_on_final_dest,
 		}]);
+
+		Dmp::make_parachain_reachable(AssetHubWestend::para_id());
 
 		// First leg is a teleport, from there a local-reserve-transfer to final dest
 		<Westend as WestendPallet>::XcmPallet::transfer_assets_using_type_and_then(

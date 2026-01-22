@@ -1,61 +1,62 @@
 [package]
 name = "polkadot-availability-recovery"
 description = "The Availability Recovery subsystem. Handles requests for recovering the availability data of included candidates."
-version = "21.0.0"
+version = "24.0.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
+homepage.workspace = true
+repository.workspace = true
 
 [lints]
 workspace = true
-
-[dependencies]
-futures = { workspace = true }
-tokio = { workspace = true, default-features = true }
-schnellru = { workspace = true }
-rand = { workspace = true, default-features = true }
-fatality = { workspace = true }
-thiserror = { workspace = true }
-async-trait = { workspace = true }
-gum.workspace = true
-gum.default-features = true
-polkadot-erasure-coding.workspace = true
-polkadot-erasure-coding.default-features = true
-polkadot-primitives.workspace = true
-polkadot-primitives.default-features = true
-polkadot-node-primitives.workspace = true
-polkadot-node-primitives.default-features = true
-polkadot-node-subsystem.workspace = true
-polkadot-node-subsystem.default-features = true
-polkadot-node-subsystem-util.workspace = true
-polkadot-node-subsystem-util.default-features = true
-polkadot-node-network-protocol.workspace = true
-polkadot-node-network-protocol.default-features = true
-codec = { features = ["derive"], workspace = true }
-sc-network.workspace = true
-sc-network.default-features = true
-
-[dev-dependencies]
-assert_matches = { workspace = true }
-futures-timer = { workspace = true }
-rstest = { workspace = true }
-log = { workspace = true, default-features = true }
-
-sp-tracing = { default-features = true, path = "../../../../substrate/primitives/tracing" }
-sp-core = { default-features = true, path = "../../../../substrate/primitives/core" }
-sp-keyring = { default-features = true, path = "../../../../substrate/primitives/keyring" }
-sp-application-crypto = { default-features = true, path = "../../../../substrate/primitives/application-crypto" }
-sc-network = { default-features = true, path = "../../../../substrate/client/network" }
-
-polkadot-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
-polkadot-primitives-test-helpers = { path = "../../../primitives/test-helpers" }
-polkadot-subsystem-bench = { path = "../../subsystem-bench" }
 
 [[bench]]
 name = "availability-recovery-regression-bench"
 path = "benches/availability-recovery-regression-bench.rs"
 harness = false
 required-features = ["subsystem-benchmarks"]
+
+[dependencies]
+async-trait = { workspace = true }
+fatality = { workspace = true }
+futures = { workspace = true }
+gum.default-features = true
+gum.workspace = true
+rand = { workspace = true, default-features = true }
+schnellru = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, default-features = true }
+
+codec = { features = ["derive"], workspace = true }
+polkadot-erasure-coding.default-features = true
+polkadot-erasure-coding.workspace = true
+polkadot-node-network-protocol.default-features = true
+polkadot-node-network-protocol.workspace = true
+polkadot-node-primitives.default-features = true
+polkadot-node-primitives.workspace = true
+polkadot-node-subsystem-util.default-features = true
+polkadot-node-subsystem-util.workspace = true
+polkadot-node-subsystem.default-features = true
+polkadot-node-subsystem.workspace = true
+polkadot-primitives.default-features = true
+polkadot-primitives.workspace = true
+sc-network.default-features = true
+sc-network.workspace = true
+
+[dev-dependencies]
+assert_matches = { workspace = true }
+futures-timer = { workspace = true }
+rstest = { workspace = true }
+
+sc-network = { default-features = true, workspace = true }
+sp-core = { default-features = true, workspace = true }
+sp-keyring = { default-features = true, workspace = true }
+sp-tracing = { default-features = true, workspace = true }
+
+polkadot-node-subsystem-test-helpers = { workspace = true }
+polkadot-primitives-test-helpers = { workspace = true }
+polkadot-subsystem-bench = { workspace = true }
 
 [features]
 subsystem-benchmarks = []

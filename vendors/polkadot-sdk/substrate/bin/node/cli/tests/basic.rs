@@ -1,19 +1,20 @@
 // This file is part of Substrate.
 
 // Copyright (C) Parity Technologies (UK) Ltd.
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// 	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use codec::{Decode, Encode, Joiner};
 use frame_support::{
@@ -61,14 +62,14 @@ pub fn bloaty_code_unwrap() -> &'static [u8] {
 /// correct multiplier.
 fn transfer_fee(extrinsic: &UncheckedExtrinsic) -> Balance {
 	let mut info = default_transfer_call().get_dispatch_info();
-	info.extension_weight = extrinsic.extension_weight();
+	info.extension_weight = extrinsic.0.extension_weight();
 	TransactionPayment::compute_fee(extrinsic.encode().len() as u32, &info, 0)
 }
 
 /// Default transfer fee, same as `transfer_fee`, but with a weight refund factored in.
 fn transfer_fee_with_refund(extrinsic: &UncheckedExtrinsic, weight_refund: Weight) -> Balance {
 	let mut info = default_transfer_call().get_dispatch_info();
-	info.extension_weight = extrinsic.extension_weight();
+	info.extension_weight = extrinsic.0.extension_weight();
 	let post_info = (Some(info.total_weight().saturating_sub(weight_refund)), info.pays_fee).into();
 	TransactionPayment::compute_actual_fee(extrinsic.encode().len() as u32, &info, &post_info, 0)
 }
@@ -324,7 +325,7 @@ fn full_native_block_import_works() {
 
 	let mut alice_last_known_balance: Balance = Default::default();
 	let mut fees = t.execute_with(|| transfer_fee(&xt()));
-	let extension_weight = xt().extension_weight();
+	let extension_weight = xt().0.extension_weight();
 	let weight_refund = Weight::zero();
 	let fees_after_refund = t.execute_with(|| transfer_fee_with_refund(&xt(), weight_refund));
 
@@ -427,7 +428,7 @@ fn full_native_block_import_works() {
 
 	fees = t.execute_with(|| transfer_fee(&xt()));
 	let pot = t.execute_with(|| Treasury::pot());
-	let extension_weight = xt().extension_weight();
+	let extension_weight = xt().0.extension_weight();
 	let weight_refund = Weight::zero();
 	let fees_after_refund = t.execute_with(|| transfer_fee_with_refund(&xt(), weight_refund));
 

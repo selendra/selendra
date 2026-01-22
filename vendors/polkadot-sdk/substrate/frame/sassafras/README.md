@@ -6,8 +6,3 @@ Runtime module for SASSAFRAS consensus.
 # ⚠️ WARNING ⚠️
 
 The crate interfaces and structures are experimental and may be subject to changes.
-
-
-## Release
-
-Polkadot SDK Stable 2412

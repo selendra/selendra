@@ -1,6 +1,6 @@
 [package]
 name = "sc-executor-wasmtime"
-version = "0.36.0"
+version = "0.39.0"
 authors.workspace = true
 edition.workspace = true
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
@@ -17,12 +17,18 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 log = { workspace = true, default-features = true }
-cfg-if = { workspace = true }
-libc = { workspace = true }
 parking_lot = { workspace = true, default-features = true }
 
 # When bumping wasmtime do not forget to also bump rustix
 # to exactly the same version as used by wasmtime!
+anyhow = { workspace = true }
+sc-allocator.default-features = true
+sc-allocator.workspace = true
+sc-executor-common.default-features = true
+sc-executor-common.workspace = true
+sp-runtime-interface.default-features = true
+sp-runtime-interface.workspace = true
+sp-wasm-interface = { features = ["wasmtime"], workspace = true, default-features = true }
 wasmtime = { features = [
 	"cache",
 	"cranelift",
@@ -30,14 +36,6 @@ wasmtime = { features = [
 	"parallel-compilation",
 	"pooling-allocator",
 ], workspace = true }
-anyhow = { workspace = true }
-sc-allocator.workspace = true
-sc-allocator.default-features = true
-sc-executor-common.workspace = true
-sc-executor-common.default-features = true
-sp-runtime-interface.workspace = true
-sp-runtime-interface.default-features = true
-sp-wasm-interface = { features = ["wasmtime"], workspace = true, default-features = true }
 
 # Here we include the rustix crate in the exactly same semver-compatible version as used by
 # wasmtime and enable its 'use-libc' flag.
@@ -48,10 +46,10 @@ sp-wasm-interface = { features = ["wasmtime"], workspace = true, default-feature
 rustix = { features = ["fs", "mm", "param", "std", "use-libc"], workspace = true }
 
 [dev-dependencies]
-wat = { workspace = true }
-sc-runtime-test = { path = "../runtime-test" }
-sp-io = { default-features = true, path = "../../../primitives/io" }
-tempfile = { workspace = true }
-paste = { workspace = true, default-features = true }
-codec = { workspace = true, default-features = true }
 cargo_metadata = { workspace = true }
+codec = { workspace = true, default-features = true }
+paste = { workspace = true, default-features = true }
+sc-runtime-test = { workspace = true }
+sp-io = { default-features = true, workspace = true }
+tempfile = { workspace = true }
+wat = { workspace = true }

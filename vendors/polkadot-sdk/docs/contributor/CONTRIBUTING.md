@@ -7,6 +7,9 @@ The `Polkadot SDK` project is an **OPENISH Open Source Project**
 Individuals making significant and valuable contributions are given commit-access to the project. Contributions are done
 via pull-requests and need to be approved by the maintainers.
 
+> **Note:** Contributors who are part of the organization do not need to fork the repository. They can create a branch
+> directly in the repository to send a pull request.
+
 ## Rules
 
 There are a few basic ground-rules for contributors (including the maintainer(s) of the project):
@@ -76,7 +79,7 @@ All Pull Requests must contain proper title & description, as described in [Pull
 Template](./PULL_REQUEST_TEMPLATE.md). Moreover, all pull requests must have a proper `prdoc` file attached.
 
 Some Pull Requests can be exempt of `prdoc` documentation, those must be labelled with
-[`R0-silent`](https://github.com/paritytech/labels/blob/main/ruled_labels/specs_polkadot-sdk.yaml#L89-L91).
+[`R0-silent`](https://github.com/paritytech/labels/blob/main/ruled_labels/specs_polkadot-sdk.yaml#L95-L97).
 
 Non "silent" PRs must come with documentation in the form of a `.prdoc` file.
 

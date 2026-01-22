@@ -1,18 +1,18 @@
 // Copyright (C) Parity Technologies (UK) Ltd.
 // This file is part of Cumulus.
+// SPDX-License-Identifier: Apache-2.0
 
-// Cumulus is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Cumulus is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #![cfg(test)]
 
@@ -21,6 +21,9 @@ use crate::mock::*;
 
 use core::num::NonZeroU32;
 use cumulus_primitives_core::{AbridgedHrmpChannel, InboundDownwardMessage, InboundHrmpMessage};
+use cumulus_primitives_parachain_inherent::{
+	v0, INHERENT_IDENTIFIER, PARACHAIN_INHERENT_IDENTIFIER_V0,
+};
 use frame_support::{assert_ok, parameter_types, weights::Weight};
 use frame_system::RawOrigin;
 use hex_literal::hex;
@@ -29,11 +32,76 @@ use rand::Rng;
 use relay_chain::vstaging::{UMPSignal, UMP_SEPARATOR};
 use relay_chain::HrmpChannelId;
 use sp_core::H256;
+use sp_inherents::InherentDataProvider;
+use sp_trie::StorageProof;
 
 #[test]
 #[should_panic]
 fn block_tests_run_on_drop() {
 	BlockTests::new().add(123, || panic!("if this test passes, block tests run properly"));
+}
+
+/// Test that ensures that the parachain-system pallet accepts both the legacy
+/// and versioned inherent format.
+#[test]
+fn test_inherent_compatibility() {
+	sp_tracing::init_for_tests();
+	let mut valid_inherent_data_v1 = sp_inherents::InherentData::new();
+	valid_inherent_data_v1
+		.put_data(
+			INHERENT_IDENTIFIER,
+			&ParachainInherentData {
+				validation_data: Default::default(),
+				relay_chain_state: StorageProof::empty(),
+				downward_messages: Default::default(),
+				horizontal_messages: Default::default(),
+				relay_parent_descendants: Default::default(),
+				collator_peer_id: None,
+			},
+		)
+		.expect("Put validation function params failed");
+
+	let mut valid_inherent_data_legacy = sp_inherents::InherentData::new();
+	valid_inherent_data_legacy
+		.put_data(
+			PARACHAIN_INHERENT_IDENTIFIER_V0,
+			&v0::ParachainInherentData {
+				validation_data: Default::default(),
+				relay_chain_state: StorageProof::empty(),
+				downward_messages: Default::default(),
+				horizontal_messages: Default::default(),
+			},
+		)
+		.expect("Put validation function params failed");
+
+	let mut valid_inherent_data_full_compatibility = sp_inherents::InherentData::new();
+	let data = ParachainInherentData {
+		validation_data: Default::default(),
+		relay_chain_state: StorageProof::empty(),
+		downward_messages: Default::default(),
+		horizontal_messages: Default::default(),
+		relay_parent_descendants: Default::default(),
+		collator_peer_id: None,
+	};
+	let _ = futures::executor::block_on(
+		data.provide_inherent_data(&mut valid_inherent_data_full_compatibility),
+	);
+
+	wasm_ext().execute_with(|| {
+		assert!(
+			ParachainSystem::create_inherent(&valid_inherent_data_v1).is_some(),
+			"V1 inherent was not accepted"
+		);
+		assert!(
+			ParachainSystem::create_inherent(&valid_inherent_data_legacy).is_some(),
+			"Legacy inherent was not accepted"
+		);
+
+		assert!(
+			ParachainSystem::create_inherent(&valid_inherent_data_full_compatibility).is_some(),
+			"Inherent on multiple keys was not accepted."
+		);
+	})
 }
 
 #[test]
@@ -86,7 +154,7 @@ fn unincluded_segment_works() {
 	BlockTests::new()
 		.with_inclusion_delay(1)
 		.add_with_post_test(
-			123,
+			1,
 			|| {},
 			|| {
 				let segment = <UnincludedSegment<Test>>::get();
@@ -95,7 +163,7 @@ fn unincluded_segment_works() {
 			},
 		)
 		.add_with_post_test(
-			124,
+			2,
 			|| {},
 			|| {
 				let segment = <UnincludedSegment<Test>>::get();
@@ -103,11 +171,11 @@ fn unincluded_segment_works() {
 			},
 		)
 		.add_with_post_test(
-			125,
+			3,
 			|| {},
 			|| {
 				let segment = <UnincludedSegment<Test>>::get();
-				// Block 123 was popped from the segment, the len is still 2.
+				// Block 1 was popped from the segment, the len is still 2.
 				assert_eq!(segment.len(), 2);
 			},
 		);
@@ -123,7 +191,7 @@ fn unincluded_segment_is_limited() {
 	BlockTests::new()
 		.with_inclusion_delay(2)
 		.add_with_post_test(
-			123,
+			1,
 			|| {},
 			|| {
 				let segment = <UnincludedSegment<Test>>::get();
@@ -131,7 +199,7 @@ fn unincluded_segment_is_limited() {
 				assert!(<AggregatedUnincludedSegment<Test>>::get().is_some());
 			},
 		)
-		.add(124, || {}); // The previous block wasn't included yet, should panic in `create_inherent`.
+		.add(2, || {}); // The previous block wasn't included yet, should panic in `create_inherent`.
 }
 
 #[test]
@@ -143,15 +211,15 @@ fn unincluded_code_upgrade_handles_signal() {
 	BlockTests::new()
 		.with_inclusion_delay(1)
 		.with_relay_sproof_builder(|_, block_number, builder| {
-			if block_number > 123 && block_number <= 125 {
+			if block_number > 1 && block_number <= 3 {
 				builder.upgrade_go_ahead = Some(relay_chain::UpgradeGoAhead::GoAhead);
 			}
 		})
-		.add(123, || {
+		.add(1, || {
 			assert_ok!(System::set_code(RawOrigin::Root.into(), Default::default()));
 		})
 		.add_with_post_test(
-			124,
+			2,
 			|| {},
 			|| {
 				assert!(
@@ -161,7 +229,7 @@ fn unincluded_code_upgrade_handles_signal() {
 			},
 		)
 		.add_with_post_test(
-			125,
+			3,
 			|| {
 				// The signal is present in relay state proof and ignored.
 				// Block that processed the signal is still not included.
@@ -178,7 +246,7 @@ fn unincluded_code_upgrade_handles_signal() {
 			},
 		)
 		.add_with_post_test(
-			126,
+			4,
 			|| {},
 			|| {
 				let aggregated_segment =
@@ -198,15 +266,15 @@ fn unincluded_code_upgrade_scheduled_after_go_ahead() {
 	BlockTests::new()
 		.with_inclusion_delay(1)
 		.with_relay_sproof_builder(|_, block_number, builder| {
-			if block_number > 123 && block_number <= 125 {
+			if block_number > 1 && block_number <= 3 {
 				builder.upgrade_go_ahead = Some(relay_chain::UpgradeGoAhead::GoAhead);
 			}
 		})
-		.add(123, || {
+		.add(1, || {
 			assert_ok!(System::set_code(RawOrigin::Root.into(), Default::default()));
 		})
 		.add_with_post_test(
-			124,
+			2,
 			|| {},
 			|| {
 				assert!(
@@ -218,7 +286,7 @@ fn unincluded_code_upgrade_scheduled_after_go_ahead() {
 			},
 		)
 		.add_with_post_test(
-			125,
+			3,
 			|| {
 				// The signal is present in relay state proof and ignored.
 				// Block that processed the signal is still not included.
@@ -235,7 +303,7 @@ fn unincluded_code_upgrade_scheduled_after_go_ahead() {
 			},
 		)
 		.add_with_post_test(
-			126,
+			4,
 			|| {},
 			|| {
 				assert!(<PendingValidationCode<Test>>::exists(), "upgrade is pending");
@@ -443,12 +511,12 @@ fn hrmp_outbound_respects_used_bandwidth() {
 fn runtime_upgrade_events() {
 	BlockTests::new()
 		.with_relay_sproof_builder(|_, block_number, builder| {
-			if block_number > 123 {
+			if block_number > 1 {
 				builder.upgrade_go_ahead = Some(relay_chain::UpgradeGoAhead::GoAhead);
 			}
 		})
 		.add_with_post_test(
-			123,
+			1,
 			|| {
 				assert_ok!(System::set_code(RawOrigin::Root.into(), Default::default()));
 			},
@@ -461,7 +529,7 @@ fn runtime_upgrade_events() {
 			},
 		)
 		.add_with_post_test(
-			1234,
+			2,
 			|| {},
 			|| {
 				let events = System::events();
@@ -471,7 +539,7 @@ fn runtime_upgrade_events() {
 				assert_eq!(
 					events[1].event,
 					RuntimeEvent::ParachainSystem(crate::Event::ValidationFunctionApplied {
-						relay_chain_block_num: 1234
+						relay_chain_block_num: 2
 					})
 				);
 
@@ -489,10 +557,10 @@ fn non_overlapping() {
 		.with_relay_sproof_builder(|_, _, builder| {
 			builder.host_config.validation_upgrade_delay = 1000;
 		})
-		.add(123, || {
+		.add(1, || {
 			assert_ok!(System::set_code(RawOrigin::Root.into(), Default::default()));
 		})
-		.add(234, || {
+		.add(2, || {
 			assert_eq!(
 				System::set_code(RawOrigin::Root.into(), Default::default()),
 				Err(Error::<Test>::OverlappingUpgrades.into()),
@@ -504,11 +572,11 @@ fn non_overlapping() {
 fn manipulates_storage() {
 	BlockTests::new()
 		.with_relay_sproof_builder(|_, block_number, builder| {
-			if block_number > 123 {
+			if block_number > 1 {
 				builder.upgrade_go_ahead = Some(relay_chain::UpgradeGoAhead::GoAhead);
 			}
 		})
-		.add(123, || {
+		.add(1, || {
 			assert!(
 				!<PendingValidationCode<Test>>::exists(),
 				"validation function must not exist yet"
@@ -517,7 +585,7 @@ fn manipulates_storage() {
 			assert!(<PendingValidationCode<Test>>::exists(), "validation function must now exist");
 		})
 		.add_with_post_test(
-			1234,
+			2,
 			|| {},
 			|| {
 				assert!(
@@ -532,15 +600,15 @@ fn manipulates_storage() {
 fn aborted_upgrade() {
 	BlockTests::new()
 		.with_relay_sproof_builder(|_, block_number, builder| {
-			if block_number > 123 {
+			if block_number > 1 {
 				builder.upgrade_go_ahead = Some(relay_chain::UpgradeGoAhead::Abort);
 			}
 		})
-		.add(123, || {
+		.add(1, || {
 			assert_ok!(System::set_code(RawOrigin::Root.into(), Default::default()));
 		})
 		.add_with_post_test(
-			1234,
+			2,
 			|| {},
 			|| {
 				assert!(
@@ -557,12 +625,12 @@ fn aborted_upgrade() {
 }
 
 #[test]
-fn checks_size() {
+fn checks_code_size() {
 	BlockTests::new()
 		.with_relay_sproof_builder(|_, _, builder| {
 			builder.host_config.max_code_size = 8;
 		})
-		.add(123, || {
+		.add(1, || {
 			assert_eq!(
 				System::set_code(RawOrigin::Root.into(), vec![0; 64]),
 				Err(Error::<Test>::TooBig.into()),
@@ -707,6 +775,34 @@ fn send_upward_message_relay_bottleneck() {
 }
 
 #[test]
+fn send_upwards_message_checks_size_on_validate() {
+	BlockTests::new()
+		.with_relay_sproof_builder(|_, _, sproof| {
+			sproof.host_config.max_upward_message_size = 128;
+		})
+		.add(1, || {
+			assert_eq!(
+				ParachainSystem::can_send_upward_message(vec![0u8; 129].as_ref()),
+				Err(MessageSendError::TooBig)
+			);
+		});
+}
+
+#[test]
+fn send_upward_message_check_size() {
+	BlockTests::new()
+		.with_relay_sproof_builder(|_, _, sproof| {
+			sproof.host_config.max_upward_message_size = 128;
+		})
+		.add(1, || {
+			assert_eq!(
+				ParachainSystem::send_upward_message(vec![0u8; 129]),
+				Err(MessageSendError::TooBig)
+			);
+		});
+}
+
+#[test]
 fn send_hrmp_message_buffer_channel_close() {
 	BlockTests::new()
 		.with_relay_sproof_builder(|_, relay_block_num, sproof| {
@@ -781,7 +877,7 @@ fn send_hrmp_message_buffer_channel_close() {
 			2,
 			|| {},
 			|| {
-				// both channels are at capacity so we do not expect any messages.
+				// Both channels are at capacity so we do not expect any messages.
 				let v = HrmpOutboundMessages::<Test>::get();
 				assert!(v.is_empty());
 			},
@@ -1001,7 +1097,7 @@ fn receive_hrmp() {
 				data.horizontal_messages.insert(
 					ParaId::from(300),
 					vec![
-						// can't be sent at the block 1 actually. However, we cheat here
+						// Can't be sent at the block 1 actually. However, we cheat here
 						// because we want to test the case where there are multiple messages
 						// but the harness at the moment doesn't support block skipping.
 						mk_hrmp(2).clone(),
@@ -1170,15 +1266,14 @@ fn receive_hrmp_many() {
 #[test]
 fn upgrade_version_checks_should_work() {
 	use codec::Encode;
-	use sp_runtime::DispatchErrorWithPostInfo;
 	use sp_version::RuntimeVersion;
 
 	let test_data = vec![
-		("test", 0, 1, Err(frame_system::Error::<Test>::SpecVersionNeedsToIncrease)),
-		("test", 1, 0, Err(frame_system::Error::<Test>::SpecVersionNeedsToIncrease)),
-		("test", 1, 1, Err(frame_system::Error::<Test>::SpecVersionNeedsToIncrease)),
-		("test", 1, 2, Err(frame_system::Error::<Test>::SpecVersionNeedsToIncrease)),
-		("test2", 1, 1, Err(frame_system::Error::<Test>::InvalidSpecName)),
+		("test", 0, 1, frame_system::Error::<Test>::SpecVersionNeedsToIncrease),
+		("test", 1, 0, frame_system::Error::<Test>::SpecVersionNeedsToIncrease),
+		("test", 1, 1, frame_system::Error::<Test>::SpecVersionNeedsToIncrease),
+		("test", 1, 2, frame_system::Error::<Test>::SpecVersionNeedsToIncrease),
+		("test2", 1, 1, frame_system::Error::<Test>::InvalidSpecName),
 	];
 
 	for (spec_name, spec_version, impl_version, expected) in test_data.into_iter() {
@@ -1193,13 +1288,21 @@ fn upgrade_version_checks_should_work() {
 		let mut ext = new_test_ext();
 		ext.register_extension(sp_core::traits::ReadRuntimeVersionExt::new(read_runtime_version));
 		ext.execute_with(|| {
+			System::set_block_number(1);
+
 			let new_code = vec![1, 2, 3, 4];
 			let new_code_hash = H256(sp_crypto_hashing::blake2_256(&new_code));
 
 			let _authorize = System::authorize_upgrade(RawOrigin::Root.into(), new_code_hash);
-			let res = System::apply_authorized_upgrade(RawOrigin::None.into(), new_code);
+			assert_ok!(System::apply_authorized_upgrade(RawOrigin::None.into(), new_code));
 
-			assert_eq!(expected.map_err(DispatchErrorWithPostInfo::from), res);
+			System::assert_last_event(
+				frame_system::Event::RejectedInvalidAuthorizedUpgrade {
+					code_hash: new_code_hash,
+					error: expected.into(),
+				}
+				.into(),
+			);
 		});
 	}
 }
@@ -1207,7 +1310,7 @@ fn upgrade_version_checks_should_work() {
 #[test]
 fn deposits_relay_parent_storage_root() {
 	BlockTests::new().add_with_post_test(
-		123,
+		1,
 		|| {},
 		|| {
 			let digest = System::digest();

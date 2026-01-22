@@ -150,9 +150,30 @@ pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
 
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait BenchmarkHelper<Public, Signature> {
+		fn sign_message(message: &[u8]) -> (Public, Signature);
+	}
+	#[cfg(feature = "runtime-benchmarks")]
+	impl BenchmarkHelper<sp_runtime::MultiSigner, sp_runtime::MultiSignature> for () {
+		fn sign_message(message: &[u8]) -> (sp_runtime::MultiSigner, sp_runtime::MultiSignature) {
+			let public = sp_io::crypto::sr25519_generate(0.into(), None);
+			let signature = sp_runtime::MultiSignature::Sr25519(
+				sp_io::crypto::sr25519_sign(
+					0.into(),
+					&public.into_account().try_into().unwrap(),
+					message,
+				)
+				.unwrap(),
+			);
+			(public.into(), signature)
+		}
+	}
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// The overarching event type.
+		#[allow(deprecated)]
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The currency trait.
@@ -226,22 +247,10 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxUsernameLength: Get<u32>;
 
-		/// A helper function for benchmarking.
-		/// The default configuration implementation uses the `Sr25519` signature schema.
+		/// A set of helper functions for benchmarking.
+		/// The default configuration `()` uses the `SR25519` signature schema.
 		#[cfg(feature = "runtime-benchmarks")]
-		fn benchmark_helper(message: &[u8]) -> (Vec<u8>, Vec<u8>) {
-			let public = sp_io::crypto::sr25519_generate(0.into(), None);
-			let signature = sp_runtime::MultiSignature::Sr25519(
-				sp_io::crypto::sr25519_sign(
-					0.into(),
-					&public.into_account().try_into().unwrap(),
-					message,
-				)
-				.unwrap(),
-			);
-
-			(sp_runtime::MultiSigner::from(public).encode(), signature.encode())
-		}
+		type BenchmarkHelper: BenchmarkHelper<Self::SigningPublicKey, Self::OffchainSignature>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -696,16 +705,14 @@ pub mod pallet {
 
 			let item = (reg_index, Judgement::FeePaid(registrar.fee));
 			match id.judgements.binary_search_by_key(&reg_index, |x| x.0) {
-				Ok(i) => {
+				Ok(i) =>
 					if id.judgements[i].1.is_sticky() {
-						return Err(Error::<T>::StickyJudgement.into());
+						return Err(Error::<T>::StickyJudgement.into())
 					} else {
 						id.judgements[i] = item
-					}
-				},
-				Err(i) => {
-					id.judgements.try_insert(i, item).map_err(|_| Error::<T>::TooManyRegistrars)?
-				},
+					},
+				Err(i) =>
+					id.judgements.try_insert(i, item).map_err(|_| Error::<T>::TooManyRegistrars)?,
 			}
 
 			T::Currency::reserve(&sender, registrar.fee)?;
@@ -747,7 +754,7 @@ pub mod pallet {
 			let fee = if let Judgement::FeePaid(fee) = id.judgements.remove(pos).1 {
 				fee
 			} else {
-				return Err(Error::<T>::JudgementGiven.into());
+				return Err(Error::<T>::JudgementGiven.into())
 			};
 
 			let err_amount = T::Currency::unreserve(&sender, fee);
@@ -895,7 +902,7 @@ pub mod pallet {
 			let mut id = IdentityOf::<T>::get(&target).ok_or(Error::<T>::InvalidTarget)?;
 
 			if T::Hashing::hash_of(&id.info) != identity {
-				return Err(Error::<T>::JudgementForDifferentIdentity.into());
+				return Err(Error::<T>::JudgementForDifferentIdentity.into())
 			}
 
 			let item = (reg_index, judgement);
@@ -1227,7 +1234,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			username: Username<T>,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_signed(origin)?;
+			ensure_signed(origin)?;
 			if let Some((who, expiration, provider)) = PendingUsernames::<T>::take(&username) {
 				let now = frame_system::Pallet::<T>::block_number();
 				ensure!(now > expiration, Error::<T>::NotExpired);
@@ -1312,7 +1319,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			username: Username<T>,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_signed(origin)?;
+			ensure_signed(origin)?;
 			let grace_period_expiry =
 				UnbindingUsernames::<T>::take(&username).ok_or(Error::<T>::NotUnbinding)?;
 			let now = frame_system::Pallet::<T>::block_number();
@@ -1506,7 +1513,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		// Happy path, user has signed the raw data.
 		if signature.verify(data, &signer) {
-			return Ok(());
+			return Ok(())
 		}
 		// NOTE: for security reasons modern UIs implicitly wrap the data requested to sign into
 		// `<Bytes> + data + </Bytes>`, so why we support both wrapped and raw versions.

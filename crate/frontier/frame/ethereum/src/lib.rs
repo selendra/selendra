@@ -22,32 +22,39 @@
 
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
-#![allow(clippy::comparison_chain, clippy::large_enum_variant)]
+#![allow(
+	clippy::comparison_chain,
+	clippy::large_enum_variant,
+	clippy::useless_conversion
+)]
 #![warn(unused_crate_dependencies)]
 
 extern crate alloc;
 
+mod catch_exec_info;
 #[cfg(all(feature = "std", test))]
 mod mock;
 #[cfg(all(feature = "std", test))]
 mod tests;
 
 use alloc::{vec, vec::Vec};
+pub use catch_exec_info::catch_exec_info;
 use core::marker::PhantomData;
 pub use ethereum::{
-	AccessListItem, BlockV2 as Block, LegacyTransactionMessage, Log, ReceiptV3 as Receipt,
-	TransactionAction, TransactionV2 as Transaction,
+	AccessListItem, BlockV3 as Block, LegacyTransactionMessage, Log, ReceiptV4 as Receipt,
+	TransactionAction, TransactionV3 as Transaction,
 };
+
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
-use scale_codec::{Decode, Encode, MaxEncodedLen};
+use scale_codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 // Substrate
 use frame_support::{
 	dispatch::{
 		DispatchErrorWithPostInfo, DispatchInfo, DispatchResultWithPostInfo, Pays, PostDispatchInfo,
 	},
-	traits::{EnsureOrigin, Get, PalletInfoAccess, Time},
+	traits::{EnsureOrigin, Get, Time},
 	weights::Weight,
 };
 use frame_system::{pallet_prelude::OriginFor, CheckWeight, WeightInfo};
@@ -69,10 +76,11 @@ use fp_evm::{
 };
 pub use fp_rpc::TransactionStatus;
 use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA};
+use frame_support::traits::PalletInfoAccess;
 use pallet_evm::{BlockHashMapping, FeeCalculator, GasWeightMapping, Runner};
 
 #[derive(Clone, Eq, PartialEq, RuntimeDebug)]
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Encode, Decode, DecodeWithMemTracking, MaxEncodedLen, TypeInfo)]
 pub enum RawOrigin {
 	EthereumTransaction(H160),
 }
@@ -198,9 +206,6 @@ pub mod pallet {
 
 	#[pallet::config(with_default)]
 	pub trait Config: frame_system::Config + pallet_evm::Config {
-		/// The overarching event type.
-		#[pallet::no_default_bounds]
-		type RuntimeEvent: From<Event> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// How Ethereum state root is calculated.
 		type StateRoot: Get<H256>;
 		/// What's included in the PostLog.
@@ -227,8 +232,6 @@ pub mod pallet {
 
 		#[register_default_impl(TestDefaultConfig)]
 		impl DefaultConfig for TestDefaultConfig {
-			#[inject_runtime_type]
-			type RuntimeEvent = ();
 			type StateRoot = IntermediateStateRoot<Self::Version>;
 			type PostLogContent = PostBlockAndTxnHashes;
 			type ExtraDataLength = ConstU32<30>;
@@ -276,7 +279,7 @@ pub mod pallet {
 					Self::validate_transaction_in_block(source, &transaction).expect(
 						"pre-block transaction verification failed; the block cannot be built",
 					);
-					let (r, _) = Self::apply_validated_transaction(source, transaction)
+					let (r, _) = Self::apply_validated_transaction(source, transaction, None)
 						.expect("pre-block apply transaction failed; the block cannot be built");
 
 					weight = weight.saturating_add(r.actual_weight.unwrap_or_default());
@@ -325,7 +328,8 @@ pub mod pallet {
 				"pre log already exists; block is invalid",
 			);
 
-			Self::apply_validated_transaction(source, transaction).map(|(post_info, _)| post_info)
+			Self::apply_validated_transaction(source, transaction, None)
+				.map(|(post_info, _)| post_info)
 		}
 	}
 
@@ -357,7 +361,7 @@ pub mod pallet {
 
 	/// The current Ethereum block.
 	#[pallet::storage]
-	pub type CurrentBlock<T: Config> = StorageValue<_, ethereum::BlockV2>;
+	pub type CurrentBlock<T: Config> = StorageValue<_, ethereum::BlockV3>;
 
 	/// The current Ethereum receipts.
 	#[pallet::storage]
@@ -405,23 +409,6 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn recover_signer(transaction: &Transaction) -> Option<H160> {
-		// EIP-2 related
-		// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2.md#specification
-		const SECP256K1N_HALF: H256 = H256([
-			0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-			0xff, 0xff, 0x5d, 0x57, 0x6e, 0x73, 0x57, 0xa4, 0x50, 0x1d, 0xdf, 0xe9, 0x2f, 0x46,
-			0x68, 0x1b, 0x20, 0xa0,
-		]);
-		let s_value = match transaction {
-			Transaction::Legacy(t) => *t.signature.s(),
-			Transaction::EIP2930(t) => t.s,
-			Transaction::EIP1559(t) => t.s,
-		};
-			
-		if s_value > SECP256K1N_HALF {
-			return None;
-		}
-
 		let mut sig = [0u8; 65];
 		let mut msg = [0u8; 32];
 		match transaction {
@@ -434,19 +421,27 @@ impl<T: Config> Pallet<T> {
 				);
 			}
 			Transaction::EIP2930(t) => {
-				sig[0..32].copy_from_slice(&t.r[..]);
-				sig[32..64].copy_from_slice(&t.s[..]);
-				sig[64] = t.odd_y_parity as u8;
+				sig[0..32].copy_from_slice(&t.signature.r()[..]);
+				sig[32..64].copy_from_slice(&t.signature.s()[..]);
+				sig[64] = t.signature.odd_y_parity() as u8;
 				msg.copy_from_slice(
 					&ethereum::EIP2930TransactionMessage::from(t.clone()).hash()[..],
 				);
 			}
 			Transaction::EIP1559(t) => {
-				sig[0..32].copy_from_slice(&t.r[..]);
-				sig[32..64].copy_from_slice(&t.s[..]);
-				sig[64] = t.odd_y_parity as u8;
+				sig[0..32].copy_from_slice(&t.signature.r()[..]);
+				sig[32..64].copy_from_slice(&t.signature.s()[..]);
+				sig[64] = t.signature.odd_y_parity() as u8;
 				msg.copy_from_slice(
 					&ethereum::EIP1559TransactionMessage::from(t.clone()).hash()[..],
+				);
+			}
+			Transaction::EIP7702(t) => {
+				sig[0..32].copy_from_slice(&t.signature.r()[..]);
+				sig[32..64].copy_from_slice(&t.signature.s()[..]);
+				sig[64] = t.signature.odd_y_parity() as u8;
+				msg.copy_from_slice(
+					&ethereum::EIP7702TransactionMessage::from(t.clone()).hash()[..],
 				);
 			}
 		}
@@ -470,6 +465,7 @@ impl<T: Config> Pallet<T> {
 					Receipt::Legacy(d) | Receipt::EIP2930(d) | Receipt::EIP1559(d) => {
 						(d.logs.clone(), d.used_gas)
 					}
+					Receipt::EIP7702(d) => (d.logs.clone(), d.used_gas),
 				};
 				cumulative_gas_used = used_gas;
 				Self::logs_bloom(logs, &mut logs_bloom);
@@ -547,7 +543,10 @@ impl<T: Config> Pallet<T> {
 		let (base_fee, _) = T::FeeCalculator::min_gas_price();
 		let (who, _) = pallet_evm::Pallet::<T>::account_basic(&origin);
 
-		let _ = CheckEvmTransaction::<InvalidTransactionWrapper>::new(
+		// Check if this is an EIP-7702 transaction
+		let is_eip7702 = matches!(transaction, Transaction::EIP7702(_));
+
+		let check_transaction = CheckEvmTransaction::<InvalidTransactionWrapper>::new(
 			CheckEvmTransactionConfig {
 				evm_config: T::config(),
 				block_gas_limit: T::BlockGasLimit::get(),
@@ -558,21 +557,39 @@ impl<T: Config> Pallet<T> {
 			transaction_data.clone().into(),
 			weight_limit,
 			proof_size_base_cost,
-		)
-		.validate_in_pool_for(&who)
-		.and_then(|v| v.with_chain_id())
-		.and_then(|v| v.with_base_fee())
-		.and_then(|v| v.with_balance_for(&who))
+		);
+		check_transaction
+			.validate_in_pool_for(&who)
+			.and_then(|v| v.with_chain_id())
+			.and_then(|v| v.with_base_fee())
+			.and_then(|v| v.with_balance_for(&who))
+			.and_then(|v| v.with_eip7702_authorization_list(is_eip7702))
 		.map_err(|e| e.0)?;
+
+		use pallet_evm::OnChargeEVMTransaction;
+		let max_withdraw = check_transaction.max_withdraw_amount().map_err(|e| e.0)?;
+		<T as pallet_evm::Config>::OnChargeTransaction::can_withdraw(&origin, max_withdraw)
+			.map_err(|_| InvalidTransaction::Payment)?;
 
 		// EIP-3607: https://eips.ethereum.org/EIPS/eip-3607
 		// Do not allow transactions for which `tx.sender` has any code deployed.
+		// Exception: Allow transactions from EOAs whose code is a valid delegation indicator (0xef0100 || address).
 		//
 		// This check should be done on the transaction validation (here) **and**
 		// on transaction execution, otherwise a contract tx will be included in
 		// the mempool and pollute the mempool forever.
-		if !pallet_evm::AccountCodes::<T>::get(origin).is_empty() {
-			return Err(InvalidTransaction::BadSigner.into());
+		if let Some(metadata) = pallet_evm::AccountCodesMetadata::<T>::get(origin) {
+			if metadata.size > 0 {
+				// Account has code, check if it's a valid delegation
+				let is_delegation = metadata.size
+					== evm::delegation::EIP_7702_DELEGATION_SIZE as u64
+					&& pallet_evm::AccountCodes::<T>::get(origin)
+						.starts_with(evm::delegation::EIP_7702_DELEGATION_PREFIX);
+
+				if !is_delegation {
+					return Err(InvalidTransaction::BadSigner.into());
+				}
+			}
 		}
 
 		let priority = match (
@@ -616,8 +633,11 @@ impl<T: Config> Pallet<T> {
 	fn apply_validated_transaction(
 		source: H160,
 		transaction: Transaction,
+		maybe_force_create_address: Option<H160>,
 	) -> Result<(PostDispatchInfo, CallOrCreateInfo), DispatchErrorWithPostInfo> {
-		let (to, _, info) = Self::execute(source, &transaction, None)?;
+		let (to, _, info) = Self::execute(source, &transaction, None, maybe_force_create_address)?;
+
+		catch_exec_info::fill_exec_info(&info);
 
 		let transaction_hash = transaction.hash();
 		let transaction_index = Pending::<T>::count();
@@ -701,9 +721,10 @@ impl<T: Config> Pallet<T> {
 				Pending::<T>::get(transaction_index.saturating_sub(1))
 			{
 				match receipt {
-					Receipt::Legacy(d) | Receipt::EIP2930(d) | Receipt::EIP1559(d) => {
-						d.used_gas.saturating_add(used_gas.effective)
-					}
+					Receipt::Legacy(d)
+					| Receipt::EIP2930(d)
+					| Receipt::EIP1559(d)
+					| Receipt::EIP7702(d) => d.used_gas.saturating_add(used_gas.effective),
 				}
 			} else {
 				used_gas.effective
@@ -722,6 +743,12 @@ impl<T: Config> Pallet<T> {
 					logs,
 				}),
 				Transaction::EIP1559(_) => Receipt::EIP1559(ethereum::EIP2930ReceiptData {
+					status_code,
+					used_gas: cumulative_gas_used,
+					logs_bloom,
+					logs,
+				}),
+				Transaction::EIP7702(_) => Receipt::EIP7702(ethereum::EIP7702ReceiptData {
 					status_code,
 					used_gas: cumulative_gas_used,
 					logs_bloom,
@@ -773,6 +800,7 @@ impl<T: Config> Pallet<T> {
 		from: H160,
 		transaction: &Transaction,
 		config: Option<evm::Config>,
+		maybe_force_create_address: Option<H160>,
 	) -> Result<(Option<H160>, Option<H160>, CallOrCreateInfo), DispatchErrorWithPostInfo> {
 		let transaction_data: TransactionData = transaction.into();
 		let (weight_limit, proof_size_base_cost) = Self::transaction_weight(&transaction_data);
@@ -788,6 +816,7 @@ impl<T: Config> Pallet<T> {
 			nonce,
 			action,
 			access_list,
+			authorization_list,
 		) = {
 			match transaction {
 				// max_fee_per_gas and max_priority_fee_per_gas in legacy and 2930 transactions is
@@ -800,6 +829,7 @@ impl<T: Config> Pallet<T> {
 					Some(t.gas_price),
 					Some(t.nonce),
 					t.action,
+					Vec::new(),
 					Vec::new(),
 				),
 				Transaction::EIP2930(t) => {
@@ -817,6 +847,7 @@ impl<T: Config> Pallet<T> {
 						Some(t.nonce),
 						t.action,
 						access_list,
+						Vec::new(),
 					)
 				}
 				Transaction::EIP1559(t) => {
@@ -834,6 +865,25 @@ impl<T: Config> Pallet<T> {
 						Some(t.nonce),
 						t.action,
 						access_list,
+						Vec::new(),
+					)
+				}
+				Transaction::EIP7702(t) => {
+					let access_list: Vec<(H160, Vec<H256>)> = t
+						.access_list
+						.iter()
+						.map(|item| (item.address, item.storage_keys.clone()))
+						.collect();
+					(
+						t.data.clone(),
+						t.value,
+						t.gas_limit,
+						Some(t.max_fee_per_gas),
+						Some(t.max_priority_fee_per_gas),
+						Some(t.nonce),
+						t.destination,
+						access_list,
+						t.authorization_list.clone(),
 					)
 				}
 			}
@@ -851,6 +901,7 @@ impl<T: Config> Pallet<T> {
 					max_priority_fee_per_gas,
 					nonce,
 					access_list,
+					authorization_list,
 					is_transactional,
 					validate,
 					weight_limit,
@@ -872,30 +923,62 @@ impl<T: Config> Pallet<T> {
 				Ok((Some(target), None, CallOrCreateInfo::Call(res)))
 			}
 			ethereum::TransactionAction::Create => {
-				let res = match T::Runner::create(
-					from,
-					input,
-					value,
-					gas_limit.unique_saturated_into(),
-					max_fee_per_gas,
-					max_priority_fee_per_gas,
-					nonce,
-					access_list,
-					is_transactional,
-					validate,
-					weight_limit,
-					proof_size_base_cost,
-					config.as_ref().unwrap_or_else(|| T::config()),
-				) {
-					Ok(res) => res,
-					Err(e) => {
-						return Err(DispatchErrorWithPostInfo {
-							post_info: PostDispatchInfo {
-								actual_weight: Some(e.weight),
-								pays_fee: Pays::Yes,
-							},
-							error: e.error.into(),
-						})
+				let res = if let Some(force_address) = maybe_force_create_address {
+					match T::Runner::create_force_address(
+						from,
+						input,
+						value,
+						gas_limit.unique_saturated_into(),
+						max_fee_per_gas,
+						max_priority_fee_per_gas,
+						nonce,
+						access_list,
+						authorization_list,
+						is_transactional,
+						validate,
+						weight_limit,
+						proof_size_base_cost,
+						config.as_ref().unwrap_or_else(|| T::config()),
+						force_address,
+					) {
+						Ok(res) => res,
+						Err(e) => {
+							return Err(DispatchErrorWithPostInfo {
+								post_info: PostDispatchInfo {
+									actual_weight: Some(e.weight),
+									pays_fee: Pays::Yes,
+								},
+								error: e.error.into(),
+							})
+						}
+					}
+				} else {
+					match T::Runner::create(
+						from,
+						input,
+						value,
+						gas_limit.unique_saturated_into(),
+						max_fee_per_gas,
+						max_priority_fee_per_gas,
+						nonce,
+						access_list,
+						authorization_list,
+						is_transactional,
+						validate,
+						weight_limit,
+						proof_size_base_cost,
+						config.as_ref().unwrap_or_else(|| T::config()),
+					) {
+						Ok(res) => res,
+						Err(e) => {
+							return Err(DispatchErrorWithPostInfo {
+								post_info: PostDispatchInfo {
+									actual_weight: Some(e.weight),
+									pays_fee: Pays::Yes,
+								},
+								error: e.error.into(),
+							})
+						}
 					}
 				};
 
@@ -917,7 +1000,10 @@ impl<T: Config> Pallet<T> {
 		let (base_fee, _) = T::FeeCalculator::min_gas_price();
 		let (who, _) = pallet_evm::Pallet::<T>::account_basic(&origin);
 
-		let _ = CheckEvmTransaction::<InvalidTransactionWrapper>::new(
+		// Check if this is an EIP-7702 transaction
+		let is_eip7702 = matches!(transaction, Transaction::EIP7702(_));
+
+		let check_transaction = CheckEvmTransaction::<InvalidTransactionWrapper>::new(
 			CheckEvmTransactionConfig {
 				evm_config: T::config(),
 				block_gas_limit: T::BlockGasLimit::get(),
@@ -928,12 +1014,19 @@ impl<T: Config> Pallet<T> {
 			transaction_data.into(),
 			weight_limit,
 			proof_size_base_cost,
-		)
-		.validate_in_block_for(&who)
-		.and_then(|v| v.with_chain_id())
-		.and_then(|v| v.with_base_fee())
-		.and_then(|v| v.with_balance_for(&who))
+		);
+		check_transaction
+			.validate_in_block_for(&who)
+			.and_then(|v| v.with_chain_id())
+			.and_then(|v| v.with_base_fee())
+			.and_then(|v| v.with_balance_for(&who))
+			.and_then(|v| v.with_eip7702_authorization_list(is_eip7702))
 		.map_err(|e| TransactionValidityError::Invalid(e.0))?;
+
+		use pallet_evm::OnChargeEVMTransaction;
+		let max_withdraw = check_transaction.max_withdraw_amount().map_err(|e| e.0)?;
+		<T as pallet_evm::Config>::OnChargeTransaction::can_withdraw(&origin, max_withdraw)
+			.map_err(|_| InvalidTransaction::Payment)?;
 
 		Ok(())
 	}
@@ -1008,8 +1101,9 @@ impl<T: Config> ValidatedTransactionT for ValidatedTransaction<T> {
 	fn apply(
 		source: H160,
 		transaction: Transaction,
+		maybe_force_create_address: Option<H160>,
 	) -> Result<(PostDispatchInfo, CallOrCreateInfo), DispatchErrorWithPostInfo> {
-		Pallet::<T>::apply_validated_transaction(source, transaction)
+		Pallet::<T>::apply_validated_transaction(source, transaction, maybe_force_create_address)
 	}
 }
 
@@ -1071,6 +1165,16 @@ impl From<TransactionValidationError> for InvalidTransactionWrapper {
 			TransactionValidationError::GasPriceTooLow => InvalidTransactionWrapper(
 				InvalidTransaction::Custom(TransactionValidationError::GasPriceTooLow as u8),
 			),
+			TransactionValidationError::EmptyAuthorizationList => {
+				InvalidTransactionWrapper(InvalidTransaction::Custom(
+					TransactionValidationError::EmptyAuthorizationList as u8,
+				))
+			}
+			TransactionValidationError::AuthorizationListTooLarge => {
+				InvalidTransactionWrapper(InvalidTransaction::Custom(
+					TransactionValidationError::AuthorizationListTooLarge as u8,
+				))
+			}
 			TransactionValidationError::UnknownError => InvalidTransactionWrapper(
 				InvalidTransaction::Custom(TransactionValidationError::UnknownError as u8),
 			),

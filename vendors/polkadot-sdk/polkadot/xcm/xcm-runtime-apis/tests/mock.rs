@@ -1,18 +1,18 @@
 // Copyright (C) Parity Technologies (UK) Ltd.
 // This file is part of Polkadot.
+// SPDX-License-Identifier: Apache-2.0
 
-// Polkadot is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Polkadot is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 //! Mock runtime for tests.
 //! Implements both runtime APIs for fee estimation and getting the messages for transfers.
@@ -25,8 +25,8 @@ use frame_support::{
 		BuildStorage, SaturatedConversion,
 	},
 	traits::{
-		AsEnsureOriginWithArg, ConstU128, ConstU32, Contains, ContainsPair, Everything, Nothing,
-		OriginTrait,
+		AsEnsureOriginWithArg, ConstU128, ConstU32, Contains, ContainsPair, Disabled, Everything,
+		Nothing, OriginTrait,
 	},
 	weights::WeightToFee as WeightToFeeT,
 };
@@ -60,7 +60,8 @@ construct_runtime! {
 	}
 }
 
-pub type TxExtension = (frame_system::CheckWeight<TestRuntime>,);
+pub type TxExtension =
+	(frame_system::CheckWeight<TestRuntime>, frame_system::WeightReclaim<TestRuntime>);
 
 // we only use the hash type from this, so using the mock should be fine.
 pub(crate) type Extrinsic = sp_runtime::generic::UncheckedExtrinsic<
@@ -96,6 +97,7 @@ impl pallet_assets::Config for TestRuntime {
 	type Currency = Balances;
 	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
 	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+	type Holder = ();
 	type Freezer = ();
 	type AssetDeposit = ConstU128<1>;
 	type AssetAccountDeposit = ConstU128<10>;
@@ -294,6 +296,7 @@ pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
+	type XcmEventEmitter = XcmPallet;
 	type AssetTransactor = AssetTransactors;
 	type OriginConverter = ();
 	type IsReserve = RelayTokenToAssetHub;
@@ -344,6 +347,8 @@ where
 	}
 }
 
+/// Converts a local signed origin into an XCM location. Forms the basis for local origins
+/// sending/executing XCMs.
 pub type LocalOriginToLocation = SignedToAccountIndex64<RuntimeOrigin, AccountId>;
 
 impl pallet_xcm::Config for TestRuntime {
@@ -370,13 +375,14 @@ impl pallet_xcm::Config for TestRuntime {
 	type MaxRemoteLockConsumers = ConstU32<0>;
 	type RemoteLockConsumerIdentifier = ();
 	type WeightInfo = TestWeightInfo;
+	type AuthorizedAliasConsideration = Disabled;
 }
 
 #[allow(dead_code)]
 pub fn new_test_ext_with_balances(balances: Vec<(AccountId, Balance)>) -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::<TestRuntime>::default().build_storage().unwrap();
 
-	pallet_balances::GenesisConfig::<TestRuntime> { balances }
+	pallet_balances::GenesisConfig::<TestRuntime> { balances, ..Default::default() }
 		.assimilate_storage(&mut t)
 		.unwrap();
 
@@ -392,7 +398,7 @@ pub fn new_test_ext_with_balances_and_assets(
 ) -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::<TestRuntime>::default().build_storage().unwrap();
 
-	pallet_balances::GenesisConfig::<TestRuntime> { balances }
+	pallet_balances::GenesisConfig::<TestRuntime> { balances, ..Default::default() }
 		.assimilate_storage(&mut t)
 		.unwrap();
 

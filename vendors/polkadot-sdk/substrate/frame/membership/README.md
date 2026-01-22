@@ -4,8 +4,3 @@ Allows control of membership of a set of `AccountId`s, useful for managing membe
 collective. A prime member may be set.
 
 License: Apache-2.0
-
-
-## Release
-
-Polkadot SDK Stable 2412

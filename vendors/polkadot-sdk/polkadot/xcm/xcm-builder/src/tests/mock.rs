@@ -27,10 +27,11 @@ pub use crate::{
 	FixedRateOfFungible, FixedWeightBounds, TakeWeightCredit,
 };
 pub use alloc::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
-pub use codec::{Decode, Encode};
+pub use codec::{Decode, DecodeWithMemTracking, Encode};
 pub use core::{
 	cell::{Cell, RefCell},
 	fmt::Debug,
+	ops::ControlFlow,
 };
 use frame_support::traits::{ContainsPair, Everything};
 pub use frame_support::{
@@ -40,11 +41,11 @@ pub use frame_support::{
 	traits::{Contains, Get, IsInVec},
 };
 pub use xcm::latest::{prelude::*, QueryId, Weight};
-use xcm_executor::traits::{Properties, QueryHandler, QueryResponseStatus};
 pub use xcm_executor::{
 	traits::{
-		AssetExchange, AssetLock, CheckSuspension, ConvertOrigin, Enact, ExportXcm, FeeManager,
-		FeeReason, LockError, OnResponse, TransactAsset,
+		AssetExchange, AssetLock, CheckSuspension, ConvertOrigin, DenyExecution, Enact, ExportXcm,
+		FeeManager, FeeReason, LockError, OnResponse, Properties, QueryHandler,
+		QueryResponseStatus, TransactAsset,
 	},
 	AssetsInHolding, Config,
 };
@@ -62,7 +63,9 @@ pub enum TestOrigin {
 ///
 /// Each item contains the amount of weight that it *wants* to consume as the first item, and the
 /// actual amount (if different from the former) in the second option.
-#[derive(Debug, Encode, Decode, Eq, PartialEq, Clone, Copy, scale_info::TypeInfo)]
+#[derive(
+	Debug, Encode, Decode, DecodeWithMemTracking, Eq, PartialEq, Clone, Copy, scale_info::TypeInfo,
+)]
 pub enum TestCall {
 	OnlyRoot(Weight, Option<Weight>),
 	OnlyParachain(Weight, Option<Weight>, Option<u32>),
@@ -740,6 +743,7 @@ pub struct TestConfig;
 impl Config for TestConfig {
 	type RuntimeCall = TestCall;
 	type XcmSender = TestMessageSender;
+	type XcmEventEmitter = ();
 	type AssetTransactor = TestAssetTransactor;
 	type OriginConverter = TestOriginConverter;
 	type IsReserve = TestIsReserve;

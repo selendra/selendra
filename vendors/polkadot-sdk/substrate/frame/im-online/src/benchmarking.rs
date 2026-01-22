@@ -29,6 +29,8 @@ use sp_runtime::{
 
 use crate::*;
 
+const MAX_KEYS: u32 = 1000;
+
 pub fn create_heartbeat<T: Config>(
 	k: u32,
 ) -> Result<
@@ -65,7 +67,7 @@ mod benchmarks {
 	use super::*;
 
 	#[benchmark(extra)]
-	fn heartbeat(k: Linear<1, { <T as Config>::MaxKeys::get() }>) -> Result<(), BenchmarkError> {
+	fn heartbeat(k: Linear<1, MAX_KEYS>) -> Result<(), BenchmarkError> {
 		let (input_heartbeat, signature) = create_heartbeat::<T>(k)?;
 
 		#[extrinsic_call]
@@ -75,9 +77,7 @@ mod benchmarks {
 	}
 
 	#[benchmark(extra)]
-	fn validate_unsigned(
-		k: Linear<1, { <T as Config>::MaxKeys::get() }>,
-	) -> Result<(), BenchmarkError> {
+	fn validate_unsigned(k: Linear<1, MAX_KEYS>) -> Result<(), BenchmarkError> {
 		let (input_heartbeat, signature) = create_heartbeat::<T>(k)?;
 		let call = Call::heartbeat { heartbeat: input_heartbeat, signature };
 
@@ -91,9 +91,7 @@ mod benchmarks {
 	}
 
 	#[benchmark]
-	fn validate_unsigned_and_then_heartbeat(
-		k: Linear<1, { <T as Config>::MaxKeys::get() }>,
-	) -> Result<(), BenchmarkError> {
+	fn validate_unsigned_and_then_heartbeat(k: Linear<1, MAX_KEYS>) -> Result<(), BenchmarkError> {
 		let (input_heartbeat, signature) = create_heartbeat::<T>(k)?;
 		let call = Call::heartbeat { heartbeat: input_heartbeat, signature };
 		let call_enc = call.encode();

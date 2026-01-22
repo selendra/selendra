@@ -1,6 +1,6 @@
 [package]
 name = "sc-utils"
-version = "18.0.0"
+version = "19.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
@@ -21,9 +21,9 @@ parking_lot = { workspace = true, default-features = true }
 prometheus = { workspace = true }
 sp-arithmetic.workspace = true
 
+[dev-dependencies]
+tokio-test = { workspace = true }
+
 [features]
 default = ["metered"]
 metered = []
-
-[dev-dependencies]
-tokio-test = { workspace = true }

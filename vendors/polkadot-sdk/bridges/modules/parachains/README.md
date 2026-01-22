@@ -71,7 +71,7 @@ It'd be better for anyone (for chain and for submitters) to reject all transacti
 already known parachain heads to the pallet. This way, we leave block space to other useful transactions and
 we don't charge concurrent submitters for their honest actions.
 
-To deal with that, we have a [signed extension](./src/call_ext) that may be added to the runtime.
+To deal with that, we have a [signed extension](./src/call_ext.rs) that may be added to the runtime.
 It does exactly what is required - rejects all transactions with already known heads. The submitter
 pays nothing for such transactions - they're simply removed from the transaction pool, when the block
 is built.
@@ -88,8 +88,3 @@ macro that bundles several similar signed extensions in a single one.
 
 We have an offchain actor, who is watching for new parachain heads and submits them to the bridged chain.
 It is the parachains relay - you may look at the [crate level documentation and the code](../../relays/parachains/).
-
-
-## Release
-
-Polkadot SDK Stable 2412

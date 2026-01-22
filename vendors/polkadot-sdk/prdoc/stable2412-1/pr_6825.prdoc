@@ -6,13 +6,45 @@ title: Use relay chain slot for velocity measurement on parachains
 doc:
   - audience: Runtime Dev
     description: |
-        This is a partial backport of #6825. It makes the node side of omni-node forward compatible with runtimes that
-        are build with the changes from #6825.
+      The AuraExt pallets `ConsensusHook` is performing checks based on a parachains velocity. It was previously
+      checking how many blocks where produced in a given parachain slot. This only works well when the parachain
+      and relay chain slot length is the same. After this PR, we are checking against the relay chain slot.
+
+      **🚨 Action Required:** A migration of name `cumulus_pallet_aura_ext::migration::MigrateV0ToV1` is included
+      that cleans up a renamed storage item. Parachain must add it to their runtimes. More information is available in
+      the [reference docs](https://paritytech.github.io/polkadot-sdk/master/polkadot_sdk_docs/reference_docs/frame_runtime_upgrades_and_migrations/index.html#single-block-migrations).
 
 crates:
+  - name: cumulus-pallet-parachain-system
+    bump: minor
+  - name: cumulus-pallet-aura-ext
+    bump: major
+  - name: cumulus-primitives-aura
+    bump: major
   - name: cumulus-client-parachain-inherent
-    bump: patch
+    bump: minor
   - name: cumulus-client-consensus-aura
-    bump: patch
+    bump: minor
   - name: xcm-emulator
-    bump: patch
+    bump: minor
+  - name: asset-hub-rococo-runtime
+    bump: minor
+  - name: asset-hub-westend-runtime
+    bump: minor
+  - name: bridge-hub-rococo-runtime
+    bump: minor
+  - name: bridge-hub-westend-runtime
+    bump: minor
+  - name: collectives-westend-runtime
+    bump: minor
+  - name: coretime-rococo-runtime
+    bump: minor
+  - name: coretime-westend-runtime
+    bump: minor
+  - name: people-rococo-runtime
+    bump: minor
+  - name: people-westend-runtime
+    bump: minor
+  - name: contracts-rococo-runtime
+    bump: minor
+        

@@ -25,14 +25,15 @@ use crate::{
 	start_rpc_servers, BuildGenesisBlock, GenesisBlockBuilder, RpcHandlers, SpawnTaskHandle,
 	TaskManager, TransactionPoolAdapter,
 };
-use futures::{channel::oneshot, future::ready, FutureExt, StreamExt};
+use futures::{select, FutureExt, StreamExt};
 use jsonrpsee::RpcModule;
-use log::info;
+use log::{debug, error, info};
 use prometheus_endpoint::Registry;
 use sc_chain_spec::{get_extension, ChainSpec};
 use sc_client_api::{
 	execution_extensions::ExecutionExtensions, proof_provider::ProofProvider, BadBlocks,
-	BlockBackend, BlockchainEvents, ExecutorProvider, ForkBlocks, StorageProvider, UsageProvider,
+	BlockBackend, BlockchainEvents, ExecutorProvider, ForkBlocks, KeysIter, StorageProvider,
+	TrieCacheContext, UsageProvider,
 };
 use sc_client_db::{Backend, BlocksPruning, DatabaseSettings, PruningMode};
 use sc_consensus::import_queue::{ImportQueue, ImportQueueService};
@@ -90,7 +91,12 @@ use sp_consensus::block_validation::{
 use sp_core::traits::{CodeExecutor, SpawnNamed};
 use sp_keystore::KeystorePtr;
 use sp_runtime::traits::{Block as BlockT, BlockIdTo, NumberFor, Zero};
-use std::{str::FromStr, sync::Arc, time::SystemTime};
+use sp_storage::{ChildInfo, ChildType, PrefixedStorageKey};
+use std::{
+	str::FromStr,
+	sync::Arc,
+	time::{Duration, SystemTime},
+};
 
 /// Full client type.
 pub type TFullClient<TBl, TRtApi, TExec> =
@@ -259,10 +265,87 @@ where
 			},
 		)?;
 
+		if let Some(warm_up_strategy) = config.warm_up_trie_cache {
+			let storage_root = client.usage_info().chain.best_hash;
+			let backend_clone = backend.clone();
+
+			if warm_up_strategy.is_blocking() {
+				// We use the blocking strategy for testing purposes.
+				// So better to error out if it fails.
+				warm_up_trie_cache(backend_clone, storage_root)?;
+			} else {
+				task_manager.spawn_handle().spawn_blocking(
+					"warm-up-trie-cache",
+					None,
+					async move {
+						if let Err(e) = warm_up_trie_cache(backend_clone, storage_root) {
+							error!("Failed to warm up trie cache: {e}");
+						}
+					},
+				);
+			}
+		}
+
 		client
 	};
 
 	Ok((client, backend, keystore_container, task_manager))
+}
+
+fn child_info(key: Vec<u8>) -> Option<ChildInfo> {
+	let prefixed_key = PrefixedStorageKey::new(key);
+	ChildType::from_prefixed_key(&prefixed_key).and_then(|(child_type, storage_key)| {
+		(child_type == ChildType::ParentKeyId).then(|| ChildInfo::new_default(storage_key))
+	})
+}
+
+fn warm_up_trie_cache<TBl: BlockT>(
+	backend: Arc<TFullBackend<TBl>>,
+	storage_root: TBl::Hash,
+) -> Result<(), Error> {
+	use sc_client_api::backend::Backend;
+	use sp_state_machine::Backend as StateBackend;
+
+	let untrusted_state = || backend.state_at(storage_root, TrieCacheContext::Untrusted);
+	let trusted_state = || backend.state_at(storage_root, TrieCacheContext::Trusted);
+
+	debug!("Populating trie cache started",);
+	let start_time = std::time::Instant::now();
+	let mut keys_count = 0;
+	let mut child_keys_count = 0;
+	for key in KeysIter::<_, TBl>::new(untrusted_state()?, None, None)? {
+		if keys_count != 0 && keys_count % 100_000 == 0 {
+			debug!("{} keys and {} child keys have been warmed", keys_count, child_keys_count);
+		}
+		match child_info(key.0.clone()) {
+			Some(info) => {
+				for child_key in
+					KeysIter::<_, TBl>::new_child(untrusted_state()?, info.clone(), None, None)?
+				{
+					if trusted_state()?
+						.child_storage(&info, &child_key.0)
+						.unwrap_or_default()
+						.is_none()
+					{
+						debug!("Child storage value unexpectedly empty: {child_key:?}");
+					}
+					child_keys_count += 1;
+				}
+			},
+			None => {
+				if trusted_state()?.storage(&key.0).unwrap_or_default().is_none() {
+					debug!("Storage value unexpectedly empty: {key:?}");
+				}
+				keys_count += 1;
+			},
+		}
+	}
+	debug!(
+		"Trie cache populated with {keys_count} keys and {child_keys_count} child keys in {} s",
+		start_time.elapsed().as_secs_f32()
+	);
+
+	Ok(())
 }
 
 /// Creates a [`NativeElseWasmExecutor`](sc_executor::NativeElseWasmExecutor) according to
@@ -511,6 +594,14 @@ where
 	let rpc_id_provider = config.rpc.id_provider.take();
 
 	// jsonrpsee RPC
+	// RPC-V2 specific metrics need to be registered before the RPC server is started,
+	// since we might have two instances running (one for the in-memory RPC and one for the network
+	// RPC).
+	let rpc_v2_metrics = config
+		.prometheus_registry()
+		.map(|registry| sc_rpc_spec_v2::transaction::TransactionMetrics::new(registry))
+		.transpose()?;
+
 	let gen_rpc_module = || {
 		gen_rpc_module(
 			task_manager.spawn_handle(),
@@ -525,6 +616,7 @@ where
 			config.blocks_pruning,
 			backend.clone(),
 			&*rpc_builder,
+			rpc_v2_metrics.clone(),
 		)
 	};
 
@@ -577,22 +669,42 @@ pub async fn propagate_transaction_notifications<Block, ExPool>(
 	Block: BlockT,
 	ExPool: MaintainedTransactionPool<Block = Block, Hash = <Block as BlockT>::Hash>,
 {
+	const TELEMETRY_INTERVAL: Duration = Duration::from_secs(1);
+
 	// transaction notifications
-	transaction_pool
-		.import_notification_stream()
-		.for_each(move |hash| {
-			tx_handler_controller.propagate_transaction(hash);
-			let status = transaction_pool.status();
-			telemetry!(
-				telemetry;
-				SUBSTRATE_INFO;
-				"txpool.import";
-				"ready" => status.ready,
-				"future" => status.future,
-			);
-			ready(())
-		})
-		.await;
+	let mut notifications = transaction_pool.import_notification_stream().fuse();
+	let mut timer = futures_timer::Delay::new(TELEMETRY_INTERVAL).fuse();
+	let mut tx_imported = false;
+
+	loop {
+		select! {
+			notification = notifications.next() => {
+				let Some(hash) = notification else { return };
+
+				tx_handler_controller.propagate_transaction(hash);
+
+				tx_imported = true;
+			},
+			_ = timer => {
+				timer = futures_timer::Delay::new(TELEMETRY_INTERVAL).fuse();
+
+				if !tx_imported {
+					continue;
+				}
+
+				tx_imported = false;
+				let status = transaction_pool.status();
+
+				telemetry!(
+					telemetry;
+					SUBSTRATE_INFO;
+					"txpool.import";
+					"ready" => status.ready,
+					"future" => status.future,
+				);
+			}
+		}
+	}
 }
 
 /// Initialize telemetry with provided configuration and return telemetry handle
@@ -652,6 +764,7 @@ pub fn gen_rpc_module<TBl, TBackend, TCl, TRpc, TExPool>(
 	blocks_pruning: BlocksPruning,
 	backend: Arc<TBackend>,
 	rpc_builder: &(dyn Fn(SubscriptionTaskExecutor) -> Result<RpcModule<TRpc>, Error>),
+	metrics: Option<sc_rpc_spec_v2::transaction::TransactionMetrics>,
 ) -> Result<RpcModule<()>, Error>
 where
 	TBl: BlockT,
@@ -707,6 +820,7 @@ where
 		client.clone(),
 		transaction_pool.clone(),
 		task_executor.clone(),
+		metrics,
 	)
 	.into_rpc();
 
@@ -821,7 +935,6 @@ pub fn build_network<Block, Net, TxPool, IQ, Client>(
 		Arc<dyn sc_network::service::traits::NetworkService>,
 		TracingUnboundedSender<sc_rpc::system::Request<Block>>,
 		sc_network_transactions::TransactionsHandlerController<<Block as BlockT>::Hash>,
-		NetworkStarter,
 		Arc<SyncingService<Block>>,
 	),
 	Error,
@@ -983,7 +1096,6 @@ pub fn build_network_advanced<Block, Net, TxPool, IQ, Client>(
 		Arc<dyn sc_network::service::traits::NetworkService>,
 		TracingUnboundedSender<sc_rpc::system::Request<Block>>,
 		sc_network_transactions::TransactionsHandlerController<<Block as BlockT>::Hash>,
-		NetworkStarter,
 		Arc<SyncingService<Block>>,
 	),
 	Error,
@@ -1124,22 +1236,6 @@ where
 		announce_block,
 	);
 
-	// TODO: Normally, one is supposed to pass a list of notifications protocols supported by the
-	// node through the `NetworkConfiguration` struct. But because this function doesn't know in
-	// advance which components, such as GrandPa or Polkadot, will be plugged on top of the
-	// service, it is unfortunately not possible to do so without some deep refactoring. To
-	// bypass this problem, the `NetworkService` provides a `register_notifications_protocol`
-	// method that can be called even after the network has been initialized. However, we want to
-	// avoid the situation where `register_notifications_protocol` is called *after* the network
-	// actually connects to other peers. For this reason, we delay the process of the network
-	// future until the user calls `NetworkStarter::start_network`.
-	//
-	// This entire hack should eventually be removed in favour of passing the list of protocols
-	// through the configuration.
-	//
-	// See also https://github.com/paritytech/substrate/issues/6827
-	let (network_start_tx, network_start_rx) = oneshot::channel();
-
 	// The network worker is responsible for gathering all network messages and processing
 	// them. This is quite a heavy task, and at the time of the writing of this comment it
 	// frequently happens that this future takes several seconds or in some situations
@@ -1147,26 +1243,9 @@ where
 	// issue, and ideally we would like to fix the network future to take as little time as
 	// possible, but we also take the extra harm-prevention measure to execute the networking
 	// future using `spawn_blocking`.
-	spawn_handle.spawn_blocking("network-worker", Some("networking"), async move {
-		if network_start_rx.await.is_err() {
-			log::warn!(
-				"The NetworkStart returned as part of `build_network` has been silently dropped"
-			);
-			// This `return` might seem unnecessary, but we don't want to make it look like
-			// everything is working as normal even though the user is clearly misusing the API.
-			return
-		}
+	spawn_handle.spawn_blocking("network-worker", Some("networking"), future);
 
-		future.await
-	});
-
-	Ok((
-		network,
-		system_rpc_tx,
-		tx_handler_controller,
-		NetworkStarter(network_start_tx),
-		sync_service.clone(),
-	))
+	Ok((network, system_rpc_tx, tx_handler_controller, sync_service.clone()))
 }
 
 /// Configuration for [`build_default_syncing_engine`].
@@ -1384,6 +1463,7 @@ where
 		mode: net_config.network_config.sync_mode,
 		max_parallel_downloads: net_config.network_config.max_parallel_downloads,
 		max_blocks_per_request: net_config.network_config.max_blocks_per_request,
+		min_peers_to_start_warp_sync: net_config.network_config.min_peers_to_start_warp_sync,
 		metrics_registry: metrics_registry.cloned(),
 		state_request_protocol_name,
 		block_downloader,
@@ -1394,22 +1474,4 @@ where
 		warp_sync_config,
 		warp_sync_protocol_name,
 	)?))
-}
-
-/// Object used to start the network.
-#[must_use]
-pub struct NetworkStarter(oneshot::Sender<()>);
-
-impl NetworkStarter {
-	/// Create a new NetworkStarter
-	pub fn new(sender: oneshot::Sender<()>) -> Self {
-		NetworkStarter(sender)
-	}
-
-	/// Start the network. Call this after all sub-components have been initialized.
-	///
-	/// > **Note**: If you don't call this function, the networking will not work.
-	pub fn start_network(self) {
-		let _ = self.0.send(());
-	}
 }

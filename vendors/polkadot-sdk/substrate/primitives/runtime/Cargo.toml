@@ -1,6 +1,6 @@
 [package]
 name = "sp-runtime"
-version = "40.1.0"
+version = "42.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
@@ -17,7 +17,9 @@ workspace = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+binary-merkle-tree.workspace = true
 codec = { features = ["derive", "max-encoded-len"], workspace = true }
+docify = { workspace = true }
 either = { workspace = true }
 hash256-std-hasher = { workspace = true }
 impl-trait-for-tuples = { workspace = true }
@@ -34,21 +36,19 @@ sp-io.workspace = true
 sp-std.workspace = true
 sp-trie.workspace = true
 sp-weights.workspace = true
-docify = { workspace = true }
 tracing = { workspace = true, features = ["log"], default-features = false }
-binary-merkle-tree.workspace = true
 
-simple-mermaid = { version = "0.1.1", optional = true }
-tuplex = { version = "0.1.2", default-features = false }
+simple-mermaid = { workspace = true, optional = true }
+tuplex = { workspace = true, default-features = false }
 
 [dev-dependencies]
 rand = { workspace = true, default-features = true }
 serde_json = { workspace = true, default-features = true }
+sp-api = { default-features = true, workspace = true }
+sp-state-machine = { default-features = true, workspace = true }
+sp-tracing = { default-features = true, workspace = true }
+substrate-test-runtime-client = { workspace = true }
 zstd = { workspace = true }
-sp-api = { default-features = true, path = "../api" }
-sp-state-machine = { default-features = true, path = "../state-machine" }
-sp-tracing = { default-features = true, path = "../tracing" }
-substrate-test-runtime-client = { path = "../../test-utils/runtime/client" }
 
 [features]
 runtime-benchmarks = []

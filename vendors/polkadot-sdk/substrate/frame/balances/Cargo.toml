@@ -1,6 +1,6 @@
 [package]
 name = "pallet-balances"
-version = "40.1.0"
+version = "42.0.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
@@ -17,20 +17,20 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 codec = { features = ["derive", "max-encoded-len"], workspace = true }
-log = { workspace = true }
-scale-info = { features = ["derive"], workspace = true }
+docify = { workspace = true }
 frame-benchmarking = { optional = true, workspace = true }
 frame-support.workspace = true
 frame-system.workspace = true
+log = { workspace = true }
+scale-info = { features = ["derive"], workspace = true }
+sp-core.workspace = true
 sp-runtime.workspace = true
-docify = { workspace = true }
 
 [dev-dependencies]
-pallet-transaction-payment = { default-features = true, path = "../transaction-payment" }
-frame-support = { features = ["experimental"], default-features = true, path = "../support" }
-sp-core = { default-features = true, path = "../../primitives/core" }
-sp-io = { default-features = true, path = "../../primitives/io" }
+frame-support = { features = ["experimental"], default-features = true, workspace = true }
+pallet-transaction-payment = { default-features = true, workspace = true }
 paste = { workspace = true, default-features = true }
+sp-io = { default-features = true, workspace = true }
 
 [features]
 default = ["std"]
@@ -41,6 +41,7 @@ std = [
 	"frame-system/std",
 	"log/std",
 	"scale-info/std",
+	"sp-core/std",
 	"sp-runtime/std",
 ]
 # Enable support for setting the existential deposit to zero.
@@ -49,10 +50,12 @@ runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 ]
 try-runtime = [
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",
+	"pallet-transaction-payment/try-runtime",
 	"sp-runtime/try-runtime",
 ]

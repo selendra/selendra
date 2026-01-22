@@ -24,8 +24,10 @@
 
 extern crate alloc;
 
-use codec::{Decode, DecodeLimit, Encode, Error as CodecError, Input, MaxEncodedLen};
-use derivative::Derivative;
+use codec::{
+	Decode, DecodeLimit, DecodeWithMemTracking, Encode, Error as CodecError, Input, MaxEncodedLen,
+};
+use derive_where::derive_where;
 use frame_support::dispatch::GetDispatchInfo;
 use scale_info::TypeInfo;
 
@@ -94,13 +96,7 @@ macro_rules! versioned_type {
 		$(#[$index5:meta])+
 		V5($v5:ty),
 	}) => {
-		#[derive(Derivative, Encode, Decode, TypeInfo)]
-		#[derivative(
-			Clone(bound = ""),
-			Eq(bound = ""),
-			PartialEq(bound = ""),
-			Debug(bound = "")
-		)]
+		#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 		#[codec(encode_bound())]
 		#[codec(decode_bound())]
 		#[scale_info(replace_segment("staging_xcm", "xcm"))]
@@ -144,12 +140,17 @@ macro_rules! versioned_type {
 		}
 		impl IntoVersion for $n {
 			fn into_version(self, n: Version) -> Result<Self, ()> {
-				Ok(match n {
-					3 => Self::V3(self.try_into()?),
-					4 => Self::V4(self.try_into()?),
-					5 => Self::V5(self.try_into()?),
-					_ => return Err(()),
-				})
+				let version = self.identify_version();
+				if version == n {
+					Ok(self)
+				} else {
+					Ok(match n {
+						3 => Self::V3(self.try_into()?),
+						4 => Self::V4(self.try_into()?),
+						5 => Self::V5(self.try_into()?),
+						_ => return Err(()),
+					})
+				}
 			}
 		}
 		impl From<$v3> for $n {
@@ -317,8 +318,8 @@ versioned_type! {
 }
 
 /// A single XCM message, together with its version code.
-#[derive(Derivative, Encode, Decode, TypeInfo)]
-#[derivative(Clone(bound = ""), Eq(bound = ""), PartialEq(bound = ""), Debug(bound = ""))]
+#[derive(Encode, Decode, DecodeWithMemTracking, TypeInfo)]
+#[derive_where(Clone, Eq, PartialEq, Debug)]
 #[codec(encode_bound())]
 #[codec(decode_bound())]
 #[scale_info(bounds(), skip_type_params(RuntimeCall))]
@@ -358,12 +359,12 @@ impl<C> VersionedXcm<C> {
 	/// such as `MAX_XCM_DECODE_DEPTH`, `MAX_ITEMS_IN_ASSETS` or `MAX_INSTRUCTIONS_TO_DECODE`.
 	///
 	/// Note that this uses the limit of the sender - not the receiver. It is a best effort.
-	pub fn validate_xcm_nesting(&self) -> Result<(), ()> {
+	pub fn check_is_decodable(&self) -> Result<(), ()> {
 		self.using_encoded(|mut enc| {
 			Self::decode_all_with_depth_limit(MAX_XCM_DECODE_DEPTH, &mut enc).map(|_| ())
 		})
 		.map_err(|e| {
-			log::error!(target: "xcm::validate_xcm_nesting", "Decode error: {e:?} for xcm: {self:?}!");
+			log::error!(target: "xcm::check_is_decodable", "Decode error: {e:?} for xcm: {self:?}!");
 			()
 		})
 	}
@@ -622,7 +623,7 @@ fn size_limits() {
 }
 
 #[test]
-fn validate_xcm_nesting_works() {
+fn check_is_decodable_works() {
 	use crate::{
 		latest::{
 			prelude::{GeneralIndex, ReserveAssetDeposited, SetAppendix},
@@ -654,46 +655,46 @@ fn validate_xcm_nesting_works() {
 		ReserveAssetDeposited(assets(1));
 		(MAX_INSTRUCTIONS_TO_DECODE - 1) as usize
 	]))
-	.validate_xcm_nesting()
+	.check_is_decodable()
 	.is_ok());
 	assert!(VersionedXcm::<()>::from(Xcm(vec![
 		ReserveAssetDeposited(assets(1));
 		MAX_INSTRUCTIONS_TO_DECODE as usize
 	]))
-	.validate_xcm_nesting()
+	.check_is_decodable()
 	.is_ok());
 	assert!(VersionedXcm::<()>::from(Xcm(vec![
 		ReserveAssetDeposited(assets(1));
 		(MAX_INSTRUCTIONS_TO_DECODE + 1) as usize
 	]))
-	.validate_xcm_nesting()
+	.check_is_decodable()
 	.is_err());
 
 	// `MAX_XCM_DECODE_DEPTH` check
 	assert!(VersionedXcm::<()>::from(with_instr(MAX_XCM_DECODE_DEPTH - 1))
-		.validate_xcm_nesting()
+		.check_is_decodable()
 		.is_ok());
 	assert!(VersionedXcm::<()>::from(with_instr(MAX_XCM_DECODE_DEPTH))
-		.validate_xcm_nesting()
+		.check_is_decodable()
 		.is_ok());
 	assert!(VersionedXcm::<()>::from(with_instr(MAX_XCM_DECODE_DEPTH + 1))
-		.validate_xcm_nesting()
+		.check_is_decodable()
 		.is_err());
 
 	// `MAX_ITEMS_IN_ASSETS` check
 	assert!(VersionedXcm::<()>::from(Xcm(vec![ReserveAssetDeposited(assets(
 		MAX_ITEMS_IN_ASSETS
 	))]))
-	.validate_xcm_nesting()
+	.check_is_decodable()
 	.is_ok());
 	assert!(VersionedXcm::<()>::from(Xcm(vec![ReserveAssetDeposited(assets(
 		MAX_ITEMS_IN_ASSETS - 1
 	))]))
-	.validate_xcm_nesting()
+	.check_is_decodable()
 	.is_ok());
 	assert!(VersionedXcm::<()>::from(Xcm(vec![ReserveAssetDeposited(assets(
 		MAX_ITEMS_IN_ASSETS + 1
 	))]))
-	.validate_xcm_nesting()
+	.check_is_decodable()
 	.is_err());
 }

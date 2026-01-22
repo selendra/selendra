@@ -1,10 +1,12 @@
 [package]
 name = "cumulus-primitives-aura"
-version = "0.16.0"
+version = "0.18.0"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
 description = "Core primitives for Aura in Cumulus"
+homepage.workspace = true
+repository.workspace = true
 
 [lints]
 workspace = true

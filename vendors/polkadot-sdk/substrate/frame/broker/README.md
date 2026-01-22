@@ -24,8 +24,3 @@ indicates usage of a single core one time over a timeslice.
 														| <-------\
 price fixed, unsold assigned to instapool, system cores reserved -/
 ```
-
-
-## Release
-
-Polkadot SDK Stable 2412

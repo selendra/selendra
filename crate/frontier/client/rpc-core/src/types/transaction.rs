@@ -16,11 +16,23 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use ethereum::{AccessListItem, TransactionAction, TransactionV2 as EthereumTransaction};
-use ethereum_types::{H160, H256, U256, U64};
+use ethereum::{AccessListItem, TransactionAction, TransactionV3 as EthereumTransaction};
+use ethereum_types::{Address, H160, H256, U256, U64};
 use serde::{ser::SerializeStruct, Serialize, Serializer};
 
 use crate::types::{BuildFrom, Bytes};
+
+/// AuthorizationListItem for EIP-7702 transactions
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthorizationListItem {
+	pub chain_id: U64,
+	pub address: Address,
+	pub nonce: U256,
+	pub y_parity: U64,
+	pub r: U256,
+	pub s: U256,
+}
 
 /// Transaction
 #[derive(Clone, Debug, Default, Eq, PartialEq, Serialize)]
@@ -66,6 +78,9 @@ pub struct Transaction {
 	/// Pre-pay to warm storage access.
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub access_list: Option<Vec<AccessListItem>>,
+	/// EIP-7702 authorization list.
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub authorization_list: Option<Vec<AuthorizationListItem>>,
 	/// The parity (0 for even, 1 for odd) of the y-value of the secp256k1 signature.
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub y_parity: Option<U256>,
@@ -106,6 +121,7 @@ impl BuildFrom for Transaction {
 				creates: None,
 				chain_id: t.signature.chain_id().map(U64::from),
 				access_list: None,
+				authorization_list: None,
 				y_parity: None,
 				v: Some(U256::from(t.signature.v())),
 				r: U256::from_big_endian(t.signature.r().as_bytes()),
@@ -132,10 +148,11 @@ impl BuildFrom for Transaction {
 				creates: None,
 				chain_id: Some(U64::from(t.chain_id)),
 				access_list: Some(t.access_list.clone()),
-				y_parity: Some(U256::from(t.odd_y_parity as u8)),
-				v: Some(U256::from(t.odd_y_parity as u8)),
-				r: U256::from_big_endian(t.r.as_bytes()),
-				s: U256::from_big_endian(t.s.as_bytes()),
+				authorization_list: None,
+				y_parity: Some(U256::from(t.signature.odd_y_parity() as u8)),
+				v: Some(U256::from(t.signature.odd_y_parity() as u8)),
+				r: U256::from_big_endian(t.signature.r().as_bytes()),
+				s: U256::from_big_endian(t.signature.s().as_bytes()),
 			},
 			EthereumTransaction::EIP1559(t) => Self {
 				transaction_type: U256::from(2),
@@ -159,10 +176,50 @@ impl BuildFrom for Transaction {
 				creates: None,
 				chain_id: Some(U64::from(t.chain_id)),
 				access_list: Some(t.access_list.clone()),
-				y_parity: Some(U256::from(t.odd_y_parity as u8)),
-				v: Some(U256::from(t.odd_y_parity as u8)),
-				r: U256::from_big_endian(t.r.as_bytes()),
-				s: U256::from_big_endian(t.s.as_bytes()),
+				authorization_list: None,
+				y_parity: Some(U256::from(t.signature.odd_y_parity() as u8)),
+				v: Some(U256::from(t.signature.odd_y_parity() as u8)),
+				r: U256::from_big_endian(t.signature.r().as_bytes()),
+				s: U256::from_big_endian(t.signature.s().as_bytes()),
+			},
+			EthereumTransaction::EIP7702(t) => Self {
+				transaction_type: U256::from(4),
+				hash,
+				nonce: t.nonce,
+				block_hash: None,
+				block_number: None,
+				transaction_index: None,
+				from,
+				to: match t.destination {
+					TransactionAction::Call(to) => Some(to),
+					TransactionAction::Create => None,
+				},
+				value: t.value,
+				gas: t.gas_limit,
+				gas_price: Some(t.max_fee_per_gas),
+				max_fee_per_gas: Some(t.max_fee_per_gas),
+				max_priority_fee_per_gas: Some(t.max_priority_fee_per_gas),
+				input: Bytes(t.data.clone()),
+				creates: None,
+				chain_id: Some(U64::from(t.chain_id)),
+				access_list: Some(t.access_list.clone()),
+				authorization_list: Some(
+					t.authorization_list
+						.iter()
+						.map(|item| AuthorizationListItem {
+							address: item.address,
+							chain_id: U64::from(item.chain_id),
+							nonce: item.nonce,
+							y_parity: U64::from(item.signature.odd_y_parity as u8),
+							r: U256::from_big_endian(&item.signature.r[..]),
+							s: U256::from_big_endian(&item.signature.s[..]),
+						})
+						.collect(),
+				),
+				y_parity: Some(U256::from(t.signature.odd_y_parity() as u8)),
+				v: Some(U256::from(t.signature.odd_y_parity() as u8)),
+				r: U256::from_big_endian(t.signature.r().as_bytes()),
+				s: U256::from_big_endian(t.signature.s().as_bytes()),
 			},
 		}
 	}

@@ -17,7 +17,7 @@
 
 use super::{
 	types::{ComponentRange, ComponentRangeMap},
-	writer, ListOutput, PalletCmd,
+	writer, ListOutput, PalletCmd, LOG_TARGET,
 };
 use crate::{
 	pallet::{types::FetchedCode, GenesisBuilderPolicy},
@@ -27,7 +27,7 @@ use crate::{
 	},
 };
 use clap::{error::ErrorKind, CommandFactory};
-use codec::{Decode, Encode};
+use codec::{Decode, DecodeWithMemTracking, Encode};
 use frame_benchmarking::{
 	Analysis, BenchmarkBatch, BenchmarkBatchSplitResults, BenchmarkList, BenchmarkParameter,
 	BenchmarkResult, BenchmarkSelector,
@@ -50,7 +50,7 @@ use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
 use sp_runtime::traits::Hash;
 use sp_state_machine::StateMachine;
 use sp_trie::{proof_size_extension::ProofSizeExt, recorder::Recorder};
-use sp_wasm_interface::HostFunctions;
+use sp_wasm_interface::{ExtendedHostFunctions, HostFunctions};
 use std::{
 	borrow::Cow,
 	collections::{BTreeMap, BTreeSet, HashMap},
@@ -60,11 +60,13 @@ use std::{
 	time,
 };
 
-/// Logging target
-const LOG_TARGET: &'static str = "polkadot_sdk_frame::benchmark::pallet";
-
-type SubstrateAndExtraHF<T> =
-	(sp_io::SubstrateHostFunctions, frame_benchmarking::benchmarking::HostFunctions, T);
+type SubstrateAndExtraHF<T> = (
+	ExtendedHostFunctions<
+		(sp_io::SubstrateHostFunctions, frame_benchmarking::benchmarking::HostFunctions),
+		super::logging::logging::HostFunctions,
+	>,
+	T,
+);
 /// How the PoV size of a storage item should be estimated.
 #[derive(clap::ValueEnum, Debug, Eq, PartialEq, Clone, Copy)]
 pub enum PovEstimationMode {
@@ -96,6 +98,7 @@ pub(crate) type PovModesMap =
 #[derive(Debug, Clone)]
 struct SelectedBenchmark {
 	pallet: String,
+	instance: String,
 	extrinsic: String,
 	components: Vec<(BenchmarkParameter, u32, u32)>,
 	pov_modes: Vec<(String, String)>,
@@ -152,26 +155,12 @@ fn combine_batches(
 }
 
 /// Explains possible reasons why the metadata for the benchmarking could not be found.
-const ERROR_METADATA_NOT_FOUND: &'static str = "Did not find the benchmarking metadata. \
+const ERROR_API_NOT_FOUND: &'static str = "Did not find the benchmarking runtime api. \
 This could mean that you either did not build the node correctly with the \
 `--features runtime-benchmarks` flag, or the chain spec that you are using was \
 not created by a node that was compiled with the flag";
 
 impl PalletCmd {
-	/// Runs the command and benchmarks a pallet.
-	#[deprecated(
-		note = "`run` will be removed after December 2024. Use `run_with_spec` instead or \
-	completely remove the code and use the `frame-benchmarking-cli` instead (see \
-	https://github.com/paritytech/polkadot-sdk/pull/3512)."
-	)]
-	pub fn run<Hasher, ExtraHostFunctions>(&self, config: sc_service::Configuration) -> Result<()>
-	where
-		Hasher: Hash,
-		ExtraHostFunctions: HostFunctions,
-	{
-		self.run_with_spec::<Hasher, ExtraHostFunctions>(Some(config.chain_spec))
-	}
-
 	fn state_handler_from_cli<HF: HostFunctions>(
 		&self,
 		chain_spec_from_api: Option<Box<dyn ChainSpec>>,
@@ -234,6 +223,7 @@ impl PalletCmd {
 	) -> Result<()>
 	where
 		Hasher: Hash,
+		<Hasher as Hash>::Output: DecodeWithMemTracking,
 		ExtraHostFunctions: HostFunctions,
 	{
 		if let Err((error_kind, msg)) = self.check_args(&chain_spec) {
@@ -264,6 +254,7 @@ impl PalletCmd {
 			};
 			return self.output_from_results(&batches)
 		}
+		super::logging::init(self.runtime_log.clone());
 
 		let state_handler =
 			self.state_handler_from_cli::<SubstrateAndExtraHF<ExtraHostFunctions>>(chain_spec)?;
@@ -306,6 +297,33 @@ impl PalletCmd {
 			.with_runtime_cache_size(2)
 			.build();
 
+		let runtime_version: sp_version::RuntimeVersion = Self::exec_state_machine(
+			StateMachine::new(
+				state,
+				&mut Default::default(),
+				&executor,
+				"Core_version",
+				&[],
+				&mut Self::build_extensions(executor.clone(), state.recorder()),
+				&runtime_code,
+				CallContext::Offchain,
+			),
+			"Could not find `Core::version` runtime api.",
+		)?;
+
+		let benchmark_api_version = runtime_version
+			.api_version(
+				&<dyn frame_benchmarking::Benchmark<
+					// We need to use any kind of `Block` type to make the compiler happy, not
+					// relevant for the `ID`.
+					sp_runtime::generic::Block<
+						sp_runtime::generic::Header<u32, Hasher>,
+						sp_runtime::generic::UncheckedExtrinsic<(), (), (), ()>,
+					>,
+				> as sp_api::RuntimeApiInfo>::ID,
+			)
+			.ok_or_else(|| ERROR_API_NOT_FOUND)?;
+
 		let (list, storage_info): (Vec<BenchmarkList>, Vec<StorageInfo>) =
 			Self::exec_state_machine(
 				StateMachine::new(
@@ -318,7 +336,7 @@ impl PalletCmd {
 					&runtime_code,
 					CallContext::Offchain,
 				),
-				ERROR_METADATA_NOT_FOUND,
+				ERROR_API_NOT_FOUND,
 			)?;
 
 		// Use the benchmark list and the user input to determine the set of benchmarks to run.
@@ -339,7 +357,7 @@ impl PalletCmd {
 			Self::parse_pov_modes(&benchmarks_to_run, &storage_info, self.ignore_unknown_pov_mode)?;
 		let mut failed = Vec::<(String, String)>::new();
 
-		'outer: for (i, SelectedBenchmark { pallet, extrinsic, components, .. }) in
+		'outer: for (i, SelectedBenchmark { pallet, instance, extrinsic, components, .. }) in
 			benchmarks_to_run.clone().into_iter().enumerate()
 		{
 			log::info!(
@@ -393,7 +411,31 @@ impl PalletCmd {
 				}
 				all_components
 			};
+
 			for (s, selected_components) in all_components.iter().enumerate() {
+				let params = |verify: bool, repeats: u32| -> Vec<u8> {
+					if benchmark_api_version >= 2 {
+						(
+							pallet.as_bytes(),
+							instance.as_bytes(),
+							extrinsic.as_bytes(),
+							&selected_components.clone(),
+							verify,
+							repeats,
+						)
+							.encode()
+					} else {
+						(
+							pallet.as_bytes(),
+							extrinsic.as_bytes(),
+							&selected_components.clone(),
+							verify,
+							repeats,
+						)
+							.encode()
+					}
+				};
+
 				// First we run a verification
 				if !self.no_verify {
 					let state = &state_without_tracking;
@@ -408,14 +450,7 @@ impl PalletCmd {
 							&mut Default::default(),
 							&executor,
 							"Benchmark_dispatch_benchmark",
-							&(
-								pallet.as_bytes(),
-								extrinsic.as_bytes(),
-								&selected_components.clone(),
-								true, // run verification code
-								1,    // no need to do internal repeats
-							)
-								.encode(),
+							&params(true, 1),
 							&mut Self::build_extensions(executor.clone(), state.recorder()),
 							&runtime_code,
 							CallContext::Offchain,
@@ -423,12 +458,12 @@ impl PalletCmd {
 						"dispatch a benchmark",
 					) {
 						Err(e) => {
-							log::error!(target: LOG_TARGET, "Error executing and verifying runtime benchmark: {}", e);
+							log::error!(target: LOG_TARGET, "Benchmark {pallet}::{extrinsic} failed: {e}");
 							failed.push((pallet.clone(), extrinsic.clone()));
 							continue 'outer
 						},
 						Ok(Err(e)) => {
-							log::error!(target: LOG_TARGET, "Error executing and verifying runtime benchmark: {}", e);
+							log::error!(target: LOG_TARGET, "Benchmark {pallet}::{extrinsic} failed: {e}");
 							failed.push((pallet.clone(), extrinsic.clone()));
 							continue 'outer
 						},
@@ -444,18 +479,11 @@ impl PalletCmd {
 						_,
 					>(
 						StateMachine::new(
-							state, // todo remove tracking
+							state,
 							&mut Default::default(),
 							&executor,
 							"Benchmark_dispatch_benchmark",
-							&(
-								pallet.as_bytes(),
-								extrinsic.as_bytes(),
-								&selected_components.clone(),
-								false, // don't run verification code for final values
-								self.repeat,
-							)
-								.encode(),
+							&params(false, self.repeat),
 							&mut Self::build_extensions(executor.clone(), state.recorder()),
 							&runtime_code,
 							CallContext::Offchain,
@@ -463,12 +491,12 @@ impl PalletCmd {
 						"dispatch a benchmark",
 					) {
 						Err(e) => {
-							log::error!(target: LOG_TARGET, "Error executing runtime benchmark: {}", e);
+							log::error!(target: LOG_TARGET, "Benchmark {pallet}::{extrinsic} failed: {e}");
 							failed.push((pallet.clone(), extrinsic.clone()));
 							continue 'outer
 						},
 						Ok(Err(e)) => {
-							log::error!(target: LOG_TARGET, "Benchmark {pallet}::{extrinsic} failed: {e}",);
+							log::error!(target: LOG_TARGET, "Benchmark {pallet}::{extrinsic} failed: {e}");
 							failed.push((pallet.clone(), extrinsic.clone()));
 							continue 'outer
 						},
@@ -490,14 +518,7 @@ impl PalletCmd {
 							&mut Default::default(),
 							&executor,
 							"Benchmark_dispatch_benchmark",
-							&(
-								pallet.as_bytes(),
-								extrinsic.as_bytes(),
-								&selected_components.clone(),
-								false, // don't run verification code for final values
-								self.repeat,
-							)
-								.encode(),
+							&params(false, self.repeat),
 							&mut Self::build_extensions(executor.clone(), state.recorder()),
 							&runtime_code,
 							CallContext::Offchain,
@@ -505,11 +526,13 @@ impl PalletCmd {
 						"dispatch a benchmark",
 					) {
 						Err(e) => {
-							return Err(format!("Error executing runtime benchmark: {e}",).into());
+							return Err(
+								format!("Benchmark {pallet}::{extrinsic} failed: {e}").into()
+							);
 						},
 						Ok(Err(e)) => {
 							return Err(
-								format!("Benchmark {pallet}::{extrinsic} failed: {e}",).into()
+								format!("Benchmark {pallet}::{extrinsic} failed: {e}").into()
 							);
 						},
 						Ok(Ok(b)) => b,
@@ -557,21 +580,14 @@ impl PalletCmd {
 	}
 
 	fn select_benchmarks_to_run(&self, list: Vec<BenchmarkList>) -> Result<Vec<SelectedBenchmark>> {
-		let extrinsic = self.extrinsic.clone().unwrap_or_default();
-		let extrinsic_split: Vec<&str> = extrinsic.split(',').collect();
-		let extrinsics: Vec<_> = extrinsic_split.iter().map(|x| x.trim().as_bytes()).collect();
-
 		// Use the benchmark list and the user input to determine the set of benchmarks to run.
 		let mut benchmarks_to_run = Vec::new();
 		list.iter().filter(|item| self.pallet_selected(&item.pallet)).for_each(|item| {
 			for benchmark in &item.benchmarks {
-				let benchmark_name = &benchmark.name;
-				if extrinsic.is_empty() ||
-					extrinsic.as_bytes() == &b"*"[..] ||
-					extrinsics.contains(&&benchmark_name[..])
-				{
+				if self.extrinsic_selected(&item.pallet, &benchmark.name) {
 					benchmarks_to_run.push((
 						item.pallet.clone(),
+						item.instance.clone(),
 						benchmark.name.clone(),
 						benchmark.components.clone(),
 						benchmark.pov_modes.clone(),
@@ -582,13 +598,15 @@ impl PalletCmd {
 		// Convert `Vec<u8>` to `String` for better readability.
 		let benchmarks_to_run: Vec<_> = benchmarks_to_run
 			.into_iter()
-			.map(|(pallet, extrinsic, components, pov_modes)| {
-				let pallet = String::from_utf8(pallet.clone()).expect("Encoded from String; qed");
+			.map(|(pallet, instance, extrinsic, components, pov_modes)| {
+				let pallet = String::from_utf8(pallet).expect("Encoded from String; qed");
+				let instance = String::from_utf8(instance).expect("Encoded from String; qed");
 				let extrinsic =
 					String::from_utf8(extrinsic.clone()).expect("Encoded from String; qed");
 
 				SelectedBenchmark {
 					pallet,
+					instance,
 					extrinsic,
 					components,
 					pov_modes: pov_modes
@@ -602,7 +620,7 @@ impl PalletCmd {
 			.collect();
 
 		if benchmarks_to_run.is_empty() {
-			return Err("No benchmarks found which match your input.".into())
+			return Err("No benchmarks found which match your input. Try `--list --all` to list all available benchmarks.".into())
 		}
 
 		Ok(benchmarks_to_run)
@@ -610,12 +628,52 @@ impl PalletCmd {
 
 	/// Whether this pallet should be run.
 	fn pallet_selected(&self, pallet: &Vec<u8>) -> bool {
-		let include = self.pallet.clone().unwrap_or_default();
+		let include = self.pallets.clone();
 
-		let included = include.is_empty() || include == "*" || include.as_bytes() == pallet;
+		let included = include.is_empty() ||
+			include.iter().any(|p| p.as_bytes() == pallet) ||
+			include.iter().any(|p| p == "*") ||
+			include.iter().any(|p| p == "all");
 		let excluded = self.exclude_pallets.iter().any(|p| p.as_bytes() == pallet);
 
 		included && !excluded
+	}
+
+	/// Whether this extrinsic should be run.
+	fn extrinsic_selected(&self, pallet: &Vec<u8>, extrinsic: &Vec<u8>) -> bool {
+		if !self.pallet_selected(pallet) {
+			return false;
+		}
+
+		let extrinsic_filter = self.extrinsic.clone().unwrap_or_default();
+		let extrinsic_split: Vec<&str> = extrinsic_filter.split(',').collect();
+		let extrinsics: Vec<_> = extrinsic_split.iter().map(|x| x.trim().as_bytes()).collect();
+
+		let included = extrinsic_filter.is_empty() ||
+			extrinsic_filter == "*" ||
+			extrinsics.contains(&&extrinsic[..]);
+
+		let excluded = self
+			.excluded_extrinsics()
+			.iter()
+			.any(|(p, e)| p.as_bytes() == pallet && e.as_bytes() == extrinsic);
+
+		included && !excluded
+	}
+
+	/// All `(pallet, extrinsic)` tuples that are excluded from the benchmarks.
+	fn excluded_extrinsics(&self) -> Vec<(String, String)> {
+		let mut excluded = Vec::new();
+
+		for e in &self.exclude_extrinsics {
+			let splits = e.split("::").collect::<Vec<_>>();
+			if splits.len() != 2 {
+				panic!("Invalid argument for '--exclude-extrinsics'. Expected format: 'pallet::extrinsic' but got '{}'", e);
+			}
+			excluded.push((splits[0].to_string(), splits[1].to_string()));
+		}
+
+		excluded
 	}
 
 	/// Execute a state machine and decode its return value as `R`.
@@ -660,7 +718,7 @@ impl PalletCmd {
 		state: &'a BenchmarkingState<H>,
 	) -> Result<FetchedCode<'a, BenchmarkingState<H>, H>> {
 		if let Some(runtime) = self.runtime.as_ref() {
-			log::info!(target: LOG_TARGET, "Loading WASM from file");
+			log::debug!(target: LOG_TARGET, "Loading WASM from file {}", runtime.display());
 			let code = fs::read(runtime).map_err(|e| {
 				format!(
 					"Could not load runtime file from path: {}, error: {}",

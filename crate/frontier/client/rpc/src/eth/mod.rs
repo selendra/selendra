@@ -20,7 +20,7 @@ mod block;
 mod client;
 mod execute;
 mod fee;
-mod filter;
+pub(crate) mod filter;
 pub mod format;
 mod mining;
 pub mod pending;
@@ -30,7 +30,7 @@ mod transaction;
 
 use std::{collections::BTreeMap, marker::PhantomData, sync::Arc};
 
-use ethereum::{BlockV2 as EthereumBlock, TransactionV2 as EthereumTransaction};
+use ethereum::{BlockV3 as EthereumBlock, TransactionV3 as EthereumTransaction};
 use ethereum_types::{H160, H256, H64, U256, U64};
 use jsonrpsee::core::{async_trait, RpcResult};
 // Substrate
@@ -158,7 +158,7 @@ where
 		let substrate_hash = self
 			.client
 			.expect_block_hash_from_id(&id)
-			.map_err(|_| internal_err(format!("Expect block number from id: {}", id)))?;
+			.map_err(|_| internal_err(format!("Expect block number from id: {id}")))?;
 
 		self.block_info_by_substrate_hash(substrate_hash).await
 	}
@@ -173,7 +173,7 @@ where
 			eth_block_hash,
 		)
 		.await
-		.map_err(|err| internal_err(format!("{:?}", err)))?
+		.map_err(|err| internal_err(format!("{err:?}")))?
 		{
 			Some(hash) => hash,
 			_ => return Ok(BlockInfo::default()),
@@ -193,7 +193,7 @@ where
 			true,
 		)
 		.await
-		.map_err(|err| internal_err(format!("{:?}", err)))?
+		.map_err(|err| internal_err(format!("{err:?}")))?
 		{
 			Some((hash, index)) => (hash, index as usize),
 			None => return Ok((BlockInfo::default(), 0)),
@@ -205,7 +205,7 @@ where
 			eth_block_hash,
 		)
 		.await
-		.map_err(|err| internal_err(format!("{:?}", err)))?
+		.map_err(|err| internal_err(format!("{err:?}")))?
 		{
 			Some(hash) => hash,
 			_ => return Ok((BlockInfo::default(), 0)),
@@ -451,6 +451,10 @@ where
 		self.transaction_count(address, number_or_hash).await
 	}
 
+	async fn pending_transactions(&self) -> RpcResult<Vec<Transaction>> {
+		self.pending_transactions().await
+	}
+
 	async fn code_at(
 		&self,
 		address: H160,
@@ -614,7 +618,7 @@ fn rich_block_build(
 	}
 }
 
-fn empty_block_from(number: U256) -> ethereum::BlockV2 {
+fn empty_block_from(number: U256) -> EthereumBlock {
 	let ommers = Vec::<ethereum::Header>::new();
 	let receipts = Vec::<ethereum::ReceiptV2>::new();
 	let receipts_root = ethereum::util::ordered_trie_root(
@@ -636,7 +640,7 @@ fn empty_block_from(number: U256) -> ethereum::BlockV2 {
 		mix_hash: H256::default(),
 		nonce: H64::default(),
 	};
-	ethereum::Block::new(partial_header, Default::default(), ommers)
+	EthereumBlock::new(partial_header, Default::default(), ommers)
 }
 
 fn transaction_build(
@@ -645,10 +649,7 @@ fn transaction_build(
 	status: Option<&TransactionStatus>,
 	base_fee: Option<U256>,
 ) -> Transaction {
-	let pubkey = match public_key(ethereum_transaction) {
-		Ok(p) => Some(p),
-		Err(_) => None,
-	};
+	let pubkey = public_key(ethereum_transaction).ok();
 	let from = status.map_or(
 		{
 			match pubkey {
@@ -698,7 +699,7 @@ fn transaction_build(
 #[derive(Clone, Default)]
 pub struct BlockInfo<H> {
 	block: Option<EthereumBlock>,
-	receipts: Option<Vec<ethereum::ReceiptV3>>,
+	receipts: Option<Vec<ethereum::ReceiptV4>>,
 	statuses: Option<Vec<TransactionStatus>>,
 	substrate_hash: H,
 	is_eip1559: bool,
@@ -708,7 +709,7 @@ pub struct BlockInfo<H> {
 impl<H> BlockInfo<H> {
 	pub fn new(
 		block: Option<EthereumBlock>,
-		receipts: Option<Vec<ethereum::ReceiptV3>>,
+		receipts: Option<Vec<ethereum::ReceiptV4>>,
 		statuses: Option<Vec<TransactionStatus>>,
 		substrate_hash: H,
 		is_eip1559: bool,

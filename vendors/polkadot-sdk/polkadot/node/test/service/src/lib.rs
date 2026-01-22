@@ -103,6 +103,7 @@ pub fn new_full<OverseerGenerator: OverseerGen>(
 					prepare_workers_hard_max_num: None,
 					prepare_workers_soft_max_num: None,
 					enable_approval_voting_parallel: false,
+					keep_finalized_for: None,
 				},
 			),
 		sc_network::config::NetworkBackendType::Litep2p =>
@@ -125,6 +126,7 @@ pub fn new_full<OverseerGenerator: OverseerGen>(
 					prepare_workers_hard_max_num: None,
 					prepare_workers_soft_max_num: None,
 					enable_approval_voting_parallel: false,
+					keep_finalized_for: None,
 				},
 			),
 	}
@@ -201,6 +203,7 @@ pub fn node_config(
 		keystore: KeystoreConfig::InMemory,
 		database: DatabaseSource::RocksDb { path: root.join("db"), cache_size: 128 },
 		trie_cache_maximum_size: Some(64 * 1024 * 1024),
+		warm_up_trie_cache: None,
 		state_pruning: Default::default(),
 		blocks_pruning: BlocksPruning::KeepFinalized,
 		chain_spec: Box::new(spec),
@@ -449,6 +452,7 @@ pub fn construct_extrinsic(
 		BlockHashCount::get().checked_next_power_of_two().map(|c| c / 2).unwrap_or(2) as u64;
 	let tip = 0;
 	let tx_ext: TxExtension = (
+		frame_system::AuthorizeCall::<Runtime>::new(),
 		frame_system::CheckNonZeroSender::<Runtime>::new(),
 		frame_system::CheckSpecVersion::<Runtime>::new(),
 		frame_system::CheckTxVersion::<Runtime>::new(),
@@ -457,6 +461,7 @@ pub fn construct_extrinsic(
 		frame_system::CheckNonce::<Runtime>::from(nonce),
 		frame_system::CheckWeight::<Runtime>::new(),
 		pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+		frame_system::WeightReclaim::<Runtime>::new(),
 	)
 		.into();
 	let raw_payload = SignedPayload::from_raw(
@@ -464,10 +469,12 @@ pub fn construct_extrinsic(
 		tx_ext.clone(),
 		(
 			(),
+			(),
 			VERSION.spec_version,
 			VERSION.transaction_version,
 			genesis_block,
 			current_block_hash,
+			(),
 			(),
 			(),
 			(),
@@ -485,8 +492,8 @@ pub fn construct_extrinsic(
 /// Construct a transfer extrinsic.
 pub fn construct_transfer_extrinsic(
 	client: &Client,
-	origin: sp_keyring::AccountKeyring,
-	dest: sp_keyring::AccountKeyring,
+	origin: sp_keyring::Sr25519Keyring,
+	dest: sp_keyring::Sr25519Keyring,
 	value: Balance,
 ) -> UncheckedExtrinsic {
 	let function =

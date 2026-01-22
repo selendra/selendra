@@ -15,24 +15,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //! Test the eth-rpc cli with the kitchensink node.
+//! This only includes basic transaction tests, most of the other tests are in the
+//! [evm-test-suite](https://github.com/paritytech/evm-test-suite) repository.
 
 use crate::{
 	cli::{self, CliCommand},
-	example::{send_transaction, wait_for_receipt},
+	example::TransactionBuilder,
+	subxt_client,
+	subxt_client::{src_chain::runtime_types::pallet_revive::primitives::Code, SrcChainConfig},
 	EthRpcClient,
 };
 use clap::Parser;
 use jsonrpsee::ws_client::{WsClient, WsClientBuilder};
 use pallet_revive::{
 	create1,
-	evm::{Account, BlockTag, Bytes, U256},
+	evm::{Account, BlockTag, U256},
 };
-use std::thread;
+use static_init::dynamic;
+use std::{sync::Arc, thread};
 use substrate_cli_test_utils::*;
+use subxt::OnlineClient;
 
-/// Create a websocket client with a 30s timeout.
+/// Create a websocket client with a 120s timeout.
 async fn ws_client_with_retry(url: &str) -> WsClient {
-	let timeout = tokio::time::Duration::from_secs(30);
+	let timeout = tokio::time::Duration::from_secs(120);
 	tokio::time::timeout(timeout, async {
 		loop {
 			if let Ok(client) = WsClientBuilder::default().build(url).await {
@@ -46,56 +52,115 @@ async fn ws_client_with_retry(url: &str) -> WsClient {
 	.expect("Hit timeout")
 }
 
-#[tokio::test]
-async fn test_jsonrpsee_server() -> anyhow::Result<()> {
-	// Start the node.
-	let _ = thread::spawn(move || {
-		if let Err(e) = start_node_inline(vec![
+struct SharedResources {
+	_node_handle: std::thread::JoinHandle<()>,
+	_rpc_handle: std::thread::JoinHandle<()>,
+}
+
+impl SharedResources {
+	fn start() -> Self {
+		// Start the node.
+		let _node_handle = thread::spawn(move || {
+			if let Err(e) = start_node_inline(vec![
+				"--dev",
+				"--rpc-port=45789",
+				"--no-telemetry",
+				"--no-prometheus",
+				"-lerror,evm=debug,sc_rpc_server=info,runtime::revive=trace",
+			]) {
+				panic!("Node exited with error: {e:?}");
+			}
+		});
+
+		// Start the rpc server.
+		let args = CliCommand::parse_from([
 			"--dev",
-			"--rpc-port=45789",
-			"--no-telemetry",
+			"--rpc-port=45788",
+			"--node-rpc-url=ws://localhost:45789",
 			"--no-prometheus",
-			"-lerror,evm=debug,sc_rpc_server=info,runtime::revive=debug",
-		]) {
-			panic!("Node exited with error: {e:?}");
+			"-linfo,eth-rpc=debug",
+		]);
+
+		let _rpc_handle = thread::spawn(move || {
+			if let Err(e) = cli::run(args) {
+				panic!("eth-rpc exited with error: {e:?}");
+			}
+		});
+
+		Self { _node_handle, _rpc_handle }
+	}
+
+	async fn client() -> WsClient {
+		ws_client_with_retry("ws://localhost:45788").await
+	}
+}
+
+#[dynamic(lazy)]
+static mut SHARED_RESOURCES: SharedResources = SharedResources::start();
+
+macro_rules! unwrap_call_err(
+	($err:expr) => {
+		match $err.downcast_ref::<jsonrpsee::core::client::Error>().unwrap() {
+			jsonrpsee::core::client::Error::Call(call) => call,
+			_ => panic!("Expected Call error"),
 		}
-	});
+	}
+);
 
-	// Start the rpc server.
-	let args = CliCommand::parse_from([
-		"--dev",
-		"--rpc-port=45788",
-		"--node-rpc-url=ws://localhost:45789",
-		"--no-prometheus",
-		"-linfo,eth-rpc=debug",
-	]);
-	let _ = thread::spawn(move || {
-		if let Err(e) = cli::run(args) {
-			panic!("eth-rpc exited with error: {e:?}");
-		}
-	});
+#[tokio::test]
+async fn transfer() -> anyhow::Result<()> {
+	let _lock = SHARED_RESOURCES.write();
+	let client = Arc::new(SharedResources::client().await);
 
-	let client = ws_client_with_retry("ws://localhost:45788").await;
-	let account = Account::default();
-
-	// Balance transfer
 	let ethan = Account::from(subxt_signer::eth::dev::ethan());
-	let ethan_balance = client.get_balance(ethan.address(), BlockTag::Latest.into()).await?;
-	assert_eq!(U256::zero(), ethan_balance);
+	let initial_balance = client.get_balance(ethan.address(), BlockTag::Latest.into()).await?;
 
 	let value = 1_000_000_000_000_000_000_000u128.into();
-	let hash =
-		send_transaction(&account, &client, value, Bytes::default(), Some(ethan.address())).await?;
+	let tx = TransactionBuilder::new(&client).value(value).to(ethan.address()).send().await?;
 
-	let receipt = wait_for_receipt(&client, hash).await?;
+	let receipt = tx.wait_for_receipt().await?;
 	assert_eq!(
 		Some(ethan.address()),
 		receipt.to,
 		"Receipt should have the correct contract address."
 	);
 
-	let ethan_balance = client.get_balance(ethan.address(), BlockTag::Latest.into()).await?;
-	assert_eq!(value, ethan_balance, "ethan's balance should be the same as the value sent.");
+	let balance = client.get_balance(ethan.address(), BlockTag::Latest.into()).await?;
+	assert_eq!(
+		Some(value),
+		balance.checked_sub(initial_balance),
+		"Ethan {:?} {balance:?} should have increased by {value:?} from {initial_balance}.",
+		ethan.address()
+	);
+	Ok(())
+}
+
+#[tokio::test]
+async fn deploy_and_call() -> anyhow::Result<()> {
+	let _lock = SHARED_RESOURCES.write();
+	let client = std::sync::Arc::new(SharedResources::client().await);
+	let account = Account::default();
+
+	// Balance transfer
+	let ethan = Account::from(subxt_signer::eth::dev::ethan());
+	let initial_balance = client.get_balance(ethan.address(), BlockTag::Latest.into()).await?;
+	let value = 1_000_000_000_000_000_000_000u128.into();
+	let tx = TransactionBuilder::new(&client).value(value).to(ethan.address()).send().await?;
+
+	let receipt = tx.wait_for_receipt().await?;
+	assert_eq!(
+		Some(ethan.address()),
+		receipt.to,
+		"Receipt should have the correct contract address."
+	);
+
+	let balance = client.get_balance(ethan.address(), BlockTag::Latest.into()).await?;
+	assert_eq!(
+		Some(value),
+		balance.checked_sub(initial_balance),
+		"Ethan {:?} {balance:?} should have increased by {value:?} from {initial_balance}.",
+		ethan.address()
+	);
 
 	// Deploy contract
 	let data = b"hello world".to_vec();
@@ -103,28 +168,105 @@ async fn test_jsonrpsee_server() -> anyhow::Result<()> {
 	let (bytes, _) = pallet_revive_fixtures::compile_module("dummy")?;
 	let input = bytes.into_iter().chain(data.clone()).collect::<Vec<u8>>();
 	let nonce = client.get_transaction_count(account.address(), BlockTag::Latest.into()).await?;
-	let hash = send_transaction(&account, &client, value, input.into(), None).await?;
-	let receipt = wait_for_receipt(&client, hash).await?;
+	let tx = TransactionBuilder::new(&client).value(value).input(input).send().await?;
+	let receipt = tx.wait_for_receipt().await?;
 	let contract_address = create1(&account.address(), nonce.try_into().unwrap());
 	assert_eq!(
 		Some(contract_address),
 		receipt.contract_address,
-		"Contract should be deployed with the correct address."
+		"Contract should be deployed at {contract_address:?}."
 	);
 
-	let balance = client.get_balance(contract_address, BlockTag::Latest.into()).await?;
-	assert_eq!(value, balance, "Contract balance should be the same as the value sent.");
+	let initial_balance = client.get_balance(contract_address, BlockTag::Latest.into()).await?;
+	assert_eq!(
+		value, initial_balance,
+		"Contract {contract_address:?} balance should be the same as the value sent ({value})."
+	);
 
 	// Call contract
-	let hash =
-		send_transaction(&account, &client, U256::zero(), Bytes::default(), Some(contract_address))
-			.await?;
-	let receipt = wait_for_receipt(&client, hash).await?;
+	let tx = TransactionBuilder::new(&client)
+		.value(value)
+		.to(contract_address)
+		.send()
+		.await?;
+	let receipt = tx.wait_for_receipt().await?;
+
 	assert_eq!(
 		Some(contract_address),
 		receipt.to,
-		"Receipt should have the correct contract address."
+		"Receipt should have the correct contract address {contract_address:?}."
 	);
+
+	let balance = client.get_balance(contract_address, BlockTag::Latest.into()).await?;
+	assert_eq!(Some(value), balance.checked_sub(initial_balance), "Contract {contract_address:?} Balance {balance} should have increased from {initial_balance} by {value}.");
+
+	// Balance transfer to contract
+	let initial_balance = client.get_balance(contract_address, BlockTag::Latest.into()).await?;
+	let tx = TransactionBuilder::new(&client)
+		.value(value)
+		.to(contract_address)
+		.send()
+		.await?;
+
+	tx.wait_for_receipt().await?;
+
+	let balance = client.get_balance(contract_address, BlockTag::Latest.into()).await?;
+
+	assert_eq!(
+		Some(value),
+		balance.checked_sub(initial_balance),
+		"Balance {balance} should have increased from {initial_balance} by {value}."
+	);
+	Ok(())
+}
+
+#[tokio::test]
+async fn runtime_api_dry_run_addr_works() -> anyhow::Result<()> {
+	let _lock = SHARED_RESOURCES.write();
+	let client = std::sync::Arc::new(SharedResources::client().await);
+
+	let account = Account::default();
+	let origin: [u8; 32] = account.substrate_account().into();
+	let data = b"hello world".to_vec();
+	let value = 5_000_000_000_000u128;
+	let (bytes, _) = pallet_revive_fixtures::compile_module("dummy")?;
+
+	let payload = subxt_client::apis().revive_api().instantiate(
+		subxt::utils::AccountId32(origin),
+		value,
+		None,
+		None,
+		Code::Upload(bytes),
+		data,
+		None,
+	);
+
+	let nonce = client.get_transaction_count(account.address(), BlockTag::Latest.into()).await?;
+	let contract_address = create1(&account.address(), nonce.try_into().unwrap());
+
+	let c = OnlineClient::<SrcChainConfig>::from_url("ws://localhost:45789").await?;
+	let res = c.runtime_api().at_latest().await?.call(payload).await?.result.unwrap();
+
+	assert_eq!(res.addr, contract_address);
+	Ok(())
+}
+
+#[tokio::test]
+async fn invalid_transaction() -> anyhow::Result<()> {
+	let _lock = SHARED_RESOURCES.write();
+	let client = Arc::new(SharedResources::client().await);
+	let ethan = Account::from(subxt_signer::eth::dev::ethan());
+
+	let err = TransactionBuilder::new(&client)
+		.value(U256::from(1_000_000_000_000u128))
+		.to(ethan.address())
+		.mutate(|tx| tx.chain_id = Some(42u32.into()))
+		.send()
+		.await
+		.unwrap_err();
+
+	let call_err = unwrap_call_err!(err.source().unwrap());
+	assert_eq!(call_err.message(), "Invalid Transaction");
 
 	Ok(())
 }

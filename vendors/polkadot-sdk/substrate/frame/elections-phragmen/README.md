@@ -59,8 +59,3 @@ votes, `M` will keep being re-elected at the end of each round.
 - [`Module`](https://docs.rs/pallet-elections-phragmen/latest/pallet_elections_phragmen/struct.Module.html)
 
 License: Apache-2.0
-
-
-## Release
-
-Polkadot SDK Stable 2412

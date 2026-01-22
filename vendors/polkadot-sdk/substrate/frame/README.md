@@ -10,8 +10,3 @@ https://docs.substrate.io/reference/frame-pallets/
 ## Issues
 
 https://github.com/orgs/paritytech/projects/40
-
-
-## Release
-
-Polkadot SDK Stable 2412

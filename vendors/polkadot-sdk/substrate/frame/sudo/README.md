@@ -75,8 +75,3 @@ You need to set an initial superuser account as the sudo `key`.
 [`Origin`]: https://docs.substrate.io/main-docs/build/origins/
 
 License: Apache-2.0
-
-
-## Release
-
-Polkadot SDK Stable 2412

@@ -12,16 +12,15 @@ homepage.workspace = true
 workspace = true
 
 [dependencies]
-codec = { workspace = true, features = ["derive"] }
 array-bytes = { optional = true, workspace = true, default-features = true }
-log = { optional = true, workspace = true }
+codec = { workspace = true, features = ["derive"] }
 hash-db = { workspace = true }
+log = { optional = true, workspace = true }
 
 [dev-dependencies]
 array-bytes = { workspace = true, default-features = true }
-sp-tracing = { default-features = true, path = "../../primitives/tracing" }
-sp-core = { default-features = true, path = "../../primitives/core" }
-sp-runtime = { default-features = true, path = "../../primitives/runtime" }
+sp-core = { default-features = true, workspace = true }
+sp-runtime = { default-features = true, workspace = true }
 
 [features]
 debug = ["array-bytes", "log"]

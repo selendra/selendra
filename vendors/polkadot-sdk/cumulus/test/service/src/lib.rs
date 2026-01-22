@@ -27,7 +27,10 @@ use cumulus_client_collator::service::CollatorService;
 use cumulus_client_consensus_aura::{
 	collators::{
 		lookahead::{self as aura, Params as AuraParams},
-		slot_based::{self as slot_based, Params as SlotBasedParams},
+		slot_based::{
+			self as slot_based, Params as SlotBasedParams, SlotBasedBlockImport,
+			SlotBasedBlockImportHandle,
+		},
 	},
 	ImportQueueParams,
 };
@@ -131,7 +134,8 @@ pub type Client = TFullClient<runtime::NodeBlock, runtime::RuntimeApi, WasmExecu
 pub type Backend = TFullBackend<Block>;
 
 /// The block-import type being used by the test service.
-pub type ParachainBlockImport = TParachainBlockImport<Block, Arc<Client>, Backend>;
+pub type ParachainBlockImport =
+	TParachainBlockImport<Block, SlotBasedBlockImport<Block, Arc<Client>, Client>, Backend>;
 
 /// Transaction pool type used by the test service
 pub type TransactionPool = Arc<sc_transaction_pool::TransactionPoolHandle<Block, Client>>;
@@ -184,7 +188,7 @@ pub type Service = PartialComponents<
 	(),
 	sc_consensus::import_queue::BasicQueue<Block>,
 	sc_transaction_pool::TransactionPoolHandle<Block, Client>,
-	ParachainBlockImport,
+	(ParachainBlockImport, SlotBasedBlockImportHandle<Block>),
 >;
 
 /// Starts a `ServiceBuilder` for a full service.
@@ -217,7 +221,9 @@ pub fn new_partial(
 		)?;
 	let client = Arc::new(client);
 
-	let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
+	let (block_import, slot_based_handle) =
+		SlotBasedBlockImport::new(client.clone(), client.clone());
+	let block_import = ParachainBlockImport::new(block_import, backend.clone());
 
 	let transaction_pool = Arc::from(
 		sc_transaction_pool::Builder::new(
@@ -260,7 +266,7 @@ pub fn new_partial(
 		task_manager,
 		transaction_pool,
 		select_chain: (),
-		other: block_import,
+		other: (block_import, slot_based_handle),
 	};
 
 	Ok(params)
@@ -349,7 +355,8 @@ where
 	let client = params.client.clone();
 	let backend = params.backend.clone();
 
-	let block_import = params.other;
+	let block_import = params.other.0;
+	let slot_based_handle = params.other.1;
 	let relay_chain_interface = build_relay_chain_interface(
 		relay_chain_config,
 		parachain_config.prometheus_registry(),
@@ -367,7 +374,7 @@ where
 		prometheus_registry.clone(),
 	);
 
-	let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
+	let (network, system_rpc_tx, tx_handler_controller, sync_service) =
 		build_network(BuildNetworkParams {
 			parachain_config: &parachain_config,
 			net_config,
@@ -377,6 +384,9 @@ where
 			spawn_handle: task_manager.spawn_handle(),
 			relay_chain_interface: relay_chain_interface.clone(),
 			import_queue: params.import_queue,
+			metrics: Net::register_notification_metrics(
+				parachain_config.prometheus_config.as_ref().map(|config| &config.registry),
+			),
 			sybil_resistance_level: CollatorSybilResistance::Resistant, /* Either Aura that is
 			                                                             * resistant or null that
 			                                                             * is not producing any
@@ -440,6 +450,7 @@ where
 		relay_chain_slot_duration,
 		recovery_handle,
 		sync_service: sync_service.clone(),
+		prometheus_registry: None,
 	})?;
 
 	if let Some(collator_key) = collator_key {
@@ -491,26 +502,20 @@ where
 					},
 					keystore,
 					collator_key,
+					relay_chain_slot_duration,
 					para_id,
 					proposer,
 					collator_service,
 					authoring_duration: Duration::from_millis(2000),
 					reinitialize: false,
-					slot_drift: Duration::from_secs(1),
+					slot_offset: Duration::from_secs(1),
+					block_import_handle: slot_based_handle,
+					spawner: task_manager.spawn_handle(),
+					export_pov: None,
+					max_pov_percentage: None,
 				};
 
-				let (collation_future, block_builder_future) =
-					slot_based::run::<Block, AuthorityPair, _, _, _, _, _, _, _, _>(params);
-				task_manager.spawn_essential_handle().spawn(
-					"collation-task",
-					None,
-					collation_future,
-				);
-				task_manager.spawn_essential_handle().spawn(
-					"block-builder-task",
-					None,
-					block_builder_future,
-				);
+				slot_based::run::<Block, AuthorityPair, _, _, _, _, _, _, _, _, _>(params);
 			} else {
 				tracing::info!(target: LOG_TARGET, "Starting block authoring with lookahead collator.");
 				let params = AuraParams {
@@ -534,6 +539,7 @@ where
 					collator_service,
 					authoring_duration: Duration::from_millis(2000),
 					reinitialize: false,
+					max_pov_percentage: None,
 				};
 
 				let fut = aura::run::<Block, AuthorityPair, _, _, _, _, _, _, _, _>(params);
@@ -541,8 +547,6 @@ where
 			}
 		}
 	}
-
-	start_network.start_network();
 
 	Ok((task_manager, client, network, rpc_handlers, transaction_pool, backend))
 }
@@ -755,7 +759,11 @@ impl TestNodeBuilder {
 			false,
 		);
 
-		let collator_options = CollatorOptions { relay_chain_mode: self.relay_chain_mode };
+		let collator_options = CollatorOptions {
+			relay_chain_mode: self.relay_chain_mode,
+			embedded_dht_bootnode: true,
+			dht_bootnode_discovery: true,
+		};
 
 		relay_chain_config.network.node_name =
 			format!("{} (relay chain)", relay_chain_config.network.node_name);
@@ -869,6 +877,7 @@ pub fn node_config(
 		keystore: KeystoreConfig::InMemory,
 		database: DatabaseSource::RocksDb { path: root.join("db"), cache_size: 128 },
 		trie_cache_maximum_size: Some(64 * 1024 * 1024),
+		warm_up_trie_cache: None,
 		state_pruning: Some(PruningMode::ArchiveAll),
 		blocks_pruning: BlocksPruning::KeepAll,
 		chain_spec: spec,
@@ -972,6 +981,7 @@ pub fn construct_extrinsic(
 		.unwrap_or(2) as u64;
 	let tip = 0;
 	let tx_ext: runtime::TxExtension = (
+		frame_system::AuthorizeCall::<runtime::Runtime>::new(),
 		frame_system::CheckNonZeroSender::<runtime::Runtime>::new(),
 		frame_system::CheckSpecVersion::<runtime::Runtime>::new(),
 		frame_system::CheckGenesis::<runtime::Runtime>::new(),
@@ -982,13 +992,12 @@ pub fn construct_extrinsic(
 		frame_system::CheckNonce::<runtime::Runtime>::from(nonce),
 		frame_system::CheckWeight::<runtime::Runtime>::new(),
 		pallet_transaction_payment::ChargeTransactionPayment::<runtime::Runtime>::from(tip),
-		cumulus_primitives_storage_weight_reclaim::StorageWeightReclaim::<runtime::Runtime>::new(),
 	)
 		.into();
 	let raw_payload = runtime::SignedPayload::from_raw(
 		function.clone(),
 		tx_ext.clone(),
-		((), runtime::VERSION.spec_version, genesis_block, current_block_hash, (), (), (), ()),
+		((), (), runtime::VERSION.spec_version, genesis_block, current_block_hash, (), (), ()),
 	);
 	let signature = raw_payload.using_encoded(|e| caller.sign(e));
 	runtime::UncheckedExtrinsic::new_signed(

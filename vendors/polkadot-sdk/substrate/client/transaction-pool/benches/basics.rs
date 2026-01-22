@@ -64,8 +64,9 @@ impl ChainApi for TestApi {
 	fn validate_transaction(
 		&self,
 		at: <Self::Block as BlockT>::Hash,
-		_source: TransactionSource,
+		_: TransactionSource,
 		uxt: Arc<<Self::Block as BlockT>::Extrinsic>,
+		_: ValidateTransactionPriority,
 	) -> Self::ValidationFuture {
 		let uxt = (*uxt).clone();
 		let transfer = TransferData::try_from(&uxt)
@@ -151,8 +152,8 @@ fn uxt(transfer: TransferData) -> Extrinsic {
 	ExtrinsicBuilder::new_bench_call(transfer).build()
 }
 
-fn bench_configured(pool: Pool<TestApi>, number: u64, api: Arc<TestApi>) {
-	let source = TransactionSource::External;
+fn bench_configured(pool: Pool<TestApi, ()>, number: u64, api: Arc<TestApi>) {
+	let source = TimedTransactionSource::new_external(false);
 	let mut futures = Vec::new();
 	let mut tags = Vec::new();
 	let at = HashAndNumber {
@@ -171,7 +172,7 @@ fn bench_configured(pool: Pool<TestApi>, number: u64, api: Arc<TestApi>) {
 
 		tags.push(to_tag(nonce, AccountId::from_h256(H256::from_low_u64_be(1))));
 
-		futures.push(pool.submit_one(&at, source, xt));
+		futures.push(pool.submit_one(&at, source.clone(), xt));
 	}
 
 	let res = block_on(futures::future::join_all(futures.into_iter()));
@@ -197,14 +198,22 @@ fn benchmark_main(c: &mut Criterion) {
 	c.bench_function("sequential 50 tx", |b| {
 		b.iter(|| {
 			let api = Arc::from(TestApi::new_dependant());
-			bench_configured(Pool::new(Default::default(), true.into(), api.clone()), 50, api);
+			bench_configured(
+				Pool::new_with_staticly_sized_rotator(Default::default(), true.into(), api.clone()),
+				50,
+				api,
+			);
 		});
 	});
 
 	c.bench_function("random 100 tx", |b| {
 		b.iter(|| {
 			let api = Arc::from(TestApi::default());
-			bench_configured(Pool::new(Default::default(), true.into(), api.clone()), 100, api);
+			bench_configured(
+				Pool::new_with_staticly_sized_rotator(Default::default(), true.into(), api.clone()),
+				100,
+				api,
+			);
 		});
 	});
 }

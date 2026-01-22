@@ -22,7 +22,7 @@ mod worker;
 
 pub use worker::MappingSyncWorker;
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -112,19 +112,19 @@ where
 	if let Some(api_version) = client
 		.runtime_api()
 		.api_version::<dyn EthereumRuntimeRPCApi<Block>>(substrate_block_hash)
-		.map_err(|e| format!("{:?}", e))?
+		.map_err(|e| format!("{e:?}"))?
 	{
 		let block = if api_version > 1 {
 			client
 				.runtime_api()
 				.current_block(substrate_block_hash)
-				.map_err(|e| format!("{:?}", e))?
+				.map_err(|e| format!("{e:?}"))?
 		} else {
 			#[allow(deprecated)]
 			let legacy_block = client
 				.runtime_api()
 				.current_block_before_version_2(substrate_block_hash)
-				.map_err(|e| format!("{:?}", e))?;
+				.map_err(|e| format!("{e:?}"))?;
 			legacy_block.map(|block| block.into())
 		};
 		let block_hash = block
@@ -155,6 +155,7 @@ pub fn sync_one_block<Block: BlockT, C, BE>(
 	pubsub_notification_sinks: Arc<
 		EthereumBlockNotificationSinks<EthereumBlockNotification<Block>>,
 	>,
+	best_at_import: &mut HashMap<Block::Hash, <Block::Header as HeaderT>::Number>,
 ) -> Result<bool, String>
 where
 	C: ProvideRuntimeApi<Block>,
@@ -168,11 +169,17 @@ where
 		let mut leaves = substrate_backend
 			.blockchain()
 			.leaves()
-			.map_err(|e| format!("{:?}", e))?;
+			.map_err(|e| format!("{e:?}"))?;
 		if leaves.is_empty() {
 			return Ok(false);
 		}
 		current_syncing_tips.append(&mut leaves);
+	}
+
+	let best_hash = client.info().best_hash;
+	if SyncStrategy::Parachain == strategy && !frontier_backend.mapping().is_synced(&best_hash)? {
+		// Add best block to current_syncing_tips
+		current_syncing_tips.push(best_hash);
 	}
 
 	let mut operating_header = None;
@@ -217,12 +224,17 @@ where
 			.write_current_syncing_tips(current_syncing_tips)?;
 	}
 	// Notify on import and remove closed channels.
-	// Only notify when the node is node in major syncing.
+	// Only notify when the node is not in major syncing.
 	let sinks = &mut pubsub_notification_sinks.lock();
 	sinks.retain(|sink| {
 		if !sync_oracle.is_major_syncing() {
 			let hash = operating_header.hash();
-			let is_new_best = client.info().best_hash == hash;
+			// Use the `is_new_best` status from import time if available.
+			// This avoids race conditions where the best hash may have changed
+			// between import and sync time (e.g., during rapid reorgs).
+			// Fall back to current best hash check for blocks synced during catch-up.
+			let is_new_best =
+				best_at_import.remove(&hash).is_some() || client.info().best_hash == hash;
 			sink.unbounded_send(EthereumBlockNotification { is_new_best, hash })
 				.is_ok()
 		} else {
@@ -245,6 +257,7 @@ pub fn sync_blocks<Block: BlockT, C, BE>(
 	pubsub_notification_sinks: Arc<
 		EthereumBlockNotificationSinks<EthereumBlockNotification<Block>>,
 	>,
+	best_at_import: &mut HashMap<Block::Hash, <Block::Header as HeaderT>::Number>,
 ) -> Result<bool, String>
 where
 	C: ProvideRuntimeApi<Block>,
@@ -265,8 +278,15 @@ where
 				strategy,
 				sync_oracle.clone(),
 				pubsub_notification_sinks.clone(),
+				best_at_import,
 			)?;
 	}
+
+	// Prune old entries from best_at_import to prevent unbounded growth.
+	// Entries for finalized blocks are no longer needed since finalized blocks
+	// cannot be reorged and their is_new_best status is irrelevant.
+	let finalized_number = client.info().finalized_number;
+	best_at_import.retain(|_, block_number| *block_number > finalized_number);
 
 	Ok(synced_any)
 }
