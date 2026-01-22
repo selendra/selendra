@@ -260,7 +260,6 @@ impl pallet_contracts::Config for TestRuntime {
 }
 
 impl pallet_operations::Config for TestRuntime {
-    type RuntimeEvent = RuntimeEvent;
     type AccountInfoProvider = System;
     type BalancesProvider = Balances;
     type NextKeysSessionProvider = Session;

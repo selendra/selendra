@@ -34,8 +34,10 @@ pub mod pallet {
     };
 
     #[pallet::config]
-    pub trait Config: frame_system::Config {
-        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+    pub trait Config: frame_system::Config
+    where
+        <Self as frame_system::Config>::RuntimeEvent: From<Event<Self>>,
+    {
         /// Something that provides information about an account's consumers counter
         type AccountInfoProvider: AccountInfoProvider<AccountId = Self::AccountId, RefCount = u32>;
         /// Something that provides information about account's balances

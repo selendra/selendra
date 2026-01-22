@@ -54,13 +54,14 @@ pub mod pallet {
         frame_system::Config
         + frame_system::offchain::CreateSignedTransaction<Call<Self>>
         + frame_system::offchain::CreateInherent<Call<Self>>
+    where
+        <Self as frame_system::Config>::RuntimeEvent: From<Event<Self>>,
     {
         type AuthorityId: Member
             + Parameter
             + RuntimeAppPublic
             + MaybeSerializeDeserialize
             + MaxEncodedLen;
-        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// Origin allowed to manage finality settings (emergency finalizer, version changes, inflation params).
         /// Recommend wiring as EitherOfDiverse<EnsureRoot<_>, EnsureThreeFifthsCouncil> in runtime.
         type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;

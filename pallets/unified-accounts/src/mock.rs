@@ -159,7 +159,6 @@ parameter_types! {
 }
 
 impl pallet_unified_accounts::Config for TestRuntime {
-    type RuntimeEvent = RuntimeEvent;
     type Currency = Balances;
     type DefaultMappings = HashedDefaultMappings<BlakeTwo256>;
     type ChainId = ChainId;

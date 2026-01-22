@@ -42,8 +42,10 @@ pub mod pallet {
     use crate::traits::ValidatorProvider;
 
     #[pallet::config]
-    pub trait Config: frame_system::Config {
-        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+    pub trait Config: frame_system::Config
+    where
+        <Self as frame_system::Config>::RuntimeEvent: From<Event<Self>>,
+    {
         /// Origin allowed to manage validators and elections settings.
         /// Recommend wiring as EitherOfDiverse<EnsureRoot<_>, EnsureThreeFifthsCouncil> in runtime.
         type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;

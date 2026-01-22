@@ -96,7 +96,10 @@ pub mod pallet {
     pub struct Pallet<T>(PhantomData<T>);
 
     #[pallet::config]
-    pub trait Config: frame_system::Config + pallet_evm::Config {
+    pub trait Config: frame_system::Config + pallet_evm::Config
+    where
+        <Self as frame_system::Config>::RuntimeEvent: From<Event<Self>>,
+    {
         /// Weight limit for checked transactions.
         type CheckedTxWeightLimit: Get<Weight>;
 
@@ -111,9 +114,6 @@ pub mod pallet {
 
         /// Account mapping.
         type AddressMapper: UnifiedAddressMapper<Self::AccountId>;
-
-        /// The overarching event type.
-        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
@@ -241,7 +241,7 @@ impl<T: Config> Pallet<T> {
         }
 
         // Execute the tx.
-        let (post_info, apply_info) = T::ValidatedTransaction::apply(source, tx)?;
+        let (post_info, apply_info) = T::ValidatedTransaction::apply(source, tx.into(), None)?;
         match apply_info {
             CallOrCreateInfo::Call(info) => Ok((post_info, info)),
             // It is not possible to have a `Create` transaction via `CheckedEthereumTx`.

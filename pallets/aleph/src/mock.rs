@@ -164,7 +164,6 @@ parameter_types! {
 
 impl Config for Test {
     type AuthorityId = AuthorityId;
-    type RuntimeEvent = RuntimeEvent;
     type AdminOrigin = frame_system::EnsureRoot<AccountId>;
     type SessionInfoProvider = SessionInfoImpl;
     type SessionManager = ();

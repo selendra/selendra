@@ -127,7 +127,6 @@ impl BannedValidators for MockProvider {
 }
 
 impl Config for Test {
-    type RuntimeEvent = RuntimeEvent;
     type DataProvider = StakingMock;
     type ValidatorProvider = MockProvider;
     type MaxWinners = ConstU32<DEFAULT_MAX_WINNERS>;

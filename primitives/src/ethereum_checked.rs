@@ -21,7 +21,7 @@ use scale_info::TypeInfo;
 
 use ethereum::{
     eip2930::TransactionSignature, AccessListItem, EIP1559Transaction, TransactionAction,
-    TransactionV2 as Transaction,
+    TransactionV3 as Transaction,
 };
 use ethereum_types::{H160, H256, U256};
 use fp_evm::CallInfo;

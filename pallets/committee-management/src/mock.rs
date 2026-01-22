@@ -237,7 +237,6 @@ parameter_types! {
 }
 
 impl pallet_elections::Config for TestRuntime {
-    type RuntimeEvent = RuntimeEvent;
     type DataProvider = Staking;
     type ValidatorProvider = Staking;
     type MaxWinners = MaxWinners;
@@ -247,7 +246,6 @@ impl pallet_elections::Config for TestRuntime {
 }
 
 impl Config for TestRuntime {
-    type RuntimeEvent = RuntimeEvent;
     type AdminOrigin = frame_system::EnsureRoot<AccountId>;
     type BanHandler = Elections;
     type EraInfoProvider = Staking;
