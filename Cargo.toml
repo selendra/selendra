@@ -7,10 +7,10 @@ members = [
     "crate/clique",
     "crate/rate-limiter",
     "crate/finality-aleph",
-    # "bin/node",
-    # "bin/runtime",
-    # "bin/chain-bootstrapper",
-    # "bin/client-runtime-api",
+    "bin/node",
+    "bin/runtime",
+    "bin/chain-bootstrapper",
+    "bin/client-runtime-api",
     "pallets/aleph",
     "pallets/aleph-runtime-api",
     "pallets/elections",
@@ -137,6 +137,7 @@ pallet-balances = { path = "vendors/polkadot-sdk/substrate/frame/balances", defa
 pallet-collective = { path = "vendors/polkadot-sdk/substrate/frame/collective", default-features = false }
 pallet-contracts = { path = "vendors/polkadot-sdk/substrate/frame/contracts", default-features = false }
 pallet-contracts-uapi = { path = "vendors/polkadot-sdk/substrate/frame/contracts/uapi", default-features = false }
+pallet-delegated-staking = { path = "vendors/polkadot-sdk/substrate/frame/delegated-staking", default-features = false }
 pallet-democracy = { path = "vendors/polkadot-sdk/substrate/frame/democracy", default-features = false }
 pallet-elections-phragmen = { path = "vendors/polkadot-sdk/substrate/frame/elections-phragmen", default-features = false }
 pallet-identity = { path = "vendors/polkadot-sdk/substrate/frame/identity", default-features = false }

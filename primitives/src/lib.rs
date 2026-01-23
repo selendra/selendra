@@ -301,7 +301,7 @@ impl Default for ProductionBanConfig {
 }
 
 /// Represent any possible reason a validator can be removed from the committee due to
-#[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, Debug, MaxEncodedLen)]
+#[derive(PartialEq, Eq, Clone, Encode, Decode, parity_scale_codec::DecodeWithMemTracking, TypeInfo, Debug, MaxEncodedLen)]
 pub enum BanReason {
     /// Validator has been removed from the committee due to insufficient production in a given number of sessions
     InsufficientProduction(u32),
@@ -314,7 +314,7 @@ pub enum BanReason {
 }
 
 /// Details of why and for how long a validator is removed from the committee
-#[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, Debug, MaxEncodedLen)]
+#[derive(PartialEq, Eq, Clone, Encode, Decode, parity_scale_codec::DecodeWithMemTracking, TypeInfo, Debug, MaxEncodedLen)]
 pub struct BanInfo {
     /// reason for banning a validator
     pub reason: BanReason,
@@ -512,17 +512,17 @@ pub mod crypto {
 
     use super::AuthoritySignature;
 
-    #[derive(PartialEq, Decode, Encode, TypeInfo, Debug, Clone)]
+    #[derive(PartialEq, Decode, Encode, parity_scale_codec::DecodeWithMemTracking, TypeInfo, Debug, Clone)]
     pub struct IndexedSignature<S> {
         pub index: u64,
         pub signature: S,
     }
 
-    #[derive(PartialEq, Decode, Encode, TypeInfo, Debug, Clone)]
+    #[derive(PartialEq, Decode, Encode, parity_scale_codec::DecodeWithMemTracking, TypeInfo, Debug, Clone)]
     pub struct SignatureSet<S>(pub Vec<IndexedSignature<S>>);
 
     #[cfg_attr(feature = "std", derive(Hash))]
-    #[derive(PartialEq, Eq, Clone, Debug, Decode, Encode, TypeInfo)]
+    #[derive(PartialEq, Eq, Clone, Debug, Decode, Encode, parity_scale_codec::DecodeWithMemTracking, TypeInfo)]
     pub struct Signature(pub AuthoritySignature);
 
     impl From<AuthoritySignature> for Signature {

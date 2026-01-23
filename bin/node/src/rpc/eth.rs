@@ -155,6 +155,7 @@ where
 				filter_pool,
 				500_usize, // max stored filters
 				max_past_logs,
+				10_000, // max block range for logs
 				block_data_cache.clone(),
 			)
 			.into_rpc(),

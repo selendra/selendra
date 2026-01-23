@@ -26,6 +26,7 @@ pallet-authorship = { workspace = true }
 pallet-balances = { workspace = true }
 pallet-collective = { workspace = true }
 pallet-contracts = { workspace = true }
+pallet-delegated-staking = { workspace = true }
 pallet-democracy = { workspace = true }
 pallet-elections-phragmen = { workspace = true }
 pallet-identity = { workspace = true }
@@ -75,6 +76,7 @@ primitives = { workspace = true }
 pallet-proxy = { workspace = true }
 
 # Frontier Primitive
+ethereum = { workspace = true }
 fp-account = { workspace = true, features = ["serde"] }
 fp-evm = { workspace = true, features = ["serde"] }
 fp-rpc = { workspace = true }
@@ -110,6 +112,7 @@ std = [
     "pallet-authorship/std",
     "pallet-balances/std",
     "pallet-collective/std",
+    "pallet-delegated-staking/std",
     "pallet-democracy/std",
     "pallet-elections/std",
     "pallet-elections-phragmen/std",
@@ -154,6 +157,7 @@ std = [
     "pallet-safe-mode/std",
     "pallet-tx-pause/std",
     # Frontier
+    "ethereum/std",
 	"fp-account/std",
 	"fp-evm/std",
 	"fp-rpc/std",

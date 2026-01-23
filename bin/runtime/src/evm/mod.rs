@@ -3,7 +3,7 @@
 mod precompiles;
 
 use crate::{
-	Aura, Balances, DynamicEvmBaseFee, Runtime, RuntimeEvent, Timestamp,
+	Aura, Balances, DynamicEvmBaseFee, Runtime, Timestamp,
 	NORMAL_DISPATCH_RATIO
 };
 
@@ -87,10 +87,11 @@ impl pallet_evm::Config for Runtime {
 	type WeightPerGas = WeightPerGas;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = pallet_evm::EnsureAddressRoot<AccountId>;
+	type CreateOriginFilter = ();
+	type CreateInnerOriginFilter = ();
 	type WithdrawOrigin = pallet_evm::EnsureAddressTruncated;
 	type AddressMapping = crate::UnifiedAccounts;
 	type Currency = Balances;
-	type RuntimeEvent = RuntimeEvent;
 	type PrecompilesType = FrontierPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
@@ -111,7 +112,6 @@ parameter_types! {
 }
 
 impl pallet_ethereum::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<crate::Version>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	type ExtraDataLength = ConstU32<30>;
@@ -122,7 +122,6 @@ parameter_types! {
 }
 
 impl pallet_unified_accounts::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type DefaultMappings = HashedDefaultMappings<BlakeTwo256>;
 	type ChainId = ChainId;
@@ -146,7 +145,6 @@ impl Get<Multiplier> for AdjustmentFactorGetter {
 }
 
 impl pallet_dynamic_evm_base_fee::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type DefaultBaseFeePerGas = DefaultBaseFeePerGas;
 	type MinBaseFeePerGas = MinBaseFeePerGas;
 	type MaxBaseFeePerGas = MaxBaseFeePerGas;
@@ -169,7 +167,6 @@ impl pallet_ethereum_checked::Config for Runtime {
 	type InvalidEvmTransactionError = pallet_ethereum::InvalidTransactionWrapper;
 	type ValidatedTransaction = pallet_ethereum::ValidatedTransaction<Self>;
 	type AddressMapper = crate::UnifiedAccounts;
-	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_ethereum_checked::weights::SubstrateWeight<Runtime>;
 }
 

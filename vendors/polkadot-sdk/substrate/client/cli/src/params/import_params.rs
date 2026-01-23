@@ -92,14 +92,14 @@ pub struct ImportParams {
 #[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum TrieCacheWarmUpStrategy {
 	/// Warm up the cache in a non-blocking way.
-	#[clap(name = "non-blocking")]
+	#[value(name = "non-blocking")]
 	NonBlocking,
 	/// Warm up the cache in a blocking way (not recommended for production use).
 	///
 	/// When enabled, the trie cache warm-up will block the node startup until complete.
 	/// This is not recommended for production use as it can significantly delay node startup.
 	/// Only enable this option for testing or debugging purposes.
-	#[clap(name = "blocking")]
+	#[value(name = "blocking")]
 	Blocking,
 }
 
