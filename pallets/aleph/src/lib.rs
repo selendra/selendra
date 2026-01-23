@@ -390,7 +390,7 @@ pub mod pallet {
             use frame_system::offchain::SubmitTransaction;
 
             let call = Call::unsigned_submit_abft_score { score, signature };
-            let xt = T::create_inherent(call.into());
+            let xt = T::create_bare(call.into());
             SubmitTransaction::<T, Call<T>>::submit_transaction(xt).ok()
         }
     }

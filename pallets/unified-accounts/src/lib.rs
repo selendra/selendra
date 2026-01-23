@@ -72,7 +72,7 @@ use frame_support::{
     traits::{
         fungible::{Inspect as FungibleInspect, Mutate as FungibleMutate},
         tokens::{Fortitude::*, Precision::*, Preservation::*},
-        IsType, OnKilledAccount,
+        OnKilledAccount,
     },
 };
 use frame_system::{ensure_signed, pallet_prelude::*};

@@ -30,9 +30,10 @@ pub struct ValidatorTotalRewards<T>(pub BTreeMap<T, TotalReward>);
 pub mod pallet {
     use frame_election_provider_support::{
         BoundedSupportsOf, DataProviderBounds, ElectionDataProvider, ElectionProvider,
-        ElectionProviderBase, Support, Supports,
+        Support, Supports, PageIndex,
     };
     use frame_support::{pallet_prelude::*, traits::{Get, EnsureOrigin}};
+    use sp_runtime::traits::Zero;
     use frame_system::{
         pallet_prelude::{BlockNumberFor, OriginFor},
     };
@@ -275,7 +276,7 @@ pub mod pallet {
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq)]
     pub enum ElectionError {
         DataProvider(&'static str),
 
@@ -293,25 +294,33 @@ pub mod pallet {
         NonReservedFinalitySeatsLargerThanNonReservedSeats,
     }
 
-    impl<T: Config> ElectionProviderBase for Pallet<T> {
+    impl<T: Config> ElectionProvider for Pallet<T> {
         type AccountId = T::AccountId;
         type BlockNumber = BlockNumberFor<T>;
         type Error = ElectionError;
         type DataProvider = T::DataProvider;
-        type MaxWinners = T::MaxWinners;
-    }
+        type MaxWinnersPerPage = T::MaxWinners;
+        type MaxBackersPerWinner = sp_runtime::traits::ConstU32<{ u32::MAX }>;
+        type Pages = sp_runtime::traits::ConstU32<1>;
 
-    impl<T: Config> ElectionProvider for Pallet<T> {
-        fn ongoing() -> bool {
-            false
+        fn duration() -> BlockNumberFor<T> {
+            Zero::zero()
+        }
+
+        fn start() -> Result<(), Self::Error> {
+            Ok(())
+        }
+
+        fn status() -> Result<bool, ()> {
+            Ok(false)
         }
 
         /// We calculate the supports for each validator. The external validators are chosen as:
         /// 1) "`NextEraNonReservedValidators` that are staking and are not banned" in case of Permissioned ElectionOpenness
         /// 2) "All staking and not banned validators" in case of Permissionless ElectionOpenness
-        fn elect() -> Result<BoundedSupportsOf<Self>, Self::Error> {
+        fn elect(_page: PageIndex) -> Result<BoundedSupportsOf<Self>, Self::Error> {
             let staking_validators =
-                Self::DataProvider::electable_targets(DataProviderBounds::default())
+                Self::DataProvider::electable_targets(DataProviderBounds::default(), 0)
                     .map_err(Self::Error::DataProvider)?
                     .into_iter()
                     .collect::<BTreeSet<_>>();
@@ -363,7 +372,7 @@ pub mod pallet {
                 })
                 .collect::<BTreeMap<_, _>>();
 
-            let voters = Self::DataProvider::electing_voters(DataProviderBounds::default())
+            let voters = Self::DataProvider::electing_voters(DataProviderBounds::default(), 0)
                 .map_err(Self::Error::DataProvider)?;
             for (voter, vote, targets) in voters {
                 // The parameter `Staking::MAX_NOMINATIONS` is set to 1 which guarantees that

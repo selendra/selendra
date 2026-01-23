@@ -75,12 +75,6 @@ type BaseNetworkOutput<B> = (
 /// Create a base network with all the protocols already included. Also spawn (almost) all the necessary services.
 pub fn network<B, BE, C>(
     network_config: &NetworkConfiguration,
-    transport_builder: impl FnOnce(
-        sc_network::transport::NetworkConfig,
-    ) -> (
-        libp2p::core::transport::Boxed<(libp2p::PeerId, libp2p::core::muxing::StreamMuxerBox)>,
-        std::sync::Arc<sc_network::transport::BandwidthSinks>,
-    ),
     protocol_id: ProtocolId,
     client: Arc<C>,
     spawn_handle: &SpawnTaskHandle,
@@ -140,8 +134,7 @@ where
         notification_metrics: sc_network::NotificationMetrics::new(metrics_registry.as_ref()),
     };
 
-    let network_service =
-        NetworkWorker::new_with_custom_transport(network_params, transport_builder)?;
+    let network_service = NetworkWorker::new(network_params)?;
     let network = network_service.service().clone();
     spawn_handle.spawn_blocking("network-worker", SPAWN_CATEGORY, network_service.run());
     Ok((network, networks, transactions_prototype))

@@ -245,6 +245,7 @@ pub mod fake_runtime {
 				_: Option<U256>,
 				_: bool,
 				_: Option<Vec<(H160, Vec<H256>)>>,
+				_: Option<Vec<ethereum::AuthorizationListItem>>,
 			) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
 				unimplemented!()
 			}
@@ -259,6 +260,7 @@ pub mod fake_runtime {
 				_: Option<U256>,
 				_: bool,
 				_: Option<Vec<(H160, Vec<H256>)>>,
+				_: Option<Vec<ethereum::AuthorizationListItem>>,
 			) -> Result<pallet_evm::CreateInfo, sp_runtime::DispatchError> {
 				unimplemented!()
 			}

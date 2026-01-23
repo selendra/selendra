@@ -22,6 +22,7 @@ pallet-transaction-payment = { workspace = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-ethereum = { workspace = true }
 pallet-evm = { workspace = true }
+ethereum = { workspace = true }
 
 sp-version = { workspace = true }
 sp-block-builder = { workspace = true }
@@ -44,6 +45,7 @@ std = [
     "pallet-ethereum/std",
     "pallet-evm/std",
     "fp-rpc/std",
+    "ethereum/std",
 ]
 short_session = []
 try-runtime = ["frame-try-runtime"]

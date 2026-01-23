@@ -197,14 +197,14 @@ pub struct SessionCommittee<T> {
 }
 
 /// Openness of the process of the elections
-#[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq, MaxEncodedLen)]
+#[derive(Decode, Encode, parity_scale_codec::DecodeWithMemTracking, TypeInfo, Debug, Clone, PartialEq, Eq, MaxEncodedLen)]
 pub enum ElectionOpenness {
     Permissioned,
     Permissionless,
 }
 
 /// Represent desirable size of a committee in a session
-#[derive(Decode, Encode, TypeInfo, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, MaxEncodedLen)]
+#[derive(Decode, Encode, parity_scale_codec::DecodeWithMemTracking, TypeInfo, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, MaxEncodedLen)]
 pub struct CommitteeSeats {
     /// Size of reserved validators in a session
     pub reserved_seats: u32,
@@ -243,7 +243,7 @@ pub trait AbftScoresProvider {
 }
 
 /// Configurable parameters for ban validator mechanism
-#[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, MaxEncodedLen)]
+#[derive(Decode, Encode, parity_scale_codec::DecodeWithMemTracking, TypeInfo, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, MaxEncodedLen)]
 pub struct FinalityBanConfig {
     /// Number representing how many rounds a parent of a head of an abft round is allowed to be behind the head.
     pub minimal_expected_performance: u16,
@@ -271,7 +271,7 @@ impl Default for FinalityBanConfig {
 }
 
 /// Configurable parameters for ban validator mechanism related to block production
-#[derive(Decode, Encode, TypeInfo, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, MaxEncodedLen)]
+#[derive(Decode, Encode, parity_scale_codec::DecodeWithMemTracking, TypeInfo, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, MaxEncodedLen)]
 pub struct ProductionBanConfig {
     /// performance ratio threshold in a session
     /// calculated as ratio of number of blocks produced to expected number of blocks for a single validator
@@ -381,7 +381,7 @@ impl SessionAuthorityData {
 
 pub type Version = u32;
 
-#[derive(Clone, Debug, Decode, Encode, PartialEq, Eq, TypeInfo, parity_scale_codec::MaxEncodedLen)]
+#[derive(Clone, Debug, Decode, Encode, parity_scale_codec::DecodeWithMemTracking, PartialEq, Eq, TypeInfo, parity_scale_codec::MaxEncodedLen)]
 pub struct VersionChange {
     pub version_incoming: Version,
     pub session: SessionIndex,
@@ -495,7 +495,7 @@ pub type ScoreNonce = u32;
 
 pub type RawScore = BoundedVec<u16, ConstU32<1024>>;
 
-#[derive(PartialEq, Decode, Encode, TypeInfo, Debug, Clone, parity_scale_codec::MaxEncodedLen)]
+#[derive(PartialEq, Decode, Encode, parity_scale_codec::DecodeWithMemTracking, TypeInfo, Debug, Clone, parity_scale_codec::MaxEncodedLen)]
 pub struct Score {
     pub session_id: SessionIndex,
     pub nonce: ScoreNonce,

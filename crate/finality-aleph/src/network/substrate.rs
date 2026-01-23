@@ -7,7 +7,7 @@ use std::{
 use log::{debug, info, trace, warn};
 use parity_scale_codec::DecodeAll;
 use rand::{seq::IteratorRandom, thread_rng};
-pub use sc_network::types::PeerId;
+pub use sc_network::PeerId;
 use sc_network::{
     service::traits::{NotificationEvent as SubstrateEvent, ValidationResult},
     ProtocolName,

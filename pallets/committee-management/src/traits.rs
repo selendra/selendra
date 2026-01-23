@@ -75,7 +75,8 @@ where
     }
 
     fn add_rewards(rewards: impl IntoIterator<Item = (Self::AccountId, u32)>) {
-        pallet_staking::Pallet::<T>::reward_by_ids(rewards);
+        use frame_support::traits::RewardsReporter;
+        <pallet_staking::Pallet<T> as RewardsReporter<T::AccountId>>::reward_by_ids(rewards);
     }
 }
 
