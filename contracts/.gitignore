@@ -1,0 +1,11 @@
+# Foundry
+cache/
+out/
+broadcast/
+
+# Dependencies (install via forge install)
+lib/
+
+# OS
+.DS_Store
+Thumbs.db
