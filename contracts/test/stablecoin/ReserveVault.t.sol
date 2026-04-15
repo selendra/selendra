@@ -43,17 +43,60 @@ contract ReserveVaultTest is Test {
         assertEq(usdt.balanceOf(address(vault)), amount);
     }
 
-    function test_Withdraw() public {
+    function test_EmergencyWithdraw() public {
         uint256 amount = 1000 * 10**6;
 
         vm.startPrank(user);
         usdt.approve(address(vault), amount);
         vault.deposit(amount);
-        vault.withdraw(amount);
         vm.stopPrank();
 
+        // Only owner can call emergencyWithdraw
+        uint256 ownerBalanceBefore = usdt.balanceOf(owner);
+        vm.prank(owner);
+        vault.emergencyWithdraw(amount);
+
         assertEq(vault.totalReserves(), 0);
-        assertEq(usdt.balanceOf(user), 1000000 * 10**6);
+        assertEq(usdt.balanceOf(owner), ownerBalanceBefore + amount);
+    }
+
+    function test_EmergencyWithdraw_OnlyOwner() public {
+        uint256 amount = 1000 * 10**6;
+
+        vm.startPrank(user);
+        usdt.approve(address(vault), amount);
+        vault.deposit(amount);
+
+        // Non-owner cannot call emergencyWithdraw
+        vm.expectRevert();
+        vault.emergencyWithdraw(amount);
+        vm.stopPrank();
+    }
+
+    function test_EmergencyWithdraw_RespectsInvariant() public {
+        // Deposit extra reserves
+        uint256 depositAmount = 2000 * 10**6;
+
+        vm.startPrank(user);
+        usdt.approve(address(vault), depositAmount);
+        vault.deposit(depositAmount);
+        vm.stopPrank();
+
+        // Mint some wUSDT (simulating wrap)
+        vm.prank(wrappedContract);
+        vault.mint(user, 1000 * 10**18);
+
+        // Now totalReserves = 2000 * 1e6, totalWrapped = 1000 * 1e18
+        // Can only withdraw up to 1000 * 1e6 (must keep 1000 * 1e6 to back the 1000 * 1e18 wUSDT)
+        vm.prank(owner);
+        vault.emergencyWithdraw(1000 * 10**6);
+
+        assertEq(vault.totalReserves(), 1000 * 10**6);
+
+        // Try to withdraw more - should fail invariant check
+        vm.expectRevert();
+        vm.prank(owner);
+        vault.emergencyWithdraw(1 * 10**6);
     }
 
     function test_Mint() public {
@@ -108,10 +151,12 @@ contract ReserveVaultTest is Test {
         usdt.approve(address(vault), amount);
         vault.deposit(amount);
         assertEq(vault.totalReserves(), amount);
-        
-        vault.withdraw(amount);
-        assertEq(vault.totalReserves(), 0);
         vm.stopPrank();
+
+        // Owner can emergency withdraw
+        vm.prank(owner);
+        vault.emergencyWithdraw(amount);
+        assertEq(vault.totalReserves(), 0);
     }
 
     function test_ReserveBacked() public {

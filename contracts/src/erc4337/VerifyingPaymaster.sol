@@ -42,7 +42,7 @@ contract VerifyingPaymaster is Ownable, IVerifyingPaymaster {
         uint256 maxCost
     ) external returns (bytes memory context) {
         _requireFromEntryPoint();
-        
+
         if (!whitelistedSenders[userOp.sender]) {
             revert VerifyingPaymaster__NotWhitelistedSender();
         }
@@ -57,15 +57,16 @@ contract VerifyingPaymaster is Ownable, IVerifyingPaymaster {
             revert VerifyingPaymaster__InvalidSignature();
         }
 
+        uint256 nonceBefore = nonces[userOp.sender];
         nonces[userOp.sender]++;
-        
-        context = abi.encodePacked(nonces[userOp.sender] - 1);
+
+        context = abi.encodePacked(nonceBefore);
         uint256 currentDeposit = entryPoint.balanceOf(address(this));
         if (currentDeposit < maxCost) {
             revert VerifyingPaymaster__InsufficientDeposit();
         }
 
-        return "";
+        return context;
     }
 
     function postOp(
