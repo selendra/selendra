@@ -7,7 +7,6 @@ homepage.workspace = true
 repository.workspace = true
 
 [dependencies]
-environmental = { version = "1.1.4", default-features = false }
 hex = { workspace = true }
 log = { workspace = true }
 parity-scale-codec = { workspace = true }
@@ -41,7 +40,6 @@ sp-io = { workspace = true, features = ["std"] }
 [features]
 default = ["std"]
 std = [
-	"environmental/std",
 	"hex/std",
 	"log/std",
 	"parity-scale-codec/std",
