@@ -65,6 +65,12 @@ impl frame_system::Config for Test {
     type SS58Prefix = ();
     type OnSetCode = ();
     type MaxConsumers = frame_support::traits::ConstU32<16>;
+    type ExtensionsWeightInfo = ();
+    type SingleBlockMigrations = ();
+    type MultiBlockMigrator = ();
+    type PreInherents = ();
+    type PostInherents = ();
+    type PostTransactions = ();
 }
 
 parameter_types! {
@@ -82,19 +88,12 @@ impl pallet_balances::Config for Test {
     type WeightInfo = ();
     type MaxLocks = ();
     type FreezeIdentifier = ();
-    type MaxHolds = ConstU32<0>;
+    type DoneSlashHandler = ();
     type MaxFreezes = ConstU32<0>;
     type RuntimeHoldReason = ();
     type RuntimeFreezeReason = RuntimeFreezeReason;
 }
 
-impl<C> frame_system::offchain::SendTransactionTypes<C> for Test
-where
-    RuntimeCall: From<C>,
-{
-    type Extrinsic = TestXt<RuntimeCall, ()>;
-    type OverarchingCall = RuntimeCall;
-}
 
 parameter_types! {
     pub const SessionPeriod: u32 = 5;

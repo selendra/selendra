@@ -236,8 +236,12 @@ where
         };
 
         // Reset the context after execution, regardless of success or failure.
-        // This must execute even if the call panics or returns an error.
-        CurrentVmContext::<T>::set(previous_context);
+        // Use kill() for None to avoid writing default value to storage,
+        // which would cause assert_noop! tests to detect spurious storage mutations.
+        match previous_context {
+            VmContext::None => CurrentVmContext::<T>::kill(),
+            other => CurrentVmContext::<T>::put(other),
+        }
 
         res
     }

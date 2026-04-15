@@ -8206,7 +8206,6 @@ dependencies = [
 name = "pallet-xvm"
 version = "0.1.0"
 dependencies = [
- "environmental",
  "fp-evm",
  "frame-benchmarking",
  "frame-support",
