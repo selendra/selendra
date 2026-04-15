@@ -6,6 +6,7 @@ import {VerifyingPaymaster} from "src/erc4337/VerifyingPaymaster.sol";
 import {MockEntryPoint} from "../mocks/MockEntryPoint.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {PackedUserOperation} from "account-abstraction/interfaces/PackedUserOperation.sol";
+import {IPaymaster} from "account-abstraction/interfaces/IPaymaster.sol";
 
 /**
  * @title DeepSecurityAudit
@@ -166,9 +167,10 @@ contract DeepSecurityAudit is Test {
         userOp.paymasterAndData = abi.encodePacked(address(paymaster), abi.encode(bytes(""), signature));
 
         vm.prank(address(mockEntryPoint));
-        (bytes memory context) = paymaster.validatePaymasterUserOp(userOp, dummyUserOpHash, 0);
+        (bytes memory context, uint256 validationData) = paymaster.validatePaymasterUserOp(userOp, dummyUserOpHash, 0);
 
         assertGt(context.length, 0, "Context should not be empty");
+        assertEq(validationData, 0, "ValidationData should be 0 (success, indefinite validity)");
     }
 
     // ============================================================

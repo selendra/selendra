@@ -6,6 +6,7 @@ import {VerifyingPaymaster} from "src/erc4337/VerifyingPaymaster.sol";
 import {MockEntryPoint} from "../mocks/MockEntryPoint.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {PackedUserOperation} from "account-abstraction/interfaces/PackedUserOperation.sol";
+import {IPaymaster} from "account-abstraction/interfaces/IPaymaster.sol";
 
 /**
  * @title AttackVectorTests
@@ -189,12 +190,9 @@ contract AttackVectorTests is Test {
     }
 
     function test_NonEntryPointCannotPostOp() public {
-        PackedUserOperation memory userOp;
-        userOp.sender = address(0x999);
-
         vm.prank(attacker);
         vm.expectRevert();
-        paymaster.postOp(userOp, "", 0);
+        paymaster.postOp(IPaymaster.PostOpMode.opSucceeded, "", 0, 0);
     }
 
     // ============================================================

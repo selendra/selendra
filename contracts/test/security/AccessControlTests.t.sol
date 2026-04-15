@@ -6,6 +6,7 @@ import {VerifyingPaymaster} from "src/erc4337/VerifyingPaymaster.sol";
 import {MockEntryPoint} from "../mocks/MockEntryPoint.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {PackedUserOperation} from "account-abstraction/interfaces/PackedUserOperation.sol";
+import {IPaymaster} from "account-abstraction/interfaces/IPaymaster.sol";
 
 /**
  * @title AccessControlTests
@@ -78,12 +79,9 @@ contract AccessControlTests is Test {
     }
 
     function test_Paymaster_OnlyEntryPoint_PostOp() public {
-        PackedUserOperation memory userOp;
-        userOp.sender = alice;
-
         vm.expectRevert();
         vm.prank(user);
-        paymaster.postOp(userOp, "", 0);
+        paymaster.postOp(IPaymaster.PostOpMode.opSucceeded, "", 0, 0);
     }
 
     function test_Paymaster_EntryPointCanCallValidate() public {

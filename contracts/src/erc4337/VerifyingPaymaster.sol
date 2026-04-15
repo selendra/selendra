@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {PackedUserOperation} from "account-abstraction/interfaces/PackedUserOperation.sol";
+import {IPaymaster} from "account-abstraction/interfaces/IPaymaster.sol";
 import "../utils/Ownable.sol";
 import "./IVerifyingPaymaster.sol";
 
@@ -10,8 +11,9 @@ import "./IVerifyingPaymaster.sol";
  * @title VerifyingPaymaster
  * @notice ERC-4337 paymaster that verifies signatures from a trusted backend
  * @dev Based on eth-infinitism/account-abstraction v0.7 VerifyingPaymaster
+ * @dev Implements IPaymaster for ERC-4337 compliance
  */
-contract VerifyingPaymaster is Ownable, IVerifyingPaymaster {
+contract VerifyingPaymaster is Ownable, IVerifyingPaymaster, IPaymaster {
     error VerifyingPaymaster__InvalidSignature();
     error VerifyingPaymaster__InvalidNonce();
     error VerifyingPaymaster__NotWhitelistedSender();
@@ -40,7 +42,7 @@ contract VerifyingPaymaster is Ownable, IVerifyingPaymaster {
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 maxCost
-    ) external returns (bytes memory context) {
+    ) external returns (bytes memory context, uint256 validationData) {
         _requireFromEntryPoint();
 
         if (!whitelistedSenders[userOp.sender]) {
@@ -66,16 +68,20 @@ contract VerifyingPaymaster is Ownable, IVerifyingPaymaster {
             revert VerifyingPaymaster__InsufficientDeposit();
         }
 
-        return context;
+        // validationData: sigFailed=0 (success), validUntil=0 (indefinite), validAfter=0 (immediate)
+        validationData = 0;
+        return (context, validationData);
     }
 
     function postOp(
-        PackedUserOperation calldata userOp,
+        PostOpMode mode,
         bytes calldata context,
-        uint256 actualGasCost
+        uint256 actualGasCost,
+        uint256 actualUserOpFeePerGas
     ) external {
         _requireFromEntryPoint();
         // No post-op processing needed for simple paymaster
+        // mode indicates whether userOp succeeded or reverted, but we pay regardless
     }
 
     function _hashPaymaster(
