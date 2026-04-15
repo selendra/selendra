@@ -16,6 +16,9 @@ contract WrappedUSDT is ERC20, Ownable, Pausable {
     IERC20 public immutable usdt;
     IReserveVault public vault;
 
+    /// @notice Accumulated dust from 18→6 decimal truncation (in 18-decimal units)
+    uint256 public accumulatedDust;
+
     error WrappedUSDT__NotVault();
     error WrappedUSDT__TransferFailed();
     error WrappedUSDT__MintFailed();
@@ -80,17 +83,26 @@ contract WrappedUSDT is ERC20, Ownable, Pausable {
         _unpause();
     }
 
-    function updateVault(IReserveVault newVault) external onlyOwner {
-        if (address(newVault) == address(0)) revert Ownable__ZeroAddress();
-        vault = newVault;
+    /// @notice Withdraw accumulated truncation dust to owner (prevent loss over time)
+    function claimDust() external onlyOwner {
+        uint256 dust = accumulatedDust;
+        if (dust == 0) return;
+        accumulatedDust = 0;
+        bool success = usdt.transfer(owner(), dust / 1e12);
+        if (!success) revert WrappedUSDT__TransferFailed();
     }
 
     function _convertTo18(uint256 amount6) internal pure returns (uint256) {
         return amount6 * 1e12;
     }
 
-    function _convertTo6(uint256 amount18) internal pure returns (uint256) {
-        return amount18 / 1e12;
+    function _convertTo6(uint256 amount18) internal returns (uint256) {
+        uint256 amount6 = amount18 / 1e12;
+        uint256 remainder = amount18 - (amount6 * 1e12);
+        if (remainder > 0) {
+            accumulatedDust += remainder;
+        }
+        return amount6;
     }
 
     function _update(address from, address to, uint256 value) internal override whenNotPaused {

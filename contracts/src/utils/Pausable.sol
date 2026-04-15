@@ -32,16 +32,6 @@ abstract contract Pausable {
         return _paused;
     }
 
-    function pause() public virtual {
-        _paused = true;
-        emit Paused(msg.sender);
-    }
-
-    function unpause() public virtual {
-        _paused = false;
-        emit Unpaused(msg.sender);
-    }
-
     function _pause() internal virtual {
         _paused = true;
         emit Paused(msg.sender);

@@ -18,7 +18,9 @@ contract VerifyingPaymaster is Ownable, IVerifyingPaymaster {
 
     IEntryPoint public immutable entryPoint;
     address public trustedSigner;
-    uint256 public nonce;
+
+    /// @dev Per-user nonces prevent transaction conflicts between concurrent users
+    mapping(address => uint256) public nonces;
 
     mapping(address => bool) public whitelistedSenders;
 
@@ -50,13 +52,14 @@ contract VerifyingPaymaster is Ownable, IVerifyingPaymaster {
             (bytes, bytes)
         );
 
-        bytes32 hash = _hashPaymaster(userOpHash, paymasterData, nonce);
+        bytes32 hash = _hashPaymaster(userOpHash, paymasterData, nonces[userOp.sender]);
         if (!verifySigner(hash, signature)) {
             revert VerifyingPaymaster__InvalidSignature();
         }
 
-        nonce++;
+        nonces[userOp.sender]++;
         
+        context = abi.encodePacked(nonces[userOp.sender] - 1);
         uint256 currentDeposit = entryPoint.balanceOf(address(this));
         if (currentDeposit < maxCost) {
             revert VerifyingPaymaster__InsufficientDeposit();

@@ -49,6 +49,9 @@ contract ReserveVault is Ownable, Pausable, IReserveVault {
         if (amount == 0) revert ReserveVault__ZeroAmount();
         if (totalReserves < amount) revert ReserveVault__InsufficientReserves();
 
+        // Reserve invariant: ensure withdrawal doesn't break backing ratio
+        if ((totalReserves - amount) * 1e12 < totalWrapped) revert ReserveVault__InsufficientReserves();
+
         totalReserves -= amount;
         
         bool success = usdt.transfer(msg.sender, amount);
@@ -82,6 +85,10 @@ contract ReserveVault is Ownable, Pausable, IReserveVault {
 
         totalWrapped -= amountWrapped;
         totalReserves -= amountReserves;
+
+        // Reserve invariant: wrapped supply must not exceed reserves (accounting for 1e12 decimal diff)
+        // This check prevents undercollateralization
+        if (totalReserves * 1e12 < totalWrapped) revert ReserveVault__InsufficientReserves();
 
         bool success = usdt.transfer(to, amountReserves);
         if (!success) revert ReserveVault__InsufficientReserves();
