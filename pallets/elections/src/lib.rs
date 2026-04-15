@@ -70,6 +70,8 @@ pub mod pallet {
     pub enum Event<T: Config> {
         /// Committee for the next era has changed
         ChangeValidators(Vec<T::AccountId>, Vec<T::AccountId>, CommitteeSeats),
+        /// Validator addition rejected in permissionless mode (not staking)
+        ValidatorRejectedNotStaking(T::AccountId),
     }
 
     #[pallet::pallet]
@@ -133,6 +135,16 @@ pub mod pallet {
                 reserved_validators.unwrap_or_else(|| NextEraReservedValidators::<T>::get().to_vec());
             let non_reserved_validators =
                 non_reserved_validators.unwrap_or_else(|| NextEraNonReservedValidators::<T>::get().to_vec());
+
+            // SECURITY: In permissionless mode, validators must be staking to prevent
+            // governance from bypassing elections and adding arbitrary addresses as validators.
+            // This ensures that only validators who have bonded stake and participated in
+            // the election process can be added to the validator set.
+            if Openness::<T>::get() == ElectionOpenness::Permissionless {
+                Self::ensure_validators_are_staking(
+                    reserved_validators.iter().chain(non_reserved_validators.iter())
+                )?;
+            }
 
             Self::ensure_validators_are_ok(
                 reserved_validators.clone(),
@@ -271,6 +283,31 @@ pub mod pallet {
 
             Ok(())
         }
+
+        /// Ensures that all validators are staking (electable targets).
+        ///
+        /// This is a security check for permissionless mode to prevent governance
+        /// from bypassing elections and adding arbitrary addresses as validators.
+        fn ensure_validators_are_staking<'a, I>(validators: I) -> DispatchResult
+        where
+            I: Iterator<Item = &'a T::AccountId>,
+        {
+            let staking_validators: BTreeSet<_> = T::DataProvider::electable_targets(
+                DataProviderBounds::default()
+            )
+            .map_err(|_| Error::<T>::ValidatorNotStaking)?
+            .into_iter()
+            .collect();
+
+            for validator in validators {
+                if !staking_validators.contains(validator) {
+                    // Emit event for transparency - this helps detect potential governance attacks
+                    Self::deposit_event(Event::ValidatorRejectedNotStaking(validator.clone()));
+                    return Err(Error::<T>::ValidatorNotStaking.into());
+                }
+            }
+            Ok(())
+        }
     }
 
     #[derive(Debug)]
@@ -289,6 +326,8 @@ pub mod pallet {
         NotEnoughNonReservedValidators,
         NonUniqueListOfValidators,
         NonReservedFinalitySeatsLargerThanNonReservedSeats,
+        /// Validator is not staking (only enforced in permissionless mode)
+        ValidatorNotStaking,
     }
 
     impl<T: Config> ElectionProviderBase for Pallet<T> {
@@ -368,8 +407,13 @@ pub mod pallet {
                 // `len(targets) == 1`.
                 let member = &targets[0];
                 if let Some(support) = supports.get_mut(member) {
-                    support.total += vote as u128;
-                    support.voters.push((voter, vote as u128));
+                    // Use checked arithmetic to prevent overflow with large committee sizes
+                    // or extreme vote weights. While u128 is very large, defense-in-depth
+                    // ensures we fail safely rather than wrapping around.
+                    let vote_weight = vote as u128;
+                    support.total = support.total.checked_add(vote_weight)
+                        .ok_or(Self::Error::DataProvider("Support total overflow"))?;
+                    support.voters.push((voter, vote_weight));
                 }
             }
 
