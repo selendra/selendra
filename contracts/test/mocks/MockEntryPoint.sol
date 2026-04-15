@@ -12,11 +12,13 @@ contract MockEntryPoint {
     }
 
     function withdrawTo(address payable withdrawAddress, uint256 withdrawAmount) external {
+        // In real EntryPoint, the paymaster (caller) withdraws from its own deposit
         if (balances[msg.sender] < withdrawAmount) {
             revert("insufficient balance");
         }
         balances[msg.sender] -= withdrawAmount;
-        withdrawAddress.transfer(withdrawAmount);
+        (bool success, ) = withdrawAddress.call{value: withdrawAmount}("");
+        require(success, "transfer failed");
     }
 
     function balanceOf(address account) external view returns (uint256) {
