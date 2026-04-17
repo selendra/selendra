@@ -121,6 +121,11 @@ pub mod pallet {
 
     /// Global nonce for all transactions to avoid hash collision, which is
     /// caused by the same dummy signatures for all transactions.
+    ///
+    /// SECURITY NOTE: U256 provides 2^256 possible values — wraparound is
+    /// practically impossible. At 1M tx/day, it would take ~10^73 years.
+    /// However, any chain migration MUST NOT reset this value without
+    /// careful analysis to prevent transaction hash collisions.
     #[pallet::storage]
     pub type Nonce<T: Config> = StorageValue<_, U256, ValueQuery>;
 

@@ -116,12 +116,15 @@ where
 
     fn update_tokens(&mut self) {
         let now = self.time_provider.now();
-        assert!(
-            now >= self.last_update,
-            "Provided value for `now` should be at least equal to `self.last_update`: now = {:#?} self.last_update = {:#?}.",
-            now,
-            self.last_update
-        );
+        if now < self.last_update {
+            log::warn!(
+                target: crate::LOG_TARGET,
+                "Time went backwards: now = {:#?} < last_update = {:#?}. Skipping token update.",
+                now,
+                self.last_update
+            );
+            return;
+        }
 
         let time_since_last_update = now.duration_since(self.last_update);
         self.last_update = now;

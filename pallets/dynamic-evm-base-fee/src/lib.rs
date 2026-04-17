@@ -117,7 +117,13 @@ pub mod pallet {
 		/// Maximum value 'base fee per gas' can be adjusted to. This is a defensive measure to prevent the fee from being too high.
 		type MaxBaseFeePerGas: Get<U256>;
 		/// Getter for the fee adjustment factor used in 'base fee per gas' formula. This is expected to change in-between the blocks (doesn't have to though).
+		/// WARNING: Extreme values can cause the ideal base fee to always clamp to Min or Max.
+		/// Runtime should validate this doesn't exceed reasonable bounds during config changes.
 		type AdjustmentFactor: Get<FixedU128>;
+		/// Upper bound for AdjustmentFactor to prevent misconfiguration from locking out EVM.
+		/// If AdjustmentFactor exceeds this, ideal_new_bfpg is capped to MaxBaseFeePerGas anyway.
+		#[pallet::constant]
+		type MaxAdjustmentFactor: Get<FixedU128>;
 		/// The so-called `weight_factor` in the 'base fee per gas' formula.
 		type WeightFactor: Get<u128>;
 		/// Ratio limit on how much the 'base fee per gas' can change in-between two blocks.
@@ -183,7 +189,10 @@ pub mod pallet {
 				};
 
 				// Calculate ideal new 'base_fee_per_gas' according to the formula
-				let ideal_new_bfpg = T::AdjustmentFactor::get()
+				let raw_adjustment = T::AdjustmentFactor::get();
+				// Cap adjustment factor to prevent extreme misconfiguration
+				let adjustment = raw_adjustment.min(T::MaxAdjustmentFactor::get());
+				let ideal_new_bfpg = adjustment
 					// Weight factor should be multiplied first since it's a larger number, to avoid precision loss.
 					.saturating_mul_int(T::WeightFactor::get())
 					.saturating_mul(25)

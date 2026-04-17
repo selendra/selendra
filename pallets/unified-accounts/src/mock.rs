@@ -94,6 +94,8 @@ impl pallet_timestamp::Config for TestRuntime {
     type OnTimestampSet = ();
     type MinimumPeriod = ConstU64<3>;
     type WeightInfo = ();
+    type RemapOrigin = frame_support::traits::EnsureRoot<AccountId32>;
+    type RemapDelay = ConstU64<100>;
 }
 
 pub struct MockFeeCalculator;
@@ -165,6 +167,8 @@ impl pallet_unified_accounts::Config for TestRuntime {
     type ChainId = ChainId;
     type AccountMappingStorageFee = AccountMappingStorageFee;
     type WeightInfo = ();
+    type RemapOrigin = frame_support::traits::EnsureRoot<AccountId32>;
+    type RemapDelay = ConstU64<100>;
 }
 
 pub(crate) type AccountId = AccountId32;
