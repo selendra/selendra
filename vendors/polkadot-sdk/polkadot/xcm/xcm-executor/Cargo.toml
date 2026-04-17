@@ -1,0 +1,47 @@
+[package]
+name = "staging-xcm-executor"
+description = "An abstract and configurable XCM message executor."
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+version = "18.0.5"
+
+[lints]
+workspace = true
+
+[dependencies]
+impl-trait-for-tuples = { workspace = true }
+environmental = { workspace = true }
+codec = { features = ["derive"], workspace = true }
+scale-info = { features = ["derive", "serde"], workspace = true }
+xcm.workspace = true
+sp-io.workspace = true
+sp-arithmetic.workspace = true
+sp-core.workspace = true
+sp-runtime.workspace = true
+sp-weights.workspace = true
+frame-support.workspace = true
+tracing = { workspace = true }
+frame-benchmarking = { optional = true, workspace = true }
+
+[features]
+default = ["std"]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+]
+std = [
+	"codec/std",
+	"environmental/std",
+	"frame-benchmarking/std",
+	"frame-support/std",
+	"scale-info/std",
+	"sp-arithmetic/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-weights/std",
+	"tracing/std",
+	"xcm/std",
+]

@@ -37,7 +37,7 @@ use crate::{
     rpc::{create_full as create_full_rpc, FullDeps as RpcFullDeps},
 	eth::{
 		db_config_dir, new_frontier_partial, spawn_frontier_tasks, BackendType, EthConfiguration,
-		FrontierBackend, FrontierBlockImport, FrontierPartialComponents, StorageOverrideHandler
+		FrontierBackend, FrontierBlockImport, FrontierPartialComponents,
 	},
 };
 
@@ -46,7 +46,8 @@ use crate::{
 pub type SelendraExecutor = selendra_executor::Executor;
 pub type FullClient = sc_service::TFullClient<Block, RuntimeApi, SelendraExecutor>;
 pub type FullBackend = sc_service::TFullBackend<Block>;
-type FullPool = sc_transaction_pool::FullPool<Block, FullClient>;
+type FullChainApi = sc_transaction_pool::FullChainApi<FullClient, Block>;
+type FullPool = sc_transaction_pool::BasicPool<FullChainApi, Block>;
 type FullImportQueue = sc_consensus::DefaultImportQueue<Block>;
 type FullProposerFactory = ProposerFactory<FullPool, FullClient, DisableProofRecording>;
 
@@ -60,8 +61,8 @@ pub struct ServiceComponents {
 	pub keystore_container: KeystoreContainer,
 	pub justification_channel_provider: ChannelProvider<Justification>,
 	pub telemetry: Option<Telemetry>,
-	pub frontier_backend: Arc<FrontierBackend<FullClient>>,
-	pub storage_override : Arc<dyn fc_rpc::StorageOverride<Block>>,
+	pub frontier_backend: Arc<FrontierBackend>,
+	pub storage_override : Arc<fc_storage::StorageOverrideHandler<Block, FullClient, FullBackend>>,
 }
 struct LimitNonfinalized(u32);
 
@@ -135,13 +136,13 @@ pub fn new_partial(
 
 	let select_chain_provider = FavouriteSelectChainProvider::default();
 
-	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
-		config.transaction_pool.clone(),
+	let transaction_pool = Arc::new(sc_transaction_pool::BasicPool::new_full(
+		sc_transaction_pool::Options::default(),
 		config.role.is_authority().into(),
 		config.prometheus_registry(),
 		task_manager.spawn_essential_handle(),
 		client.clone(),
-	);
+	));
 	let justification_translator = JustificationTranslator::new(
 		SubstrateChainStatus::new(backend.clone())
 			.map_err(|e| ServiceError::Other(format!("failed to set up chain status: {e}")))?,
@@ -157,10 +158,10 @@ pub fn new_partial(
     let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 
 	let frontier_block_import =
-		FrontierBlockImport::new(selendra_block_import.clone(), client.clone());
+	FrontierBlockImport::new(selendra_block_import.clone(), client.clone());
 
-    let storage_override = Arc::new(StorageOverrideHandler::new(client.clone()));
-		let frontier_backend = match eth_config.frontier_backend_type {
+    let storage_override = Arc::new(fc_storage::StorageOverrideHandler::new(client.clone()));
+	let frontier_backend = match eth_config.frontier_backend_type {
 		BackendType::KeyValue => FrontierBackend::KeyValue(Arc::new(fc_db::kv::Backend::open(
 			Arc::clone(&client),
 			&config.database,
@@ -180,16 +181,14 @@ pub fn new_partial(
 					thread_count: eth_config.frontier_sql_backend_thread_count,
 					cache_size: eth_config.frontier_sql_backend_cache_size,
 				}),
-				eth_config.frontier_sql_backend_pool_size,
-				std::num::NonZeroU32::new(eth_config.frontier_sql_backend_num_ops_timeout),
-				storage_override.clone(),
-			))
-			.unwrap_or_else(|err| panic!("failed creating sql backend: {:?}", err));
-			FrontierBackend::Sql(Arc::new(backend))
-		}
-	};
-
-	// DO NOT change Aura parameters without updating the finality-aleph sync accordingly,
+			eth_config.frontier_sql_backend_pool_size,
+			std::num::NonZeroU32::new(eth_config.frontier_sql_backend_num_ops_timeout),
+			storage_override.clone(),
+		))
+		.unwrap_or_else(|err| panic!("failed creating sql backend: {:?}", err));
+		FrontierBackend::Sql(Arc::new(backend))
+	}
+};	// DO NOT change Aura parameters without updating the finality-aleph sync accordingly,
 	// in particular the code responsible for verifying incoming Headers, as it is supposed
 	// to duplicate parts of Aura internal logic
 	let import_queue = sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _>(
@@ -301,7 +300,7 @@ impl Link<Block> for NoopLink {}
 
 /// Builds a new service for a full client.
 pub async fn new_authority(
-	mut config: Configuration,
+	config: Configuration,
 	aleph_config: AlephCli,
 	eth_config: EthConfiguration,
 ) -> Result<TaskManager, ServiceError> {
@@ -389,9 +388,6 @@ pub async fn new_authority(
 	> = Default::default();
 	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
 
-	// for ethereum-compatibility rpc.
-	config.rpc_id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
-
 	let chain_status = SubstrateChainStatus::new(service_components.backend.clone())
 		.map_err(|e| ServiceError::Other(format!("failed to set up chain status: {e}")))?;
 	let validator_address_cache = get_validator_address_cache(&aleph_config);
@@ -436,25 +432,25 @@ pub async fn new_authority(
 			Ok((slot, timestamp, dynamic_fee))
 		};
 
-		Box::new(move |deny_unsafe, subscription_task_executor| {
+		Box::new(move |subscription_task_executor| {
 			let eth_deps = crate::rpc::EthDeps {
 				client: client.clone(),
-				pool: pool.clone(),
-				graph: pool.pool().clone(),
-				converter: Some(TransactionConverter),
-				is_authority,
-				enable_dev_signer,
-				network: network.clone(),
-				sync: sync_service.clone(),
-				frontier_backend: match &*frontier_backend {
-					fc_db::Backend::KeyValue(b) => b.clone(),
-					fc_db::Backend::Sql(b) => b.clone(),
-				},
-				storage_override: storage_override.clone(),
-				block_data_cache: block_data_cache.clone(),
-				filter_pool: filter_pool.clone(),
-				max_past_logs,
-				fee_history_cache: fee_history_cache.clone(),
+			pool: pool.clone(),
+			graph: pool.clone(),
+			converter: Some(TransactionConverter),
+			is_authority,
+			enable_dev_signer,
+			network: network.clone(),
+			sync: sync_service.clone(),
+			frontier_backend: match &*frontier_backend {
+				fc_db::Backend::KeyValue(b) => b.clone() as Arc<dyn fc_api::Backend<Block>>,
+				fc_db::Backend::Sql(b) => b.clone() as Arc<dyn fc_api::Backend<Block>>,
+			},
+			storage_override: storage_override.clone(),
+			block_data_cache: block_data_cache.clone(),
+			filter_pool: filter_pool.clone(),
+			max_past_logs,
+			fee_history_cache: fee_history_cache.clone(),
 				fee_history_cache_limit,
 				execute_gas_limit_multiplier,
 				forced_parent_hashes: None,
@@ -463,7 +459,6 @@ pub async fn new_authority(
 			let deps = RpcFullDeps {
 				client: client.clone(),
 				pool: pool.clone(),
-				deny_unsafe,
 				import_justification_tx: import_justification_tx.clone(),
 				justification_translator: JustificationTranslator::new(chain_status.clone()),
 				sync_oracle: sync_oracle.clone(),
@@ -496,7 +491,7 @@ pub async fn new_authority(
 	service_components.task_manager.spawn_handle().spawn(
 		"import-queue",
 		None,
-		service_components.import_queue.run(Box::new(NoopLink)),
+		service_components.import_queue.run(&NoopLink),
 	);
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
@@ -506,7 +501,7 @@ pub async fn new_authority(
 		keystore: service_components.keystore_container.local_keystore(),
 		task_manager: &mut service_components.task_manager,
 		transaction_pool: service_components.transaction_pool.clone(),
-		rpc_builder,
+		rpc_builder: Box::new(rpc_builder),
 		backend: service_components.backend,
 		system_rpc_tx,
 		tx_handler_controller,
@@ -562,7 +557,7 @@ pub fn new_chain_ops(
 	config: &mut Configuration,
 	eth_config: &EthConfiguration,
 ) -> Result<
-	(Arc<FullClient>, Arc<FullBackend>, BasicQueue<Block>, TaskManager, Arc<FrontierBackend<FullClient>>),
+	(Arc<FullClient>, Arc<FullBackend>, BasicQueue<Block>, TaskManager, Arc<FrontierBackend>),
 	ServiceError,
 > {
 	config.keystore = sc_service::config::KeystoreConfig::InMemory;

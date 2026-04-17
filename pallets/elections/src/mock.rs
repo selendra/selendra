@@ -133,6 +133,7 @@ impl Config for Test {
     type MaxWinners = ConstU32<DEFAULT_MAX_WINNERS>;
     type BannedValidators = MockProvider;
     type MaxValidators = ConstU32<100>;
+    type AdminOrigin = frame_system::EnsureRoot<AccountId>;
 }
 
 type MaxVotesPerVoter = ConstU32<1>;

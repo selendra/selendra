@@ -1,0 +1,20 @@
+[package]
+name = "polkadot-primitives-test-helpers"
+publish = false
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+sp-keyring.workspace = true
+sp-keyring.default-features = true
+sp-application-crypto.workspace = true
+sp-runtime.workspace = true
+sp-runtime.default-features = true
+sp-core = { features = ["std"], workspace = true, default-features = true }
+polkadot-primitives = { features = ["test"], workspace = true, default-features = true }
+rand = { workspace = true, default-features = true }

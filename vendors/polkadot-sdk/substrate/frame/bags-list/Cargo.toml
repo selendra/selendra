@@ -1,0 +1,88 @@
+[package]
+name = "pallet-bags-list"
+version = "38.0.0"
+authors.workspace = true
+edition.workspace = true
+license = "Apache-2.0"
+homepage.workspace = true
+repository.workspace = true
+description = "FRAME pallet bags list"
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+# parity
+codec = { features = [
+	"derive",
+], workspace = true }
+scale-info = { features = [
+	"derive",
+], workspace = true }
+sp-runtime.workspace = true
+frame-support.workspace = true
+frame-system.workspace = true
+frame-election-provider-support.workspace = true
+
+# third party
+log = { workspace = true }
+docify = { workspace = true }
+aquamarine = { workspace = true }
+frame-benchmarking = { optional = true, workspace = true }
+pallet-balances = { optional = true, workspace = true }
+sp-core = { optional = true, workspace = true }
+sp-io = { optional = true, workspace = true }
+sp-tracing = { optional = true, workspace = true }
+
+[dev-dependencies]
+sp-core = { default-features = true, path = "../../primitives/core" }
+sp-io = { default-features = true, path = "../../primitives/io" }
+sp-tracing = { default-features = true, path = "../../primitives/tracing" }
+pallet-balances = { default-features = true, path = "../balances" }
+frame-election-provider-support = { default-features = true, path = "../election-provider-support" }
+frame-benchmarking = { default-features = true, path = "../benchmarking" }
+
+[features]
+default = ["std"]
+std = [
+	"codec/std",
+	"frame-benchmarking?/std",
+	"frame-election-provider-support/std",
+	"frame-support/std",
+	"frame-system/std",
+	"log/std",
+	"pallet-balances?/std",
+	"scale-info/std",
+	"sp-core?/std",
+	"sp-io?/std",
+	"sp-runtime/std",
+	"sp-tracing?/std",
+]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-election-provider-support/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"sp-core",
+	"sp-io",
+	"sp-runtime/runtime-benchmarks",
+	"sp-tracing",
+]
+fuzz = [
+	"frame-election-provider-support/fuzz",
+	"pallet-balances",
+	"sp-core",
+	"sp-io",
+	"sp-tracing",
+]
+try-runtime = [
+	"frame-election-provider-support/try-runtime",
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-balances?/try-runtime",
+	"sp-runtime/try-runtime",
+]

@@ -15,19 +15,18 @@ use sc_service::{error::Error as ServiceError, Configuration, TaskManager};
 pub use fc_consensus::FrontierBlockImport;
 use fc_rpc::EthTask;
 pub use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
-pub use fc_storage::{StorageOverride, StorageOverrideHandler};
+pub use fc_storage::StorageOverrideHandler;
 // Local
 use primitives::Block;
 
 use crate::service::{FullBackend, FullClient};
 
 /// Frontier DB backend type.
-pub type FrontierBackend<C> = fc_db::Backend<Block, C>;
+pub type FrontierBackend = fc_db::Backend<Block, FullClient>;
 
 pub fn db_config_dir(config: &Configuration) -> PathBuf {
 	config.base_path.config_dir(config.chain_spec.id())
 }
-
 /// Avalailable frontier backend types.
 #[derive(Debug, Copy, Clone, Default, clap::ValueEnum)]
 pub enum BackendType {
@@ -126,9 +125,9 @@ pub async fn spawn_frontier_tasks(
 	task_manager: &TaskManager,
 	client: Arc<FullClient>,
 	backend: Arc<FullBackend>,
-	frontier_backend: Arc<FrontierBackend<FullClient>>,
+	frontier_backend: Arc<FrontierBackend>,
 	filter_pool: Option<FilterPool>,
-	storage_override: Arc<dyn StorageOverride<Block>>,
+	storage_override: Arc<dyn fc_storage::StorageOverride<Block>>,
 	fee_history_cache: FeeHistoryCache,
 	fee_history_cache_limit: FeeHistoryCacheLimit,
 	sync: Arc<SyncingService<Block>>,

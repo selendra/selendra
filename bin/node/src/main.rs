@@ -11,7 +11,7 @@ use sc_service::{Configuration, DatabaseSource};
 use fc_db::kv::frontier_database_dir;
 
 fn enforce_heap_pages(config: &mut Configuration) {
-    config.default_heap_pages = Some(HEAP_PAGES);
+    config.executor.default_heap_pages = Some(HEAP_PAGES);
 }
 
 fn main() -> sc_cli::Result<()> {
@@ -36,7 +36,7 @@ fn main() -> sc_cli::Result<()> {
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|mut config| {
-				let ServiceComponents { 
+				let ServiceComponents {
                     client,
                     task_manager,
                     ..
@@ -117,11 +117,11 @@ fn main() -> sc_cli::Result<()> {
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|mut config| {
-				let ServiceComponents { 
+				let ServiceComponents {
                     client,
                     task_manager,
                     backend,
-                    .. 
+                    ..
                 } = new_partial(&mut config, &cli.eth)?;
 				Ok((cmd.run(client, backend, None), task_manager))
 			})
@@ -136,10 +136,10 @@ fn main() -> sc_cli::Result<()> {
 				let (client, _, _, _, frontier_backend) =
 					service::new_chain_ops(&mut config, &cli.eth)?;
 				let frontier_backend = match &*frontier_backend {
-					fc_db::Backend::KeyValue(kv) => kv,
+					fc_db::Backend::KeyValue(kv) => kv.clone(),
 					_ => panic!("Only fc_db::Backend::KeyValue supported"),
 				};
-				cmd.run(client, frontier_backend.clone()) // Assuming kv is Clone
+				cmd.run(client, frontier_backend)
 			})
 		}
         #[cfg(feature = "runtime-benchmarks")]

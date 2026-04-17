@@ -1,0 +1,23 @@
+[package]
+name = "cumulus-primitives-timestamp"
+version = "0.17.0"
+authors.workspace = true
+edition.workspace = true
+description = "Provides timestamp related functionality for parachains."
+license = "Apache-2.0"
+
+[lints]
+workspace = true
+
+[dependencies]
+sp-inherents.workspace = true
+sp-timestamp.workspace = true
+cumulus-primitives-core.workspace = true
+
+[features]
+default = ["std"]
+std = [
+	"cumulus-primitives-core/std",
+	"sp-inherents/std",
+	"sp-timestamp/std",
+]

@@ -261,10 +261,18 @@ for i in $(seq 0 "$(( RPC_NODES - 1 ))"); do
   # rpc_node_account_ids="5DM7PJEFPbcYViEzFXu5GjF96JgoSJ3rb6jfXLsmXqrPVG2o"
 done
 
-declare -a validator_account_ids
-for i in $(seq "${RPC_NODES}" "$(( NUMBER_OF_NODES_TO_BOOTSTRAP - 1 ))"); do
-  validator_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
-done
+# declare -a validator_account_ids
+# for i in $(seq "${RPC_NODES}" "$(( NUMBER_OF_NODES_TO_BOOTSTRAP - 1 ))"); do
+#   validator_account_ids+=($(get_ss58_address_from_seed "//${i}" "${SELENDRA_NODE}"))
+# done
+
+# Hardcoded list of addresses (must match or exceed VALIDATORS)
+validator_account_ids=(
+  "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
+  "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty"
+  "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL"
+  "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y"
+)
 
 # # Hardcoded list of addresses (must match or exceed VALIDATORS)
 # validator_account_ids=(

@@ -4,7 +4,7 @@
 
 use sc_service::Configuration;
 
-#[cfg(not(any(feature = "runtime-benchmarks", feature = "selendra-native-runtime",)))]
+#[cfg(not(any(feature = "runtime-benchmarks")))]
 pub mod selendra_executor {
     use sc_executor::WasmExecutor;
 
@@ -14,11 +14,11 @@ pub mod selendra_executor {
     pub type Executor = WasmExecutor<ExtendHostFunctions>;
 
     pub fn get_executor(config: &Configuration) -> Executor {
-        sc_service::new_wasm_executor(config)
+        sc_service::new_wasm_executor(&config.executor)
     }
 }
 
-#[cfg(any(feature = "runtime-benchmarks", feature = "selendra-native-runtime",))]
+#[cfg(any(feature = "runtime-benchmarks"))]
 pub mod selendra_executor {
     use sc_executor::NativeElseWasmExecutor;
 
@@ -45,6 +45,6 @@ pub mod selendra_executor {
     pub type Executor = NativeElseWasmExecutor<ExecutorDispatch>;
 
     pub fn get_executor(config: &Configuration) -> Executor {
-        sc_service::new_native_or_wasm_executor(config)
+        sc_service::new_native_or_wasm_executor(&config.executor)
     }
 }

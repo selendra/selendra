@@ -63,7 +63,7 @@ pub mod pallet {
     use frame_support::{
         dispatch::DispatchResult, ensure, pallet_prelude::*, BoundedVec, Twox64Concat,
     };
-    use frame_system::{ensure_root, pallet_prelude::OriginFor};
+    use frame_system::pallet_prelude::OriginFor;
     use primitives::{
         AbftScoresProvider, BanHandler, BanReason, BlockCount, FinalityCommitteeManager,
         SessionCount, SessionValidators, ValidatorProvider,
@@ -81,6 +81,9 @@ pub mod pallet {
     #[pallet::config]
     pub trait Config: frame_system::Config {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+        /// Origin allowed to manage committee settings (ban config, manual bans, lenient threshold).
+        /// Recommend wiring as EitherOfDiverse<EnsureRoot<_>, EnsureThreeFifthsCouncil> in runtime.
+        type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
         /// Something that handles bans
         type BanHandler: BanHandler<AccountId = Self::AccountId>;
         /// Something that provides information about era.
@@ -195,7 +198,7 @@ pub mod pallet {
             clean_session_counter_delay: Option<u32>,
             ban_period: Option<EraIndex>,
         ) -> DispatchResult {
-            ensure_root(origin)?;
+            T::AdminOrigin::ensure_origin(origin)?;
 
             let mut current_committee_ban_config = Self::production_ban_config();
 
@@ -244,7 +247,7 @@ pub mod pallet {
             banned: T::AccountId,
             ban_reason: Vec<u8>,
         ) -> DispatchResult {
-            ensure_root(origin)?;
+            T::AdminOrigin::ensure_origin(origin)?;
             let bounded_description: BoundedVec<_, _> = ban_reason
                 .try_into()
                 .map_err(|_| Error::<T>::BanReasonTooBig)?;
@@ -259,7 +262,7 @@ pub mod pallet {
         #[pallet::call_index(3)]
         #[pallet::weight((T::BlockWeights::get().max_block, DispatchClass::Operational))]
         pub fn cancel_ban(origin: OriginFor<T>, banned: T::AccountId) -> DispatchResult {
-            ensure_root(origin)?;
+            T::AdminOrigin::ensure_origin(origin)?;
             Banned::<T>::remove(banned);
 
             Ok(())
@@ -272,7 +275,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             threshold_percent: u8,
         ) -> DispatchResult {
-            ensure_root(origin)?;
+            T::AdminOrigin::ensure_origin(origin)?;
             ensure!(
                 threshold_percent <= 100,
                 Error::<T>::InvalidLenientThreshold
@@ -293,7 +296,7 @@ pub mod pallet {
             ban_period: Option<EraIndex>,
             clean_session_counter_delay: Option<u32>,
         ) -> DispatchResult {
-            ensure_root(origin)?;
+            T::AdminOrigin::ensure_origin(origin)?;
 
             let mut current_committee_ban_config = Self::finality_ban_config();
 

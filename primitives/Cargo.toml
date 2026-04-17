@@ -11,6 +11,7 @@ repository.workspace = true
 parity-scale-codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
+ethereum = { workspace = true, features = ["with-scale"] }
 ethereum-types = { workspace = true }
 
 sp-api = { workspace = true }
@@ -22,6 +23,7 @@ sp-staking = { workspace = true }
 sp-consensus-aura = { workspace = true }
 
 frame-support = { workspace = true }
+frame-system = { workspace = true }
 frame-system-rpc-runtime-api = { workspace = true }
 
 pallet-transaction-payment = { workspace = true }
@@ -42,7 +44,9 @@ sp-inherents = { workspace = true }
 default = ["std"]
 std = [
     "parity-scale-codec/std",
+    "scale-info/std",
     "serde/std",
+    "ethereum/std",
     "ethereum-types/std",
 
     "sp-api/std",
@@ -60,6 +64,7 @@ std = [
     "sp-inherents/std",
 
     "frame-support/std",
+	"frame-system/std",
     "frame-system-rpc-runtime-api/std",
 
     "pallet-transaction-payment-rpc-runtime-api/std",
@@ -70,3 +75,13 @@ std = [
     "fp-evm/std",
 ]
 short_session = []
+runtime-benchmarks = [
+    "frame-support/runtime-benchmarks",
+    "sp-runtime/runtime-benchmarks",
+    "pallet-evm/runtime-benchmarks",
+]
+try-runtime = [
+    "frame-support/try-runtime",
+    "sp-runtime/try-runtime",
+    "pallet-evm/try-runtime",
+]

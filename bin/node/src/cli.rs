@@ -3,7 +3,7 @@ use sc_cli::{
     PurgeChainCmd, RunCmd, SubstrateCli,
 };
 
-pub type SelendraNodeChainSpec = sc_service::GenericChainSpec<()>;
+pub type SelendraNodeChainSpec = sc_service::GenericChainSpec<Option<()>>;
 
 use crate::{
     aleph_cli::AlephCli,

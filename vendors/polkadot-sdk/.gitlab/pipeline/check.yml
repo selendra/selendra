@@ -1,0 +1,9 @@
+job-starter:
+  stage: check
+  image: paritytech/tools:latest
+  extends:
+    - .kubernetes-env
+    - .common-refs
+  allow_failure: true
+  script:
+    - echo ok

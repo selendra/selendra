@@ -1,0 +1,27 @@
+[
+	{
+		"metric": "Blake2256",
+		"minimum": 1000.00
+	},
+	{
+		"metric": {"Blake2256Parallel":{"num_cores":8}},
+		"minimum": 1000.00,
+		"validator_only": true
+	},
+	{
+		"metric": "Sr25519Verify",
+		"minimum": 0.622675781
+	},
+	{
+		"metric": "MemCopy",
+		"minimum": 11768.341
+	},
+	{
+		"metric": "DiskSeqWrite",
+		"minimum": 950.0
+	},
+	{
+		"metric": "DiskRndWrite",
+		"minimum": 420.0
+	}
+]

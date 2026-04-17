@@ -1,0 +1,50 @@
+[package]
+name = "cumulus-pallet-aura-ext"
+version = "0.18.0"
+authors.workspace = true
+edition.workspace = true
+description = "AURA consensus extension pallet for parachains"
+license = "Apache-2.0"
+
+[lints]
+workspace = true
+
+[dependencies]
+codec = { features = ["derive"], workspace = true }
+scale-info = { features = ["derive"], workspace = true }
+frame-support.workspace = true
+frame-system.workspace = true
+pallet-aura.workspace = true
+pallet-timestamp.workspace = true
+sp-application-crypto.workspace = true
+sp-consensus-aura.workspace = true
+sp-runtime.workspace = true
+cumulus-pallet-parachain-system.workspace = true
+
+[dev-dependencies]
+
+# Cumulus
+cumulus-pallet-parachain-system = { default-features = true, path = "../parachain-system" }
+
+[features]
+default = ["std"]
+std = [
+	"codec/std",
+	"cumulus-pallet-parachain-system/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-aura/std",
+	"pallet-timestamp/std",
+	"scale-info/std",
+	"sp-application-crypto/std",
+	"sp-consensus-aura/std",
+	"sp-runtime/std",
+]
+try-runtime = [
+	"cumulus-pallet-parachain-system/try-runtime",
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-aura/try-runtime",
+	"pallet-timestamp/try-runtime",
+	"sp-runtime/try-runtime",
+]

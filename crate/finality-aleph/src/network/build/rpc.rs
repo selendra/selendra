@@ -21,7 +21,7 @@ pub fn spawn_rpc_service<B: Block, BE: Backend<B>, C: ClientForAleph<B, BE>>(
     spawn_handle.spawn(
         "system-rpc-handler",
         SPAWN_CATEGORY,
-        build_system_rpc_future(
+        build_system_rpc_future::<B, C, B::Hash>(
             Role::Full,
             network,
             sync_service,

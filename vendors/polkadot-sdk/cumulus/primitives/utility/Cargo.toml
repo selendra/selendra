@@ -1,0 +1,47 @@
+[package]
+name = "cumulus-primitives-utility"
+version = "0.18.1"
+authors.workspace = true
+edition.workspace = true
+license = "Apache-2.0"
+description = "Helper datatypes for Cumulus"
+
+[lints]
+workspace = true
+
+[dependencies]
+codec = { features = ["derive"], workspace = true }
+log = { workspace = true }
+frame-support.workspace = true
+sp-runtime.workspace = true
+pallet-asset-conversion.workspace = true
+polkadot-runtime-common.workspace = true
+xcm.workspace = true
+xcm-executor.workspace = true
+xcm-builder.workspace = true
+cumulus-primitives-core.workspace = true
+
+[features]
+default = ["std"]
+std = [
+	"codec/std",
+	"cumulus-primitives-core/std",
+	"frame-support/std",
+	"log/std",
+	"pallet-asset-conversion/std",
+	"polkadot-runtime-common/std",
+	"sp-runtime/std",
+	"xcm-builder/std",
+	"xcm-executor/std",
+	"xcm/std",
+]
+
+runtime-benchmarks = [
+	"cumulus-primitives-core/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"pallet-asset-conversion/runtime-benchmarks",
+	"polkadot-runtime-common/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
+	"xcm-executor/runtime-benchmarks",
+]

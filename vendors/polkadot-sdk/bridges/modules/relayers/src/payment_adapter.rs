@@ -1,0 +1,162 @@
+// Copyright (C) Parity Technologies (UK) Ltd.
+// This file is part of Parity Bridges Common.
+
+// Parity Bridges Common is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Parity Bridges Common is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Parity Bridges Common.  If not, see <http://www.gnu.org/licenses/>.
+
+//! Code that allows relayers pallet to be used as a payment mechanism for the messages pallet.
+
+use crate::{Config, Pallet};
+
+use bp_messages::{
+	source_chain::{DeliveryConfirmationPayments, RelayersRewards},
+	MessageNonce,
+};
+pub use bp_relayers::PayRewardFromAccount;
+use bp_relayers::{RewardsAccountOwner, RewardsAccountParams};
+use bp_runtime::Chain;
+use frame_support::{sp_runtime::SaturatedConversion, traits::Get};
+use pallet_bridge_messages::LaneIdOf;
+use sp_arithmetic::traits::{Saturating, Zero};
+use sp_std::{collections::vec_deque::VecDeque, marker::PhantomData, ops::RangeInclusive};
+
+/// Adapter that allows relayers pallet to be used as a delivery+dispatch payment mechanism
+/// for the messages pallet.
+pub struct DeliveryConfirmationPaymentsAdapter<T, MI, RI, DeliveryReward>(
+	PhantomData<(T, MI, RI, DeliveryReward)>,
+);
+
+impl<T, MI, RI, DeliveryReward> DeliveryConfirmationPayments<T::AccountId, LaneIdOf<T, MI>>
+	for DeliveryConfirmationPaymentsAdapter<T, MI, RI, DeliveryReward>
+where
+	T: Config<RI> + pallet_bridge_messages::Config<MI, LaneId = <T as Config<RI>>::LaneId>,
+	MI: 'static,
+	RI: 'static,
+	DeliveryReward: Get<T::Reward>,
+{
+	type Error = &'static str;
+
+	fn pay_reward(
+		lane_id: LaneIdOf<T, MI>,
+		messages_relayers: VecDeque<bp_messages::UnrewardedRelayer<T::AccountId>>,
+		confirmation_relayer: &T::AccountId,
+		received_range: &RangeInclusive<bp_messages::MessageNonce>,
+	) -> MessageNonce {
+		let relayers_rewards =
+			bp_messages::calc_relayers_rewards::<T::AccountId>(messages_relayers, received_range);
+		let rewarded_relayers = relayers_rewards.len();
+
+		register_relayers_rewards::<T, RI>(
+			confirmation_relayer,
+			relayers_rewards,
+			RewardsAccountParams::new(
+				lane_id,
+				T::BridgedChain::ID,
+				RewardsAccountOwner::BridgedChain,
+			),
+			DeliveryReward::get(),
+		);
+
+		rewarded_relayers as _
+	}
+}
+
+// Update rewards to given relayers, optionally rewarding confirmation relayer.
+fn register_relayers_rewards<T: Config<I>, I: 'static>(
+	confirmation_relayer: &T::AccountId,
+	relayers_rewards: RelayersRewards<T::AccountId>,
+	lane_id: RewardsAccountParams<T::LaneId>,
+	delivery_fee: T::Reward,
+) {
+	// reward every relayer except `confirmation_relayer`
+	let mut confirmation_relayer_reward = T::Reward::zero();
+	for (relayer, messages) in relayers_rewards {
+		// sane runtime configurations guarantee that the number of messages will be below
+		// `u32::MAX`
+		let relayer_reward = T::Reward::saturated_from(messages).saturating_mul(delivery_fee);
+
+		if relayer != *confirmation_relayer {
+			Pallet::<T, I>::register_relayer_reward(lane_id, &relayer, relayer_reward);
+		} else {
+			confirmation_relayer_reward =
+				confirmation_relayer_reward.saturating_add(relayer_reward);
+		}
+	}
+
+	// finally - pay reward to confirmation relayer
+	Pallet::<T, I>::register_relayer_reward(
+		lane_id,
+		confirmation_relayer,
+		confirmation_relayer_reward,
+	);
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::{mock::*, RelayerRewards};
+
+	const RELAYER_1: ThisChainAccountId = 1;
+	const RELAYER_2: ThisChainAccountId = 2;
+	const RELAYER_3: ThisChainAccountId = 3;
+
+	fn relayers_rewards() -> RelayersRewards<ThisChainAccountId> {
+		vec![(RELAYER_1, 2), (RELAYER_2, 3)].into_iter().collect()
+	}
+
+	#[test]
+	fn confirmation_relayer_is_rewarded_if_it_has_also_delivered_messages() {
+		run_test(|| {
+			register_relayers_rewards::<TestRuntime, ()>(
+				&RELAYER_2,
+				relayers_rewards(),
+				test_reward_account_param(),
+				50,
+			);
+
+			assert_eq!(
+				RelayerRewards::<TestRuntime>::get(RELAYER_1, test_reward_account_param()),
+				Some(100)
+			);
+			assert_eq!(
+				RelayerRewards::<TestRuntime>::get(RELAYER_2, test_reward_account_param()),
+				Some(150)
+			);
+		});
+	}
+
+	#[test]
+	fn confirmation_relayer_is_not_rewarded_if_it_has_not_delivered_any_messages() {
+		run_test(|| {
+			register_relayers_rewards::<TestRuntime, ()>(
+				&RELAYER_3,
+				relayers_rewards(),
+				test_reward_account_param(),
+				50,
+			);
+
+			assert_eq!(
+				RelayerRewards::<TestRuntime>::get(RELAYER_1, test_reward_account_param()),
+				Some(100)
+			);
+			assert_eq!(
+				RelayerRewards::<TestRuntime>::get(RELAYER_2, test_reward_account_param()),
+				Some(150)
+			);
+			assert_eq!(
+				RelayerRewards::<TestRuntime>::get(RELAYER_3, test_reward_account_param()),
+				None
+			);
+		});
+	}
+}

@@ -1,0 +1,24 @@
+[package]
+name = "cumulus-primitives-proof-size-hostfunction"
+version = "0.11.0"
+authors.workspace = true
+edition.workspace = true
+description = "Hostfunction exposing storage proof size to the runtime."
+license = "Apache-2.0"
+
+[lints]
+workspace = true
+
+[dependencies]
+sp-runtime-interface.workspace = true
+sp-externalities.workspace = true
+sp-trie.workspace = true
+
+[dev-dependencies]
+sp-state-machine = { default-features = true, path = "../../../substrate/primitives/state-machine" }
+sp-core = { default-features = true, path = "../../../substrate/primitives/core" }
+sp-io = { default-features = true, path = "../../../substrate/primitives/io" }
+
+[features]
+default = ["std"]
+std = ["sp-externalities/std", "sp-runtime-interface/std", "sp-trie/std"]

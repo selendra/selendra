@@ -1,0 +1,156 @@
+[package]
+name = "polkadot-test-runtime"
+build = "build.rs"
+publish = false
+version = "1.0.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+codec = { features = ["derive"], workspace = true }
+log = { workspace = true }
+scale-info = { features = ["derive"], workspace = true }
+serde = { workspace = true }
+sp-authority-discovery.workspace = true
+sp-consensus-babe.workspace = true
+sp-consensus-beefy.workspace = true
+sp-api.workspace = true
+sp-inherents.workspace = true
+sp-offchain.workspace = true
+sp-io.workspace = true
+sp-runtime.workspace = true
+sp-staking.workspace = true
+sp-core.workspace = true
+sp-genesis-builder.workspace = true
+sp-mmr-primitives.workspace = true
+sp-session.workspace = true
+sp-version.workspace = true
+frame-election-provider-support.workspace = true
+sp-transaction-pool.workspace = true
+sp-block-builder.workspace = true
+pallet-authority-discovery.workspace = true
+pallet-authorship.workspace = true
+pallet-babe.workspace = true
+pallet-balances.workspace = true
+pallet-transaction-payment.workspace = true
+pallet-transaction-payment-rpc-runtime-api.workspace = true
+frame-executive.workspace = true
+pallet-grandpa.workspace = true
+pallet-indices.workspace = true
+pallet-offences.workspace = true
+pallet-session.workspace = true
+frame-support.workspace = true
+pallet-staking.workspace = true
+pallet-staking-reward-curve.workspace = true
+pallet-staking-reward-curve.default-features = true
+frame-system.workspace = true
+frame-system-rpc-runtime-api.workspace = true
+test-runtime-constants.workspace = true
+pallet-timestamp.workspace = true
+pallet-sudo.workspace = true
+pallet-vesting.workspace = true
+polkadot-runtime-common.workspace = true
+polkadot-primitives.workspace = true
+pallet-xcm.workspace = true
+polkadot-runtime-parachains.workspace = true
+xcm-builder.workspace = true
+xcm-executor.workspace = true
+xcm.workspace = true
+
+[dev-dependencies]
+hex-literal = { workspace = true, default-features = true }
+tiny-keccak = { features = ["keccak"], workspace = true }
+sp-keyring = { default-features = true, path = "../../../substrate/primitives/keyring" }
+sp-trie = { default-features = true, path = "../../../substrate/primitives/trie" }
+serde_json = { workspace = true, default-features = true }
+
+[build-dependencies]
+substrate-wasm-builder.workspace = true
+substrate-wasm-builder.default-features = true
+
+[features]
+default = ["std"]
+no_std = []
+only-staking = []
+runtime-metrics = [
+	"polkadot-runtime-parachains/runtime-metrics",
+	"sp-io/with-tracing",
+]
+
+std = [
+	"codec/std",
+	"frame-election-provider-support/std",
+	"frame-executive/std",
+	"frame-support/std",
+	"frame-system-rpc-runtime-api/std",
+	"frame-system/std",
+	"log/std",
+	"pallet-authority-discovery/std",
+	"pallet-authorship/std",
+	"pallet-babe/std",
+	"pallet-balances/std",
+	"pallet-grandpa/std",
+	"pallet-indices/std",
+	"pallet-offences/std",
+	"pallet-session/std",
+	"pallet-staking/std",
+	"pallet-sudo/std",
+	"pallet-timestamp/std",
+	"pallet-transaction-payment-rpc-runtime-api/std",
+	"pallet-transaction-payment/std",
+	"pallet-vesting/std",
+	"pallet-xcm/std",
+	"polkadot-primitives/std",
+	"polkadot-runtime-common/std",
+	"polkadot-runtime-parachains/std",
+	"scale-info/std",
+	"serde/std",
+	"sp-api/std",
+	"sp-authority-discovery/std",
+	"sp-block-builder/std",
+	"sp-consensus-babe/std",
+	"sp-consensus-beefy/std",
+	"sp-core/std",
+	"sp-genesis-builder/std",
+	"sp-inherents/std",
+	"sp-io/std",
+	"sp-mmr-primitives/std",
+	"sp-offchain/std",
+	"sp-runtime/std",
+	"sp-session/std",
+	"sp-staking/std",
+	"sp-transaction-pool/std",
+	"sp-version/std",
+	"test-runtime-constants/std",
+	"xcm-builder/std",
+	"xcm-executor/std",
+	"xcm/std",
+]
+
+runtime-benchmarks = [
+	"frame-election-provider-support/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-babe/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-grandpa/runtime-benchmarks",
+	"pallet-indices/runtime-benchmarks",
+	"pallet-offences/runtime-benchmarks",
+	"pallet-staking/runtime-benchmarks",
+	"pallet-sudo/runtime-benchmarks",
+	"pallet-timestamp/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks",
+	"pallet-vesting/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
+	"polkadot-primitives/runtime-benchmarks",
+	"polkadot-runtime-common/runtime-benchmarks",
+	"polkadot-runtime-parachains/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-staking/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
+	"xcm-executor/runtime-benchmarks",
+]

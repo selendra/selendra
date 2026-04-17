@@ -7,16 +7,17 @@ use crate::{
 	NORMAL_DISPATCH_RATIO
 };
 
+use parity_scale_codec::Encode;
 use pallet_transaction_payment::Multiplier;
-use sp_core::{crypto::ByteArray, Get, H160, U256};
+use sp_core::{Get, H160, U256};
 use sp_runtime::{
 	ConsensusEngineId, Perquintill,
 };
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::prelude::*;
 
 use frame_support::{
 	parameter_types,
-	traits::{ConstU32, FindAuthor},
+	traits::{ConstU32, ConstU64, FindAuthor},
 	weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight},
 };
 use pallet_ethereum::PostLogContent;
@@ -28,19 +29,36 @@ use primitives::{
 	evm::HashedDefaultMappings,
 };
 
-pub struct FindAuthorTruncated<F>(PhantomData<F>);
+// pub struct FindAuthorTruncated<F>(PhantomData<F>);
+// impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
+// 	fn find_author<'a, I>(digests: I) -> Option<H160>
+// 	where
+// 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
+// 	{
+// 		if let Some(author_index) = F::find_author(digests) {
+// 			let authority_id = Aura::authorities()[author_index as usize].clone();
+// 			return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]));
+// 		}
+// 		None
+// 	}
+// }
+
+pub struct FindAuthorTruncated<F>(sp_std::marker::PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
-	fn find_author<'a, I>(digests: I) -> Option<H160>
-	where
-		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
-	{
-		if let Some(author_index) = F::find_author(digests) {
-			let authority_id = Aura::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]));
-		}
-		None
-	}
+    fn find_author<'a, I>(digests: I) -> Option<H160>
+    where
+        I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
+    {
+        if let Some(author_index) = F::find_author(digests) {
+            let authority_id =
+                pallet_aura::Authorities::<Runtime>::get()[author_index as usize].clone();
+            return Some(H160::from_slice(&authority_id.encode()[4..24]));
+        }
+
+        None
+    }
 }
+
 
 /// Current approximation of the gas/s consumption considering
 /// EVM execution over compiled WASM (on 4.4Ghz CPU).
@@ -59,14 +77,11 @@ parameter_types! {
 	pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
 	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, 0);
 	pub ChainId: u64 = 1961;
-	/// The amount of gas per storage (in bytes): BLOCK_GAS_LIMIT / BLOCK_STORAGE_LIMIT
-	/// The current definition of BLOCK_STORAGE_LIMIT is 160 KB, resulting in a value of 400.
-	pub GasLimitStorageGrowthRatio: u64 = 400;
+	/// The amount of gas per pov size: BLOCK_GAS_LIMIT / MAX_POV_SIZE
 	pub const GasLimitPovSizeRatio: u64 = 16;
 }
 
 impl pallet_evm::Config for Runtime {
-	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
 	type FeeCalculator = DynamicEvmBaseFee;
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 	type WeightPerGas = WeightPerGas;
@@ -85,9 +100,10 @@ impl pallet_evm::Config for Runtime {
 	type OnCreate = ();
 	type FindAuthor = FindAuthorTruncated<Aura>;
 	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
-	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
+    type GasLimitStorageGrowthRatio = ConstU64<0>; // gas based storage limit not enabled
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Self>;
+	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
 }
 
 parameter_types! {
@@ -96,7 +112,7 @@ parameter_types! {
 
 impl pallet_ethereum::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
+	type StateRoot = pallet_ethereum::IntermediateStateRoot<crate::Version>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	type ExtraDataLength = ConstU32<30>;
 }
@@ -138,4 +154,28 @@ impl pallet_dynamic_evm_base_fee::Config for Runtime {
 	type WeightFactor = ();
 	type StepLimitRatio = StepLimitRatio;
 	type WeightInfo = pallet_dynamic_evm_base_fee::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+	/// Weight limit for checked transactions (user calls)
+	pub CheckedTxWeightLimit: Weight = Weight::from_parts(u64::MAX / 2, 0);
+	/// Weight limit for XVM transactions
+	pub XvmTxWeightLimit: Weight = Weight::from_parts(u64::MAX / 4, 0);
+}
+
+impl pallet_ethereum_checked::Config for Runtime {
+	type CheckedTxWeightLimit = CheckedTxWeightLimit;
+	type XvmTxWeightLimit = XvmTxWeightLimit;
+	type InvalidEvmTransactionError = pallet_ethereum::InvalidTransactionWrapper;
+	type ValidatedTransaction = pallet_ethereum::ValidatedTransaction<Self>;
+	type AddressMapper = crate::UnifiedAccounts;
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_ethereum_checked::weights::SubstrateWeight<Runtime>;
+}
+
+impl pallet_xvm::Config for Runtime {
+	type AddressMapper = crate::UnifiedAccounts;
+	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Runtime>;
+	type EthereumTransact = crate::EthereumChecked;
+	type WeightInfo = pallet_xvm::weights::SubstrateWeight<Runtime>;
 }

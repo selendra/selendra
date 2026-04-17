@@ -9,6 +9,6 @@ pub mod eth;
 
 pub use cli::{Cli, Subcommand};
 pub use config::Validator as ConfigValidator;
-#[cfg(any(feature = "runtime-benchmarks", feature = "selendra-native-runtime"))]
+#[cfg(any(feature = "runtime-benchmarks"))]
 pub use executor::selendra_executor::ExecutorDispatch;
 pub use service::{new_authority, new_partial, ServiceComponents};

@@ -1,0 +1,28 @@
+[package]
+name = "xcm-procedural"
+description = "Procedural macros for XCM"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+version = "11.0.1"
+publish = true
+
+[lints]
+workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
+syn = { workspace = true }
+Inflector = { workspace = true }
+
+[dev-dependencies]
+trybuild = { features = ["diff"], workspace = true }
+# NOTE: we have to explicitly specify `std` because of trybuild
+# https://github.com/paritytech/polkadot-sdk/pull/5167
+xcm = { default-features = true, features = ["std"], path = "..", package = "staging-xcm" }
+# For testing macros.
+frame-support = { path = "../../../substrate/frame/support", default-features = false }

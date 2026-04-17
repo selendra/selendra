@@ -69,14 +69,14 @@ where
     type Error = I::Error;
 
     async fn check_block(
-        &mut self,
+        &self,
         block: BlockCheckParams<Block>,
     ) -> Result<ImportResult, Self::Error> {
         self.inner.check_block(block).await
     }
 
     async fn import_block(
-        &mut self,
+        &self,
         mut block: BlockImportParams<Block>,
     ) -> Result<ImportResult, Self::Error> {
         if let Ok(best) = self.select_chain.best_chain().await {
@@ -132,7 +132,7 @@ where
     }
 
     fn send_justification(
-        &mut self,
+        &self,
         block_id: BlockId,
         justification: SubstrateJustification,
     ) -> Result<(), SendJustificationError<TranslateError>> {
@@ -158,19 +158,19 @@ where
 #[async_trait::async_trait]
 impl<I> BlockImport<Block> for AlephBlockImport<I>
 where
-    I: BlockImport<Block> + Clone + Send,
+    I: BlockImport<Block> + Clone + Send + Sync,
 {
     type Error = I::Error;
 
     async fn check_block(
-        &mut self,
+        &self,
         block: BlockCheckParams<Block>,
     ) -> Result<ImportResult, Self::Error> {
         self.inner.check_block(block).await
     }
 
     async fn import_block(
-        &mut self,
+        &self,
         mut block: BlockImportParams<Block>,
     ) -> Result<ImportResult, Self::Error> {
         let number = *block.header.number();
@@ -285,12 +285,12 @@ impl<E: Display + Debug> Error for RedirectingImportError<E> {}
 #[async_trait::async_trait]
 impl<I> BlockImport<Block> for RedirectingBlockImport<I>
 where
-    I: BlockImport<Block> + Clone + Send,
+    I: BlockImport<Block> + Clone + Send + Sync,
 {
     type Error = RedirectingImportError<I::Error>;
 
     async fn check_block(
-        &mut self,
+        &self,
         block: BlockCheckParams<Block>,
     ) -> Result<ImportResult, Self::Error> {
         self.inner
@@ -300,7 +300,7 @@ where
     }
 
     async fn import_block(
-        &mut self,
+        &self,
         block: BlockImportParams<Block>,
     ) -> Result<ImportResult, Self::Error> {
         let header = block.post_header();

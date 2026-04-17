@@ -16,7 +16,7 @@ use crate::{
 pub type TestClientBuilder<E, B> =
     substrate_test_client::TestClientBuilder<TBlock, E, B, GenesisParameters>;
 
-/// Call executor for `kitchensink-runtime` `TestClient`.
+/// Call executor for `selendra-runtime` `TestClient`.
 pub type ExecutorDispatch = sc_executor::NativeElseWasmExecutor<LocalExecutorDispatch>;
 
 /// Default backend type.

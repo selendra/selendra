@@ -7,7 +7,7 @@ use std::{
 use log::{debug, info, trace, warn};
 use parity_scale_codec::DecodeAll;
 use rand::{seq::IteratorRandom, thread_rng};
-pub use sc_network::PeerId;
+pub use sc_network::types::PeerId;
 use sc_network::{
     service::traits::{NotificationEvent as SubstrateEvent, ValidationResult},
     ProtocolName,
@@ -74,14 +74,14 @@ impl ProtocolNetwork {
                 None
             }
             NotificationStreamOpened { peer, .. } => {
-                self.connected_peers.insert(peer);
+                self.connected_peers.insert(peer.into());
                 None
             }
             NotificationStreamClosed { peer } => {
-                self.connected_peers.remove(&peer);
+                self.connected_peers.remove(&peer.into());
                 None
             }
-            NotificationReceived { peer, notification } => Some((notification, peer)),
+            NotificationReceived { peer, notification } => Some((notification, peer.into())),
         }
     }
 
@@ -122,7 +122,7 @@ impl<D: Data> GossipNetwork<D> for ProtocolNetwork {
             "Sending block sync data to peer {:?}.",
             peer_id,
         );
-        self.service.send_sync_notification(&peer_id, data.encode());
+        self.service.send_sync_notification(&peer_id.into(), data.encode());
         Ok(())
     }
 

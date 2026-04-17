@@ -1,0 +1,21 @@
+[package]
+name = "cumulus-primitives-aura"
+version = "0.16.0"
+authors.workspace = true
+edition.workspace = true
+license = "Apache-2.0"
+description = "Core primitives for Aura in Cumulus"
+
+[lints]
+workspace = true
+
+[dependencies]
+sp-api.workspace = true
+sp-consensus-aura.workspace = true
+
+[features]
+default = ["std"]
+std = [
+	"sp-api/std",
+	"sp-consensus-aura/std",
+]

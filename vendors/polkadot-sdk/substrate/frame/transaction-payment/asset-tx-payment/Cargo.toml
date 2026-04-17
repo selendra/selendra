@@ -1,0 +1,67 @@
+[package]
+name = "pallet-asset-tx-payment"
+version = "39.1.0"
+authors.workspace = true
+edition.workspace = true
+license = "Apache-2.0"
+homepage.workspace = true
+repository.workspace = true
+description = "pallet to manage transaction payments in assets"
+readme = "README.md"
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+sp-core.workspace = true
+sp-io.workspace = true
+sp-runtime.workspace = true
+frame-support.workspace = true
+frame-system.workspace = true
+pallet-transaction-payment.workspace = true
+frame-benchmarking = { optional = true, workspace = true }
+
+# Other dependencies
+codec = { features = ["derive"], workspace = true }
+scale-info = { features = ["derive"], workspace = true }
+serde = { optional = true, workspace = true, default-features = true }
+
+[dev-dependencies]
+serde_json = { workspace = true, default-features = true }
+
+sp-storage = { path = "../../../primitives/storage", default-features = false }
+
+pallet-assets = { default-features = true, path = "../../assets" }
+pallet-authorship = { default-features = true, path = "../../authorship" }
+pallet-balances = { default-features = true, path = "../../balances" }
+
+[features]
+default = ["std"]
+std = [
+	"codec/std",
+	"frame-benchmarking?/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-transaction-payment/std",
+	"scale-info/std",
+	"serde",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-transaction-payment/try-runtime",
+	"sp-runtime/try-runtime",
+]

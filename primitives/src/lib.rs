@@ -23,6 +23,12 @@ use frame_support::traits::Get;
 /// EVM primitives.
 pub mod evm;
 
+/// XVM primitives.
+pub mod xvm;
+
+/// Ethereum checked primitives.
+pub mod ethereum_checked;
+
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"alp0");
 
 // Same as GRANDPA_ENGINE_ID because as of right now substrate sends only
@@ -111,6 +117,9 @@ pub const HEAP_PAGES: u64 = 4096;
 
 /// How much execution time fits in a single block
 pub const MILLISECS_PER_BLOCK: u64 = 1000;
+
+/// Slot duration in Polkadot-like chain consensus algorithms.
+pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 /// Block size limit.
 pub const MAX_BLOCK_SIZE: u32 = 5 * 1024 * 1024;

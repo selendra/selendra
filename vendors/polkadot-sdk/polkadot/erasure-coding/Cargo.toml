@@ -1,0 +1,31 @@
+[package]
+name = "polkadot-erasure-coding"
+version = "17.0.0"
+description = "Erasure coding used for Polkadot's availability system"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+polkadot-primitives.workspace = true
+polkadot-primitives.default-features = true
+polkadot-node-primitives.workspace = true
+polkadot-node-primitives.default-features = true
+novelpoly = { workspace = true }
+codec = { features = ["derive", "std"], workspace = true }
+sp-core.workspace = true
+sp-core.default-features = true
+sp-trie.workspace = true
+sp-trie.default-features = true
+thiserror = { workspace = true }
+
+[dev-dependencies]
+quickcheck = { workspace = true }
+criterion = { features = ["cargo_bench_support"], workspace = true }
+
+[[bench]]
+name = "scaling_with_validators"
+harness = false

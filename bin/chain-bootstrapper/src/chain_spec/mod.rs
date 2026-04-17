@@ -12,7 +12,7 @@ pub const CHAINTYPE_LIVE: &str = "live";
 pub const DEFAULT_CHAIN_ID: &str = "selnet";
 pub const DEFAULT_SUDO_ACCOUNT_ALICE: &str = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
 
-pub type SelendraNodeChainSpec = sc_service::GenericChainSpec<()>;
+pub type SelendraNodeChainSpec = sc_service::GenericChainSpec<Option<()>>;
 
 use primitives::AccountId;
 use sc_chain_spec::ChainType;

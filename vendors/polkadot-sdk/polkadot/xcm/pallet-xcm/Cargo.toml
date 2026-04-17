@@ -1,0 +1,73 @@
+[package]
+name = "pallet-xcm"
+version = "18.1.4"
+description = "A pallet for handling XCM programs."
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+bounded-collections = { workspace = true }
+codec = { features = ["derive"], workspace = true }
+scale-info = { features = ["derive"], workspace = true }
+serde = { optional = true, features = ["derive"], workspace = true, default-features = true }
+tracing = { workspace = true }
+frame-support.workspace = true
+frame-system.workspace = true
+sp-core.workspace = true
+sp-io.workspace = true
+sp-runtime.workspace = true
+xcm.workspace = true
+xcm-executor.workspace = true
+xcm-builder.workspace = true
+xcm-runtime-apis.workspace = true
+frame-benchmarking = { optional = true, workspace = true }
+hex-literal = { workspace = true, default-features = false }
+pallet-balances = { optional = true, workspace = true }
+
+[dev-dependencies]
+pallet-assets = { default-features = true, path = "../../../substrate/frame/assets" }
+polkadot-runtime-parachains = { default-features = true, path = "../../runtime/parachains" }
+polkadot-parachain-primitives = { default-features = true, path = "../../parachain" }
+xcm-simulator = { default-features = true, path = "../xcm-simulator" }
+
+[features]
+default = ["std"]
+std = [
+	"bounded-collections/std",
+	"codec/std",
+	"frame-benchmarking?/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-balances/std",
+	"scale-info/std",
+	"serde",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"tracing/std",
+	"xcm-builder/std",
+	"xcm-executor/std",
+	"xcm-runtime-apis/std",
+	"xcm/std",
+]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
+	"xcm-executor/runtime-benchmarks",
+	"xcm-runtime-apis/runtime-benchmarks",
+]
+test-utils = ["std"]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-balances/try-runtime",
+	"sp-runtime/try-runtime",
+]

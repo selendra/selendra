@@ -1,0 +1,34 @@
+[package]
+name = "substrate-frame-rpc-support"
+version = "43.0.0"
+authors.workspace = true
+edition.workspace = true
+license = "Apache-2.0"
+homepage.workspace = true
+repository.workspace = true
+description = "Substrate RPC for FRAME's support"
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = { workspace = true, default-features = true }
+jsonrpsee = { features = ["jsonrpsee-types"], workspace = true }
+serde = { workspace = true, default-features = true }
+frame-support.workspace = true
+frame-support.default-features = true
+sc-rpc-api.workspace = true
+sc-rpc-api.default-features = true
+sp-storage.workspace = true
+sp-storage.default-features = true
+
+[dev-dependencies]
+scale-info = { workspace = true, default-features = true }
+jsonrpsee = { features = ["jsonrpsee-types", "ws-client"], workspace = true }
+tokio = { workspace = true, default-features = true }
+sp-core = { default-features = true, path = "../../../../primitives/core" }
+sp-runtime = { default-features = true, path = "../../../../primitives/runtime" }
+frame-system = { default-features = true, path = "../../../../frame/system" }

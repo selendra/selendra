@@ -43,7 +43,7 @@ pub mod fake_runtime {
 				unimplemented!()
 			}
 
-			fn initialize_block(_: &<Block as BlockT>::Header) {
+			fn initialize_block(_: &<Block as BlockT>::Header) -> sp_runtime::ExtrinsicInclusionMode {
 				unimplemented!()
 			}
 		}
@@ -303,9 +303,9 @@ pub mod fake_runtime {
 				unimplemented!()
 			}
 
-            fn initialize_pending_block(_: &<Block as BlockT>::Header) {
-                unimplemented!()
-            }
+			fn initialize_pending_block(_: &<Block as BlockT>::Header) {
+				unimplemented!()
+        	}
 		}
 
 		impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {

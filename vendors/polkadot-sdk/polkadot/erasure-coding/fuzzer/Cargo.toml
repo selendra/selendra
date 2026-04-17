@@ -1,0 +1,27 @@
+[package]
+name = "erasure_coding_fuzzer"
+version = "1.0.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+polkadot-erasure-coding.workspace = true
+polkadot-erasure-coding.default-features = true
+honggfuzz = { workspace = true }
+polkadot-primitives.workspace = true
+polkadot-primitives.default-features = true
+polkadot-node-primitives.workspace = true
+polkadot-node-primitives.default-features = true
+
+[[bin]]
+name = "reconstruct"
+path = "src/reconstruct.rs"
+
+[[bin]]
+name = "round_trip"
+path = "src/round_trip.rs"

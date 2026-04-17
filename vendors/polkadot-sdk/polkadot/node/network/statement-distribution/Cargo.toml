@@ -1,0 +1,63 @@
+[package]
+name = "polkadot-statement-distribution"
+description = "Statement Distribution Subsystem"
+version = "21.1.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+futures = { workspace = true }
+futures-timer = { workspace = true }
+gum.workspace = true
+gum.default-features = true
+polkadot-primitives.workspace = true
+polkadot-primitives.default-features = true
+sp-staking.workspace = true
+sp-keystore.workspace = true
+sp-keystore.default-features = true
+polkadot-node-subsystem.workspace = true
+polkadot-node-subsystem.default-features = true
+polkadot-node-primitives.workspace = true
+polkadot-node-primitives.default-features = true
+polkadot-node-subsystem-util.workspace = true
+polkadot-node-subsystem-util.default-features = true
+polkadot-node-network-protocol.workspace = true
+polkadot-node-network-protocol.default-features = true
+arrayvec = { workspace = true }
+indexmap = { workspace = true }
+codec = { features = ["derive"], workspace = true }
+thiserror = { workspace = true }
+fatality = { workspace = true }
+bitvec = { workspace = true, default-features = true }
+
+[dev-dependencies]
+async-channel = { workspace = true }
+assert_matches = { workspace = true }
+polkadot-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
+sp-authority-discovery = { default-features = true, path = "../../../../substrate/primitives/authority-discovery" }
+sp-keyring = { default-features = true, path = "../../../../substrate/primitives/keyring" }
+sp-core = { default-features = true, path = "../../../../substrate/primitives/core" }
+sp-application-crypto = { default-features = true, path = "../../../../substrate/primitives/application-crypto" }
+sp-keystore = { default-features = true, path = "../../../../substrate/primitives/keystore" }
+sp-tracing = { default-features = true, path = "../../../../substrate/primitives/tracing" }
+sc-keystore = { default-features = true, path = "../../../../substrate/client/keystore" }
+sc-network = { default-features = true, path = "../../../../substrate/client/network" }
+futures-timer = { workspace = true }
+polkadot-primitives = { features = ["test"], path = "../../../primitives", default-features = false }
+polkadot-primitives-test-helpers = { path = "../../../primitives/test-helpers" }
+rand_chacha = { workspace = true, default-features = true }
+polkadot-subsystem-bench = { path = "../../subsystem-bench" }
+rstest = { workspace = true }
+
+[[bench]]
+name = "statement-distribution-regression-bench"
+path = "benches/statement-distribution-regression-bench.rs"
+harness = false
+required-features = ["subsystem-benchmarks"]
+
+[features]
+subsystem-benchmarks = []
