@@ -72,7 +72,7 @@ use frame_support::{
     traits::{
         fungible::{Inspect as FungibleInspect, Mutate as FungibleMutate},
         tokens::{Fortitude::*, Precision::*, Preservation::*},
-        IsType, OnKilledAccount,
+        EnsureOrigin, IsType, OnKilledAccount,
     },
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
@@ -124,6 +124,11 @@ pub mod pallet {
         type AccountMappingStorageFee: Get<Balance>;
         /// Weight information for the extrinsics in this module
         type WeightInfo: WeightInfo;
+        /// The origin which can forcibly remap account mappings (admin/governance)
+        type RemapOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+        /// The delay in blocks before a remap request can be executed
+        #[pallet::constant]
+        type RemapDelay: Get<BlockNumberFor<Self>>;
     }
 
     #[pallet::error]
@@ -136,6 +141,12 @@ pub mod pallet {
         InvalidSignature,
         /// Funds unavailable to claim account
         FundsUnavailable,
+        /// No remap request exists for this account
+        NoRemapRequest,
+        /// Remap delay period has not yet elapsed
+        RemapDelayNotElapsed,
+        /// Account is not currently mapped to any EVM address
+        NotMapped,
     }
 
     #[pallet::event]
@@ -146,6 +157,21 @@ pub mod pallet {
         AccountClaimed {
             account_id: T::AccountId,
             evm_address: EvmAddress,
+        },
+        /// A remap request has been created for an account
+        RemapRequested {
+            account_id: T::AccountId,
+            new_evm_address: EvmAddress,
+            executable_at: BlockNumberFor<T>,
+        },
+        /// An account has been remapped to a new EVM address
+        AccountRemapped {
+            account_id: T::AccountId,
+            new_evm_address: EvmAddress,
+        },
+        /// A remap request has been cancelled
+        RemapCancelled {
+            account_id: T::AccountId,
         },
     }
 
@@ -160,6 +186,16 @@ pub mod pallet {
     #[pallet::storage]
     pub type NativeToEvm<T: Config> =
         StorageMap<_, Blake2_128Concat, T::AccountId, EvmAddress, OptionQuery>;
+
+    /// Pending remap requests: AccountId => (request_block_number, new_evm_address)
+    #[pallet::storage]
+    pub type RemapRequests<T: Config> = StorageMap<
+        _,
+        Blake2_128Concat,
+        T::AccountId,
+        (BlockNumberFor<T>, EvmAddress),
+        OptionQuery,
+    >;
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
@@ -237,6 +273,97 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
             // claim default evm address
             let _ = Self::do_claim_default_evm_address(who)?;
+            Ok(())
+        }
+
+        /// Request to remap an account to a new EVM address (admin/governance only).
+        /// Creates a pending request that must wait for the configured delay before execution.
+        ///
+        /// - `account_id`: The account to remap
+        /// - `new_evm_address`: The new EVM address to map to
+        #[pallet::weight(T::WeightInfo::claim_evm_address())]
+        pub fn request_remap(
+            origin: OriginFor<T>,
+            account_id: T::AccountId,
+            new_evm_address: EvmAddress,
+        ) -> DispatchResult {
+            T::RemapOrigin::ensure_origin(origin)?;
+
+            // Ensure the account is currently mapped
+            ensure!(
+                NativeToEvm::<T>::contains_key(&account_id),
+                Error::<T>::NotMapped
+            );
+
+            let current_block = frame_system::Pallet::<T>::block_number();
+            let executable_at = current_block + T::RemapDelay::get();
+
+            // Store the remap request
+            RemapRequests::<T>::insert(&account_id, (executable_at, new_evm_address));
+
+            Self::deposit_event(Event::RemapRequested {
+                account_id,
+                new_evm_address,
+                executable_at,
+            });
+            Ok(())
+        }
+
+        /// Execute a pending remap request (admin/governance only).
+        /// Removes the old mapping and creates a new one to the specified EVM address.
+        ///
+        /// - `account_id`: The account to remap
+        #[pallet::weight(T::WeightInfo::claim_evm_address())]
+        pub fn execute_remap(origin: OriginFor<T>, account_id: T::AccountId) -> DispatchResult {
+            T::RemapOrigin::ensure_origin(origin)?;
+
+            // Get the pending remap request
+            let (executable_at, new_evm_address) =
+                RemapRequests::<T>::get(&account_id).ok_or(Error::<T>::NoRemapRequest)?;
+
+            // Ensure the delay has elapsed
+            let current_block = frame_system::Pallet::<T>::block_number();
+            ensure!(current_block >= executable_at, Error::<T>::RemapDelayNotElapsed);
+
+            // Get the current EVM address mapping
+            let current_evm_address = NativeToEvm::<T>::get(&account_id)
+                .ok_or(Error::<T>::NotMapped)?;
+
+            // Remove old bidirectional mappings
+            EvmToNative::<T>::remove(&current_evm_address);
+            NativeToEvm::<T>::remove(&account_id);
+
+            // Create new bidirectional mappings
+            EvmToNative::<T>::insert(&new_evm_address, &account_id);
+            NativeToEvm::<T>::insert(&account_id, &new_evm_address);
+
+            // Clean up the remap request
+            RemapRequests::<T>::remove(&account_id);
+
+            Self::deposit_event(Event::AccountRemapped {
+                account_id,
+                new_evm_address,
+            });
+            Ok(())
+        }
+
+        /// Cancel a pending remap request (admin/governance only).
+        ///
+        /// - `account_id`: The account whose remap request should be cancelled
+        #[pallet::weight(T::WeightInfo::claim_evm_address())]
+        pub fn cancel_remap(origin: OriginFor<T>, account_id: T::AccountId) -> DispatchResult {
+            T::RemapOrigin::ensure_origin(origin)?;
+
+            // Ensure a remap request exists
+            ensure!(
+                RemapRequests::<T>::contains_key(&account_id),
+                Error::<T>::NoRemapRequest
+            );
+
+            // Remove the remap request
+            RemapRequests::<T>::remove(&account_id);
+
+            Self::deposit_event(Event::RemapCancelled { account_id });
             Ok(())
         }
     }

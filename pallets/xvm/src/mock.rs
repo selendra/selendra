@@ -67,6 +67,12 @@ impl frame_system::Config for TestRuntime {
     type SS58Prefix = ();
     type OnSetCode = ();
     type MaxConsumers = frame_support::traits::ConstU32<16>;
+    type ExtensionsWeightInfo = ();
+    type SingleBlockMigrations = ();
+    type MultiBlockMigrator = ();
+    type PreInherents = ();
+    type PostInherents = ();
+    type PostTransactions = ();
     type RuntimeTask = RuntimeTask;
 }
 
@@ -84,7 +90,7 @@ impl pallet_balances::Config for TestRuntime {
     type FreezeIdentifier = ();
     type RuntimeFreezeReason = ();
     type MaxFreezes = ConstU32<0>;
-    type MaxHolds = ConstU32<2>;
+    type DoneSlashHandler = ();
 }
 
 impl pallet_timestamp::Config for TestRuntime {
@@ -137,6 +143,10 @@ impl pallet_contracts::Config for TestRuntime {
     type Debug = ();
     type Environment = ();
     type Xcm = ();
+    type MaxTransientStorageSize = ConstU32<{ 1024 * 1024 }>;
+    type UploadOrigin = frame_system::EnsureSigned<AccountId>;
+    type InstantiateOrigin = frame_system::EnsureSigned<AccountId>;
+    type ApiVersion = ();
 }
 
 thread_local! {

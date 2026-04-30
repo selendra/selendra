@@ -156,8 +156,12 @@ pub fn compute_validator_scaled_total_rewards<V>(
         .collect()
 }
 
+/// Check if a ban has expired.
+/// Ban covers `period` eras starting from `start` era (inclusive).
+/// The `active_era + 1` convention in callers means we check if the NEXT era
+/// is beyond the ban window.
 pub fn ban_expired(start: EraIndex, period: EraIndex, active_era: EraIndex) -> bool {
-    start + period <= active_era
+    active_era > start + period
 }
 
 impl<T: Config> Pallet<T> {

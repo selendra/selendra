@@ -41,12 +41,19 @@ extern crate alloc;
 use alloc::format;
 
 use fp_evm::ExitReason;
-use frame_support::{ensure, traits::fungible::Inspect, weights::Weight};
+use frame_support::{
+    ensure,
+    pallet_prelude::*,
+    traits::fungible::Inspect,
+    weights::Weight,
+};
 use pallet_contracts::{CollectEvents, DebugInfo, Determinism};
 use pallet_contracts_uapi::ReturnFlags;
 use pallet_evm::GasWeightMapping;
-use parity_scale_codec::Decode;
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 use sp_core::{H160, U256};
+use sp_runtime::RuntimeDebug;
 use sp_std::{marker::PhantomData, prelude::*};
 
 use primitives::{
@@ -72,7 +79,39 @@ pub use pallet::*;
 
 pub type WeightInfoOf<T> = <T as Config>::WeightInfo;
 
-environmental::thread_local_impl!(static IN_XVM: environmental::RefCell<bool> = environmental::RefCell::new(false));
+/// VM context for reentrancy guard.
+///
+/// Tracks which VM is currently executing via XVM to prevent reentrancy
+/// back into the same VM (e.g., EVM → WASM → EVM).
+#[derive(Encode, Decode, MaxEncodedLen, Default, Clone, Copy, PartialEq, Eq, TypeInfo, RuntimeDebug)]
+pub enum VmContext {
+    /// No XVM call is currently in progress.
+    #[default]
+    None,
+    /// Currently executing within EVM via XVM.
+    Evm,
+    /// Currently executing within WASM via XVM.
+    Wasm,
+}
+
+impl VmContext {
+    /// Returns the corresponding `VmId` if this context is active.
+    pub fn as_vm_id(self) -> Option<VmId> {
+        match self {
+            VmContext::None => None,
+            VmContext::Evm => Some(VmId::Evm),
+            VmContext::Wasm => Some(VmId::Wasm),
+        }
+    }
+
+    /// Creates a `VmContext` from a `VmId`.
+    pub fn from_vm_id(vm_id: VmId) -> Self {
+        match vm_id {
+            VmId::Evm => VmContext::Evm,
+            VmId::Wasm => VmContext::Wasm,
+        }
+    }
+}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -80,6 +119,17 @@ pub mod pallet {
 
     #[pallet::pallet]
     pub struct Pallet<T>(PhantomData<T>);
+
+    /// Storage for tracking the current VM context during XVM calls.
+    ///
+    /// This prevents reentrancy by ensuring that a cross-VM call cannot
+    /// call back into the originating VM. For example:
+    /// - EVM → WASM (allowed)
+    /// - WASM → EVM (allowed)
+    /// - EVM → WASM → EVM (blocked - reentrancy)
+    /// - WASM → EVM → WASM (blocked - reentrancy)
+    #[pallet::storage]
+    pub(super) type CurrentVmContext<T: Config> = StorageValue<_, VmContext, ValueQuery>;
 
     #[pallet::config]
     pub trait Config: frame_system::Config + pallet_contracts::Config {
@@ -149,11 +199,20 @@ where
             CallFailure::error(SameVmCallDenied, overheads)
         );
 
-        // Set `IN_XVM` to true & check reentrance.
-        if IN_XVM.with(|in_xvm| in_xvm.replace(true)) {
+        // Check and set reentrancy guard using storage.
+        // Prevents calling back into the same VM (e.g., EVM → WASM → EVM).
+        let target_context = VmContext::from_vm_id(vm_id);
+        let previous_context = CurrentVmContext::<T>::get();
+
+        // If we're already in the target VM context, this is reentrancy.
+        if previous_context == target_context {
             return Err(CallFailure::error(ReentranceDenied, overheads));
         }
 
+        // Set the new context before executing the call.
+        CurrentVmContext::<T>::put(target_context);
+
+        // Execute the call, ensuring we reset the context afterward.
         let res = match vm_id {
             VmId::Evm => Pallet::<T>::evm_call(
                 context,
@@ -176,9 +235,13 @@ where
             ),
         };
 
-        // Set `IN_XVM` to false.
-        // We should make sure that this line is executed whatever the execution path.
-        let _ = IN_XVM.with(|in_xvm| in_xvm.take());
+        // Reset the context after execution, regardless of success or failure.
+        // Use kill() for None to avoid writing default value to storage,
+        // which would cause assert_noop! tests to detect spurious storage mutations.
+        match previous_context {
+            VmContext::None => CurrentVmContext::<T>::kill(),
+            other => CurrentVmContext::<T>::put(other),
+        }
 
         res
     }

@@ -16,9 +16,10 @@ use crate::{
 
 impl<T: Config> Pallet<T> {
     /// Calculate expected consumers counter for a `who` account, and if actual
-    /// counter is not as expected, increment or decrement current counter
+    /// counter is not as expected, increment or decrement until it matches.
+    /// Loops to handle cases where the difference is more than 1.
     pub fn fix_consumer_counter(who: T::AccountId) -> DispatchResult {
-        let current_consumers = T::AccountInfoProvider::get_consumers(&who);
+        let mut current_consumers = T::AccountInfoProvider::get_consumers(&who);
         let mut expected_consumers: u32 = 0;
 
         if Self::reserved_or_frozen_non_zero(&who) {
@@ -34,24 +35,31 @@ impl<T: Config> Pallet<T> {
             expected_consumers += 1;
         }
 
-        #[allow(clippy::comparison_chain)]
-        if current_consumers < expected_consumers {
+        // Loop until counter matches expected value.
+        // Handles cases where difference exceeds 1 (race condition safe).
+        while current_consumers < expected_consumers {
             log::debug!(
                 target: LOG_TARGET,
-                "Account {:?} has consumers underflow: current({}) < expected ({}), incrementing ",
+                "Account {:?} consumers underflow: current({}) < expected ({}), incrementing",
                 HexDisplay::from(&who.encode()), current_consumers, expected_consumers);
             Self::increment_consumers(&who)?;
-        } else if current_consumers > expected_consumers {
+            current_consumers = T::AccountInfoProvider::get_consumers(&who);
+        }
+
+        while current_consumers > expected_consumers {
             log::debug!(
                 target: LOG_TARGET,
-                "Account {:?} has consumers overflow: current({}) > expected ({}), decrementing ",
+                "Account {:?} consumers overflow: current({}) > expected ({}), decrementing",
                 HexDisplay::from(&who.encode()), current_consumers, expected_consumers);
             Self::decrement_consumers(&who);
-        } else {
+            current_consumers = T::AccountInfoProvider::get_consumers(&who);
+        }
+
+        if current_consumers == expected_consumers {
             log::trace!(
                 target: LOG_TARGET,
-                "Account {:?} neither has underflow nor overflow of consumers counter.",
-                HexDisplay::from(&who.encode())
+                "Account {:?} consumers counter corrected to {}.",
+                HexDisplay::from(&who.encode()), current_consumers
             );
         }
 
