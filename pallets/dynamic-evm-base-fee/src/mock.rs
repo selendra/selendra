@@ -30,7 +30,7 @@ use parity_scale_codec::Encode;
 use sp_core::H256;
 use sp_io::TestExternalities;
 use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup, One},
+	traits::{BlakeTwo256, Bounded, IdentityLookup, One},
 	BuildStorage, FixedU128, Perquintill,
 };
 
@@ -67,6 +67,12 @@ impl frame_system::Config for TestRuntime {
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 	type RuntimeTask = RuntimeTask;
+	type ExtensionsWeightInfo = ();
+	type SingleBlockMigrations = ();
+	type MultiBlockMigrator = ();
+	type PreInherents = ();
+	type PostInherents = ();
+	type PostTransactions = ();
 }
 
 impl pallet_balances::Config for TestRuntime {
@@ -82,8 +88,8 @@ impl pallet_balances::Config for TestRuntime {
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type FreezeIdentifier = ();
-	type MaxHolds = ConstU32<0>;
 	type MaxFreezes = ConstU32<0>;
+	type DoneSlashHandler = ();
 }
 
 impl pallet_timestamp::Config for TestRuntime {
@@ -106,6 +112,7 @@ impl pallet_dynamic_evm_base_fee::Config for TestRuntime {
 	type MinBaseFeePerGas = MinBaseFeePerGas;
 	type MaxBaseFeePerGas = MaxBaseFeePerGas;
 	type AdjustmentFactor = GetAdjustmentFactor;
+	type MaxAdjustmentFactor = GetMaxAdjustmentFactor;
 	type WeightFactor = ConstU128<30_000_000_000_000_000>;
 	type StepLimitRatio = StepLimitRation;
 	type WeightInfo = ();
@@ -123,16 +130,29 @@ construct_runtime!(
 );
 
 const ADJUSTMENT_FACTOR: &[u8] = b":adj_factor_evm";
+const MAX_ADJUSTMENT_FACTOR: &[u8] = b":max_adj_factor_evm";
 
 /// Helper method to set the adjustment factor used by the pallet.
 pub fn set_adjustment_factor(factor: FixedU128) {
 	storage::unhashed::put_raw(&ADJUSTMENT_FACTOR, &factor.encode());
 }
 
+/// Helper method to set the upper bound applied to the adjustment factor.
+pub fn set_max_adjustment_factor(factor: FixedU128) {
+	storage::unhashed::put_raw(&MAX_ADJUSTMENT_FACTOR, &factor.encode());
+}
+
 pub struct GetAdjustmentFactor;
 impl Get<FixedU128> for GetAdjustmentFactor {
 	fn get() -> FixedU128 {
 		storage::unhashed::get::<FixedU128>(&ADJUSTMENT_FACTOR).unwrap_or_default()
+	}
+}
+
+pub struct GetMaxAdjustmentFactor;
+impl Get<FixedU128> for GetMaxAdjustmentFactor {
+	fn get() -> FixedU128 {
+		storage::unhashed::get::<FixedU128>(&MAX_ADJUSTMENT_FACTOR).unwrap_or(FixedU128::max_value())
 	}
 }
 
