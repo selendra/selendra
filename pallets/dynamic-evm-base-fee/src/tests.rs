@@ -174,6 +174,31 @@ fn bfpg_bounds_are_respected() {
 }
 
 #[test]
+fn max_adjustment_factor_caps_the_ideal_value() {
+	ExtBuilder::build().execute_with(|| {
+		let init_bfpg = BaseFeePerGas::<TestRuntime>::get();
+
+		// Uncapped by default, so an extreme adjustment factor drives bfpg up.
+		set_adjustment_factor(FixedU128::max_value());
+		DynamicEvmBaseFee::on_finalize(1);
+		assert!(
+			BaseFeePerGas::<TestRuntime>::get() > init_bfpg,
+			"Sanity check: without a cap the fee rises."
+		);
+
+		// Same adjustment factor, but capped low enough that the ideal value lands
+		// below the current bfpg, so the fee has to move the other way.
+		BaseFeePerGas::<TestRuntime>::set(init_bfpg);
+		set_max_adjustment_factor(FixedU128::from_rational(1, 100));
+		DynamicEvmBaseFee::on_finalize(2);
+		assert!(
+			BaseFeePerGas::<TestRuntime>::get() < init_bfpg,
+			"MaxAdjustmentFactor must bound the adjustment factor used in the formula."
+		);
+	});
+}
+
+#[test]
 fn step_limit_ratio_is_respected() {
 	ExtBuilder::build().execute_with(|| {
 		// Lower bound, high adjustment factor
