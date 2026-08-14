@@ -2,14 +2,14 @@
 
 <div align="center">
 
-[![License](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](LICENSE)
-[![Substrate](https://img.shields.io/badge/Substrate-Polkadot--SDK-E6007A)](https://substrate.io)
-[![Rust](https://img.shields.io/badge/Rust-1.75+-orange.svg)](https://www.rust-lang.org)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Substrate](https://img.shields.io/badge/Substrate-Polkadot--SDK-E6007A)](https://github.com/paritytech/polkadot-sdk)
+[![Rust](https://img.shields.io/badge/Rust-1.81+-orange.svg)](https://www.rust-lang.org)
 [![EVM Compatible](https://img.shields.io/badge/EVM-Compatible-brightgreen.svg)](https://ethereum.org)
 
 **A high-performance, EVM-compatible blockchain built with Substrate**
 
-[Website](https://selendra.org) • [Documentation](https://docs.selendra.org) • [Discord](https://discord.gg/selendra) • [Telegram](https://t.me/selendra)
+[Website](https://selendra.org) • [Documentation](https://selendra.org/docs) • [Telegram](https://t.me/selendranetwork)
 
 </div>
 
@@ -17,11 +17,11 @@
 
 ## 🚀 Overview
 
-Selendra is a next-generation Layer 1 blockchain that combines the best of Ethereum compatibility with Substrate's flexibility and performance. Built on Cardinal Cryptography's AlephBFT consensus, Selendra delivers sub-second finality, low transaction costs, and enterprise-grade reliability.
+Selendra is a next-generation Layer 1 blockchain that combines the best of Ethereum compatibility with Substrate's flexibility and performance. Built on Cardinal Cryptography's AlephBFT consensus, Selendra finalises blocks in about a second, at low transaction cost.
 
 ### Key Features
 
-- **⚡ Blazing Fast**: Sub-second finality with Aura block production + AlephBFT consensus
+- **⚡ Blazing Fast**: About one second to finality with Aura block production + AlephBFT consensus
 - **🔗 EVM Compatible**: Full Ethereum compatibility via Frontier - deploy Solidity contracts seamlessly
 - **🔐 Unified Accounts**: Native ↔ EVM account mapping for superior user experience
 - **💰 Low Fees**: Optimized transaction costs with dynamic EVM base fee adjustment
@@ -43,7 +43,7 @@ Selendra is a next-generation Layer 1 blockchain that combines the best of Ether
 │  ├─ WASM (WebAssembly Contracts via pallet-contracts)│
 │  └─ Native Pallets (Substrate Runtime Logic)        │
 ├─────────────────────────────────────────────────────┤
-│  Core Pallets (30 Total)                            │
+│  Core Pallets (36 Total)                            │
 │  ├─ Staking & Governance (DPoS, Treasury, Council)  │
 │  ├─ EVM Integration (Ethereum, Dynamic Fees)        │
 │  ├─ Unified Accounts (Native ↔ EVM Mapping)         │
@@ -57,9 +57,9 @@ Selendra is a next-generation Layer 1 blockchain that combines the best of Ether
 |----------|-------|
 | **Chain ID** | 1961 (Mainnet) |
 | **Block Time** | ~1 second |
-| **Finality** | Sub-second (AlephBFT) |
-| **EVM Gas Limit** | ~15M gas/block |
-| **Runtime Version** | v20004 (v3.0) |
+| **Finality** | ~1s median, 1.4s p95 (AlephBFT, measured on mainnet 14 Aug 2026) |
+| **EVM Gas Limit** | 36M gas/block |
+| **Runtime Version** | 20004 deployed on mainnet, 20016 on `master` |
 | **Native Token** | SEL |
 | **Decimals** | 18 |
 | **Consensus** | Aura + AlephBFT |
@@ -77,22 +77,28 @@ selendra/
 │   └── client-runtime-api/     # Client-side runtime APIs
 ├── pallets/                    # Custom Substrate pallets
 │   ├── aleph/                  # AlephBFT integration
+│   ├── aleph-runtime-api/      # Aleph runtime API
 │   ├── elections/              # DPoS validator elections
 │   ├── committee-management/   # Validator committee management
 │   ├── operations/             # Administrative operations
 │   ├── dynamic-evm-base-fee/   # EVM fee adjustment
+│   ├── ethereum-checked/       # Checked Ethereum transactions
+│   ├── xvm/                    # Cross-VM calls
 │   └── unified-accounts/       # Native ↔ EVM account mapping
 ├── crate/                      # Supporting libraries
 │   ├── finality-aleph/         # AlephBFT finality gadget
 │   ├── aggregator/             # Signature aggregation
 │   ├── clique/                 # Peer discovery
-│   └── rate-limiter/           # Network rate limiting
+│   ├── rate-limiter/           # Network rate limiting
+│   ├── frontier/               # Ethereum compatibility (vendored)
+│   ├── selendra-client/        # Rust client library
+│   ├── finalizer/              # Finalisation tooling
+│   ├── fork-off/               # Fork-off-from-live state tooling
+│   └── unified-accounts-cli/   # Account binding CLI
 ├── primitives/                 # Core primitive types
 ├── scripts/                    # Deployment & utility scripts
-└── vendors/                    # Vendored dependencies
-    ├── selendra-client/        # Rust client library (v3.16.0)
-    ├── frontier/               # Ethereum compatibility (submodule)
-    └── bind_account/           # Account binding utilities
+└── vendors/
+    └── polkadot-sdk/           # Vendored Polkadot SDK
 ```
 
 ---
@@ -101,7 +107,7 @@ selendra/
 
 ### Prerequisites
 
-- **Rust**: 1.75.0 or later (see [rust-toolchain.toml](rust-toolchain.toml))
+- **Rust**: 1.81.0 (pinned in [rust-toolchain.toml](rust-toolchain.toml))
 - **OS**: Linux (recommended), macOS, or WSL2 on Windows
 - **Memory**: 8GB RAM minimum, 16GB recommended
 - **Disk**: 50GB+ free space
@@ -127,9 +133,6 @@ selendra/
    ```bash
    git clone https://github.com/selendra/selendra.git
    cd selendra
-
-   # Initialize submodules (Frontier, etc.)
-   git submodule update --init --recursive
    ```
 
 3. **Build the Node**
@@ -189,7 +192,7 @@ Access the node:
   --prometheus-external
 ```
 
-For detailed validator setup, see [Validator Guide](https://docs.selendra.org/validators)
+For detailed validator setup, see [Validator Guide](https://selendra.org/docs/run-nodes/run-validator)
 
 ---
 
@@ -203,7 +206,7 @@ Add Selendra to Metamask:
 - **RPC URL**: `https://rpc.selendra.org`
 - **Chain ID**: `1961`
 - **Currency Symbol**: `SEL`
-- **Block Explorer**: `https://scan.selendra.org`
+- **Block Explorer**: `https://explorer.selendra.org`
 
 ### Polkadot.js Apps
 
@@ -359,6 +362,7 @@ Selendra provides custom precompiles for accessing Substrate functionality from 
 - `Balances` - Native token management
 - `TransactionPayment` - Fee handling
 - `Scheduler` - Delayed/scheduled calls
+- `Authorship` - Block author tracking
 
 ### Staking & Governance
 - `Staking` - Proof-of-Stake validation
@@ -379,6 +383,8 @@ Selendra provides custom precompiles for accessing Substrate functionality from 
 - `EVM` - EVM execution environment
 - `DynamicEvmBaseFee` - Dynamic EVM fee adjustment
 - `UnifiedAccounts` - Native ↔ EVM account mapping
+- `EthereumChecked` - Checked Ethereum transactions
+- `Xvm` - Cross-VM calls
 
 ### Smart Contracts
 - `Contracts` - WASM smart contracts (ink!)
@@ -408,14 +414,14 @@ Selendra provides custom precompiles for accessing Substrate functionality from 
 
 ### Current Status (v3.0 - October 2025)
 - ✅ Full EVM compatibility via Frontier
-- ✅ AlephBFT consensus (sub-second finality)
+- ✅ AlephBFT consensus (~1s finality)
 - ✅ Unified accounts (native ↔ EVM)
 - ✅ DPoS staking with nomination pools
 - ✅ Dynamic EVM fee adjustment
 - ✅ Council governance (13-member council)
 - ✅ Democracy & referendum system
 - ✅ Treasury with Council approval
-- ✅ 35 runtime pallets
+- ✅ 36 runtime pallets
 - ✅ Mainnet live and operational
 
 ### Next Steps (Q4 2025 - Q2 2026)
@@ -433,7 +439,7 @@ Selendra provides custom precompiles for accessing Substrate functionality from 
 - 🎯 Developer adoption in Cambodia and Southeast Asia
 - 🏢 Real-world use cases (remittance, supply chain)
 
-See [docs/chain-dev.md](docs/chain-dev.md) for detailed technical roadmap.
+See [docs/design/chain-dev.md](docs/design/chain-dev.md) for detailed technical roadmap.
 
 ---
 
@@ -494,15 +500,6 @@ We welcome contributions! Here's how to get involved:
 **DO NOT** open public issues for security vulnerabilities.
 
 - **Email**: security@selendra.org
-- **PGP Key**: [Download](https://selendra.org/security/pgp-key.asc)
-- **Bug Bounty**: Up to $500K via [Immunefi](https://immunefi.com/selendra) *(coming soon)*
-
-### Security Audits
-
-- **Status**: In progress
-- **Firms**: CertiK, Trail of Bits
-- **Scope**: Runtime, custom pallets, EVM integration
-- **Reports**: Published at [selendra.org/security](https://selendra.org/security)
 
 ### Known Issues
 
@@ -517,16 +514,20 @@ See [Security Advisory](https://github.com/selendra/selendra/security/advisories
 
 ## 📄 License
 
-This project is licensed under the **GNU General Public License v3.0** - see [LICENSE](LICENSE) file.
+This project is licensed under the **Apache License 2.0** - see [LICENSE](LICENSE) file.
 
 ```
 Copyright (C) 2019-2025 Selendra
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
 ```
+
+Polkadot-SDK client crates are GPL-3.0 WITH Classpath-exception-2.0, whose linking
+exception permits distributing the combined node under Apache-2.0.
 
 ---
 
@@ -535,25 +536,22 @@ the Free Software Foundation, either version 3 of the License, or
 ### Official
 
 - **Website**: [selendra.org](https://selendra.org)
-- **Documentation**: [docs.selendra.org](https://docs.selendra.org)
-- **Block Explorer**: [scan.selendra.org](https://scan.selendra.org)
+- **Documentation**: [selendra.org/docs](https://selendra.org/docs)
+- **Block Explorer**: [explorer.selendra.org](https://explorer.selendra.org)
+- **Wallet Portal**: [portal.selendra.org](https://portal.selendra.org)
 - **GitHub**: [github.com/selendra](https://github.com/selendra)
 
 ### Community
 
-- **Discord**: [discord.gg/selendra](https://discord.gg/selendra)
-- **Telegram**: [t.me/selendra](https://t.me/selendra)
-- **Twitter**: [@selendra](https://twitter.com/selendra)
-- **Forum**: [forum.selendra.org](https://forum.selendra.org)
+- **Telegram**: [t.me/selendranetwork](https://t.me/selendranetwork)
+- **X**: [@selendranetwork](https://x.com/selendranetwork)
 
 ### Developer Resources
 
 - **RPC Endpoint**: `https://rpc.selendra.org`
 - **WebSocket**: `wss://rpc.selendra.org`
 - **Testnet RPC**: `https://rpc-testnet.selendra.org`
-- **Faucet**: [faucet.selendra.org](https://faucet.selendra.org) *(coming soon)*
-- **Governance Guide**: [docs/GOVERNANCE_SETUP.md](docs/GOVERNANCE_SETUP.md)
-- **Governance Quick Start**: [docs/GOVERNANCE_QUICK_START.md](docs/GOVERNANCE_QUICK_START.md)
+- **Faucet**: [faucet.selendra.org](https://faucet.selendra.org)
 
 ### Technical
 
@@ -582,6 +580,6 @@ Special thanks to all validators, developers, and community members making Selen
 
 **Built with ❤️ by the Selendra Team**
 
-[Join our Discord](https://discord.gg/selendra) • [Follow on Twitter](https://twitter.com/selendra) • [Read the Docs](https://docs.selendra.org)
+[Join us on Telegram](https://t.me/selendranetwork) • [Follow on X](https://x.com/selendranetwork) • [Read the Docs](https://selendra.org/docs)
 
 </div>
