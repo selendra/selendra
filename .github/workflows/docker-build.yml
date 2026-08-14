@@ -3,8 +3,8 @@ name: Build and Push Docker Image
 # When to run this workflow
 on:
   push:
-    branches: [ main ]  # Change to your main branch name if different
-  
+    branches: [ master ]
+
   # Optional: Enable manual trigger from the Actions tab
   workflow_dispatch:
 
