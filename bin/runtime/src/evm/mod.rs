@@ -3,29 +3,30 @@
 mod precompiles;
 
 use crate::{
-	Aura, Balances, DynamicEvmBaseFee, Runtime, RuntimeEvent, Timestamp,
-	NORMAL_DISPATCH_RATIO
+	Aura, Balances, DynamicEvmBaseFee, EnsureThreeFifthsCouncil, Runtime, RuntimeEvent, Timestamp,
+	DAYS, NORMAL_DISPATCH_RATIO
 };
 
 use parity_scale_codec::Encode;
 use pallet_transaction_payment::Multiplier;
 use sp_core::{Get, H160, U256};
 use sp_runtime::{
-	ConsensusEngineId, Perquintill,
+	ConsensusEngineId, FixedPointNumber, Perquintill,
 };
 use sp_std::prelude::*;
 
 use frame_support::{
 	parameter_types,
-	traits::{ConstU32, ConstU64, FindAuthor},
+	traits::{ConstU32, ConstU64, EitherOfDiverse, FindAuthor},
 	weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight},
 };
+use frame_system::EnsureRoot;
 use pallet_ethereum::PostLogContent;
 // use pallet_evm::{EnsureAccountId20, IdentityAddressMapping};
 
 use precompiles::FrontierPrecompiles;
 use primitives::{
-	TOKEN, AccountId, Balance, BlakeTwo256,
+	TOKEN, AccountId, Balance, BlakeTwo256, BlockNumber as SelendraBlockNumber,
 	evm::HashedDefaultMappings,
 };
 
@@ -119,6 +120,7 @@ impl pallet_ethereum::Config for Runtime {
 
 parameter_types! {
 	pub const AccountMappingStorageFee: Balance = TOKEN / 100; // 0.01 SEL storage fee
+	pub const RemapDelay: SelendraBlockNumber = 7 * DAYS;
 }
 
 impl pallet_unified_accounts::Config for Runtime {
@@ -128,6 +130,8 @@ impl pallet_unified_accounts::Config for Runtime {
 	type ChainId = ChainId;
 	type AccountMappingStorageFee = AccountMappingStorageFee;
 	type WeightInfo = pallet_unified_accounts::weights::SubstrateWeight<Runtime>;
+	type RemapOrigin = EitherOfDiverse<EnsureRoot<AccountId>, EnsureThreeFifthsCouncil>;
+	type RemapDelay = RemapDelay;
 }
 
 parameter_types! {
@@ -135,6 +139,8 @@ parameter_types! {
 	pub MinBaseFeePerGas: U256 = U256::from(100_000_000_u128);
 	pub MaxBaseFeePerGas: U256 = U256::from(10_000_000_000_000_u128);
 	pub StepLimitRatio: Perquintill = Perquintill::from_rational(93_u128, 1_000_000);
+	// pallet_transaction_payment MaximumMultiplier is Bounded::max_value(), so cap it here
+	pub MaxAdjustmentFactor: Multiplier = Multiplier::saturating_from_integer(10);
 }
 
 /// Simple wrapper for fetching current native transaction fee weight fee multiplier.
@@ -151,6 +157,7 @@ impl pallet_dynamic_evm_base_fee::Config for Runtime {
 	type MinBaseFeePerGas = MinBaseFeePerGas;
 	type MaxBaseFeePerGas = MaxBaseFeePerGas;
 	type AdjustmentFactor = AdjustmentFactorGetter;
+	type MaxAdjustmentFactor = MaxAdjustmentFactor;
 	type WeightFactor = ();
 	type StepLimitRatio = StepLimitRatio;
 	type WeightInfo = pallet_dynamic_evm_base_fee::weights::SubstrateWeight<Runtime>;
