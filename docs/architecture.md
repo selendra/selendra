@@ -3,6 +3,11 @@
 Derived from the source tree at `spec_version` 20016.
 Every number and type name below is quoted from code, with the file it comes from.
 
+![Selendra node architecture](diagrams/selendra-architecture.png)
+
+Open [`diagrams/selendra-architecture.html`](diagrams/selendra-architecture.html) for the interactive version, where every box links to the source file it was read from.
+The diagram is generated from [`diagrams/selendra-architecture.json`](diagrams/selendra-architecture.json); regenerate it with `archify deliver architecture` after editing that spec.
+
 ## Contents
 
 1. [Shape of the repository](#shape-of-the-repository)
