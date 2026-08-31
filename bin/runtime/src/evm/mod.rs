@@ -11,7 +11,7 @@ use parity_scale_codec::Encode;
 use pallet_transaction_payment::Multiplier;
 use sp_core::{Get, H160, U256};
 use sp_runtime::{
-	ConsensusEngineId, Perquintill,
+	ConsensusEngineId, FixedU128, Perquintill,
 };
 use sp_std::prelude::*;
 
@@ -20,12 +20,13 @@ use frame_support::{
 	traits::{ConstU32, ConstU64, FindAuthor},
 	weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight},
 };
+use frame_system::EnsureRoot;
 use pallet_ethereum::PostLogContent;
 // use pallet_evm::{EnsureAccountId20, IdentityAddressMapping};
 
 use precompiles::FrontierPrecompiles;
 use primitives::{
-	TOKEN, AccountId, Balance, BlakeTwo256,
+	TOKEN, AccountId, Balance, BlakeTwo256, BlockNumber,
 	evm::HashedDefaultMappings,
 };
 
@@ -119,6 +120,8 @@ impl pallet_ethereum::Config for Runtime {
 
 parameter_types! {
 	pub const AccountMappingStorageFee: Balance = TOKEN / 100; // 0.01 SEL storage fee
+	/// Timelock between requesting a forced remap and executing it (~1 day at 1s blocks).
+	pub const RemapDelay: BlockNumber = crate::DAYS;
 }
 
 impl pallet_unified_accounts::Config for Runtime {
@@ -128,6 +131,8 @@ impl pallet_unified_accounts::Config for Runtime {
 	type ChainId = ChainId;
 	type AccountMappingStorageFee = AccountMappingStorageFee;
 	type WeightInfo = pallet_unified_accounts::weights::SubstrateWeight<Runtime>;
+	type RemapOrigin = EnsureRoot<AccountId>;
+	type RemapDelay = RemapDelay;
 }
 
 parameter_types! {
@@ -135,6 +140,9 @@ parameter_types! {
 	pub MinBaseFeePerGas: U256 = U256::from(100_000_000_u128);
 	pub MaxBaseFeePerGas: U256 = U256::from(10_000_000_000_000_u128);
 	pub StepLimitRatio: Perquintill = Perquintill::from_rational(93_u128, 1_000_000);
+	/// Defensive upper bound on the fee adjustment factor, which is otherwise unbounded
+	/// (see `MaximumMultiplier` in the transaction-payment config).
+	pub MaxAdjustmentFactor: FixedU128 = FixedU128::from_rational(1_000, 1);
 }
 
 /// Simple wrapper for fetching current native transaction fee weight fee multiplier.
@@ -151,6 +159,7 @@ impl pallet_dynamic_evm_base_fee::Config for Runtime {
 	type MinBaseFeePerGas = MinBaseFeePerGas;
 	type MaxBaseFeePerGas = MaxBaseFeePerGas;
 	type AdjustmentFactor = AdjustmentFactorGetter;
+	type MaxAdjustmentFactor = MaxAdjustmentFactor;
 	type WeightFactor = ();
 	type StepLimitRatio = StepLimitRatio;
 	type WeightInfo = pallet_dynamic_evm_base_fee::weights::SubstrateWeight<Runtime>;

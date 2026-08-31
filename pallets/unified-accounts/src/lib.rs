@@ -281,6 +281,7 @@ pub mod pallet {
         ///
         /// - `account_id`: The account to remap
         /// - `new_evm_address`: The new EVM address to map to
+        #[pallet::call_index(2)]
         #[pallet::weight(T::WeightInfo::claim_evm_address())]
         pub fn request_remap(
             origin: OriginFor<T>,
@@ -313,6 +314,7 @@ pub mod pallet {
         /// Removes the old mapping and creates a new one to the specified EVM address.
         ///
         /// - `account_id`: The account to remap
+        #[pallet::call_index(3)]
         #[pallet::weight(T::WeightInfo::claim_evm_address())]
         pub fn execute_remap(origin: OriginFor<T>, account_id: T::AccountId) -> DispatchResult {
             T::RemapOrigin::ensure_origin(origin)?;
@@ -350,6 +352,7 @@ pub mod pallet {
         /// Cancel a pending remap request (admin/governance only).
         ///
         /// - `account_id`: The account whose remap request should be cancelled
+        #[pallet::call_index(4)]
         #[pallet::weight(T::WeightInfo::claim_evm_address())]
         pub fn cancel_remap(origin: OriginFor<T>, account_id: T::AccountId) -> DispatchResult {
             T::RemapOrigin::ensure_origin(origin)?;
