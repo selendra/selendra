@@ -1,0 +1,5 @@
+[env]
+# RocksDB 8.1.1 (vendored by librocksdb-sys 0.11) predates GCC 13+/Clang 16+ dropping
+# transitive <cstdint> includes, so its headers fail with "'uint64_t' has not been declared".
+# Force-including the header is a no-op on older toolchains.
+CXXFLAGS = "-include cstdint"
