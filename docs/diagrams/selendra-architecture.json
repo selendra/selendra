@@ -1,0 +1,394 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Selendra Node Architecture",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1500,
+      660
+    ],
+    "repository": {
+      "url": "https://github.com/selendra/selendra",
+      "revision": "8f6acbca35b0b61a71264e58d09eaebd1368a81c"
+    }
+  },
+  "components": [
+    {
+      "id": "clients",
+      "type": "external",
+      "label": "Wallets & dApps",
+      "sublabel": "Substrate + Ethereum RPC",
+      "pos": [
+        60,
+        330
+      ],
+      "size": [
+        160,
+        66
+      ]
+    },
+    {
+      "id": "rpc",
+      "type": "cloud",
+      "label": "RPC Server",
+      "sublabel": "eth_*, selendraNode_*",
+      "pos": [
+        290,
+        330
+      ],
+      "size": [
+        170,
+        66
+      ],
+      "sources": [
+        {
+          "path": "bin/node/src/rpc/mod.rs",
+          "line": 68,
+          "label": "create_full"
+        }
+      ]
+    },
+    {
+      "id": "pool",
+      "type": "backend",
+      "label": "Transaction Pool",
+      "sublabel": "self-contained eth txs",
+      "pos": [
+        520,
+        330
+      ],
+      "size": [
+        170,
+        66
+      ]
+    },
+    {
+      "id": "aura",
+      "type": "backend",
+      "label": "Aura Authorship",
+      "sublabel": "1s slots, 400ms weight",
+      "pos": [
+        750,
+        330
+      ],
+      "size": [
+        170,
+        66
+      ],
+      "sources": [
+        {
+          "path": "bin/node/src/service.rs",
+          "line": 322,
+          "label": "start_aura"
+        }
+      ]
+    },
+    {
+      "id": "import",
+      "type": "backend",
+      "label": "Block Import Stack",
+      "sublabel": "Frontier to Aleph to client",
+      "pos": [
+        980,
+        330
+      ],
+      "size": [
+        170,
+        66
+      ],
+      "sources": [
+        {
+          "path": "bin/node/src/service.rs",
+          "line": 151,
+          "label": "block import"
+        }
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "Selendra Runtime",
+      "sublabel": "36 FRAME pallets, WASM",
+      "pos": [
+        1210,
+        330
+      ],
+      "size": [
+        190,
+        66
+      ],
+      "tag": "spec 20016",
+      "sources": [
+        {
+          "path": "bin/runtime/src/lib.rs",
+          "line": 1191,
+          "label": "construct_runtime"
+        }
+      ]
+    },
+    {
+      "id": "evm",
+      "type": "backend",
+      "label": "EVM Execution",
+      "sublabel": "Frontier, chain ID 1961",
+      "pos": [
+        1210,
+        500
+      ],
+      "size": [
+        190,
+        66
+      ],
+      "sources": [
+        {
+          "path": "bin/runtime/src/evm/mod.rs",
+          "line": 85,
+          "label": "pallet_evm::Config"
+        }
+      ]
+    },
+    {
+      "id": "state",
+      "type": "database",
+      "label": "Chain Database",
+      "sublabel": "state trie + Frontier index",
+      "pos": [
+        980,
+        500
+      ],
+      "size": [
+        170,
+        66
+      ]
+    },
+    {
+      "id": "gossip",
+      "type": "messagebus",
+      "label": "Gossip + Block Sync",
+      "sublabel": "txs, blocks, justifications",
+      "pos": [
+        440,
+        90
+      ],
+      "size": [
+        190,
+        66
+      ],
+      "sources": [
+        {
+          "path": "crate/finality-aleph/src/sync/mod.rs",
+          "label": "sync service"
+        }
+      ]
+    },
+    {
+      "id": "clique",
+      "type": "messagebus",
+      "label": "Validator Network",
+      "sublabel": "clique, all-to-all TCP",
+      "pos": [
+        700,
+        90
+      ],
+      "size": [
+        190,
+        66
+      ],
+      "sources": [
+        {
+          "path": "crate/clique/src/lib.rs",
+          "label": "network-clique"
+        }
+      ]
+    },
+    {
+      "id": "alephbft",
+      "type": "security",
+      "label": "AlephBFT Finality",
+      "sublabel": "session committee",
+      "pos": [
+        960,
+        90
+      ],
+      "size": [
+        190,
+        66
+      ],
+      "tag": "validator",
+      "sources": [
+        {
+          "path": "crate/finality-aleph/src/nodes.rs",
+          "line": 58,
+          "label": "run_validator_node"
+        }
+      ]
+    },
+    {
+      "id": "keystore",
+      "type": "security",
+      "label": "Keystore",
+      "sublabel": "aura + aleph session keys",
+      "pos": [
+        520,
+        500
+      ],
+      "size": [
+        190,
+        66
+      ],
+      "sources": [
+        {
+          "path": "bin/node/src/service.rs",
+          "line": 342,
+          "label": "local_keystore"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "selendra-node process",
+      "wraps": [
+        "rpc",
+        "pool",
+        "aura",
+        "import",
+        "runtime",
+        "evm",
+        "state",
+        "gossip",
+        "clique",
+        "alephbft",
+        "keystore"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Validator only",
+      "wraps": [
+        "clique",
+        "alephbft"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-rpc",
+      "from": "clients",
+      "to": "rpc",
+      "label": "JSON-RPC",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rpc-pool",
+      "from": "rpc",
+      "to": "pool",
+      "label": "submit extrinsic",
+      "labelDy": -34
+    },
+    {
+      "id": "gossip-pool",
+      "from": "gossip",
+      "to": "pool",
+      "label": "gossiped txs",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pool-aura",
+      "from": "pool",
+      "to": "aura",
+      "label": "ready set"
+    },
+    {
+      "id": "aura-import",
+      "from": "aura",
+      "to": "import",
+      "label": "authored block",
+      "labelDy": -34
+    },
+    {
+      "id": "import-runtime",
+      "from": "import",
+      "to": "runtime",
+      "label": "execute_block",
+      "labelDy": -20
+    },
+    {
+      "id": "import-aleph",
+      "from": "import",
+      "to": "alephbft",
+      "label": "justifications",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "aleph-clique",
+      "from": "alephbft",
+      "to": "clique",
+      "label": "units + multisignature",
+      "variant": "security",
+      "labelDy": 57
+    },
+    {
+      "id": "runtime-evm",
+      "from": "runtime",
+      "to": "evm",
+      "label": "EVM dispatch",
+      "labelDy": 60
+    },
+    {
+      "id": "runtime-state",
+      "from": "runtime",
+      "to": "state",
+      "label": "state writes"
+    },
+    {
+      "id": "evm-state",
+      "from": "evm",
+      "to": "state",
+      "label": "accounts, code, logs",
+      "labelDy": 50
+    },
+    {
+      "id": "keystore-aura",
+      "from": "keystore",
+      "to": "aura",
+      "label": "slot + unit signing",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Consensus split",
+      "items": [
+        "Aura authors one block per 1s slot",
+        "AlephBFT finalizes behind it, off the authoring path",
+        "Authoring backs off at 20 nonfinalized blocks"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "EVM layer",
+      "items": [
+        "Chain ID 1961, Frontier self-contained extrinsics",
+        "H160 resolved through pallet-unified-accounts",
+        "Base fee tracks the native fee multiplier"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Session rhythm",
+      "items": [
+        "900 blocks per session, 96 sessions per era",
+        "Committee and finality version rotate at the boundary",
+        "AlephBFT restarts per session with the new committee"
+      ]
+    }
+  ]
+}
